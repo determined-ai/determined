@@ -10,6 +10,7 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -116,18 +117,21 @@ const ExperimentInfoBox: React.FC<Props> = (
         visible={showConfig}
         width={768}
         onCancel={handleHideConfig}>
-        <MonacoEditor
-          height="60vh"
-          language="yaml"
-          options={{
-            minimap: { enabled: false },
-            occurrencesHighlight: false,
-            readOnly: true,
-            scrollBeyondLastLine: false,
-            selectOnLineNumbers: true,
-          }}
-          theme="vs-light"
-          value={yaml.safeDump(experiment.configRaw)} />
+        <React.Suspense
+          fallback={<div className={css.loading}><Spinner className="minHeight" /></div>}>
+          <MonacoEditor
+            height="60vh"
+            language="yaml"
+            options={{
+              minimap: { enabled: false },
+              occurrencesHighlight: false,
+              readOnly: true,
+              scrollBeyondLastLine: false,
+              selectOnLineNumbers: true,
+            }}
+            theme="vs-light"
+            value={yaml.safeDump(experiment.configRaw)} />
+        </React.Suspense>
       </Modal>
     </Section>
   );

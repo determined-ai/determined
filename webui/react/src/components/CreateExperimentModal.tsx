@@ -7,6 +7,7 @@ import { RawJson } from 'types';
 import { clone } from 'utils/data';
 
 import css from './CreateExperimentModal.module.scss';
+import Spinner from './Spinner';
 
 export enum CreateExperimentType {
   Fork = 'Fork',
@@ -136,18 +137,20 @@ const CreateExperimentModal: React.FC<Props> = ({
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
-      <MonacoEditor
-        height="40vh"
-        language="yaml"
-        options={{
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          selectOnLineNumbers: true,
-        }}
-        theme="vs-light"
-        value={localConfig}
-        onChange={handleEditorChange}
-      />
+      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+        <MonacoEditor
+          height="40vh"
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }}
+          theme="vs-light"
+          value={localConfig}
+          onChange={handleEditorChange}
+        />
+      </React.Suspense>
       {configError && <Alert className={css.error} message={configError} type="error" />}
       {error && <Alert className={css.error} message={error} type="error" />}
     </Modal>
