@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 import determined as det
-from determined import ipc, layers, load, profiler
+from determined import ipc, layers, load, profiler, horovod
 
 
 def config_logging(worker_process_env: layers.WorkerProcessContext) -> None:
@@ -43,13 +43,15 @@ def main() -> None:
         subrec = layers.SubprocessReceiver(broadcast_client)
         workloads = iter(subrec)
 
+
         prof_start_on_batch, prof_end_after_batch = worker_process_env.env.experiment_config.profiling_interval()
+        local_rank = int(os.getenv("HOROVOD_LOCAL_RANK", 0))
         with profiler.ProfilerAgent(trial_id=worker_process_env.env.det_trial_id,
                                     agent_id=worker_process_env.env.det_agent_id,
                                     master_url=worker_process_env.env.master_url,
                                     profiling_is_enabled=worker_process_env.env.experiment_config.profiling_enabled(),
                                     global_rank=worker_process_env.rendezvous_info.get_rank(),
-                                    local_rank=0,  # TODO: We need to actually get this info from somewhere...
+                                    local_rank=local_rank,
                                     start_on_batch=prof_start_on_batch,
                                     end_after_batch=prof_end_after_batch) as prof:
 
