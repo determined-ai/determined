@@ -257,6 +257,13 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "LabelsV0",
     ]
 
+    # Disallow pointers for required fields in all cases.
+    if required and type.startswith("*"):
+        raise AssertionError(
+            f"ERROR: {schema.golang_title}.{tag} type ({type}) must not be a pointer, since it is "
+            "a required field"
+        )
+
     # There are two ways that you can know the final value of a pointer field will never be nil;
     # either the default value is not null, or the field is required/eventuallyRequired.
     if default is not None or eventuallyRequired:
@@ -266,6 +273,8 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
                 "This is not allowed, since maps and slices can be nil by default, so it is\n"
                 "an unnecesary layer of indirection which complicates the code."
             )
+        elif type.startswith("**"):
+            raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
         elif type.startswith("*"):
             # Pointers are nil-able, and the non-nil type is without the '*'.
             type = type[1:]
@@ -276,8 +285,6 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         ):
             # Maps and Slices are nil-able, and the non-nil type is just the same type.
             pass
-        elif type.startswith("**"):
-            raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
         elif not required:
             raise AssertionError(
                 f"ERROR: {schema.golang_title}.{tag} type ({type}) must be nil-able, since it is "

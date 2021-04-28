@@ -319,4 +319,4 @@ def optionalRef(
     if instance is None:
         return
 
-    yield from validator.descend(instance, schema={"$ref": optionalRef}, schema_path="optional")
+    yield from validator.descend(instance, schema={"$ref": optionalRef}, schema_path="optionalRef")
