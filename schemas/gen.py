@@ -140,25 +140,18 @@ def next_type_name(file: str, start: int) -> str:
 
     It is pretty dumb and only matches type definitions of the form:
 
-        ^type Thing struct.*   // a struct definition
+        ^type Thing .*
 
-        ^type Thing.*          // a non-struct definition
-
-    This is how we decide which struct to operate on for the //go:generate comments above structs.
+    This is how we decide which type definition to operate on after the //go:generate comments.
     """
     with open(file) as f:
         for lineno, line in enumerate(f.readlines()):
             if lineno < start:
                 continue
-            # Detect struct types.
-            match = re.match("type ([\\S]+) struct", line)
+            match = re.match("type ([\\S]+) ", line)
             if match is not None:
                 return match[1]
-            # Detect non-struct types.
-            match = re.match("type ([\\S]+)", line)
-            if match is not None:
-                return match[1]
-    raise AssertionError(f"did not find struct in {file} after line {start}")
+    raise AssertionError(f"did not find a type definition in {file} after line {start}")
 
 
 # FieldSpec = (field, type, tag)
