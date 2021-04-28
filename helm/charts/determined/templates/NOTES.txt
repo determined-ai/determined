@@ -37,7 +37,8 @@ format X.Y.Z (e.g., 0.13.6).
 {{ end -}}
 
 {{- if .Values.defaultScheduler }}
-      {{- if not (eq (.Values.defaultScheduler | trim) "coscheduler")}}
+      {{- $schedulerType := .Values.defaultScheduler | trim}}
+      {{- if not (or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption"))}}
 WARNING: defaultScheduler has been set to an unsupported value. The cluster default scheduler will be set to the Kubernetes scheduler.
       {{ end }}
 {{ end -}}
