@@ -40,7 +40,7 @@ class NoopEstimator(estimator.EstimatorTrial):
             if mode == tf.estimator.ModeKeys.EVAL:
 
                 eval_metric_ops = {
-                    name: self.context.experimental.make_metric(metric, reducer, np.float64)
+                    name: self.context.make_metric(metric, reducer, np.float64)
                     for name, metric, reducer in [
                         ("rand_rand", tf.constant([[]]), rand_rand_reducer),
                         ("np_rand", tf.constant([[]]), np_rand_reducer),

@@ -99,7 +99,7 @@ class LinearEstimator(estimator.EstimatorTrial):
             if mode == tf.estimator.ModeKeys.EVAL:
                 # Use the custom metrics API with all allowable input types.
                 eval_metric_ops = {
-                    name: self.context.experimental.make_metric(metric, reducer, np.float32)
+                    name: self.context.make_metric(metric, reducer, np.float32)
                     for name, metric, reducer in [
                         ("label_sum_tensor_fn", labels, sum_tensor_reducer),
                         ("label_sum_tensor_cls", labels, SumTensorReducer()),

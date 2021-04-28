@@ -452,7 +452,7 @@ class TestPyTorchTrial:
             return 1.0
 
         # Inject an unnamed metric which returns a non-dict (which is not allowed).
-        controller.context.experimental.wrap_reducer(reducer_fn)
+        controller.context.wrap_reducer(reducer_fn)
 
         with pytest.raises(AssertionError, match="name=None but it did not return a dict"):
             controller.run()
@@ -477,7 +477,7 @@ class TestPyTorchTrial:
             return {"my_metric": 1.0}
 
         # Inject a named metric which returns a dict (which is not allowed).
-        controller.context.experimental.wrap_reducer(reducer_fn, name="my_metric")
+        controller.context.wrap_reducer(reducer_fn, name="my_metric")
 
         with pytest.raises(AssertionError, match="with name set but it returned a dict anyway"):
             controller.run()

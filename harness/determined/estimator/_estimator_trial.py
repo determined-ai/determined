@@ -379,7 +379,7 @@ class EstimatorTrialController(det.LoopTrialController):
         # Used to send Terminate response following post-trial close callback.
         self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
 
-        context.experimental._set_allgather_fn(self.allgather_metrics)
+        context._set_allgather_fn(self.allgather_metrics)
 
         self._init_model()
 
@@ -761,7 +761,7 @@ class EstimatorTrialController(det.LoopTrialController):
         )
 
         # Reset the per-evaluation set of allgather ops in the context.
-        self.context.experimental._reset_allgather_ops()
+        self.context._reset_allgather_ops()
 
         if not self.is_chief:
             return workload.Skipped()
