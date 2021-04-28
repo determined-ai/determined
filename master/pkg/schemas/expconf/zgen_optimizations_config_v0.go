@@ -104,14 +104,6 @@ func (o *OptimizationsConfigV0) SetAutoTuneTensorFusion(val bool) {
 	o.RawAutoTuneTensorFusion = &val
 }
 
-func (o OptimizationsConfigV0) WithDefaults() OptimizationsConfigV0 {
-	return schemas.WithDefaults(o).(OptimizationsConfigV0)
-}
-
-func (o OptimizationsConfigV0) Merge(other OptimizationsConfigV0) OptimizationsConfigV0 {
-	return schemas.Merge(o, other).(OptimizationsConfigV0)
-}
-
 func (o OptimizationsConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedOptimizationsConfigV0()
 }

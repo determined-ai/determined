@@ -24,14 +24,6 @@ func (s *SharedFSDataLayerConfigV0) SetHostStoragePath(val *string) {
 	s.RawHostStoragePath = val
 }
 
-func (s SharedFSDataLayerConfigV0) WithDefaults() SharedFSDataLayerConfigV0 {
-	return schemas.WithDefaults(s).(SharedFSDataLayerConfigV0)
-}
-
-func (s SharedFSDataLayerConfigV0) Merge(other SharedFSDataLayerConfigV0) SharedFSDataLayerConfigV0 {
-	return schemas.Merge(s, other).(SharedFSDataLayerConfigV0)
-}
-
 func (s SharedFSDataLayerConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedSharedFSDataLayerConfigV0()
 }

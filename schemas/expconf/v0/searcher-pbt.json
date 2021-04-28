@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "metric",
         "population_size",
         "length_per_round",
@@ -18,60 +20,101 @@
             "const": "pbt"
         },
         "population_size": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "length_per_round": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "num_rounds": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "replace_function": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
             "unionKey": "singleproperty",
-            "union": {
-                "items": [
-                    {
-                        "unionKey": "always",
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                            "truncate_fraction"
-                        ],
-                        "properties": {
-                            "truncate_fraction": {
-                                "type": "number",
-                                "minimum": 0.0,
-                                "maximum": 0.5
+            "conditional": {
+                "unless": {
+                    "const": null
+                },
+                "enforce": {
+                    "union": {
+                        "items": [
+                            {
+                                "unionKey": "always",
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "truncate_fraction"
+                                ],
+                                "properties": {
+                                    "truncate_fraction": {
+                                        "type": "number",
+                                        "minimum": 0.0,
+                                        "maximum": 0.5
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
-                ]
+                }
             }
         },
         "explore_function": {
-            "type": "object",
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
             "additionalProperties": false,
-            "required": [
+            "eventuallyRequired": [
                 "resample_probability",
                 "perturb_factor"
             ],
             "properties": {
                 "resample_probability": {
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
                     "minimum": 0.0,
                     "maximum": 1.0
                 },
                 "perturb_factor": {
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
                     "minimum": 0.0,
                     "maximum": 1.0
                 }
             }
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [

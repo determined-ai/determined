@@ -27,14 +27,6 @@ func (h HyperparameterV0) GetUnionMember() interface{} {
 	panic("no union member defined")
 }
 
-func (h HyperparameterV0) WithDefaults() HyperparameterV0 {
-	return schemas.WithDefaults(h).(HyperparameterV0)
-}
-
-func (h HyperparameterV0) Merge(other HyperparameterV0) HyperparameterV0 {
-	return schemas.Merge(h, other).(HyperparameterV0)
-}
-
 func (h HyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedHyperparameterV0()
 }

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -24,6 +25,9 @@ type SchemaTestCase struct {
 	Errors    *map[string][]string `json:"errors"`
 	Defaulted *JSON                `json:"defaulted"`
 	Case      JSON                 `json:"case"`
+	MergeAs   *string              `json:"merge_as"`
+	MergeSrc  *JSON                `json:"merge_src"`
+	Merged    *JSON                `json:"merged"`
 }
 
 func errorIn(expect string, errors []error) bool {
@@ -92,6 +96,10 @@ func objectForURL(url string) interface{} {
 		return &ExperimentConfigV0{}
 	case "http://determined.ai/schemas/expconf/v0/bind-mount.json":
 		return &BindMountV0{}
+	case "http://determined.ai/schemas/expconf/v0/bind-mounts.json":
+		return &BindMountsConfigV0{}
+	case "http://determined.ai/schemas/expconf/v0/devices.json":
+		return &DevicesConfigV0{}
 	// For union member schemas, just return the union type.
 	case "http://determined.ai/schemas/expconf/v0/searcher.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
@@ -100,10 +108,12 @@ func objectForURL(url string) interface{} {
 		"http://determined.ai/schemas/expconf/v0/searcher-pbt.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-random.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-single.json":
-		return &SearcherConfig{}
+		return &SearcherConfigV0{}
+	case "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json":
+		return &CheckpointStorageConfigV0{}
 	case "http://determined.ai/schemas/expconf/v0/hyperparameter.json",
 		"http://determined.ai/schemas/expconf/v0/hyperparameter-int.json":
-		return &Hyperparameter{}
+		return &HyperparameterV0{}
 
 	// Test-related structs.
 	case "http://determined.ai/schemas/expconf/v0/test-root.json":
@@ -194,6 +204,54 @@ func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 	})
 }
 
+func (tc SchemaTestCase) CheckMerged(t *testing.T) {
+	if tc.MergeAs == nil && tc.MergeSrc == nil && tc.Merged == nil {
+		return
+	}
+
+	if tc.MergeAs == nil || tc.MergeSrc == nil || tc.Merged == nil {
+		assert.NilError(t, errors.New(
+			"if any of merge_as, merge_src, or merged are set in a test case, "+
+				"they must all be set",
+		))
+	}
+
+	objBytes, err := json.Marshal(tc.Case)
+	assert.NilError(t, err)
+
+	srcBytes, err := json.Marshal(*tc.MergeSrc)
+	assert.NilError(t, err)
+
+	url := (*tc.MergeAs)
+
+	// Get an empty objects to unmarshal into.
+	obj := objectForURL(url)
+	src := objectForURL(url)
+
+	testName := fmt.Sprintf("merged %T", obj)
+	t.Run(testName, func(t *testing.T) {
+		assert.NilError(t, schemas.SaneBytes(obj.(schemas.Schema), objBytes))
+		assert.NilError(t, schemas.SaneBytes(src.(schemas.Schema), srcBytes))
+
+		err = json.Unmarshal(objBytes, &obj)
+		assert.NilError(t, err)
+
+		err = json.Unmarshal(srcBytes, &src)
+		assert.NilError(t, err)
+
+		merged := schemas.Merge(obj, src)
+
+		// Compare json-to-json.
+		mergedBytes, err := json.Marshal(merged)
+		assert.NilError(t, err)
+		var rawMerged interface{}
+		err = json.Unmarshal(mergedBytes, &rawMerged)
+		assert.NilError(t, err)
+
+		assert.DeepEqual(t, rawMerged, *tc.Merged)
+	})
+}
+
 func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	if tc.Defaulted == nil {
 		return
@@ -251,6 +309,7 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 			tc.CheckErrors(t)
 			tc.CheckDefaulted(t)
 			tc.CheckRoundTrip(t)
+			tc.CheckMerged(t)
 		})
 	}
 }

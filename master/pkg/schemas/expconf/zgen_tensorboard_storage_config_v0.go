@@ -24,62 +24,6 @@ func (t TensorboardStorageConfigV0) GetUnionMember() interface{} {
 	panic("no union member defined")
 }
 
-func (t TensorboardStorageConfigV0) SaveExperimentBest() int {
-	if t.RawSharedFSConfigV0 != nil {
-		return t.RawSharedFSConfigV0.SaveExperimentBest()
-	}
-	if t.RawHDFSConfig != nil {
-		return t.RawHDFSConfig.SaveExperimentBest()
-	}
-	if t.RawS3Config != nil {
-		return t.RawS3Config.SaveExperimentBest()
-	}
-	if t.RawGCSConfig != nil {
-		return t.RawGCSConfig.SaveExperimentBest()
-	}
-	panic("no union member defined")
-}
-
-func (t TensorboardStorageConfigV0) SaveTrialBest() int {
-	if t.RawSharedFSConfigV0 != nil {
-		return t.RawSharedFSConfigV0.SaveTrialBest()
-	}
-	if t.RawHDFSConfig != nil {
-		return t.RawHDFSConfig.SaveTrialBest()
-	}
-	if t.RawS3Config != nil {
-		return t.RawS3Config.SaveTrialBest()
-	}
-	if t.RawGCSConfig != nil {
-		return t.RawGCSConfig.SaveTrialBest()
-	}
-	panic("no union member defined")
-}
-
-func (t TensorboardStorageConfigV0) SaveTrialLatest() int {
-	if t.RawSharedFSConfigV0 != nil {
-		return t.RawSharedFSConfigV0.SaveTrialLatest()
-	}
-	if t.RawHDFSConfig != nil {
-		return t.RawHDFSConfig.SaveTrialLatest()
-	}
-	if t.RawS3Config != nil {
-		return t.RawS3Config.SaveTrialLatest()
-	}
-	if t.RawGCSConfig != nil {
-		return t.RawGCSConfig.SaveTrialLatest()
-	}
-	panic("no union member defined")
-}
-
-func (t TensorboardStorageConfigV0) WithDefaults() TensorboardStorageConfigV0 {
-	return schemas.WithDefaults(t).(TensorboardStorageConfigV0)
-}
-
-func (t TensorboardStorageConfigV0) Merge(other TensorboardStorageConfigV0) TensorboardStorageConfigV0 {
-	return schemas.Merge(t, other).(TensorboardStorageConfigV0)
-}
-
 func (t TensorboardStorageConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedTensorboardStorageConfigV0()
 }

@@ -2,25 +2,79 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json",
     "title": "CheckpointStorageConfig",
-    "union": {
-        "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
-        "items": [
-            {
-                "unionKey": "const:type=shared_fs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
-            },
-            {
-                "unionKey": "const:type=hdfs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
-            },
-            {
-                "unionKey": "const:type=s3",
-                "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
-            },
-            {
-                "unionKey": "const:type=gcs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "conditional": {
+        "when": {
+            "required": [
+                "type"
+            ]
+        },
+        "enforce": {
+            "union": {
+                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+                "items": [
+                    {
+                        "unionKey": "const:type=shared_fs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
+                    },
+                    {
+                        "unionKey": "const:type=hdfs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
+                    },
+                    {
+                        "unionKey": "const:type=s3",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
+                    },
+                    {
+                        "unionKey": "const:type=gcs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                    }
+                ]
             }
-        ]
+        }
+    },
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "type"
+    ],
+    "properties": {
+        "access_key": true,
+        "bucket": true,
+        "checkpoint_path": true,
+        "container_path": true,
+        "endpoint_url": true,
+        "hdfs_path": true,
+        "hdfs_url": true,
+        "host_path": true,
+        "propagation": true,
+        "secret_key": true,
+        "storage_path": true,
+        "tensorboard_path": true,
+        "type": true,
+        "user": true,
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
     }
 }

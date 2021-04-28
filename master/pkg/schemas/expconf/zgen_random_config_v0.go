@@ -8,55 +8,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (r RandomConfigV0) Metric() string {
-	return r.RawMetric
-}
-
-func (r *RandomConfigV0) SetMetric(val string) {
-	r.RawMetric = val
-}
-
-func (r RandomConfigV0) SmallerIsBetter() bool {
-	if r.RawSmallerIsBetter == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .RawSmallerIsBetter")
-	}
-	return *r.RawSmallerIsBetter
-}
-
-func (r *RandomConfigV0) SetSmallerIsBetter(val bool) {
-	r.RawSmallerIsBetter = &val
-}
-
-func (r RandomConfigV0) SourceTrialID() *int {
-	return r.RawSourceTrialID
-}
-
-func (r *RandomConfigV0) SetSourceTrialID(val *int) {
-	r.RawSourceTrialID = val
-}
-
-func (r RandomConfigV0) SourceCheckpointUUID() *string {
-	return r.RawSourceCheckpointUUID
-}
-
-func (r *RandomConfigV0) SetSourceCheckpointUUID(val *string) {
-	r.RawSourceCheckpointUUID = val
-}
-
 func (r RandomConfigV0) MaxLength() LengthV0 {
-	return r.RawMaxLength
+	if r.RawMaxLength == nil {
+		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxLength")
+	}
+	return *r.RawMaxLength
 }
 
 func (r *RandomConfigV0) SetMaxLength(val LengthV0) {
-	r.RawMaxLength = val
+	r.RawMaxLength = &val
 }
 
 func (r RandomConfigV0) MaxTrials() int {
-	return r.RawMaxTrials
+	if r.RawMaxTrials == nil {
+		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxTrials")
+	}
+	return *r.RawMaxTrials
 }
 
 func (r *RandomConfigV0) SetMaxTrials(val int) {
-	r.RawMaxTrials = val
+	r.RawMaxTrials = &val
 }
 
 func (r RandomConfigV0) MaxConcurrentTrials() int {
@@ -68,14 +39,6 @@ func (r RandomConfigV0) MaxConcurrentTrials() int {
 
 func (r *RandomConfigV0) SetMaxConcurrentTrials(val int) {
 	r.RawMaxConcurrentTrials = &val
-}
-
-func (r RandomConfigV0) WithDefaults() RandomConfigV0 {
-	return schemas.WithDefaults(r).(RandomConfigV0)
-}
-
-func (r RandomConfigV0) Merge(other RandomConfigV0) RandomConfigV0 {
-	return schemas.Merge(r, other).(RandomConfigV0)
 }
 
 func (r RandomConfigV0) ParsedSchema() interface{} {

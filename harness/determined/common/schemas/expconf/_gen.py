@@ -53,6 +53,20 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/bind-mounts.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/bind-mounts.json",
+    "title": "BindMountsConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/bind-mount.json"
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json": json.loads(
         r"""
 {
@@ -301,26 +315,80 @@ schemas = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json",
     "title": "CheckpointStorageConfig",
-    "union": {
-        "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
-        "items": [
-            {
-                "unionKey": "const:type=shared_fs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
-            },
-            {
-                "unionKey": "const:type=hdfs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
-            },
-            {
-                "unionKey": "const:type=s3",
-                "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
-            },
-            {
-                "unionKey": "const:type=gcs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "conditional": {
+        "when": {
+            "required": [
+                "type"
+            ]
+        },
+        "enforce": {
+            "union": {
+                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+                "items": [
+                    {
+                        "unionKey": "const:type=shared_fs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/shared-fs.json"
+                    },
+                    {
+                        "unionKey": "const:type=hdfs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/hdfs.json"
+                    },
+                    {
+                        "unionKey": "const:type=s3",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/s3.json"
+                    },
+                    {
+                        "unionKey": "const:type=gcs",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                    }
+                ]
             }
-        ]
+        }
+    },
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "type"
+    ],
+    "properties": {
+        "access_key": true,
+        "bucket": true,
+        "checkpoint_path": true,
+        "container_path": true,
+        "endpoint_url": true,
+        "hdfs_path": true,
+        "hdfs_url": true,
+        "host_path": true,
+        "propagation": true,
+        "secret_key": true,
+        "storage_path": true,
+        "tensorboard_path": true,
+        "type": true,
+        "user": true,
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
     }
 }
 
@@ -335,7 +403,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "bucket",
         "bucket_directory_path"
     ],
@@ -344,10 +414,18 @@ schemas = {
             "const": "gcs"
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "bucket_directory_path": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "local_cache_host_path": {
             "type": [
@@ -392,7 +470,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "bucket",
         "bucket_directory_path"
     ],
@@ -401,10 +481,18 @@ schemas = {
             "const": "s3"
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "bucket_directory_path": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "local_cache_host_path": {
             "type": [
@@ -558,6 +646,20 @@ schemas = {
             ],
             "default": "mrw"
         }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/devices.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/devices.json",
+    "title": "DevicesConfig",
+    "type": "array",
+    "items": {
+        "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
     }
 }
 
@@ -816,14 +918,12 @@ schemas = {
     "title": "ExperimentConfig",
     "type": "object",
     "additionalProperties": false,
-    "required": [
-        "hyperparameters",
-        "searcher"
-    ],
     "eventuallyRequired": [
         "checkpoint_storage",
         "description",
-        "reproducibility"
+        "hyperparameters",
+        "reproducibility",
+        "searcher"
     ],
     "properties": {
         "bind_mounts": {
@@ -831,10 +931,8 @@ schemas = {
                 "array",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/bind-mount.json"
-            },
-            "default": []
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/bind-mounts.json"
         },
         "checkpoint_policy": {
             "enum": [
@@ -905,7 +1003,12 @@ schemas = {
             "optionalRef": "http://determined.ai/schemas/expconf/v0/environment.json"
         },
         "hyperparameters": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
         },
         "internal": {
             "type": [
@@ -1008,7 +1111,12 @@ schemas = {
             "default": 100
         },
         "searcher": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/searcher.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/searcher.json"
         },
         "security": {
             "type": [
@@ -1119,7 +1227,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "bucket"
     ],
     "properties": {
@@ -1127,7 +1237,11 @@ schemas = {
             "const": "gcs"
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "save_experiment_best": {
             "type": [
@@ -1167,7 +1281,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "hdfs_url",
         "hdfs_path"
     ],
@@ -1176,10 +1292,18 @@ schemas = {
             "const": "hdfs"
         },
         "hdfs_url": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "hdfs_path": {
-            "type": "string",
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null,
             "checks": {
                 "hdfs_path must be an absolute path": {
                     "pattern": "^/"
@@ -1458,12 +1582,18 @@ schemas = {
     "$id": "http://determined.ai/schemas/expconf/v0/hyperparameters.json",
     "title": "Hyperparameters",
     "type": "object",
-    "required": [
+    "eventuallyRequired": [
         "global_batch_size"
     ],
     "properties": {
         "global_batch_size": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
+            "type": [
+                "integer",
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-global-batch-size.json"
         }
     },
     "additionalProperties": {
@@ -1858,10 +1988,8 @@ schemas = {
                 "array",
                 "null"
             ],
-            "items": {
-                "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
-            },
-            "default": []
+            "default": [],
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/devices.json"
         },
         "max_slots": {
             "type": [
@@ -1936,7 +2064,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "access_key",
         "bucket",
         "secret_key"
@@ -1946,13 +2076,25 @@ schemas = {
             "const": "s3"
         },
         "access_key": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "bucket": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "secret_key": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "endpoint_url": {
             "type": [
@@ -1999,7 +2141,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "max_length",
         "max_trials",
         "metric"
@@ -2019,7 +2163,11 @@ schemas = {
             }
         },
         "max_trials": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "mode": {
@@ -2056,10 +2204,26 @@ schemas = {
             "default": 0
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2081,13 +2245,6 @@ schemas = {
                 "null"
             ],
             "default": null
-        },
-        "stop_once": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": false
         }
     }
 }
@@ -2103,7 +2260,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "num_rungs",
         "max_length",
         "max_trials",
@@ -2114,14 +2273,27 @@ schemas = {
             "const": "async_halving"
         },
         "num_rungs": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "max_trials": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "divisor": {
@@ -2140,8 +2312,19 @@ schemas = {
             "minimum": 0,
             "default": 0
         },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2163,13 +2346,6 @@ schemas = {
                 "null"
             ],
             "default": null
-        },
-        "stop_once": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": false
         }
     }
 }
@@ -2185,7 +2361,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "max_length",
         "metric"
     ],
@@ -2202,10 +2380,19 @@ schemas = {
             "default": 0
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2242,7 +2429,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "metric",
         "population_size",
         "length_per_round",
@@ -2255,60 +2444,101 @@ schemas = {
             "const": "pbt"
         },
         "population_size": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "length_per_round": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "num_rounds": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "replace_function": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
             "unionKey": "singleproperty",
-            "union": {
-                "items": [
-                    {
-                        "unionKey": "always",
-                        "type": "object",
-                        "additionalProperties": false,
-                        "required": [
-                            "truncate_fraction"
-                        ],
-                        "properties": {
-                            "truncate_fraction": {
-                                "type": "number",
-                                "minimum": 0.0,
-                                "maximum": 0.5
+            "conditional": {
+                "unless": {
+                    "const": null
+                },
+                "enforce": {
+                    "union": {
+                        "items": [
+                            {
+                                "unionKey": "always",
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "truncate_fraction"
+                                ],
+                                "properties": {
+                                    "truncate_fraction": {
+                                        "type": "number",
+                                        "minimum": 0.0,
+                                        "maximum": 0.5
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
-                ]
+                }
             }
         },
         "explore_function": {
-            "type": "object",
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
             "additionalProperties": false,
-            "required": [
+            "eventuallyRequired": [
                 "resample_probability",
                 "perturb_factor"
             ],
             "properties": {
                 "resample_probability": {
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
                     "minimum": 0.0,
                     "maximum": 1.0
                 },
                 "perturb_factor": {
-                    "type": "number",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
                     "minimum": 0.0,
                     "maximum": 1.0
                 }
             }
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2345,7 +2575,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "max_trials",
         "max_length",
         "metric"
@@ -2363,14 +2595,27 @@ schemas = {
             "default": 0
         },
         "max_trials": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2407,7 +2652,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "max_length",
         "metric"
     ],
@@ -2416,10 +2663,19 @@ schemas = {
             "const": "single"
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -2453,34 +2709,93 @@ schemas = {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
     "title": "SearcherConfig",
-    "union": {
-        "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
-        "items": [
-            {
-                "unionKey": "const:name=single",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
-            },
-            {
-                "unionKey": "const:name=random",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
-            },
-            {
-                "unionKey": "const:name=grid",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
-            },
-            {
-                "unionKey": "const:name=adaptive_asha",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
-            },
-            {
-                "unionKey": "const:name=pbt",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
-            },
-            {
-                "unionKey": "const:name=async_halving",
-                "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+    "$comment": "this is a union of all possible properties, with validation for the common properties",
+    "conditional": {
+        "when": {
+            "required": [
+                "name"
+            ]
+        },
+        "enforce": {
+            "union": {
+                "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'adaptive_asha', or 'pbt'",
+                "items": [
+                    {
+                        "unionKey": "const:name=single",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-single.json"
+                    },
+                    {
+                        "unionKey": "const:name=random",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-random.json"
+                    },
+                    {
+                        "unionKey": "const:name=grid",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                    },
+                    {
+                        "unionKey": "const:name=adaptive_asha",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
+                    },
+                    {
+                        "unionKey": "const:name=pbt",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-pbt.json"
+                    },
+                    {
+                        "unionKey": "const:name=async_halving",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                    }
+                ]
             }
-        ]
+        }
+    },
+    "additionalProperties": false,
+    "eventuallyRequired": [
+        "type"
+    ],
+    "properties": {
+        "bracket_rungs": true,
+        "divisor": true,
+        "explore_function": true,
+        "length_per_round": true,
+        "max_concurrent_trials": true,
+        "max_length": true,
+        "max_rungs": true,
+        "max_trials": true,
+        "mode": true,
+        "name": true,
+        "num_rounds": true,
+        "num_rungs": true,
+        "population_size": true,
+        "replace_function": true,
+        "stop_once": true,
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
     }
 }
 
@@ -2518,7 +2833,9 @@ schemas = {
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "host_path"
     ],
     "properties": {
@@ -2526,7 +2843,11 @@ schemas = {
             "const": "shared_fs"
         },
         "host_path": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "storage_path": {
             "type": [

@@ -61,18 +61,25 @@ class Case:
         matches: Optional[List[str]] = None,
         errors: Optional[Dict[str, str]] = None,
         defaulted: Any = None,
+        merge_as: Optional[str] = None,
+        merge_src: Any = None,
+        merged: Any = None,
     ) -> None:
         self.name = name
         self.case = case
         self.matches = matches
         self.errors = errors
         self.defaulted = defaulted
+        self.merge_as = merge_as
+        self.merge_src = merge_src
+        self.merged = merged
 
     def run(self) -> None:
         self.run_matches()
         self.run_errors()
         self.run_defaulted()
         self.run_round_trip()
+        self.run_merged()
 
     def run_matches(self) -> None:
         if not self.matches:
@@ -130,6 +137,27 @@ class Case:
         obj1.fill_defaults()
         obj2 = cls.from_dict(obj1.to_dict())
         assert obj2 == obj1, "round trip failed with defaults"
+
+    def run_merged(self) -> None:
+        if not self.merge_as and not self.merge_src and not self.merged:
+            return
+        assert (
+            self.merge_as and self.merge_src and self.merged
+        ), "matches, merge_src, and merged must all be present in a test case if any are present"
+
+        # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
+        # support the partial checkpoint storage configs.  It probably will never support the
+        # partial checkpoint storage (only the master needs it, and hopefully only for the V0
+        # schema).
+        pytest.skip("python expconf support merge tests yet")
+
+        cls = class_from_url(self.merge_as)
+
+        obj = cls.from_dict(self.case)
+        src = cls.from_dict(self.merge_src)
+
+        merged = schemas.merge(obj, src)
+        assert merged == self.merged, f"failed while testing {self.name}"
 
 
 CASES_ROOT = os.path.join(os.path.dirname(__file__), "..", "..", "..", "schemas", "test_cases")

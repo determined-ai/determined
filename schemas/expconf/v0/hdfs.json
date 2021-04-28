@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "type",
+        "type"
+    ],
+    "eventuallyRequired": [
         "hdfs_url",
         "hdfs_path"
     ],
@@ -14,10 +16,18 @@
             "const": "hdfs"
         },
         "hdfs_url": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "hdfs_path": {
-            "type": "string",
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null,
             "checks": {
                 "hdfs_path must be an absolute path": {
                     "pattern": "^/"

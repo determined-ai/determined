@@ -19,14 +19,6 @@ func (i *InternalConfigV0) SetNative(val NativeConfigV0) {
 	i.RawNative = &val
 }
 
-func (i InternalConfigV0) WithDefaults() InternalConfigV0 {
-	return schemas.WithDefaults(i).(InternalConfigV0)
-}
-
-func (i InternalConfigV0) Merge(other InternalConfigV0) InternalConfigV0 {
-	return schemas.Merge(i, other).(InternalConfigV0)
-}
-
 func (i InternalConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedInternalConfigV0()
 }

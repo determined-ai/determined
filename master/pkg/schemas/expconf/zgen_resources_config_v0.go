@@ -100,14 +100,6 @@ func (r *ResourcesConfigV0) SetDevices(val DevicesConfigV0) {
 	r.RawDevices = val
 }
 
-func (r ResourcesConfigV0) WithDefaults() ResourcesConfigV0 {
-	return schemas.WithDefaults(r).(ResourcesConfigV0)
-}
-
-func (r ResourcesConfigV0) Merge(other ResourcesConfigV0) ResourcesConfigV0 {
-	return schemas.Merge(r, other).(ResourcesConfigV0)
-}
-
 func (r ResourcesConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedResourcesConfigV0()
 }

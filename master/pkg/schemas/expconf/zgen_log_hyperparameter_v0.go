@@ -40,14 +40,6 @@ func (l *LogHyperparameterV0) SetCount(val *int) {
 	l.RawCount = val
 }
 
-func (l LogHyperparameterV0) WithDefaults() LogHyperparameterV0 {
-	return schemas.WithDefaults(l).(LogHyperparameterV0)
-}
-
-func (l LogHyperparameterV0) Merge(other LogHyperparameterV0) LogHyperparameterV0 {
-	return schemas.Merge(l, other).(LogHyperparameterV0)
-}
-
 func (l LogHyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedLogHyperparameterV0()
 }

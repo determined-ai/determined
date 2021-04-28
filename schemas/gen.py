@@ -134,20 +134,24 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
     return lines
 
 
-def next_struct_name(file: str, start: int) -> str:
+def next_type_name(file: str, start: int) -> str:
     """
     Find the name of the next struct definition in a go file starting at a given line.
 
-    This is how we decide which struct to operate on for the //go:generate comments above structs.
+    It is pretty dumb and only matches type definitions of the form:
+
+        ^type Thing .*
+
+    This is how we decide which type definition to operate on after the //go:generate comments.
     """
     with open(file) as f:
         for lineno, line in enumerate(f.readlines()):
             if lineno < start:
                 continue
-            match = re.match("type ([\\S]+) struct", line)
+            match = re.match("type ([\\S]+) ", line)
             if match is not None:
                 return match[1]
-    raise AssertionError(f"did not find struct in {file} after line {start}")
+    raise AssertionError(f"did not find a type definition in {file} after line {start}")
 
 
 # FieldSpec = (field, type, tag)
@@ -156,9 +160,11 @@ FieldSpec = Tuple[str, str, str]
 UnionSpec = Tuple[str, str]
 
 
-def find_struct(file: str, struct_name: str) -> Tuple[List[FieldSpec], List[UnionSpec]]:
+def find_struct(file: str, gotype: str) -> Tuple[List[FieldSpec], List[UnionSpec]]:
     """
     Open a file and find a struct definition for a given name.
+
+    If the given name is not a struct, it returns empty lists.
 
     This function uses regex to read the golang source code... hacky, but it works.
     """
@@ -168,8 +174,11 @@ def find_struct(file: str, struct_name: str) -> Tuple[List[FieldSpec], List[Unio
         state = "pre"
         for lineno, line in enumerate(f.readlines()):
             if state == "pre":
-                if line.startswith(f"type {struct_name} struct"):
+                if line.startswith(f"type {gotype} struct"):
                     state = "fields"
+                elif line.startswith(f"type {gotype}"):
+                    # Non-struct type; return empty field_spec and union_spec.
+                    return [], []
             elif state == "fields":
                 if line.strip() == "}":
                     # No more fields
@@ -201,18 +210,16 @@ def find_struct(file: str, struct_name: str) -> Tuple[List[FieldSpec], List[Unio
                 )
 
     # We should have exited when we saw the "}" line.
-    raise AssertionError(
-        f"failed to find struct definition for {struct_name} in {file}"
-    )
+    raise AssertionError(f"failed to find struct definition for {gotype} in {file}")
 
 
-def find_schema(package: str, struct: str) -> Schema:
-    """Locate a json-schema file from a struct name."""
-    if re.match(".*V[0-9]+", struct) is None:
+def find_schema(package: str, gotype: str) -> Schema:
+    """Locate a json-schema file from a type name."""
+    if re.match(".*V[0-9]+", gotype) is None:
         raise AssertionError(
-            f"{struct} is not a valid schema type name; it should end in Vx where x is a digit"
+            f"{gotype} is not a valid schema type name; it should end in Vx where x is a digit"
         )
-    version = struct[-2:].lower()
+    version = gotype[-2:].lower()
     dir = os.path.join(HERE, package, version)
     for file in os.listdir(dir):
         if not file.endswith(".json"):
@@ -222,10 +229,10 @@ def find_schema(package: str, struct: str) -> Schema:
         url = os.path.join(URLBASE, urlend)
         with open(path) as f:
             schema = Schema(url, f.read())
-            if schema.golang_title != struct:
+            if schema.golang_title != gotype:
                 continue
             return schema
-    raise AssertionError(f"failed to find schema matching title=={struct}")
+    raise AssertionError(f"failed to find schema matching title=={gotype}")
 
 
 def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, bool]:
@@ -240,19 +247,19 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         prop = {}
     default = prop.get("default")
 
-    required = tag in schema.schema.get("required", []) or tag in schema.schema.get(
-        "eventuallyRequired", []
-    )
+    required = tag in schema.schema.get("required", [])
+    eventuallyRequired = required or tag in schema.schema.get("eventuallyRequired", [])
 
     KNOWN_MAP_OR_SLICE_ALIAS_TYPES = [
         "BindMountsConfigV0",
         "DevicesConfigV0",
+        "HyperparametersV0",
         "LabelsV0",
     ]
 
     # There are two ways that you can know the final value of a pointer field will never be nil;
-    # either the default value is not null, or the field is eventuallyRequired.
-    if default is not None or required:
+    # either the default value is not null, or the field is required/eventuallyRequired.
+    if default is not None or eventuallyRequired:
         if type.startswith("*map[") or type.startswith("*[]"):
             raise AssertionError(
                 f"ERROR: {tag} type ({type}) is a pointer to a map or slice type.\n"
@@ -271,19 +278,17 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
             pass
         elif type.startswith("**"):
             raise AssertionError(f"{tag} type ({type}) must not be a double pointer")
-        elif default is not None:
+        elif not required:
             raise AssertionError(
-                f"ERROR: {tag} type ({type}) must be a pointer since it can be defaulted!\n"
+                f"ERROR: {schema.golang_title}.{tag} type ({type}) must be nil-able, since it is "
+                "not required.  This is because `nil` is how we represent values which were not "
+                "provided by the user.  Nilable types are pointers, slices, or maps.\n"
                 "\n"
-                "Otherwise, after deserialization it would be impossible to know if\n"
-                "the user provided the value or not.\n"
-                "\n"
-                "Note: since slices and maps can be be nil by default, they do not need to\n"
-                f"be made pointers.  If {type} is a type alias for a map or slice type, like:\n"
+                f"Note: if {type} is a type alias for a map or slice type, like:\n"
                 "\n"
                 "    type BindMountsConfigV0 []BindMounts\n"
                 "\n"
-                f'then you can safely add "{type}" to KNOWN_MAP_OR_SLICE_ALIAS_TYPES\n'
+                f'then you can safely just add "{type}" to KNOWN_MAP_OR_SLICE_ALIAS_TYPES\n'
                 "in schemas/gen.py to avoid this error."
             )
 
@@ -291,21 +296,21 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
 
 
 def go_getters_and_setters(
-    struct: str, schema: Schema, spec: List[FieldSpec]
+    gotype: str, schema: Schema, spec: List[FieldSpec]
 ) -> List[str]:
     lines = []  # type: List[str]
 
     if len(spec) < 1:
         return lines
 
-    x = struct[0].lower()
+    x = gotype[0].lower()
 
     for field, type, tag in spec:
         defaulted_type, default, required = get_defaulted_type(schema, tag, type)
 
         if not field.startswith("Raw"):
             raise AssertionError(
-                f'{struct} has field {field} which doesn\'t start with "Raw"; all fields should '
+                f'{gotype} has field {field} which doesn\'t start with "Raw"; all fields should '
                 'start with "Raw" and the getter will be the primary API for accessing those '
                 "values.  When the field is a pointer-type with a non-nil default type, the getter "
                 "will be a non-pointer (automatic dereferencing) for use after WithDefaults() is "
@@ -316,23 +321,24 @@ def go_getters_and_setters(
 
         if defaulted_type == type:
             # Getter for nonpointer field.
-            lines.append(f"func ({x} {struct}) {getter}() {type} {{")
+            lines.append("")
+            lines.append(f"func ({x} {gotype}) {getter}() {type} {{")
             lines.append(f"\treturn {x}.{field}")
             lines.append("}")
             lines.append("")
 
             # Setter for nonpointer field.
-            lines.append(f"func ({x} *{struct}) Set{getter}(val {type}) {{")
+            lines.append(f"func ({x} *{gotype}) Set{getter}(val {type}) {{")
             lines.append(f"\t{x}.{field} = val")
             lines.append("}")
-            lines.append("")
 
         else:
             # Getter for pointer field.
-            lines.append(f"func ({x} {struct}) {getter}() {defaulted_type} {{")
+            lines.append("")
+            lines.append(f"func ({x} {gotype}) {getter}() {defaulted_type} {{")
             lines.append(f"\tif {x}.{field} == nil {{")
             lines.append(
-                f'\t\tpanic("You must call WithDefaults on {struct} before .{field}")'
+                f'\t\tpanic("You must call WithDefaults on {gotype} before .{field}")'
             )
             lines.append("\t}")
             lines.append(f"\treturn *{x}.{field}")
@@ -340,114 +346,35 @@ def go_getters_and_setters(
             lines.append("")
 
             # Setter for pointer field.
-            lines.append(f"func ({x} *{struct}) Set{getter}(val {defaulted_type}) {{")
+            lines.append(f"func ({x} *{gotype}) Set{getter}(val {defaulted_type}) {{")
             lines.append(f"\t{x}.{field} = &val")
             lines.append("}")
-            lines.append("")
 
     return lines
 
 
-def get_union_common_members(
-    file: str, package: str, union_types: List[str]
-) -> List[Tuple[str, str]]:
-    """
-    Look at all of the union members types for a union type and automatically determine which
-    members are common to all members.
-    """
-    # Find all members and types of all union member types
-    per_struct_members = []
-    for struct in union_types:
-        schema = find_schema(package, struct)
-        spec, union = find_struct(file, struct)
-        if len(union) > 0:
-            raise AssertionError(
-                f"detected nested union; {struct} is a union member and also a union itself"
-            )
-        members = {}
-        for field, type, tag in spec:
-            type, _, _ = get_defaulted_type(schema, tag, type)
-            members[field] = type
-        per_struct_members.append(members)
-
-    # Find common members by name.
-    common_fields = set(per_struct_members[0].keys())
-    for members in per_struct_members[1:]:
-        common_fields = common_fields.intersection(set(members.keys()))
-
-    # Validate types all match.
-    for field in common_fields:
-        field_types = {members[field] for members in per_struct_members}
-        if len(field_types) != 1:
-            raise AssertionError(
-                f".{field} has multiple types ({field_types}) among union members {union_types}"
-            )
-
-    # Sort this so the generation is deterministic.
-    return sorted(
-        {field: per_struct_members[0][field] for field in common_fields}.items()
-    )
-
-
 def go_unions(
-    struct: str, package: str, file: str, schema: Schema, union_spec: List[UnionSpec]
+    gotype: str, package: str, file: str, schema: Schema, union_spec: List[UnionSpec]
 ) -> List[str]:
     lines = []  # type: List[str]
     if len(union_spec) < 1:
         return lines
-    x = struct[0].lower()
+    x = gotype[0].lower()
 
     # Define a GetUnionMember() that returns an interface.
-    lines.append(f"func ({x} {struct}) GetUnionMember() interface{{}} {{")
+    lines.append("")
+    lines.append(f"func ({x} {gotype}) GetUnionMember() interface{{}} {{")
     for field, _ in union_spec:
         lines.append(f"\tif {x}.{field} != nil {{")
         lines.append("\t\treturn nil")
         lines.append("\t}")
     lines.append('\tpanic("no union member defined")')
     lines.append("}")
-    lines.append("")
-
-    union_types = [type.lstrip("*") for _, type in union_spec]
-
-    # Define getters for each of the common members of the union.
-    common_members = get_union_common_members(file, package, union_types)
-    for common_field, type in common_members:
-        # Getter.
-        getter = common_field[len("Raw") :]
-        lines.append(f"func ({x} {struct}) {getter}() {type} {{")
-        for field, _ in union_spec:
-            lines.append(f"\tif {x}.{field} != nil {{")
-            lines.append(f"\t\treturn {x}.{field}.{getter}()")
-            lines.append("\t}")
-        lines.append('\tpanic("no union member defined")')
-        lines.append("}")
-        lines.append("")
 
     return lines
 
 
-def go_helpers(struct: str) -> List[str]:
-    """
-    Define WithDefaults() and Merge(), which are typed wrappers around schemas.WithDefaults() and
-    schemas.Merge().
-    """
-    lines = []
-
-    x = struct[0].lower()
-
-    lines.append(f"func ({x} {struct}) WithDefaults() {struct} {{")
-    lines.append(f"\treturn schemas.WithDefaults({x}).({struct})")
-    lines.append("}")
-    lines.append("")
-
-    lines.append(f"func ({x} {struct}) Merge(other {struct}) {struct} {{")
-    lines.append(f"\treturn schemas.Merge({x}, other).({struct})")
-    lines.append("}")
-
-    return lines
-
-
-def go_schema_interface(struct: str, url: str) -> List[str]:
+def go_schema_interface(gotype: str, url: str) -> List[str]:
     """
     Generate the schemas.Schema interface for a particular schema.
 
@@ -456,18 +383,18 @@ def go_schema_interface(struct: str, url: str) -> List[str]:
     """
     lines = []
 
-    x = struct[0].lower()
+    x = gotype[0].lower()
 
     lines.append("")
-    lines.append(f"func ({x} {struct}) ParsedSchema() interface{{}} {{")
-    lines.append(f"\treturn schemas.Parsed{struct}()")
+    lines.append(f"func ({x} {gotype}) ParsedSchema() interface{{}} {{")
+    lines.append(f"\treturn schemas.Parsed{gotype}()")
     lines.append("}")
     lines.append("")
-    lines.append(f"func ({x} {struct}) SanityValidator() *jsonschema.Schema {{")
+    lines.append(f"func ({x} {gotype}) SanityValidator() *jsonschema.Schema {{")
     lines.append(f'\treturn schemas.GetSanityValidator("{url}")')
     lines.append("}")
     lines.append("")
-    lines.append(f"func ({x} {struct}) CompletenessValidator() *jsonschema.Schema {{")
+    lines.append(f"func ({x} {gotype}) CompletenessValidator() *jsonschema.Schema {{")
     lines.append(f'\treturn schemas.GetCompletenessValidator("{url}")')
     lines.append("}")
 
@@ -475,16 +402,16 @@ def go_schema_interface(struct: str, url: str) -> List[str]:
 
 
 def gen_go_struct(
-    package: str, file: str, line: int, imports: List[str]
+    package: str,
+    file: str,
+    line: int,
+    imports: List[str],
 ) -> Tuple[str, List[str]]:
     """Used by the //go:generate decorations on structs."""
-    struct = next_struct_name(file, line)
-    field_spec, union_spec = find_struct(file, struct)
+    gotype = next_type_name(file, line)
+    field_spec, union_spec = find_struct(file, gotype)
 
-    if len(field_spec) and len(union_spec):
-        raise AssertionError(f"{struct} has both union tags and normal fields")
-
-    schema = find_schema(package, struct)
+    schema = find_schema(package, gotype)
 
     lines = []
     lines.append("// Code generated by gen.py. DO NOT EDIT.")
@@ -502,14 +429,12 @@ def gen_go_struct(
     lines.append("")
     lines.append('\t"github.com/determined-ai/determined/master/pkg/schemas"')
     lines.append(")")
-    lines.append("")
 
-    lines += go_getters_and_setters(struct, schema, field_spec)
-    lines += go_unions(struct, package, file, schema, union_spec)
-    lines += go_helpers(struct)
-    lines += go_schema_interface(struct, schema.url)
+    lines += go_getters_and_setters(gotype, schema, field_spec)
+    lines += go_unions(gotype, package, file, schema, union_spec)
+    lines += go_schema_interface(gotype, schema.url)
 
-    filename = "zgen_" + camel_to_snake(struct) + ".go"
+    filename = "zgen_" + camel_to_snake(gotype) + ".go"
 
     return filename, lines
 

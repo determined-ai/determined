@@ -16,14 +16,6 @@ func (c *ConstHyperparameterV0) SetVal(val interface{}) {
 	c.RawVal = val
 }
 
-func (c ConstHyperparameterV0) WithDefaults() ConstHyperparameterV0 {
-	return schemas.WithDefaults(c).(ConstHyperparameterV0)
-}
-
-func (c ConstHyperparameterV0) Merge(other ConstHyperparameterV0) ConstHyperparameterV0 {
-	return schemas.Merge(c, other).(ConstHyperparameterV0)
-}
-
 func (c ConstHyperparameterV0) ParsedSchema() interface{} {
 	return schemas.ParsedConstHyperparameterV0()
 }

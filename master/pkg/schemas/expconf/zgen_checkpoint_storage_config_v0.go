@@ -8,6 +8,39 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
+func (c CheckpointStorageConfigV0) SaveExperimentBest() int {
+	if c.RawSaveExperimentBest == nil {
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveExperimentBest")
+	}
+	return *c.RawSaveExperimentBest
+}
+
+func (c *CheckpointStorageConfigV0) SetSaveExperimentBest(val int) {
+	c.RawSaveExperimentBest = &val
+}
+
+func (c CheckpointStorageConfigV0) SaveTrialBest() int {
+	if c.RawSaveTrialBest == nil {
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveTrialBest")
+	}
+	return *c.RawSaveTrialBest
+}
+
+func (c *CheckpointStorageConfigV0) SetSaveTrialBest(val int) {
+	c.RawSaveTrialBest = &val
+}
+
+func (c CheckpointStorageConfigV0) SaveTrialLatest() int {
+	if c.RawSaveTrialLatest == nil {
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveTrialLatest")
+	}
+	return *c.RawSaveTrialLatest
+}
+
+func (c *CheckpointStorageConfigV0) SetSaveTrialLatest(val int) {
+	c.RawSaveTrialLatest = &val
+}
+
 func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
 	if c.RawSharedFSConfig != nil {
 		return nil
@@ -22,62 +55,6 @@ func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
 		return nil
 	}
 	panic("no union member defined")
-}
-
-func (c CheckpointStorageConfigV0) SaveExperimentBest() int {
-	if c.RawSharedFSConfig != nil {
-		return c.RawSharedFSConfig.SaveExperimentBest()
-	}
-	if c.RawHDFSConfig != nil {
-		return c.RawHDFSConfig.SaveExperimentBest()
-	}
-	if c.RawS3Config != nil {
-		return c.RawS3Config.SaveExperimentBest()
-	}
-	if c.RawGCSConfig != nil {
-		return c.RawGCSConfig.SaveExperimentBest()
-	}
-	panic("no union member defined")
-}
-
-func (c CheckpointStorageConfigV0) SaveTrialBest() int {
-	if c.RawSharedFSConfig != nil {
-		return c.RawSharedFSConfig.SaveTrialBest()
-	}
-	if c.RawHDFSConfig != nil {
-		return c.RawHDFSConfig.SaveTrialBest()
-	}
-	if c.RawS3Config != nil {
-		return c.RawS3Config.SaveTrialBest()
-	}
-	if c.RawGCSConfig != nil {
-		return c.RawGCSConfig.SaveTrialBest()
-	}
-	panic("no union member defined")
-}
-
-func (c CheckpointStorageConfigV0) SaveTrialLatest() int {
-	if c.RawSharedFSConfig != nil {
-		return c.RawSharedFSConfig.SaveTrialLatest()
-	}
-	if c.RawHDFSConfig != nil {
-		return c.RawHDFSConfig.SaveTrialLatest()
-	}
-	if c.RawS3Config != nil {
-		return c.RawS3Config.SaveTrialLatest()
-	}
-	if c.RawGCSConfig != nil {
-		return c.RawGCSConfig.SaveTrialLatest()
-	}
-	panic("no union member defined")
-}
-
-func (c CheckpointStorageConfigV0) WithDefaults() CheckpointStorageConfigV0 {
-	return schemas.WithDefaults(c).(CheckpointStorageConfigV0)
-}
-
-func (c CheckpointStorageConfigV0) Merge(other CheckpointStorageConfigV0) CheckpointStorageConfigV0 {
-	return schemas.Merge(c, other).(CheckpointStorageConfigV0)
 }
 
 func (c CheckpointStorageConfigV0) ParsedSchema() interface{} {

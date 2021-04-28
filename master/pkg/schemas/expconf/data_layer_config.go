@@ -40,8 +40,8 @@ type SharedFSDataLayerConfigV0 struct {
 //go:generate ../gen.sh
 // S3DataLayerConfigV0 configures data layer storage on S3.
 type S3DataLayerConfigV0 struct {
-	RawBucket                  string  `json:"bucket"`
-	RawBucketDirectoryPath     string  `json:"bucket_directory_path"`
+	RawBucket                  *string `json:"bucket"`
+	RawBucketDirectoryPath     *string `json:"bucket_directory_path"`
 	RawLocalCacheContainerPath *string `json:"local_cache_container_path"`
 	RawLocalCacheHostPath      *string `json:"local_cache_host_path"`
 	RawAccessKey               *string `json:"access_key"`
@@ -52,8 +52,8 @@ type S3DataLayerConfigV0 struct {
 //go:generate ../gen.sh
 // GCSDataLayerConfigV0 configures data layer storage on GCS.
 type GCSDataLayerConfigV0 struct {
-	RawBucket                  string  `json:"bucket"`
-	RawBucketDirectoryPath     string  `json:"bucket_directory_path"`
+	RawBucket                  *string `json:"bucket"`
+	RawBucketDirectoryPath     *string `json:"bucket_directory_path"`
 	RawLocalCacheContainerPath *string `json:"local_cache_container_path"`
 	RawLocalCacheHostPath      *string `json:"local_cache_host_path"`
 }

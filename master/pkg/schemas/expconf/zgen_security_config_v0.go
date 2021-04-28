@@ -16,14 +16,6 @@ func (s *SecurityConfigV0) SetKerberos(val *KerberosConfigV0) {
 	s.RawKerberos = val
 }
 
-func (s SecurityConfigV0) WithDefaults() SecurityConfigV0 {
-	return schemas.WithDefaults(s).(SecurityConfigV0)
-}
-
-func (s SecurityConfigV0) Merge(other SecurityConfigV0) SecurityConfigV0 {
-	return schemas.Merge(s, other).(SecurityConfigV0)
-}
-
 func (s SecurityConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedSecurityConfigV0()
 }

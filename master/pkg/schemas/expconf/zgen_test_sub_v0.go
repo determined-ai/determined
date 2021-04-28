@@ -19,14 +19,6 @@ func (t *TestSubV0) SetValY(val string) {
 	t.RawValY = &val
 }
 
-func (t TestSubV0) WithDefaults() TestSubV0 {
-	return schemas.WithDefaults(t).(TestSubV0)
-}
-
-func (t TestSubV0) Merge(other TestSubV0) TestSubV0 {
-	return schemas.Merge(t, other).(TestSubV0)
-}
-
 func (t TestSubV0) ParsedSchema() interface{} {
 	return schemas.ParsedTestSubV0()
 }

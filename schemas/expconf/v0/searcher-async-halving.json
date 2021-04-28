@@ -5,7 +5,9 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-        "name",
+        "name"
+    ],
+    "eventuallyRequired": [
         "num_rungs",
         "max_length",
         "max_trials",
@@ -16,14 +18,27 @@
             "const": "async_halving"
         },
         "num_rungs": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "max_length": {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
         },
         "max_trials": {
-            "type": "integer",
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
             "minimum": 1
         },
         "divisor": {
@@ -42,8 +57,19 @@
             "minimum": 0,
             "default": 0
         },
+        "stop_once": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
         "metric": {
-            "type": "string"
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "smaller_is_better": {
             "type": [
@@ -65,13 +91,6 @@
                 "null"
             ],
             "default": null
-        },
-        "stop_once": {
-            "type": [
-                "boolean",
-                "null"
-            ],
-            "default": false
         }
     }
 }
