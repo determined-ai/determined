@@ -28,11 +28,13 @@ const UPlotChart: React.FC<Props> = forwardRef((
 
   const hasData: boolean = useMemo(() => {
     // no x values
-    if (!data || data[0].length === 0) return false;
+    if (!data || !data[0] || data[0].length === 0) return false;
+
     // series values length not matching x values length
-    data.forEach(dataSerie => {
-      if (dataSerie.length !== data[0].length) return false;
-    });
+    for (let i = 1; i < data.length; i++) {
+      if (data[i].length !== data[0].length) return false;
+    }
+
     return true;
   }, [ data ]);
 
