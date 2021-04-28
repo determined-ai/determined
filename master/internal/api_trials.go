@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/protoutil"
@@ -548,10 +547,9 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 	trialAddr := actor.Addr("experiments", eID, rID)
 
-	id := uuid.New()
 	signal := make(chan struct{}, 1)
-	a.m.system.TellAt(trialAddr, trialWatchPreemption{id: id, signal: signal})
-	unwatch := func() { a.m.system.TellAt(trialAddr, trialUnwatchPreemption{id: id}) }
+	a.m.system.TellAt(trialAddr, trialWatchPreemption{signal: signal})
+	unwatch := func() { a.m.system.TellAt(trialAddr, trialUnwatchPreemption{signal: signal}) }
 
 	for {
 		select {
