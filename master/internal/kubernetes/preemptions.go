@@ -1,8 +1,9 @@
 package kubernetes
 
 import (
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,7 +57,6 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 }
 
 func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) error {
-<<<<<<< HEAD
 	// check if there are pods to preempt on startup
 	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
 		metaV1.ListOptions{LabelSelector: "determined-preemption"})
@@ -68,8 +68,6 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) error {
 		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
 	}
 
-=======
->>>>>>> feat: adding support for preemption on k8s [DET-5135]
 	watch, err := p.clientSet.CoreV1().Pods(p.namespace).Watch(
 		metaV1.ListOptions{LabelSelector: "determined-preemption"})
 	if err != nil {
@@ -90,8 +88,4 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) error {
 	ctx.Tell(ctx.Self(), startPreemptionListener{})
 
 	return nil
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> feat: adding support for preemption on k8s [DET-5135]
