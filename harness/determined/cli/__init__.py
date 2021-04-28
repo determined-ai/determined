@@ -14,6 +14,5 @@ from . import (
     template,
     tensorboard,
     trial,
-    tunnel,
     user,
 )
