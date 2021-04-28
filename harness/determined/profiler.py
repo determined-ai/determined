@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import psutil
 
-from determined.common import api
+from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
@@ -171,6 +171,9 @@ class ProfilerAgent:
         if not self.is_enabled:
             return
 
+        check.check_gt_eq(
+            new_batch_idx, self.current_batch_idx, "Batch index should never decrease over time"
+        )
         self.current_batch_idx = new_batch_idx
         self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
