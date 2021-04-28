@@ -25,7 +25,16 @@ const UPlotChart: React.FC<Props> = forwardRef((
 ) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const hasData: boolean = useMemo(() => !!(data && data[0].length > 0), [ data ]);
+
+  const hasData: boolean = useMemo(() => {
+    // no x values
+    if (!data || data[0].length === 0) return false;
+    // series values length not matching x values length
+    data.forEach(dataSerie => {
+      if (dataSerie.length !== data[0].length) return false;
+    });
+    return true;
+  }, [ data ]);
 
   /*
    * Chart setup.
