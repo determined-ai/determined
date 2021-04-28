@@ -115,15 +115,14 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Pa
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	trialID int, metrics workload.ValidationMetrics,
+	trialID int, metric float64,
 ) ([]Operation, error) {
 	requestID, ok := s.RequestIDs[trialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
-	// TODO(Brad): This type assertion is stupid.
-	operations, err := s.method.validationCompleted(s.context(), requestID, metrics)
+	operations, err := s.method.validationCompleted(s.context(), requestID, metric)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}

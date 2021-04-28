@@ -276,9 +276,9 @@ func (a *apiServer) PreviewHPSearch(
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-					Length: &experimentv1.TrainingUnits{
-						Unit:  experimentv1.Unit_UNIT_RECORDS,
-						Count: int32(op.Length.Units),
+					Length: &experimentv1.TrainingLength{
+						Units:  experimentv1.TrainingLength_UNITS_RECORDS,
+						Length: int32(op.Length.Units),
 					},
 				},
 				{
@@ -289,9 +289,9 @@ func (a *apiServer) PreviewHPSearch(
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingUnits{
-						Unit:  experimentv1.Unit_UNIT_BATCHES,
-						Count: int32(op.Length.Units),
+					Length: &experimentv1.TrainingLength{
+						Units:  experimentv1.TrainingLength_UNITS_BATCHES,
+						Length: int32(op.Length.Units),
 					},
 				},
 				{
@@ -302,9 +302,9 @@ func (a *apiServer) PreviewHPSearch(
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingUnits{
-						Unit:  experimentv1.Unit_UNIT_EPOCHS,
-						Count: int32(op.Length.Units),
+					Length: &experimentv1.TrainingLength{
+						Units:  experimentv1.TrainingLength_UNITS_EPOCHS,
+						Length: int32(op.Length.Units),
 					},
 				},
 				{

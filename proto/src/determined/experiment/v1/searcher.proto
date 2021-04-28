@@ -4,26 +4,29 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
-// WorkloadKind defines the kind of workload that should be executed by trial
-// runners.
-enum Unit {
-  // Denotes an unknown Uz.
-  UNIT_UNSPECIFIED = 0;
-  // Unit type "Batches".
-  UNIT_BATCHES = 1;
-  // Unit type "Records".
-  UNIT_RECORDS = 2;
-  // Unit type "Epochs".
-  UNIT_EPOCHS = 3;
-}
-
-// TrainingUnits represents a single runnable operation emitted by a searcher.
-message TrainingUnits {
-  // This is the unit the TrainingLength is in terms of.
-  Unit unit = 1;
-  // This is the magnitude of the TrainingLength.
-  int32 count = 2;
+// The representation for an amount of training.
+message TrainingLength {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "units", "length" ] }
+  };
+  // The units for the training length.
+  enum Units {
+    // Zero-value (not allowed).
+    UNITS_UNSPECIFIED = 0;
+    // Indicates a training length is specified in records, samples or another
+    // synonymous unit.
+    UNITS_RECORDS = 1;
+    // Indicates a training length is specified in batches.
+    UNITS_BATCHES = 2;
+    // Indicates a training length is specified in epochs.
+    UNITS_EPOCHS = 3;
+  }
+  // The units the training length is in terms of.
+  Units units = 1;
+  // The value for the training length.
+  int32 length = 2;
 }
 
 // RunnableType defines the type of operation that should be executed by trial
@@ -43,7 +46,7 @@ message RunnableOperation {
   // This is the type of the operation.
   RunnableType type = 1;
   // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-  TrainingUnits length = 2;
+  TrainingLength length = 2;
 }
 
 // TrialSimulation is a specific sequence of workloads that were run before the

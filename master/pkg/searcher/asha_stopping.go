@@ -128,17 +128,11 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metric float64,
 ) ([]Operation, error) {
-	// Extract the relevant metric as a float.
-	metric, err := metrics.Metric(s.Metric)
-	if err != nil {
-		return nil, err
-	}
 	if !s.SmallerIsBetter {
 		metric *= -1
 	}
-
 	return s.promoteAsync(ctx, requestID, metric), nil
 }
 

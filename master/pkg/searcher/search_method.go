@@ -24,9 +24,7 @@ type SearchMethod interface {
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
-	validationCompleted(
-		ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
-	) ([]Operation, error)
+	validationCompleted(ctx context, requestID model.RequestID, metric float64) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
 	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
@@ -92,7 +90,7 @@ func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, 
 }
 
 func (defaultSearchMethod) validationCompleted(
-	context, model.RequestID, workload.ValidationMetrics,
+	context, model.RequestID, float64,
 ) ([]Operation, error) {
 	return nil, nil
 }

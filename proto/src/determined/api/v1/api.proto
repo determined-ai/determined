@@ -509,6 +509,40 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Get the absolute training length until the searcher needs the trial to
+  // report a validation.
+  rpc GetTrialSearcherTrainUntil(GetTrialSearcherTrainUntilRequest)
+      returns (GetTrialSearcherTrainUntilResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/searcher/train_until"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Signals the searcher that the trial has completed the current
+  // requested amount of training with the given searcher validation
+  // metric.
+  rpc ReportTrialSearcherValidation(ReportTrialSearcherValidationRequest)
+      returns (ReportTrialSearcherValidationResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/searcher/report_validation"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // For bookkeeping, updates the progress towards to current requested searcher
+  // training length.
+  rpc ReportTrialProgress(ReportTrialProgressRequest)
+      returns (ReportTrialProgressResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/searcher/complete_training_length"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
