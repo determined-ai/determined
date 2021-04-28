@@ -1,5 +1,6 @@
 {{- if .Values.defaultScheduler}}
-{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
+{{- $schedulerType := .Values.defaultScheduler | trim}}
+{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,11 @@ metadata:
     component: scheduler
     tier: control-plane
     release: coscheduler-{{ .Release.Name }}
+  {{- if eq $schedulerType "preemption"}}
+  name: preemption-scheduler
+  {{- else }}
   name: coscheduler
+  {{- end}}
   namespace: kube-system
 spec:
   selector:
@@ -30,7 +35,11 @@ spec:
         - --scheduler-name=coscheduler
         - --config=/etc/config/config.yaml
         name: coscheduler
+        {{- if eq $schedulerType "preemption"}}
+        image: determinedai/kube-scheduler:latest
+        {{- else }}
         image: k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.18.9
+        {{- end}}
         imagePullPolicy: "Always"
         livenessProbe:
           httpGet:

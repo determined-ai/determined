@@ -1,10 +1,33 @@
 {{- if .Values.defaultScheduler}}
-{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
+{{- $schedulerType := .Values.defaultScheduler | trim}}
+{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: coscheduler
   namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coscheduler-pod-permissions
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: coscheduler-pod-role
+subjects:
+  - kind: ServiceAccount
+    name: coscheduler
+    namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: coscheduler-pod-permissions
+  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

@@ -1,5 +1,6 @@
 {{- if .Values.defaultScheduler}}
-{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
+{{- $schedulerType := .Values.defaultScheduler | trim}}
+{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -19,6 +20,11 @@ data:
             - name: Coscheduling
           disabled:
             - name: "*"
+        {{- if eq $schedulerType "preemption"}}
+        preFilter:
+          enabled:
+            - name: Coscheduling
+        {{- end }}
         permit:
           enabled:
             - name: Coscheduling
