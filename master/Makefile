@@ -50,6 +50,14 @@ build: gen
 		-o build/determined-master \
 		./cmd/determined-master
 
+.PHONY: build-race
+build-race: gen
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
+		-o build/determined-master \
+		-race \
+		./cmd/determined-master
+
 .PHONY: check
 check: check-gen
 	go mod tidy
