@@ -3,7 +3,7 @@ import pathlib
 from typing import Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload, profiler
+from determined import horovod, load, profiler, tensorboard, workload
 from determined.common import check
 
 

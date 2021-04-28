@@ -44,11 +44,15 @@ class StartMessage:
 class ShutdownMessage:
     pass
 
-DEBUG=True
-def debug_log(*args):
+
+DEBUG = True
+
+
+def debug_log(*args: Any) -> None:
     args_as_str = " ".join([str(arg) for arg in args])
     if DEBUG:
         logging.info(f"{LOG_NAMESPACE} (DEBUG) {args_as_str}")
+
 
 class ProfilerAgent:
     """
@@ -64,11 +68,13 @@ class ProfilerAgent:
     Profiling is only active between start_on_batch and end_after_batch. It will also automatically
     shut down 5 minutes after starting. When profiling is not active, no system metrics are
     collected and the record_timing function is a no-op.
+
+    If is_enabled=False, every method in this class should be a no-op.
     """
 
     def __init__(
         self,
-        trial_id: int,
+        trial_id: str,
         agent_id: str,
         master_url: str,
         profiling_is_enabled: bool,
@@ -98,7 +104,7 @@ class ProfilerAgent:
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         if self.is_enabled:
-            # Set up timer to stop collecting after 5 minutes
+            # Set up timer thread to stop collecting after 5 minutes
             self.max_collection_seconds = 300
             self.shutdown_timer = PreemptibleTimer(
                 self.max_collection_seconds, self._end_collection
@@ -138,6 +144,7 @@ class ProfilerAgent:
         if not self.is_enabled:
             return
         self._end_collection()
+        self.cleanup_timer()
 
     def __enter__(self) -> "ProfilerAgent":
         self.start()
@@ -199,8 +206,18 @@ class ProfilerAgent:
             and self.end_after_batch is not None
             and self.current_batch_idx > self.end_after_batch
         ):
-            debug_log(f"ProfilerAgent.update_batch_idx exceeded end_after_batch ({self.end_after_batch}) and shutting down")
+            debug_log(
+                f"ProfilerAgent.update_batch_idx exceeded "
+                f"end_after_batch ({self.end_after_batch}) and shutting down"
+            )
             self._end_collection()
+            self.shutdown_timer.send_shutdown_signal()
+
+    def cleanup_timer(self) -> None:
+        if not self.is_enabled:
+            return
+        self.shutdown_timer.send_shutdown_signal()
+        self.shutdown_timer.join()
 
     def _begin_collection(self) -> None:
         if not self.is_enabled:
@@ -215,35 +232,72 @@ class ProfilerAgent:
 
     def _end_collection(self) -> None:
         """
-        Stop collecting data and shut down child threads. This function can be invoked due to the
-        max batch idx being exceeded, due to timeout or due to the ProfilingAgent shutting down as
-        the harness exits, so the function needs to be threadsafe and idempotent.
+        Stop collecting data and shut down most child threads. This function can be invoked due to
+        the max batch idx being exceeded, due to timeout or due to the ProfilingAgent shutting down
+        as the harness exits, so the function needs to be threadsafe and idempotent.
+
+        This cleans up all threads except for the shutdown timer, because this function might be
+        invoked by the shutdown timer.
         """
+        if not self.is_enabled:
+            return
+
         debug_log("ProfilerAgent._end_collection")
         with self.shutdown_lock:
             if self.has_finished:
+                debug_log(
+                    "ProfilerAgent._end_collection - already finished, skipping any shut down"
+                )
                 return
 
-            if self.is_enabled:
-                # Shut down in reverse creation order
-                self.shutdown_timer.kill()
-                self.shutdown_timer.join()
+            debug_log("ProfilerAgent._end_collection - is_enabled, shutting down threads")
+            debug_log("ProfilerAgent._end_collection - ")
+            # Shut down in reverse creation order
 
-                if self.sysmetrics_is_enabled:
-                    self.sys_metric_collector_thread.kill()
-                    self.sys_metric_collector_thread.join()
+            self.shutdown_timer.send_shutdown_signal()
+            debug_log("ProfilerAgent._end_collection - timer shutdown signal sent")
 
-                # TODO [DET-5062]: Shut down TimingBatcher as well
+            if self.sysmetrics_is_enabled:
+                debug_log(
+                    "ProfilerAgent._end_collection - sysmetrics_is_enabled "
+                    "shutting down sysmetrics collector"
+                )
+                self.sys_metric_collector_thread.send_shutdown_signal()
+                debug_log("ProfilerAgent._end_collection - sysmetriccollector shutdown signal sent")
+                self.sys_metric_collector_thread.join()
+                debug_log("ProfilerAgent._end_collection - sysmetriccollector joined")
 
-                self.sender_thread.kill()
-                self.sender_thread.join()
+            # TODO [DET-5062]: Shut down TimingBatcher as well
+            debug_log("ProfilerAgent._end_collection - shutting down sender thread")
+            self.sender_thread.send_shutdown_signal()
+            debug_log("ProfilerAgent._end_collection - sender thread shutdown signal sent")
+            self.sender_thread.join()
+            debug_log("ProfilerAgent._end_collection - sender thread joined")
 
+            debug_log("ProfilerAgent._end_collection - setting has_finished to true")
             self.has_finished = True
 
     def record_timing(self, timing: float) -> None:
-        if not self.is_active:
+        if not self.is_enabled:
             return
         # TODO [DET-5062]: Add new timing to TimingBatcher
+
+
+def create_no_op_profiler() -> ProfilerAgent:
+    """
+    Create a ProfilerAgent that is disabled. Utility function for testing, but also
+    used by test_one_batch in native, so it can't be put in the tests folder.
+    """
+    return ProfilerAgent(
+        trial_id="",
+        agent_id="",
+        master_url="",
+        profiling_is_enabled=False,
+        global_rank=0,
+        local_rank=0,
+        start_on_batch=0,
+        end_after_batch=None,
+    )
 
 
 class PreemptibleTimer(threading.Thread):
@@ -257,7 +311,8 @@ class PreemptibleTimer(threading.Thread):
     # After 300 seconds, callback_fn will be executed
 
     # If we need to clean up the timer
-    timer.kill()  # This is idempotent and will work fine if the timer has gone off
+    timer.send_shutdown_signal()  # This is idempotent and will work fine if the timer has gone off
+    timer.join()
     ```
     """
 
@@ -274,7 +329,7 @@ class PreemptibleTimer(threading.Thread):
             self.control_queue.put(StartMessage())
             self._timer_has_begun = True
 
-    def kill(self) -> None:
+    def send_shutdown_signal(self) -> None:
         self.control_queue.put(ShutdownMessage())
 
     def run(self) -> None:
@@ -288,7 +343,7 @@ class PreemptibleTimer(threading.Thread):
                 return
         except queue.Empty:
             # Time is up!
-            debug_log("CustomTimer time expired, executing callback fn")
+            debug_log("PreemptibleTimer time expired, executing callback fn")
             self.callback()
 
 
@@ -310,7 +365,7 @@ class SysMetricCollectorThread(threading.Thread):
     FLUSH_INTERVAL = 10  # How often to make API calls
     MEASUREMENT_INTERVAL = 0.1
 
-    def __init__(self, trial_id: int, agent_id: str, send_queue: queue.Queue):
+    def __init__(self, trial_id: str, agent_id: str, send_queue: queue.Queue):
 
         self.current_batch_idx = 0
         self.send_queue = send_queue
@@ -324,7 +379,7 @@ class SysMetricCollectorThread(threading.Thread):
         debug_log("SysMetricCollectorThread.activate()")
         self.control_queue.put(StartMessage())
 
-    def kill(self) -> None:
+    def send_shutdown_signal(self) -> None:
         self.control_queue.put(ShutdownMessage())
 
     def update_batch_idx(self, new_batch_idx: int) -> None:
@@ -365,10 +420,16 @@ class SysMetricCollectorThread(threading.Thread):
                 # a negative timeout will lead to an exception when retrieving from the queue
                 sleep_time = max(sleep_time, 0)
                 try:
-                    debug_log("SysMetricCollectorThread.run - waiting", sleep_time, "seconds for next collection")
+                    debug_log(
+                        "SysMetricCollectorThread.run - waiting",
+                        sleep_time,
+                        "seconds for next collection",
+                    )
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
-                        debug_log("SysMetricCollectorThread.run - received shutdown message in while loop")
+                        debug_log(
+                            "SysMetricCollectorThread.run - received shutdown message in while loop"
+                        )
                         # Drop any partial batches if we receive a shutdown
                         return
                 except queue.Empty:
@@ -436,7 +497,7 @@ class ProfilerSenderThread(threading.Thread):
         self.inbound_queue = inbound_queue
         super().__init__(daemon=True)
 
-    def kill(self) -> None:
+    def send_shutdown_signal(self) -> None:
         self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
@@ -469,7 +530,7 @@ class SysMetricBatcher:
     the API
     """
 
-    def __init__(self, trial_id: int, agent_id: str) -> None:
+    def __init__(self, trial_id: str, agent_id: str) -> None:
         self.trial_id = trial_id
         self.agent_id = agent_id
         self.clear()

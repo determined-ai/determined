@@ -6,7 +6,7 @@ import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.utils import tf_utils
 
-from determined import tensorboard, profiler
+from determined import profiler, tensorboard
 
 
 class Callback(tf.keras.callbacks.Callback):  # type: ignore
@@ -710,5 +710,5 @@ class _DeterminedProfiler(Callback):
         super().__init__()
         self.prof = prof
 
-    def on_train_batch_begin(self, batch: int, logs: Dict[str, Any] = None):
+    def on_train_batch_begin(self, batch: int, logs: Optional[Dict] = None) -> None:
         self.prof.update_batch_idx(batch)

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, ipc, pytorch, util, workload, profiler
+from determined import horovod, ipc, profiler, pytorch, util, workload
 from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
@@ -21,7 +21,9 @@ except ImportError:
 
 
 class PyTorchTrialController(det.LoopTrialController):
-    def __init__(self, trial_inst: det.Trial, prof: profiler.ProfilerAgent, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, trial_inst: det.Trial, prof: profiler.ProfilerAgent, *args: Any, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")

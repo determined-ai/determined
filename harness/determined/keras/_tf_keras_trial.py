@@ -21,7 +21,7 @@ from tensorflow.python.keras.saving.hdf5_format import (
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, util, workload, profiler
+from determined import horovod, keras, profiler, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -298,12 +298,12 @@ class TFKerasTrialController(det.LoopTrialController):
     @staticmethod
     def from_native(
         context: det.NativeContext,
+        prof: profiler.ProfilerAgent,
         env: det.EnvContext,
         workloads: workload.Stream,
         load_path: Optional[pathlib.Path],
         rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
     ) -> det.TrialController:
         check.is_instance(
             context,

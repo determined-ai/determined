@@ -33,16 +33,13 @@ class ExperimentConfig(dict):
         end_after_batch = self.get("profiling", {}).get("end_after_batch", None)
         if end_after_batch is not None:
             end_after_batch = int(end_after_batch)
-        # Pre-experiment config rework, if this field is not set by the user, it
+        # Until experiment config rework, if this field is not set by the user, it
         # will default to 0 before being sent to the harness. Once the rework lands,
         # the default will be None and this if statement can be removed.
         if end_after_batch == 0:
             end_after_batch = None
 
-        return (
-            int(self.get("profiling", {}).get("begin_on_batch", 0)),
-            end_after_batch
-        )
+        return (int(self.get("profiling", {}).get("begin_on_batch", 0)), end_after_batch)
 
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])
