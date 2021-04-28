@@ -9,14 +9,11 @@ import (
 )
 
 func (i InternalConfigV0) Native() NativeConfigV0 {
-	if i.RawNative == nil {
-		panic("You must call WithDefaults on InternalConfigV0 before .RawNative")
-	}
-	return *i.RawNative
+	return i.RawNative
 }
 
 func (i *InternalConfigV0) SetNative(val NativeConfigV0) {
-	i.RawNative = &val
+	i.RawNative = val
 }
 
 func (i InternalConfigV0) ParsedSchema() interface{} {
