@@ -285,11 +285,7 @@ func simulateOperationComplete(
 		return ops, nil
 	}
 
-	ops, err := method.validationCompleted(ctx, operation.RequestID, workload.ValidationMetrics{
-		Metrics: map[string]interface{}{
-			"error": trial.ValMetrics[opIndex],
-		},
-	})
+	ops, err := method.validationCompleted(ctx, operation.RequestID, trial.ValMetrics[opIndex])
 	if err != nil {
 		return nil, errors.Wrap(err, "validationCompleted")
 	}

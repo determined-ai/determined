@@ -66,7 +66,8 @@ DO UPDATE SET
 			return errors.Wrap(err, "failed to upsert experiment snapshot")
 		}
 
-		if _, err := tx.Exec(`
+		if trialSnapshot != nil {
+			if _, err := tx.Exec(`
 INSERT INTO trial_snapshots (experiment_id, trial_id, request_id, content, version)
 VALUES ($1, $2, $3, $4, $5)
 ON CONFLICT (trial_id)
@@ -74,8 +75,9 @@ DO UPDATE SET
   updated_at = now(),
   content = EXCLUDED.content,
   version = EXCLUDED.version`,
-			experimentID, trialID, requestID, trialSnapshot, version); err != nil {
-			return errors.Wrap(err, "failed to upsert trial snapshot")
+				experimentID, trialID, requestID, trialSnapshot, version); err != nil {
+				return errors.Wrap(err, "failed to upsert trial snapshot")
+			}
 		}
 		return nil
 	})

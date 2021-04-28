@@ -716,8 +716,12 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case reportValidation:
+		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher.Metric)
+		if err != nil {
+			return err
+		}
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}
+			return trialReportValidation{metric: m, trialSnapshot: s}
 		}); err != nil {
 			return errors.Wrap(err, "failed to report validation with snapshot")
 		}

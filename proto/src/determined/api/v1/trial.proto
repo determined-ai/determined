@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "determined/experiment/v1/experiment.proto";
+import "determined/experiment/v1/searcher.proto";
 import "determined/log/v1/log.proto";
 import "determined/trial/v1/trial.proto";
 import "determined/api/v1/pagination.proto";
@@ -282,3 +283,48 @@ message TrialPreemptionSignalResponse {
   // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }
+
+// Retrieves the current total length to train, requested by the searcher.
+message GetTrialSearcherTrainUntilRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+}
+// Response to GetTrialSearcherTrainUntilRequest
+message GetTrialSearcherTrainUntilResponse {
+  // The length to train until the trial should report a validation.
+  determined.experiment.v1.TrainingLength length = 1;
+}
+
+// Signals the searcher that the trial has completed the current
+// requested amount of training.
+message ReportTrialSearcherValidationRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "searcher_metric" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The value of validation metric used to guide hyperparameter search at
+  // completion.
+  // TODO(DET-5210): Long term this should be the signed searcher metric.
+  double searcher_metric = 2;
+}
+// Response to ReportTrialSearcherValidationRequest
+message ReportTrialSearcherValidationResponse {}
+
+// For bookkeeping, updates the progress of the trial as a percent torwards
+// the training length requested of it by the searcher.
+message ReportTrialProgressRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "progress" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // Total units completed by the trial, in terms of the unit used to configure
+  // the searcher.
+  double progress = 2;
+}
+// Response to ReportTrialProgressRequest
+message ReportTrialProgressResponse {}
