@@ -178,7 +178,7 @@ class _EstimatorReducerContext:
         list of the per-batch values of ``metric``, or it can be an instance of a
         :class:`det.estimator.MetricReducer<determined.estimator.MetricReducer>`.
 
-        The ``numpy_dtype`` must be a numpy dtype.  It is used internally to determined the output
+        The ``numpy_dtype`` must be a numpy dtype.  It is used internally to determine the output
         type of the TensorFlow ``py_func`` to report the final metric result to the Estimator API.
         The format of ``numpy_dtype`` should be anything that ``np.dtype()`` accepts.
 

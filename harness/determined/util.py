@@ -2,13 +2,13 @@ import collections
 import datetime
 import enum
 import inspect
-import logging
 import os
 import pathlib
 import random
 import shutil
 import time
 import uuid
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
 import numpy as np
@@ -218,13 +218,8 @@ T = TypeVar("T", bound=Callable[..., Any])
 
 def deprecated(msg: str) -> Callable[[T], T]:
     def make_wrapper(fn: T) -> T:
-        warned = False
-
         def wrapper(*arg: List, **kwarg: Dict) -> Any:
-            nonlocal warned
-            if not warned:
-                warned = True
-                logging.warning(msg)
+            warnings.warn(msg, FutureWarning)
             return fn(*arg, **kwarg)
 
         return cast(T, wrapper)
