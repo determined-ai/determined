@@ -1,0 +1,10 @@
+:orphan:
+
+**New Features**
+
+-  Add support for priority scheduling with preemption. Setting the
+   ``defaultScheduler`` field in ``values.yaml`` to ``preemption``
+   activates the scheduler, which is able to preempt experiments
+   when higher priority ones are submitted. See 
+   :ref:`Priority Scheduling with Preemption on Kubernetes
+   <priority-scheduling-on-kubernetes>` for more information.
