@@ -17,7 +17,6 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
   let tooltipEl: HTMLDivElement|null = null;
 
   const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
-    let hasValue = false;
     let html = '';
 
     let header: ChartTooltip = null;
@@ -43,8 +42,6 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
 
-      if (valueRaw) hasValue = true;
-
       const cssClass = valueRaw ? css.valueY : css.valueYEmpty;
       html += `<div class="${cssClass}">`
         + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
@@ -53,7 +50,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
         + '</div>';
     });
 
-    return (hasValue ? html : '');
+    return html;
   };
 
   const _getTooltipLeftPx = (uPlot: uPlot, idx: number): number => {
@@ -115,25 +112,29 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
         barEl = document.createElement('div');
         barEl.className = css.bar;
         uPlot.root.querySelector('.u-over')?.appendChild(barEl);
-
       },
       setCursor: (uPlot: uPlot) => {
         const { left, idx, top } = uPlot.cursor;
 
-        if (
-          (idx == null && displayedIdx)
-          || !left || left < 0
-          || !top || top < 0
-        ) {
-          hide();
+        if (!left || left < 0 || !top || top < 0 || idx == null) {
+          if (displayedIdx) hide();
           return;
         }
 
-        if (idx != null && idx !== displayedIdx) {
-          showIdx(uPlot, idx);
+        if (idx !== displayedIdx) {
+          const hasXValue = !!uPlot.series.find((serie, serieId) => (
+            serie.scale !== 'x' && serie.show && !!uPlot.data[serieId][idx]
+          ));
+          if (hasXValue) {
+            showIdx(uPlot, idx);
+          } else {
+            hide();
+          }
         }
 
-        _updateTooltipVerticalPosition(uPlot, top);
+        if (displayedIdx) {
+          _updateTooltipVerticalPosition(uPlot, top);
+        }
       },
     },
   };
