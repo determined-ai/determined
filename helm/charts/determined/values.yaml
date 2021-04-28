@@ -159,6 +159,6 @@ telemetry:
       # certificate: <certificate contents>
 
 ## Configure the default Determined scheduler 
-## Currently supports the coscheduler for gang scheduling. If unspecified, uses the Kubernetes
-## default scheduler. The coscheduler does not support autoscaling nodes.
-# defaultScheduler: coscheduler
+## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
+## scheduling with preemption
+# defaultScheduler: preemption
