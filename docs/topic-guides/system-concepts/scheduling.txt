@@ -119,11 +119,11 @@ enabled:
    priority 1 then starts running. Once that experiment is complete,
    distributed training experiment with priority 2 runs.
 
-.. _scheduling-on-kubernetes:
+.. _gang-scheduling-on-kubernetes:
 
-**************************
- Scheduling on Kubernetes
-**************************
+*******************************
+ Gang Scheduling on Kubernetes
+*******************************
 
 By default, the Kubernetes scheduler does not perform gang scheduling or
 support preemption of pods. While it does take pod priority into
@@ -140,8 +140,8 @@ experiment and some GPUs to the other. Because neither experiment will
 receive the resources it needs to begin executing, the system will wait
 indefinitely.
 
-Determined addresses these problems through the use of the `lightweight
-coscheduling plugin
+One way Determined addresses these problems is through the use of the
+`lightweight coscheduling plugin
 <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
 which extends the Kubernetes scheduler to support priority-based gang
 scheduling. To implement gang scheduling, the coscheduling plugin will
@@ -161,12 +161,10 @@ gang scheduling. Also, while the plugin allocates resources to jobs
 based on their priority, it does not support preemption. For example, if
 the cluster is full of low priority jobs and a new high priority job is
 submitted, the high priority job will not be scheduled until one of the
-low priority jobs finishes. Additionally, there isn't an implementation
-of ``max_slots`` or ``max_concurrent_trials`` that would limit the
-resources of an experiment, i.e. one for hyperparameter search. Lastly,
-Determined's capability to automatically set pod labels is restricted to
-GPU experiments; Determined does not currently set labels for CPU
-experiments or user commands.
+low priority jobs finishes. Lastly, Determined's capability to
+automatically set pod labels is restricted to GPU experiments;
+Determined does not currently set labels for CPU experiments or user
+commands.
 
 To enable gang scheduling with commands or CPU experiments, enable the
 coscheduler in ``values.yaml`` and modify the experiment config to
@@ -185,3 +183,44 @@ contain the following:
 
 You can also use ``schedulerName: default-scheduler`` to use the default
 Kubernetes scheduler.
+
+.. _priority-scheduling-on-kubernetes:
+
+***************************************************
+ Priority Scheduling with Preemption on Kubernetes
+***************************************************
+
+Determined also makes available a priority scheduler with preemption
+that extends the Kubernetes scheduler to support preemption. This plugin
+will preempt existing pods if higher priority pods are submitted. This
+plugin is also in beta and is not enabled by default. Similar to the
+coscheduling plugin, it is enabled by setting the ``defaultScheduler``
+field to ``preemption``. Autoscaling is not supported and Determined can
+only automatically set labels for GPU experiments.
+
+If using a cluster with tainted nodes or labels, users must specify the
+tolerations or node selectors in the experiment config:
+
+.. code:: yaml
+
+   environment:
+      pod_spec:
+         apiVersion: v1
+         kind: Pod
+         spec:
+            priorityClassName: determined-medium-priority
+            nodeSelector:
+               key: value
+            tolerations:
+            -  key: "key1"
+               operator: "Equal"
+               value: "value"
+               effect: "NoSchedule"
+
+We recommend using both tolerations and node selectors to better
+constrain where your experiments can run, especially on clusters that
+contain multiple GPU types. Lastly, Determined provides low, medium, and
+high priority classes by default, named ``determined-low-priority``,
+``determined-medium-priority``, and ``determined-high-priority``. Users
+may make their own priority classes for finer grained control if they
+wish.

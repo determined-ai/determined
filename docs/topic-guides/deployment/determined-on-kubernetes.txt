@@ -50,9 +50,11 @@ starts. Determined includes built-in support for the `lightweight
 coscheduling plugin
 <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
 which extends the default Kubernetes scheduler to support gang
-scheduling. The coscheduling plugin is not enabled by default. For more
-details and instructions on how to enable the coscheduling plugin, refer
-to :ref:`scheduling-on-kubernetes`.
+scheduling. Determined also includes support for priority-based
+preemption scheduling. Neither are enabled by default. For more details
+and instructions on how to enable the coscheduling plugin, refer to
+:ref:`gang-scheduling-on-kubernetes` and
+:ref:`priority-scheduling-on-kubernetes`.
 
 Dynamic Agents
 ==============

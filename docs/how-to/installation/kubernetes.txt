@@ -286,6 +286,16 @@ tasks.
 
    defaultScheduler: coscheduler
 
+Determined also includes support for priority based scheduling with
+preemption. This feature allows experiments to be preempted if higher
+priority ones are submitted. This feature is also in beta and is not
+enabled by default. To activate priority-based preemption scheduling,
+set ``defaultScheduler`` to ``preemption``.
+
+.. code:: yaml
+
+   defaultScheduler: preemption
+
 ***********************
  Installing Determined
 ***********************
