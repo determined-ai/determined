@@ -5,6 +5,7 @@
    tutorials/index
    how-to/index
    topic-guides/index
+   experiment-config
    reference/index
    faq
    examples
