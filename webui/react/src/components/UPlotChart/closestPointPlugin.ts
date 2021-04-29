@@ -14,19 +14,26 @@ interface Point {
 
 interface Props {
   distInPx?: number, // max cursor distance from data point to focus it (in pixel)
+  getPointTooltipHTML?: (xVal: number, yVal: number, point: Point) => string,
   onPointClick?: (e: MouseEvent, point: Point) => void,
   onPointFocus?: (point: Point|undefined) => void,
   pointSizeInPx?: number,
   yScale: string, // y scale to use
 }
 
-export const closestPointPlugin = (
-  { distInPx = 30, onPointClick, onPointFocus, pointSizeInPx = 7, yScale }: Props,
-): Plugin => {
+export const closestPointPlugin = ({
+  distInPx = 30,
+  getPointTooltipHTML,
+  onPointClick,
+  onPointFocus,
+  pointSizeInPx = 7,
+  yScale,
+}: Props): Plugin => {
   let distValX: number; // distInPx transformed to X value
   let distValY: number; // distInPx transformed to Y value
   let focusedPoint: Point|undefined; // focused data point
   let pointEl: HTMLDivElement;
+  let tooltipEl: HTMLDivElement;
 
   const findClosestPoint =
     (uPlot: uPlot, cursorLeft: number, cursorTop: number): Point|undefined => {
@@ -75,19 +82,44 @@ export const closestPointPlugin = (
     }
 
     const series = point && uPlot.series[point.seriesIdx];
+    const xVal = point && uPlot.data[0][point.idx];
     const yVal = point && uPlot.data[point.seriesIdx][point.idx];
 
+    const xPos = point && uPlot.valToPos(uPlot.data[0][point.idx], 'x');
+    const yPos = yVal && uPlot.valToPos(yVal, yScale);
+
+    if (!point || !series || xVal == null || yVal == null || xPos == null || yPos == null) {
+      pointEl.style.display = 'none';
+      tooltipEl.style.display = 'none';
+      return;
+    }
+
     // point
-    if (pointSizeInPx > 0 && point && series && yVal != null) {
+    if (pointSizeInPx > 0) {
       pointEl.style.backgroundColor = typeof series.stroke === 'function'
         ? series.stroke(uPlot, point.seriesIdx) as string : 'rgba(0, 155, 222, 1)';
       pointEl.style.display = 'block';
       pointEl.style.height = pointSizeInPx + 'px';
-      pointEl.style.left = uPlot.valToPos(uPlot.data[0][point.idx], 'x') + 'px';
-      pointEl.style.top = uPlot.valToPos(yVal, yScale) + 'px';
+      pointEl.style.left = xPos + 'px';
+      pointEl.style.top = yPos + 'px';
       pointEl.style.width = pointSizeInPx + 'px';
+    }
+
+    // tooltip
+    const tooltipHtml = typeof getPointTooltipHTML === 'function'
+      && getPointTooltipHTML(xVal, yVal, point);
+    if (tooltipHtml) {
+      const classes = [ css.tooltip ];
+      if (xPos > uPlot.bbox.width / 2 / window.devicePixelRatio) classes.push(css.left);
+      if (yPos > uPlot.bbox.height / 2 / window.devicePixelRatio) classes.push(css.top);
+
+      tooltipEl.className = classes.join(' ');
+      tooltipEl.innerHTML = `<div class="${css.box}">${tooltipHtml}</div>`;
+      tooltipEl.style.display = 'block';
+      tooltipEl.style.left = xPos + 'px';
+      tooltipEl.style.top = yPos + 'px';
     } else {
-      pointEl.style.display = 'none';
+      tooltipEl.style.display = 'none';
     }
   };
 
@@ -110,94 +142,6 @@ export const closestPointPlugin = (
     }
   });
 
-  // let tooltipEl: HTMLDivElement|null = null;
-  //
-  // const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
-  //   let html = '';
-  //
-  //   let header: ChartTooltip = null;
-  //   if (typeof getXTooltipHeader === 'function') {
-  //     header = getXTooltipHeader(idx);
-  //   }
-  //   let yLabels: ChartTooltip[] = [];
-  //   if (typeof getXTooltipYLabels === 'function') {
-  //     yLabels = getXTooltipYLabels(idx);
-  //   }
-  //
-  //   const xSerie = uPlot.series[0];
-  //   const xValue = (typeof xSerie.value === 'function' ?
-  //     xSerie.value(uPlot, uPlot.data[0][idx], 0, idx) : uPlot.data[0][idx]);
-  //   html += `<div class="${css.valueX}">`
-  //     + (header ? header + '<br />' : '')
-  //     + `${xSerie.label}: ${xValue}`
-  //     + '</div>';
-  //
-  //   uPlot.series.forEach((serie, i) => {
-  //     if (serie.scale === 'x' || !serie.show) return;
-  //
-  //     const label = yLabels[i - 1] || null;
-  //     const valueRaw = uPlot.data[i][idx];
-  //
-  //     const cssClass = valueRaw ? css.valueY : css.valueYEmpty;
-  //     html += `<div class="${cssClass}">`
-  //       + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
-  //       + (label ? label + '<br />' : '')
-  //       + `${serie.label}: ${valueRaw || 'N/A'}`
-  //       + '</div>';
-  //   });
-  //
-  //   return html;
-  // };
-  //
-  // const _getTooltipLeftPx = (uPlot: uPlot, idx: number): number => {
-  //   const idxLeft = uPlot.valToPos(uPlot.data[0][idx], 'x');
-  //   if (!tooltipEl) return idxLeft;
-  //
-  //   const chartWidth = uPlot.root.querySelector('.u-over')?.getBoundingClientRect().width;
-  //   const tooltipWidth = tooltipEl.getBoundingClientRect().width;
-  //
-  //   // right
-  //   if (chartWidth && idxLeft + tooltipWidth >= chartWidth) {
-  //     return (idxLeft - tooltipWidth);
-  //   }
-  //
-  //   // left
-  //   return idxLeft;
-  // };
-  //
-  // const _updateTooltipVerticalPosition = (uPlot: uPlot, cursorTop: number) => {
-  //   if (!tooltipEl) return;
-  //
-  //   const chartHeight = uPlot.root.querySelector('.u-over')?.getBoundingClientRect().height;
-  //
-  //   const vPos = (chartHeight && cursorTop > (chartHeight/2)) ? 'top' : 'bottom';
-  //
-  //   tooltipEl.style.bottom = vPos === 'bottom' ? '0px' : 'auto';
-  //   tooltipEl.style.top = vPos === 'top' ? '0px' : 'auto';
-  // };
-  //
-  // const showIdx = (uPlot: uPlot, idx: number) => {
-  //   if (!tooltipEl || !barEl) return;
-  //   displayedIdx = idx;
-  //
-  //   const idxLeft = uPlot.valToPos(uPlot.data[0][idx], 'x');
-  //
-  //   barEl.style.display = 'block';
-  //   barEl.style.left = idxLeft + 'px';
-  //
-  //   tooltipEl.innerHTML = _buildTooltipHtml(uPlot, idx);
-  //   tooltipEl.style.display = 'block';
-  //   tooltipEl.style.left = _getTooltipLeftPx(uPlot, idx) + 'px';
-  // };
-  //
-  // const hide = () => {
-  //   if (!tooltipEl || !barEl) return;
-  //   displayedIdx = null;
-  //
-  //   barEl.style.display = 'none';
-  //   tooltipEl.style.display = 'none';
-  // };
-
   return {
     hooks: {
       ready: (uPlot: uPlot) => {
@@ -208,6 +152,10 @@ export const closestPointPlugin = (
         pointEl = document.createElement('div');
         pointEl.className = css.point;
         over.appendChild(pointEl);
+
+        // point div
+        tooltipEl = document.createElement('div');
+        over.appendChild(tooltipEl);
 
         // click handler
         if (typeof onPointClick === 'function') {

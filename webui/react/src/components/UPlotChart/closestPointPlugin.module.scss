@@ -6,42 +6,29 @@ $tooltip-offset: 0.5rem;
   position: absolute;
   transform: translate(-50%, -50%);
 }
+.tooltip {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  z-index: 100;
 
-//.tooltip {
-//  display: none;
-//  pointer-events: none;
-//  position: absolute;
-//  z-index: 100;
-//
-//  .box {
-//    background-color: var(--theme-colors-monochrome-17);
-//    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
-//    border-radius: var(--theme-sizes-border-radius);
-//    box-shadow: var(--theme-shadow);
-//    left: $tooltip-offset;
-//    padding: var(--theme-sizes-layout-medium);
-//    position: absolute;
-//    top: $tooltip-offset;
-//  }
-//  .row {
-//    display: table-row;
-//  }
-//  .row > * {
-//    display: table-cell;
-//  }
-//  .row > *:last-child {
-//    padding-left: var(--theme-sizes-layout-medium);
-//  }
-//}
-//.tooltip.top {
-//  .box {
-//    bottom: $tooltip-offset;
-//    top: auto;
-//  }
-//}
-//.tooltip.left {
-//  .box {
-//    left: auto;
-//    right: $tooltip-offset;
-//  }
-//}
+  .box {
+    background-color: var(--theme-colors-monochrome-17);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    border-radius: var(--theme-sizes-border-radius);
+    box-shadow: var(--theme-shadow);
+    left: $tooltip-offset;
+    padding: var(--theme-sizes-layout-medium);
+    position: absolute;
+    top: $tooltip-offset;
+    white-space: nowrap;
+  }
+}
+.tooltip.top .box {
+  bottom: $tooltip-offset;
+  top: auto;
+}
+.tooltip.left .box {
+  left: auto;
+  right: $tooltip-offset;
+}

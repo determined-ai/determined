@@ -32,26 +32,6 @@ const LearningCurveChart: React.FC<Props> = ({
 }: Props) => {
   const chart = useRef<uPlot>();
 
-  // const handleClick = useCallback((event: React.MouseEvent) => {
-  //   if (!chart || !mouseDownPoint) return;
-  //
-  //   /*
-  //    * Make sure the mouse down and mouse up distance is fairly close
-  //    * to be considered a click instead of a drag movement for chart zoom.
-  //    */
-  //   const dist = distance(event.clientX, event.clientY, mouseDownPoint?.x, mouseDownPoint?.y);
-  //   if (dist < MOUSE_CLICK_THRESHOLD) {
-  //     if (focusedPoint && focusedPoint.seriesIdx != null && onTrialClick) {
-  //       onTrialClick(event, trialIds[focusedPoint.seriesIdx]);
-  //     }
-  //     setShowZoomOutTip(false);
-  //   } else {
-  //     setShowZoomOutTip(true);
-  //   }
-  //
-  //   setMouseDownPoint(undefined);
-  // }, [ chart, focusedPoint, mouseDownPoint, onTrialClick, trialIds ]);
-  //
   const chartData: AlignedData = useMemo(() => {
     return [ xValues, ...data ];
   }, [ data, xValues ]);
@@ -75,6 +55,10 @@ const LearningCurveChart: React.FC<Props> = ({
       height: CHART_HEIGHT,
       legend: { show: false },
       plugins: [ closestPointPlugin({
+        getPointTooltipHTML: (x, y, point) => {
+          const trialId = trialIds[point.seriesIdx - 1];
+          return `Trial ID: ${trialId}<br />Batches: ${x}<br />Metric: ${y}`;
+        },
         onPointClick: (e, point) => {
           if (typeof onTrialClick !== 'function') return;
           onTrialClick(e, trialIds[point.seriesIdx - 1]);
