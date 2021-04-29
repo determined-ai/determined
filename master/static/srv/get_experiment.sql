@@ -1,5 +1,7 @@
 SELECT
     e.id AS id,
+    e.name AS name,
+    e.note AS note,
     e.config->>'description' AS description,
     e.config->'labels' AS labels,
     e.config->'resources'->>'resource_pool' as resource_pool,

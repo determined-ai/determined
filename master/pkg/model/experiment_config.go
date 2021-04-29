@@ -23,6 +23,9 @@ const (
 
 // ExperimentConfig is the defaulted configuration.
 type ExperimentConfig struct {
+	// FIXME should these to be added to v1 config? (or maybe just Name)
+	Note                     string                    `json:"note"`
+	Name                     string                    `json:"name"`
 	Description              string                    `json:"description"`
 	Labels                   Labels                    `json:"labels,omitempty"`
 	Data                     map[string]interface{}    `json:"data,omitempty"`
