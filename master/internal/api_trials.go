@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/protoutil"
@@ -538,34 +540,73 @@ func (a *apiServer) TrialPreemptionSignal(
 	req *apiv1.TrialPreemptionSignalRequest,
 	resp apiv1.Determined_TrialPreemptionSignalServer,
 ) error {
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	switch {
-	case err == db.ErrNotFound:
-		return trialNotFound
-	case err != nil:
+	trial, err := a.trialActorFromID(int(req.TrialId))
+	if err != nil {
 		return err
 	}
-	trialAddr := actor.Addr("experiments", eID, rID)
 
-	signal := make(chan struct{}, 1)
-	a.m.system.TellAt(trialAddr, trialWatchPreemption{signal: signal})
-	unwatch := func() { a.m.system.TellAt(trialAddr, trialUnwatchPreemption{signal: signal}) }
+	id := uuid.New()
+	ret, err := a.askAtDefaultSystem(trial, trialWatchPreemption{id: id})
+	if err != nil {
+		return err
+	}
+	signal, ok := ret.(<-chan bool)
+	if !ok {
+		return unexpectedMessageError(trial, ret)
+	}
+	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
 
 	for {
 		select {
-		case _, ok := <-signal:
-			if !ok {
-				// Do not call unwatch() when the channel is closed.
+		case preempt, ok := <-signal:
+			switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{
+				Preempt: preempt || !ok,
+			}); {
+			case err != nil:
+				return err
+			case preempt, !ok:
 				return nil
 			}
-			if err := resp.Send(&apiv1.TrialPreemptionSignalResponse{}); err != nil {
-				unwatch()
-				return err
-			}
 		case <-resp.Context().Done():
-			unwatch()
 			return nil
 		}
+	}
+}
+
+func (a *apiServer) askAtDefaultSystem(
+	addr actor.Address, msg interface{},
+) (interface{}, error) {
+	switch resp := a.m.system.AskAt(addr, msg); {
+	case resp.Source() == nil, resp.Empty(), resp.Get() == nil:
+		return nil, status.Errorf(
+			codes.NotFound,
+			"actor %s could not be found or the actor did not respond", addr,
+		)
+	case resp.Error() != nil:
+		return nil, status.Errorf(
+			codes.Internal,
+			"actor %s returned error resp %s", addr, resp.Error(),
+		)
+	default:
+		return resp.Get(), nil
+	}
+}
+
+func unexpectedMessageError(addr actor.Address, resp interface{}) error {
+	return status.Errorf(
+		codes.Internal,
+		"actor %s returned unexpected message (%T): %v", addr, resp, resp,
+	)
+}
+
+func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
+	switch eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID); {
+	case errors.Is(err, db.ErrNotFound):
+		return actor.Address{}, trialNotFound
+	case err != nil:
+		return actor.Address{}, err
+	default:
+		return actor.Addr("experiments", eID, rID), nil
 	}
 }
 

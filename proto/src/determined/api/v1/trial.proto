@@ -280,6 +280,9 @@ message TrialPreemptionSignalRequest {
   // The requested trial's id.
   int32 trial_id = 1;
 }
-// Response to TrialPreemptionSignalRequest. Receipt indicates the
-// trial has been preempted.
-message TrialPreemptionSignalResponse {}
+// Response to TrialPreemptionSignalRequest.
+message TrialPreemptionSignalResponse {
+  // True if the response is signaling preempt, otherwise just a synchronization
+  // marker.
+  bool preempt = 1;
+}
