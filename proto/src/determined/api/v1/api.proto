@@ -520,7 +520,7 @@ service Determined {
       tags: "Internal"
     };
   }
-  // Signals the searcher that the trial has completed the current
+  // Reports to the searcher that the trial has completed the current
   // requested amount of training with the given searcher validation
   // metric.
   rpc ReportTrialSearcherValidation(ReportTrialSearcherValidationRequest)
@@ -532,12 +532,24 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Reports to the searcher that the trial has completed the current
+  // requested amount of training with the given searcher validation
+  // metric.
+  rpc ReportTrialSearcherEarlyExit(ReportTrialSearcherEarlyExitRequest)
+      returns (ReportTrialSearcherEarlyExitResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/searcher/early_exit"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // For bookkeeping, updates the progress towards to current requested searcher
   // training length.
   rpc ReportTrialProgress(ReportTrialProgressRequest)
       returns (ReportTrialProgressResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/searcher/complete_training_length"
+      post: "/api/v1/trials/{trial_id}/searcher/report_progress"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

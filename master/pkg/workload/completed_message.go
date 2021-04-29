@@ -2,7 +2,10 @@ package workload
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -82,3 +85,17 @@ const (
 	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
 	InvalidHP ExitedReason = "INVALID_HP"
 )
+
+// ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
+func ExitedReasonFromProto(r trialv1.ExitedReason) ExitedReason {
+	switch r {
+	case trialv1.ExitedReason_EXITED_REASON_UNSPECIFIED:
+		return Errored
+	case trialv1.ExitedReason_EXITED_REASON_INVALID_HP:
+		return InvalidHP
+	case trialv1.ExitedReason_EXITED_REASON_USER_REQUESTED_STOP:
+		return UserCanceled
+	default:
+		panic(fmt.Errorf("unexpected exited reason: %v", r))
+	}
+}

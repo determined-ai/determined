@@ -57,7 +57,6 @@ type (
 	trialClosed struct {
 		requestID model.RequestID
 	}
-	// TODO(brad): This message is redundant.
 	getTrial       struct{ trialID int }
 	killExperiment struct{}
 )

@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -597,10 +597,7 @@ func (a *apiServer) GetTrialSearcherTrainUntil(
 		return nil, nil
 	default:
 		return &apiv1.GetTrialSearcherTrainUntilResponse{
-			Length: &experimentv1.TrainingLength{
-				Units:  tResp.length.Unit.ToProto(),
-				Length: int32(tResp.length.Units),
-			},
+			Length: tResp.length.ToProto(),
 		}, nil
 	}
 }
@@ -626,6 +623,26 @@ func (a *apiServer) ReportTrialSearcherValidation(
 		return nil, err
 	}
 	return &apiv1.ReportTrialSearcherValidationResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialSearcherEarlyExit(
+	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
+) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
+	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(DET-5210): Ditto comment in apiServer.ReportTrialSearcherValidation.
+	if _, err = a.askAtDefaultSystem(exp, trialReportEarlyExit{
+		reason: workload.ExitedReasonFromProto(req.ExitedReason),
+		trialSnapshot: trialSnapshot{
+			trialID: int(req.TrialId),
+		},
+	}); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialSearcherEarlyExitResponse{}, nil
 }
 
 func (a *apiServer) ReportTrialProgress(
