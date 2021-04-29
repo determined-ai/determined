@@ -1,10 +1,3 @@
-// credits: https://stackoverflow.com/a/55533058
-export const sumArrays = (...arrays: number[][]): number[] => {
-  const n = arrays.reduce((max, xs) => Math.max(max, xs?.length), 0);
-  const result = Array.from({ length: n });
-  return result.map((_, i) => arrays.map(xs => xs[i] || 0).reduce((sum, x) => sum + x, 0));
-};
-
 // credits: https://gist.github.com/Izhaki/834a9d37d1ad34c6179b6a16e670b526
 export const findInsertionIndex = (
   sortedArray: number[],
@@ -42,4 +35,11 @@ export const findInsertionIndex = (
   }
 
   return iMiddle;
+};
+
+// credits: https://stackoverflow.com/a/55533058
+export const sumArrays = (...arrays: number[][]): number[] => {
+  const n = arrays.reduce((max, xs) => Math.max(max, xs?.length), 0);
+  const result = Array.from({ length: n });
+  return result.map((_, i) => arrays.map(xs => xs[i] || 0).reduce((sum, x) => sum + x, 0));
 };
