@@ -1,24 +1,22 @@
 import { findInsertionIndex, sumArrays } from './array';
 
+const FIBO = [ 0, 1, 1, 2, 3, 5, 8 ];
+
 describe('findInsertionIndex', () => {
   it('empty', () => {
-    expect(findInsertionIndex([], 1))
-      .toStrictEqual(0);
+    expect(findInsertionIndex([], 1)) .toStrictEqual(0);
   });
 
-  it('unique', () => {
-    expect(findInsertionIndex([ 1, 1, 2, 3, 5, 8 ], 13))
-      .toStrictEqual(6);
+  it('beyond max', () => {
+    expect(findInsertionIndex(FIBO, 13)).toStrictEqual(7);
   });
 
-  it('simple', () => {
-    expect(findInsertionIndex([ 1, 1, 2, 3, 5, 8 ], 3))
-      .toStrictEqual(3);
+  it('existing value', () => {
+    expect(findInsertionIndex(FIBO, 3)).toStrictEqual(4);
   });
 
-  it('negative values', () => {
-    expect(findInsertionIndex([ 1, 1, 2, 3, 5, 8 ], 4))
-      .toStrictEqual(4);
+  it('unexisting value', () => {
+    expect(findInsertionIndex(FIBO, 4)).toStrictEqual(5);
   });
 });
 

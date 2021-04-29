@@ -14,12 +14,14 @@ interface Point {
 
 interface Props {
   distInPx?: number, // max cursor distance from data point to focus it (in pixel)
+  onPointClick?: (e: MouseEvent, point: Point) => void,
   onPointFocus?: (point: Point|undefined) => void,
+  pointSizeInPx?: number,
   yScale: string, // y scale to use
 }
 
 export const closestPointPlugin = (
-  { distInPx = 30, onPointFocus, yScale }: Props,
+  { distInPx = 30, onPointClick, onPointFocus, pointSizeInPx = 7, yScale }: Props,
 ): Plugin => {
   let distValX: number; // distInPx transformed to X value
   let distValY: number; // distInPx transformed to Y value
@@ -76,13 +78,14 @@ export const closestPointPlugin = (
     const yVal = point && uPlot.data[point.seriesIdx][point.idx];
 
     // point
-    if (point && series && yVal != null) {
-
+    if (pointSizeInPx > 0 && point && series && yVal != null) {
       pointEl.style.backgroundColor = typeof series.stroke === 'function'
         ? series.stroke(uPlot, point.seriesIdx) as string : 'rgba(0, 155, 222, 1)';
       pointEl.style.display = 'block';
+      pointEl.style.height = pointSizeInPx + 'px';
       pointEl.style.left = uPlot.valToPos(uPlot.data[0][point.idx], 'x') + 'px';
       pointEl.style.top = uPlot.valToPos(yVal, yScale) + 'px';
+      pointEl.style.width = pointSizeInPx + 'px';
     } else {
       pointEl.style.display = 'none';
     }
@@ -107,7 +110,6 @@ export const closestPointPlugin = (
     }
   });
 
-  // let displayedIdx: number|null = null;
   // let tooltipEl: HTMLDivElement|null = null;
   //
   // const _buildTooltipHtml = (uPlot: uPlot, idx: number): string => {
@@ -199,13 +201,32 @@ export const closestPointPlugin = (
   return {
     hooks: {
       ready: (uPlot: uPlot) => {
+        const over = uPlot.root.querySelector('.u-over');
+        if (!over) return;
+
+        // point div
         pointEl = document.createElement('div');
         pointEl.className = css.point;
-        uPlot.root.querySelector('.u-over')?.appendChild(pointEl);
+        over.appendChild(pointEl);
 
-        // barEl = document.createElement('div');
-        // barEl.className = css.bar;
-        // uPlot.root.querySelector('.u-over')?.appendChild(barEl);
+        // click handler
+        if (typeof onPointClick === 'function') {
+          let mousedownX: number;
+          let mousedownY: number;
+          over.addEventListener('mousedown', e => {
+            mousedownX = (e as MouseEvent).clientX;
+            mousedownY = (e as MouseEvent).clientY;
+          });
+          over.addEventListener('mouseup', e => {
+            if (
+              (e as MouseEvent).clientX !== mousedownX
+              || (e as MouseEvent).clientY !== mousedownY
+              || !focusedPoint
+            ) return;
+
+            onPointClick(e as MouseEvent, focusedPoint);
+          });
+        }
       },
       setCursor: (uPlot: uPlot) => handleCursorMove(uPlot),
       setScale: (uPlot: uPlot) => {

@@ -10,7 +10,7 @@ import { metricNameToStr } from 'utils/string';
 interface Props {
   data: (number | null)[][];
   focusedTrialId?: number;
-  onTrialClick?: (event: React.MouseEvent, trialId: number) => void;
+  onTrialClick?: (event: MouseEvent, trialId: number) => void;
   onTrialFocus?: (trialId: number | null) => void;
   selectedMetric: MetricName;
   trialIds: number[];
@@ -75,6 +75,10 @@ const LearningCurveChart: React.FC<Props> = ({
       height: CHART_HEIGHT,
       legend: { show: false },
       plugins: [ closestPointPlugin({
+        onPointClick: (e, point) => {
+          if (typeof onTrialClick !== 'function') return;
+          onTrialClick(e, trialIds[point.seriesIdx - 1]);
+        },
         onPointFocus: (point) => {
           if (typeof onTrialFocus !== 'function') return;
           onTrialFocus(point ? trialIds[point.seriesIdx - 1] : null);
@@ -93,7 +97,7 @@ const LearningCurveChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ onTrialFocus, selectedMetric, trialIds ]);
+  }, [ onTrialClick, onTrialFocus, selectedMetric, trialIds ]);
 
   /*
    * Focus on a trial series if provided.

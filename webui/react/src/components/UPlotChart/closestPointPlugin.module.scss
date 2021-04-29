@@ -1,13 +1,10 @@
-$point-size: 0.7rem;
 $tooltip-offset: 0.5rem;
 
 .point {
-  border-radius: $point-size / 2;
+  border-radius: 100%;
   display: none;
-  height: $point-size;
   position: absolute;
   transform: translate(-50%, -50%);
-  width: $point-size;
 }
 
 //.tooltip {

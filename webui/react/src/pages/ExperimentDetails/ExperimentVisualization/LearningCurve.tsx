@@ -5,7 +5,7 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { handlePath, paths } from 'routes/utils';
+import { isShiftClick, openBlank, paths, routeAll } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -52,8 +52,10 @@ const LearningCurve: React.FC<Props> = ({
     }, {} as Record<string, ExperimentHyperParam>);
   }, [ experiment.config.hyperparameters, fullHParams ]);
 
-  const handleTrialClick = useCallback((event: React.MouseEvent, trialId: number) => {
-    handlePath(event, { path: paths.trialDetails(trialId, experiment.id) });
+  const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
+    const href = paths.trialDetails(trialId, experiment.id);
+    if (isShiftClick(event)) openBlank(href);
+    else routeAll(href);
   }, [ experiment.id ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
