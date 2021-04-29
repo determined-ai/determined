@@ -211,12 +211,12 @@ Can I use TensorFlow 2 with Determined?
 Yes; Determined supports both TensorFlow 1 and 2. The version of
 TensorFlow that is used for a particular experiment is controlled by the
 container image that has been configured for that experiment. Determined
-provides prebuilt Docker images that include TensorFlow 1.15, 2.2, and
-2.4, respectively:
+provides prebuilt Docker images that include TensorFlow 1.15, and 2.4,
+respectively:
 
--  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0``
+-  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.12.0``
    (default)
--  ``determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0``
+-  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0``
 
 To change the container image used for an experiment, specify
 :ref:`environment.image <exp-environment-image>` in the experiment

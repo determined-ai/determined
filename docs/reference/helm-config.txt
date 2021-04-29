@@ -204,12 +204,12 @@ Helm Chart </helm/determined-0.5.0.tgz>`.
    -  ``cpuImage``: Sets the default docker image for all non-gpu tasks.
       If a docker image is specified in the :ref:`experiment config
       <exp-environment-image>` this default is overriden. Defaults to:
-      ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.11.0``.
+      ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.12.0``.
 
    -  ``gpuImage``: Sets the default docker image for all gpu tasks. If
       a docker image is specified in the :ref:`experiment config
       <exp-environment-image>` this default is overriden. Defaults to:
-      ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0``.
+      ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.12.0``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise
    edition.

@@ -68,7 +68,7 @@ data with a bind-mount.
 .. code:: yaml
 
    environment:
-     image: determinedai/environments:cuda-10.2-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0
+     image: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0
    bind_mounts:
      - host_path: /my/agent/path
        container_path: /my/container/path
