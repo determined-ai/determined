@@ -9,14 +9,11 @@ import (
 )
 
 func (k KerberosConfigV0) ConfigFile() string {
-	if k.RawConfigFile == nil {
-		panic("You must call WithDefaults on KerberosConfigV0 before .RawConfigFile")
-	}
-	return *k.RawConfigFile
+	return k.RawConfigFile
 }
 
 func (k *KerberosConfigV0) SetConfigFile(val string) {
-	k.RawConfigFile = &val
+	k.RawConfigFile = val
 }
 
 func (k KerberosConfigV0) ParsedSchema() interface{} {
