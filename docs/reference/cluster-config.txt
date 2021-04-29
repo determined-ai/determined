@@ -350,7 +350,7 @@ The master supports the following configuration settings:
                Zero-slot tasks (e.g., CPU-only notebooks, tensorboards)
                are prioritized separately from tasks requiring slots
                (e.g., experiments running on GPUs). Task priority can be
-               assigned using the the ``resources.priority`` field. If a
+               assigned using the ``resources.priority`` field. If a
                task does not specify a priority it is assigned the
                ``default_priority``.
 
@@ -451,7 +451,7 @@ The master supports the following configuration settings:
             priority task is pending. Zero-slot tasks (e.g., CPU-only
             notebooks, tensorboards) are prioritized separately from
             tasks requiring slots (e.g., experiments running on GPUs).
-            Task priority can be assigned using the the
+            Task priority can be assigned using the
             ``resources.priority`` field. If a task does not specify a
             priority it is assigned the ``default_priority``.
 
