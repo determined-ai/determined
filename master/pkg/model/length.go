@@ -103,6 +103,14 @@ func (l *Length) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// ToProto converts a model.Length to its protobuf representation.
+func (l Length) ToProto() *experimentv1.TrainingLength {
+	return &experimentv1.TrainingLength{
+		Units:  l.Unit.ToProto(),
+		Length: int32(l.Units),
+	}
+}
+
 // NewLength returns a new length with the specified unit and length.
 func NewLength(unit Unit, units int) Length {
 	return Length{Unit: unit, Units: units}
