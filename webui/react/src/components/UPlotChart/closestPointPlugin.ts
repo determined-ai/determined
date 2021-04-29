@@ -1,10 +1,11 @@
-import uPlot, { Plugin } from 'uplot';
+import { throttle } from 'throttle-debounce';
+import uPlot, { Options, Plugin } from 'uplot';
 
 import { findInsertionIndex } from 'utils/array';
 import { distance } from 'utils/chart';
+import { isEqual } from 'utils/data';
 
-import css from './tooltipsPlugin.module.scss';
-import { isEqual } from '../../utils/data';
+import css from './closestPointPlugin.module.scss';
 
 interface Point {
   idx: number;
@@ -12,16 +13,18 @@ interface Point {
 }
 
 interface Props {
-  distInPx?: number, // max cursor distance from data point to highlight it (in pixel)
+  distInPx?: number, // max cursor distance from data point to focus it (in pixel)
+  onPointFocus?: (point: Point|undefined) => void,
   yScale: string, // y scale to use
 }
 
 export const closestPointPlugin = (
-  { distInPx = 30, yScale }: Props,
+  { distInPx = 30, onPointFocus, yScale }: Props,
 ): Plugin => {
   let distValX: number; // distInPx transformed to X value
   let distValY: number; // distInPx transformed to Y value
-  let highlightedPoint: Point|undefined; // highlighted data point
+  let focusedPoint: Point|undefined; // focused data point
+  let pointEl: HTMLDivElement;
 
   const findClosestPoint =
     (uPlot: uPlot, cursorLeft: number, cursorTop: number): Point|undefined => {
@@ -41,7 +44,7 @@ export const closestPointPlugin = (
 
       // cycle on each data point in the idx range found
       for (let idx = idxMin; idx <= idxMax; idx++) {
-        const posX = uPlot.valToPos(idx, 'x');
+        const posX = uPlot.valToPos(uPlot.data[0][idx], 'x');
 
         for (let seriesIdx = 1; seriesIdx < uPlot.data.length; seriesIdx++) {
           const yVal = uPlot.data[seriesIdx][idx];
@@ -62,17 +65,48 @@ export const closestPointPlugin = (
       return closestPoint;
     };
 
-  const highlight = (point: Point) => {
-    console.log('ON', point);
-    highlightedPoint = point;
+  const focusPoint = (uPlot: uPlot, point: Point|undefined) => {
+    focusedPoint = point;
+
+    if (typeof onPointFocus === 'function') {
+      onPointFocus(focusedPoint);
+    }
+
+    const series = point && uPlot.series[point.seriesIdx];
+    const yVal = point && uPlot.data[point.seriesIdx][point.idx];
+
+    // point
+    if (point && series && yVal != null) {
+
+      pointEl.style.backgroundColor = typeof series.stroke === 'function'
+        ? series.stroke(uPlot, point.seriesIdx) as string : 'rgba(0, 155, 222, 1)';
+      pointEl.style.display = 'block';
+      pointEl.style.left = uPlot.valToPos(uPlot.data[0][point.idx], 'x') + 'px';
+      pointEl.style.top = uPlot.valToPos(yVal, yScale) + 'px';
+    } else {
+      pointEl.style.display = 'none';
+    }
   };
 
-  const unHilight = () => {
-    console.log('OFF');
-    highlightedPoint = undefined;
-  };
+  const handleCursorMove = throttle(100, (uPlot: uPlot) => {
+    const { left, idx, top } = uPlot.cursor;
 
-  // let barEl: HTMLDivElement|null = null;
+    if (!left || left < 0 || !top || top < 0 || idx == null) {
+      if (focusedPoint) focusPoint(uPlot, undefined);
+      return;
+    }
+
+    const point = findClosestPoint(uPlot, left, top);
+    if (!point) {
+      if (focusedPoint) focusPoint(uPlot, undefined);
+      return;
+    }
+
+    if (!isEqual(point, focusedPoint)) {
+      focusPoint(uPlot, point);
+    }
+  });
+
   // let displayedIdx: number|null = null;
   // let tooltipEl: HTMLDivElement|null = null;
   //
@@ -165,36 +199,22 @@ export const closestPointPlugin = (
   return {
     hooks: {
       ready: (uPlot: uPlot) => {
-        // tooltipEl = document.createElement('div');
-        // tooltipEl.className = css.tooltip;
-        // uPlot.root.querySelector('.u-over')?.appendChild(tooltipEl);
-        //
+        pointEl = document.createElement('div');
+        pointEl.className = css.point;
+        uPlot.root.querySelector('.u-over')?.appendChild(pointEl);
+
         // barEl = document.createElement('div');
         // barEl.className = css.bar;
         // uPlot.root.querySelector('.u-over')?.appendChild(barEl);
       },
-      setCursor: (uPlot: uPlot) => {
-        const { left, idx, top } = uPlot.cursor;
-
-        if (!left || left < 0 || !top || top < 0 || idx == null) {
-          if (highlightedPoint) unHilight();
-          return;
-        }
-
-        const point = findClosestPoint(uPlot, left, top);
-        if (!point) {
-          if (highlightedPoint) unHilight();
-          return;
-        }
-
-        if (!isEqual(point, highlightedPoint)) {
-          highlight(point);
-        }
-      },
+      setCursor: (uPlot: uPlot) => handleCursorMove(uPlot),
       setScale: (uPlot: uPlot) => {
         distValX = uPlot.posToVal(distInPx, 'x') - uPlot.posToVal(0, 'x');
         distValY = uPlot.posToVal(0, yScale) - uPlot.posToVal(distInPx, yScale);
       },
+    },
+    opts: (self, opts) => {
+      return uPlot.assign({}, opts, { cursor: { points: { show: false } } }) as Options;
     },
   };
 };

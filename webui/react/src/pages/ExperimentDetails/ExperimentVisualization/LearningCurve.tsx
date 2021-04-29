@@ -38,8 +38,7 @@ const LearningCurve: React.FC<Props> = ({
   const [ batches, setBatches ] = useState<number[]>([]);
   const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
-  const [ chartTrialId, setChartTrialId ] = useState<number>();
-  const [ tableTrialId, setTableTrialId ] = useState<number>();
+  const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<Error>();
 
@@ -58,15 +57,15 @@ const LearningCurve: React.FC<Props> = ({
   }, [ experiment.id ]);
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
-    setChartTrialId(trialId != null ? trialId : undefined);
+    setHighlightedTrialId(trialId != null ? trialId : undefined);
   }, []);
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
-    if (record.id) setTableTrialId(record.id);
+    if (record.id) setHighlightedTrialId(record.id);
   }, []);
 
   const handleTableMouseLeave = useCallback(() => {
-    setTableTrialId(undefined);
+    setHighlightedTrialId(undefined);
   }, []);
 
   useEffect(() => {
@@ -168,7 +167,7 @@ const LearningCurve: React.FC<Props> = ({
           <div className={css.chart}>
             <LearningCurveChart
               data={chartData}
-              focusedTrialId={tableTrialId}
+              focusedTrialId={highlightedTrialId}
               selectedMetric={selectedMetric}
               trialIds={trialIds}
               xValues={batches}
@@ -177,7 +176,7 @@ const LearningCurve: React.FC<Props> = ({
           </div>
           <HpTrialTable
             experimentId={experiment.id}
-            highlightedTrialId={chartTrialId}
+            highlightedTrialId={highlightedTrialId}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
             trialHps={trialHps}
