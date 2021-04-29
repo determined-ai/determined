@@ -288,7 +288,7 @@ const mapV1Experiment = (
     endTime: data.endTime as unknown as string,
     id: data.id,
     labels: data.labels || [],
-    name: data.description,
+    name: data.name,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',

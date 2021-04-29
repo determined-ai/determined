@@ -37,7 +37,7 @@ message Experiment {
     json_schema: {
       required: [
         "id",
-        "description",
+        "name",
         "start_time",
         "state",
         "archived",
@@ -71,6 +71,10 @@ message Experiment {
   string resource_pool = 11;
   // The type of searcher for the experiment
   string searcher_type = 12;
+  // The experiment name.
+  string name = 12;
+  // The experiment notes.
+  string notes = 13;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

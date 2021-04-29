@@ -679,9 +679,10 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config)
+        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
+        :notes)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
@@ -970,6 +971,29 @@ WHERE id = $1`, id)
 	}
 	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
 }
+
+// TODO remove me: sticking with jsonb exp config
+// ExperimentConfigLatest returns the full config object for an experiment updated with the
+// latest user changes.
+// func (db *PgDB) ExperimentConfigLatest(id int) (*model.ExperimentConfig, error) {
+// 	dbResp := struct {
+// 		Config model.ExperimentConfig `db:"config"`
+// 		Name   string                 `db:"name"`
+// 		Notes   string                 `db:"notes"`
+// 	}{}
+// 	err := db.query(`
+// SELECT config, name, notes
+// FROM experiments
+// WHERE id = $1
+// `, &dbResp, id)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	dbResp.Config.Name = dbResp.Name
+// 	dbResp.Config.Notes = dbResp.Notes
+// 	return &dbResp.Config, nil
+// }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
 // with the given ID. Any step with a NULL end_time does not contribute. Elapsed time is

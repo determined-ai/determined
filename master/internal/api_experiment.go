@@ -68,18 +68,12 @@ func (a *apiServer) GetExperiment(
 		return nil, err
 	}
 
-	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
+	config, err := a.m.db.ExperimentConfig(int(req.ExperimentId))
 	if err != nil {
 		return nil, errors.Wrapf(err,
 			"error fetching experiment config from database: %d", req.ExperimentId)
 	}
-	var conf map[string]interface{}
-	err = json.Unmarshal(confBytes, &conf)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error unmarshalling experiment config: %d", req.ExperimentId)
-	}
-	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
+	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(config)}, nil
 }
 
 func (a *apiServer) DeleteExperiment(
@@ -509,22 +503,31 @@ func (a *apiServer) PatchExperiment(
 	paths := req.UpdateMask.GetPaths()
 	for _, path := range paths {
 		switch {
-		case path == "description":
-			exp.Description = req.Experiment.Description
+		case path == "name":
+			exp.Name = req.Experiment.Name
+		case path == "notes":
+			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+		case path == "description":
+			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"only description and labels fields are mutable. cannot update %s", path)
+				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
 
 	type experimentPatch struct {
 		Labels      []string `json:"labels"`
 		Description string   `json:"description"`
+		Name        string   `json:"name"`
 	}
-	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
+	patches := experimentPatch{
+		Labels:      exp.Labels,
+		Description: exp.Description,
+		Name:        exp.Name,
+	}
 	marshalledPatches, err := json.Marshal(patches)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal experiment patches")
@@ -534,6 +537,7 @@ func (a *apiServer) PatchExperiment(
 		"patch_experiment",
 		req.Experiment.Id,
 		marshalledPatches,
+		exp.Notes,
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
@@ -625,6 +629,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	// TODO save originial user submission req.Config
 	dbExp.OwnerID = &user.ID
 	e, err := newExperiment(a.m, dbExp, taskSpec)
 	if err != nil {
