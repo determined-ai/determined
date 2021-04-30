@@ -1,8 +1,8 @@
 import { setServerAddress } from 'dev';
 import { globalStorage } from 'globalStorage';
+import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/actions';
 import { Children, TreeNode } from 'omnibar/AsyncTree';
-import devExtension from 'omnibar/nodes/dev.rr.tmp';
 import { serverAddress } from 'routes/utils';
 
 const dev: TreeNode[] = [
@@ -28,7 +28,14 @@ const dev: TreeNode[] = [
     ],
     title: 'serverAddress',
   },
-  ...devExtension,
+  {
+    onAction: () => window.localStorage.clear(),
+    title: 'resetLocalStorage',
+  },
+  {
+    onAction: () => userPreferencesStorage.reset(),
+    title: 'resetUserPreferences',
+  },
 ];
 
 export default dev;
