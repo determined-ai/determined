@@ -1,7 +1,6 @@
 export interface Store {
   clear(): void;
   getItem(key: string): string | null;
-  keys(): string[];
   removeItem(key: string): void;
   setItem(key: string, value: string): void;
 }
@@ -34,10 +33,6 @@ export class MemoryStore implements Store {
 
   setItem(key: string, value: string): void {
     this.store[key] = value;
-  }
-
-  keys(): string[] {
-    return Object.keys(this.store);
   }
 }
 
@@ -81,38 +76,6 @@ export class Storage {
     this.store.setItem(path, item);
   }
 
-  keys(): string[] {
-    const prefix = this.pathKeys.join(this.delimiter) + this.delimiter;
-    return this.store.keys()
-      .filter(key => key.startsWith(prefix))
-      .map(key => key.replace(prefix, ''));
-  }
-
-  toString(): string {
-    const inMemoryRepr = this.keys().reduce((acc: Record<string, unknown>, cur: string) => {
-      cur;
-      acc[cur] = this.get(cur);
-      return acc;
-    }, {});
-
-    return JSON.stringify(inMemoryRepr);
-  }
-
-  fromString(marshalled: string): void {
-    const inMemoryRepr = JSON.parse(marshalled);
-    for (const key in inMemoryRepr) {
-      this.set(key, inMemoryRepr[key]);
-    }
-  }
-
-  reset(): void {
-    this.keys().forEach(key => this.remove(key));
-  }
-
-  fork(basePath: string): Storage {
-    basePath = [ ...this.pathKeys, basePath ].join(this.delimiter);
-    return new Storage({ basePath, delimiter: this.delimiter, store: this.store });
-  }
   private computeKey(key: string): string {
     return [ ...this.pathKeys, key ].join(this.delimiter);
   }
@@ -120,5 +83,4 @@ export class Storage {
   private parsePath (path: string, delimiter: string): string[] {
     return path.split(delimiter).filter(key => key !== '');
   }
-
 }

@@ -67,8 +67,3 @@ function quickSort<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: 
 Array.prototype.sortAll = function(compareFn) {
   return quickSort(this, 0, this.length - 1, compareFn);
 };
-
-// FIXME or we use a custom Storage instead of the original window.localStorage.
-Storage.prototype.keys = function() {
-  return Object.keys(this);
-};
