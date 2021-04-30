@@ -1,25 +1,16 @@
 import { message, Modal } from 'antd';
-import React, { ReactNode } from 'react';
+import React from 'react';
 
 import { routeAll } from 'routes/utils';
 
-import { dfsStaticRoutes } from './AsyncTree';
+import { dfsStaticRoutes, FinalAction } from './AsyncTree';
 import root from './sampleTree';
-export const alertAction = (msg: string) => (() => { message.info(msg); });
+export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeAll(url));
 export const noOp = (): void => undefined;
 export const parseIds = (input: string): number[] => input.split(',').map(i => parseInt(i));
-export const displayModal = (title: string, content: ReactNode) => {
-  const modal = Modal.info({});
-  modal.update({
-    content: <pre>{content}</pre>,
-    style: { minWidth: '70rem' },
-    title, // FIXME
-  });
-  return modal;
-};
 
-export const displayHelp = () => {
+export const displayHelp = (): void => {
   const commands = dfsStaticRoutes([], [], root)
     .map(path => path.reduce((acc, cur) => `${acc} ${cur.title}`, ''))
     .map(addr => addr.replace('root ', ''))
@@ -30,8 +21,8 @@ export const displayHelp = () => {
     '"Tab", "Up", or "Down" arrow keys to cycle through suggestions.',
     '"Escape" to close the bar.',
   ];
-  displayModal(
-    'Help', (
+  Modal.info({
+    content: (
       <>
         <p>
         Keyboard shortcuts:
@@ -47,6 +38,7 @@ export const displayHelp = () => {
         </ul>
       </>
     ),
-  );
-  // this could be full suggestions when query is empty.
+    style: { minWidth: '70rem' },
+    title: 'Help',
+  });
 };

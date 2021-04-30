@@ -21,10 +21,7 @@ import { correctViewportHeight, refreshPage } from 'utils/browser';
 import css from './App.module.scss';
 import { paths } from './routes/utils';
 
-const globalKeymap = {
-  // HIDE_OMNIBAR: [ 'esc' ],
-  SHOW_OMNIBAR: [ 'ctrl+space' ],
-};
+const globalKeymap = { SHOW_OMNIBAR: [ 'ctrl+space' ] };
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -36,10 +33,8 @@ const AppView: React.FC = () => {
 
   useKeyTracker();
   const globalKeyHandler = {
-    // HIDE_OMNIBAR: (): void => {
-    //   storeDispatch({ type: StoreAction.HideOmnibar });
-    // },
-    SHOW_OMNIBAR: (): void => storeDispatch({ type: StoreAction.ShowOmnibar }),
+    SHOW_OMNIBAR:
+    (): void => storeDispatch({ type: StoreAction.ShowOmnibar }),
   };
 
   useRouteTracker();

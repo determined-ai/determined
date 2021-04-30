@@ -11,11 +11,11 @@ export interface BaseNode {
 export type Children = TreeNode[]
 export type TreePath = TreeNode[]
 export type TreeNode = LeafNode | NLNode;
-export type ComputedChildren = (arg?: NLNode) => Children | Promise<Children>
+export type ComputedChildren = (arg?: NLNode) => Eventually<Children>
 export type FinalAction = (node?: LeafNode) => Eventually<void>;
 
 export interface LeafNode extends BaseNode {
-  onAction: FinalAction; // with potential response. could be shown
+  onAction: FinalAction;
 }
 
 // Non-leaf Node
@@ -26,8 +26,8 @@ export interface NLNode extends BaseNode {
 
 export const isLeafNode = (node: TreeNode): node is LeafNode =>
   'onAction' in node && !('options' in node);
-export const isNLNode = (node: any): node is NLNode =>
-  node.onAction === undefined && (node.options !== undefined || node.onCustomInput !== undefined);
+export const isNLNode = (node: TreeNode): node is NLNode =>
+  !('onAction' in node) && ('options' in node || 'onCustomInput' in node);
 export const isTreeNode = (node: TreeNode): node is TreeNode =>
   'title' in node && node.title !== undefined && (isLeafNode(node) || isNLNode(node));
 

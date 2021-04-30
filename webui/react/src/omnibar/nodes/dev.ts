@@ -15,6 +15,7 @@ const dev: TreeNode[] = [
       {
         onCustomInput: (inp: string): Children => {
           return [ {
+            closeBar: true,
             onAction: () => setServerAddress(inp),
             title: 'Ok',
           } ];
