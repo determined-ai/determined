@@ -15,7 +15,6 @@ import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Component';
-import { checkForImport } from 'recordReplay';
 import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
@@ -95,17 +94,10 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const [ checkedImport, setCheckedImport ] = useState<boolean>(false);
-
-  useEffect(() => {
-    // CHECK
-    checkForImport().then(() => setCheckedImport(true));
-  }, []);
-
   return (
     <HelmetProvider>
       <StoreProvider>
-        {checkedImport && <AppView />}
+        <AppView />
       </StoreProvider>
     </HelmetProvider>
   );
