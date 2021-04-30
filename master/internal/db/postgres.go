@@ -991,25 +991,23 @@ WHERE id = $1`, id)
 // ExperimentConfig returns the full config object for an experiment updated with the
 // latest user changes.
 func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
-	expConfigBytes, err := db.rawQuery(`
-SELECT name, note, config
+	dbResp := struct {
+		Config model.ExperimentConfig `db:"config"`
+		Name   string                 `db:"name"`
+		Note   string                 `db:"note"`
+	}{}
+	err := db.query(`
+SELECT config, name, note
 FROM experiments
-WHERE id = $1`, id)
+WHERE id = $1
+`, &dbResp, id)
 	if err != nil {
 		return nil, err
 	}
-	type configParts struct {
-		config model.ExperimentConfig `json:"config"`
-		name   string                 `json:"name"`
-		note   string                 `json:"note"`
-	}
-	var parts configParts
-	if err = json.Unmarshal(expConfigBytes, &parts); err != nil {
-		return nil, errors.WithStack(err)
-	}
-	parts.config.Name = parts.name
-	parts.config.Note = parts.note
-	return &parts.config, nil
+
+	dbResp.Config.Name = dbResp.Name
+	dbResp.Config.Note = dbResp.Note
+	return &dbResp.Config, nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
