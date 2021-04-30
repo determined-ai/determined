@@ -474,22 +474,23 @@ func (a *apiServer) PatchExperiment(
 	paths := req.UpdateMask.GetPaths()
 	for _, path := range paths {
 		switch {
-		case path == "description":
-			exp.Description = req.Experiment.Description
+		case path == "name":
+			exp.Name = req.Experiment.Name
+		case path == "note":
+			exp.Note = req.Experiment.Note
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"only description and labels fields are mutable. cannot update %s", path)
+				"only 'name', 'notes', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
 
 	type experimentPatch struct {
-		Labels      []string `json:"labels"`
-		Description string   `json:"description"`
+		Labels []string `json:"labels"`
 	}
-	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
+	patches := experimentPatch{Labels: exp.Labels}
 	marshalledPatches, err := json.Marshal(patches)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal experiment patches")
@@ -499,6 +500,8 @@ func (a *apiServer) PatchExperiment(
 		"patch_experiment",
 		req.Experiment.Id,
 		marshalledPatches,
+		exp.Name,
+		exp.Note,
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}

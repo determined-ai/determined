@@ -125,8 +125,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		}
 	}
 
-	// TODO set name and description
-
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
 

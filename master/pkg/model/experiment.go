@@ -232,6 +232,8 @@ func NewExperiment(
 	}
 	return &Experiment{
 		State:                PausedState,
+		Name:                 config.Name,
+		Note:                 config.Note,
 		Config:               config,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),
