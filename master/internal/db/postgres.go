@@ -417,6 +417,25 @@ EXISTS(
 	return exists, err
 }
 
+// TrialExperimentAndRequestID returns the trial's experiment and request ID.
+func (db *PgDB) TrialExperimentAndRequestID(id int) (int, model.RequestID, error) {
+	var eID int
+	var rID model.RequestID
+	err := db.sql.QueryRow(`
+SELECT e.id, t.request_id
+FROM trials t, experiments e
+WHERE t.experiment_id = e.id
+  AND t.id = $1`, id).Scan(&eID, &rID)
+	switch {
+	case err == sql.ErrNoRows:
+		return eID, rID, errors.WithStack(ErrNotFound)
+	case err != nil:
+		return eID, rID, errors.Wrap(err, "failed to get trial exp and req id")
+	default:
+		return eID, rID, nil
+	}
+}
+
 // ExperimentCheckpointsRaw returns a JSON string describing checkpoints for a given experiment,
 // either all of them or the best subset.
 func (db *PgDB) ExperimentCheckpointsRaw(id int, numBest *int) ([]byte, error) {
