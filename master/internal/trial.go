@@ -102,8 +102,7 @@ type (
 		socket      *websocket.Conn
 	}
 
-	// trialWatchPreemption begins watching if the trial has been preempted,
-	// either by the scheduler, as is the priority scheduler, or by the user, when paused.
+	// trialWatchPreemption begins watching if the trial has been preempted.
 	// The trial responds to this message with a channel of bools, where sends of true
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
@@ -311,10 +310,17 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		// the scheduler. This should be refactored into the terminating logic.
 
 	case trialWatchPreemption:
-		w := make(chan bool, 1)
-		t.preemptionWatchers[msg.id] = w
-		t.preemptionWatchers[msg.id] <- t.PendingGracefulTermination
-		ctx.Respond((<-chan bool)(w))
+		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
+		w := make(chan bool, 2)
+		if t.PendingGracefulTermination {
+			w <- true
+			close(w)
+			ctx.Respond((<-chan bool)(w))
+		} else {
+			t.preemptionWatchers[msg.id] = w
+			w <- false
+			ctx.Respond((<-chan bool)(w))
+		}
 	case trialUnwatchPreemption:
 		delete(t.preemptionWatchers, msg.id)
 
@@ -336,9 +342,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if err := t.db.UpdateTrial(t.id, endState); err != nil {
 			ctx.Log().Error(err)
 		}
-		for _, w := range t.preemptionWatchers {
-			close(w)
-		}
+		t.preemptWatchers()
 		return nil
 	default:
 		if t.task != nil {
@@ -1077,7 +1081,7 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 		}
 	case !t.PendingGracefulTermination:
 		ctx.Log().Info("gracefully terminating trial")
-		t.MarkPendingGracefulTermination(ctx)
+		t.MarkPendingGracefulTermination()
 	}
 }
 
@@ -1194,14 +1198,16 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 }
 
-func (t *trial) MarkPendingGracefulTermination(ctx *actor.Context) {
+func (t *trial) MarkPendingGracefulTermination() {
 	t.PendingGracefulTermination = true
-	for _, w := range t.preemptionWatchers {
-		select {
-		case w <- true:
-		default:
-			ctx.Log().Info("skipping sending preemption signal because channel was full")
-		}
+	t.preemptWatchers()
+}
+
+func (t *trial) preemptWatchers() {
+	for id, w := range t.preemptionWatchers {
+		w <- true
+		close(w)
+		delete(t.preemptionWatchers, id)
 	}
 }
 

@@ -550,23 +550,23 @@ func (a *apiServer) TrialPreemptionSignal(
 	if err != nil {
 		return err
 	}
+	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
+
 	signal, ok := ret.(<-chan bool)
 	if !ok {
 		return unexpectedMessageError(trial, ret)
 	}
-	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
 
-	for {
+	preempt := <-signal
+	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
+	case err != nil:
+		return err
+	case preempt:
+		return nil
+	default:
 		select {
-		case preempt, ok := <-signal:
-			switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{
-				Preempt: preempt || !ok,
-			}); {
-			case err != nil:
-				return err
-			case preempt, !ok:
-				return nil
-			}
+		case preempt = <-signal:
+			return resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt})
 		case <-resp.Context().Done():
 			return nil
 		}

@@ -269,10 +269,7 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
-// Stream preemption signals for the given trial. If the trial
-// is preempted, the caller will receive a response. If the trial
-// is pending preemption when the call is made, the caller will
-// receive a reponse immediately.
+// Stream updates to the preemption status for a trial.
 message TrialPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
@@ -282,7 +279,6 @@ message TrialPreemptionSignalRequest {
 }
 // Response to TrialPreemptionSignalRequest.
 message TrialPreemptionSignalResponse {
-  // True if the response is signaling preempt, otherwise just a synchronization
-  // marker.
+  // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }

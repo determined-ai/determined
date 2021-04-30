@@ -495,7 +495,11 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Stream updates to the preemption status for a trial.
+  // Stream preemption signals for the given trial. Upon connection a signal is
+  // sent immediately, for synchronization purposes. If it is to preempt, that
+  // will be the only signal and the trial should preempt. Otherwise, the trial
+  // should continue to listen. The only signal ever sent after this will be to
+  // preempt.
   rpc TrialPreemptionSignal(TrialPreemptionSignalRequest)
       returns (stream TrialPreemptionSignalResponse) {
     option (google.api.http) = {
