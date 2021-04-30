@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix the issue of the WebUI crashing when user selects a row in
-   experiment list page then changes the user filter.

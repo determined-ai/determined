@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix the issue of agents overview on the Cluster page not
-   updating properly when agents shutdown.
