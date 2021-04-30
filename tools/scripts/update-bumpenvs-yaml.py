@@ -38,7 +38,6 @@ EXPECT_JOBS = {
     "build-and-publish-docker-tf2-cpu",
     "build-and-publish-docker-tf1-cpu",
     "build-and-publish-docker-tf1-gpu",
-    "build-and-publish-docker-tf2-gpu",
     "build-and-publish-docker-cuda-11",
 }
 
@@ -47,7 +46,6 @@ EXPECT_ARTIFACTS = {
     "publish-tf2-cpu",
     "publish-tf1-cpu",
     "publish-tf1-gpu",
-    "publish-tf2-gpu",
     "publish-cuda-11",
 }
 
@@ -202,7 +200,6 @@ if __name__ == "__main__":
         **yaml.safe_load(artifacts["publish-tf1-cpu"]),
         **yaml.safe_load(artifacts["publish-tf1-gpu"]),
         **yaml.safe_load(artifacts["publish-tf2-cpu"]),
-        **yaml.safe_load(artifacts["publish-tf2-gpu"]),
         **yaml.safe_load(artifacts["publish-cuda-11"]),
         **parse_packer_log(artifacts["packer-log"]),
     }
