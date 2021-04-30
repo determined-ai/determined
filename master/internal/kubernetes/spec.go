@@ -175,8 +175,8 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" ||
-		p.taskSpec.Description() == "cmd" {
+	if scheduler != "coscheduler" || p.taskSpec.Description() == "cmd" ||
+		(newPod.Spec.SchedulerName != "" && newPod.Spec.SchedulerName != "coscheduler") {
 		return
 	}
 
@@ -193,7 +193,7 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-		minAvailable = 1
+		minAvailable = 0
 	} else {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial) / float64(p.gpus)))
 	}
