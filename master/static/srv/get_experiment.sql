@@ -1,6 +1,6 @@
 SELECT
     e.id AS id,
-    e.name AS name,
+    COALESCE(e.name, e.config->>'description', CONCAT("Experiment ", e.id)) AS name,
     e.note AS note,
     e.config->>'description' AS description,
     e.config->'labels' AS labels,
