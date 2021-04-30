@@ -27,6 +27,7 @@ import (
 )
 
 const fluentBaseDir = "/run/determined/fluent/"
+const coscheduler = "coscheduler"
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	return k8sV1.ResourceRequirements{
@@ -175,8 +176,8 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || p.taskSpec.Description() == "cmd" ||
-		(newPod.Spec.SchedulerName != "" && newPod.Spec.SchedulerName != "coscheduler") {
+	if scheduler != coscheduler || p.taskSpec.Description() == "cmd" ||
+		(newPod.Spec.SchedulerName != "" && newPod.Spec.SchedulerName != coscheduler) {
 		return
 	}
 
