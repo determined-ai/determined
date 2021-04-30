@@ -55,6 +55,7 @@ setup(
         "docker-compose>=1.13.0",
         "tqdm",
         "appdirs",
+        "backoff",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],

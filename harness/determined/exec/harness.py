@@ -57,6 +57,7 @@ ENVIRONMENT_VARIABLE_KEYS = {
     "DET_WORKLOAD_MANAGER_TYPE",
     "DET_RENDEZVOUS_PORTS",
     "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
+    "DET_TASK_TOKEN",
 }
 
 
@@ -179,7 +180,9 @@ def main() -> None:
     det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]
     det_trial_id = os.environ["DET_TRIAL_ID"]
     det_experiment_id = os.environ["DET_EXPERIMENT_ID"]
+    det_agent_id = os.environ["DET_AGENT_ID"]
     det_cluster_id = os.environ["DET_CLUSTER_ID"]
+    det_task_token = os.environ["DET_TASK_TOKEN"]
     trial_seed = int(os.environ["DET_TRIAL_SEED"])
 
     gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
@@ -205,7 +208,9 @@ def main() -> None:
         det_trial_runner_network_interface,
         det_trial_id,
         det_experiment_id,
+        det_agent_id,
         det_cluster_id,
+        det_task_token,
         trial_seed,
         managed_training=True,
         test_mode=False,
