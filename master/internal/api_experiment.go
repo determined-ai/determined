@@ -67,18 +67,12 @@ func (a *apiServer) GetExperiment(
 		return nil, err
 	}
 
-	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
+	config, err := a.m.db.ExperimentConfig(int(req.ExperimentId))
 	if err != nil {
 		return nil, errors.Wrapf(err,
 			"error fetching experiment config from database: %d", req.ExperimentId)
 	}
-	var conf map[string]interface{}
-	err = json.Unmarshal(confBytes, &conf)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error unmarshalling experiment config: %d", req.ExperimentId)
-	}
-	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
+	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(config)}, nil
 }
 
 func (a *apiServer) DeleteExperiment(

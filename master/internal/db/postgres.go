@@ -972,8 +972,8 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	return nil
 }
 
-// ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
+// ExperimentConfigOriginal returns the full config object for an experiment.
+func (db *PgDB) ExperimentConfigOriginal(id int) (*model.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments
@@ -986,6 +986,30 @@ WHERE id = $1`, id)
 		return nil, errors.WithStack(err)
 	}
 	return &expConfig, nil
+}
+
+// ExperimentConfig returns the full config object for an experiment updated with the
+// latest user changes.
+func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
+	expConfigBytes, err := db.rawQuery(`
+SELECT name, note, config
+FROM experiments
+WHERE id = $1`, id)
+	if err != nil {
+		return nil, err
+	}
+	type configParts struct {
+		config model.ExperimentConfig `json:"config"`
+		name   string                 `json:"name"`
+		note   string                 `json:"note"`
+	}
+	var parts configParts
+	if err = json.Unmarshal(expConfigBytes, &parts); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	parts.config.Name = parts.name
+	parts.config.Note = parts.note
+	return &parts.config, nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
