@@ -474,6 +474,8 @@ func (a *apiServer) PatchExperiment(
 			exp.Note = req.Experiment.Note
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+		case path == "description":
+			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
@@ -482,7 +484,8 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	type experimentPatch struct {
-		Labels []string `json:"labels"`
+		Labels      []string `json:"labels"`
+		Description string   `json:"description"`
 	}
 	patches := experimentPatch{Labels: exp.Labels}
 	marshalledPatches, err := json.Marshal(patches)
