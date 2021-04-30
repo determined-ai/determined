@@ -1,5 +1,5 @@
 import OmnibarNpm from 'omnibar';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { GlobalHotKeys } from 'react-hotkeys';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
@@ -15,10 +15,13 @@ const globalKeymap = { HIDE_OMNIBAR: [ 'esc' ] };
 const Omnibar: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { omnibar } = useStore();
+
+  const hideBar = useCallback(
+    () => storeDispatch({ type: StoreAction.HideOmnibar }),
+    [ storeDispatch ],
+  );
   const globalKeyHandler = {
-    HIDE_OMNIBAR: (): void => {
-      storeDispatch({ type: StoreAction.HideOmnibar });
-    },
+    HIDE_OMNIBAR: hideBar,
     SHOW_OMNIBAR: (): void => storeDispatch({ type: StoreAction.ShowOmnibar }),
   };
 
@@ -27,7 +30,7 @@ const Omnibar: React.FC = () => {
   }, [ storeDispatch, omnibar ]);
 
   return (
-    <div className={css.base} onClick={() => alert('hi')}>
+    <div className={css.base} onClick={hideBar}>
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>
           autoFocus={true}
