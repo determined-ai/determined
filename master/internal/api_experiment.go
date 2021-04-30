@@ -479,7 +479,7 @@ func (a *apiServer) PatchExperiment(
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"only 'name', 'notes', and 'labels' fields are mutable. cannot update %s", path)
+				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
 

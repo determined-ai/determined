@@ -37,7 +37,7 @@ message Experiment {
     json_schema: {
       required: [
         "id",
-        "description",
+        "name",
         "start_time",
         "state",
         "archived",
