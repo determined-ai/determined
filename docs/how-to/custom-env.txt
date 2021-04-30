@@ -110,9 +110,9 @@ and values of the hyperparameters for the current trial.
 .. note::
 
    The default images are
-   ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0``
+   ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.12.0``
    and
-   ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.11.0``
+   ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.12.0``
    for GPU and CPU respectively.
 
 .. _cuda-11-images:
@@ -136,7 +136,7 @@ This can be configured in your experiment configuration like below:
 .. code:: yaml
 
    environment:
-     image: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0"
+     image: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0"
 
 Older Images
 ============
@@ -177,7 +177,7 @@ example of a Dockerfile that installs custom ``conda``-, ``pip``- and
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.11.0
+   FROM determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.12.0
 
    # Custom Configuration
    RUN apt-get update && \

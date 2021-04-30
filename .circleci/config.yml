@@ -97,11 +97,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da9ba40
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-1c26118
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-da9ba40
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c26118
 
   login-docker:
     parameters:
@@ -609,8 +609,8 @@ commands:
           values-to-override: |
             detVersion=<<parameters.det-version>>,\
             maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
-            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0,\
-            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0,\
+            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0,\
+            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0,\
             checkpointStorage.type=gcs,\
             checkpointStorage.bucket=det-ci
       - set-master-address-gke:
@@ -1500,8 +1500,8 @@ jobs:
       # "CUDA" environment variable is set to 11.
       # TODO: (DET-4918): we should ensure a consistent way to have tests that can run against
       # both major TensorFlow versions do so regularly (but not others).
-      TF1_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0
-      TF2_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0
+      TF1_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0
+      TF2_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0
       CUDA: 11
     steps:
       - checkout

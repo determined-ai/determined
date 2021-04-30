@@ -31,8 +31,8 @@
     "description": "Fork of Fork of mnist_tp_to_estimator_const",
     "environment": {
       "image": {
-        "cpu": "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da9ba40",
-        "gpu": "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da9ba40"
+        "cpu": "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-1c26118",
+        "gpu": "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-1c26118"
       },
       "ports": null,
       "pod_spec": null,
