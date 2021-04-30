@@ -48,13 +48,14 @@ const root: NLNode = {
         const { experiments: exps } = await getExperiments({
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_END_TIME',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           states: Array.from(terminalRunStates).map(s => 'STATE_' + s) as any,
         });
         const options: Children = exps.map(exp => (
           {
             onAction: (): unknown => archiveExperiment({ experimentId: exp.id }),
             title: `${exp.id}`,
-          })); // is use of `this` discouraged?
+          }));
         return options;
       },
       title: 'archiveExperiment',
@@ -114,7 +115,7 @@ const root: NLNode = {
               {
                 onAction: () => killExperiment({ experimentId: exp.id }),
                 title: `${exp.id}`,
-              })); // is use of `this` discouraged?
+              }));
             return options;
           },
           title: 'experiment',

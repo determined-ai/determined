@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
+/*
+  Serve a standalone version of Determined's WebUI.
+*/
+
 const express = require('express');
 const morgan = require('morgan');
 

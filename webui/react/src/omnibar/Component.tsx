@@ -27,7 +27,7 @@ const Omnibar: React.FC = () => {
   }, [ storeDispatch, omnibar ]);
 
   return (
-    <div className={css.base}>
+    <div className={css.base} onClick={() => alert('hi')}>
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>
           autoFocus={true}
@@ -35,7 +35,6 @@ const Omnibar: React.FC = () => {
           maxResults={7}
           placeholder='Type a command or "help" for more info.'
           render={BaseRenderer}
-          rootStyle={{ width: 'calc(max(40vw, 30rem))' }}
           onAction={Tree.onAction as any} />
       </div>
       <GlobalHotKeys handlers={globalKeyHandler} keyMap={globalKeymap} />

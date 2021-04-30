@@ -9,9 +9,7 @@ export const setServerAddress = (address: string): void => {
   updateDetApi({ basePath: serverAddress });
 };
 
-window.dev = window.dev || {};
 window.dev = {
-  ...window.dev,
   resetServerAddress: () => globalStorage.removeServerAddress(),
   setServerAddress,
 };
