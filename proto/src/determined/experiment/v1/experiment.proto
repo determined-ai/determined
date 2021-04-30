@@ -37,7 +37,7 @@ message Experiment {
     json_schema: {
       required: [
         "id",
-        "description",
+        "name",
         "start_time",
         "state",
         "archived",
@@ -49,8 +49,6 @@ message Experiment {
   };
   // The id of the experiment.
   int32 id = 1;
-  // The description of the experiment.
-  string description = 2;
   // Labels attached to the experiment.
   repeated string labels = 3;
   // The time the experiment was started.
