@@ -5,7 +5,7 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { isShiftClick, openBlank, paths, routeAll } from 'routes/utils';
+import { isNewTabClickEvent, openBlank, paths, routeAll } from 'routes/utils';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -54,7 +54,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
     const href = paths.trialDetails(trialId, experiment.id);
-    if (isShiftClick(event)) openBlank(href);
+    if (isNewTabClickEvent(event)) openBlank(href);
     else routeAll(href);
   }, [ experiment.id ]);
 

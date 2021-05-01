@@ -123,7 +123,7 @@ export const closestPointPlugin = ({
     }
   };
 
-  const handleCursorMove = throttle(100, (uPlot: uPlot) => {
+  const handleCursorMove = throttle(50, (uPlot: uPlot) => {
     const { left, idx, top } = uPlot.cursor;
 
     if (!left || left < 0 || !top || top < 0 || idx == null) {

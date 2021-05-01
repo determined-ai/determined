@@ -68,7 +68,7 @@ export const handlePath = (
   if (options.onClick) {
     options.onClick(event);
   } else if (href) {
-    if (isShiftClick(event) || options.popout) {
+    if (isNewTabClickEvent(event) || options.popout) {
       openBlank(href);
     } else {
       routeAll(href);
@@ -76,7 +76,7 @@ export const handlePath = (
   }
 };
 
-export const isShiftClick = (event: MouseEvent|React.MouseEvent): boolean => {
+export const isNewTabClickEvent = (event: MouseEvent|React.MouseEvent): boolean => {
   return event.button === 1 || event.metaKey || event.ctrlKey;
 };
 
