@@ -132,19 +132,6 @@ The following configuration settings are supported:
       configuration <master-configuration>` for details about resource
       managers.
 
-``resource_pool``
-   The resource pool where this experiment will be scheduled. If no
-   resource pool is specified, experiments will run in the default GPU
-   pool. Refer to :ref:`resource-pools` for more information.
-
-``devices``
-   A list of device strings to pass to the Docker daemon. Each entry in
-   the list is equivalent to a ``--device DEVICE`` command line argument
-   to ``docker run``. ``devices`` is honored by resource managers of
-   type ``agent`` but is ignored by resource managers of type
-   ``kubernetes``. See :ref:`master configuration
-   <master-configuration>` for details about resource managers.
-
 -  ``bind_mounts``: Specifies a collection of directories that are
    bind-mounted into the Docker containers for execution. This can be
    used to allow commands to access additional data that is not
