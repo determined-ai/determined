@@ -33,19 +33,18 @@ def test_create_experiment_wait(det: object):
         '../../../examples/tutorials/mnist_pytorch',
         False,
     )
-
     if exp_resp is None:
         print("Failed to create an experiment")
     else:
         exp_id = exp_resp.experiment.id
         if exp_resp.experiment.id != 0:
             print("Created experiment: {}".format(exp_id))
-            ret = det.activate_experiment(id = exp_id)
+            ret = det.activate_experiment(exp_id = exp_id)
             if (ret != 0):
                 print("Failed to activate experiment")
             else:
                 print("Activated experiment: {}".format(exp_id))
-    python_sdk._wait_for_experiment_complete(det, exp_id, 2)
+    python_sdk._wait_for_experiment_complete(det, exp_id = exp_id, sleep_interval = 5)
 
 def main():
     det = python_sdk.Core('detconfig.yaml')
@@ -59,8 +58,6 @@ def main():
     test_get_experiment(det, 1)
     print("Getting trial: 1")
     test_get_trial(det, 1)
-    
-    input("press enter to continue...")
     
 if __name__ == '__main__':
     main()
