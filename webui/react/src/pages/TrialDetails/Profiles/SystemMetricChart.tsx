@@ -40,20 +40,27 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
       axes: [
         {
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-            const rangeSecs = scaleMax - scaleMin;
-            const pxPerSec = plotDim / rangeSecs;
-            return Math.max(60, pxPerSec * 10);
+            const rangeMs = scaleMax - scaleMin;
+            const msPerSec = plotDim / rangeMs;
+            return Math.max(60, msPerSec * 10 * 1000);
           },
           values: (self, splits) => {
-            return splits.map(i => dayjs.utc(i * 1000).format('HH:mm:ss'));
+            return splits.map(i => dayjs.utc(i).format('HH:mm:ss'));
           },
         },
         ...systemMetrics.names.map((name) => ({ label: getUnitForMetricName(name) })),
       ],
       height: CHART_HEIGHT,
-      scales: xMin ? { x: { auto: false, max: xMin + (5 * 60), min: xMin } } : undefined,
+      scales: xMin
+        ? { x: { auto: false, max: xMin + (5 * 60 * 1000), min: xMin, time: false } }
+        : { x: { time: false } },
       series: [
-        { label: 'Time', value: '{HH}:{mm}:{ss}' },
+        {
+          label: 'Time',
+          value: (self, rawValue) => {
+            return dayjs.utc(rawValue).format('HH:mm:ss.SSS');
+          },
+        },
         ...systemMetrics.names.map((name, index) => ({
           label: name,
           points: { show: false },
