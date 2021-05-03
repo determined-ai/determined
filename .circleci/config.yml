@@ -462,20 +462,6 @@ commands:
           command: |
             gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=<<parameters.region>>
 
-  terminate-gke-cluster-cuda-11:
-    parameters:
-      cluster-id:
-        type: string
-      zone:
-        type: string
-    steps:
-      # Use a run instead of `gke/delete-cluster` because circle CI orbs do not support `when`.
-      - run:
-          name: Terminate GKE Cluster
-          when: always
-          command: |
-            gcloud container clusters delete <<parameters.cluster-id>> --quiet --zone=<<parameters.zone>>
-
   setup-gke-cluster:
     parameters:
       cluster-id:
@@ -561,6 +547,8 @@ commands:
         type: string
       gpus-per-machine:
         type: integer
+      region:
+        type: string
       node-locations:
         type: string
       gcloud-service-key:
@@ -586,13 +574,13 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --node-locations=us-central1-c --scopes storage-rw,cloud-platform --num-nodes 1
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
       - run:
-          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --zone <<parameters.node-locations>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
           name: Create GPU node pool
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --zone <<parameters.node-locations>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
@@ -1469,22 +1457,22 @@ jobs:
         default: "1.18.15-gke.1501"
       machine-type:
         type: string
-        default: "a2-highgpu-1g"
+        default: "n1-standard-8"
       num-machines:
         type: integer
         default: 1
       gpu-type:
         type: string
-        default: "nvidia-tesla-a100"
+        default: "nvidia-tesla-k80"
       gpus-per-machine:
         type: integer
         default: 1
       region:
         type: string
-        default: "us-central1"
+        default: "us-west1"
       node-locations:
         type: string
-        default: "us-central1-c"
+        default: "us-west1-b"
       slack-mentions:
         type: string
         default: ""
@@ -1518,14 +1506,15 @@ jobs:
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
           gpus-per-machine: <<parameters.gpus-per-machine>>
+          region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
-      - terminate-gke-cluster-cuda-11:
+      - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
-          zone: <<parameters.node-locations>>
+          region: <<parameters.region>>
       - slack/status:
           fail_only: True
           only_for_branches: master
@@ -1891,7 +1880,7 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["a2-highgpu-4g"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 
@@ -1965,7 +1954,7 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["a2-highgpu-4g"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 
