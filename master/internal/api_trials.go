@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -655,6 +656,40 @@ func (a *apiServer) ReportTrialProgress(
 	return &apiv1.ReportTrialProgressResponse{}, nil
 }
 
+func (a *apiServer) PatchTrialMetadata(
+	_ context.Context, req *apiv1.PatchTrialMetadataRequest,
+) (*apiv1.PatchTrialMetadataResponse, error) {
+	if err := a.checkTrialExists(int(req.TrialId)); err != nil {
+		return nil, err
+	}
+
+	md := make(map[string]interface{})
+	if b, err := protojson.Marshal(req.Metadata); err != nil {
+		return nil, err
+	} else if err := json.Unmarshal(b, &md); err != nil {
+		return nil, err
+	}
+
+	if err := a.m.db.PatchTrialMetadata(int(req.TrialId), md); err != nil {
+		return nil, err
+	}
+	return &apiv1.PatchTrialMetadataResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialTrainingMetrics(
+	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
+) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
+	if err := a.checkTrialExists(int(req.TrialId)); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.ReportTrialTrainingMetricsResponse{}, a.m.db.AddTrainingMetrics(
+		ctx,
+		int(req.TrialId),
+		req.TrainingMetrics,
+	)
+}
+
 func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID)
 	switch {
@@ -675,6 +710,18 @@ func (a *apiServer) experimentActorFromTrialID(trialID int) (actor.Address, erro
 		return actor.Address{}, err
 	}
 	return actor.Addr("experiments", eID), nil
+}
+
+func (a *apiServer) checkTrialExists(id int) error {
+	ok, err := a.m.db.CheckTrialExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "trial %d not found", id)
+	default:
+		return nil
+	}
 }
 
 // askAtDefaultSystem asks addr the req and puts the response into what v points at.

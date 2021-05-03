@@ -1,0 +1,1 @@
+ALTER TABLE public.trials DROP COLUMN metadata;

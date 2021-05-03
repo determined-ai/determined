@@ -608,6 +608,10 @@ func (t *trial) processAllocated(
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
 
+	if err = t.db.ResetRunStart(t.id); err != nil {
+		ctx.Log().WithError(err).Error("failed to reset run start")
+	}
+
 	ctx.Log().Infof("starting trial container: %v", w)
 
 	additionalFiles := archive.Archive{

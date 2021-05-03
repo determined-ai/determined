@@ -339,3 +339,30 @@ message ReportTrialProgressRequest {
 }
 // Response to ReportTrialProgressRequest
 message ReportTrialProgressResponse {}
+
+// For bookkeeping, updates the trial's metadata as reported by the trial
+// runner.
+message PatchTrialMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The metadata for the trial.
+  google.protobuf.Struct metadata = 2;
+}
+// Response to PatchTrialMetadataRequest
+message PatchTrialMetadataResponse {}
+
+// For bookkeeping, marks the trial as actively training at the current step.
+message ReportTrialTrainingMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The training metrics to persist.
+  determined.trial.v1.TrainingMetrics training_metrics = 2;
+}
+// Response to ReportTrialTrainingMetricsRequest
+message ReportTrialTrainingMetricsResponse {}

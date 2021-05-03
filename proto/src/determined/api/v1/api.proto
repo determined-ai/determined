@@ -558,6 +558,29 @@ service Determined {
       tags: "Internal"
     };
   }
+  // For bookkeeping, updates the trial's metadata as reported by the trial
+  // runner.
+  rpc PatchTrialMetadata(PatchTrialMetadataRequest)
+      returns (PatchTrialMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/metadata"
+      body: "metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Records training metrics for specified training.
+  rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
+      returns (ReportTrialTrainingMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/training_metrics"
+      body: "training_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
