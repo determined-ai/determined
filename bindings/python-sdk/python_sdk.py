@@ -1,4 +1,5 @@
 import io
+import time
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pathlib import Path
@@ -29,7 +30,7 @@ def _parse_config_file(config_file: io.FileIO) -> Dict:
 
 def _wait_for_experiment_complete(det: object, exp_id: int, sleep_interval: int = 1) -> GetExperimentResponse:    
     while True:
-        exp_resp = det.get_experiment(id = exp_id)
+        exp_resp = det.get_experiment(exp_id = exp_id)
         if exp_resp is None:
             print("Invalid Experiemnt ID")
         else:
@@ -37,7 +38,7 @@ def _wait_for_experiment_complete(det: object, exp_id: int, sleep_interval: int 
                 exp_resp.experiment.state == Determinedexperimentv1State.CANCELED or
                 exp_resp.experiment.state == Determinedexperimentv1State.DELETED or
                 exp_resp.experiment.state == Determinedexperimentv1State.ERROR):
-                print("Experiment {} is in a terminal state".format(id))
+                print("Experiment {} is in a terminal state".format(exp_id))
                 break
             elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
                 raise ValueError("Experiment {} is in paused state".format(exp_id))
