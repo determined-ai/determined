@@ -54,7 +54,6 @@ const query = async (input: string): Promise<Children> => {
 
   if (isNLNode(node)) {
     if (node.onCustomInput) {
-    // TODO provide hint if query is empty.
       const moreOptions = await node.onCustomInput(query);
       matches.push(...moreOptions);
     } else if (matches.length === 0) {
@@ -79,15 +78,12 @@ export const extension = async(input: string): Promise<Children> => {
 
 export const onAction = async (item: BaseNode): Promise<void> => {
   if (!!item && isTreeNode(item)) {
-    // TODO should be replaced, perhaps, with a update to the omnibar package's command decorator
-    // TODO setup the omnibar with context and tree
-    // TODO make below a generic omnibar decorator
     const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
     if (!input) return Promise.resolve();
     const { path } = await parseInput(input.value);
     // update the omnibar text to reflect the current path
     input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
-        + item.title; // TODO add the separator and trigger the extensions
+        + item.title;
     // trigger the onchange
     input.onchange && input.onchange(undefined as unknown as Event);
     if (isLeafNode(item)) {

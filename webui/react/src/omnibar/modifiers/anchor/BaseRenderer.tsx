@@ -28,8 +28,6 @@ type ResultRenderer<T> = (
   } & React.HTMLAttributes<HTMLElement>
 ) => JSX.Element;
 
-// TODO move to x.module.scss
-
 const ITEM_STYLE: React.CSSProperties = {
   borderBottomWidth: 1,
   borderColor: COLORS.DARKGRAY,
