@@ -43,7 +43,8 @@
     },
     "additionalProperties": false,
     "eventuallyRequired": [
-        "type"
+        "type",
+        "metric"
     ],
     "properties": {
         "bracket_rungs": true,

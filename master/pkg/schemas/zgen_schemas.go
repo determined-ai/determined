@@ -1917,9 +1917,7 @@ var (
         "type"
     ],
     "eventuallyRequired": [
-        "access_key",
-        "bucket",
-        "secret_key"
+        "bucket"
     ],
     "properties": {
         "type": {
@@ -2572,7 +2570,8 @@ var (
     },
     "additionalProperties": false,
     "eventuallyRequired": [
-        "type"
+        "type",
+        "metric"
     ],
     "properties": {
         "bracket_rungs": true,
