@@ -1,7 +1,7 @@
 from pprint import pprint
 
 import python_sdk
-from swagger_client.models import Determinedexperimentv1State as Determinedexperimentv1State
+from swagger_client.models import Determinedexperimentv1State as ExperimentState
 
 def test_get_labels(det: object):
     labels = det.get_experiment_labels()
@@ -17,9 +17,9 @@ def test_get_experiment(det: object, exp_id: int):
     if exp_resp is None:
         print("Invalid Experiemnt ID")
     else:
-        if (exp_resp.experiment.state == Determinedexperimentv1State.COMPLETED):
+        if (exp_resp.experiment.state == ExperimentState.COMPLETED):
             print("Experiment {} is Complete".format(id))
-        elif (exp_resp.experiment.state == Determinedexperimentv1State.PAUSED):
+        elif (exp_resp.experiment.state == ExperimentState.PAUSED):
             raise ValueError("Experiment {} is not active".format(id))
         
     pprint(exp_resp)

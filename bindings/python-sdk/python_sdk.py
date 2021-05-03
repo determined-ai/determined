@@ -18,7 +18,7 @@ from swagger_client.models import V1GetExperimentsResponse as GetExperimentsResp
 from swagger_client.models import V1GetExperimentTrialsResponse as GetExperimentTrialsResponse
 from swagger_client.models import V1GetTrialResponse as GetTrialResponse
 from swagger_client.models import V1GetExperimentLabelsResponse as GetExperimentLabelsResponse
-from swagger_client.models import Determinedexperimentv1State as Determinedexperimentv1State
+from swagger_client.models import Determinedexperimentv1State as ExperimentState
 
 def _print_exception(e: ApiException):
     print("{} {} {}".format(e.status, e.reason, e.body))
@@ -34,13 +34,13 @@ def _wait_for_experiment_complete(det: object, exp_id: int, sleep_interval: int 
         if exp_resp is None:
             print("Invalid Experiemnt ID")
         else:
-            if (exp_resp.experiment.state == Determinedexperimentv1State.COMPLETED or
-                exp_resp.experiment.state == Determinedexperimentv1State.CANCELED or
-                exp_resp.experiment.state == Determinedexperimentv1State.DELETED or
-                exp_resp.experiment.state == Determinedexperimentv1State.ERROR):
+            if (exp_resp.experiment.state == ExperimentState.COMPLETED or
+                exp_resp.experiment.state == ExperimentState.CANCELED or
+                exp_resp.experiment.state == ExperimentState.DELETED or
+                exp_resp.experiment.state == ExperimentState.ERROR):
                 print("Experiment {} is in a terminal state".format(exp_id))
                 break
-            elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
+            elif exp_resp.experiment.state == ExperimentState.PAUSED:
                 raise ValueError("Experiment {} is in paused state".format(exp_id))
             else:
                 # ACTIVE, STOPPING_COMPLETED, etc.
@@ -199,7 +199,7 @@ class Core:
             description = "",
             labels = [],
             #archived = True,
-            #states = Determinedexperimentv1State.COMPLETED,
+            #states = ExperimentState.COMPLETED,
             users = []) -> GetExperimentsResponse:
 
         if self.experiments is None:
