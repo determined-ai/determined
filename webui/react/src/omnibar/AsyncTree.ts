@@ -83,5 +83,3 @@ export const dfsStaticRoutes = (
   }
   return allRoutes;
 };
-
-// TODO add utility to check if node is child of and ancestor.
