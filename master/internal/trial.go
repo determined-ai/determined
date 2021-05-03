@@ -922,8 +922,8 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 			addrs2 = append(addrs2, formatAddress(addrs[1]))
 		} else {
 			ctx.Log().Errorf(
-				"found %d rendezvous addresses instead of 2 for container %s; dropping rendezvous addresses",
-				numAddrs, caddr.Container.ID)
+				"found %d rendezvous addresses instead of 2 for container %s; dropping rendezvous addresses %v",
+				numAddrs, caddr.Container.ID, addrs)
 		}
 
 		rcontainers = append(rcontainers, &rendezvousContainer{
