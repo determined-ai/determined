@@ -527,6 +527,7 @@ service Determined {
       returns (ReportTrialSearcherValidationResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/{trial_id}/searcher/report_validation"
+      body: "searcher_metric"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -539,6 +540,7 @@ service Determined {
       returns (ReportTrialSearcherEarlyExitResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/{trial_id}/searcher/early_exit"
+      body: "early_exit"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -550,6 +552,7 @@ service Determined {
       returns (ReportTrialProgressResponse) {
     option (google.api.http) = {
       post: "/api/v1/trials/{trial_id}/searcher/report_progress"
+      body: "progress"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
