@@ -130,7 +130,7 @@ const ExperimentInfoBox: React.FC<Props> = (
               selectOnLineNumbers: true,
             }}
             theme="vs-light"
-            value={yaml.safeDump(experiment.configRaw)} />
+            value={yaml.dump(experiment.configRaw)} />
         </React.Suspense>
       </Modal>
     </Section>
