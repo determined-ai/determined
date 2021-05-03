@@ -312,7 +312,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case trialWatchPreemption:
 		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
 		w := make(chan bool, 2)
-		if t.PendingGracefulTermination {
+		if t.PendingGracefulTermination || t.experimentState != model.ActiveState {
 			w <- true
 			close(w)
 			ctx.Respond((<-chan bool)(w))

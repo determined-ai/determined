@@ -320,7 +320,7 @@ message ReportTrialSearcherEarlyExitRequest {
   // The id of the trial.
   int32 trial_id = 1;
   // The exit reason.
-  determined.trial.v1.ExitedReason exited_reason = 2;
+  determined.trial.v1.TrialEarlyExit early_exit = 2;
 }
 // Response to ReportTrialSearcherEarlyExitRequest
 message ReportTrialSearcherEarlyExitResponse {}

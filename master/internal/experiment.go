@@ -48,8 +48,7 @@ type (
 		trialID int
 	}
 	trialTrainUntilResp struct {
-		finished bool
-		length   model.Length
+		length model.Length
 	}
 
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
@@ -218,9 +217,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialReportValidation:
 		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric)
 		e.processOperations(ctx, ops, err)
-		if ctx.ExpectingResponse() {
-			ctx.Respond(nil)
-		}
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
 		e.processOperations(ctx, ops, err)
@@ -233,9 +229,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
-		if ctx.ExpectingResponse() {
-			ctx.Respond(nil)
-		}
 	case trialTrainUntilReq:
 		requestID, ok := e.searcher.RequestID(msg.trialID)
 		if !ok {
@@ -243,13 +236,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		if op, ok := e.TrialCurrentOperation[requestID]; ok {
 			ctx.Respond(trialTrainUntilResp{
-				finished: false,
-				length:   op.Length,
+				length: op.Length,
 			})
 		} else {
-			ctx.Respond(trialTrainUntilResp{
-				finished: true,
-			})
+			ctx.Respond(fmt.Errorf("trial %d has no operations", msg.trialID))
 		}
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
@@ -414,7 +404,6 @@ func (e *experiment) restoreTrialsFromPriorOperations(
 			e.TrialCurrentOperation[op.GetRequestID()] = op
 		case searcher.Close:
 			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
-			delete(e.TrialCurrentOperation, op.GetRequestID())
 		}
 	}
 
@@ -466,7 +455,6 @@ func (e *experiment) processOperations(
 			e.TrialCurrentOperation[op.GetRequestID()] = op
 		case searcher.Close:
 			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
-			delete(e.TrialCurrentOperation, op.GetRequestID())
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)

@@ -87,13 +87,13 @@ const (
 )
 
 // ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
-func ExitedReasonFromProto(r trialv1.ExitedReason) ExitedReason {
+func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 	switch r {
-	case trialv1.ExitedReason_EXITED_REASON_UNSPECIFIED:
+	case trialv1.TrialEarlyExit_EXITED_REASON_UNSPECIFIED:
 		return Errored
-	case trialv1.ExitedReason_EXITED_REASON_INVALID_HP:
+	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
 		return InvalidHP
-	case trialv1.ExitedReason_EXITED_REASON_USER_REQUESTED_STOP:
+	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
 		return UserCanceled
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
