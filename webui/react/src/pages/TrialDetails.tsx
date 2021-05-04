@@ -218,15 +218,15 @@ const TrialDetailsComp: React.FC = () => {
     return <Spinner />;
   }
 
+  const experimentDescForBreadcrumb = experiment.config.description
+    ? ` (${experiment.config.description})`
+    : '';
+
   return (
     <Page
       breadcrumb={[
         {
-          breadcrumbName: 'Experiments',
-          path: paths.experimentList(),
-        },
-        {
-          breadcrumbName: `Experiment ${experiment.id}`,
+          breadcrumbName: `Experiment ${experiment.id}${experimentDescForBreadcrumb}`,
           path: paths.experimentDetails(experiment.id),
         },
         {
