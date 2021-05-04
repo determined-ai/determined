@@ -741,6 +741,13 @@ commands:
             ENC_LOG_GROUP=$(echo "$LOG_GROUP" | sed 's|/|$252F|g')
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
+  pre-package-and-push-system:
+    steps:
+      - go-get-deps
+      - run: make -C proto build
+      - run: make -C master check
+      - run: make -C agent check
+
 
 jobs:
   build-helm:
@@ -807,10 +814,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - go-get-deps
       - setup_remote_docker:
           version: 19.03.12
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -839,8 +845,7 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - go-get-deps
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
@@ -864,8 +869,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
-      - go-get-deps
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: make -C master publish
       - run: make -C agent publish
@@ -889,10 +893,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
-      - go-get-deps
-      - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - pre-package-and-push-system
       - run: make -C master release
       - run: make -C agent release
 

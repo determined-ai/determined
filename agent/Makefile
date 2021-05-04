@@ -9,7 +9,6 @@ clean:
 
 .PHONY: get-deps
 get-deps:
-	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
