@@ -20,6 +20,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
         data_config = self.context.get_data_config()
+        hparams = self.context.get_hparams()
         self.using_bind_mount = data_config.get("use_bind_mount", False)
         self.use_cache = data_config.get("use_cache", True)
         self.bind_mount_path = (
@@ -33,14 +34,14 @@ class WordLanguageModelPyTorch(PyTorchTrial):
             self.download_directory / f"data-rank{self.context.distributed.get_rank()}"
         )
         self.corpus = data.load_and_cache_dataset(download_directory, use_cache)
-        emsize = data_config.get("word_embeddings_size", 200)
-        self.model_cls = data_config.get("model_type", "transformer")
-        num_heads = data_config.get("num_heads", 2)
-        num_hidden = data_config.get("num_hidden", 200)
-        num_layers = data_config.get("num_layers", 2)
-        dropout = data_config.get("dropout", 0.2)
-        tied = data_config.get("tied", False)
-        self.bptt = data_config.get("bptt", 35)
+        emsize = hparams.get("word_embeddings_size", 200)
+        self.model_cls = hparams.get("model_type", "transformer")
+        num_heads = hparams.get("num_heads", 2)
+        num_hidden = hparams.get("num_hidden", 200)
+        num_layers = hparams.get("num_layers", 2)
+        dropout = hparams.get("dropout", 0.2)
+        tied = hparams.get("tied", False)
+        self.bptt = hparams.get("bptt", 35)
 
         if self.model_cls.lower() == "transformer":
             self.model = TransformerModel(
@@ -60,7 +61,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         self.model = self.context.wrap_model(self.model)
         self.criterion = nn.NLLLoss()
 
-        lr = data_config.get("lr", 20)
+        lr = hparams.get("lr", 20)
         optimizer = torch.optim.SGD(self.model.named_parameters(), lr=lr)
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
@@ -109,7 +110,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         )
         return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
 
-    def evaluate_full_dataset(self, data_loader: DataLoader):
+    def evaluate_full_dataset(self, data_loader: DataLoader) -> float:
         total_loss = 0.0
         if self.model_cls.lower() != "transformer":
             self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
