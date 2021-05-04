@@ -4,6 +4,7 @@ import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
 import Icon from 'components/Icon';
 import MultiSelect from 'components/MultiSelect';
 import Page from 'components/Page';
@@ -17,7 +18,6 @@ import {
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -67,7 +67,7 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
-  showArchived: false,
+  showArchived: 'Unarchived',
   states: [ ALL_VALUE ],
   username: undefined,
 };
@@ -111,7 +111,7 @@ const ExperimentList: React.FC = () => {
     const url = parseUrl(window.location.href);
 
     // archived
-    searchParams.append('archived', filters.showArchived ? '1' : '0');
+    searchParams.append('archived', filters.showArchived);
 
     // labels
     if (filters.labels && filters.labels.length > 0) {
@@ -163,7 +163,7 @@ const ExperimentList: React.FC = () => {
     // archived
     const archived = urlSearchParams.get('archived');
     if (archived != null) {
-      filters.showArchived = (archived === '1');
+      filters.showArchived = archived;
     }
 
     // labels
@@ -224,7 +224,9 @@ const ExperimentList: React.FC = () => {
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
   const hasFiltersApplied = useMemo(() => {
-    return filters.showArchived || !filters.states.includes(ALL_VALUE) || !!filters.username;
+    return filters.showArchived !== 'All' ||
+          !filters.states.includes(ALL_VALUE) ||
+          !!filters.username;
   }, [ filters ]);
 
   const experimentMap = useMemo(() => {
@@ -281,7 +283,9 @@ const ExperimentList: React.FC = () => {
       });
       const response = await getExperiments(
         {
-          archived: filters.showArchived ? undefined : false,
+          archived: filters.showArchived === 'All' ? undefined :
+            filters.showArchived === 'Unarchived' ? false :
+              true,
           description: search,
           labels: filters.labels?.length === 0 ? undefined : filters.labels,
           limit: pagination.limit,
@@ -367,7 +371,7 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
-  const handleArchiveChange = useCallback((value: boolean): void => {
+  const handleArchiveChange = useCallback((value: string): void => {
     handleFilterChange({ ...filters, showArchived: value });
   }, [ filters, handleFilterChange ]);
 
@@ -505,10 +509,7 @@ const ExperimentList: React.FC = () => {
             onChange={handleSearchChange}
           />
           <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
-            <Toggle
-              checked={filters.showArchived}
-              prefixLabel="Show Archived"
-              onChange={handleArchiveChange} />
+            <ArchiveSelectFilter value={filters.showArchived} onChange={handleArchiveChange} />
             <MultiSelect label="Labels" value={filters.labels} onChange={handleLabelsChange}>
               {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
             </MultiSelect>
