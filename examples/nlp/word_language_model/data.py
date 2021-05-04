@@ -106,14 +106,14 @@ class Corpus(object):
 class WikiTextDataset(Dataset):
     def __init__(
         self,
-        path: Path,
+        corpus: Corpus,
         batch_size: int = 20,
         valid: bool = False,
         use_cache: bool = True,
     ):
         self.batch_size = batch_size
         self.valid = valid
-        self.corpus = load_and_cache_dataset(path, use_cache)
+        self.corpus = corpus
         self.data = self.batchify()
 
     def batchify(self):
