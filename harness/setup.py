@@ -23,7 +23,7 @@ setup(
         "numpy>=1.16.2",
         "psutil",
         "pyzmq>=18.1.0",
-        "yogadl==0.1.3",
+        "yogadl==0.1.4",
         # Common:
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
