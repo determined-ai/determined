@@ -2,7 +2,7 @@ WITH filtered_exps AS (
     SELECT
         e.id AS id,
         COALESCE(NULLIF(e.config->>'name', ''), NULLIF(e.config->>'description', ''), 'Experiment ' ||  e.id) AS name,
-        e.config->>'note' AS note,
+        e.config->>'notes' AS notes,
         e.config->>'description' AS description,
         e.config->'labels' AS labels,
         e.config->'resources'->>'resource_pool' AS resource_pool,

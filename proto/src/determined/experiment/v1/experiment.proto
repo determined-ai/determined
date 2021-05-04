@@ -72,9 +72,9 @@ message Experiment {
   // The type of searcher for the experiment
   string searcher_type = 12;
   // The experiment name.
-  string name = 13;
-  // The experiment note.
-  string note = 14;
+  string name = 12;
+  // The experiment notes.
+  string notes = 13;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

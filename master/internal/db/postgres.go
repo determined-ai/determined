@@ -995,10 +995,10 @@ WHERE id = $1`, id)
 // 	dbResp := struct {
 // 		Config model.ExperimentConfig `db:"config"`
 // 		Name   string                 `db:"name"`
-// 		Note   string                 `db:"note"`
+// 		Notes   string                 `db:"notes"`
 // 	}{}
 // 	err := db.query(`
-// SELECT config, name, note
+// SELECT config, name, notes
 // FROM experiments
 // WHERE id = $1
 // `, &dbResp, id)
@@ -1007,7 +1007,7 @@ WHERE id = $1`, id)
 // 	}
 
 // 	dbResp.Config.Name = dbResp.Name
-// 	dbResp.Config.Note = dbResp.Note
+// 	dbResp.Config.Notes = dbResp.Notes
 // 	return &dbResp.Config, nil
 // }
 

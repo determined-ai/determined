@@ -470,8 +470,8 @@ func (a *apiServer) PatchExperiment(
 		switch {
 		case path == "name":
 			exp.Name = req.Experiment.Name
-		case path == "note":
-			exp.Note = req.Experiment.Note
+		case path == "notes":
+			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
 		case path == "description":
@@ -486,7 +486,7 @@ func (a *apiServer) PatchExperiment(
 	type experimentPatch struct {
 		Labels      []string `json:"labels"`
 		Description string   `json:"description"`
-		Note        string   `json:"note"`
+		Notes       string   `json:"notes"`
 		Name        string   `json:"name"`
 	}
 	patches := experimentPatch{Labels: exp.Labels}
