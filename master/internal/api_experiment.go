@@ -590,6 +590,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	// TODO save user submitted config.
 	dbExp.OwnerID = &user.ID
 	e, err := newExperiment(a.m, dbExp, taskSpec)
 	if err != nil {
