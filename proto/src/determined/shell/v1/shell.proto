@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.shell.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/shellv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -41,4 +42,12 @@ message Shell {
   string username = 10;
   // The name of the resource pool the Shell was created in
   string resource_pool = 11;
+  // The config;
+  google.protobuf.Struct config = 12;
+  // The exit status;
+  string exit_status = 13;
+  // The addresses;
+  repeated google.protobuf.Struct addresses = 14;
+  // The agent user group;
+  google.protobuf.Struct agent_user_group = 15;
 }

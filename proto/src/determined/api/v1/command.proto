@@ -31,6 +31,8 @@ message GetCommandsRequest {
   int32 offset = 3;
   // Limit the number of commands. A value of 0 denotes no limit.
   int32 limit = 4;
+  // Limit commands to those that are owned by the specified users.
+  repeated string users = 5;
 }
 // Response to GetCommandsRequest.
 message GetCommandsResponse {

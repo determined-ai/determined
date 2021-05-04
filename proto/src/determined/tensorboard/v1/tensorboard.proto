@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.tensorboard.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/tensorboardv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -43,4 +44,8 @@ message Tensorboard {
   string service_address = 11;
   // The name of the resource pool the command was created in
   string resource_pool = 12;
+  // The config;
+  google.protobuf.Struct config = 13;
+  // The exit status;
+  string exit_status = 14;
 }

@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.command.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/commandv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -37,4 +38,8 @@ message Command {
   string username = 10;
   // The name of the resource pool the command was created in
   string resource_pool = 11;
+  // The config;
+  google.protobuf.Struct config = 12;
+  // The exit status;
+  string exit_status = 13;
 }
