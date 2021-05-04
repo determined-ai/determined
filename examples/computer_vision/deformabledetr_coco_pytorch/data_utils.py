@@ -42,9 +42,6 @@ def download_coco_from_source(data_dir):
         "http://images.cocodataset.org/zips/val2017.zip",
     ]
     async_download_url_list(url_list, data_dir)
-    done_path = os.path.join(data_dir, "done.txt")
-    with open(done_path, "w") as f:
-        f.write("done")
 
 
 if __name__ == "__main__":
