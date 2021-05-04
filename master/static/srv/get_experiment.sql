@@ -1,7 +1,7 @@
 SELECT
     e.id AS id,
-    COALESCE(e.name, e.config->>'description', CONCAT("Experiment ", e.id)) AS name,
-    e.note AS note,
+    COALESCE(NULLIF(e.config->>'name', ''), NULLIF(e.config->>'description', ''), 'Experiment ' ||  e.id) AS name,
+    e.config->>'note' AS note,
     e.config->>'description' AS description,
     e.config->'labels' AS labels,
     e.config->'resources'->>'resource_pool' as resource_pool,

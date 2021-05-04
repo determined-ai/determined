@@ -676,9 +676,9 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, name, note)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-				:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :name, :note)
+				:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
@@ -972,8 +972,8 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	return nil
 }
 
-// ExperimentConfigOriginal returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfigOriginal(id int) (*model.ExperimentConfig, error) {
+// ExperimentConfig returns the full config object for an experiment.
+func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments
@@ -988,27 +988,28 @@ WHERE id = $1`, id)
 	return &expConfig, nil
 }
 
-// ExperimentConfig returns the full config object for an experiment updated with the
+// TODO remove me: sticking with jsonb exp config
+// ExperimentConfigLatest returns the full config object for an experiment updated with the
 // latest user changes.
-func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
-	dbResp := struct {
-		Config model.ExperimentConfig `db:"config"`
-		Name   string                 `db:"name"`
-		Note   string                 `db:"note"`
-	}{}
-	err := db.query(`
-SELECT config, name, note
-FROM experiments
-WHERE id = $1
-`, &dbResp, id)
-	if err != nil {
-		return nil, err
-	}
+// func (db *PgDB) ExperimentConfigLatest(id int) (*model.ExperimentConfig, error) {
+// 	dbResp := struct {
+// 		Config model.ExperimentConfig `db:"config"`
+// 		Name   string                 `db:"name"`
+// 		Note   string                 `db:"note"`
+// 	}{}
+// 	err := db.query(`
+// SELECT config, name, note
+// FROM experiments
+// WHERE id = $1
+// `, &dbResp, id)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	dbResp.Config.Name = dbResp.Name
-	dbResp.Config.Note = dbResp.Note
-	return &dbResp.Config, nil
-}
+// 	dbResp.Config.Name = dbResp.Name
+// 	dbResp.Config.Note = dbResp.Note
+// 	return &dbResp.Config, nil
+// }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
 // with the given ID. Any step with a NULL end_time does not contribute. Elapsed time is

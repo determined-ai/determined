@@ -486,6 +486,8 @@ func (a *apiServer) PatchExperiment(
 	type experimentPatch struct {
 		Labels      []string `json:"labels"`
 		Description string   `json:"description"`
+		Note        string   `json:"note"`
+		Name        string   `json:"name"`
 	}
 	patches := experimentPatch{Labels: exp.Labels}
 	marshalledPatches, err := json.Marshal(patches)
@@ -497,8 +499,6 @@ func (a *apiServer) PatchExperiment(
 		"patch_experiment",
 		req.Experiment.Id,
 		marshalledPatches,
-		exp.Name,
-		exp.Note,
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
@@ -590,6 +590,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	// TODO save originial user submission req.Config
 	dbExp.OwnerID = &user.ID
 	e, err := newExperiment(a.m, dbExp, taskSpec)
 	if err != nil {
