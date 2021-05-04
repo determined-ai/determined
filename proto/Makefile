@@ -30,6 +30,7 @@ get-deps:
 	go install google.golang.org/grpc
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+	go mod tidy
 
 build/proto.stamp: $(source_files)
 	rm -rf build/proto pkg
