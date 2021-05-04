@@ -41,7 +41,7 @@ The page will automatically load and display new changes via [Hot Module Replace
 - `SERVER_ADDRESS`: If set, directs the WebUI to find the Determined cluster at this address.
 This allows users to host the WebUI on a separate server from Determined. This would need the target
 server to allow requests coming from the domain hosting the WebUI, aka CORS.
-- `PUBLIC_URL`: Indicates where the React assets are being served from relative to the root of the webserver.
+- `PUBLIC_URL`: Indicates where the React assets are being served from relative to the root of the webserver. Set this variable to an empty string to serve from `/`.
 This is set to `/det` by default for typical workflows in this project.  [More info](https://create-react-app.dev/docs/using-the-public-folder/)
 - `DET_NODE_ENV`: set this to `development` to skip some build optimizations when developing and building
 locally to lower build time.

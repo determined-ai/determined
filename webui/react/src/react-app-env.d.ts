@@ -21,4 +21,8 @@ export declare global {
     random(): T;
     sortAll(compareFn: (a: T, b: T) => number): Array<T>;
   }
+
+  interface Storage {
+    keys(): string[];
+  }
 }

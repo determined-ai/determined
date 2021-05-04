@@ -1,0 +1,21 @@
+.base {
+  background-color: rgba(0, 0, 0, 0.7);
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+
+  .bar {
+    left: 50%;
+    min-width: 50rem;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(max(40vw, 300px));
+
+    input {
+      border-radius: 3px;
+    }
+  }
+}
