@@ -2,4 +2,5 @@
 
 **Bug Fixes**
 
--  Fix trial environment dependency compatibility for ``websockets>=9.0``.
+-  Fix trial environment dependency compatibility for
+   ``websockets>=9.0``.
