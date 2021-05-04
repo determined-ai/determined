@@ -106,7 +106,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case TensorboardRequestWithUser:
-		summary, statusCode, err := t.processLaunchRequest(ctx, msg.User, &msg.Tensorboard)
+		summary, statusCode, err := t.processLaunchRequest(ctx, &msg.Tensorboard)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode,
 				errors.Wrap(err, "failed to launch Tensorboard").Error(),
@@ -121,22 +121,10 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 func (t *tensorboardManager) processLaunchRequest(
 	ctx *actor.Context,
-	user *model.User,
 	req *TensorboardRequest,
 ) (*summary, int, error) {
-	// Tensorboards always use zero slots. We need to know this when parsing the command
-	// request to make sure that we fill in the correct default value for 'slots' if the
-	// user didn't set it explicitly.
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), t.db, *user, req.CommandParams, t.makeTaskSpec, true,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &t.defaultAgentUserGroup
-	}
+	var err error
+	params := req.CommandParams
 
 	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
 		err = errors.New("must set experiment or trial ids")
@@ -146,7 +134,7 @@ func (t *tensorboardManager) processLaunchRequest(
 	ctx.Log().Infof("creating tensorboard (experiment id(s): %v trial id(s): %v)",
 		req.ExperimentIDs, req.TrialIDs)
 
-	b, err := t.newTensorBoard(commandReq, *req)
+	b, err := t.newTensorBoard(params, *req)
 
 	if err != nil {
 		err = errors.Wrap(err, "failed to create tensorboard")
@@ -169,7 +157,7 @@ func (t *tensorboardManager) processLaunchRequest(
 }
 
 func (t *tensorboardManager) newTensorBoard(
-	commandReq *commandRequest,
+	params *CommandParams,
 	req TensorboardRequest,
 ) (*command, error) {
 	// Warning! Since certain fields are incompatible with the current model.Experiment,
@@ -188,7 +176,7 @@ func (t *tensorboardManager) newTensorBoard(
 	var logDirs []string
 
 	additionalFiles := archive.Archive{
-		commandReq.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
@@ -201,7 +189,7 @@ func (t *tensorboardManager) newTensorBoard(
 	taskID := sproto.NewTaskID()
 	serviceAddress := fmt.Sprintf(tensorboardServiceAddress, taskID)
 
-	config := commandReq.Config
+	config := params.FullConfig
 
 	uniqEnvVars["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -267,14 +255,14 @@ func (t *tensorboardManager) newTensorBoard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, commandReq.TaskSpec.ClusterID, exp.ID)
+				logBasePath, params.TaskSpec.ClusterID, exp.ID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, commandReq.TaskSpec.ClusterID, exp.ID, id)
+				id, logBasePath, params.TaskSpec.ClusterID, exp.ID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -294,7 +282,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	additionalFiles = append(additionalFiles,
-		commandReq.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
+		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
@@ -324,12 +312,12 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
-	setPodSpec(&config, commandReq.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,
-		config:          config,
-		userFiles:       commandReq.UserFiles,
+		config:          *config,
+		userFiles:       params.UserFiles,
 		additionalFiles: additionalFiles,
 		metadata: map[string]interface{}{
 			"experiment_ids": req.ExperimentIDs,
@@ -341,9 +329,12 @@ func (t *tensorboardManager) newTensorBoard(
 			},
 		},
 		serviceAddress: &serviceAddress,
-		owner:          commandReq.Owner,
-		agentUserGroup: commandReq.AgentUserGroup,
-		taskSpec:       &commandReq.TaskSpec,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		db: t.db,
 	}, nil

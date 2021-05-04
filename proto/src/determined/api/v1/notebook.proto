@@ -95,11 +95,13 @@ message LaunchNotebookRequest {
   string template_name = 2;
   // The files to run with the command.
   repeated determined.util.v1.File files = 3;
+  // Preview a launching request without actually creating a Notebook.
+  bool preview = 4;
 }
 // Response to LaunchNotebookRequest.
 message LaunchNotebookResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "notebook" ] }
+    json_schema: { required: [ "notebook", "config" ] }
   };
   // The requested notebook.
   determined.notebook.v1.Notebook notebook = 1;

@@ -84,7 +84,7 @@ message LaunchTensorboardRequest {
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "tensorboard" ] }
+    json_schema: { required: [ "tensorboard", "config" ] }
   };
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
