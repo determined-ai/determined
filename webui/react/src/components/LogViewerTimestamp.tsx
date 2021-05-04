@@ -121,6 +121,31 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
     const newLogs = addedLogs
       .map(log => {
+        // Try to handle TQDM gracefully, even though that isn't really possible from the rendering side
+        if (log.message.includes('\r')) {
+          // TQDM doesn't write new lines so fluent interprets each TQDM update as more characters on the
+          // same line. This info won't be flushed to the logs backend until it hits some max size limit
+          // where it gets flushed to the logs backend even though the line is still in-progress.
+          // Then it shows up in the log backend as one huge line with \r separating TQDM updates from
+          // each other. The best we can do is to show the most recent update rather than trying to show
+          // all of them (which is the cause of the rendering bug where the log line is so huge, the
+          // webui gives it a ridiculous height and it shows up as a blank section in the logs).
+          //
+          // Fluent is convinced that all of the TQDM updates are part of the same log line which share a
+          // single timestamp. As more of the TQDM data makes it into the log store due to the max log line
+          // size setting, the new TQDM updates won't be added to the bottom of the logs viewer, they
+          // will be added to the same area as the first TQDM log line because they share the same timestamp.
+          //
+          // The correct solution to TQDM is to build a custom integration that has a newline behavior that
+          // works well with Determined/Fluent - https://github.com/tqdm/tqdm#custom-integration
+          //
+          // But with this PR, TQDM will no longer ruin the entire log viewer, only TQDM will be weird.
+          //
+          // Fingers crossed no one is actually trying to use \r in their logs.
+          const tqdm_lines = log.message.split('\r');
+          // The last line might not be a full progress bar - use the second last line
+          log.message = tqdm_lines[tqdm_lines.length - 2];
+        }
         const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
         return { ...log, formattedTime };
       })
