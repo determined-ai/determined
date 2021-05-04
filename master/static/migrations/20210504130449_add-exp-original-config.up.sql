@@ -1,1 +1,1 @@
-ALTER TABLE public.experiments ADD COLUMN config_original;
+ALTER TABLE public.experiments ADD COLUMN original_config bytea;
