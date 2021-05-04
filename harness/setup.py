@@ -31,7 +31,6 @@ setup(
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
-        "ruamel.yaml>=0.15.78",
         "simplejson",
         "termcolor>=1.1.0",
         # boto3 1.14.11+ has consistent urllib3 requirements which we have to manually resolve.
@@ -46,8 +45,9 @@ setup(
         "gitpython>=3.1.3",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil",
-        "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
+        # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
+        "ruamel.yaml>=0.15.29",
         # Deploy
         "docker[ssh]>=3.7.3",
         "google-api-python-client>=1.12.1",
