@@ -1,5 +1,7 @@
 SELECT
     e.id AS id,
+    /* TODO We could either do this and rely that we go through the apis that use this query
+     (eg update cli) or migrate older experiments in database (one way). Look at model defaults */
     COALESCE(NULLIF(e.config->>'name', ''), NULLIF(e.config->>'description', ''), 'Experiment ' ||  e.id) AS name,
     e.config->>'notes' AS notes,
     e.config->>'description' AS description,
