@@ -530,10 +530,12 @@ def set_description(args: Namespace) -> None:
     patch_experiment(args, "change description of", {"description": args.description})
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
 
+
 @authentication_required
 def set_name(args: Namespace) -> None:
     patch_experiment(args, "change name of", {"name": args.name})
     print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
+
 
 @authentication_required
 def add_label(args: Namespace) -> None:

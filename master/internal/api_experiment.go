@@ -489,7 +489,12 @@ func (a *apiServer) PatchExperiment(
 		Notes       string   `json:"notes"`
 		Name        string   `json:"name"`
 	}
-	patches := experimentPatch{Labels: exp.Labels}
+	patches := experimentPatch{
+		Labels:      exp.Labels,
+		Description: exp.Description,
+		Notes:       exp.Notes,
+		Name:        exp.Name,
+	}
 	marshalledPatches, err := json.Marshal(patches)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal experiment patches")
