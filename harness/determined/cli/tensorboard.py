@@ -58,7 +58,7 @@ def start_tensorboard(args: Namespace) -> None:
     if args.context is not None:
         req_body["user_files"], _ = context.read_context(args.context, constants.MAX_CONTEXT_SIZE)
 
-    resp = api.post(args.master, "tensorboard", body=req_body).json()
+    resp = api.post(args.master, "api/v1/tensorboards", body=req_body).json()
 
     if args.detach:
         print(resp["id"])
@@ -87,7 +87,7 @@ def start_tensorboard(args: Namespace) -> None:
 
 @authentication_required
 def open_tensorboard(args: Namespace) -> None:
-    resp = api.get(args.master, "tensorboard/{}".format(args.tensorboard_id)).json()
+    resp = api.get(args.master, "api/v1/tensorboards/{}".format(args.tensorboard_id)).json()
     tensorboard = render.unmarshal(Command, resp)
     check_eq(tensorboard.state, "RUNNING", "TensorBoard must be in a running state")
     api.open(args.master, resp["service_address"])
@@ -112,7 +112,7 @@ def list_tensorboards(args: Namespace) -> None:
 
     commands = [
         render.unmarshal(Command, command)
-        for command in api.get(args.master, "tensorboard", params=params).json().values()
+        for command in api.get(args.master, "api/v1/tensorboards", params=params).json().values()
     ]
 
     if args.quiet:
@@ -127,7 +127,7 @@ def list_tensorboards(args: Namespace) -> None:
 def kill_tensorboard(args: Namespace) -> None:
     for i, tid in enumerate(args.tensorboard_id):
         try:
-            api.delete(args.master, "tensorboard/{}".format(tid))
+            api.delete(args.master, "api/v1/tensorboards/{}".format(tid))
             print(colored("Killed tensorboard {}".format(tid), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -139,7 +139,7 @@ def kill_tensorboard(args: Namespace) -> None:
 
 @authentication_required
 def tensorboard_config(args: Namespace) -> None:
-    res_json = api.get(args.master, "tensorboard/{}".format(args.tensorboard_id)).json()
+    res_json = api.get(args.master, "api/v1/tensorboards/{}".format(args.tensorboard_id)).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
 

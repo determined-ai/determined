@@ -29,7 +29,7 @@ def start_notebook(args: Namespace) -> None:
 
     resp = launch_command(
         args.master,
-        "notebooks",
+        "api/v1/notebooks",
         config,
         args.template,
         context_path=args.context,
@@ -49,7 +49,7 @@ def start_notebook(args: Namespace) -> None:
 
 @authentication_required
 def open_notebook(args: Namespace) -> None:
-    resp = api.get(args.master, "notebooks/{}".format(args.notebook_id)).json()
+    resp = api.get(args.master, "api/v1/notebooks/{}".format(args.notebook_id)).json()
     notebook = render.unmarshal(Command, resp)
     check_eq(notebook.state, "RUNNING", "Notebook must be in a running state")
     api.open(args.master, resp["service_address"])
@@ -72,7 +72,7 @@ def list_notebooks(args: Namespace) -> None:
 
     commands = [
         render.unmarshal(Command, command)
-        for command in api.get(args.master, "notebooks", params=params).json().values()
+        for command in api.get(args.master, "api/v1/notebooks", params=params).json().values()
     ]
 
     if args.quiet:
@@ -87,7 +87,7 @@ def list_notebooks(args: Namespace) -> None:
 def kill_notebook(args: Namespace) -> None:
     for i, nid in enumerate(args.notebook_id):
         try:
-            api.delete(args.master, "notebooks/{}".format(nid))
+            api.delete(args.master, "api/v1/notebooks/{}".format(nid))
             print(colored("Killed notebook {}".format(nid), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -99,7 +99,7 @@ def kill_notebook(args: Namespace) -> None:
 
 @authentication_required
 def notebook_config(args: Namespace) -> None:
-    res_json = api.get(args.master, "notebooks/{}".format(args.id)).json()
+    res_json = api.get(args.master, "api/v1/notebooks/{}".format(args.id)).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
 

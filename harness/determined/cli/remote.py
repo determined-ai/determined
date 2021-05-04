@@ -28,7 +28,7 @@ def run_command(args: Namespace) -> None:
     config = parse_config(args.config_file, args.entrypoint, args.config, args.volume)
     resp = launch_command(
         args.master,
-        "commands",
+        "api/v1/commands",
         config,
         args.template,
         context_path=args.context,
@@ -53,7 +53,7 @@ def list_commands(args: Namespace) -> None:
         params = {"user": api.Authentication.instance().get_session_user()}
     commands = [
         render.unmarshal(Command, command)
-        for command in api.get(args.master, path="commands", params=params).json().values()
+        for command in api.get(args.master, path="api/v1/commands", params=params).json().values()
     ]
 
     if args.quiet:
@@ -80,7 +80,7 @@ def tail_command_logs(args: Namespace) -> None:
 def kill_command(args: Namespace) -> None:
     for i, cid in enumerate(args.command_id):
         try:
-            api.delete(args.master, "commands/{}".format(cid))
+            api.delete(args.master, "api/v1/commands/{}".format(cid))
             print(colored("Killed command {}".format(cid), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -92,7 +92,7 @@ def kill_command(args: Namespace) -> None:
 
 @authentication_required
 def command_config(args: Namespace) -> None:
-    res_json = api.get(args.master, "commands/{}".format(args.id)).json()
+    res_json = api.get(args.master, "api/v1/commands/{}".format(args.id)).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
 

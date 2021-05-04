@@ -36,7 +36,7 @@ def start_shell(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
     resp = launch_command(
         args.master,
-        "shells",
+        "api/v1/shells",
         config,
         args.template,
         context_path=args.context,
@@ -61,7 +61,7 @@ def start_shell(args: Namespace) -> None:
 @authentication_required
 def open_shell(args: Namespace) -> None:
     shell = render.unmarshal(
-        Command, api.get(args.master, "shells/{}".format(args.shell_id)).json()
+        Command, api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()
     )
     check_eq(shell.state, "RUNNING", "Shell must be in a running state")
     _open_shell(args.master, shell, args.ssh_opts)
@@ -126,7 +126,7 @@ def list_shells(args: Namespace) -> None:
         params = {"user": api.Authentication.instance().get_session_user()}
     commands = [
         render.unmarshal(Command, command)
-        for command in api.get(args.master, "shells", params=params).json().values()
+        for command in api.get(args.master, "api/v1/shells", params=params).json().values()
     ]
 
     if args.quiet:
@@ -141,7 +141,7 @@ def list_shells(args: Namespace) -> None:
 def kill_shell(args: Namespace) -> None:
     for i, nid in enumerate(args.shell_id):
         try:
-            api.delete(args.master, "shells/{}".format(nid))
+            api.delete(args.master, "api/v1/shells/{}".format(nid))
             print(colored("Killed shell {}".format(nid), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -153,7 +153,7 @@ def kill_shell(args: Namespace) -> None:
 
 @authentication_required
 def shell_config(args: Namespace) -> None:
-    res_json = api.get(args.master, "shells/{}".format(args.id)).json()
+    res_json = api.get(args.master, "api/v1/shells/{}".format(args.id)).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
 

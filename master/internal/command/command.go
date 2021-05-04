@@ -3,11 +3,9 @@ package command
 import (
 	"fmt"
 	"math/rand"
-	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -256,26 +254,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
-	case echo.Context:
-		c.handleAPIRequest(ctx, msg)
-
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-// handleAPIRequest handles API requests inbound to this actor.
-func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, newSummary(c)))
-	case echo.DELETE:
-		c.terminate(ctx)
-		ctx.Respond(apiCtx.NoContent(http.StatusAccepted))
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
 }
 
 func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {

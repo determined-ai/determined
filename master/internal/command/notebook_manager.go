@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -167,42 +166,8 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		ctx.Respond(summary.ID)
-
-	case echo.Context:
-		n.handleAPIRequest(ctx, msg)
 	}
 	return nil
-}
-
-func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		req := NotebookLaunchRequest{
-			User:          &user,
-			CommandParams: &params,
-		}
-		summary, statusCode, err := n.processLaunchRequest(ctx, req)
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
 }
 
 func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
