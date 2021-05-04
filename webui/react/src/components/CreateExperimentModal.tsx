@@ -70,7 +70,7 @@ const CreateExperimentModal: React.FC<Props> = ({
       newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
     }
 
-    return yaml.safeDump(newConfig);
+    return yaml.dump(newConfig);
   }, [ config, form, maxLengthType ]);
 
   const handleShowForm = useCallback(() => {
@@ -88,7 +88,7 @@ const CreateExperimentModal: React.FC<Props> = ({
 
     // Validate the yaml syntax by attempting to load it.
     try {
-      const newConfig = (yaml.safeLoad(newConfigString) || {}) as RawJson;
+      const newConfig = (yaml.load(newConfigString) || {}) as RawJson;
 
       form.setFields([
         { name: 'description', value: getExperimentName(newConfig) },
@@ -121,7 +121,7 @@ const CreateExperimentModal: React.FC<Props> = ({
   }, [ form, onCancel ]);
 
   useEffect(() => {
-    setLocalConfig(yaml.safeDump(config));
+    setLocalConfig(yaml.dump(config));
   }, [ config ]);
 
   return isAdvancedMode ? (
