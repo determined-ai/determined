@@ -1843,12 +1843,12 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              parallelism: [2]
               gpu-agent-instance-type: ["p2.8xlarge"]
               cpu-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["parallel"]
+              cluster-id-prefix: ["model-hub"]
               mark: ["model_hub"]
               slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
