@@ -2,7 +2,7 @@
 export PUBLIC_URL ?= /det
 export ESLINT_NO_DEV_ERRORS ?= true
 swagger_client := src/services/swagger
-source_files := $(shell find src -type f)
+source_files := $(shell find src public -type f)
 ts_bindings_src := ../../bindings/build/typescript-fetch
 ts_bindings_dest := src/services/api-ts-sdk
 ts_bindings := $(shell find $(ts_bindings_src) -type f)
