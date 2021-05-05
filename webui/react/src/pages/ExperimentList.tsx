@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import { SorterResult } from 'antd/es/table/interface';
+import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
@@ -16,9 +16,10 @@ import {
   getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
+import TableFilterDropdown from 'components/TableFilterDropdown';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import UserSelectFilter from 'components/UserSelectFilter';
+import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -69,7 +70,7 @@ const STORAGE_SORTER_KEY = 'sorter';
 const defaultFilters: ExperimentFilters = {
   showArchived: 'unarchived',
   states: [ ALL_VALUE ],
-  username: undefined,
+  users: undefined,
 };
 
 const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
@@ -78,14 +79,14 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 };
 
 const ExperimentList: React.FC = () => {
-  const { auth } = useStore();
+  const { auth, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
     (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
       ...defaultFilters,
-      username: auth.user?.username,
+      users: [ auth.user?.username ],
     },
   );
   const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
@@ -147,8 +148,12 @@ const ExperimentList: React.FC = () => {
       searchParams.append('state', URL_ALL);
     }
 
-    // username
-    searchParams.append('username', filters.username || URL_ALL);
+    // users
+    if (filters.users && filters.users.length > 0) {
+      filters.users.forEach(user => searchParams.append('user', user));
+    } else {
+      searchParams.append('user', URL_ALL);
+    }
 
     window.history.pushState(
       {},
@@ -218,10 +223,10 @@ const ExperimentList: React.FC = () => {
       filters.states = (states.includes(URL_ALL) ? [ ALL_VALUE ] : states);
     }
 
-    // username
-    const username = urlSearchParams.get('username');
-    if (username != null) {
-      filters.username = (username === URL_ALL ? '' : username);
+    // users
+    if (urlSearchParams.get('user') != null) {
+      const users = urlSearchParams.getAll('user');
+      filters.users = (users.includes(URL_ALL) ? [ ALL_VALUE ] : users);
     }
 
     setFilters(filters);
@@ -288,6 +293,7 @@ const ExperimentList: React.FC = () => {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         return encodeExperimentState(state as RunState) as any;
       });
+      const users = filters.users?.filter(user => user !== ALL_VALUE) || undefined;
       const response = await getExperiments(
         {
           archived: filters.showArchived === ALL_VALUE ? undefined :
@@ -300,7 +306,7 @@ const ExperimentList: React.FC = () => {
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
           states,
-          users: filters.username ? [ filters.username ] : undefined,
+          users,
         },
         { signal: canceler.signal },
       );
@@ -336,6 +342,29 @@ const ExperimentList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
+  const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
+    storage.set(STORAGE_FILTERS_KEY, filters);
+    setSelectedRowKeys([]);
+    setFilters(filters);
+    setPagination(prev => ({ ...prev, offset: 0 }));
+  }, [ setFilters, storage ]);
+
+  const handleUserFilterApply = useCallback((users: string[]) => {
+    handleFilterChange({ ...filters, users });
+  }, [ handleFilterChange, filters ]);
+
+  const handleUserFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, users: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      values={filters.users}
+      onFilter={handleUserFilterApply}
+      onReset={handleUserFilterReset} />
+  ), [ filters, handleUserFilterApply, handleUserFilterReset ]);
+
   const columns = useMemo(() => {
     const nameRenderer = (value: string, record: ExperimentItem) => (
       <div className={css.nameColumn}>
@@ -356,6 +385,10 @@ const ExperimentList: React.FC = () => {
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === V1GetExperimentsRequestSortBy.DESCRIPTION) column.render = nameRenderer;
       if (column.key === 'action') column.render = actionRenderer;
+      if (column.key === V1GetExperimentsRequestSortBy.USER) {
+        column.filterDropdown = userFilterDropdown;
+        column.filters = users.map(user => ({ text: user.username, value: user.username }));
+      }
       return column;
     });
 
@@ -364,6 +397,8 @@ const ExperimentList: React.FC = () => {
     handleActionComplete,
     experimentTags,
     sorter,
+    userFilterDropdown,
+    users,
   ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -378,19 +413,13 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
-  const handleArchiveChange =
-  useCallback((value: ArchiveFilters): void => {
+  const handleArchiveChange = useCallback((value: ArchiveFilters): void => {
     handleFilterChange({ ...filters, showArchived: value });
   }, [ filters, handleFilterChange ]);
 
   const handleStateChange = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
     handleFilterChange({ ...filters, states: [ value ] });
-  }, [ filters, handleFilterChange ]);
-
-  const handleUserChange = useCallback((value: SelectValue) => {
-    const username = value === ALL_VALUE ? undefined : value as string;
-    handleFilterChange({ ...filters, username });
   }, [ filters, handleFilterChange ]);
 
   const handleLabelsChange = useCallback((newValue: SelectValue) => {
@@ -510,6 +539,8 @@ const ExperimentList: React.FC = () => {
         <div className={css.header}>
           <Input
             allowClear
+            aria-label="Search Filters"
+            autoFocus
             className={css.search}
             placeholder="name"
             prefix={<Icon name="search" size="small" />}
@@ -525,7 +556,6 @@ const ExperimentList: React.FC = () => {
               showCommandStates={false}
               value={filters.states}
               onChange={handleStateChange} />
-            <UserSelectFilter value={filters.username} onChange={handleUserChange} />
           </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>

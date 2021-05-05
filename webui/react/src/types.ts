@@ -460,7 +460,7 @@ export interface ExperimentFilters {
   labels?: string[];
   showArchived: ArchiveFilters;
   states: string[];
-  username?: string;
+  users?: string[];
 }
 
 export interface TaskFilters<T extends TaskType = TaskType> {
