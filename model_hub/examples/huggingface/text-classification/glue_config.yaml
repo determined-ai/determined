@@ -1,34 +1,45 @@
-description: huggingface_ner_trial
+# Metrics differ for different tasks.
+# | task | metric               |
+# | cola | matthews_correlation |
+# | sst2 | accuracy             |
+# | mrpc | accuracy or f1       |
+# | stsb | pearson or spearmanr |
+# | qqp  | accuracy or f1       |
+# | mnli | accuracy             |
+# | qnli | accuracy             |
+# | rte  | accuracy             |
+# | wnli | accuracy             |
+description: huggingface_glue_trial
 hyperparameters:
-  pretrained_model_name_or_path: bert-base-uncased
-  model_mode: token-classification
-  finetuning_task: ner
+  pretrained_model_name_or_path: bert-base-cased
+  model_mode: sequence-classification
+  finetuning_task: cola
   use_pretrained_weights: true
-  use_apex_amp: false
+  use_apex_amp: true
   # Training Args
-  global_batch_size: 8
-  learning_rate: 5e-5
+  global_batch_size: 32
+  learning_rate: 3e-5
   adam_epsilon: 1e-8
   weight_decay: 0
   lr_scheduler_type: linear
   num_warmup_steps: 0
 data:
-  dataset_name: conll2003
-  dataset_config_name: null
+  dataset_name: glue
+  dataset_config_name: cola
+  max_seq_length: 128
   train_file: null
   validation_file: null
   preprocessing_num_workers: null
   cache_dir: null
   overwrite_cache: false
-  pad_to_max_length: false
-  label_all_tokens: false
+  pad_to_max_length: true
 # Number of records per epoch differs based on max_seq_length.
-records_per_epoch: 14041
+records_per_epoch: 8551
 min_validation_period:
   batches: 500
 searcher:
   name: single
-  metric: accuracy_score
+  metric: matthews_correlation
   max_length:
     epochs: 3
   smaller_is_better: false
@@ -41,4 +52,4 @@ resources:
 bind_mounts:
   - host_path: /tmp
     container_path: /root/.cache
-entrypoint: ner_trial:NERTrial
+entrypoint: glue_trial:GLUETrial

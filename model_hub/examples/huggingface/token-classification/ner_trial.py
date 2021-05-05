@@ -22,7 +22,7 @@ class NERTrial(hf.BaseTransformerTrial):
         # because we need to know num_labels before doing so.
         self.raw_datasets = hf.default_load_dataset(self.data_config)
         datasets_metadata = ner_utils.get_dataset_metadata(self.raw_datasets, self.hparams)
-        self.hparams["num_labels"] = datasets_metadata.num_labels
+        self.hparams.num_labels = datasets_metadata.num_labels
 
         super(NERTrial, self).__init__(context)
         self.logger.info(self.config)
