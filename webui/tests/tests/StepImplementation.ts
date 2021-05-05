@@ -330,7 +330,7 @@ export default class StepImplementation {
 
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
-    await t.click(t.text('Show Archived'));
+    await t.click(t.text('Show'));
   }
 
   /* Experiment Detail Page Steps */
