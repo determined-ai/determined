@@ -48,7 +48,15 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
-func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
+// TODO separate api for posting notes
+// TODO fetch notes in one or two queries
+
+// type ExtendedExp struct {
+// 	experimentv1.Experiment
+// 	Notes string `protobuf:"bytes,13,opt,name=notes,proto3" json:"notes,omitempty"`
+// }
+
+func (a *apiServer) getExperiment(experimentID int) (*ExtendedExp, error) {
 	exp := &experimentv1.Experiment{}
 	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
 	case err == db.ErrNotFound:
@@ -73,7 +81,11 @@ func (a *apiServer) GetExperiment(
 		return nil, errors.Wrapf(err,
 			"error fetching experiment config from database: %d", req.ExperimentId)
 	}
-	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(config)}, nil
+	return &apiv1.GetExperimentResponse{
+		Experiment: &exp.Experiment,
+		Config:     protoutils.ToStruct(config),
+		Notes:      exp.Notes,
+	}, nil
 }
 
 func (a *apiServer) DeleteExperiment(
@@ -505,8 +517,6 @@ func (a *apiServer) PatchExperiment(
 		switch {
 		case path == "name":
 			exp.Name = req.Experiment.Name
-		case path == "notes":
-			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
 		case path == "description":
@@ -514,7 +524,7 @@ func (a *apiServer) PatchExperiment(
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
+				"only 'name', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
 
@@ -537,7 +547,6 @@ func (a *apiServer) PatchExperiment(
 		"patch_experiment",
 		req.Experiment.Id,
 		marshalledPatches,
-		exp.Notes,
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
@@ -642,7 +651,7 @@ func (a *apiServer) CreateExperiment(
 		return nil, err
 	}
 	return &apiv1.CreateExperimentResponse{
-		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
+		Experiment: &protoExp.Experiment, Config: protoutils.ToStruct(e.Config),
 	}, nil
 }
 
