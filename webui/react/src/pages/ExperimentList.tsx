@@ -5,12 +5,12 @@ import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
+import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import MultiSelect from 'components/MultiSelect';
 import Page from 'components/Page';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
-import StateSelectFilter from 'components/StateSelectFilter';
 import {
   defaultRowClassName, ExperimentRenderer,
   getFullPaginationConfig, MINIMUM_PAGE_SIZE,
@@ -36,7 +36,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum } from 'services/utils';
 import {
-  ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
@@ -69,7 +69,7 @@ const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
   showArchived: 'unarchived',
-  states: [ ALL_VALUE ],
+  states: undefined,
   users: undefined,
 };
 
@@ -220,13 +220,13 @@ const ExperimentList: React.FC = () => {
     // states
     if (urlSearchParams.get('state') != null) {
       const states = urlSearchParams.getAll('state');
-      filters.states = (states.includes(URL_ALL) ? [ ALL_VALUE ] : states);
+      filters.states = (states.includes(URL_ALL) ? undefined : states);
     }
 
     // users
     if (urlSearchParams.get('user') != null) {
       const users = urlSearchParams.getAll('user');
-      filters.users = (users.includes(URL_ALL) ? [ ALL_VALUE ] : users);
+      filters.users = (users.includes(URL_ALL) ? undefined : users);
     }
 
     setFilters(filters);
@@ -236,9 +236,7 @@ const ExperimentList: React.FC = () => {
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
   const hasFiltersApplied = useMemo(() => {
-    return filters.showArchived !== ALL_VALUE ||
-          !filters.states.includes(ALL_VALUE) ||
-          !!filters.username;
+    return filters.showArchived !== ALL_VALUE || !!filters.states || !!filters.users;
   }, [ filters ]);
 
   const experimentMap = useMemo(() => {
@@ -289,11 +287,10 @@ const ExperimentList: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
+      const states = !filters.states ? undefined : filters.states.map(state => {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         return encodeExperimentState(state as RunState) as any;
       });
-      const users = filters.users?.filter(user => user !== ALL_VALUE) || undefined;
       const response = await getExperiments(
         {
           archived: filters.showArchived === ALL_VALUE ? undefined :
@@ -306,7 +303,7 @@ const ExperimentList: React.FC = () => {
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
           states,
-          users,
+          users: filters.users,
         },
         { signal: canceler.signal },
       );
@@ -349,6 +346,22 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
+  const handleStateFilterApply = useCallback((states: string[]) => {
+    handleFilterChange({ ...filters, states });
+  }, [ handleFilterChange, filters ]);
+
+  const handleStateFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, states: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      values={filters.states}
+      onFilter={handleStateFilterApply}
+      onReset={handleStateFilterReset} />
+  ), [ filters, handleStateFilterApply, handleStateFilterReset ]);
+
   const handleUserFilterApply = useCallback((users: string[]) => {
     handleFilterChange({ ...filters, users });
   }, [ handleFilterChange, filters ]);
@@ -385,6 +398,15 @@ const ExperimentList: React.FC = () => {
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === V1GetExperimentsRequestSortBy.DESCRIPTION) column.render = nameRenderer;
       if (column.key === 'action') column.render = actionRenderer;
+      if (column.key === V1GetExperimentsRequestSortBy.STATE) {
+        column.filterDropdown = stateFilterDropdown;
+        column.filters = Object.values(RunState)
+          .filter(value => value !== RunState.Unspecified)
+          .map((value) => ({
+            text: <Badge state={value} type={BadgeType.State} />,
+            value,
+          }));
+      }
       if (column.key === V1GetExperimentsRequestSortBy.USER) {
         column.filterDropdown = userFilterDropdown;
         column.filters = users.map(user => ({ text: user.username, value: user.username }));
@@ -397,6 +419,7 @@ const ExperimentList: React.FC = () => {
     handleActionComplete,
     experimentTags,
     sorter,
+    stateFilterDropdown,
     userFilterDropdown,
     users,
   ]);
@@ -415,11 +438,6 @@ const ExperimentList: React.FC = () => {
 
   const handleArchiveChange = useCallback((value: ArchiveFilters): void => {
     handleFilterChange({ ...filters, showArchived: value });
-  }, [ filters, handleFilterChange ]);
-
-  const handleStateChange = useCallback((value: SelectValue): void => {
-    if (typeof value !== 'string') return;
-    handleFilterChange({ ...filters, states: [ value ] });
   }, [ filters, handleFilterChange ]);
 
   const handleLabelsChange = useCallback((newValue: SelectValue) => {
@@ -552,10 +570,6 @@ const ExperimentList: React.FC = () => {
             <MultiSelect label="Labels" value={filters.labels} onChange={handleLabelsChange}>
               {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
             </MultiSelect>
-            <StateSelectFilter
-              showCommandStates={false}
-              value={filters.states}
-              onChange={handleStateChange} />
           </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>

@@ -459,7 +459,7 @@ export type ArchiveFilters = typeof ALL_VALUE | 'archived' | 'unarchived'
 export interface ExperimentFilters {
   labels?: string[];
   showArchived: ArchiveFilters;
-  states: string[];
+  states?: string[];
   users?: string[];
 }
 
