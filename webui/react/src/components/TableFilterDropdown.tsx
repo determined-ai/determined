@@ -13,6 +13,7 @@ interface Props extends FilterDropdownProps {
   onReset?: () => void;
   searchable?: boolean;
   values?: string[];
+  width?: number;
 }
 
 const ITEM_HEIGHT = 28;
@@ -26,6 +27,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   searchable,
   values = [],
   visible,
+  width = 160,
 }: Props) => {
   const [ search, setSearch ] = useState('');
   const [ selectedMap, setSelectedMap ] = useState<Record<string, boolean>>({});
@@ -81,7 +83,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         style={style}
         onClick={handleOptionClick}>
         <span>{data[index].text}</span>
-        {isSelected && <Icon name="checkmark" />}
+        <Icon name="checkmark" />
       </div>
     );
   }, [ handleOptionClick, selectedMap ]);
@@ -102,7 +104,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   }, [ prevVisible, values, visible ]);
 
   return (
-    <div className={css.base}>
+    <div className={css.base} style={{ width }}>
       {searchable && (
         <div className={css.search}>
           <Input

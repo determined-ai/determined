@@ -19,18 +19,23 @@
     background-color: var(--theme-colors-monochrome-15);
   }
   .option > * {
-    padding: var(--theme-sizes-layout-medium);
+    padding: 0 var(--theme-sizes-layout-medium);
     pointer-events: none;
   }
-  .options > *:first-child {
-    flex-grow: 1;
+  .option > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .option > [class*=Icon_base] {
+    display: none;
   }
   .option.selected {
     font-weight: bold;
   }
   .option.selected > [class*=Icon_base] {
     color: var(--theme-colors-action-normal);
-    flex-shrink: 0;
+    display: flex;
   }
   .footer {
     border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
