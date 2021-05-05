@@ -9,6 +9,10 @@ TRANSFORMERS_VERSION := 4.4.2
 DATASETS_VERSION := 1.5.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 
+# Example dirs
+HF_EXAMPLES := $(wildcard examples/huggingface/*/.)
+HF_EXAMPLES_DIRS := $(patsubst examples/huggingface/%/., build-examples/%.tgz, $(HF_EXAMPLES))
+
 .PHONY: clean
 clean:
 	rm -rf .pytest_cache/
@@ -17,12 +21,21 @@ clean:
 	rm -rf pip-wheel-metadata/
 	rm -rf dist/
 	rm -rf build/
+	rm -rf build-examples/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 	find . -type d -name .mypy_cache -prune -exec rm -rf {} \;
 
 .PHONY: build
 build:
 	python setup.py -q bdist_wheel
+
+.PHONY: examples
+examples: $(HF_EXAMPLES_DIRS)
+
+build-examples/%.tgz: examples/*/%/
+	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
+	mkdir -p $$(dirname "$@")
+	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
 .PHONY: publish
 publish:
@@ -86,4 +99,5 @@ build-docker: build-transformers
 
 .PHONY: publish-docker
 publish-docker: publish-transformers
+
 

@@ -122,6 +122,35 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`bert_glue_pytorch.tgz
          </examples/bert_glue_pytorch.tgz>`
 
+   -  -  PyTorch (:ref:`Model Hub Transformers
+         <model-hub-transformers>`)
+      -  WikiText-2
+      -  :download:`language-modeling.tgz
+         </examples/language-modeling.tgz>`
+
+   -  -  PyTorch (:ref:`Model Hub Transformers
+         <model-hub-transformers>`)
+      -  SWAG
+      -  :download:`multiple-choice.tgz </examples/multiple-choice.tgz>`
+
+   -  -  PyTorch (:ref:`Model Hub Transformers
+         <model-hub-transformers>`)
+      -  SQuAD v1 and v2
+      -  :download:`question-answering.tgz
+         </examples/question-answering.tgz>`
+
+   -  -  PyTorch (:ref:`Model Hub Transformers
+         <model-hub-transformers>`)
+      -  GLUE and XNLI
+      -  :download:`text-classification.tgz
+         </examples/text-classification.tgz>`
+
+   -  -  PyTorch (:ref:`Model Hub Transformers
+         <model-hub-transformers>`)
+      -  CoNLL-2003
+      -  :download:`token-classification.tgz
+         </examples/token-classification.tgz>`
+
 ************************
  HP Search Benchmarking
 ************************

@@ -7,6 +7,7 @@ SPHINXBUILD   = sphinx-build
 .PHONY: build-examples
 build-examples:
 	$(MAKE) -C ../examples build
+	$(MAKE) -C ../model_hub examples
 
 .PHONY: build-helm
 build-helm:
@@ -19,6 +20,7 @@ reference/attributions.txt: $(shell find ../tools/scripts/licenses -type f)
 build: build-examples build-helm reference/attributions.txt
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
+	cp ../model_hub/build-examples/* site/downloads/examples
 	mkdir -p site/downloads/helm
 	cp ../helm/build/* site/downloads/helm
 	$(MAKE) sp-html

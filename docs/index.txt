@@ -8,6 +8,7 @@
    reference/index
    faq
    examples
+   model-hub/index
    release-notes
 
 ###############
