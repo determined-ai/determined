@@ -112,9 +112,11 @@ class WikiTextDataset(Dataset):
         use_cache: bool = True,
     ):
         self.batch_size = batch_size
+        print(self.batch_size)
         self.valid = valid
         self.corpus = corpus
         self.data = self.batchify()
+        print("DATA SIZE:", self.data.size())
 
     def batchify(self):
         data = self.corpus.val if self.valid else self.corpus.train
@@ -138,6 +140,7 @@ class BatchSamp:
         self.data = dataset
         self.data_length = len(dataset) - 1
         self.bptt = bptt
+        print(self.bptt)
 
     def __len__(self):
         return self.data_length // self.bptt
@@ -145,4 +148,5 @@ class BatchSamp:
     def __iter__(self):
         for batch in range(0, self.data_length, self.bptt):
             seq_len = min(self.bptt, self.data_length - batch)
+            print("BATCH SIZE:", self.data[batch : batch + seq_len + 1].size())
             yield self.data[batch : batch + seq_len + 1]

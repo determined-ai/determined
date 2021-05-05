@@ -1,6 +1,6 @@
 description: Word_Language_Modeling_Transformer_1gpu
 hyperparameters:
-    global_batch_size: 20
+    global_batch_size: 1
     max_grad_norm: 0.25
     num_training_steps: 2983 # This is the number of optimizer steps. Train for 2 epochs
 resources:
@@ -9,13 +9,14 @@ searcher:
     name: single
     metric: validation_loss
     max_length:
-        epochs: 119320
+        records: 119320
     smaller_is_better: true
 min_validation_period:
     records: 2983
 data:
     use_bind_mount: True
     bind_mount_path: /mnt/data
+    batch_size: 20
 entrypoint: model_def:WordLanguageModelPyTorch
 optimizations:
     aggregation_frequency: 24
