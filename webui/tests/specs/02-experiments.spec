@@ -26,10 +26,11 @@ Specification to test the experiment list page.
 
 ## Filter experiments by archived
 
-* Toggle show archived button
-* Should have "4" table rows
-* Toggle show archived button
-* Should have "3" table rows
+# Temporarily disabled following cbafb09b1f600e329e6bfd1ca545accfadf060e7.
+# * Toggle show archived button
+# * Should have "4" table rows
+# * Toggle show archived button
+# * Should have "3" table rows
 
 ## Sign out
 
