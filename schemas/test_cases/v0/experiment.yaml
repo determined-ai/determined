@@ -83,6 +83,7 @@
       average_aggregated_gradients: true
       average_training_metrics: false
       gradient_compression: false
+      grad_updates_size_file: "/tmp/hi I am a size file"
       mixed_precision: O0
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
