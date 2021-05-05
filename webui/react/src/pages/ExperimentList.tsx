@@ -167,6 +167,7 @@ const ExperimentList: React.FC = () => {
 
     // archived
     const archived = urlSearchParams.get('archived');
+    const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
     if (archived !== null &&
       ((archiveOptions.includes(archived)))) {
       filters.showArchived = archived as ArchiveFilters;
