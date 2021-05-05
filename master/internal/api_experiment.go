@@ -24,9 +24,10 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -112,9 +113,12 @@ func (a *apiServer) DeleteExperiment(
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	exp.Config.CheckpointStorage.SaveExperimentBest = 0
-	exp.Config.CheckpointStorage.SaveTrialBest = 0
-	exp.Config.CheckpointStorage.SaveTrialLatest = 0
+	storage := exp.Config.CheckpointStorage()
+	storage.SetSaveExperimentBest(0)
+	storage.SetSaveTrialBest(0)
+	storage.SetSaveTrialLatest(0)
+	exp.Config.SetCheckpointStorage(storage)
+
 	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
 		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
 	}
@@ -254,17 +258,37 @@ func (a *apiServer) PreviewHPSearch(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
 	}
-	config := model.DefaultExperimentConfig(&a.m.config.TaskContainerDefaults)
-	if err = json.Unmarshal(bytes, &config); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
-	}
-	if err = check.Validate(config.Searcher); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment config: %s", err)
+
+	// Parse the provided experiment config.
+	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	sm := searcher.NewSearchMethod(config.Searcher)
-	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)
-	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
+	// Get the useful subconfigs for preview search.
+	if config.RawSearcher == nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration; missing searcher")
+	}
+	sc := *config.RawSearcher
+	hc := config.RawHyperparameters
+
+	// Apply any json-schema-defined defaults.
+	sc = schemas.WithDefaults(sc).(expconf.SearcherConfig)
+	hc = schemas.WithDefaults(hc).(expconf.Hyperparameters)
+
+	// Make sure the searcher config has all eventuallyRequired fields.
+	err = schemas.IsComplete(sc)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid searcher configuration")
+	}
+	err = schemas.IsComplete(hc)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid hyperparameters configuration")
+	}
+
+	sm := searcher.NewSearchMethod(sc)
+	s := searcher.NewSearcher(req.Seed, sm, hc)
+	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, sc.Metric())
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +296,7 @@ func (a *apiServer) PreviewHPSearch(
 	indexes := make(map[string]int)
 	toProto := func(op searcher.ValidateAfter) ([]*experimentv1.RunnableOperation, error) {
 		switch op.Length.Unit {
-		case model.Records:
+		case expconf.Records:
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
@@ -285,7 +309,7 @@ func (a *apiServer) PreviewHPSearch(
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 				},
 			}, nil
-		case model.Batches:
+		case expconf.Batches:
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
@@ -298,7 +322,7 @@ func (a *apiServer) PreviewHPSearch(
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 				},
 			}, nil
-		case model.Epochs:
+		case expconf.Epochs:
 			return []*experimentv1.RunnableOperation{
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
@@ -624,7 +648,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		return errors.Wrapf(err,
 			"error fetching experiment config from database: %d", experimentID)
 	}
-	searcherMetric := config.Searcher.Metric
+	searcherMetric := config.Searcher().Metric()
 
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
@@ -830,7 +854,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	}
 }
 
-func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherConfig) (
+func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.SearcherConfig) (
 	trials []int32, err error) {
 	type Ranking int
 	const (
@@ -839,27 +863,27 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s model.SearcherC
 	)
 	var ranking Ranking
 
-	switch {
-	case s.RandomConfig != nil:
+	switch s.GetUnionMember().(type) {
+	case expconf.RandomConfig:
 		ranking = ByMetricOfInterest
-	case s.GridConfig != nil:
+	case expconf.GridConfig:
 		ranking = ByMetricOfInterest
-	case s.AsyncHalvingConfig != nil:
+	case expconf.AsyncHalvingConfig:
 		ranking = ByTrainingLength
-	case s.AdaptiveASHAConfig != nil:
+	case expconf.AdaptiveASHAConfig:
 		ranking = ByTrainingLength
-	case s.SingleConfig != nil:
+	case expconf.SingleConfig:
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
-	case s.PBTConfig != nil:
+	case expconf.PBTConfig:
 		return nil, errors.New("population-based training not supported for trial sampling")
 	default:
 		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
 	}
 	switch ranking {
 	case ByMetricOfInterest:
-		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+		return a.m.db.TopTrialsByMetric(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
 	case ByTrainingLength:
-		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
+		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric(), s.SmallerIsBetter())
 	default:
 		panic("Invalid state in trial sampling")
 	}
@@ -956,7 +980,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	if err != nil {
 		return errors.Wrapf(err, "error fetching experiment config from database")
 	}
-	searcherConfig := config.Searcher
+	searcherConfig := config.Searcher()
 
 	trialCursors := make(map[int32]time.Time)
 	currentTrials := make(map[int32]bool)

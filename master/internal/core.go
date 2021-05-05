@@ -50,6 +50,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -445,7 +446,8 @@ func (m *Master) tryRestoreExperiment(sema chan struct{}, e *model.Experiment) {
 	defer func() { <-sema }()
 	// Check if the returned config is the zero value, i.e. the config could not be parsed
 	// correctly. If the config could not be parsed, mark the experiment as errored.
-	if !reflect.DeepEqual(e.Config, model.ExperimentConfig{}) {
+	// XXX: is this even slightly right??
+	if !reflect.DeepEqual(e.Config, expconf.ExperimentConfig{}) {
 		err := m.restoreExperiment(e)
 		if err == nil {
 			return
