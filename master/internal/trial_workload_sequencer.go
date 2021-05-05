@@ -115,23 +115,23 @@ func (s *trialWorkloadSequencer) SetTrialID(trialID int) {
 // only method to alter the snapshot, too.
 func (s *trialWorkloadSequencer) WorkloadCompleted(
 	msg workload.CompletedMessage, isBestValFunc func() bool,
-) (reportValidation bool, err error) {
+) (op *searcher.ValidateAfter, err error) {
 	// Checkpoints are allowed even if they were not specified by sequencer.workload(). This can
 	// occur after a call to precloseCheckpointWorkload or during a replay of a trial that was
 	// descheduled.
 	if s.UpToDate() {
 		if msg.Workload.Kind != workload.CheckpointModel {
-			return false, errors.Errorf(
+			return nil, errors.Errorf(
 				"illegal non-checkpoint workload completed message received: %s", msg.Workload)
 		}
 	} else {
 		w, err := s.Workload()
 		if err != nil {
-			return false, errors.Wrap(err, "error checking workload")
+			return nil, errors.Wrap(err, "error checking workload")
 		}
 		if msg.Workload != w {
 			if msg.Workload.Kind != workload.CheckpointModel {
-				return false, errors.Errorf(
+				return nil, errors.Errorf(
 					"illegal completed message received: expected checkpoint or %s, got %s", w, msg.Workload)
 			}
 		}
@@ -140,14 +140,14 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	switch msg.Workload.Kind {
 	case workload.RunStep:
 		s.runStepCompleted(msg)
-		return false, nil
+		return nil, nil
 	case workload.CheckpointModel:
 		s.checkpointModelCompleted(msg)
-		return false, nil
+		return nil, nil
 	case workload.ComputeValidationMetrics:
 		return s.computeValidationMetricsCompleted(msg, isBestValFunc)
 	default:
-		return false, errors.New("invalid operation for trialWorkloadSequencer")
+		return nil, errors.New("invalid operation for trialWorkloadSequencer")
 	}
 }
 
@@ -189,9 +189,9 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg workload.CompletedMessage)
 // completed COMPUTE_VALIDATION_METRICS worklaod.
 func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 	msg workload.CompletedMessage, isBestValFunc func() bool,
-) (reportValidation bool, err error) {
+) (op *searcher.ValidateAfter, err error) {
 	if msg.ValidationMetrics == nil {
-		return false, errors.New("missing validation metrics")
+		return nil, errors.New("missing validation metrics")
 	}
 	hadSearcherValidation := s.hasSearcherValidation()
 	s.BatchesSinceLastVal = 0
@@ -212,7 +212,10 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 		// If this we haven't run any more batches since we checkpointed, we can snapshot here, too.
 		s.snapshotState()
 	}
-	return hadSearcherValidation, nil
+	if hadSearcherValidation {
+		return &s.ops[s.CurOpIdx-1], nil
+	}
+	return nil, nil
 }
 
 // checkpointModelCompleted updates the internal state of the sequencer to account for a completed

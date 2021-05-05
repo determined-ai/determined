@@ -509,25 +509,23 @@ service Determined {
       tags: "Internal"
     };
   }
-  // Get the absolute training length until the searcher needs the trial to
-  // report a validation.
-  rpc GetTrialSearcherTrainUntil(GetTrialSearcherTrainUntilRequest)
-      returns (GetTrialSearcherTrainUntilResponse) {
+  // Get the current searcher operation.
+  rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
+      returns (GetCurrentTrialSearcherOperationResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/searcher/train_until"
+      get: "/api/v1/trials/{trial_id}/searcher/operation"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
   }
-  // Reports to the searcher that the trial has completed the current
-  // requested amount of training with the given searcher validation
-  // metric.
-  rpc ReportTrialSearcherValidation(ReportTrialSearcherValidationRequest)
-      returns (ReportTrialSearcherValidationResponse) {
+  // Reports to the searcher that the trial has completed the given searcher
+  // operation.
+  rpc CompleteTrialSearcherValidation(CompleteTrialSearcherValidationRequest)
+      returns (CompleteTrialSearcherValidationResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/searcher/report_validation"
-      body: "searcher_metric"
+      post: "/api/v1/trials/{trial_id}/searcher/completed_operation"
+      body: "completed_operation"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -539,7 +537,7 @@ service Determined {
   rpc ReportTrialSearcherEarlyExit(ReportTrialSearcherEarlyExitRequest)
       returns (ReportTrialSearcherEarlyExitResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/searcher/early_exit"
+      post: "/api/v1/trials/{trial_id}/early_exit"
       body: "early_exit"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -551,7 +549,7 @@ service Determined {
   rpc ReportTrialProgress(ReportTrialProgressRequest)
       returns (ReportTrialProgressResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/searcher/report_progress"
+      post: "/api/v1/trials/{trial_id}/progress"
       body: "progress"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

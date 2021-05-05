@@ -284,33 +284,34 @@ message TrialPreemptionSignalResponse {
   bool preempt = 1;
 }
 
-// Retrieves the current total length to train, requested by the searcher.
-message GetTrialSearcherTrainUntilRequest {
+// Retrieves the current searcher operation.
+message GetCurrentTrialSearcherOperationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
   };
   // The id of the trial.
   int32 trial_id = 1;
 }
-// Response to GetTrialSearcherTrainUntilRequest
-message GetTrialSearcherTrainUntilResponse {
-  // The length to train until the trial should report a validation.
-  determined.experiment.v1.TrainingLength length = 1;
+// Response to GetCurrentTrialSearcherOperationRequest
+message GetCurrentTrialSearcherOperationResponse {
+  // The current searcher operation.
+  determined.experiment.v1.SearcherOperation op = 1;
 }
 
 // Reports to the searcher that the trial has completed the current requested
 // amount of training.
-message ReportTrialSearcherValidationRequest {
+message CompleteTrialSearcherValidationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id", "searcher_metric" ] }
   };
   // The id of the trial.
   int32 trial_id = 1;
-  // The value of validation metric used to guide HP search.
-  double searcher_metric = 2;
+  // The completed operation.
+  determined.experiment.v1.CompleteValidateAfterOperation completed_operation =
+      2;
 }
-// Response to ReportTrialSearcherValidationRequest
-message ReportTrialSearcherValidationResponse {}
+// Response to CompleteTrialSearcherValidationRequest
+message CompleteTrialSearcherValidationResponse {}
 
 // Report a voluntary early exit to the searcher.
 message ReportTrialSearcherEarlyExitRequest {

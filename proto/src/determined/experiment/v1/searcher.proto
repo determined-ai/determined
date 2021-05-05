@@ -29,6 +29,31 @@ message TrainingLength {
   int32 length = 2;
 }
 
+// ValidateAfterOperation means the trial should train and validate after
+// training the given length.
+message ValidateAfterOperation {
+  // The length to train before reporting a validation.
+  TrainingLength length = 1;
+}
+
+// Used to complete a ValidateAfterOperation.
+message CompleteValidateAfterOperation {
+  // The ValidateAfterOperation being completed.
+  ValidateAfterOperation op = 1;
+  // The value of searcher metric associated with this completed metric.
+  // The metric provided should be the metric used to guide HP search.
+  double searcher_metric = 2;
+}
+
+// SearcherOperation is an operation issued by the searcher.
+message SearcherOperation {
+  // A searcher operation is one of the following operations.
+  oneof union {
+    // ValidateAfter is issued to tell a trial to train some then validate.
+    ValidateAfterOperation validate_after = 1;
+  }
+}
+
 // RunnableType defines the type of operation that should be executed by trial
 // runners.
 enum RunnableType {

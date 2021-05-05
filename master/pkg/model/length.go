@@ -14,6 +14,14 @@ import (
 // Unit is the type of unit for specifying lengths.
 type Unit string
 
+// All the units available for lengths.
+const (
+	Records     Unit = "records"
+	Batches     Unit = "batches"
+	Epochs      Unit = "epoches"
+	Unspecified Unit = "unspecified"
+)
+
 // ToProto converts the internal representation of a unit to protobuf.
 func (u Unit) ToProto() experimentv1.TrainingLength_Units {
 	switch u {
@@ -28,12 +36,19 @@ func (u Unit) ToProto() experimentv1.TrainingLength_Units {
 	}
 }
 
-// All the units available for lengths.
-const (
-	Records Unit = "records"
-	Batches Unit = "batches"
-	Epochs  Unit = "epoches"
-)
+// UnitFromProto returns a model.Unit from its protobuf representation.
+func UnitFromProto(u experimentv1.TrainingLength_Units) Unit {
+	switch u {
+	case experimentv1.TrainingLength_UNITS_RECORDS:
+		return Records
+	case experimentv1.TrainingLength_UNITS_BATCHES:
+		return Batches
+	case experimentv1.TrainingLength_UNITS_EPOCHS:
+		return Epochs
+	default:
+		return Unspecified
+	}
+}
 
 // PartialUnits represent partial epochs, batches or records where the Unit is implied.
 type PartialUnits float64
@@ -108,6 +123,14 @@ func (l Length) ToProto() *experimentv1.TrainingLength {
 	return &experimentv1.TrainingLength{
 		Units:  l.Unit.ToProto(),
 		Length: int32(l.Units),
+	}
+}
+
+// LengthFromProto returns a model.Length from its protobuf representation.
+func LengthFromProto(l *experimentv1.TrainingLength) Length {
+	return Length{
+		Unit:  UnitFromProto(l.Units),
+		Units: int(l.Length),
 	}
 }
 

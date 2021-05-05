@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -27,7 +29,8 @@ type (
 		create searcher.Create
 		trialSnapshot
 	}
-	trialReportValidation struct {
+	trialCompleteOperation struct {
+		op     searcher.ValidateAfter
 		metric float64
 		trialSnapshot
 	}
@@ -44,11 +47,8 @@ type (
 	}
 
 	// Searcher-related messages.
-	trialTrainUntilReq struct {
+	trialGetCurrentOperation struct {
 		trialID int
-	}
-	trialTrainUntilResp struct {
-		length model.Length
 	}
 
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
@@ -214,11 +214,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case trialReportValidation:
-		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric)
+	case trialCompleteOperation:
+		if msg.op != e.TrialCurrentOperation[msg.op.RequestID] &&
+			ctx.ExpectingResponse() {
+			ctx.Respond(api.AsErrBadRequest(
+				"expected op %v but received op %v",
+				e.TrialCurrentOperation[msg.requestID], msg.op,
+			))
+			return nil
+		}
+		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
+		if err != nil && ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 		e.processOperations(ctx, ops, err)
 	case trialQueryIsBestValidation:
 		ctx.Respond(e.isBestValidation(msg.validationMetrics))
@@ -229,18 +240,18 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
-	case trialTrainUntilReq:
+	case trialGetCurrentOperation:
 		requestID, ok := e.searcher.RequestID(msg.trialID)
 		if !ok {
-			ctx.Respond(errors.New("trial not found"))
+			ctx.Respond(api.AsErrNotFound("trial %d not found", msg.trialID))
+			return nil
 		}
 		if op, ok := e.TrialCurrentOperation[requestID]; ok {
-			ctx.Respond(trialTrainUntilResp{
-				length: op.Length,
-			})
-		} else {
-			ctx.Respond(fmt.Errorf("trial %d has no operations", msg.trialID))
+			ctx.Respond(op)
+			return nil
 		}
+		ctx.Respond(api.AsErrNotFound("trial %d has no operations", msg.trialID))
+		return nil
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
 		// with the searcher.

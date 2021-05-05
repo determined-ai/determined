@@ -122,7 +122,7 @@ func Simulate(
 			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 
 			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
-			ops, err := s.ValidationCompleted(trialIDs[requestID], metric)
+			ops, err := s.ValidationCompleted(trialIDs[requestID], metric, operation)
 			if err != nil {
 				return simulation, err
 			}

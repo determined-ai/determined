@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -571,62 +574,77 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 }
 
-func (a *apiServer) GetTrialSearcherTrainUntil(
-	_ context.Context, req *apiv1.GetTrialSearcherTrainUntilRequest,
-) (*apiv1.GetTrialSearcherTrainUntilResponse, error) {
+func (a *apiServer) GetCurrentTrialSearcherOperation(
+	_ context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
+) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
 	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
 	if err != nil {
 		return nil, err
 	}
 
-	var resp trialTrainUntilResp
-	if err := a.askAtDefaultSystem(exp, trialTrainUntilReq{
+	var resp searcher.ValidateAfter
+	if err := a.askAtDefaultSystem(exp, trialGetCurrentOperation{
 		trialID: int(req.TrialId),
 	}, &resp); err != nil {
 		return nil, err
 	}
 
-	return &apiv1.GetTrialSearcherTrainUntilResponse{
-		Length: resp.length.ToProto(),
+	return &apiv1.GetCurrentTrialSearcherOperationResponse{
+		Op: &experimentv1.SearcherOperation{
+			Union: &experimentv1.SearcherOperation_ValidateAfter{
+				ValidateAfter: resp.ToProto(),
+			},
+		},
 	}, nil
 }
 
-func (a *apiServer) ReportTrialSearcherValidation(
-	_ context.Context, req *apiv1.ReportTrialSearcherValidationRequest,
-) (*apiv1.ReportTrialSearcherValidationResponse, error) {
-	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
-	if err != nil {
+func (a *apiServer) CompleteTrialSearcherValidation(
+	_ context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
+) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
 		return nil, err
 	}
+	exp := actor.Addr("experiments", eID)
 
 	// TODO(DET-5210): Sending a trial snapshot along forces an experiment snapshot,
 	// but with a nil snapshot it won't save the trial snapshot. At the end of push
 	// arch, we should just remove trial snapshots entirely (they should snapshotted
 	// but separately, not through/with experiments, since it's really just run id and restarts).
-	if err = a.askAtDefaultSystem(exp, trialReportValidation{
-		metric: req.SearcherMetric,
+	if err = a.askAtDefaultSystem(exp, trialCompleteOperation{
+		metric: req.CompletedOperation.SearcherMetric,
+		op:     searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
 		trialSnapshot: trialSnapshot{
-			trialID: int(req.TrialId),
+			trialID:   int(req.TrialId),
+			requestID: rID,
 		},
 	}, nil); err != nil {
 		return nil, err
 	}
-	return &apiv1.ReportTrialSearcherValidationResponse{}, nil
+	return &apiv1.CompleteTrialSearcherValidationResponse{}, nil
 }
 
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
-	if err != nil {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
 		return nil, err
 	}
+	exp := actor.Addr("experiments", eID)
 
 	// TODO(DET-5210): Ditto comment in apiServer.ReportTrialSearcherValidation.
 	if err = a.askAtDefaultSystem(exp, trialReportEarlyExit{
 		reason: workload.ExitedReasonFromProto(req.EarlyExit.Reason),
 		trialSnapshot: trialSnapshot{
-			trialID: int(req.TrialId),
+			trialID:   int(req.TrialId),
+			requestID: rID,
 		},
 	}, nil); err != nil {
 		return nil, err
@@ -700,10 +718,23 @@ func (a *apiServer) askAtDefaultSystem(
 			"actor %s did not respond", addr,
 		)
 	case resp.Error() != nil:
-		return status.Errorf(
-			codes.Internal,
-			"actor %s returned error: %s", addr, resp.Error(),
-		)
+		switch {
+		case errors.Is(resp.Error(), api.ErrBadRequest):
+			return status.Errorf(
+				codes.InvalidArgument,
+				resp.Error().Error(),
+			)
+		case errors.Is(resp.Error(), api.ErrNotFound):
+			return status.Errorf(
+				codes.NotFound,
+				resp.Error().Error(),
+			)
+		default:
+			return status.Errorf(
+				codes.Internal,
+				"actor %s returned error: %s", addr, resp.Error(),
+			)
+		}
 	default:
 		if expectingResponse {
 			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
