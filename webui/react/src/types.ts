@@ -455,9 +455,11 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
 export type TaskType = CommandType | 'Experiment';
 
+export type ArchiveFilters = typeof ALL_VALUE | 'archived' | 'unarchived'
+
 export interface ExperimentFilters {
   labels?: string[];
-  showArchived: boolean;
+  showArchived: ArchiveFilters;
   states: string[];
   username?: string;
 }
