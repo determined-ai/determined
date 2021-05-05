@@ -11,7 +11,7 @@ interface Props {
   value?: ArchiveFilters;
 }
 
-const options = [ ALL_VALUE, 'unarchived', 'archived' ];
+const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
 
 const ArchiveSelectFilter: React.FC<Props> = ({
   onChange,
@@ -20,7 +20,7 @@ const ArchiveSelectFilter: React.FC<Props> = ({
   const handleSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
     const strValue = newValue.toString() as ArchiveFilters;
-    if (!(options.includes(strValue))) return;
+    if (!(archiveOptions.includes(strValue))) return;
     onChange(strValue);
   }, [ onChange ]);
   return (
@@ -30,7 +30,7 @@ const ArchiveSelectFilter: React.FC<Props> = ({
       style={{ minWidth: 100, textTransform: 'capitalize' }}
       value={value || ALL_VALUE}
       onSelect={handleSelect}>
-      {options.map(option => <Option key={option} value={option}>{option}</Option>)}
+      {archiveOptions.map(option => <Option key={option} value={option}>{option}</Option>)}
     </SelectFilter>
   );
 };

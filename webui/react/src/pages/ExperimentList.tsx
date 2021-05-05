@@ -67,7 +67,7 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
-  showArchived: 'unarchived' as ArchiveFilters,
+  showArchived: 'unarchived',
   states: [ ALL_VALUE ],
   username: undefined,
 };
@@ -88,13 +88,18 @@ const ExperimentList: React.FC = () => {
       username: auth.user?.username,
     },
   );
+  const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
+  const validatedInitFilters = archiveOptions
+    .includes(initFilters.showArchived) ? initFilters :
+    { ...initFilters, showArchived: defaultFilters.showArchived };
+  storage.set(STORAGE_FILTERS_KEY, validatedInitFilters)
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
-  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
+  const [ filters, setFilters ] = useState<ExperimentFilters>(validatedInitFilters);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
@@ -163,7 +168,7 @@ const ExperimentList: React.FC = () => {
     // archived
     const archived = urlSearchParams.get('archived');
     if (archived !== null &&
-      (archived === ALL_VALUE || archived === 'unarchived' || archived === 'archived')) {
+      ((archiveOptions.includes(archived)))) {
       filters.showArchived = archived as ArchiveFilters;
     }
 

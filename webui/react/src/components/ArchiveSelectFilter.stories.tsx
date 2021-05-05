@@ -12,5 +12,5 @@ export const Default = (): React.ReactNode => {
   const [ currentValue, setCurrentValue ] = useState<ArchiveFilters>('unarchived');
   return <ArchiveSelectFilter
     value={currentValue}
-    onChange={(newValue) => setCurrentValue(newValue as ArchiveFilters)} />;
+    onChange={(newValue) => setCurrentValue(newValue)} />;
 };
