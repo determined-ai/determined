@@ -10,8 +10,8 @@ import { paths } from 'routes/utils';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
 
-export const idRenderer = (
-  value: string | number| undefined,
+export const nameRenderer = (
+  value: string | number | undefined,
   record: ExperimentItem,
 ): React.ReactNode => {
   return (
@@ -23,15 +23,21 @@ export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
     key: V1GetExperimentsRequestSortBy.ID,
-    render: idRenderer,
+    render: nameRenderer,
     sorter: true,
     title: 'ID',
   },
   {
     dataIndex: 'name',
     key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+    render: nameRenderer,
     sorter: true,
     title: 'Name',
+  },
+  {
+    dataIndex: 'labels',
+    key: 'labels',
+    title: 'Labels',
   },
   {
     key: V1GetExperimentsRequestSortBy.STARTTIME,

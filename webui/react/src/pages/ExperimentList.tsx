@@ -1,13 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { Button, Input, Modal } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
 import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
-import MultiSelect from 'components/MultiSelect';
 import Page from 'components/Page';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -46,9 +44,7 @@ import {
 import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
-import { columns as defaultColumns, idRenderer } from './ExperimentList.table';
-
-const { Option } = Select;
+import { columns as defaultColumns } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -181,7 +177,7 @@ const ExperimentList: React.FC = () => {
     // labels
     if (urlSearchParams.get('label') != null) {
       const labels = urlSearchParams.getAll('label');
-      filters.labels = (labels.includes(URL_ALL) ? [] : labels);
+      filters.labels = (labels.includes(URL_ALL) ? undefined : labels);
     }
 
     // limit
@@ -297,7 +293,7 @@ const ExperimentList: React.FC = () => {
             filters.showArchived === 'unarchived' ? false :
               true,
           description: search,
-          labels: filters.labels?.length === 0 ? undefined : filters.labels,
+          labels: filters.labels,
           limit: pagination.limit,
           offset: pagination.offset,
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -346,6 +342,24 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
+  const handleLabelFilterApply = useCallback((labels: string[]) => {
+    handleFilterChange({ ...filters, labels });
+  }, [ handleFilterChange, filters ]);
+
+  const handleLabelFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, labels: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const labelFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      searchable
+      values={filters.labels}
+      onFilter={handleLabelFilterApply}
+      onReset={handleLabelFilterReset}
+    />
+  ), [ filters.labels, handleLabelFilterApply, handleLabelFilterReset ]);
+
   const handleStateFilterApply = useCallback((states: string[]) => {
     handleFilterChange({ ...filters, states });
   }, [ handleFilterChange, filters ]);
@@ -360,7 +374,7 @@ const ExperimentList: React.FC = () => {
       values={filters.states}
       onFilter={handleStateFilterApply}
       onReset={handleStateFilterReset} />
-  ), [ filters, handleStateFilterApply, handleStateFilterReset ]);
+  ), [ filters.states, handleStateFilterApply, handleStateFilterReset ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
     handleFilterChange({ ...filters, users });
@@ -377,17 +391,14 @@ const ExperimentList: React.FC = () => {
       values={filters.users}
       onFilter={handleUserFilterApply}
       onReset={handleUserFilterReset} />
-  ), [ filters, handleUserFilterApply, handleUserFilterReset ]);
+  ), [ filters.users, handleUserFilterApply, handleUserFilterReset ]);
 
   const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: ExperimentItem) => (
-      <div className={css.nameColumn}>
-        {idRenderer(value, record)}
-        <TagList
-          tags={record.labels || []}
-          onChange={experimentTags.handleTagListChange(record.id)}
-        />
-      </div>
+    const labelRenderer = (value: string, record: ExperimentItem) => (
+      <TagList
+        tags={record.labels}
+        onChange={experimentTags.handleTagListChange(record.id)}
+      />
     );
 
     const actionRenderer: ExperimentRenderer = (_, record) => (
@@ -397,8 +408,11 @@ const ExperimentList: React.FC = () => {
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === V1GetExperimentsRequestSortBy.DESCRIPTION) column.render = nameRenderer;
-      if (column.key === 'action') column.render = actionRenderer;
+      if (column.key === 'labels') {
+        column.render = labelRenderer;
+        column.filterDropdown = labelFilterDropdown;
+        column.filters = labels.map(label => ({ text: label, value: label }));
+      }
       if (column.key === V1GetExperimentsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.filters = Object.values(RunState)
@@ -412,6 +426,7 @@ const ExperimentList: React.FC = () => {
         column.filterDropdown = userFilterDropdown;
         column.filters = users.map(user => ({ text: user.username, value: user.username }));
       }
+      if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
 
@@ -419,6 +434,8 @@ const ExperimentList: React.FC = () => {
   }, [
     handleActionComplete,
     experimentTags,
+    labelFilterDropdown,
+    labels,
     sorter,
     stateFilterDropdown,
     userFilterDropdown,
@@ -439,13 +456,6 @@ const ExperimentList: React.FC = () => {
 
   const handleArchiveChange = useCallback((value: ArchiveFilters): void => {
     handleFilterChange({ ...filters, showArchived: value });
-  }, [ filters, handleFilterChange ]);
-
-  const handleLabelsChange = useCallback((newValue: SelectValue) => {
-    handleFilterChange({
-      ...filters,
-      labels: (newValue as Array<string>).map(label => label.toString()),
-    });
   }, [ filters, handleFilterChange ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
@@ -568,9 +578,6 @@ const ExperimentList: React.FC = () => {
           />
           <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
             <ArchiveSelectFilter value={filters.showArchived} onChange={handleArchiveChange} />
-            <MultiSelect label="Labels" value={filters.labels} onChange={handleLabelsChange}>
-              {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
-            </MultiSelect>
           </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
