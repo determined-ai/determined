@@ -1,5 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp';
-import { MouseEvent, MouseEventHandler } from 'react';
+import React, { MouseEventHandler } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
@@ -52,7 +52,7 @@ export const openBlank = (url: string): void => {
 };
 
 export const handlePath = (
-  event: MouseEvent,
+  event: React.MouseEvent,
   options: {
     external?: boolean,
     onClick?: MouseEventHandler,
@@ -68,12 +68,16 @@ export const handlePath = (
   if (options.onClick) {
     options.onClick(event);
   } else if (href) {
-    if (event.button === 1 || event.metaKey || event.ctrlKey || options.popout) {
+    if (isNewTabClickEvent(event) || options.popout) {
       openBlank(href);
     } else {
       routeAll(href);
     }
   }
+};
+
+export const isNewTabClickEvent = (event: MouseEvent|React.MouseEvent): boolean => {
+  return event.button === 1 || event.metaKey || event.ctrlKey;
 };
 
 // remove host and public_url.

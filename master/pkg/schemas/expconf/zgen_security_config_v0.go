@@ -8,11 +8,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SecurityConfigV0) Kerberos() *KerberosConfigV0 {
+func (s SecurityConfigV0) Kerberos() KerberosConfigV0 {
 	return s.RawKerberos
 }
 
-func (s *SecurityConfigV0) SetKerberos(val *KerberosConfigV0) {
+func (s *SecurityConfigV0) SetKerberos(val KerberosConfigV0) {
 	s.RawKerberos = val
 }
 

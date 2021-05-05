@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.15.2.dev0
+    default: 0.15.3.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -97,11 +97,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da9ba40
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-baefbf7
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-da9ba40
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-baefbf7
 
   login-docker:
     parameters:
@@ -462,20 +462,6 @@ commands:
           command: |
             gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=<<parameters.region>>
 
-  terminate-gke-cluster-cuda-11:
-    parameters:
-      cluster-id:
-        type: string
-      zone:
-        type: string
-    steps:
-      # Use a run instead of `gke/delete-cluster` because circle CI orbs do not support `when`.
-      - run:
-          name: Terminate GKE Cluster
-          when: always
-          command: |
-            gcloud container clusters delete <<parameters.cluster-id>> --quiet --zone=<<parameters.zone>>
-
   setup-gke-cluster:
     parameters:
       cluster-id:
@@ -561,6 +547,8 @@ commands:
         type: string
       gpus-per-machine:
         type: integer
+      region:
+        type: string
       node-locations:
         type: string
       gcloud-service-key:
@@ -586,13 +574,13 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --zone=us-central1-c --node-locations=us-central1-c --scopes storage-rw,cloud-platform --num-nodes 1
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
       - run:
-          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --zone <<parameters.node-locations>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
           name: Create GPU node pool
       - run:
-          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --zone <<parameters.node-locations>>
+          command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
           name: Get Kubeconfig
       - run:
           command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
@@ -609,8 +597,8 @@ commands:
           values-to-override: |
             detVersion=<<parameters.det-version>>,\
             maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
-            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0,\
-            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0,\
+            taskContainerDefaults.cpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.13.0,\
+            taskContainerDefaults.gpuImage=determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.13.0,\
             checkpointStorage.type=gcs,\
             checkpointStorage.bucket=det-ci
       - set-master-address-gke:
@@ -741,6 +729,13 @@ commands:
             ENC_LOG_GROUP=$(echo "$LOG_GROUP" | sed 's|/|$252F|g')
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
+  pre-package-and-push-system:
+    steps:
+      - go-get-deps
+      - run: make -C proto build
+      - run: make -C master check
+      - run: make -C agent check
+
 
 jobs:
   build-helm:
@@ -807,10 +802,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - go-get-deps
       - setup_remote_docker:
           version: 19.03.12
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -839,8 +833,7 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - go-get-deps
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
@@ -864,8 +857,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
-      - go-get-deps
-      - run: make -C proto build
+      - pre-package-and-push-system
       - run: make package
       - run: make -C master publish
       - run: make -C agent publish
@@ -889,10 +881,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
-      - go-get-deps
-      - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - pre-package-and-push-system
       - run: make -C master release
       - run: make -C agent release
 
@@ -1469,22 +1458,22 @@ jobs:
         default: "1.18.15-gke.1501"
       machine-type:
         type: string
-        default: "a2-highgpu-1g"
+        default: "n1-standard-8"
       num-machines:
         type: integer
         default: 1
       gpu-type:
         type: string
-        default: "nvidia-tesla-a100"
+        default: "nvidia-tesla-k80"
       gpus-per-machine:
         type: integer
         default: 1
       region:
         type: string
-        default: "us-central1"
+        default: "us-west1"
       node-locations:
         type: string
-        default: "us-central1-c"
+        default: "us-west1-b"
       slack-mentions:
         type: string
         default: ""
@@ -1500,8 +1489,8 @@ jobs:
       # "CUDA" environment variable is set to 11.
       # TODO: (DET-4918): we should ensure a consistent way to have tests that can run against
       # both major TensorFlow versions do so regularly (but not others).
-      TF1_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0
-      TF2_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.11.0
+      TF1_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.13.0
+      TF2_GPU_IMAGE: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.13.0
       CUDA: 11
     steps:
       - checkout
@@ -1518,14 +1507,15 @@ jobs:
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
           gpus-per-machine: <<parameters.gpus-per-machine>>
+          region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
-      - terminate-gke-cluster-cuda-11:
+      - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
-          zone: <<parameters.node-locations>>
+          region: <<parameters.region>>
       - slack/status:
           fail_only: True
           only_for_branches: master
@@ -1891,7 +1881,7 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["a2-highgpu-4g"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 
@@ -1965,7 +1955,7 @@ workflows:
               mark: ["parallel"]
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["a2-highgpu-4g"]
+              machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
 

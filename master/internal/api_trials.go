@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/protoutil"
@@ -42,6 +44,9 @@ var (
 	trialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
+
+	// Common errors
+	trialNotFound = status.Error(codes.NotFound, "trial not found")
 )
 
 // TrialLogBackend is an interface trial log backends, such as elastic or postgres,
@@ -455,7 +460,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	case err != nil:
 		return err
 	case !exists:
-		return status.Error(codes.NotFound, "trial not found")
+		return trialNotFound
 	}
 
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
@@ -529,6 +534,80 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 		}
 	}
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
+}
+
+func (a *apiServer) TrialPreemptionSignal(
+	req *apiv1.TrialPreemptionSignalRequest,
+	resp apiv1.Determined_TrialPreemptionSignalServer,
+) error {
+	trial, err := a.trialActorFromID(int(req.TrialId))
+	if err != nil {
+		return err
+	}
+
+	id := uuid.New()
+	ret, err := a.askAtDefaultSystem(trial, trialWatchPreemption{id: id})
+	if err != nil {
+		return err
+	}
+	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
+
+	signal, ok := ret.(<-chan bool)
+	if !ok {
+		return unexpectedMessageError(trial, ret)
+	}
+
+	preempt := <-signal
+	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
+	case err != nil:
+		return err
+	case preempt:
+		return nil
+	default:
+		select {
+		case preempt = <-signal:
+			return resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt})
+		case <-resp.Context().Done():
+			return nil
+		}
+	}
+}
+
+func (a *apiServer) askAtDefaultSystem(
+	addr actor.Address, msg interface{},
+) (interface{}, error) {
+	switch resp := a.m.system.AskAt(addr, msg); {
+	case resp.Source() == nil, resp.Empty(), resp.Get() == nil:
+		return nil, status.Errorf(
+			codes.NotFound,
+			"actor %s could not be found or the actor did not respond", addr,
+		)
+	case resp.Error() != nil:
+		return nil, status.Errorf(
+			codes.Internal,
+			"actor %s returned error resp %s", addr, resp.Error(),
+		)
+	default:
+		return resp.Get(), nil
+	}
+}
+
+func unexpectedMessageError(addr actor.Address, resp interface{}) error {
+	return status.Errorf(
+		codes.Internal,
+		"actor %s returned unexpected message (%T): %v", addr, resp, resp,
+	)
+}
+
+func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
+	switch eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID); {
+	case errors.Is(err, db.ErrNotFound):
+		return actor.Address{}, trialNotFound
+	case err != nil:
+		return actor.Address{}, err
+	default:
+		return actor.Addr("experiments", eID, rID), nil
+	}
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

@@ -234,19 +234,19 @@ func (r ReproducibilityConfigV0) RuntimeDefaults() interface{} {
 //go:generate ../gen.sh
 // SecurityConfigV0 is a legacy config.
 type SecurityConfigV0 struct {
-	RawKerberos *KerberosConfigV0 `json:"kerberos"`
+	RawKerberos KerberosConfigV0 `json:"kerberos"`
 }
 
 //go:generate ../gen.sh
 // KerberosConfigV0 is a legacy config.
 type KerberosConfigV0 struct {
-	RawConfigFile *string `json:"config_file"`
+	RawConfigFile string `json:"config_file"`
 }
 
 //go:generate ../gen.sh
 // InternalConfigV0 is a legacy config.
 type InternalConfigV0 struct {
-	RawNative *NativeConfigV0 `json:"native"`
+	RawNative NativeConfigV0 `json:"native"`
 }
 
 //go:generate ../gen.sh

@@ -66,8 +66,8 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		stores, err := getAllCredentialStores()
 		if err != nil {
-			ctx.Log().Info(fmt.Sprintf(
-				"can't find any docker credential stores, continuing without them %v", err))
+			ctx.Log().Infof(
+				"can't find any docker credential stores, continuing without them %v", err)
 		}
 		d.credentialStores = stores
 

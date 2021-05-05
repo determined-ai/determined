@@ -35,7 +35,6 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
-	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
@@ -48,6 +47,14 @@ build: gen
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
+		./cmd/determined-master
+
+.PHONY: build-race
+build-race: gen
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
+		-o build/determined-master \
+		-race \
 		./cmd/determined-master
 
 .PHONY: check

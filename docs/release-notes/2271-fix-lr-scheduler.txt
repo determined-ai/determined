@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  PyTorchTrial: Fix learning rate scheduler behavior when used with
-   gradient aggregation.

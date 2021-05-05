@@ -8,9 +8,7 @@
         "type"
     ],
     "eventuallyRequired": [
-        "access_key",
-        "bucket",
-        "secret_key"
+        "bucket"
     ],
     "properties": {
         "type": {

@@ -1,5 +1,6 @@
 import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
@@ -74,9 +75,11 @@ const AppView: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <StoreProvider>
-      <AppView />
-    </StoreProvider>
+    <HelmetProvider>
+      <StoreProvider>
+        <AppView />
+      </StoreProvider>
+    </HelmetProvider>
   );
 };
 

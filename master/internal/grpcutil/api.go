@@ -26,22 +26,28 @@ const jsonPretty = "application/json+pretty"
 
 // NewGRPCServer creates a Determined gRPC service.
 func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
-	logger := logrus.NewEntry(logrus.StandardLogger())
+	// In go-grpc, the INFO log level is used primarily for debugging
+	// purposes, so omit INFO messages from the master log.
+	logger := logrus.New()
+	logger.SetLevel(logrus.WarnLevel)
+
+	logEntry := logrus.NewEntry(logger)
+	grpclogrus.ReplaceGrpcLogger(logEntry)
+
 	opts := []grpclogrus.Option{
 		grpclogrus.WithLevels(grpcCodeToLogrusLevel),
 	}
-	grpclogrus.ReplaceGrpcLogger(logger)
 	grpcS := grpc.NewServer(
 		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(
-			grpclogrus.StreamServerInterceptor(logger, opts...),
+			grpclogrus.StreamServerInterceptor(logEntry, opts...),
 			grpcrecovery.StreamServerInterceptor(),
 			streamAuthInterceptor(db),
 		)),
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
-			grpclogrus.UnaryServerInterceptor(logger, opts...),
+			grpclogrus.UnaryServerInterceptor(logEntry, opts...),
 			grpcrecovery.UnaryServerInterceptor(grpcrecovery.WithRecoveryHandler(
 				func(p interface{}) (err error) {
-					logger.Error(string(debug.Stack()))
+					logEntry.Error(string(debug.Stack()))
 					return status.Errorf(codes.Internal, "%s", p)
 				},
 			)),

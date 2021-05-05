@@ -2067,9 +2067,7 @@ schemas = {
         "type"
     ],
     "eventuallyRequired": [
-        "access_key",
-        "bucket",
-        "secret_key"
+        "bucket"
     ],
     "properties": {
         "type": {
@@ -2750,7 +2748,8 @@ schemas = {
     },
     "additionalProperties": false,
     "eventuallyRequired": [
-        "type"
+        "type",
+        "metric"
     ],
     "properties": {
         "bracket_rungs": true,

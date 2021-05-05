@@ -8,7 +8,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/kubernetes"
@@ -93,7 +92,6 @@ func setupAgentResourceManager(
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 
-	logrus.Infof("initializing endpoints for agents")
 	agent.Initialize(system, echo, opts)
 	return ref
 }
@@ -111,7 +109,6 @@ func setupKubernetesResourceManager(
 	)
 	system.Ask(ref, actor.Ping{}).Get()
 
-	logrus.Infof("initializing endpoints for pods")
 	kubernetes.Initialize(
 		system, echo, ref, config.Namespace, config.MasterServiceName, masterTLSConfig, loggingConfig,
 		config.LeaveKubernetesResources, config.DefaultScheduler,

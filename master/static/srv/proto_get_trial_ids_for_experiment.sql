@@ -21,12 +21,9 @@ WITH searcher_info AS (
         t.end_time,
         coalesce(t.end_time, now()) - t.start_time AS duration,
         (
-            SELECT s.total_batches
+            SELECT coalesce(max(s.total_batches), 0)
             FROM steps s
-            WHERE s.trial_id = t.id
-                AND s.state = 'COMPLETED'
-            ORDER BY s.id DESC
-            LIMIT 1
+            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
         ) AS total_batches_processed,
         (
            CASE WHEN t.best_validation_id IS NOT NULL THEN

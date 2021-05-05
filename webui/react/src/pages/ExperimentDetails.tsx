@@ -18,7 +18,6 @@ import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import ExperimentOverview from './ExperimentDetails/ExperimentOverview';
-import ExperimentVisualization from './ExperimentDetails/ExperimentVisualization';
 
 const { TabPane } = Tabs;
 
@@ -35,6 +34,10 @@ interface Params {
 
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
+
+const ExperimentVisualization = React.lazy(() => {
+  return import('./ExperimentDetails/ExperimentVisualization');
+});
 
 const ExperimentDetails: React.FC = () => {
   const { experimentId, tab, viz } = useParams<Params>();
@@ -175,10 +178,12 @@ const ExperimentDetails: React.FC = () => {
             onTagsChange={fetchExperimentDetails} />
         </TabPane>
         <TabPane key="visualization" tab="Visualization">
-          <ExperimentVisualization
-            basePath={`${basePath}/${TabType.Visualization}`}
-            experiment={experiment}
-            type={viz} />
+          <React.Suspense fallback={<Spinner />}>
+            <ExperimentVisualization
+              basePath={`${basePath}/${TabType.Visualization}`}
+              experiment={experiment}
+              type={viz} />
+          </React.Suspense>
         </TabPane>
       </Tabs>
       <CreateExperimentModal

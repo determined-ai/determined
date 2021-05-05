@@ -1,6 +1,6 @@
 # WebUI
 
-We [React](https://reactjs.org/) as a WebUI framework. React has been the most
+We use [React](https://reactjs.org/) as a WebUI framework. React has been the most
 popular frontend framework and enjoys the benefits of being a mature and stable
 framework. As a result we see these benefits:
 

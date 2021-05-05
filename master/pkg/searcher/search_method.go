@@ -52,11 +52,11 @@ const (
 	RandomSearch SearchMethodType = "random"
 	// GridSearch is the SearchMethodType for a grid searcher.
 	GridSearch SearchMethodType = "grid"
-	// AdaptiveSearch is the SearchMethodType for a adaptive searcher.
+	// AdaptiveSearch is the SearchMethodType for an adaptive searcher.
 	AdaptiveSearch SearchMethodType = "adaptive"
-	// ASHASearch is the SearchMethodType for a ASHA searcher.
+	// ASHASearch is the SearchMethodType for an ASHA searcher.
 	ASHASearch SearchMethodType = "asha"
-	// AdaptiveASHASearch is the SearchMethodType for a adaptive ASHA searcher.
+	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
 	// PBTSearch is the SearchMethodType for a PBT searcher.
 	PBTSearch SearchMethodType = "pbt"

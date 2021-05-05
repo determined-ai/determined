@@ -81,7 +81,7 @@ type queuedResourceRequest struct {
 //  in a FIFO order, if all request were forwarded right away any cancellation request would only
 //  be processed after the creation request case already been processed, requiring an unnecessary
 //  resource creation and deletion. An example of this is when a large HP search is created and
-//  then killed moments later. By having requests be buffered, if a a deletion request arrives
+//  then killed moments later. By having requests be buffered, if a deletion request arrives
 //  prior to the creation request being executed, the requestQueue detects this and skips the
 //  unnecessary creation / deletion.
 //

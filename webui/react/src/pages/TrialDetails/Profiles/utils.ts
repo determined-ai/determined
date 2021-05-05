@@ -161,7 +161,7 @@ export const useFetchMetrics = (
           internalData.dataByBatch[batch][labelName] = value;
 
           const unixTime: number =
-            Date.parse(event.batch.timestamps[index] as unknown as string) / 1000;
+            Date.parse(event.batch.timestamps[index] as unknown as string);
           if (!internalData.dataByUnixTime[unixTime]) {
             internalData.dataByUnixTime[unixTime] = {};
           }

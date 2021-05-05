@@ -63,7 +63,7 @@ option should be set to the DNS name contained in the certificate.
 
 .. note::
 
-   Due to a limitation of `Fluent Bit <https://fluentbit.io>`, which
+   Due to a limitation of `Fluent Bit <https://fluentbit.io>`__, which
    Determined uses internally, the certificate must be valid for at
    least one hostname that is not an IP address and the
    ``security.tls.master_cert_name`` option must be set to that hostname

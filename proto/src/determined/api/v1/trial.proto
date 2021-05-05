@@ -268,3 +268,17 @@ message PostTrialProfilerMetricsBatchRequest {
 }
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
+
+// Stream updates to the preemption status for a trial.
+message TrialPreemptionSignalRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The requested trial's id.
+  int32 trial_id = 1;
+}
+// Response to TrialPreemptionSignalRequest.
+message TrialPreemptionSignalResponse {
+  // True if signaling preempt, otherwise just a synchronization marker.
+  bool preempt = 1;
+}

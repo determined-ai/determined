@@ -8,6 +8,74 @@
  Version 0.15
 **************
 
+Version 0.15.2
+==============
+
+**Release Date:** April 29, 2021
+
+**New Features**
+
+-  Kubernetes: Support priority scheduling with preemption. The
+   preemption scheduler is able to preempt experiments when higher
+   priority ones are submitted. See :ref:`Priority Scheduling with
+   Preemption on Kubernetes <priority-scheduling-on-kubernetes>` for
+   more information.
+
+-  APIs: Promote the custom metric reducer APIs for both :ref:`pytorch
+   <pytorch-custom-reducers>` and :ref:`estimators
+   <estimators-custom-reducers>` from experimental status to general
+   availability.
+
+-  Resource pools: Support configuring distinct
+   ``task_container_defaults`` for each resource pool configured on the
+   cluster. This can allow different resource pools which may have very
+   different hardware to configure tasks in each pool with the correct
+   settings. See Resource Pool configuration under
+   :ref:`cluster-configuration` for more information.
+
+**Improvements**
+
+-  Agent: Support configuring the name of the Fluent Bit logging
+   container via the ``--fluent-container-name`` option.
+
+-  Docker: Support specifying the ``--devices``, ``--cap-add``, and
+   ``--cap-drop`` arguments to the ``docker run`` command. These are
+   configured in an experiment or command/notebook config via
+   ``resources.devices``, ``environment.add_capabilities``, and
+   ``environment.drop_capabilities``. These settings can combine to
+   allow an experiment to take advantage of cluster hardware not
+   previously available to training or notebook task. See
+   :ref:`experiment-configuration` for more details. These
+   configurations are only honored by resource managers of type
+   ``agent``, and are ignored by resource managers of type
+   ``kubernetes``.
+
+**Bug Fixes**
+
+-  Agent: Support the ``--fluent-port`` option.
+
+-  PyTorchTrial: Fix learning rate scheduler behavior when used with
+   gradient aggregation.
+
+-  ``PyTorchTrial``'s
+   :meth:`~determined.pytorch.PyTorchTrialContext.to_device` no longer
+   throws errors on non-numeric Numpy-like data. As PyTorch is still
+   unable to move such data to the GPU, non-numeric arrays will simply
+   remain on the CPU. This is especially useful to NLP practitioners who
+   wish to make use of Numpy's string manipulations anywhere in their
+   data pipelines.
+
+-  TFKerasTrial: Fix support for Tensorflow v2.2.x.
+
+-  WebUI: Fix the issue of the WebUI crashing when user selects a row in
+   experiment list page then changes the user filter.
+
+-  WebUI: Fix the issue of agents overview on the Cluster page not
+   updating properly when agents shutdown.
+
+-  WebUI: Fix the issue of trial logs not rendering properly on Safari
+   14.
+
 Version 0.15.1
 ==============
 

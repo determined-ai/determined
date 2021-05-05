@@ -39,7 +39,6 @@ message Experiment {
         "id",
         "description",
         "start_time",
-        "end_time",
         "state",
         "archived",
         "num_trials",

@@ -354,9 +354,9 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
 func (p *pods) receiveKillPod(ctx *actor.Context, msg sproto.KillTaskPod) {
 	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
 	if !ok {
-		// For multi-pod tasks, when the the chief pod exits,
-		// the scheduler will request to terminate pods all other pods
-		// that have notified the scheduler that they have exited.
+		// For multi-pod tasks, when the chief pod exits, the scheduler
+		// will request to terminate pods all other pods that have
+		// notified the scheduler that they have exited.
 		ctx.Log().WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return

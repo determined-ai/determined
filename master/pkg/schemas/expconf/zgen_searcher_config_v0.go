@@ -8,12 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-func (s SearcherConfigV0) Metric() *string {
-	return s.RawMetric
+func (s SearcherConfigV0) Metric() string {
+	if s.RawMetric == nil {
+		panic("You must call WithDefaults on SearcherConfigV0 before .RawMetric")
+	}
+	return *s.RawMetric
 }
 
-func (s *SearcherConfigV0) SetMetric(val *string) {
-	s.RawMetric = val
+func (s *SearcherConfigV0) SetMetric(val string) {
+	s.RawMetric = &val
 }
 
 func (s SearcherConfigV0) SmallerIsBetter() bool {

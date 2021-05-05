@@ -2,12 +2,12 @@ import { Alert, Button, Form, Input, Modal } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 
 import { RawJson } from 'types';
 import { clone } from 'utils/data';
 
 import css from './CreateExperimentModal.module.scss';
+import Spinner from './Spinner';
 
 export enum CreateExperimentType {
   Fork = 'Fork',
@@ -34,6 +34,8 @@ const getMaxLengthValue = (config: RawJson) => {
   const value = (Object.keys(config.searcher?.max_length || {}) || [])[1];
   return value ? parseInt(value) : undefined;
 };
+
+const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
 
 const CreateExperimentModal: React.FC<Props> = ({
   config = {},
@@ -68,7 +70,7 @@ const CreateExperimentModal: React.FC<Props> = ({
       newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
     }
 
-    return yaml.safeDump(newConfig);
+    return yaml.dump(newConfig);
   }, [ config, form, maxLengthType ]);
 
   const handleShowForm = useCallback(() => {
@@ -86,7 +88,7 @@ const CreateExperimentModal: React.FC<Props> = ({
 
     // Validate the yaml syntax by attempting to load it.
     try {
-      const newConfig = (yaml.safeLoad(newConfigString) || {}) as RawJson;
+      const newConfig = (yaml.load(newConfigString) || {}) as RawJson;
 
       form.setFields([
         { name: 'description', value: getExperimentName(newConfig) },
@@ -119,7 +121,7 @@ const CreateExperimentModal: React.FC<Props> = ({
   }, [ form, onCancel ]);
 
   useEffect(() => {
-    setLocalConfig(yaml.safeDump(config));
+    setLocalConfig(yaml.dump(config));
   }, [ config ]);
 
   return isAdvancedMode ? (
@@ -135,18 +137,20 @@ const CreateExperimentModal: React.FC<Props> = ({
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
-      <MonacoEditor
-        height="40vh"
-        language="yaml"
-        options={{
-          minimap: { enabled: false },
-          scrollBeyondLastLine: false,
-          selectOnLineNumbers: true,
-        }}
-        theme="vs-light"
-        value={localConfig}
-        onChange={handleEditorChange}
-      />
+      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+        <MonacoEditor
+          height="40vh"
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }}
+          theme="vs-light"
+          value={localConfig}
+          onChange={handleEditorChange}
+        />
+      </React.Suspense>
       {configError && <Alert className={css.error} message={configError} type="error" />}
       {error && <Alert className={css.error} message={error} type="error" />}
     </Modal>

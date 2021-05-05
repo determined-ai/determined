@@ -19,26 +19,20 @@ func (s *S3ConfigV0) SetBucket(val string) {
 	s.RawBucket = &val
 }
 
-func (s S3ConfigV0) AccessKey() string {
-	if s.RawAccessKey == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawAccessKey")
-	}
-	return *s.RawAccessKey
+func (s S3ConfigV0) AccessKey() *string {
+	return s.RawAccessKey
 }
 
-func (s *S3ConfigV0) SetAccessKey(val string) {
-	s.RawAccessKey = &val
+func (s *S3ConfigV0) SetAccessKey(val *string) {
+	s.RawAccessKey = val
 }
 
-func (s S3ConfigV0) SecretKey() string {
-	if s.RawSecretKey == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawSecretKey")
-	}
-	return *s.RawSecretKey
+func (s S3ConfigV0) SecretKey() *string {
+	return s.RawSecretKey
 }
 
-func (s *S3ConfigV0) SetSecretKey(val string) {
-	s.RawSecretKey = &val
+func (s *S3ConfigV0) SetSecretKey(val *string) {
+	s.RawSecretKey = val
 }
 
 func (s S3ConfigV0) EndpointURL() *string {

@@ -1,5 +1,5 @@
 import { Button, Menu, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
@@ -49,6 +49,8 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
 const STORAGE_KEY = 'collapsed';
 
 const NavigationSideBar: React.FC = () => {
+  // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
+  const nodeRef = useRef(null);
   const { auth, cluster: overview, ui } = useStore();
   const storeDispatch = useStoreDispatch();
   const storage = useStorage('navigation');
@@ -95,8 +97,9 @@ const NavigationSideBar: React.FC = () => {
         exitDone: css.collapsedExitDone,
       }}
       in={isCollapsed}
+      nodeRef={nodeRef}
       timeout={200}>
-      <nav className={css.base}>
+      <nav className={css.base} ref={nodeRef}>
         <header>
           <div className={css.logo}>
             <div className={css.logoIcon} />

@@ -9,7 +9,6 @@ clean:
 
 .PHONY: get-deps
 get-deps:
-	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
@@ -19,6 +18,14 @@ build:
 	go build \
 		-ldflags "-X main.version=$(VERSION)" \
 		-o build/determined-agent \
+		./cmd/determined-agent
+
+.PHONY: build-race
+build-race:
+	go build \
+		-ldflags "-X main.version=$(VERSION)" \
+		-o build/determined-agent \
+		-race \
 		./cmd/determined-agent
 
 .PHONY: check
