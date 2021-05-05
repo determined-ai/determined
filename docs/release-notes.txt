@@ -18,6 +18,8 @@ Version 0.15.3
 -  Images: Fix GPU support in CUDA 10.2 + Tensorflow 1.15 images.
 -  Trials: Fix trial environment dependency compatibility for
    ``websockets>=9.0``.
+-  Trials: Fix a bug that caused trials to panic upon
+   receiving too many rendezvous addresses.
 
 Version 0.15.2
 ==============
