@@ -42,7 +42,8 @@ message Experiment {
         "state",
         "archived",
         "num_trials",
-        "username"
+        "username",
+        "searcher_type"
       ]
     }
   };
