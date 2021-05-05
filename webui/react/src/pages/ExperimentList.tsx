@@ -92,7 +92,7 @@ const ExperimentList: React.FC = () => {
   const validatedInitFilters = archiveOptions
     .includes(initFilters.showArchived) ? initFilters :
     { ...initFilters, showArchived: defaultFilters.showArchived };
-  storage.set(STORAGE_FILTERS_KEY, validatedInitFilters)
+  storage.set(STORAGE_FILTERS_KEY, validatedInitFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
