@@ -24,13 +24,13 @@ Specification to test the experiment list page.
   |Kill               |false   |
 * Toggle all table row selection
 
-## Filter experiments by archived
+// Temporarily disabled following cbafb09b1f600e329e6bfd1ca545accfadf060e7.
+// ## Filter experiments by archived
 
-# Temporarily disabled following cbafb09b1f600e329e6bfd1ca545accfadf060e7.
-# * Toggle show archived button
-# * Should have "4" table rows
-# * Toggle show archived button
-# * Should have "3" table rows
+// * Toggle show archived button
+// * Should have "4" table rows
+// * Toggle show archived button
+// * Should have "3" table rows
 
 ## Sign out
 
