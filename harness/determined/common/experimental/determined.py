@@ -2,7 +2,7 @@ import io
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from determined.common import api
+from determined.common import api, context, yaml
 from determined.common.api import authentication as auth
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.experiment import ExperimentReference
@@ -10,12 +10,9 @@ from determined.common.experimental.model import Model, ModelOrderBy, ModelSortB
 from determined.common.experimental.session import Session
 from determined.common.experimental.trial import TrialReference
 
-import swagger_client
-from swagger_client.api.authentication_api import AuthenticationApi  # noqa: E501
-from swagger_client.rest import ApiException
-from swagger_client import models
-from swagger_client.models import V1File as V1File
-from swagger_client.models import V1CreateExperimentRequest as CreateExperimentRequest
+import determined_client
+from determined_client.models import V1File as V1File
+from determined_client.models import V1CreateExperimentRequest as CreateExperimentRequest
 
 def _path_to_files(path):
     files = []
@@ -57,7 +54,7 @@ class Determined:
     ):
         self._session = Session(master, user)
         self._auth = auth.Authentication.instance()
-        self._configuration = swagger_client.Configuration()
+        self._configuration = determined_client.Configuration()
 
         # Remove trailing '/' character for Swagger
         if (self._session._master[-1] == "/"):
@@ -68,24 +65,22 @@ class Determined:
         self._configuration.api_key_prefix["Authorization"] = "Bearer"
         self._configuration.api_key["Authorization"] = self._auth.get_session_token()
 
-        self._experiments = swagger_client.ExperimentsApi(swagger_client.ApiClient(self._configuration))
-        self._internal = swagger_client.InternalApi(swagger_client.ApiClient(self._configuration))
-        self._trials = swagger_client.TrialsApi(swagger_client.ApiClient(self._configuration))
+        self._experiments = determined_client.ExperimentsApi(determined_client.ApiClient(self._configuration))
+        self._internal = determined_client.InternalApi(determined_client.ApiClient(self._configuration))
+        self._trials = determined_client.TrialsApi(determined_client.ApiClient(self._configuration))
 
     def create_experiment(
         self,
         model_dir: str,
-        config_file: str = "",
-        exp_config: Dict = None,
+        exp_config: object = None,
     ) -> ExperimentReference:
-        if exp_config == None and config_file == "":
-            raise ValueError("Both exp_config and config_file are invalid")
-
-        if config_file != "":
-            f = open(config_file)
+        if isinstance(exp_config, str):
+            f = open(exp_config)
             experiment_config = _parse_config_file(f)
+        elif isinstance(exp_config, Dict):
+            experiment_config = exp_config
         else:
-            experiment_config = config
+            raise ValueError("Invalid experiment config")
 
         model_context = _path_to_files(Path(model_dir))
 
