@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
@@ -50,8 +51,8 @@ type (
 		create     searcher.Create
 
 		checkpointPolicy    string
-		minValidationPeriod model.Length
-		minCheckpointPeriod model.Length
+		minValidationPeriod expconf.Length
+		minCheckpointPeriod expconf.Length
 
 		unitContext model.UnitContext
 
@@ -69,19 +70,19 @@ func newTrialWorkloadSequencer(
 ) *trialWorkloadSequencer {
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState: trialWorkloadSequencerState{
-			NeedInitialValidation: exp.Config.PerformInitialValidation,
+			NeedInitialValidation: exp.Config.PerformInitialValidation(),
 			LatestCheckpoint:      firstCheckpoint,
 			LatestSnapshot: &trialWorkloadSequencerState{
-				NeedInitialValidation: exp.Config.PerformInitialValidation,
+				NeedInitialValidation: exp.Config.PerformInitialValidation(),
 				LatestCheckpoint:      firstCheckpoint,
 			},
 		},
-		checkpointPolicy:    exp.Config.CheckpointPolicy,
-		minValidationPeriod: exp.Config.MinValidationPeriod,
-		minCheckpointPeriod: exp.Config.MinCheckpointPeriod,
+		checkpointPolicy:    exp.Config.CheckpointPolicy(),
+		minValidationPeriod: exp.Config.MinValidationPeriod(),
+		minCheckpointPeriod: exp.Config.MinCheckpointPeriod(),
 		unitContext: model.NewUnitContext(
-			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), exp.Config.RecordsPerEpoch),
-		schedulingUnit: exp.Config.SchedulingUnit,
+			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), exp.Config.RecordsPerEpoch()),
+		schedulingUnit: exp.Config.SchedulingUnit(),
 		create:         create,
 		experiment:     exp,
 	}
@@ -179,7 +180,7 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg workload.CompletedMessage)
 	s.BatchesSinceLastVal += msg.Workload.NumBatches
 	s.BatchesSinceLastCkpt += msg.Workload.NumBatches
 	// We choose not to handle partial batches.
-	if s.ops[s.CurOpIdx].Length.EqualWithinBatch(s.TotalBatchesProcessed, s.unitContext) {
+	if s.unitContext.EqualWithinBatch(s.ops[s.CurOpIdx].Length, s.TotalBatchesProcessed) {
 		s.CurOpIdx++
 		s.BatchesTowardsCurrentOp = 0
 	}
@@ -255,7 +256,7 @@ func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 		return s.validate(), nil
 	}
 
-	batchesLeft := s.ops[s.CurOpIdx].Length.ToNearestBatch(s.unitContext) - s.TotalBatchesProcessed
+	batchesLeft := s.unitContext.ToNearestBatch(s.ops[s.CurOpIdx].Length) - s.TotalBatchesProcessed
 	batchesTilVal := s.batchesUntilValNeeded()
 	batchesTilCkpt := s.batchesUntilCkptNeeded()
 	batchesThisStep := max(min(
@@ -358,21 +359,21 @@ func (s *trialWorkloadSequencer) minValidationNeeded() bool {
 	if s.minValidationPeriod.Units == 0 {
 		return false
 	}
-	return s.minValidationPeriod.EqualWithinBatch(s.BatchesSinceLastVal, s.unitContext)
+	return s.unitContext.EqualWithinBatch(s.minValidationPeriod, s.BatchesSinceLastVal)
 }
 
 func (s *trialWorkloadSequencer) batchesUntilValNeeded() int {
 	if s.minValidationPeriod.Units == 0 {
 		return math.MaxInt32
 	}
-	return s.minValidationPeriod.ToNearestBatch(s.unitContext) - s.BatchesSinceLastVal
+	return s.unitContext.ToNearestBatch(s.minValidationPeriod) - s.BatchesSinceLastVal
 }
 
 func (s *trialWorkloadSequencer) minCheckpointNeeded() bool {
 	if s.minCheckpointPeriod.Units == 0 {
 		return false
 	}
-	return s.minCheckpointPeriod.EqualWithinBatch(s.BatchesSinceLastCkpt, s.unitContext)
+	return s.unitContext.EqualWithinBatch(s.minCheckpointPeriod, s.BatchesSinceLastCkpt)
 }
 
 func (s *trialWorkloadSequencer) postGracefulStopCheckpointNeeded() bool {
@@ -387,7 +388,7 @@ func (s *trialWorkloadSequencer) batchesUntilCkptNeeded() int {
 	if s.minCheckpointPeriod.Units == 0 {
 		return math.MaxInt32
 	}
-	return s.minCheckpointPeriod.ToNearestBatch(s.unitContext) - s.BatchesSinceLastCkpt
+	return s.unitContext.ToNearestBatch(s.minCheckpointPeriod) - s.BatchesSinceLastCkpt
 }
 
 func (s *trialWorkloadSequencer) Progress() model.PartialUnits {

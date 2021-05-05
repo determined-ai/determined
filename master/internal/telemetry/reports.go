@@ -37,11 +37,11 @@ func ReportAgentDisconnected(system *actor.System, uuid uuid.UUID) {
 func ReportExperimentCreated(system *actor.System, e model.Experiment) {
 	report(system, "experiment_created", map[string]interface{}{
 		"id":               e.ID,
-		"searcher":         e.Config.Searcher,
-		"resources":        e.Config.Resources,
-		"image":            e.Config.Environment.Image,
-		"num_hparams":      len(e.Config.Hyperparameters),
-		"batches_per_step": e.Config.SchedulingUnit,
+		"searcher":         e.Config.Searcher(),
+		"resources":        e.Config.Resources(),
+		"image":            e.Config.Environment().Image(),
+		"num_hparams":      len(e.Config.Hyperparameters()),
+		"batches_per_step": e.Config.SchedulingUnit(),
 	})
 }
 

@@ -13,6 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
@@ -99,12 +101,9 @@ func TestUnmarshalMasterConfiguration(t *testing.T) {
 	config, err := getConfig(v.AllSettings())
 	assert.NilError(t, err)
 
-	c, err := config.CheckpointStorage.ToModel()
-	if err != nil {
-		t.Fatal(err)
-	}
+	c := schemas.WithDefaults(config.CheckpointStorage).(expconf.CheckpointStorageConfig)
 
-	if f := c.SaveTrialBest; f <= 0 {
+	if f := c.SaveTrialBest(); f <= 0 {
 		t.Errorf("SaveTrialBest %d <= 0", f)
 	}
 }

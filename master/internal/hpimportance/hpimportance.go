@@ -24,6 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -41,7 +42,7 @@ const (
 // where order does matter. We need to keep define the Hps and
 // keep track of the order so the data columns will match.
 func createDataFile(data map[int][]model.HPImportanceTrialData,
-	experimentConfig *model.ExperimentConfig, dataFile string) (int, error) {
+	experimentConfig expconf.ExperimentConfig, dataFile string) (int, error) {
 	f, err := os.Create(dataFile)
 	if err != nil {
 		return 0, err
@@ -61,18 +62,18 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 		return 0, err
 	}
 	var hpsOrder []string // HPs must be in the same order for the arff file
-	hps := experimentConfig.Hyperparameters
+	hps := experimentConfig.Hyperparameters()
 
 	for key, element := range hps {
 		var st string
-		switch {
-		case element.ConstHyperparameter != nil:
+		switch tHP := element.GetUnionMember().(type) {
+		case expconf.ConstHyperparameter:
 			continue
-		case element.CategoricalHyperparameter != nil:
+		case expconf.CategoricalHyperparameter:
 			hpsOrder = append(hpsOrder, key)
 
 			var values string
-			for _, catVal := range element.CategoricalHyperparameter.Vals {
+			for _, catVal := range tHP.Vals() {
 				values += fmt.Sprintf("%v,", catVal)
 			}
 			st = fmt.Sprintf("@attribute %s {%s}\n", key, values)
@@ -183,7 +184,7 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 // 2. The difference between the most(aka max) trained trial and the lowest batch are within a
 // defined range (maxDiffCompBatches).
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
-	experimentConfig *model.ExperimentConfig, masterConfig HPImportanceConfig,
+	experimentConfig expconf.ExperimentConfig, masterConfig HPImportanceConfig,
 	growforest string, workingDir string) (map[string]float64, error) {
 	if len(data) == 0 {
 		return nil, errors.New("not enough data to compute HP importance")

@@ -2,10 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 	"time"
-	"unicode"
 
 	"github.com/ghodss/yaml"
 	"gotest.tools/assert"
@@ -15,6 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -123,18 +123,6 @@ db:
 	assert.DeepEqual(t, unmarshaled, expected)
 }
 
-func removeAllWhitespace(s string) string {
-	var b strings.Builder
-	b.Grow(len(s))
-	for _, r := range s {
-		if unicode.IsSpace(r) {
-			continue
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
-}
-
 func TestUnmarshalConfigWithExperiment(t *testing.T) {
 	raw := `
 log:
@@ -163,16 +151,13 @@ checkpoint_storage:
 			Host:     "hostname",
 			Port:     "3000",
 		},
-		CheckpointStorage: CheckpointStorageConfig(removeAllWhitespace(`
-{
-  "access_key": "my_key",
-  "bucket": "my_bucket",
-  "save_experiment_best": 0,
-  "save_trial_best": 0,
-  "save_trial_latest": 0,
-  "secret_key": "my_secret",
-  "type":"s3"
-}`)),
+		CheckpointStorage: expconf.CheckpointStorageConfig{
+			RawS3Config: &expconf.S3Config{
+				RawAccessKey: ptrs.StringPtr("my_key"),
+				RawBucket:    ptrs.StringPtr("my_bucket"),
+				RawSecretKey: ptrs.StringPtr("my_secret"),
+			},
+		},
 	}
 
 	var unmarshaled Config
