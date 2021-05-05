@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -14,10 +16,39 @@ type Unit string
 
 // All the units available for lengths.
 const (
-	Records Unit = "records"
-	Batches Unit = "batches"
-	Epochs  Unit = "epoches"
+	Records     Unit = "records"
+	Batches     Unit = "batches"
+	Epochs      Unit = "epoches"
+	Unspecified Unit = "unspecified"
 )
+
+// ToProto converts the internal representation of a unit to protobuf.
+func (u Unit) ToProto() experimentv1.TrainingLength_Units {
+	switch u {
+	case Records:
+		return experimentv1.TrainingLength_UNITS_RECORDS
+	case Batches:
+		return experimentv1.TrainingLength_UNITS_BATCHES
+	case Epochs:
+		return experimentv1.TrainingLength_UNITS_EPOCHS
+	default:
+		return experimentv1.TrainingLength_UNITS_UNSPECIFIED
+	}
+}
+
+// UnitFromProto returns a model.Unit from its protobuf representation.
+func UnitFromProto(u experimentv1.TrainingLength_Units) Unit {
+	switch u {
+	case experimentv1.TrainingLength_UNITS_RECORDS:
+		return Records
+	case experimentv1.TrainingLength_UNITS_BATCHES:
+		return Batches
+	case experimentv1.TrainingLength_UNITS_EPOCHS:
+		return Epochs
+	default:
+		return Unspecified
+	}
+}
 
 // PartialUnits represent partial epochs, batches or records where the Unit is implied.
 type PartialUnits float64
@@ -85,6 +116,22 @@ func (l *Length) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+}
+
+// ToProto converts a model.Length to its protobuf representation.
+func (l Length) ToProto() *experimentv1.TrainingLength {
+	return &experimentv1.TrainingLength{
+		Units:  l.Unit.ToProto(),
+		Length: int32(l.Units),
+	}
+}
+
+// LengthFromProto returns a model.Length from its protobuf representation.
+func LengthFromProto(l *experimentv1.TrainingLength) Length {
+	return Length{
+		Unit:  UnitFromProto(l.Units),
+		Units: int(l.Length),
+	}
 }
 
 // NewLength returns a new length with the specified unit and length.

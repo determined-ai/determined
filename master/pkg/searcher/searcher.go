@@ -2,7 +2,10 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
+
+	"github.com/determined-ai/determined/master/internal/api"
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
@@ -15,14 +18,16 @@ import (
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialOperations OperationList                          `json:"trial_operations"`
-		TrialsRequested int                                    `json:"trials_requested"`
-		TrialsClosed    map[model.RequestID]bool               `json:"trials_closed"`
-		TrialIDs        map[model.RequestID]int                `json:"trial_ids"`
-		RequestIDs      map[int]model.RequestID                `json:"request_ids"`
-		Failures        map[model.RequestID]bool               `json:"failures"`
-		TrialProgress   map[model.RequestID]model.PartialUnits `json:"trial_progress"`
-		Shutdown        bool                                   `json:"shutdown"`
+		TrialOperations     OperationList                          `json:"trial_operations"`
+		TrialsRequested     int                                    `json:"trials_requested"`
+		TrialsClosed        map[model.RequestID]bool               `json:"trials_closed"`
+		TrialIDs            map[model.RequestID]int                `json:"trial_ids"`
+		RequestIDs          map[int]model.RequestID                `json:"request_ids"`
+		Exits               map[model.RequestID]bool               `json:"exits"`
+		Failures            map[model.RequestID]bool               `json:"failures"`
+		TrialProgress       map[model.RequestID]model.PartialUnits `json:"trial_progress"`
+		Shutdown            bool                                   `json:"shutdown"`
+		CompletedOperations map[string]ValidateAfter               `json:"completed_operations"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -43,12 +48,14 @@ func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters
 		hparams: hparams,
 		method:  method,
 		SearcherState: SearcherState{
-			Rand:          nprand.New(seed),
-			TrialsClosed:  map[model.RequestID]bool{},
-			TrialIDs:      map[model.RequestID]int{},
-			RequestIDs:    map[int]model.RequestID{},
-			Failures:      map[model.RequestID]bool{},
-			TrialProgress: map[model.RequestID]model.PartialUnits{},
+			Rand:                nprand.New(seed),
+			TrialsClosed:        map[model.RequestID]bool{},
+			TrialIDs:            map[model.RequestID]int{},
+			RequestIDs:          map[int]model.RequestID{},
+			Exits:               map[model.RequestID]bool{},
+			Failures:            map[model.RequestID]bool{},
+			TrialProgress:       map[model.RequestID]model.PartialUnits{},
+			CompletedOperations: map[string]ValidateAfter{},
 		},
 	}
 }
@@ -92,6 +99,10 @@ func (s *Searcher) TrialExitedEarly(
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
+	if s.Exits[requestID] {
+		return nil, api.AsErrBadRequest("trial %d reported an exit twice", trialID)
+	}
+
 	switch exitedReason {
 	case workload.InvalidHP:
 		delete(s.TrialProgress, requestID)
@@ -104,6 +115,7 @@ func (s *Searcher) TrialExitedEarly(
 	if err != nil {
 		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", trialID)
 	}
+	s.Exits[requestID] = true
 	s.Record(operations)
 	return operations, nil
 }
@@ -115,18 +127,22 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Pa
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	trialID int, metrics workload.ValidationMetrics,
+	trialID int, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
-	requestID, ok := s.RequestIDs[trialID]
+	requestID, ok := s.RequestID(trialID)
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
-	// TODO(Brad): This type assertion is stupid.
-	operations, err := s.method.validationCompleted(s.context(), requestID, metrics)
+	if _, ok := s.CompletedOperations[op.String()]; ok {
+		return nil, fmt.Errorf("operation %v was already completed", op)
+	}
+
+	operations, err := s.method.validationCompleted(s.context(), requestID, metric)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
+	s.CompletedOperations[op.String()] = op
 	s.Record(operations)
 	return operations, nil
 }

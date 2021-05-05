@@ -7,8 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -73,17 +71,8 @@ func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *pbtSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metric float64,
 ) ([]Operation, error) {
-	// Extract the relevant metric as a float.
-	rawMetric := metrics.Metrics[s.Metric]
-	metric, ok := rawMetric.(float64)
-	if !ok {
-		return nil, errors.Errorf(
-			"selected metric %s is not a scalar float value: %v", s.Metric, rawMetric,
-		)
-	}
-
 	// If we haven't gotten results from the whole population yet, do nothing.
 	sign := 1.0
 	if !s.SmallerIsBetter {

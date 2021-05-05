@@ -150,3 +150,18 @@ message TrialProfilerMetricsBatch {
   // The labels for this series.
   TrialProfilerMetricLabels labels = 4;
 }
+
+// Signals to the experiment the trial early exited.
+message TrialEarlyExit {
+  // The reason for an early exit.
+  enum ExitedReason {
+    // Zero-value (not allowed).
+    EXITED_REASON_UNSPECIFIED = 0;
+    // Indicates the trial exited due to an invalid hyperparameter.
+    EXITED_REASON_INVALID_HP = 1;
+    // Indicates the trial exited due to a user requested stop.
+    EXITED_REASON_USER_REQUESTED_STOP = 2;
+  }
+  // The reason for the exit.
+  ExitedReason reason = 1;
+}

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
@@ -166,12 +168,29 @@ func NewValidateAfter(requestID model.RequestID, length model.Length) ValidateAf
 	return ValidateAfter{requestID, length}
 }
 
+// ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
+func ValidateAfterFromProto(
+	rID model.RequestID, op *experimentv1.ValidateAfterOperation,
+) ValidateAfter {
+	return ValidateAfter{
+		RequestID: rID,
+		Length:    model.LengthFromProto(op.Length),
+	}
+}
+
 func (t ValidateAfter) String() string {
 	return fmt.Sprintf("{ValidateAfter %s, %s}", t.RequestID, t.Length)
 }
 
 // GetRequestID implemented Requested.
 func (t ValidateAfter) GetRequestID() model.RequestID { return t.RequestID }
+
+// ToProto converts a searcher.ValidateAfter to its protobuf representation.
+func (t ValidateAfter) ToProto() *experimentv1.ValidateAfterOperation {
+	return &experimentv1.ValidateAfterOperation{
+		Length: t.Length.ToProto(),
+	}
+}
 
 // Close the trial with the given trial id.
 type Close struct {

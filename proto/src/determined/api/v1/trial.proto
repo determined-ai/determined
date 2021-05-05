@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 import "determined/experiment/v1/experiment.proto";
+import "determined/experiment/v1/searcher.proto";
 import "determined/log/v1/log.proto";
 import "determined/trial/v1/trial.proto";
 import "determined/api/v1/pagination.proto";
@@ -282,3 +283,60 @@ message TrialPreemptionSignalResponse {
   // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }
+
+// Retrieves the current searcher operation.
+message GetCurrentTrialSearcherOperationRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+}
+// Response to GetCurrentTrialSearcherOperationRequest
+message GetCurrentTrialSearcherOperationResponse {
+  // The current searcher operation.
+  determined.experiment.v1.SearcherOperation op = 1;
+}
+
+// Reports to the searcher that the trial has completed the current requested
+// amount of training.
+message CompleteTrialSearcherValidationRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "searcher_metric" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The completed operation.
+  determined.experiment.v1.CompleteValidateAfterOperation completed_operation =
+      2;
+}
+// Response to CompleteTrialSearcherValidationRequest
+message CompleteTrialSearcherValidationResponse {}
+
+// Report a voluntary early exit to the searcher.
+message ReportTrialSearcherEarlyExitRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "reason" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The exit reason.
+  determined.trial.v1.TrialEarlyExit early_exit = 2;
+}
+// Response to ReportTrialSearcherEarlyExitRequest
+message ReportTrialSearcherEarlyExitResponse {}
+
+// For bookkeeping, updates the progress of the trial as a percent torwards
+// the training length requested of it by the searcher.
+message ReportTrialProgressRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "progress" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // Total units completed by the trial, in terms of the unit used to configure
+  // the searcher.
+  double progress = 2;
+}
+// Response to ReportTrialProgressRequest
+message ReportTrialProgressResponse {}
