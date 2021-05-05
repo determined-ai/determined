@@ -16,9 +16,13 @@ class TrialReference:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, trial_id: int, master: str):
+    def __init__(self, trial_id: int, master: str, api_ref: object = None):
         self.id = trial_id
         self._master = master
+        self._trials = api_ref
+
+    def kill(self) -> None:
+        self._trials.determined_kill_trial(id = self.id)
 
     def top_checkpoint(
         self,
