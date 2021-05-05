@@ -11,6 +11,7 @@ import css from './TableFilterDropdown.module.scss';
 interface Props extends FilterDropdownProps {
   onFilter?: (keys: string[]) => void;
   onReset?: () => void;
+  searchable?: boolean;
   values?: string[];
 }
 
@@ -22,6 +23,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   filters,
   onFilter,
   onReset,
+  searchable,
   values = [],
   visible,
 }: Props) => {
@@ -101,16 +103,18 @@ const TableFilterDropdown: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <div className={css.search}>
-        <Input
-          allowClear
-          bordered={false}
-          placeholder="search filters"
-          prefix={<Icon name="search" size="tiny" />}
-          value={search}
-          onChange={handleSearchChange}
-        />
-      </div>
+      {searchable && (
+        <div className={css.search}>
+          <Input
+            allowClear
+            bordered={false}
+            placeholder="search filters"
+            prefix={<Icon name="search" size="tiny" />}
+            value={search}
+            onChange={handleSearchChange}
+          />
+        </div>
+      )}
       <FixedSizeList
         height={listHeight}
         itemCount={filteredOptions.length}

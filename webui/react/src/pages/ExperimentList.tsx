@@ -373,6 +373,7 @@ const ExperimentList: React.FC = () => {
   const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
       {...filterProps}
+      searchable
       values={filters.users}
       onFilter={handleUserFilterApply}
       onReset={handleUserFilterReset} />
