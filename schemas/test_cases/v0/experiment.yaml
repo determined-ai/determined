@@ -91,7 +91,7 @@
     profiling:
       enabled: true
       begin_on_batch: 0
-      end_on_batch: 1
+      end_after_batch: 1
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
@@ -188,7 +188,7 @@
     profiling:
       enabled: false
       begin_on_batch: null
-      end_on_batch: null
+      end_after_batch: null
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"
@@ -201,7 +201,7 @@
       weight: 1
       max_slots: null
       priority: null
-      resource_pool: null
+      resource_pool: ''
     scheduling_unit: 100
     searcher:
       max_length:
