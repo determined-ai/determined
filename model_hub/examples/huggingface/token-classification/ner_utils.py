@@ -1,12 +1,24 @@
 """
-These functions extract parts of the code from the named-entity recognition example
-in huggingface transformers.  The source example code changes rapidly due to frequent refactorings
-but the main structure should be similar.
-See the original example at:
-https://github.com/huggingface/transformers/blob/master/examples/token-classification/run_ner.py
+The compute_metrics, get_dataset_metadata, and build_tokenized_datasets methods below are largely
+derived from the token-classification example from huggingface transformers.
 
-Note this code is separated from ner_trial.py since it is not Determined-specific code and
-is necessary even if implementing outside of Determined.
+The license for the transformer's library is reproduced below.
+
+==================================================================================================
+
+Copyright 2020 The HuggingFace Team. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 from typing import Any, Dict, List, Union
 
@@ -18,24 +30,6 @@ from seqeval import metrics as seq_metrics
 
 from model_hub import huggingface as hf
 from model_hub import utils
-
-# The compute_metrics, get_dataset_metadata, and build_tokenized_datasets methods below are largely
-# derived from the token-classification example from huggingface transformers.
-#
-# Copyright 2020 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ===============================================================================================
 
 
 def compute_metrics(label_list: List[Any], pred_labels: List[Any]) -> Dict:
