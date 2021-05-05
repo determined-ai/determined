@@ -3,12 +3,13 @@ package searcher
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type context struct {
 	rand    *nprand.State
-	hparams model.Hyperparameters
+	hparams expconf.Hyperparameters
 }
 
 // SearchMethod is the interface for hyper-parameter tuning methods. Implementations of this
@@ -36,7 +37,7 @@ type SearchMethod interface {
 	) ([]Operation, error)
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
-	model.InUnits
+	expconf.InUnits
 }
 
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
@@ -61,23 +62,23 @@ const (
 )
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
-func NewSearchMethod(c model.SearcherConfig) SearchMethod {
+func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 	switch {
-	case c.SingleConfig != nil:
-		return newSingleSearch(*c.SingleConfig)
-	case c.RandomConfig != nil:
-		return newRandomSearch(*c.RandomConfig)
-	case c.GridConfig != nil:
-		return newGridSearch(*c.GridConfig)
-	case c.AsyncHalvingConfig != nil:
-		if c.AsyncHalvingConfig.StopOnce {
-			return newAsyncHalvingStoppingSearch(*c.AsyncHalvingConfig)
+	case c.RawSingleConfig != nil:
+		return newSingleSearch(*c.RawSingleConfig)
+	case c.RawRandomConfig != nil:
+		return newRandomSearch(*c.RawRandomConfig)
+	case c.RawGridConfig != nil:
+		return newGridSearch(*c.RawGridConfig)
+	case c.RawAsyncHalvingConfig != nil:
+		if c.RawAsyncHalvingConfig.StopOnce() {
+			return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
 		}
-		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
-	case c.AdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig)
-	case c.PBTConfig != nil:
-		return newPBTSearch(*c.PBTConfig)
+		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
+	case c.RawAdaptiveASHAConfig != nil:
+		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
+	case c.RawPBTConfig != nil:
+		return newPBTSearch(*c.RawPBTConfig, c.SmallerIsBetter())
 	default:
 		panic("no searcher type specified")
 	}
