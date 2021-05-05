@@ -46,7 +46,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
 
     const optionsExtended = uPlot.assign(
       {
-        cursor: { drag: { dist: 5, uni: null, x: true, y: true } },
+        cursor: { drag: { dist: 5, uni: 10, x: true, y: true } },
         hooks: { ready: [ (chart: uPlot) => setChart(chart) ] },
         width: chartDivRef.current.offsetWidth,
       },
