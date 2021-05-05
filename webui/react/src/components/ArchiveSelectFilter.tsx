@@ -18,7 +18,7 @@ const ArchiveSelectFilter: React.FC<Props> = ({
   value,
 }: Props) => {
   const handleSelect = useCallback((newValue: SelectValue) => {
-    if (!onChange) return;
+    if (!onChange || newValue === undefined) return;
     const strValue = newValue.toString() as ArchiveFilters;
     if (!(archiveOptions.includes(strValue))) return;
     onChange(strValue);
