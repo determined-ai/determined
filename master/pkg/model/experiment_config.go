@@ -23,7 +23,6 @@ const (
 
 // ExperimentConfig is the defaulted configuration.
 type ExperimentConfig struct {
-	Notes                    string                    `json:"notes"`
 	Name                     string                    `json:"name"`
 	Description              string                    `json:"description"`
 	Labels                   Labels                    `json:"labels,omitempty"`

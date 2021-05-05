@@ -486,13 +486,11 @@ func (a *apiServer) PatchExperiment(
 	type experimentPatch struct {
 		Labels      []string `json:"labels"`
 		Description string   `json:"description"`
-		Notes       string   `json:"notes"`
 		Name        string   `json:"name"`
 	}
 	patches := experimentPatch{
 		Labels:      exp.Labels,
 		Description: exp.Description,
-		Notes:       exp.Notes,
 		Name:        exp.Name,
 	}
 	marshalledPatches, err := json.Marshal(patches)
@@ -504,6 +502,7 @@ func (a *apiServer) PatchExperiment(
 		"patch_experiment",
 		req.Experiment.Id,
 		marshalledPatches,
+		exp.Notes,
 	); err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}

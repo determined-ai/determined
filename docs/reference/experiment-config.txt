@@ -40,9 +40,6 @@ an experiment is created with the Determined CLI. For example:
    be unique but should be limited to less than 255 characters for the
    best experience.
 
-``notes``
-   Long format notes on the experiment.
-
 ``labels``
    A list of label names (strings). Assigning labels to experiments
    allows you to identify experiments that share the same property or
