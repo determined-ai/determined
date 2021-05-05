@@ -370,7 +370,8 @@ class _PyTorchReducerContext:
         stored and exposes a ``per_slot_reduce()`` call which lets users minimize the cost of the
         network communication before the final ``cross_slot_reduce()``.
 
-        An additional reason for using the ``det.pytorch.MetricReducer``
+        An additional reason for using the ``det.pytorch.MetricReducer`` is for flexibility of the
+        update mechanism, which is completely user-defined when subclassing ``MetricReducer``.
 
         For the full details and a code example, see: :class:`~determined.pytorch.MetricReducer`.
         """
