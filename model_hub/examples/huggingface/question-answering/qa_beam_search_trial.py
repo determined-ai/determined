@@ -92,11 +92,11 @@ class QABeamSearchTrial(hf.BaseTransformerTrial):
 
         # We need to use XLNetForQuestionAnswering instead of XLNetForQuestionAnsweringSimple
         # which is the default returned by AutoModelForQuestionAnswering.
-        if not self.hparams.use_pretrained_weights:
+        if self.hparams.use_pretrained_weights:
             self.model_kwargs["config"] = self.config
             self.model = transformers.XLNetForQuestionAnswering.from_pretrained(**self.model_kwargs)
         else:
-            self.model = transformers.XLNetForQuestionAnswering.from_config(self.config)
+            self.model = transformers.XLNetForQuestionAnswering(self.config)
         self.model = self.context.wrap_model(self.model)
 
         # The rest is the same as the parent init method.
