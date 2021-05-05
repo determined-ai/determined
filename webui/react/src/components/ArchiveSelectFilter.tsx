@@ -3,13 +3,15 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback } from 'react';
 
 import SelectFilter from 'components/SelectFilter';
+import { ALL_VALUE, ArchiveFilters } from 'types';
 
 const { Option } = Select;
-
 interface Props {
-  onChange?: (value: string) => void;
-  value?: string;
+  onChange?: (value: ArchiveFilters) => void;
+  value?: ArchiveFilters;
 }
+
+const options = [ ALL_VALUE, 'unarchived', 'archived' ];
 
 const ArchiveSelectFilter: React.FC<Props> = ({
   onChange,
@@ -17,18 +19,18 @@ const ArchiveSelectFilter: React.FC<Props> = ({
 }: Props) => {
   const handleSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
-    onChange(newValue.toString());
+    const strValue = newValue.toString() as ArchiveFilters;
+    if (!(options.includes(strValue))) return;
+    onChange(strValue);
   }, [ onChange ]);
   return (
     <SelectFilter
       dropdownMatchSelectWidth={130}
       label="Show"
-      style={{ minWidth: 100 }}
-      value={value}
+      style={{ minWidth: 100, textTransform: 'capitalize' }}
+      value={value || ALL_VALUE}
       onSelect={handleSelect}>
-      <Option key="All" value="All">All</Option>
-      <Option key="Unarchived" value="Unarchived">Unarchived</Option>
-      <Option key="Archived" value="Archived">Archived</Option>
+      {options.map(option => <Option key={option} value={option}>{option}</Option>)}
     </SelectFilter>
   );
 };

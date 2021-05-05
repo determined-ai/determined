@@ -35,7 +35,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum } from 'services/utils';
 import {
-  ALL_VALUE, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
@@ -67,7 +67,7 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
-  showArchived: 'Unarchived',
+  showArchived: 'unarchived' as ArchiveFilters,
   states: [ ALL_VALUE ],
   username: undefined,
 };
@@ -162,8 +162,9 @@ const ExperimentList: React.FC = () => {
 
     // archived
     const archived = urlSearchParams.get('archived');
-    if (archived != null) {
-      filters.showArchived = archived;
+    if (archived !== null &&
+      (archived === ALL_VALUE || archived === 'unarchived' || archived === 'archived')) {
+      filters.showArchived = archived as ArchiveFilters;
     }
 
     // labels
@@ -224,7 +225,7 @@ const ExperimentList: React.FC = () => {
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
   const hasFiltersApplied = useMemo(() => {
-    return filters.showArchived !== 'All' ||
+    return filters.showArchived !== ALL_VALUE ||
           !filters.states.includes(ALL_VALUE) ||
           !!filters.username;
   }, [ filters ]);
@@ -283,8 +284,8 @@ const ExperimentList: React.FC = () => {
       });
       const response = await getExperiments(
         {
-          archived: filters.showArchived === 'All' ? undefined :
-            filters.showArchived === 'Unarchived' ? false :
+          archived: filters.showArchived === ALL_VALUE ? undefined :
+            filters.showArchived === 'unarchived' ? false :
               true,
           description: search,
           labels: filters.labels?.length === 0 ? undefined : filters.labels,
@@ -371,7 +372,8 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
-  const handleArchiveChange = useCallback((value: string): void => {
+  const handleArchiveChange =
+  useCallback((value: ArchiveFilters): void => {
     handleFilterChange({ ...filters, showArchived: value });
   }, [ filters, handleFilterChange ]);
 
