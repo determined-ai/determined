@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -11,6 +13,20 @@ import (
 
 // Unit is the type of unit for specifying lengths.
 type Unit string
+
+// ToProto converts the internal representation of a unit to protobuf.
+func (u Unit) ToProto() experimentv1.TrainingLength_Units {
+	switch u {
+	case Records:
+		return experimentv1.TrainingLength_UNITS_RECORDS
+	case Batches:
+		return experimentv1.TrainingLength_UNITS_BATCHES
+	case Epochs:
+		return experimentv1.TrainingLength_UNITS_EPOCHS
+	default:
+		return experimentv1.TrainingLength_UNITS_UNSPECIFIED
+	}
+}
 
 // All the units available for lengths.
 const (
@@ -85,6 +101,14 @@ func (l *Length) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+}
+
+// ToProto converts a model.Length to its protobuf representation.
+func (l Length) ToProto() *experimentv1.TrainingLength {
+	return &experimentv1.TrainingLength{
+		Units:  l.Unit.ToProto(),
+		Length: int32(l.Units),
+	}
 }
 
 // NewLength returns a new length with the specified unit and length.

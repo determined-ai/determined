@@ -297,6 +297,7 @@ type Step struct {
 	TrialID               int        `db:"trial_id"`
 	ID                    int        `db:"id"`
 	TotalBatches          int        `db:"total_batches"`
+	TotalInputs           int        `db:"total_inputs"`
 	State                 State      `db:"state"`
 	StartTime             time.Time  `db:"start_time"`
 	EndTime               *time.Time `db:"end_time"`

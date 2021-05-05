@@ -28,7 +28,7 @@ type (
 		trialSnapshot
 	}
 	trialReportValidation struct {
-		metrics workload.ValidationMetrics
+		metric float64
 		trialSnapshot
 	}
 	trialReportEarlyExit struct {
@@ -42,6 +42,15 @@ type (
 	trialQueryIsBestValidation struct {
 		validationMetrics workload.ValidationMetrics
 	}
+
+	// Searcher-related messages.
+	trialTrainUntilReq struct {
+		trialID int
+	}
+	trialTrainUntilResp struct {
+		length model.Length
+	}
+
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
@@ -85,6 +94,8 @@ type (
 
 		agentUserGroup *model.AgentUserGroup
 		taskSpec       *tasks.TaskSpec
+
+		TrialCurrentOperation map[model.RequestID]searcher.ValidateAfter
 
 		faultToleranceEnabled bool
 		restored              bool
@@ -166,6 +177,8 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		agentUserGroup: agentUserGroup,
 		taskSpec:       taskSpec,
 
+		TrialCurrentOperation: map[model.RequestID]searcher.ValidateAfter{},
+
 		faultToleranceEnabled: true,
 	}, nil
 }
@@ -202,7 +215,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
 	case trialReportValidation:
-		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metrics)
+		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
@@ -216,6 +229,18 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
+	case trialTrainUntilReq:
+		requestID, ok := e.searcher.RequestID(msg.trialID)
+		if !ok {
+			ctx.Respond(errors.New("trial not found"))
+		}
+		if op, ok := e.TrialCurrentOperation[requestID]; ok {
+			ctx.Respond(trialTrainUntilResp{
+				length: op.Length,
+			})
+		} else {
+			ctx.Respond(fmt.Errorf("trial %d has no operations", msg.trialID))
+		}
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
 		// with the searcher.
@@ -374,7 +399,10 @@ func (e *experiment) restoreTrialsFromPriorOperations(
 		case searcher.Create:
 			requestIDs = append(requestIDs, op.RequestID)
 			trialOpsByRequestID[op.RequestID] = append(trialOpsByRequestID[op.RequestID], op)
-		case searcher.Requested:
+		case searcher.ValidateAfter:
+			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
+			e.TrialCurrentOperation[op.GetRequestID()] = op
+		case searcher.Close:
 			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
 		}
 	}
@@ -422,7 +450,10 @@ func (e *experiment) processOperations(
 				return
 			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
-		case searcher.Requested:
+		case searcher.ValidateAfter:
+			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
+			e.TrialCurrentOperation[op.GetRequestID()] = op
+		case searcher.Close:
 			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 		case searcher.Shutdown:
 			if op.Failure {

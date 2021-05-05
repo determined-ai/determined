@@ -150,3 +150,30 @@ message TrialProfilerMetricsBatch {
   // The labels for this series.
   TrialProfilerMetricLabels labels = 4;
 }
+
+// Signals to the experiment the trial early exited.
+message TrialEarlyExit {
+  // The reason for an early exit.
+  enum ExitedReason {
+    // Zero-value (not allowed).
+    EXITED_REASON_UNSPECIFIED = 0;
+    // Indicates the trial exited due to an invalid hyperparameter.
+    EXITED_REASON_INVALID_HP = 1;
+    // Indicates the trial exited due to a user requested stop.
+    EXITED_REASON_USER_REQUESTED_STOP = 2;
+  }
+  // The reason for the exit.
+  ExitedReason reason = 1;
+}
+
+// The training metrics for some duration of training.
+message TrainingMetrics {
+  // The number of batches trained on when these metrics were reported.
+  int32 batches_trained = 1;
+  // The number of batches trained on when these metrics were reported.
+  int32 records_trained = 2;
+  // The metrics for this bit of training (reduced over the reporting period).
+  google.protobuf.Struct metrics = 3;
+  // The batch metrics for this bit of training.
+  repeated google.protobuf.Struct batch_metrics = 4;
+}

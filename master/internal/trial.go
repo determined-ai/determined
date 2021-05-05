@@ -312,7 +312,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case trialWatchPreemption:
 		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
 		w := make(chan bool, 2)
-		if t.PendingGracefulTermination {
+		if t.PendingGracefulTermination || t.experimentState != model.ActiveState {
 			w <- true
 			close(w)
 			ctx.Respond((<-chan bool)(w))
@@ -608,6 +608,10 @@ func (t *trial) processAllocated(
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
 
+	if err = t.db.ResetRunStart(t.id); err != nil {
+		ctx.Log().WithError(err).Error("failed to reset run start")
+	}
+
 	ctx.Log().Infof("starting trial container: %v", w)
 
 	additionalFiles := archive.Archive{
@@ -716,8 +720,12 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case reportValidation:
+		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher.Metric)
+		if err != nil {
+			return err
+		}
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}
+			return trialReportValidation{metric: m, trialSnapshot: s}
 		}); err != nil {
 			return errors.Wrap(err, "failed to report validation with snapshot")
 		}

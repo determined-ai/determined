@@ -509,6 +509,78 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Get the absolute training length until the searcher needs the trial to
+  // report a validation.
+  rpc GetTrialSearcherTrainUntil(GetTrialSearcherTrainUntilRequest)
+      returns (GetTrialSearcherTrainUntilResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/train_length"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Reports to the searcher that the trial has completed the current
+  // requested amount of training with the given searcher validation
+  // metric.
+  rpc ReportTrialSearcherValidation(ReportTrialSearcherValidationRequest)
+      returns (ReportTrialSearcherValidationResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/searcher/searcher_validation"
+      body: "searcher_metric"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Reports to the searcher that the trial has completed the current
+  // requested amount of training with the given searcher validation
+  // metric.
+  rpc ReportTrialSearcherEarlyExit(ReportTrialSearcherEarlyExitRequest)
+      returns (ReportTrialSearcherEarlyExitResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/early_stop"
+      body: "early_exit"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // For bookkeeping, updates the progress towards to current requested searcher
+  // training length.
+  rpc ReportTrialProgress(ReportTrialProgressRequest)
+      returns (ReportTrialProgressResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/progress"
+      body: "progress"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // For bookkeeping, updates the trial's metadata as reported by the trial
+  // runner.
+  rpc PatchTrialMetadata(PatchTrialMetadataRequest)
+      returns (PatchTrialMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/metadata"
+      body: "metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Records training metrics for specified training.
+  rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
+      returns (ReportTrialTrainingMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/training_metrics"
+      body: "training_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
