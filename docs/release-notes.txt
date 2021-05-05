@@ -11,6 +11,17 @@
 Version 0.15.2
 ==============
 
+**Release Date:** May 5, 2021
+
+**Bug Fixes**
+
+-  Images: Fix GPU support in CUDA 10.2 + Tensorflow 1.15 images.
+-  Trials: Fix trial environment dependency compatibility for
+   ``websockets>=9.0``.
+
+Version 0.15.2
+==============
+
 **Release Date:** April 29, 2021
 
 **New Features**
