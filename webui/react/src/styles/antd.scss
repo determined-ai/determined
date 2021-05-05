@@ -8,8 +8,8 @@ html {
 
   /* Button */
 
-  .ant-btn[disabled],
-  .ant-btn[disabled]:hover {
+  .ant-btn[disabled]:not(.ant-btn-link),
+  .ant-btn[disabled]:not(.ant-btn-link):hover {
     background-color: var(--theme-colors-monochrome-15);
     border-color: var(--theme-colors-monochrome-12);
     color: var(--theme-colors-monochrome-9);

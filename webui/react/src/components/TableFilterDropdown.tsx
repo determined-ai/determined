@@ -122,6 +122,7 @@ const TableFilterDropdown: React.FC<Props> = ({
       <div className={css.footer}>
         <Button
           aria-label="Reset Filter"
+          disabled={Object.keys(selectedMap).length === 0}
           size="small"
           type="link"
           onClick={handleReset}>Reset</Button>
