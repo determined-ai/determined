@@ -28,8 +28,6 @@ message GetExperimentResponse {
   determined.experiment.v1.Experiment experiment = 1;
   // The experiment config.
   google.protobuf.Struct config = 2;
-  // The experiment notes.
-  string notes = 3;
 }
 
 // Get a list of experiments.
