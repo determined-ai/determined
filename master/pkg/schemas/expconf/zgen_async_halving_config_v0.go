@@ -10,7 +10,7 @@ import (
 
 func (a AsyncHalvingConfigV0) NumRungs() int {
 	if a.RawNumRungs == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawNumRungs")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .NumRungs")
 	}
 	return *a.RawNumRungs
 }
@@ -21,7 +21,7 @@ func (a *AsyncHalvingConfigV0) SetNumRungs(val int) {
 
 func (a AsyncHalvingConfigV0) MaxLength() LengthV0 {
 	if a.RawMaxLength == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxLength")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .MaxLength")
 	}
 	return *a.RawMaxLength
 }
@@ -32,7 +32,7 @@ func (a *AsyncHalvingConfigV0) SetMaxLength(val LengthV0) {
 
 func (a AsyncHalvingConfigV0) MaxTrials() int {
 	if a.RawMaxTrials == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxTrials")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .MaxTrials")
 	}
 	return *a.RawMaxTrials
 }
@@ -43,7 +43,7 @@ func (a *AsyncHalvingConfigV0) SetMaxTrials(val int) {
 
 func (a AsyncHalvingConfigV0) Divisor() float64 {
 	if a.RawDivisor == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawDivisor")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .Divisor")
 	}
 	return *a.RawDivisor
 }
@@ -54,7 +54,7 @@ func (a *AsyncHalvingConfigV0) SetDivisor(val float64) {
 
 func (a AsyncHalvingConfigV0) MaxConcurrentTrials() int {
 	if a.RawMaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawMaxConcurrentTrials")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .MaxConcurrentTrials")
 	}
 	return *a.RawMaxConcurrentTrials
 }
@@ -65,7 +65,7 @@ func (a *AsyncHalvingConfigV0) SetMaxConcurrentTrials(val int) {
 
 func (a AsyncHalvingConfigV0) StopOnce() bool {
 	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .RawStopOnce")
+		panic("You must call WithDefaults on AsyncHalvingConfigV0 before .StopOnce")
 	}
 	return *a.RawStopOnce
 }

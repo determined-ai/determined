@@ -12,7 +12,7 @@ import (
 
 func (e EnvironmentConfigV0) Image() EnvironmentImageMapV0 {
 	if e.RawImage == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawImage")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .Image")
 	}
 	return *e.RawImage
 }
@@ -23,7 +23,7 @@ func (e *EnvironmentConfigV0) SetImage(val EnvironmentImageMapV0) {
 
 func (e EnvironmentConfigV0) EnvironmentVariables() EnvironmentVariablesMapV0 {
 	if e.RawEnvironmentVariables == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawEnvironmentVariables")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .EnvironmentVariables")
 	}
 	return *e.RawEnvironmentVariables
 }
@@ -50,7 +50,7 @@ func (e *EnvironmentConfigV0) SetRegistryAuth(val *types.AuthConfig) {
 
 func (e EnvironmentConfigV0) ForcePullImage() bool {
 	if e.RawForcePullImage == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawForcePullImage")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .ForcePullImage")
 	}
 	return *e.RawForcePullImage
 }

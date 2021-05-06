@@ -10,7 +10,7 @@ import (
 
 func (g GCSConfigV0) Bucket() string {
 	if g.RawBucket == nil {
-		panic("You must call WithDefaults on GCSConfigV0 before .RawBucket")
+		panic("You must call WithDefaults on GCSConfigV0 before .Bucket")
 	}
 	return *g.RawBucket
 }

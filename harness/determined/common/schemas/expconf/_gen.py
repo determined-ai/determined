@@ -1771,6 +1771,13 @@ schemas = {
             ],
             "default": false
         },
+        "grad_updates_size_file": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "mixed_precision": {
             "enum": [
                 null,
@@ -1832,17 +1839,17 @@ schemas = {
             "default": null,
             "minimum": 0
         },
-        "end_on_batch": {
+        "end_after_batch": {
             "type": [
                 "integer",
                 "null"
             ],
             "default": null,
-            "minimum": 1
+            "minimum": 0
         }
     },
     "conditional": {
-        "$comment": "when enabled=true, assert begin < end",
+        "$comment": "when enabled=true, assert begin <= end",
         "when": {
             "required": [
                 "enabled"
@@ -1856,20 +1863,20 @@ schemas = {
         "enforce": {
             "required": [
                 "begin_on_batch",
-                "end_on_batch"
+                "end_after_batch"
             ],
             "propeties": {
                 "begin_on_batch": {
                     "type": "integer"
                 },
-                "end_on_batch": {
+                "end_after_batch": {
                     "type": "integer"
                 }
             },
             "compareProperties": {
-                "type": "a<b",
+                "type": "a<=b",
                 "a": "begin_on_batch",
-                "b": "end_on_batch"
+                "b": "end_after_batch"
             }
         }
     }
@@ -2019,7 +2026,7 @@ schemas = {
                 "string",
                 "null"
             ],
-            "default": null
+            "default": ""
         },
         "shm_size": {
             "type": [
@@ -2748,7 +2755,7 @@ schemas = {
     },
     "additionalProperties": false,
     "eventuallyRequired": [
-        "type",
+        "name",
         "metric"
     ],
     "properties": {

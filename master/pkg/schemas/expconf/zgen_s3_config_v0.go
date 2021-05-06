@@ -10,7 +10,7 @@ import (
 
 func (s S3ConfigV0) Bucket() string {
 	if s.RawBucket == nil {
-		panic("You must call WithDefaults on S3ConfigV0 before .RawBucket")
+		panic("You must call WithDefaults on S3ConfigV0 before .Bucket")
 	}
 	return *s.RawBucket
 }

@@ -10,7 +10,7 @@ import (
 
 func (g GCSDataLayerConfigV0) Bucket() string {
 	if g.RawBucket == nil {
-		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .RawBucket")
+		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .Bucket")
 	}
 	return *g.RawBucket
 }
@@ -21,7 +21,7 @@ func (g *GCSDataLayerConfigV0) SetBucket(val string) {
 
 func (g GCSDataLayerConfigV0) BucketDirectoryPath() string {
 	if g.RawBucketDirectoryPath == nil {
-		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .RawBucketDirectoryPath")
+		panic("You must call WithDefaults on GCSDataLayerConfigV0 before .BucketDirectoryPath")
 	}
 	return *g.RawBucketDirectoryPath
 }

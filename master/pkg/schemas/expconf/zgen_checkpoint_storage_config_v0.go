@@ -10,7 +10,7 @@ import (
 
 func (c CheckpointStorageConfigV0) SaveExperimentBest() int {
 	if c.RawSaveExperimentBest == nil {
-		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveExperimentBest")
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .SaveExperimentBest")
 	}
 	return *c.RawSaveExperimentBest
 }
@@ -21,7 +21,7 @@ func (c *CheckpointStorageConfigV0) SetSaveExperimentBest(val int) {
 
 func (c CheckpointStorageConfigV0) SaveTrialBest() int {
 	if c.RawSaveTrialBest == nil {
-		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveTrialBest")
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .SaveTrialBest")
 	}
 	return *c.RawSaveTrialBest
 }
@@ -32,7 +32,7 @@ func (c *CheckpointStorageConfigV0) SetSaveTrialBest(val int) {
 
 func (c CheckpointStorageConfigV0) SaveTrialLatest() int {
 	if c.RawSaveTrialLatest == nil {
-		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .RawSaveTrialLatest")
+		panic("You must call WithDefaults on CheckpointStorageConfigV0 before .SaveTrialLatest")
 	}
 	return *c.RawSaveTrialLatest
 }
@@ -43,16 +43,16 @@ func (c *CheckpointStorageConfigV0) SetSaveTrialLatest(val int) {
 
 func (c CheckpointStorageConfigV0) GetUnionMember() interface{} {
 	if c.RawSharedFSConfig != nil {
-		return nil
+		return *c.RawSharedFSConfig
 	}
 	if c.RawHDFSConfig != nil {
-		return nil
+		return *c.RawHDFSConfig
 	}
 	if c.RawS3Config != nil {
-		return nil
+		return *c.RawS3Config
 	}
 	if c.RawGCSConfig != nil {
-		return nil
+		return *c.RawGCSConfig
 	}
 	panic("no union member defined")
 }

@@ -10,7 +10,7 @@ import (
 
 func (g GridConfigV0) MaxLength() LengthV0 {
 	if g.RawMaxLength == nil {
-		panic("You must call WithDefaults on GridConfigV0 before .RawMaxLength")
+		panic("You must call WithDefaults on GridConfigV0 before .MaxLength")
 	}
 	return *g.RawMaxLength
 }
@@ -21,7 +21,7 @@ func (g *GridConfigV0) SetMaxLength(val LengthV0) {
 
 func (g GridConfigV0) MaxConcurrentTrials() int {
 	if g.RawMaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on GridConfigV0 before .RawMaxConcurrentTrials")
+		panic("You must call WithDefaults on GridConfigV0 before .MaxConcurrentTrials")
 	}
 	return *g.RawMaxConcurrentTrials
 }

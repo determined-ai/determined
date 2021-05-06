@@ -10,7 +10,7 @@ import (
 
 func (a AdaptiveASHAConfigV0) MaxLength() LengthV0 {
 	if a.RawMaxLength == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxLength")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxLength")
 	}
 	return *a.RawMaxLength
 }
@@ -21,7 +21,7 @@ func (a *AdaptiveASHAConfigV0) SetMaxLength(val LengthV0) {
 
 func (a AdaptiveASHAConfigV0) MaxTrials() int {
 	if a.RawMaxTrials == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxTrials")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxTrials")
 	}
 	return *a.RawMaxTrials
 }
@@ -40,7 +40,7 @@ func (a *AdaptiveASHAConfigV0) SetBracketRungs(val []int) {
 
 func (a AdaptiveASHAConfigV0) Divisor() float64 {
 	if a.RawDivisor == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawDivisor")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .Divisor")
 	}
 	return *a.RawDivisor
 }
@@ -51,7 +51,7 @@ func (a *AdaptiveASHAConfigV0) SetDivisor(val float64) {
 
 func (a AdaptiveASHAConfigV0) Mode() AdaptiveMode {
 	if a.RawMode == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMode")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .Mode")
 	}
 	return *a.RawMode
 }
@@ -62,7 +62,7 @@ func (a *AdaptiveASHAConfigV0) SetMode(val AdaptiveMode) {
 
 func (a AdaptiveASHAConfigV0) MaxRungs() int {
 	if a.RawMaxRungs == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxRungs")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxRungs")
 	}
 	return *a.RawMaxRungs
 }
@@ -73,7 +73,7 @@ func (a *AdaptiveASHAConfigV0) SetMaxRungs(val int) {
 
 func (a AdaptiveASHAConfigV0) MaxConcurrentTrials() int {
 	if a.RawMaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawMaxConcurrentTrials")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .MaxConcurrentTrials")
 	}
 	return *a.RawMaxConcurrentTrials
 }
@@ -84,7 +84,7 @@ func (a *AdaptiveASHAConfigV0) SetMaxConcurrentTrials(val int) {
 
 func (a AdaptiveASHAConfigV0) StopOnce() bool {
 	if a.RawStopOnce == nil {
-		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .RawStopOnce")
+		panic("You must call WithDefaults on AdaptiveASHAConfigV0 before .StopOnce")
 	}
 	return *a.RawStopOnce
 }
