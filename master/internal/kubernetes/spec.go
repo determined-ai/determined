@@ -185,14 +185,9 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	if scheduler == coscheduler {
+	if scheduler == coscheduler || scheduler == preemptionScheduler {
 		if newPod.Spec.SchedulerName == "" {
-			newPod.Spec.SchedulerName = coscheduler
-		}
-		p.configureCoscheduler(newPod, scheduler)
-	} else if scheduler == preemptionScheduler {
-		if newPod.Spec.SchedulerName == "" {
-			newPod.Spec.SchedulerName = preemptionScheduler
+			newPod.Spec.SchedulerName = scheduler
 		}
 		p.configureCoscheduler(newPod, scheduler)
 	}
