@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"time"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -380,6 +382,11 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		return nil, errors.Wrapf(err, "generating service address for %s", c.taskID)
 	}
 
+	exitStatus := protoutils.DefaultStringValue
+	if c.exitStatus != nil {
+		exitStatus = *c.exitStatus
+	}
+
 	return &notebookv1.Notebook{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
@@ -389,10 +396,17 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.owner.Username,
 		ResourcePool:   c.config.Resources.ResourcePool,
+		Config:         protoutils.ToStruct(c.config),
+		ExitStatus:     exitStatus,
 	}, nil
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
+	exitStatus := protoutils.DefaultStringValue
+	if c.exitStatus != nil {
+		exitStatus = *c.exitStatus
+	}
+
 	return &commandv1.Command{
 		Id:           ctx.Self().Address().Local(),
 		State:        c.State().Proto(),
@@ -401,24 +415,45 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.owner.Username,
 		ResourcePool: c.config.Resources.ResourcePool,
+		Config:       protoutils.ToStruct(c.config),
+		ExitStatus:   exitStatus,
 	}
 }
 
 func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
+	exitStatus := protoutils.DefaultStringValue
+	if c.exitStatus != nil {
+		exitStatus = *c.exitStatus
+	}
+
+	addresses := make([]*structpb.Struct, 0)
+	for _, addr := range c.addresses {
+		addresses = append(addresses, protoutils.ToStruct(addr))
+	}
+
 	return &shellv1.Shell{
-		Id:           ctx.Self().Address().Local(),
-		State:        c.State().Proto(),
-		Description:  c.config.Description,
-		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:    c.container.Proto(),
-		PrivateKey:   c.metadata["privateKey"].(string),
-		PublicKey:    c.metadata["publicKey"].(string),
-		Username:     c.owner.Username,
-		ResourcePool: c.config.Resources.ResourcePool,
+		Id:             ctx.Self().Address().Local(),
+		State:          c.State().Proto(),
+		Description:    c.config.Description,
+		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:      c.container.Proto(),
+		PrivateKey:     c.metadata["privateKey"].(string),
+		PublicKey:      c.metadata["publicKey"].(string),
+		Username:       c.owner.Username,
+		ResourcePool:   c.config.Resources.ResourcePool,
+		Config:         protoutils.ToStruct(c.config),
+		ExitStatus:     exitStatus,
+		Addresses:      addresses,
+		AgentUserGroup: protoutils.ToStruct(c.agentUserGroup),
 	}
 }
 
 func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
+	exitStatus := protoutils.DefaultStringValue
+	if c.exitStatus != nil {
+		exitStatus = *c.exitStatus
+	}
+
 	var eids []int32
 	for _, id := range c.metadata["experiment_ids"].([]int) {
 		eids = append(eids, int32(id))
@@ -438,6 +473,8 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		TrialIds:       tids,
 		Username:       c.owner.Username,
 		ResourcePool:   c.config.Resources.ResourcePool,
+		Config:         protoutils.ToStruct(c.config),
+		ExitStatus:     exitStatus,
 	}
 }
 
