@@ -10,13 +10,11 @@ import css from './TagList.module.scss';
 
 const TAG_MAX_LENGTH = 20;
 interface Props {
-  className?: string;
   onChange?: (tags: string[]) => void;
   tags: string[];
 }
 
 const EditableTagList: React.FC<Props> = ({
-  className,
   tags,
   onChange,
 }: Props) => {
@@ -98,11 +96,8 @@ const EditableTagList: React.FC<Props> = ({
 
   const { editInputIndex, editInputValue, inputVisible, inputValue, inputWidth } = state;
 
-  const classes = [ css.base ];
-  if (className) classes.push(className);
-
   return (
-    <div className={classes.join(' ')} onClick={stopPropagation}>
+    <div className={css.base} onClick={stopPropagation}>
       {tags
         .sort((a, b) => alphanumericSorter(a, b))
         .map((tag, index) => {
