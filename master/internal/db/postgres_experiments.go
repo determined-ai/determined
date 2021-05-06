@@ -388,7 +388,7 @@ func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metr
 	err error) {
 	rows, err := db.sql.Query(`
 SELECT 
-  total_batches AS batches,
+  v.total_batches AS batches,
   v.metrics->'validation_metrics'->$1 AS value,
   v.end_time as end_time
 FROM trials t
@@ -396,8 +396,8 @@ FROM trials t
   LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
-  AND total_batches >= $3
-  AND total_batches <= $4
+  AND v.total_batches >= $3
+  AND v.total_batches <= $4
   AND v.end_time > $5
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
