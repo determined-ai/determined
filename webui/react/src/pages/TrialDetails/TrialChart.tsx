@@ -57,7 +57,7 @@ const TrialChart: React.FC<Props> = ({
           wlWrapper.training : wlWrapper.validation;
         if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
 
-        const x = metricsWl.numBatches + metricsWl.priorBatchesProcessed;
+        const x = metricsWl.totalBatches;
         if (!xValues.includes(x)) xValues.push(x);
 
         yValues[index][x] = metricsWl.metrics[metric.name];

@@ -61,7 +61,7 @@ def describe_trial(args: Namespace) -> None:
 
     values = [
         [
-            s["prior_batches_processed"] + s["num_batches"],
+            s["total_batches"],
             s["state"],
             render.format_time(s["start_time"]),
             render.format_time(s["end_time"]),

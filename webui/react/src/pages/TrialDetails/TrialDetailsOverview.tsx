@@ -80,7 +80,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
       if (trial && record.checkpoint && hasCheckpointStep(record)) {
         const checkpoint = {
           ...record.checkpoint,
-          batch: record.checkpoint.numBatches + record.checkpoint.priorBatchesProcessed,
+          batch: record.checkpoint.totalBatches,
           experimentId: trial?.experimentId,
           trialId: trial?.id,
         };
