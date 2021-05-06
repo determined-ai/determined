@@ -39,6 +39,6 @@ describe('canBeOpened', () => {
     expect(canBeOpened(SampleCommandTask)).toStrictEqual(false);
   });
   it('Command Task with service address', () => {
-    expect(canBeOpened({ ...SampleCommandTask, serviceAddress: '' })).toStrictEqual(true);
+    expect(canBeOpened({ ...SampleCommandTask, serviceAddress: 'test' })).toStrictEqual(true);
   });
 });
