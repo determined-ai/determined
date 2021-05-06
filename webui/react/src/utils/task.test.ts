@@ -3,8 +3,20 @@ import { CommandState, CommandTask, CommandType, ExperimentTask, RunState, Task 
 import { canBeOpened, isExperimentTask } from './task';
 
 const SampleTask: Task = { id: '', name: '', resourcePool: '', startTime: '' };
-const SampleExperimentTask: ExperimentTask = { ...SampleTask, archived: false, resourcePool: '', state: 'ACTIVE' as RunState, username: '' };
-const SampleCommandTask: CommandTask = { ...SampleTask, resourcePool: '', state: 'PENDING' as CommandState, type: 'COMMAND' as CommandType, username: '' };
+const SampleExperimentTask: ExperimentTask = {
+  ...SampleTask,
+  archived: false,
+  resourcePool: '',
+  state: 'ACTIVE' as RunState,
+  username: '',
+};
+const SampleCommandTask: CommandTask = {
+  ...SampleTask,
+  resourcePool: '',
+  state: 'PENDING' as CommandState,
+  type: 'COMMAND' as CommandType,
+  username: '',
+};
 
 describe('isExperimentTask', () => {
   it('Experiment Task', () => {
@@ -20,7 +32,8 @@ describe('canBeOpened', () => {
     expect(canBeOpened(SampleExperimentTask)).toStrictEqual(true);
   });
   it('Terminated Command Task', () => {
-    expect(canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState })).toStrictEqual(false);
+    expect(canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState }))
+      .toStrictEqual(false);
   });
   it('Command Task without service address', () => {
     expect(canBeOpened(SampleCommandTask)).toStrictEqual(false);
