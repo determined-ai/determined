@@ -10,9 +10,9 @@ from determined.common.experimental.model import Model, ModelOrderBy, ModelSortB
 from determined.common.experimental.session import Session
 from determined.common.experimental.trial import TrialReference
 
-import determined_client
-from determined_client.models import V1File as V1File
-from determined_client.models import V1CreateExperimentRequest as CreateExperimentRequest
+import determined.client
+from determined.client import V1File as V1File
+from determined.client import V1CreateExperimentRequest as CreateExperimentRequest
 
 def _path_to_files(path):
     files = []
@@ -54,7 +54,7 @@ class Determined:
     ):
         self._session = Session(master, user)
         self._auth = auth.Authentication.instance()
-        self._configuration = determined_client.Configuration()
+        self._configuration = determined.client.Configuration()
 
         # Remove trailing '/' character for Swagger
         if (self._session._master[-1] == "/"):
@@ -65,9 +65,9 @@ class Determined:
         self._configuration.api_key_prefix["Authorization"] = "Bearer"
         self._configuration.api_key["Authorization"] = self._auth.get_session_token()
 
-        self._experiments = determined_client.ExperimentsApi(determined_client.ApiClient(self._configuration))
-        self._internal = determined_client.InternalApi(determined_client.ApiClient(self._configuration))
-        self._trials = determined_client.TrialsApi(determined_client.ApiClient(self._configuration))
+        self._experiments = determined.client.ExperimentsApi(determined.client.ApiClient(self._configuration))
+        self._internal = determined.client.InternalApi(determined.client.ApiClient(self._configuration))
+        self._trials = determined.client.TrialsApi(determined.client.ApiClient(self._configuration))
 
     def create_experiment(
         self,

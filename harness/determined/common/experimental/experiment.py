@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from determined.common import api
 from determined.common.experimental import checkpoint
 
-from determined_client.models import Determinedexperimentv1State as ExperimentState
+from determined.client import Determinedexperimentv1State as ExperimentState
 
 class ExperimentReference:
     """

@@ -21,7 +21,6 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 
 .PHONY: build
 build: build/typescript-fetch build/python
-	cd build/python && python setup.py install
 
 .PHONY: clean-deps
 clean-deps:
