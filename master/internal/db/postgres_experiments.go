@@ -321,7 +321,7 @@ func (db *PgDB) TopTrialsByTrainingLength(experimentID int, maxTrials int, metri
 	err = db.sql.Select(&trials, fmt.Sprintf(`
 SELECT t.id FROM (
   SELECT t.id,
-    max(s.prior_batches_processed) as progress,
+    max(s.total_batches) as progress,
     %s((v.metrics->'validation_metrics'->$1)::text::numeric) as best_metric
   FROM trials t
     INNER JOIN steps s ON t.id=s.trial_id
@@ -361,15 +361,15 @@ func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metric
 	err error) {
 	rows, err := db.sql.Query(`
 SELECT 
-  (prior_batches_processed + num_batches) AS batches,
+  total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
   s.end_time as end_time
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.id=$2
   AND s.state = 'COMPLETED'
-  AND (prior_batches_processed + num_batches) >= $3
-  AND (prior_batches_processed + num_batches) <= $4
+  AND total_batches >= $3
+  AND total_batches <= $4
   AND s.end_time > $5
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -388,7 +388,7 @@ func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metr
 	err error) {
 	rows, err := db.sql.Query(`
 SELECT 
-  (prior_batches_processed + num_batches) AS batches,
+  v.total_batches AS batches,
   v.metrics->'validation_metrics'->$1 AS value,
   v.end_time as end_time
 FROM trials t
@@ -396,8 +396,8 @@ FROM trials t
   LEFT OUTER JOIN validations v ON s.total_batches=v.total_batches AND s.trial_id=v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
-  AND (prior_batches_processed + num_batches) >= $3
-  AND (prior_batches_processed + num_batches) <= $4
+  AND v.total_batches >= $3
+  AND v.total_batches <= $4
   AND v.end_time > $5
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
