@@ -10,19 +10,19 @@ import (
 
 func (h HyperparameterV0) GetUnionMember() interface{} {
 	if h.RawConstHyperparameter != nil {
-		return nil
+		return *h.RawConstHyperparameter
 	}
 	if h.RawIntHyperparameter != nil {
-		return nil
+		return *h.RawIntHyperparameter
 	}
 	if h.RawDoubleHyperparameter != nil {
-		return nil
+		return *h.RawDoubleHyperparameter
 	}
 	if h.RawLogHyperparameter != nil {
-		return nil
+		return *h.RawLogHyperparameter
 	}
 	if h.RawCategoricalHyperparameter != nil {
-		return nil
+		return *h.RawCategoricalHyperparameter
 	}
 	panic("no union member defined")
 }

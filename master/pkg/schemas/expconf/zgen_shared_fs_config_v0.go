@@ -10,7 +10,7 @@ import (
 
 func (s SharedFSConfigV0) HostPath() string {
 	if s.RawHostPath == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .RawHostPath")
+		panic("You must call WithDefaults on SharedFSConfigV0 before .HostPath")
 	}
 	return *s.RawHostPath
 }
@@ -53,7 +53,7 @@ func (s *SharedFSConfigV0) SetStoragePath(val *string) {
 
 func (s SharedFSConfigV0) Propagation() string {
 	if s.RawPropagation == nil {
-		panic("You must call WithDefaults on SharedFSConfigV0 before .RawPropagation")
+		panic("You must call WithDefaults on SharedFSConfigV0 before .Propagation")
 	}
 	return *s.RawPropagation
 }

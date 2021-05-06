@@ -42,6 +42,13 @@
             ],
             "default": false
         },
+        "grad_updates_size_file": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "mixed_precision": {
             "enum": [
                 null,

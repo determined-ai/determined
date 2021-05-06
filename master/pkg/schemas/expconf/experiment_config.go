@@ -91,7 +91,10 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	if err != nil {
 		return err
 	}
-	*e = config
+	// This *should* be a copy without any changes, unless perhaps we just shimmed the bytes that
+	// were in the database, but to ensure we never allow any un-defaulted experiments anywhere
+	// inside the system, we call WithDefaults here.
+	*e = schemas.WithDefaults(config).(ExperimentConfigV0)
 	return nil
 }
 

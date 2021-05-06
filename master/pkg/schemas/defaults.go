@@ -29,10 +29,10 @@ type RuntimeDefaultable interface {
 //    // Use the cluster checkpoint storage if the user did not specify one.
 //    config.RawCheckpointStorage = schemas.Merge(
 //        config.RawCheckpointStorage, &cluster_default_storage
-//    ).(CheckpointStorageConfig)
+//    ).(*expconf.CheckpointStorageConfig)
 //
 //    // Define any remaining undefined values.
-//    config = schemas.WithDefaults(config).(ExperimentConfig)
+//    config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
 //
 func WithDefaults(obj interface{}) interface{} {
 	vObj := reflect.ValueOf(obj)

@@ -66,7 +66,7 @@ func (e *EnvironmentImageMapV0) UnmarshalJSON(data []byte) error {
 }
 
 // For returns the value for the provided device type.
-func (e *EnvironmentImageMapV0) For(deviceType device.Type) string {
+func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 	switch deviceType {
 	case device.CPU:
 		return *e.RawCPU
@@ -111,7 +111,7 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 }
 
 // For returns the value for the provided device type.
-func (e *EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
+func (e EnvironmentVariablesMapV0) For(deviceType device.Type) []string {
 	switch deviceType {
 	case device.CPU:
 		return e.RawCPU

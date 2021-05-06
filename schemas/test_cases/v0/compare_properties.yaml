@@ -4,9 +4,9 @@
   case:
     type: int
     minval: 2
-    maxval: 10
+    maxval: 3
 
-- name: a<b compareProperties (invalid)
+- name: a<b compareProperties (invalid, equal)
   errors:
     http://determined.ai/schemas/expconf/v0/hyperparameter-int.json:
       - minval must be less than maxval
@@ -14,6 +14,40 @@
     type: int
     minval: 2
     maxval: 2
+
+- name: a<b compareProperties (invalid, nonequal)
+  errors:
+    http://determined.ai/schemas/expconf/v0/hyperparameter-int.json:
+      - minval must be less than maxval
+  case:
+    type: int
+    minval: 2
+    maxval: 1
+
+- name: a<=b compareProperties (valid, nonequal)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
+  case:
+    enabled: true
+    begin_on_batch: 2
+    end_after_batch: 3
+
+- name: a<=b compareProperties (valid, equal)
+  matches:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
+  case:
+    enabled: true
+    begin_on_batch: 2
+    end_after_batch: 2
+
+- name: a<=b compareProperties (invalid)
+  errors:
+    http://determined.ai/schemas/expconf/v0/profiling.json:
+      - "begin_on_batch must be less than end_after_batch"
+  case:
+    enabled: true
+    begin_on_batch: 2
+    end_after_batch: 1
 
 - name: a_is_subdir_of_b (valid, no storage path)
   matches:

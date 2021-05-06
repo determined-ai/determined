@@ -10,7 +10,7 @@ import (
 
 func (t TestSubV0) ValY() string {
 	if t.RawValY == nil {
-		panic("You must call WithDefaults on TestSubV0 before .RawValY")
+		panic("You must call WithDefaults on TestSubV0 before .ValY")
 	}
 	return *t.RawValY
 }

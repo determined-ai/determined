@@ -10,7 +10,7 @@ import (
 
 func (s SearcherConfigV0) Metric() string {
 	if s.RawMetric == nil {
-		panic("You must call WithDefaults on SearcherConfigV0 before .RawMetric")
+		panic("You must call WithDefaults on SearcherConfigV0 before .Metric")
 	}
 	return *s.RawMetric
 }
@@ -21,7 +21,7 @@ func (s *SearcherConfigV0) SetMetric(val string) {
 
 func (s SearcherConfigV0) SmallerIsBetter() bool {
 	if s.RawSmallerIsBetter == nil {
-		panic("You must call WithDefaults on SearcherConfigV0 before .RawSmallerIsBetter")
+		panic("You must call WithDefaults on SearcherConfigV0 before .SmallerIsBetter")
 	}
 	return *s.RawSmallerIsBetter
 }
@@ -48,22 +48,22 @@ func (s *SearcherConfigV0) SetSourceCheckpointUUID(val *string) {
 
 func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.RawSingleConfig != nil {
-		return nil
+		return *s.RawSingleConfig
 	}
 	if s.RawRandomConfig != nil {
-		return nil
+		return *s.RawRandomConfig
 	}
 	if s.RawGridConfig != nil {
-		return nil
+		return *s.RawGridConfig
 	}
 	if s.RawAsyncHalvingConfig != nil {
-		return nil
+		return *s.RawAsyncHalvingConfig
 	}
 	if s.RawAdaptiveASHAConfig != nil {
-		return nil
+		return *s.RawAdaptiveASHAConfig
 	}
 	if s.RawPBTConfig != nil {
-		return nil
+		return *s.RawPBTConfig
 	}
 	panic("no union member defined")
 }
