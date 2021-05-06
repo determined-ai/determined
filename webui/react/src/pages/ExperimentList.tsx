@@ -17,7 +17,6 @@ import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -34,7 +33,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum } from 'services/utils';
 import {
-  ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
@@ -446,13 +445,6 @@ const ExperimentList: React.FC = () => {
     setSearch(e.target.value || '');
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, []);
-
-  const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
-    storage.set(STORAGE_FILTERS_KEY, filters);
-    setSelectedRowKeys([]);
-    setFilters(filters);
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, [ setFilters, storage ]);
 
   const handleArchiveChange = useCallback((value: ArchiveFilters): void => {
     handleFilterChange({ ...filters, showArchived: value });
