@@ -26,7 +26,13 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const fluentBaseDir = "/run/determined/fluent/"
+const (
+	fluentBaseDir       = "/run/determined/fluent/"
+	coscheduler         = "coscheduler"
+	preemptionScheduler = "preemption"
+	gcTask              = "gc"
+	cmdTask             = "cmd"
+)
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	return k8sV1.ResourceRequirements{
@@ -175,16 +181,27 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" ||
-		p.taskSpec.Description() == "cmd" {
+	if p.taskSpec.Description() == cmdTask {
+		return
+	}
+
+	if scheduler == coscheduler || scheduler == preemptionScheduler {
+		if newPod.Spec.SchedulerName == "" {
+			newPod.Spec.SchedulerName = scheduler
+		}
+		p.configureCoscheduler(newPod, scheduler)
+	}
+}
+
+func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
+	if newPod.Spec.SchedulerName != scheduler {
 		return
 	}
 
 	resources := p.taskSpec.ResourcesConfig()
 	var minAvailable int
 
-	newPod.Spec.SchedulerName = scheduler
-	if p.taskSpec.Description() == "gc" {
+	if p.taskSpec.Description() == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -193,7 +210,7 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-		minAvailable = 1
+		minAvailable = 0
 	} else {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial) / float64(p.gpus)))
 	}
