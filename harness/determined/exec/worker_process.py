@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 import determined as det
-from determined import ipc, layers, load
+from determined import ipc, layers, load, profiler
 
 
 def config_logging(worker_process_env: layers.WorkerProcessContext) -> None:
@@ -43,22 +43,39 @@ def main() -> None:
         subrec = layers.SubprocessReceiver(broadcast_client)
         workloads = iter(subrec)
 
-        with det._catch_sys_exit():
-            with det._catch_init_invalid_hp(workloads):
-                controller = load.prepare_controller(
-                    worker_process_env.env,
-                    workloads,
-                    worker_process_env.load_path,
-                    worker_process_env.rendezvous_info,
-                    worker_process_env.hvd_config,
-                )
+        (
+            prof_start_on_batch,
+            prof_end_after_batch,
+        ) = worker_process_env.env.experiment_config.profiling_interval()
+        local_rank = int(os.getenv("HOROVOD_LOCAL_RANK", 0))
+        with profiler.ProfilerAgent(
+            trial_id=worker_process_env.env.det_trial_id,
+            agent_id=worker_process_env.env.det_agent_id,
+            master_url=worker_process_env.env.master_url,
+            profiling_is_enabled=worker_process_env.env.experiment_config.profiling_enabled(),
+            global_rank=worker_process_env.rendezvous_info.get_rank(),
+            local_rank=local_rank,
+            start_on_batch=prof_start_on_batch,
+            end_after_batch=prof_end_after_batch,
+        ) as prof:
 
-            try:
-                controller.run()
+            with det._catch_sys_exit():
+                with det._catch_init_invalid_hp(workloads):
+                    controller = load.prepare_controller(
+                        worker_process_env.env,
+                        workloads,
+                        worker_process_env.load_path,
+                        worker_process_env.rendezvous_info,
+                        worker_process_env.hvd_config,
+                        prof,
+                    )
 
-            except Exception as e:
-                broadcast_client.send_exception_message()
-                raise e
+                try:
+                    controller.run()
+
+                except Exception as e:
+                    broadcast_client.send_exception_message()
+                    raise e
 
 
 if __name__ == "__main__":
