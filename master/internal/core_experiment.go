@@ -415,7 +415,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	}
 
 	dbExp, err := model.NewExperiment(
-		config, modelBytes, params.ParentID, params.Archived,
+		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
 	return dbExp, params.ValidateOnly, &taskSpec, err
 }

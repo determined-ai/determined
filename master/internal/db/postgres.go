@@ -674,9 +674,9 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id)
+        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
