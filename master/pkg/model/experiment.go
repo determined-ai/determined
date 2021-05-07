@@ -215,6 +215,7 @@ type ExperimentDescriptor struct {
 // that the experiment ID will not be set.
 func NewExperiment(
 	config ExperimentConfig,
+	originalConfig string,
 	modelDefinitionBytes []byte,
 	parentID *int,
 	archived bool,
@@ -232,6 +233,7 @@ func NewExperiment(
 	return &Experiment{
 		State:                PausedState,
 		Config:               config,
+		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),
 		ParentID:             parentID,
