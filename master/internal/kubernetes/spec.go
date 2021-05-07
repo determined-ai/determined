@@ -27,11 +27,11 @@ import (
 )
 
 const (
-	fluentBaseDir = "/run/determined/fluent/"
-	coscheduler = "coscheduler"
+	fluentBaseDir       = "/run/determined/fluent/"
+	coscheduler         = "coscheduler"
 	preemptionScheduler = "preemption"
-	gcTask = "gc"
-	cmdTask = "cmd"
+	gcTask              = "gc"
+	cmdTask             = "cmd"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
