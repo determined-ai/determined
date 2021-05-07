@@ -38,6 +38,8 @@ type AWSClusterConfig struct {
 	SpotMaxPrice string `json:"spot_max_price"`
 
 	CustomTags []*ec2Tag `json:"custom_tags"`
+
+	CPUSlots bool `json:"cpu_slots"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -62,6 +64,7 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	},
 	InstanceType: "p3.8xlarge",
 	SpotEnabled:  false,
+	CPUSlots:     false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -131,6 +134,16 @@ func (c AWSClusterConfig) Validate() []error {
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 		spotPriceIsNotValidNumberErr,
 	}
+}
+
+// SlotsPerInstance returns the number of slots per instance.
+func (c AWSClusterConfig) SlotsPerInstance() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlots {
+		slots = 1
+	}
+
+	return slots
 }
 
 func validateMaxSpotPrice(spotMaxPriceInput string) error {

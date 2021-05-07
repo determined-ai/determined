@@ -1,6 +1,6 @@
 name: boosted_trees_estimator_const
 data:
-  titanic_dataset: 
+  titanic_dataset:
     train: "https://storage.googleapis.com/tf-datasets/titanic/train.csv"
     eval: "https://storage.googleapis.com/tf-datasets/titanic/eval.csv"
 hyperparameters:

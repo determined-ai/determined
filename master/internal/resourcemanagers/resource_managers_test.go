@@ -25,7 +25,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 		ResourcePools: []ResourcePoolConfig{
 			{
 				PoolName:                 defaultResourcePoolName,
-				MaxCPUContainersPerAgent: 100,
+				MaxAuxContainersPerAgent: 100,
 			},
 		},
 	}

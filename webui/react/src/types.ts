@@ -522,11 +522,11 @@ export interface Template {
 }
 
 export interface ResourcePool {
-  cpuContainerCapacity: number;
-  cpuContainerCapacityPerAgent: number;
-  cpuContainersRunning: number;
-  defaultCpuPool: boolean;
-  defaultGpuPool?: boolean;
+  auxContainerCapacity: number;
+  auxContainerCapacityPerAgent: number;
+  auxContainersRunning: number;
+  defaultAuxPool: boolean;
+  defaultComputePool?: boolean;
   description: string;
   details: RPDetails;
   imageId: string;

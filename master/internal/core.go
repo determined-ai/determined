@@ -107,9 +107,9 @@ func (m *Master) makeTaskSpec(poolName string, numSlots int) tasks.TaskSpec {
 	if m.config.ResourceManager.AgentRM != nil {
 		if poolName == "" {
 			if numSlots == 0 {
-				poolName = m.config.ResourceManager.AgentRM.DefaultCPUResourcePool
+				poolName = m.config.ResourceManager.AgentRM.DefaultAuxResourcePool
 			} else {
-				poolName = m.config.ResourceManager.AgentRM.DefaultGPUResourcePool
+				poolName = m.config.ResourceManager.AgentRM.DefaultComputeResourcePool
 			}
 		}
 		// Iterate through configured pools looking for a TaskContainerDefaults setting.

@@ -88,8 +88,8 @@ type ResourceSummary struct {
 	numAgents              int
 	numTotalSlots          int
 	numActiveSlots         int
-	maxNumCPUContainers    int
-	numActiveCPUContainers int
+	maxNumAuxContainers    int
+	numActiveAuxContainers int
 }
 
 func getResourceSummary(
@@ -98,15 +98,15 @@ func getResourceSummary(
 	summary := ResourceSummary{
 		numTotalSlots:          0,
 		numActiveSlots:         0,
-		maxNumCPUContainers:    0,
-		numActiveCPUContainers: 0,
+		maxNumAuxContainers:    0,
+		numActiveAuxContainers: 0,
 	}
 	for _, agentState := range agentInfo {
 		summary.numAgents++
 		summary.numTotalSlots += agentState.numSlots()
 		summary.numActiveSlots += agentState.numUsedSlots()
-		summary.maxNumCPUContainers += agentState.maxZeroSlotContainers
-		summary.numActiveCPUContainers += agentState.numZeroSlotContainers()
+		summary.maxNumAuxContainers += agentState.maxZeroSlotContainers
+		summary.numActiveAuxContainers += agentState.numZeroSlotContainers()
 	}
 	return summary
 }

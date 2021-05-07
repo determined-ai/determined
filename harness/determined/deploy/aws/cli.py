@@ -314,13 +314,15 @@ args_description = Cmd(
                 Arg("--master-cert-name"),
                 Arg(
                     "--gpu-agent-instance-type",
+                    "--compute-agent-instance-type",
                     type=str,
-                    help="instance type for agent in the GPU resource pool",
+                    help="instance type for agent in the compute (previously, GPU) resource pool",
                 ),
                 Arg(
                     "--cpu-agent-instance-type",
+                    "--aux-agent-instance-type",
                     type=str,
-                    help="instance type for agent in the CPU resource pool",
+                    help="instance type for agent in the auxiliary (previously, CPU) resource pool",
                 ),
                 Arg(
                     "--deployment-type",

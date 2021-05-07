@@ -761,6 +761,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
+                  cpu_slots: true
                   startup_script: |
                     apt-get update
                     apt-get -y install binutils

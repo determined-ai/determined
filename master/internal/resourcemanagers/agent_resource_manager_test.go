@@ -20,8 +20,8 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 					FairShare:     &FairShareSchedulerConfig{},
 					FittingPolicy: defaultFitPolicy,
 				},
-				DefaultCPUResourcePool: "cpu-pool",
-				DefaultGPUResourcePool: "gpu-pool",
+				DefaultAuxResourcePool:     "cpu-pool",
+				DefaultComputeResourcePool: "gpu-pool",
 			},
 		},
 		ResourcePools: []ResourcePoolConfig{

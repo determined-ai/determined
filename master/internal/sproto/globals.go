@@ -20,21 +20,21 @@ var (
 )
 
 type (
-	// GetDefaultGPUResourcePoolRequest is a message asking for the name of the default
+	// GetDefaultComputeResourcePoolRequest is a message asking for the name of the default
 	// GPU resource pool
-	GetDefaultGPUResourcePoolRequest struct{}
+	GetDefaultComputeResourcePoolRequest struct{}
 
-	// GetDefaultGPUResourcePoolResponse is the response to GetDefaultGPUResourcePoolRequest
-	GetDefaultGPUResourcePoolResponse struct {
+	// GetDefaultComputeResourcePoolResponse is the response to GetDefaultComputeResourcePoolRequest
+	GetDefaultComputeResourcePoolResponse struct {
 		PoolName string
 	}
 
-	// GetDefaultCPUResourcePoolRequest is a message asking for the name of the default
+	// GetDefaultAuxResourcePoolRequest is a message asking for the name of the default
 	// CPU resource pool
-	GetDefaultCPUResourcePoolRequest struct{}
+	GetDefaultAuxResourcePoolRequest struct{}
 
-	// GetDefaultCPUResourcePoolResponse is the response to GetDefaultCPUResourcePoolRequest
-	GetDefaultCPUResourcePoolResponse struct {
+	// GetDefaultAuxResourcePoolResponse is the response to GetDefaultAuxResourcePoolRequest
+	GetDefaultAuxResourcePoolResponse struct {
 		PoolName string
 	}
 )
@@ -74,16 +74,16 @@ func GetCurrentRM(system *actor.System) *actor.Ref {
 	panic("There should either be a k8s resource manager or an agent resource manager")
 }
 
-// GetDefaultGPUResourcePool returns the default GPU resource pool.
-func GetDefaultGPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultGPUResourcePoolRequest{}).Get()
-	return resp.(GetDefaultGPUResourcePoolResponse).PoolName
+// GetDefaultComputeResourcePool returns the default GPU resource pool.
+func GetDefaultComputeResourcePool(system *actor.System) string {
+	resp := system.Ask(GetCurrentRM(system), GetDefaultComputeResourcePoolRequest{}).Get()
+	return resp.(GetDefaultComputeResourcePoolResponse).PoolName
 }
 
-// GetDefaultCPUResourcePool returns the default CPU resource pool.
-func GetDefaultCPUResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultCPUResourcePoolRequest{}).Get()
-	return resp.(GetDefaultCPUResourcePoolResponse).PoolName
+// GetDefaultAuxResourcePool returns the default CPU resource pool.
+func GetDefaultAuxResourcePool(system *actor.System) string {
+	resp := system.Ask(GetCurrentRM(system), GetDefaultAuxResourcePoolRequest{}).Get()
+	return resp.(GetDefaultAuxResourcePoolResponse).PoolName
 }
 
 // ValidateRP validates if the resource pool exists when using the agent resource manager.

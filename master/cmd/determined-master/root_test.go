@@ -67,7 +67,7 @@ task_container_defaults:
 		{
 			PoolName:                 "default",
 			Provider:                 providerConf,
-			MaxCPUContainersPerAgent: 100,
+			MaxAuxContainersPerAgent: 100,
 		},
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{

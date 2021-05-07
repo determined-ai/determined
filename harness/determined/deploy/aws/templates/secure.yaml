@@ -797,6 +797,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
+                  cpu_slots: true
             EOF
 
             if [ "$scheme" = https ]; then

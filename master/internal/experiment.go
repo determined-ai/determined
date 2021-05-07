@@ -120,9 +120,9 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	// If the resource pool isn't set, fill in the default.
 	if poolName == "" {
 		if resources.SlotsPerTrial() == 0 {
-			poolName = sproto.GetDefaultCPUResourcePool(master.system)
+			poolName = sproto.GetDefaultAuxResourcePool(master.system)
 		} else {
-			poolName = sproto.GetDefaultGPUResourcePool(master.system)
+			poolName = sproto.GetDefaultComputeResourcePool(master.system)
 		}
 		resources.SetResourcePool(poolName)
 		conf.SetResources(resources)

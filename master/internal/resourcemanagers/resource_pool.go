@@ -188,7 +188,7 @@ func (rp *ResourcePool) notifyOnStop(
 
 func (rp *ResourcePool) updateScalingInfo() bool {
 	desiredInstanceNum := calculateDesiredNewAgentNum(
-		rp.taskList, rp.slotsPerInstance, rp.config.MaxCPUContainersPerAgent,
+		rp.taskList, rp.slotsPerInstance, rp.config.MaxAuxContainersPerAgent,
 	)
 	agents := make(map[string]sproto.AgentSummary)
 	for _, agentState := range rp.agents {
@@ -280,7 +280,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
-		rp.agents[msg.Agent] = newAgentState(msg, rp.config.MaxCPUContainersPerAgent)
+		rp.agents[msg.Agent] = newAgentState(msg, rp.config.MaxAuxContainersPerAgent)
 
 	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s on %s", msg.Device.String(), msg.Agent.Address().Local())
