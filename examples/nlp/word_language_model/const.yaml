@@ -1,8 +1,4 @@
-# description: Word_Language_Modeling_Transformer_1gpu
-# description: Word_Language_Modeling_LSTM_1gpu
-# description: Word_Language_Modeling_GRU_1gpu
-# description: Word_Language_Modeling_RNN_TANH_1gpu
-description: Word_Language_Modeling_RNN_RELU_1gpu
+description: Word_Language_Modeling_1gpu
 max_restarts: 0
 hyperparameters:
     global_batch_size: 20
