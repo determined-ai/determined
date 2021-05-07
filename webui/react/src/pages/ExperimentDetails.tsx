@@ -152,13 +152,6 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
-      breadcrumb={[
-        { breadcrumbName: 'Experiments', path: paths.experimentList() },
-        {
-          breadcrumbName: `Experiment ${experimentId}`,
-          path: paths.experimentDetails(experimentId),
-        },
-      ]}
       options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
