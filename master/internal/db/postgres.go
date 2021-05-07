@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -18,6 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
@@ -371,7 +372,7 @@ FROM (
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -568,7 +569,7 @@ FROM (
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -693,27 +694,6 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id
-FROM experiments
-WHERE id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutBackwardsIncompatibleFieldsByID looks up an experiment by ID in a database,
-// returning an error if none exists.
-// TODO(DET-4009): Remove when we have a better story for backwards compatibility.
-func (db *PgDB) ExperimentWithoutBackwardsIncompatibleFieldsByID(
-	id int,
-) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT id, state,
-  config #- '{searcher}' #- '{min_validation_period}' #- '{min_checkpoint_period}' AS config,
-  model_definition, start_time, end_time, archived,
-  git_remote, git_commit, git_committer, git_commit_date, owner_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -973,19 +953,19 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 }
 
 // ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
+func (db *PgDB) ExperimentConfig(id int) (expconf.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments
 WHERE id = $1`, id)
 	if err != nil {
-		return nil, err
+		return expconf.ExperimentConfig{}, err
 	}
-	var expConfig model.ExperimentConfig
-	if err = json.Unmarshal(expConfigBytes, &expConfig); err != nil {
-		return nil, errors.WithStack(err)
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML(expConfigBytes)
+	if err != nil {
+		return expconf.ExperimentConfig{}, errors.WithStack(err)
 	}
-	return &expConfig, nil
+	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
@@ -1344,7 +1324,7 @@ FROM (
                         FROM (
                             SELECT v.end_time, v.id, v.metrics, v.state, v.start_time
                             FROM validations v
-                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches 
+                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                   AND v.metrics IS NOT NULL
                         ) r4
                        ) AS validation,
@@ -1385,7 +1365,7 @@ func (db *PgDB) AddStep(step *model.Step) error {
 INSERT INTO steps
 (trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time,
 	:num_batches, :prior_batches_processed
 )`, step)
 	if err != nil {
@@ -1411,7 +1391,7 @@ func (db *PgDB) AddNoOpStep(step *model.Step) error {
 INSERT INTO steps
 (trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time,
 	:num_batches, :prior_batches_processed
 )`,
 		step)
@@ -1426,8 +1406,8 @@ VALUES (
 func (db *PgDB) StepByTotalBatches(trialID, totalBatches int) (*model.Step, error) {
 	var step model.Step
 	if err := db.query(`
-SELECT 
-	trial_id, id, total_batches, state, start_time, end_time, metrics, 
+SELECT
+	trial_id, id, total_batches, state, start_time, end_time, metrics,
 	num_batches, prior_batches_processed
 FROM steps
 WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {

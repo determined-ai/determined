@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Operation represents the base interface for possible operations that a search method can return.
@@ -160,11 +161,11 @@ func (c Checkpoint) String() string {
 // its total batches trained equals the specified length.
 type ValidateAfter struct {
 	RequestID model.RequestID
-	Length    model.Length
+	Length    expconf.Length
 }
 
 // NewValidateAfter returns a new train operation.
-func NewValidateAfter(requestID model.RequestID, length model.Length) ValidateAfter {
+func NewValidateAfter(requestID model.RequestID, length expconf.Length) ValidateAfter {
 	return ValidateAfter{requestID, length}
 }
 
@@ -174,7 +175,7 @@ func ValidateAfterFromProto(
 ) ValidateAfter {
 	return ValidateAfter{
 		RequestID: rID,
-		Length:    model.LengthFromProto(op.Length),
+		Length:    expconf.LengthFromProto(op.Length),
 	}
 }
 
