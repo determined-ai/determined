@@ -1991,7 +1991,7 @@ workflows:
               mark: ["distributed"]
               gpu-agent-instance-type: ["p2.8xlarge"]
               cpu-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
+              max-dynamic-agents: [3]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
 

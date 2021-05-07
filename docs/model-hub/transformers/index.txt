@@ -70,7 +70,7 @@ HuggingFace **transformers**, the following features are not currently
 supported:
 
 -  Tensorflow version of transformers
--  Suport for deepspeed and fairscale
+-  Support for deepspeed and fairscale
 -  Running on TPUs
 
 .. toctree::
