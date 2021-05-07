@@ -49,164 +49,173 @@ class FlexibleDataclass:
 
 @dataclasses.dataclass(init=False, repr=False)
 class DatasetKwargs(FlexibleDataclass):
+    """
+    Config parser for dataset fields.
+
+    Either ``dataset_name`` needs to be provided or ``train_file`` and ``validation_file`` need
+    to be provided.
+
+    Args:
+        dataset_name (optional, defaults to ``None``): Path argument to pass to HuggingFace
+            ``datasets.load_dataset``. Can be a dataset identifier in HuggingFace Datasets Hub or
+            a local path to processing script.
+        dataset_config_name (optional, defaults to ``None``): The name of the dataset configuration
+            to pass to HuggingFace ``datasets.load_dataset``.
+        validation_split_percentage (optional, defaults to ``None``): This is used to create a
+            validation split from the training data when a dataset does not have a predefined
+            validation split.
+        train_file (optional, defaults to ``None``): Path to training data.  This will be used if
+            a dataset_name is not provided.
+        validation_file (optional, defaults to ``None``): Path to validation data.  This will be
+            used if a dataset_name is not provided.
+
+    Returns:
+        dataclass with the above fields populated according to provided config.
+    """
+
     dataset_name: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Path argument to pass to HuggingFace datasets's load_dataset. Can be a "
-            "dataset identifier in HuggingFace Datasets Hub or a local path to processing "
-            "script."
-        },
     )
     dataset_config_name: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "The name of the dataset configuration to pass to HuggingFace dataset's "
-            "load_dataset."
-        },
     )
     validation_split_percentage: Optional[float] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "This is used to create a validation split from the training data when "
-            "a dataset does not have a predefined validation split."
-        },
     )
     train_file: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Path to training data.  This will be used if a dataset_name is not provided."
-        },
     )
     validation_file: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Path to validation data.  This will be used if a dataset_name is not "
-            "provided."
-        },
     )
 
 
 @dataclasses.dataclass(init=False, repr=False)
 class ConfigKwargs(FlexibleDataclass):
+    """
+    Config parser for transformers config fields.
+
+    Args:
+        pretrained_model_name_or_path: Path to pretrained model or model identifier from
+            huggingface.co/models.
+        cache_dir (optional, defaults to ``None``): Where do you want to store the pretrained models
+            downloaded from huggingface.co.
+        revision (optional, defaults to ``None``): The specific model version to use (can be a
+            branch name, tag name or commit id).
+        use_auth_token (optional, defaults to ``None``): Will use the token generated when running
+            ``transformers-cli login`` (necessary to use this script with private models).
+        num_labels (optional, excluded if not provided): Number of labels to use in the last layer
+            added to the model, typically for a classification task.
+        finetuning_task (optional, excluded if not provided): Name of the task used to fine-tune
+            the model. This can be used when converting from an original PyTorch checkpoint.
+
+    Returns:
+        dataclass with the above fields populated according to provided config.
+    """
+
     # Fields without defaults will be set as attributes only if a value is provided in the init.
-    num_labels: Optional[int] = dataclasses.field(
-        metadata={
-            "help": "Number of labels to use in the last layer added to the model, typically "
-            "for a classification task."
-        },
-    )
-    finetuning_task: Optional[str] = dataclasses.field(
-        metadata={
-            "help": "Name of the task used to fine-tune the model. This can be used when "
-            "converting from an original PyTorch checkpoint."
-        },
-    )
+    num_labels: Optional[int] = dataclasses.field()
+    finetuning_task: Optional[str] = dataclasses.field()
 
     # Fields with defaults should always be set.
     pretrained_model_name_or_path: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
     )
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Where do you want to store the pretrained models downloaded from "
-            "huggingface.co"
-        },
     )
     revision: Optional[str] = dataclasses.field(
         default="main",
-        metadata={
-            "help": "The specific model version to use (can be a branch name, tag name or "
-            "commit id)."
-        },
     )
     use_auth_token: Optional[bool] = dataclasses.field(
         default=False,
-        metadata={
-            "help": "Will use the token generated when running `transformers-cli login` "
-            "(necessary to use this script with private models)."
-        },
     )
 
 
 @dataclasses.dataclass(init=False, repr=False)
 class TokenizerKwargs(FlexibleDataclass):
+    """
+    Config parser for transformers tokenizer fields.
+
+    Args:
+        pretrained_model_name_or_path: Path to pretrained model or model identifier from
+            huggingface.co/models.
+        cache_dir (optional, defaults to ``None``): Where do you want to store the pretrained models
+            downloaded from huggingface.co.
+        revision (optional, defaults to ``None``): The specific model version to use (can be a
+            branch name, tag name or commit id).
+        use_auth_token (optional, defaults to ``None``): Will use the token generated when running
+            ``transformers-cli login`` (necessary to use this script with private models).
+        use_fast (optional, defaults to ``True``): Whether to use one of the fast tokenizer
+            (backed by the tokenizers library) or not.
+        do_lower_case (optional, excluded if not provided): Indicate if tokenizer should do lower
+            case
+
+    Returns:
+        dataclass with the above fields populated according to provided config.
+
+    """
+
     # Fields without defaults will be set as attributes only if a value is provided in the init.
-    do_lower_case: Optional[bool] = dataclasses.field(
-        metadata={
-            "help": "arg to indicate if tokenizer should do lower case in "
-            "AutoTokenizer.from_pretrained()"
-        },
-    )
+    do_lower_case: Optional[bool] = dataclasses.field()
 
     # Fields with defaults should always be set.
     pretrained_model_name_or_path: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Path to pretrained model or model identifier from huggingface.co/models"
-        },
     )
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Where do you want to store the pretrained models downloaded from "
-            "huggingface.co"
-        },
-    )
-    use_fast: Optional[bool] = dataclasses.field(
-        default=True,
-        metadata={
-            "help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) "
-            "or not."
-        },
     )
     revision: Optional[str] = dataclasses.field(
         default="main",
-        metadata={
-            "help": "The specific model version to use (can be a branch name, tag name or "
-            "commit id)."
-        },
     )
     use_auth_token: Optional[bool] = dataclasses.field(
         default=False,
-        metadata={
-            "help": "Will use the token generated when running `transformers-cli login` "
-            "(necessary to use this script with private models)."
-        },
+    )
+    use_fast: Optional[bool] = dataclasses.field(
+        default=True,
     )
 
 
 @dataclasses.dataclass
 class ModelKwargs(FlexibleDataclass):
+    """
+    Config parser for transformers model fields.
+
+    Args:
+        pretrained_model_name_or_path: Path to pretrained model or model identifier from
+            huggingface.co/models.
+        cache_dir (optional, defaults to ``None``): Where do you want to store the pretrained models
+            downloaded from huggingface.co.
+        revision (optional, defaults to ``None``): The specific model version to use (can be a
+            branch name, tag name or commit id).
+        use_auth_token (optional, defaults to ``None``): Will use the token generated when running
+            ``transformers-cli login`` (necessary to use this script with private models).
+
+    Returns:
+        dataclass with the above fields populated according to provided config.
+
+    """
+
     pretrained_model_name_or_path: str = dataclasses.field()
     cache_dir: Optional[str] = dataclasses.field(
         default=None,
-        metadata={
-            "help": "Where do you want to store the pretrained models downloaded from "
-            "huggingface.co"
-        },
     )
     revision: Optional[str] = dataclasses.field(
         default="main",
-        metadata={
-            "help": "The specific model version to use (can be a branch name, tag name or "
-            "commit id)."
-        },
     )
     use_auth_token: Optional[bool] = dataclasses.field(
         default=False,
-        metadata={
-            "help": "Will use the token generated when running `transformers-cli login` "
-            "(necessary to use this script with private models)."
-        },
     )
 
 
 @dataclasses.dataclass
 class OptimizerKwargs:
+    """
+    Config parser for transformers optimizer fields.
+
+    """
+
     weight_decay: Optional[float] = dataclasses.field(
         default=0,
     )
@@ -247,6 +256,10 @@ class OptimizerKwargs:
 
 @dataclasses.dataclass
 class LRSchedulerKwargs:
+    """
+    Config parser for transformers lr scheduler fields.
+    """
+
     num_training_steps: int = dataclasses.field()
     lr_scheduler_type: Optional[str] = dataclasses.field(
         default="linear",

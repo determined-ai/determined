@@ -46,8 +46,8 @@ def build_using_auto(
     Args:
         config_kwargs: arguments for transformers configuration classes
         tokenizer_kwargs: arguments for transformers tokenizer classes
-        model_mode: one of the tasks supported by transformers, see MODEL_MODES for
-            the supported options
+        model_mode: one of (pretraining, causal-lm, masked-lm, seq2seq-lm, sequence-classification,
+            multiple-choice, next-sentence, token-classification, question-answering)
         model_kwargs: arguments for transformers model classes
 
     Returns:
@@ -197,12 +197,11 @@ def default_load_dataset(
 
 class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
-    This is the base trial class for transformers with a default init and train_batch method.
+    This is the base PyTorchTrial for transformers that implements the ``__init__`` and
+    ``train_batch`` methods.
 
-    You can subclass BaseTransformerTrial to customize a trial for your own usage by filing in
+    You can subclass ``BaseTransformerTrial`` to customize a trial for your own usage by filing in
     the expected methods for data loading and evaluation.
-
-    See examples/huggingface/token-classification/ner_trial.py for an example.
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
