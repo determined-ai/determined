@@ -299,7 +299,7 @@ func (r *Ref) close() {
 	defer r.lLock.Unlock()
 
 	if r.err != nil {
-		fmt.Println("About to log error: %T : %d : %+v", r.err, reflect.TypeOf(r.err), r.err)
+		fmt.Printf("About to log error: %T : %d : %+v\n", r.err, reflect.TypeOf(r.err), r.err)
 		r.log.WithError(r.err).Error("error while actor was running")
 		fmt.Println("Finished logging error")
 	}
