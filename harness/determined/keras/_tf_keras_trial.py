@@ -21,7 +21,7 @@ from tensorflow.python.keras.saving.hdf5_format import (
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, util, workload
+from determined import horovod, keras, profiler, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -242,6 +242,7 @@ class TFKerasTrialController(det.LoopTrialController):
     @staticmethod
     def from_trial(
         trial_inst: det.Trial,
+        prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: workload.Stream,
@@ -285,6 +286,7 @@ class TFKerasTrialController(det.LoopTrialController):
             context.model,
             session,
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
+            prof,
             context,
             env,
             workloads,
@@ -296,6 +298,7 @@ class TFKerasTrialController(det.LoopTrialController):
     @staticmethod
     def from_native(
         context: det.NativeContext,
+        prof: profiler.ProfilerAgent,
         env: det.EnvContext,
         workloads: workload.Stream,
         load_path: Optional[pathlib.Path],
@@ -333,6 +336,7 @@ class TFKerasTrialController(det.LoopTrialController):
             context.model,
             session,
             train_config,
+            prof,
             context,
             env,
             workloads,
@@ -346,6 +350,7 @@ class TFKerasTrialController(det.LoopTrialController):
         model: tf.keras.models.Model,
         session: tf.compat.v1.ConfigProto,
         train_config: keras.TFKerasTrainConfig,
+        prof: profiler.ProfilerAgent,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -384,6 +389,8 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # If a load path is provided, load weights and restore the data location.
         self._load()
+
+        self.prof = prof
 
         self._configure_callbacks(train_config.callbacks)
 
@@ -501,6 +508,8 @@ class TFKerasTrialController(det.LoopTrialController):
         if self.context._fit_verbose:
             # Our implementation of verbose=True.
             callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
+
+        callbacks = callbacks + [keras.callbacks._DeterminedProfiler(self.prof)]
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in

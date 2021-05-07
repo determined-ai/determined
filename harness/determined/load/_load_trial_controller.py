@@ -3,7 +3,7 @@ import pathlib
 from typing import Optional, Tuple, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload
+from determined import horovod, load, profiler, tensorboard, workload
 from determined.common import check
 
 
@@ -14,6 +14,7 @@ def load_controller_from_trial(
     load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    prof: profiler.ProfilerAgent,
 ) -> det.TrialController:
     # Step 1: Validate model definition.
     controller_class = trial_class.trial_controller_class
@@ -41,6 +42,7 @@ def load_controller_from_trial(
     logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
     return controller_class.from_trial(
         trial_inst=trial_inst,
+        prof=prof,
         context=trial_context,
         env=env,
         workloads=workloads,
@@ -56,10 +58,12 @@ def load_trial_implementation_controller(
     load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    prof: profiler.ProfilerAgent,
 ) -> det.TrialController:
     trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
     return load_controller_from_trial(
         trial_class=trial_class,
+        prof=prof,
         env=env,
         workloads=workloads,
         load_path=load_path,
@@ -74,6 +78,7 @@ def load_native_implementation_controller(
     load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    prof: profiler.ProfilerAgent,
 ) -> det.TrialController:
     check.true(
         env.experiment_config.native_enabled(),
@@ -91,6 +96,7 @@ def load_native_implementation_controller(
             load_path=load_path,
             rendezvous_info=rendezvous_info,
             hvd_config=hvd_config,
+            prof=prof,
         )
 
     else:
@@ -114,6 +120,7 @@ def load_native_implementation_controller(
             load_path=load_path,
             rendezvous_info=rendezvous_info,
             hvd_config=hvd_config,
+            prof=prof,
         )
 
 
@@ -123,6 +130,7 @@ def prepare_controller(
     load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    prof: profiler.ProfilerAgent,
 ) -> det.TrialController:
     """
     Load a user's python code, locate the Trial and Trial Controller, then instantiate one.
@@ -130,11 +138,11 @@ def prepare_controller(
 
     if env.experiment_config.native_enabled():
         controller = load_native_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config
+            env, workloads, load_path, rendezvous_info, hvd_config, prof
         )
     else:
         controller = load_trial_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config
+            env, workloads, load_path, rendezvous_info, hvd_config, prof
         )
 
     return controller
