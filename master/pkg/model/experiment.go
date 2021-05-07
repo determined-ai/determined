@@ -188,6 +188,7 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 type Experiment struct {
 	ID     int              `db:"id"`
 	State  State            `db:"state"`
+	Notes  string           `db:"notes"`
 	Config ExperimentConfig `db:"config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`

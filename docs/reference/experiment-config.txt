@@ -32,9 +32,13 @@ an experiment is created with the Determined CLI. For example:
 
 **Optional Fields**
 
+``name``
+   A short human-readable name for the experiment.
+
 ``description``
    A human-readable description of the experiment. This does not need to
-   be unique.
+   be unique but should be limited to less than 255 characters for the
+   best experience.
 
 ``labels``
    A list of label names (strings). Assigning labels to experiments

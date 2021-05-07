@@ -221,7 +221,7 @@ def describe(args: Namespace) -> None:
         "Progress",
         "Start Time",
         "End Time",
-        "Description",
+        "Name",
         "Archived",
         "Resource Pool",
         "Labels",
@@ -233,7 +233,7 @@ def describe(args: Namespace) -> None:
             render.format_percent(doc["progress"]),
             render.format_time(doc.get("start_time")),
             render.format_time(doc.get("end_time")),
-            doc["config"].get("description"),
+            doc["config"].get("name"),
             doc["archived"],
             doc["config"]["resources"].get("resource_pool"),
             ", ".join(sorted(doc["config"].get("labels", []))),
@@ -435,7 +435,7 @@ def list_experiments(args: Namespace) -> None:
         result = [
             e["id"],
             e["owner"]["username"],
-            e["config"]["description"],
+            e["config"]["name"],
             e["state"],
             render.format_percent(e["progress"]),
             render.format_time(e["start_time"]),
@@ -449,7 +449,7 @@ def list_experiments(args: Namespace) -> None:
     headers = [
         "ID",
         "Owner",
-        "Description",
+        "Name",
         "State",
         "Progress",
         "Start Time",
@@ -529,6 +529,12 @@ def pause(args: Namespace) -> None:
 def set_description(args: Namespace) -> None:
     patch_experiment(args, "change description of", {"description": args.description})
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
+
+
+@authentication_required
+def set_name(args: Namespace) -> None:
+    patch_experiment(args, "change name of", {"name": args.name})
+    print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
 
 
 @authentication_required
@@ -892,6 +898,15 @@ args_description = Cmd(
                     [
                         experiment_id_arg("experiment ID to modify"),
                         Arg("description", help="experiment description"),
+                    ],
+                ),
+                Cmd(
+                    "name",
+                    set_name,
+                    "set experiment name",
+                    [
+                        experiment_id_arg("experiment ID to modify"),
+                        Arg("name", help="experiment name"),
                     ],
                 ),
                 Cmd(
