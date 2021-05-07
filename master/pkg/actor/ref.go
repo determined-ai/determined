@@ -299,9 +299,7 @@ func (r *Ref) close() {
 	defer r.lLock.Unlock()
 
 	if r.err != nil {
-		r.log.Errorf("About to log error: %T : %d : %+v\n", r.err, reflect.TypeOf(r.err), r.err)
 		r.log.WithError(r.err).Error("error while actor was running")
-		r.log.Errorf("Finished logging error")
 	}
 	// Recover from an actor panic and set the error flag.
 	if rec := recover(); rec != nil {
