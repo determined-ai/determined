@@ -54,9 +54,9 @@ class ExperimentReference:
 
     def wait_till_complete(self, sleep_interval: int = 5) -> None:
         while True:
-            exp_resp = self._experiments.determined_get_experiment(
+            exp_resp = self._experiments.determined_get_experiment(  # type: ignore
                 experiment_id=self.id
-            )  # type: ignore
+            )
             if (
                 exp_resp.experiment.state == ExperimentState.COMPLETED
                 or exp_resp.experiment.state == ExperimentState.CANCELED
