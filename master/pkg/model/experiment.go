@@ -189,7 +189,7 @@ type Experiment struct {
 	ID             int              `db:"id"`
 	State          State            `db:"state"`
 	Config         ExperimentConfig `db:"config"`
-	OriginalConfig *string          `db:"original_config"`
+	OriginalConfig string           `db:"original_config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -233,7 +233,7 @@ func NewExperiment(
 	return &Experiment{
 		State:                PausedState,
 		Config:               config,
-		OriginalConfig:       originalConfig,
+		OriginalConfig:       *originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),
 		ParentID:             parentID,

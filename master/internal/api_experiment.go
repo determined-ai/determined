@@ -566,7 +566,7 @@ func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
 	detParams := CreateExperimentParams{
-		ConfigBytes:  &req.Config,
+		ConfigBytes:  req.Config,
 		ModelDef:     filesToArchive(req.ModelDefinition),
 		ValidateOnly: req.ValidateOnly,
 	}

@@ -341,7 +341,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 // CreateExperimentParams defines a request to create an experiment.
 type CreateExperimentParams struct {
-	ConfigBytes   *string         `json:"experiment_config"`
+	ConfigBytes   string          `json:"experiment_config"`
 	Template      *string         `json:"template"`
 	ModelDef      archive.Archive `json:"model_definition"`
 	ParentID      *int            `json:"parent_id"`
@@ -356,7 +356,7 @@ type CreateExperimentParams struct {
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
-	resources := model.ParseJustResources([]byte(*params.ConfigBytes))
+	resources := model.ParseJustResources([]byte(params.ConfigBytes))
 	taskSpec := m.makeTaskSpec(resources.ResourcePool, resources.SlotsPerTrial)
 
 	config := model.DefaultExperimentConfig(&taskSpec.TaskContainerDefaults)
@@ -379,7 +379,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	}
 
 	if yerr := yaml.Unmarshal(
-		[]byte(*params.ConfigBytes), &config, yaml.DisallowUnknownFields,
+		[]byte(params.ConfigBytes), &config, yaml.DisallowUnknownFields,
 	); yerr != nil {
 		return nil, false, nil, errors.Wrap(yerr, "invalid experiment configuration")
 	}
@@ -415,7 +415,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	}
 
 	dbExp, err := model.NewExperiment(
-		config, params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
+		config, &params.ConfigBytes, modelBytes, params.ParentID, params.Archived,
 		params.GitRemote, params.GitCommit, params.GitCommitter, params.GitCommitDate)
 	return dbExp, params.ValidateOnly, &taskSpec, err
 }
