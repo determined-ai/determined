@@ -59,6 +59,11 @@ setup(
         # docker-compose has a requirement not properly propagated with semi-old pip installations;
         # so we expose that requirement here.
         "websocket-client<1",
+        # Swagger-codegen: python requirements
+        "certifi>=2017.4.17",
+        "python-dateutil>=2.1",
+        "six>=1.10",
+        "urllib3>=1.23",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],

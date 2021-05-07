@@ -1,3 +1,8 @@
 [tool.black]
 line-length = 100
-exclude = '_gen.py'
+exclude = '''
+/(
+    \_gen.py
+  | determined/client/*
+)/
+'''
