@@ -143,14 +143,14 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                     prof_end_after_batch,
                 ) = env.experiment_config.profiling_interval()
                 with profiler.ProfilerAgent(
-                        trial_id=env.det_trial_id,
-                        agent_id=env.det_agent_id,
-                        master_url=env.master_url,
-                        profiling_is_enabled=env.experiment_config.profiling_enabled(),
-                        global_rank=0,
-                        local_rank=0,
-                        start_on_batch=prof_start_on_batch,
-                        end_after_batch=prof_end_after_batch,
+                    trial_id=env.det_trial_id,
+                    agent_id=env.det_agent_id,
+                    master_url=env.master_url,
+                    profiling_is_enabled=env.experiment_config.profiling_enabled(),
+                    global_rank=0,
+                    local_rank=0,
+                    start_on_batch=prof_start_on_batch,
+                    end_after_batch=prof_end_after_batch,
                 ) as prof:
                     with det._catch_sys_exit():
                         with det._catch_init_invalid_hp(workloads):
