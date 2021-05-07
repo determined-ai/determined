@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -26,6 +27,13 @@ const (
 	determinedLabel         = "determined"
 )
 
+const (
+	// SlotTypeCPU signals CPU-only slots
+	SlotTypeCPU = "cpu"
+	// SlotTypeGPU signals CUDA GPU slots
+	SlotTypeGPU = "gpu"
+)
+
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
@@ -41,12 +49,14 @@ type pod struct {
 	masterTLSConfig          model.TLSClientConfig
 	loggingTLSConfig         model.TLSClientConfig
 	loggingConfig            model.LoggingConfig
-	gpus                     int
+	slots                    int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
 	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
 	scheduler                string
+	slotType                 string
+	slotResourceRequests     PodSlotResourceRequests
 
 	pod              *k8sV1.Pod
 	podName          string
@@ -59,11 +69,17 @@ type pod struct {
 	containerNames   map[string]bool
 }
 
+// PodSlotResourceRequests contains the per-slot container requests.
+type PodSlotResourceRequests struct {
+	CPU float32 `json:"cpu"`
+}
+
 type getPodNodeInfo struct{}
 
 type podNodeInfo struct {
 	nodeName  string
-	numGPUs   int
+	numSlots  int
+	slotType  string
 	container *container.Container
 }
 
@@ -82,6 +98,8 @@ func newPod(
 	configMapInterface typedV1.ConfigMapInterface,
 	resourceRequestQueue *actor.Ref,
 	leaveKubernetesResources bool,
+	slotType string,
+	slotResourceRequests PodSlotResourceRequests,
 	scheduler string,
 ) *pod {
 	podContainer := container.Container{
@@ -107,7 +125,7 @@ func newPod(
 		masterTLSConfig:          masterTLSConfig,
 		loggingTLSConfig:         loggingTLSConfig,
 		loggingConfig:            loggingConfig,
-		gpus:                     msg.Slots,
+		slots:                    msg.Slots,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
 		resourceRequestQueue:     resourceRequestQueue,
@@ -117,6 +135,8 @@ func newPod(
 		container:                podContainer,
 		containerNames:           containerNames,
 		scheduler:                scheduler,
+		slotType:                 slotType,
+		slotResourceRequests:     slotResourceRequests,
 	}
 }
 
@@ -328,7 +348,8 @@ func (p *pod) receiveResourceDeletionFailed(
 func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
 	ctx.Respond(podNodeInfo{
 		nodeName:  p.pod.Spec.NodeName,
-		numGPUs:   p.gpus,
+		numSlots:  p.slots,
+		slotType:  p.slotType,
 		container: &p.container,
 	})
 }
@@ -379,6 +400,52 @@ func (p *pod) insertLog(ctx *actor.Context, timestamp time.Time, msg string) {
 	})
 }
 
+// Converts k8s message to be more understandable.
+func (p *pod) preparePodUpdateMessage(msgText string) string {
+	// Handle simple message replacements.
+	replacements := map[string]string{
+		"pod triggered scale-up":     "Job requires additional resources, scaling up cluster.",
+		"Successfully assigned":      "Pod resources allocated.",
+		"skip schedule deleting pod": "Deleting unscheduled pod.",
+	}
+
+	simpleReplacement := false
+
+	for k, v := range replacements {
+		matched, err := regexp.MatchString(k, msgText)
+		if err != nil {
+			break
+		} else if matched {
+			msgText = v
+			simpleReplacement = true
+		}
+	}
+
+	// Otherwise, try special treatment for slots availability message.
+	if !simpleReplacement {
+		matched, err := regexp.MatchString("nodes are available", msgText)
+		if err == nil && matched {
+			fmt.Printf("K8S nodes message: %s\n", msgText)
+			available := string(msgText[0])
+			required := strconv.Itoa(p.slots)
+			var resourceName string
+			switch p.slotType {
+			case SlotTypeCPU:
+				resourceName = "CPU slots"
+			case SlotTypeGPU:
+				fallthrough
+			default:
+				resourceName = "GPUs"
+			}
+
+			msgText = fmt.Sprintf("Waiting for resources. %s %s are available, %s %s required",
+				available, resourceName, required, resourceName)
+		}
+	}
+
+	return msgText
+}
+
 func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	// We only forward messages while pods are starting up.
 	switch p.container.State {
@@ -386,11 +453,10 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 		return
 	}
 
-	if len(msg.event.Message) > 22 && msg.event.Message[0:23] == gpuTextReplacement {
-		msg.event.Message += strconv.Itoa(p.gpus) + " GPUs required."
-	}
+	msgText := p.preparePodUpdateMessage(msg.event.Message)
+	msg.event.Message = msgText
 
-	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msg.event.Message)
+	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msgText)
 	p.insertLog(ctx, msg.event.CreationTimestamp.Time, message)
 }
 

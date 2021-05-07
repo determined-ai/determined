@@ -74,13 +74,15 @@ func createPod(
 	configMapInterface := clientSet.CoreV1().ConfigMaps(namespace)
 	resourceRequestQueue := resourceHandler
 	leaveKubernetesResources := false
+	slotType := "gpu"
+	slotResourceRequests := PodSlotResourceRequests{}
 
 	newPodHandler := newPod(
 		msg, cluster, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue, leaveKubernetesResources,
-		"default-scheduler",
+		slotType, slotResourceRequests, "default-scheduler",
 	)
 
 	return newPodHandler
@@ -560,14 +562,13 @@ func TestReceivePodEventUpdate(t *testing.T) {
 
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
 
-	msg := gpuTextReplacement
 	object := k8sV1.ObjectReference{Kind: "mock", Namespace: "test", Name: "MockObject"}
 	newEvent := k8sV1.Event{
 		InvolvedObject: object,
 		Reason:         "testing",
-		Message:        msg,
+		Message:        "0/99 nodes are available: 99 Insufficient cpu",
 	}
-	newPod.gpus = 99
+	newPod.slots = 99
 	podMap["task"].Purge()
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
@@ -579,7 +580,8 @@ func TestReceivePodEventUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to pop message from task receiver queue")
 	}
-	correctMsg := fmt.Sprintf("Pod %s: %s", object.Name, gpuTextReplacement+"99 GPUs required.")
+	correctMsg := fmt.Sprintf("Pod %s: %s", object.Name,
+		"Waiting for resources. 0 GPUs are available, 99 GPUs required")
 
 	containerMsg, ok := message.(sproto.ContainerLog)
 	if !ok {
@@ -741,7 +743,7 @@ func TestGetPodNodeInfo(t *testing.T) {
 	defer cleanup(t)
 
 	system, newPod, ref, podMap, _ := createPodWithMockQueue()
-	newPod.gpus = 99
+	newPod.slots = 99
 	time.Sleep(time.Second)
 
 	podMap["task"].Purge()
@@ -763,5 +765,5 @@ func TestGetPodNodeInfo(t *testing.T) {
 	}
 
 	assert.Equal(t, podInfo.nodeName, newPod.pod.Spec.NodeName)
-	assert.Equal(t, podInfo.numGPUs, newPod.gpus)
+	assert.Equal(t, podInfo.numSlots, newPod.slots)
 }

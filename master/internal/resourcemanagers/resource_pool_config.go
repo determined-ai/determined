@@ -11,7 +11,8 @@ import (
 // DefaultRPConfig returns the default resources pool configuration.
 func defaultRPConfig() ResourcePoolConfig {
 	return ResourcePoolConfig{
-		MaxCPUContainersPerAgent: 100,
+		MaxAuxContainersPerAgent: 100,
+		MaxCPUContainersPerAgent: -1,
 	}
 }
 
@@ -21,22 +22,34 @@ type ResourcePoolConfig struct {
 	Description              string                             `json:"description"`
 	Provider                 *provisioner.Config                `json:"provider"`
 	Scheduler                *SchedulerConfig                   `json:"scheduler,omitempty"`
-	MaxCPUContainersPerAgent int                                `json:"max_cpu_containers_per_agent"`
+	MaxAuxContainersPerAgent int                                `json:"max_aux_containers_per_agent"`
 	TaskContainerDefaults    *model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	// Deprecated: Use MaxAuxContainersPerAgent instead.
+	MaxCPUContainersPerAgent int `json:"max_cpu_containers_per_agent,omitempty"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (r *ResourcePoolConfig) UnmarshalJSON(data []byte) error {
 	*r = defaultRPConfig()
 	type DefaultParser *ResourcePoolConfig
-	return json.Unmarshal(data, DefaultParser(r))
+	if err := json.Unmarshal(data, DefaultParser(r)); err != nil {
+		return err
+	}
+
+	if r.MaxCPUContainersPerAgent != -1 {
+		r.MaxAuxContainersPerAgent = r.MaxCPUContainersPerAgent
+	}
+
+	r.MaxCPUContainersPerAgent = 0
+
+	return nil
 }
 
 // Validate implements the check.Validatable interface.
 func (r ResourcePoolConfig) Validate() []error {
 	return []error{
 		check.True(len(r.PoolName) != 0, "resource pool name cannot be empty"),
-		check.True(r.MaxCPUContainersPerAgent >= 0,
+		check.True(r.MaxAuxContainersPerAgent >= 0,
 			"resource pool max cpu containers per agent should be >= 0"),
 	}
 }

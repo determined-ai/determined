@@ -117,6 +117,7 @@ resource "google_compute_instance" "master_instance" {
             gpu_type: ${var.gpu_type}
             gpu_num: ${var.gpu_num}
             preemptible: ${var.preemptible}
+          cpu_slots: true
           min_instances: ${var.min_dynamic_agents}
           max_instances: ${var.max_dynamic_agents}
           operation_timeout_period: ${var.operation_timeout_period}

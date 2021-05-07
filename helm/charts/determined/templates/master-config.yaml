@@ -54,6 +54,11 @@ data:
       default_scheduler: "coscheduler"
       {{- end }}
       {{- end }}
+      {{- if (ne (default "gpu" .Values.slotType) "gpu") }}
+      slot_type: {{ .Values.slotType }}
+      slot_resource_requests:
+        cpu: {{ .Values.slotResourceRequests.cpu }}
+      {{- end }}
 
     {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-3a452bc")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-3a452bc")._1 -}}

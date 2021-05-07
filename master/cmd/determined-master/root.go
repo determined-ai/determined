@@ -146,7 +146,7 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 
 	_, rmExisted := configMap["resource_manager"]
 	_, rpsExisted := configMap["resource_pools"]
-	vSchduler, schedulerExisted := configMap["scheduler"]
+	vScheduler, schedulerExisted := configMap["scheduler"]
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
 	// Ensure we use either the old schema or the new one.
@@ -168,7 +168,7 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 		"type": agentVal,
 	}
 	if schedulerExisted {
-		schedulerMap, ok := vSchduler.(map[string]interface{})
+		schedulerMap, ok := vScheduler.(map[string]interface{})
 		if !ok {
 			return nil, errors.New("wrong type for scheduler field")
 		}

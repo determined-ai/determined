@@ -776,6 +776,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
+                  cpu_slots: true
                   startup_script: |
                     wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
                     bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'

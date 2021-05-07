@@ -61,8 +61,8 @@ resource_pools:
 						FairShare:     &resourcemanagers.FairShareSchedulerConfig{},
 						FittingPolicy: "best",
 					},
-					DefaultGPUResourcePool: "default",
-					DefaultCPUResourcePool: "default",
+					DefaultComputeResourcePool: "default",
+					DefaultAuxResourcePool:     "default",
 				},
 			},
 			ResourcePools: []resourcemanagers.ResourcePoolConfig{
@@ -77,12 +77,83 @@ resource_pools:
 						MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),
 						MaxInstances:           5,
 					},
-					MaxCPUContainersPerAgent: 100,
+					MaxAuxContainersPerAgent: 100,
 					TaskContainerDefaults: &model.TaskContainerDefaultsConfig{
 						ShmSizeBytes:           4294967296,
 						NetworkMode:            "bridge",
 						DtrainNetworkInterface: "if0",
 					},
+				},
+			},
+		},
+	}
+
+	unmarshaled := Config{}
+	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, unmarshaled, expected)
+}
+
+func TestUnmarshalConfigWithCPUGPUPools(t *testing.T) {
+	raw := `
+resource_manager:
+  type: agent
+  default_cpu_resource_pool: cpu-pool
+  default_gpu_resource_pool: gpu-pool
+  scheduler:
+    type: fair_share
+resource_pools:
+  - pool_name: cpu-pool
+    max_aux_containers_per_agent: 10
+    provider:
+      max_idle_agent_period: 10s
+      max_agent_starting_period: 20s
+  - pool_name: gpu-pool
+    max_cpu_containers_per_agent: 0
+    provider:
+      max_idle_agent_period: 30s
+      max_agent_starting_period: 40s
+`
+	expected := Config{
+		ResourceConfig: &resourcemanagers.ResourceConfig{
+			ResourceManager: &resourcemanagers.ResourceManagerConfig{
+				AgentRM: &resourcemanagers.AgentResourceManagerConfig{
+					Scheduler: &resourcemanagers.SchedulerConfig{
+						FairShare:     &resourcemanagers.FairShareSchedulerConfig{},
+						FittingPolicy: "best",
+					},
+					DefaultComputeResourcePool: "gpu-pool",
+					DefaultAuxResourcePool:     "cpu-pool",
+				},
+			},
+			ResourcePools: []resourcemanagers.ResourcePoolConfig{
+				{
+					PoolName: "cpu-pool",
+					Provider: &provisioner.Config{
+						AgentDockerRuntime:     "runc",
+						AgentDockerNetwork:     "default",
+						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+						AgentFluentImage:       "fluent/fluent-bit:1.6",
+						MaxIdleAgentPeriod:     provisioner.Duration(10 * time.Second),
+						MaxAgentStartingPeriod: provisioner.Duration(20 * time.Second),
+						MaxInstances:           5,
+					},
+					MaxAuxContainersPerAgent: 10,
+					MaxCPUContainersPerAgent: 0,
+				},
+				{
+					PoolName: "gpu-pool",
+					Provider: &provisioner.Config{
+						AgentDockerRuntime:     "runc",
+						AgentDockerNetwork:     "default",
+						AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
+						AgentFluentImage:       "fluent/fluent-bit:1.6",
+						MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
+						MaxAgentStartingPeriod: provisioner.Duration(40 * time.Second),
+						MaxInstances:           5,
+					},
+					MaxAuxContainersPerAgent: 0,
+					MaxCPUContainersPerAgent: 0,
 				},
 			},
 		},

@@ -49,6 +49,8 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 	scheduler                string
+	slotType                 string
+	slotResourceRequests     PodSlotResourceRequests
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -83,6 +85,8 @@ func Initialize(
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 	scheduler string,
+	slotType string,
+	slotResourceRequests PodSlotResourceRequests,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -101,6 +105,8 @@ func Initialize(
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
 		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources: leaveKubernetesResources,
+		slotType:                 slotType,
+		slotResourceRequests:     slotResourceRequests,
 		currentNodes:             make(map[string]*k8sV1.Node),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
@@ -282,7 +288,8 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) 
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
-		p.resourceRequestQueue, p.leaveKubernetesResources, p.scheduler,
+		p.resourceRequestQueue, p.leaveKubernetesResources,
+		p.slotType, p.slotResourceRequests, p.scheduler,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
@@ -423,8 +430,20 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 
 	summary := make(map[string]agent.AgentSummary)
 	for _, node := range p.currentNodes {
-		gpuResources := node.Status.Capacity["nvidia.com/gpu"]
-		numSlots := gpuResources.Value()
+		var numSlots int64
+		var deviceType device.Type
+		switch p.slotType {
+		case SlotTypeCPU:
+			resources := node.Status.Capacity["cpu"]
+			numSlots = int64(float32(resources.Value()) / p.slotResourceRequests.CPU)
+			deviceType = device.CPU
+		case SlotTypeGPU:
+			fallthrough
+		default:
+			resources := node.Status.Capacity["nvidia.com/gpu"]
+			numSlots = resources.Value()
+			deviceType = device.GPU
+		}
 		if numSlots < 1 {
 			continue
 		}
@@ -432,7 +451,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		slotsSummary := make(agent.SlotsSummary)
 		curSlot := 0
 		for _, podInfo := range podByNode[node.Name] {
-			for i := 0; i < podInfo.numGPUs; i++ {
+			for i := 0; i < podInfo.numSlots; i++ {
 				if curSlot >= int(numSlots) {
 					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
 					continue
@@ -440,7 +459,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 
 				slotsSummary[strconv.Itoa(curSlot)] = agent.SlotSummary{
 					ID:        strconv.Itoa(i),
-					Device:    device.Device{Type: device.GPU},
+					Device:    device.Device{Type: deviceType},
 					Enabled:   true,
 					Container: podInfo.container,
 				}
@@ -451,7 +470,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = agent.SlotSummary{
 				ID:      strconv.Itoa(i),
-				Device:  device.Device{Type: device.GPU},
+				Device:  device.Device{Type: deviceType},
 				Enabled: true,
 			}
 		}

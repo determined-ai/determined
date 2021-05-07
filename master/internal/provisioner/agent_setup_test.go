@@ -23,7 +23,7 @@ func TestAgentSetupScript(t *testing.T) {
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		MasterCertBase64:             encodedMasterCert,
-		AgentUseGPUs:                 true,
+		AgentForceGPUs:               true,
 		AgentDockerImage:             "test_docker_image",
 		AgentFluentImage:             "fluent-test",
 		AgentDockerRuntime:           "runc",
@@ -45,15 +45,15 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-use_gpus=true
-if $use_gpus
+force_gpus=true
+if $force_gpus
 then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
     docker_args+=(-e DET_SLOT_TYPE=gpu)
 else
-    echo "#### Starting agent with only CPUs"
-    docker_args+=(-e DET_SLOT_TYPE=none)
+    echo "#### Starting agent with auto slots"
+    docker_args+=(-e DET_SLOT_TYPE=auto)
 fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=

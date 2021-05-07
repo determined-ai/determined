@@ -71,12 +71,13 @@ func newGCPCluster(
 		}
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
+	agentForceGPUs := config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlots
 
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,
-		AgentUseGPUs:                 config.GCP.InstanceType.Slots() > 0,
+		AgentForceGPUs:               agentForceGPUs,
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
@@ -111,6 +112,10 @@ func newGCPCluster(
 
 func (c *gcpCluster) instanceType() instanceType {
 	return c.InstanceType
+}
+
+func (c *gcpCluster) slotsPerInstance() int {
+	return c.GCPClusterConfig.SlotsPerInstance()
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {

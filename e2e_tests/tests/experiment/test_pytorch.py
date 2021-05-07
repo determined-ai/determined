@@ -89,6 +89,7 @@ def test_pytorch_const_warm_start() -> None:
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])  # type: ignore
 def test_pytorch_const_with_amp(api_style: str) -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))

@@ -246,7 +246,7 @@ const NotebookForm:React.FC<FormProps> = (
     if (!selectedPool) {
       return { hasCPU: false, hasGPU: false, showResourceType: true };
     }
-    const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
+    const hasCPUCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
     const hasGPUCapacity = selectedPool.slotsAvailable > 0
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     if (hasCPUCapacity && !hasGPUCapacity) {
