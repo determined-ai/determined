@@ -43,15 +43,15 @@ Let us walk through qa_trial.py_ to learn the basics. We won't cover the
 model definition line by line but will highlight the parts that make use
 of **model-hub**.
 
-After this tutorial, if you want to further customize a trial for your
-own use, you can look at qa_beam_search_trial.py_ for an example.
-
 .. note::
 
    If you are new to Determined, we recommend going through the
    :ref:`PyTorch MNIST tutorial <pytorch-mnist-tutorial>` first to get a
    better understanding of how to use PyTorch in Determined via
    :py:class:`determined.harness.pytorch.PyTorchTrial`.
+
+After this tutorial, if you want to further customize a trial for your
+own use, you can look at qa_beam_search_trial.py_ for an example.
 
 **************************
  Initializing the QATrial

@@ -8,10 +8,10 @@
 
 `The Huggingface transformers library
 <https://github.com/huggingface/transformers>`_ is the de-facto library
-for natural language processing models. It provides pretrained weights
-for leading NLP models and allows users to easily use these pretrained
-models for the most common NLP tasks like language modeling, text
-classification, and question answering among others.
+for natural language processing (NLP) models. It provides pretrained
+weights for leading NLP models and allows users to easily use these
+pretrained models for the most common NLP tasks like language modeling,
+text classification, and question answering among others.
 
 **model-hub** makes it easy for users to train transformer models in
 Determined while keeping the developer experience as close as possible
@@ -24,13 +24,13 @@ provides access all of Determined's benefits including:
    no code modifications. Determined automatically sets up the
    distributed backend for you.
 
--  Experiment tracking, experiment visualization, artifact tracking, and
+-  Experiment monitoring and tracking, artifact tracking, and
    :ref:`state-of-the-art hyperparameter search <hyperparameter-tuning>`
    without requiring third-party integrations.
 
 -  :ref:`Automated cluster management, fault tolerance, and job
    rescheduling <benefits-of-determined>` so you don't have to worry
-   about provisioning resources or babysit your experiments.
+   about provisioning resources or babysitting your experiments.
 
 .. note::
 

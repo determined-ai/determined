@@ -33,8 +33,8 @@ Helper Functions
 ================
 
 The ``BaseTransformerTrial`` calls many helper functions below that are
-also useful for those subclassing ``BaseTransformerTrial`` or writing
-their own transformers trials for use with Determined.
+also useful when subclassing ``BaseTransformerTrial`` or writing custom
+transformers trials for use with Determined.
 
 .. automodule:: model_hub.huggingface
    :members: default_parse_config_tokenizer_model_kwargs, default_parse_optimizer_lr_scheduler_kwargs, build_using_auto, build_default_optimizer, build_default_lr_scheduler, default_load_dataset
@@ -42,11 +42,11 @@ their own transformers trials for use with Determined.
 Structured Dataclasses
 ======================
 
-Structured dataclasses are used to ensure that we parse the experiment
-config correctly. See the below classes for details on what fields can
-be used in the experiment config to configure the dataset; transformers
-config, model, and tokenizer; as well as optimizer and learning rate
-scheduler for use with the functions above.
+Structured dataclasses are used to ensure that Determined parses the
+experiment config correctly. See the below classes for details on what
+fields can be used in the experiment config to configure the dataset;
+transformers config, model, and tokenizer; as well as optimizer and
+learning rate scheduler for use with the functions above.
 
 .. autoclass:: model_hub.huggingface.DatasetKwargs
 
