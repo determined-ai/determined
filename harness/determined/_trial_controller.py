@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import horovod, workload
+from determined import horovod, profiler, workload
 from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 from determined.common.types import StepID
@@ -64,6 +64,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def from_trial(
         trial_inst: "det.Trial",
+        prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: workload.Stream,
@@ -80,6 +81,7 @@ class TrialController(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def from_native(
         context: det.NativeContext,
+        prof: profiler.ProfilerAgent,
         env: det.EnvContext,
         workloads: workload.Stream,
         load_path: Optional[pathlib.Path],

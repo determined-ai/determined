@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, cast
 import determined as det
 import determined.common
 import determined.common.api.authentication as auth
-from determined import constants, errors, load, workload
+from determined import constants, errors, load, profiler, workload
 from determined.common import api, check, context, util
 
 
@@ -219,6 +219,7 @@ def test_one_batch(
         def train_fn() -> None:
             controller = cast(Type[det.TrialController], controller_cls).from_native(
                 context=context,
+                prof=profiler.create_no_op_profiler(),
                 env=env,
                 workloads=workloads,
                 load_path=None,
@@ -238,6 +239,7 @@ def test_one_batch(
         # Case 2: test one batch for Trial implementation.
         controller = load.load_controller_from_trial(
             trial_class=trial_class,
+            prof=profiler.create_no_op_profiler(),
             env=env,
             workloads=workloads,
             load_path=None,

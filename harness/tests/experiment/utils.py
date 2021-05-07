@@ -13,7 +13,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import constants, experimental, gpu, horovod, keras, load, workload
+from determined import constants, experimental, gpu, horovod, keras, load, profiler, workload
 from determined.common import check
 from determined.common.types import ExperimentID, StepID, TrialID
 
@@ -247,6 +247,7 @@ def make_trial_controller(
         load_path=load_path,
         rendezvous_info=make_default_rendezvous_info(),
         hvd_config=make_default_hvd_config(),
+        prof=profiler.create_no_op_profiler(),
     )
 
 
@@ -278,6 +279,7 @@ def make_trial_controller_from_trial_implementation(
         load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        prof=profiler.create_no_op_profiler(),
     )
 
 
@@ -313,6 +315,7 @@ def make_trial_controller_from_native_implementation(
         load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        prof=profiler.create_no_op_profiler(),
     )
 
 

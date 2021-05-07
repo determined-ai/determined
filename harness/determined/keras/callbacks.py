@@ -6,7 +6,7 @@ import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.utils import tf_utils
 
-from determined import tensorboard
+from determined import profiler, tensorboard
 
 
 class Callback(tf.keras.callbacks.Callback):  # type: ignore
@@ -701,3 +701,22 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
     def on_train_workload_end(self, total_batches_trained: int, logs: Dict) -> None:
         tf.keras.callbacks.TensorBoard.on_epoch_end(self, self.workload_end_count, logs)
         self.workload_end_count += 1
+
+
+class _DeterminedProfiler(Callback):
+    """Hooks Keras into the profiler agent lifecycle"""
+
+    def __init__(self, prof: profiler.ProfilerAgent) -> None:
+        super().__init__()
+        self.current_batch = 0
+        self.prof = prof
+
+    def get_state(self) -> Dict:
+        return {"current_batch": self.current_batch}
+
+    def load_state(self, state: Any) -> None:
+        self.current_batch = state["current_batch"]
+
+    def on_train_batch_begin(self, batch: int, logs: Optional[Dict] = None) -> None:
+        self.current_batch += 1
+        self.prof.update_batch_idx(self.current_batch)
