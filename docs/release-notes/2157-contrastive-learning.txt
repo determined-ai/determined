@@ -1,0 +1,7 @@
+:orphan:
+
+**New Features**
+
+-  Add new example for contrastive learning with support for
+   [SIMCLR](https://arxiv.org/abs/2002.05709) and [supervised
+   contrastive learning](https://arxiv.org/abs/2004.11362).

@@ -52,6 +52,11 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
          </examples/fasterrcnn_coco_pytorch.tgz>`
 
    -  -  PyTorch
+      -  CIFAR-10/CIFAR-100
+      -  :download:`contrastive_learning_pytorch.tgz
+         </examples/contrastive_learning_pytorch.tgz>`
+
+   -  -  PyTorch
       -  COCO
       -  :download:`mmdetection_pytorch.tgz
          </examples/mmdetection_pytorch.tgz>`
