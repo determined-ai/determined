@@ -56,7 +56,7 @@ class DeterminedControlHook(estimator.RunHook):
     """
 
     def __init__(
-            self, estimator_trial_controller: "EstimatorTrialController", prof: profiler.ProfilerAgent
+        self, estimator_trial_controller: "EstimatorTrialController", prof: profiler.ProfilerAgent
     ) -> None:
         self.total_batches_processed = 0
         self.batches_processed_in_step = 0

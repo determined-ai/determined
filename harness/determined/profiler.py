@@ -3,8 +3,9 @@ import logging
 import queue
 import threading
 import time
+from contextlib import contextmanager
 from types import TracebackType
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
 import psutil
 
@@ -12,6 +13,7 @@ from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
+TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
 
 LOG_NAMESPACE = "determined-profiler"
 
@@ -53,6 +55,7 @@ def debug_log(*args: Any) -> None:
     if DEBUG:
         logging.info(f"{LOG_NAMESPACE} (DEBUG) {args_as_str}")
 
+
 class ProfilerAgent:
     """
     Agent that collects metrics and sends them to the master.
@@ -70,6 +73,11 @@ class ProfilerAgent:
 
     If is_enabled=False, every method in this class should be a no-op.
     """
+
+    # dev note: We optimize this code by only creating threads if they will be used.
+    # It is essential that any time you interact with a child thread, you gate the code
+    # behind a check that the thread exists (using is_enabled, sysmetrics_is_enabled,
+    # or timings_is_enabled)
 
     def __init__(
         self,
@@ -120,10 +128,13 @@ class ProfilerAgent:
                     trial_id, agent_id, self.send_queue
                 )
 
-            # TODO [DET-5062]: Add data structure to batch timings and then send to SenderThread
-            #       Does this need to be its own thread to flush correctly?
-            # if self.timings_is_enabled:
-            #     self.timings_batcher = TimingsBatcher()
+            if self.timings_is_enabled:
+                self.timings_batcher_queue = (
+                    queue.Queue()
+                )  # type: """queue.Queue[Union[Timing, StartMessage, ShutdownMessage]]"""
+                self.timings_batcher_thread = TimingsBatcherThread(
+                    trial_id, agent_id, self.timings_batcher_queue, self.send_queue
+                )
 
     # Launch the children threads. This does not mean 'start collecting metrics'
     def start(self) -> None:
@@ -138,6 +149,9 @@ class ProfilerAgent:
         if self.sysmetrics_is_enabled:
             debug_log("ProfilerAgent.start - starting sys_metric_collector_thread")
             self.sys_metric_collector_thread.start()
+
+        if self.timings_is_enabled:
+            self.timings_batcher_thread.start()
 
     def end(self) -> None:
         if not self.is_enabled:
@@ -193,7 +207,9 @@ class ProfilerAgent:
             new_batch_idx, self.current_batch_idx, "Batch index should never decrease over time"
         )
         self.current_batch_idx = new_batch_idx
-        self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
+
+        if self.sysmetrics_is_enabled:
+            self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
         # Check if we should start collecting metrics
         if not self.has_started and self.current_batch_idx >= self.start_on_batch:
@@ -212,6 +228,18 @@ class ProfilerAgent:
             self._end_collection()
             self.shutdown_timer.send_shutdown_signal()
 
+    @contextmanager
+    def record_timing(self, metric_name: str) -> Iterator[None]:
+        if not self.is_enabled or not self.timings_is_enabled or not self.is_active:
+            yield
+            return
+
+        timing = Timing(metric_name, self.current_batch_idx)
+        timing.start()
+        yield
+        timing.end()
+        self.timings_batcher_queue.put(timing)
+
     def cleanup_timer(self) -> None:
         if not self.is_enabled:
             return
@@ -225,8 +253,12 @@ class ProfilerAgent:
         debug_log("ProfilerAgent._begin_collection")
 
         # Note: due to its simplicity, sender_thread doesn't need to be activated
-        self.sys_metric_collector_thread.activate()
-        # TODO [DET-5062]: Activate TimingBatcher as well
+        if self.sysmetrics_is_enabled:
+            self.sys_metric_collector_thread.activate()
+
+        if self.timings_is_enabled:
+            self.timings_batcher_thread.activate()
+
         self.shutdown_timer.activate()
         self.has_started = True
 
@@ -267,7 +299,16 @@ class ProfilerAgent:
                 self.sys_metric_collector_thread.join()
                 debug_log("ProfilerAgent._end_collection - sysmetriccollector joined")
 
-            # TODO [DET-5062]: Shut down TimingBatcher as well
+            if self.timings_is_enabled:
+                debug_log(
+                    "ProfilerAgent._end_collection - timings_is_enabled "
+                    "shutting down timings thread"
+                )
+                self.timings_batcher_thread.send_shutdown_signal()
+                debug_log("ProfilerAgent._end_collection - sysmetriccollector shutdown signal sent")
+                self.timings_batcher_thread.join()
+                debug_log("ProfilerAgent._end_collection - sysmetriccollector joined")
+
             debug_log("ProfilerAgent._end_collection - shutting down sender thread")
             self.sender_thread.send_shutdown_signal()
             debug_log("ProfilerAgent._end_collection - sender thread shutdown signal sent")
@@ -276,11 +317,6 @@ class ProfilerAgent:
 
             debug_log("ProfilerAgent._end_collection - setting has_finished to true")
             self.has_finished = True
-
-    def record_timing(self, timing: float) -> None:
-        if not self.is_enabled:
-            return
-        # TODO [DET-5062]: Add new timing to TimingBatcher
 
 
 def create_no_op_profiler() -> ProfilerAgent:
@@ -298,6 +334,45 @@ def create_no_op_profiler() -> ProfilerAgent:
         start_on_batch=0,
         end_after_batch=None,
     )
+
+
+class Timing:
+    def __init__(self, name: str, current_batch_idx: int) -> None:
+        self.name = name
+        self.current_batch_idx = current_batch_idx
+        self.start_time = None  # type: Optional[datetime.datetime]
+        self.dur = None  # type: Optional[float]
+
+    def start(self) -> None:
+        self.start_time = datetime.datetime.utcnow()
+
+    def end(self) -> None:
+        check.is_not_none(
+            self.start_time,
+            "Timing has no start time and end() was called. You probably didn't "
+            "run start() before end().",
+        )
+        self.start_time = cast(datetime.datetime, self.start_time)
+        end_time = datetime.datetime.utcnow()
+        dur_timedelta = end_time - self.start_time
+        self.dur = dur_timedelta.total_seconds()
+
+    def to_measurement(self) -> Measurement:
+        check.is_not_none(
+            self.start_time,
+            "Timing has no start time and to_measurement() was called. You probably didn't "
+            "run start() before to_measurement().",
+        )
+        check.is_not_none(
+            self.dur,
+            "Timing has no duration and to_measurement() was called. You probably didn't "
+            "run end() before to_measurement().",
+        )
+        self.start_time = cast(datetime.datetime, self.start_time)
+        self.dur = cast(float, self.start_time)
+        return Measurement(
+            timestamp=self.start_time, batch_idx=self.current_batch_idx, value=self.dur
+        )
 
 
 class PreemptibleTimer(threading.Thread):
@@ -487,6 +562,97 @@ class SysMetricCollectorThread(threading.Thread):
                 batch_start_time = time.time()
 
 
+class TimingsBatcherThread(threading.Thread):
+    """
+    This is a thread that exists solely so that we can batch Timings and ship them to the
+    SenderThread every FLUSH_INTERVAL seconds.
+    """
+
+    FLUSH_INTERVAL = 10  # How often to make API calls
+
+    def __init__(
+        self,
+        trial_id: str,
+        agent_id: str,
+        inbound_queue: queue.Queue,
+        send_queue: queue.Queue,
+    ) -> None:
+        self.inbound_queue = inbound_queue
+        self.send_queue = send_queue
+        self.current_batch = TimingsBatcher(trial_id, agent_id)
+        super().__init__(daemon=True)
+
+    def activate(self) -> None:
+        """Begin collecting Timings"""
+        self.inbound_queue.put(StartMessage())
+
+    def send_shutdown_signal(self) -> None:
+        self.inbound_queue.put(ShutdownMessage())
+
+    def run(self) -> None:
+        # Do nothing while we wait for a StartMessage
+        while True:
+            msg = self.inbound_queue.get()
+            if isinstance(msg, StartMessage):
+                break
+            if isinstance(msg, ShutdownMessage):
+                return
+            else:
+                # Ignore any Timings that are received before StartMessage
+                pass
+
+        batch_start_time = None  # type: Optional[float]
+        while True:
+            # Wait for the next Timing to arrive. If it doesn't arrive before the next flush
+            # should happen, we stop waiting for the next Timing and go straight to flushing.
+            timeout = None
+            if batch_start_time is not None:
+                time_since_flush = time.time() - batch_start_time
+                timeout = self.FLUSH_INTERVAL - time_since_flush
+
+            try:
+                message = self.inbound_queue.get(timeout=timeout)
+                if isinstance(message, ShutdownMessage):
+                    # Drop any partial batches if we receive a shutdown
+                    return
+                elif isinstance(message, Timing):
+                    if batch_start_time is None:
+                        batch_start_time = time.time()
+                    self.current_batch.add_timing(message)
+                elif isinstance(message, StartMessage):
+                    # This should never happen
+                    logging.fatal(
+                        "ProfilerAgent.TimingsBatcherThread received more than "
+                        "one StartMessage from the inbound_queue. This should "
+                        "never happen - there must be a bug in the code."
+                    )
+                else:
+                    logging.fatal(
+                        f"ProfilerAgent.TimingsBatcherThread received a message "
+                        f"of unexpected type '{type(message)}' from the "
+                        f"inbound_queue. This should never happen - there must "
+                        f"be a bug in the code."
+                    )
+
+            except queue.Empty:
+                pass
+
+            check.is_not_none(
+                batch_start_time,
+                "batch_start_time should never be None. The inbound_queue.get() "
+                "should never return and proceed to this piece of code "
+                "without batch_start_time being updated to a real timestamp. If "
+                "batch_start_time is None, inbound_queue.get() timeout should be "
+                "None and the get() should block until a Timing is received.",
+            )
+            batch_start_time = cast(float, batch_start_time)
+            if time.time() - batch_start_time > self.FLUSH_INTERVAL:
+                debug_log("TimingsBatcherThread.run - decided to flush the batch")
+                self.send_queue.put(self.current_batch.convert_to_post_format())
+                self.current_batch.clear()
+                batch_start_time = time.time()
+
+
 class ProfilerSenderThread(threading.Thread):
     """
     This is a thread that exists solely so that we can make API calls without blocking.
@@ -523,6 +689,33 @@ class SysMetricType:
     DISK_THRU_WRITE_METRIC = "disk_throughput_write"
     FREE_MEM_METRIC = "free_memory"
     SIMPLE_CPU_UTIL_METRIC = "cpu_util_simple"
+
+
+def convert_to_timestamp_str(timestamp: datetime.datetime) -> str:
+    return timestamp.isoformat() + "Z"
+
+
+def to_post_format(
+    measurements: List[Measurement], labels: Dict[str, Any]
+) -> TrialProfilerMetricsBatch:
+    values, batches, timestamps = [], [], []
+    for m in measurements:
+        values.append(m.measurement)
+        batches.append(m.batch_idx)
+        timestamps.append(convert_to_timestamp_str(m.timestamp))
+    return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
+
+
+def make_labels(
+    name: str, trial_id: str, agent_id: str, metric_type: str, gpu_uuid_label: str = ""
+) -> Dict[str, Any]:
+    return {
+        "trialId": trial_id,
+        "name": name,
+        "agentId": agent_id,
+        "gpuUuid": gpu_uuid_label,
+        "metricType": metric_type,
+    }
 
 
 class SysMetricBatcher:
@@ -565,28 +758,7 @@ class SysMetricBatcher:
             self.batch[metric_type][gpu_uuid] = []
         self.batch[metric_type][gpu_uuid].append(measurement)
 
-    def convert_to_timestamp_str(self, timestamp: datetime.datetime) -> str:
-        return timestamp.isoformat() + "Z"
-
     def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
-        def to_post_format(
-            measurements: List[Measurement], labels: Dict[str, Any]
-        ) -> TrialProfilerMetricsBatch:
-            values, batches, timestamps = [], [], []
-            for m in measurements:
-                values.append(m.measurement)
-                batches.append(m.batch_idx)
-                timestamps.append(self.convert_to_timestamp_str(m.timestamp))
-            return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
-
-        def make_labels(name: str, metric_type: str, gpu_uuid_label: str = "") -> Dict[str, Any]:
-            return {
-                "trialId": self.trial_id,
-                "name": name,
-                "agentId": self.agent_id,
-                "gpuUuid": gpu_uuid_label,
-                "metricType": metric_type,
-            }
 
         trial_profiler_metrics_batches = []
         for metric_name in self.batch.keys():
@@ -598,7 +770,9 @@ class SysMetricBatcher:
                 trial_profiler_metrics_batches.append(
                     to_post_format(
                         self.batch[metric_name],
-                        make_labels(metric_name, SYSTEM_METRIC_TYPE_ENUM),
+                        make_labels(
+                            metric_name, self.trial_id, self.agent_id, SYSTEM_METRIC_TYPE_ENUM
+                        ),
                     )
                 )
 
@@ -613,10 +787,49 @@ class SysMetricBatcher:
                             to_post_format(
                                 self.batch[metric_name][gpu_uuid],
                                 make_labels(
-                                    metric_name, SYSTEM_METRIC_TYPE_ENUM, gpu_uuid_label=gpu_uuid
+                                    metric_name,
+                                    self.trial_id,
+                                    self.agent_id,
+                                    SYSTEM_METRIC_TYPE_ENUM,
+                                    gpu_uuid_label=gpu_uuid,
                                 ),
                             )
                         )
+
+        return trial_profiler_metrics_batches
+
+
+class TimingsBatcher:
+    """
+    Data structure to collect batches of Timings and then convert them to the format expected by
+    the API
+    """
+
+    def __init__(self, trial_id: str, agent_id: str) -> None:
+        self.trial_id = trial_id
+        self.agent_id = agent_id
+        self.clear()
+
+    def clear(self) -> None:
+        self.batch = {}  # type: Dict[str, List[Timing]]
+
+    def add_timing(self, timing: Timing) -> None:
+        if timing.name not in self.batch.keys():
+            self.batch[timing.name] = []
+        self.batch[timing.name].append(timing)
+
+    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
+        trial_profiler_metrics_batches = []
+        for metric_name in self.batch.keys():
+            if len(self.batch[metric_name]) > 0:
+                trial_profiler_metrics_batches.append(
+                    to_post_format(
+                        [timing.to_measurement() for timing in self.batch[metric_name]],
+                        make_labels(
+                            metric_name, self.trial_id, self.agent_id, TIMING_METRIC_TYPE_ENUM
+                        ),
+                    )
+                )
 
         return trial_profiler_metrics_batches
 
