@@ -309,8 +309,7 @@ export interface Checkpoint extends StartEndTimes {
 }
 
 export interface Workload extends StartEndTimes {
-  numBatches: number;
-  priorBatchesProcessed: number;
+  totalBatches: number;
 }
 
 export interface CheckpointWorkload extends Workload {

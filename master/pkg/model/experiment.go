@@ -294,27 +294,23 @@ func NewTrial(
 
 // Step represents a row from the `steps` table.
 type Step struct {
-	TrialID               int        `db:"trial_id"`
-	ID                    int        `db:"id"`
-	TotalBatches          int        `db:"total_batches"`
-	State                 State      `db:"state"`
-	StartTime             time.Time  `db:"start_time"`
-	EndTime               *time.Time `db:"end_time"`
-	NumBatches            int        `db:"num_batches"`
-	PriorBatchesProcessed int        `db:"prior_batches_processed"`
-	Metrics               JSONObj    `db:"metrics"`
+	TrialID      int        `db:"trial_id"`
+	ID           int        `db:"id"`
+	TotalBatches int        `db:"total_batches"`
+	State        State      `db:"state"`
+	StartTime    time.Time  `db:"start_time"`
+	EndTime      *time.Time `db:"end_time"`
+	Metrics      JSONObj    `db:"metrics"`
 }
 
 // NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
+func NewStep(trialID, stepID, totalBatches int) *Step {
 	return &Step{
-		TrialID:               trialID,
-		ID:                    stepID,
-		TotalBatches:          numBatches + priorBatchesProcessed,
-		State:                 ActiveState,
-		StartTime:             time.Now().UTC(),
-		NumBatches:            numBatches,
-		PriorBatchesProcessed: priorBatchesProcessed,
+		TrialID:      trialID,
+		ID:           stepID,
+		TotalBatches: totalBatches,
+		State:        ActiveState,
+		StartTime:    time.Now().UTC(),
 	}
 }
 
@@ -322,13 +318,11 @@ func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
 func NewNoOpStep(trialID, stepID int) *Step {
 	now := time.Now().UTC()
 	return &Step{
-		TrialID:               trialID,
-		ID:                    stepID,
-		State:                 CompletedState,
-		StartTime:             now,
-		EndTime:               &now,
-		NumBatches:            0,
-		PriorBatchesProcessed: 0,
+		TrialID:   trialID,
+		ID:        stepID,
+		State:     CompletedState,
+		StartTime: now,
+		EndTime:   &now,
 	}
 }
 

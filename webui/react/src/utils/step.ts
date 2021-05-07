@@ -25,7 +25,7 @@ export const workloadsToSteps = (workloads: WorkloadWrapper[]): Step[] => {
   const stepsDict: Record<number, Partial<Step>> = {};
   workloads.forEach(wlWrapper => {
     const wl = getWorkload(wlWrapper);
-    const batchNum = wl.numBatches + wl.priorBatchesProcessed;
+    const batchNum = wl.totalBatches;
     if (stepsDict[batchNum] === undefined) stepsDict[batchNum] = {};
     stepsDict[batchNum].batchNum = batchNum;
 

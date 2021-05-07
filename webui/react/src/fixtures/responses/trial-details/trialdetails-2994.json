@@ -46,8 +46,7 @@
       "avg_metrics": {
         "loss": 0.9000000000000005
       },
-      "num_batches": 100,
-      "prior_batches_processed": 0
+      "total_batches": 100
     }
   ]
 }

@@ -12,14 +12,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [
-        "start_time",
-        "state",
-        "num_batches",
-        "prior_batches_processed"
-      ]
-    }
+    json_schema: { required: [ "start_time", "state", "total_batches" ] }
   };
   // UUID of the checkpoint.
   string uuid = 1;
@@ -32,23 +25,15 @@ message CheckpointWorkload {
   // Dictionary of file paths to file sizes in bytes of all files in the
   // checkpoint.
   map<string, int64> resources = 5;
-  // Number of batches in this workload.
-  int32 num_batches = 6;
-  // Number of batches processed prior to this workload.
-  int32 prior_batches_processed = 7;
+  // Total number of batches as of this workload's completion.
+  int32 total_batches = 8;
 }
 
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "start_time",
-        "state",
-        "num_inputs",
-        "num_batches",
-        "prior_batches_processed"
-      ]
+      required: [ "start_time", "state", "num_inputs", "total_batches" ]
     }
   };
   // The time the workload was started.
@@ -60,11 +45,9 @@ message MetricsWorkload {
   // Metrics.
   google.protobuf.Struct metrics = 4;
   // Number of inputs processed.
-  int32 num_inputs = 5;
-  // Number of batches in this workload.
-  int32 num_batches = 6;
-  // Number of batches processed prior to this workload.
-  int32 prior_batches_processed = 7;
+  int32 num_inputs = 5 [deprecated = true];
+  // Total number of batches as of this workload's completion.
+  int32 total_batches = 8;
 }
 
 // Trial is a set of workloads and are exploring a determined set of
