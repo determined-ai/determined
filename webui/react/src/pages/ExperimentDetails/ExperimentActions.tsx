@@ -1,9 +1,11 @@
 import { Button, Popconfirm, Space } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory } from 'react-router';
 
 import { ConditionalButton } from 'components/types';
+import { paths } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, killExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { ExperimentBase, RunState } from 'types';
@@ -33,10 +35,12 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   const [ isRunningActivate, setIsRunningActivate ] = useState<boolean>(false);
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningCancel, setIsRunningCancel ] = useState<boolean>(false);
+  const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(false);
   const [ isRunningKill, setIsRunningKill ] = useState<boolean>(false);
   const [ isRunningPause, setIsRunningPause ] = useState<boolean>(false);
   const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
+  const history = useHistory();
 
   useEffect(() => {
     setIsRunningArchive(false);
@@ -69,6 +73,16 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
       setIsRunningUnarchive(false);
     }
   }, [ experiment.id, onSettled ]);
+
+  const handleDelete = useCallback(async () => {
+    setIsRunningDelete(true);
+    try {
+      await deleteExperiment({ experimentId: experiment.id });
+      history.push(paths.experimentList());
+    } catch (e) {
+      setIsRunningDelete(false);
+    }
+  }, [ experiment.id, history ]);
 
   const handleKill = useCallback(async () => {
     setIsRunningKill(true);
@@ -183,6 +197,18 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
         loading={isRunningUnarchive}
         onClick={handleUnarchive()}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
+    },
+    {
+      button: <Popconfirm
+        cancelText="No"
+        key="delete"
+        okText="Yes"
+        placement='topRight'
+        title="Are you sure you want to delete the experiment?"
+        onConfirm={handleDelete}>
+        <Button danger loading={isRunningDelete}>Delete</Button>
+      </Popconfirm>,
+      showIf: (exp): boolean => terminalRunStates.has(exp.state),
     },
   ];
 
