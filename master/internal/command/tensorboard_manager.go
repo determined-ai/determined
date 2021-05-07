@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -80,8 +79,6 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case echo.Context:
-		t.handleAPIRequest(ctx, msg)
 	case tensorboardTick:
 		services := ctx.Ask(t.proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
 		for _, boardRef := range ctx.Children() {
@@ -163,42 +160,6 @@ func (t *tensorboardManager) processLaunchRequest(
 	ctx.Log().Infof("created tensorboard %s", a.Address().Local())
 	summary := summaryFut.Get().(summary)
 	return &summary, http.StatusOK, nil
-}
-
-func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		type params struct {
-			CommandParams
-			ExperimentIDs []int `json:"experiment_ids"`
-			TrialIDs      []int `json:"trial_ids"`
-		}
-		boundParams := params{}
-		if err := apiCtx.Bind(&boundParams); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &TensorboardRequest{
-			CommandParams: &boundParams.CommandParams,
-			ExperimentIDs: boundParams.ExperimentIDs,
-			TrialIDs:      boundParams.TrialIDs,
-		})
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
 }
 
 func (t *tensorboardManager) newTensorBoard(

@@ -3,6 +3,7 @@ import csv
 import inspect
 import pathlib
 import sys
+from collections import OrderedDict
 from datetime import timezone
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
@@ -14,6 +15,16 @@ from determined.common import util, yaml
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
 _FORMAT = "presto"
+_DEFAULT_VALUE = "N/A"
+
+
+def render_table(
+    values: List[Dict[str, Any]], headers: OrderedDict, table_fmt: str = _FORMAT
+) -> None:
+    # Only display interested columns
+    values = [{k: item.get(k, _DEFAULT_VALUE) for k in headers.keys()} for item in values]
+
+    print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)  # type: ignore
 
 
 def unmarshal(
@@ -47,16 +58,6 @@ def render_objects(
 
     values = [_coerce(renderable) for renderable in values]
     print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)
-
-
-def render_dicts(
-    generic: Any,
-    values: Iterable[Dict[str, Any]],
-    default_value: str = "N/A",
-    table_fmt: str = _FORMAT,
-) -> None:
-    objects = [unmarshal(generic, value) for value in values]
-    render_objects(generic, objects, default_value=default_value, table_fmt=table_fmt)
 
 
 def format_base64_as_yaml(source: str) -> str:
