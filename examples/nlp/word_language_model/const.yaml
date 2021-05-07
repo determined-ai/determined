@@ -1,25 +1,32 @@
-description: Word_Language_Modeling_Transformer_1gpu
+# description: Word_Language_Modeling_Transformer_1gpu
+# description: Word_Language_Modeling_LSTM_1gpu
+# description: Word_Language_Modeling_GRU_1gpu
+# description: Word_Language_Modeling_RNN_TANH_1gpu
+description: Word_Language_Modeling_RNN_RELU_1gpu
+max_restarts: 0
 hyperparameters:
-    global_batch_size: 1
+    global_batch_size: 20
     max_grad_norm: 0.25
-    num_training_steps: 2983 # This is the number of optimizer steps. Train for 2 epochs
+    # model_cls: Transformer
+    # model_cls: LSTM
+    # model_cls: GRU
+    # model_cls: RNN_TANH
+    model_cls: RNN_RELU
 resources:
     slots_per_trial: 1
+records_per_epoch: 59660
 searcher:
     name: single
     metric: validation_loss
     max_length:
-        records: 119320
+        epochs: 40
     smaller_is_better: true
 min_validation_period:
-    records: 2983
+    epochs: 1
 data:
     use_bind_mount: True
     bind_mount_path: /mnt/data
-    batch_size: 20
 entrypoint: model_def:WordLanguageModelPyTorch
-optimizations:
-    aggregation_frequency: 24
 bind_mounts:
     - host_path: /tmp/
       container_path: /mnt/data

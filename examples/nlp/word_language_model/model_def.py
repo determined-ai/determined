@@ -1,4 +1,4 @@
-from typing import Dict, Sequence, Union
+from typing import Dict, Sequence, Union, Any
 import torch
 import torch.nn as nn
 import time
@@ -23,7 +23,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         hparams = self.context.get_hparams()
         self.using_bind_mount = data_config.get("use_bind_mount", False)
         self.use_cache = data_config.get("use_cache", True)
-        self.batch_size = data_config.get("batch_size", 20)
+        self.eval_batch_size = data_config.get("eval_batch_size", 10)
         self.bind_mount_path = (
             Path(data_config.get("bind_mount_path")) if self.using_bind_mount else None
         )
@@ -67,14 +67,15 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
-            torch.optim.lr_scheduler.ExponentialLR(self.optimizer, 4.0),
-            LRScheduler.StepMode.STEP_EVERY_EPOCH,
+            torch.optim.lr_scheduler.ExponentialLR(self.optimizer, 0.25),
+            LRScheduler.StepMode.MANUAL_STEP,
         )
+        self.best_val_loss = torch.tensor(float("inf"))
 
     def build_training_data_loader(self):
         train_dataset = data.WikiTextDataset(
             self.corpus,
-            batch_size=self.batch_size,
+            batch_size=self.context.get_per_slot_batch_size(),
             use_cache=self.use_cache,
         )
         batch_samp = data.BatchSamp(train_dataset, self.bptt)
@@ -83,22 +84,20 @@ class WordLanguageModelPyTorch(PyTorchTrial):
     def build_validation_data_loader(self):
         val_dataset = data.WikiTextDataset(
             self.corpus,
-            batch_size=self.batch_size,
+            batch_size=self.eval_batch_size,
             use_cache=self.use_cache,
             valid=True,
         )
+        self.val_data_len = len(val_dataset) - 1
         batch_samp = data.BatchSamp(val_dataset, self.bptt)
         return DataLoader(val_dataset, batch_sampler=batch_samp)
 
     def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         if batch_idx == 0 and self.model_cls.lower() != "transformer":
-            self.hidden = self.model.init_hidden(self.batch_size)
+            self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
         inputs = batch[:-1]
         labels = batch[1:].view(-1)
         if self.model_cls.lower() == "transformer":
-            print(batch.size())
-            print(inputs.size())
-            print(labels.size())
             output = self.model(inputs)
             output = output.view(-1, self.corpus.ntokens)
         else:
@@ -115,18 +114,25 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         )
         return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
 
-    def evaluate_full_dataset(self, data_loader: DataLoader) -> float:
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader):
         total_loss = 0.0
         if self.model_cls.lower() != "transformer":
-            self.hidden = self.model.init_hidden(self.batch_size)
+            self.hidden = self.model.init_hidden(self.eval_batch_size)
         for batch in data_loader:
-            if args.model.lower() == "transformer":
-                output = model(batch[:-1])
+            batch = self.context.to_device(batch)
+            if self.model_cls.lower() == "transformer":
+                output = self.model(batch[:-1])
                 output = output.view(-1, self.corpus.ntokens)
             else:
-                output, self.hidden = model(batch[:-1], self.hidden)
-                self.hidden = model.repackage_hidden(self.hidden)
+                output, self.hidden = self.model(batch[:-1], self.hidden)
+                self.hidden = self.model.repackage_hidden(self.hidden)
             total_loss += (
                 len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
             )
-        return total_loss / len(data_loader.dataset)
+        total_loss /= len(data_loader.dataset) - 1
+        if total_loss >= self.best_val_loss:
+            self.lr_scheduler.step()
+        else:
+            self.best_val_loss = total_loss
+        self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
+        return {"validation_loss": total_loss}

@@ -74,14 +74,13 @@ class RNNModel(nn.Module):
         else:
             return weight.new_zeros(self.nlayers, bsz, self.nhid)
 
+    def repackage_hidden(self, h):
+        """Wraps hidden states in new Tensors, to detach them from their history."""
 
-def repackage_hidden(h):
-    """Wraps hidden states in new Tensors, to detach them from their history."""
-
-    if isinstance(h, torch.Tensor):
-        return h.detach()
-    else:
-        return tuple(repackage_hidden(v) for v in h)
+        if isinstance(h, torch.Tensor):
+            return h.detach()
+        else:
+            return tuple(self.repackage_hidden(v) for v in h)
 
 
 # Temporarily leave PositionalEncoding module here. Will be moved somewhere else.

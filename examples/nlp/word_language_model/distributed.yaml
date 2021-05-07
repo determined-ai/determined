@@ -1,0 +1,24 @@
+description: Word_Language_Modeling_Transformer_Distributed 
+max_restarts: 0
+hyperparameters:
+  global_batch_size: 50 # per gpu batch size of 24
+  max_grad_norm: 0.25
+records_per_epoch: 59660
+searcher:
+    name: single
+    metric: validation_loss
+    max_length:
+        epochs: 40
+    smaller_is_better: true
+min_validation_period:
+    epochs: 1
+resources:
+    slots_per_trial: 8
+data:
+    use_bind_mount: True
+    bind_mount_path: /mnt/data
+entrypoint: model_def:WordLanguageModelPyTorch
+bind_mounts:
+    - host_path: /tmp/
+      container_path: /mnt/data
+      read_only: false
