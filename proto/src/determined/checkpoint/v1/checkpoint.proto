@@ -10,7 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // Metrics calculated during validation.
 message Metrics {
   // Number of inputs to the model.
-  int32 num_inputs = 1;
+  int32 num_inputs = 1 [deprecated = true];
   // Metrics calculated on the validation set.
   google.protobuf.Struct validation_metrics = 2;
 }
