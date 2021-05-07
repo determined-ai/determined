@@ -56,6 +56,11 @@ setup(
         "tqdm",
         "appdirs",
         "backoff",
+        # Swagger-codegen: python requirements
+        "certifi>=2017.4.17",
+        "python-dateutil>=2.1",
+        "six>=1.10",
+        "urllib3>=1.23",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],

@@ -1,5 +1,8 @@
-from typing import List, Optional
+import time
+from typing import Dict, List, Optional
 
+import determined.client
+from determined.client import Determinedexperimentv1State as ExperimentState
 from determined.common import api
 from determined.common.experimental import checkpoint
 
@@ -16,9 +19,58 @@ class ExperimentReference:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, experiment_id: int, master: str):
+    def __init__(
+        self,
+        experiment_id: int,
+        master: str,
+        api_ref: determined.client.ExperimentsApi,
+        config: Optional[Dict] = None,
+    ):
         self.id = experiment_id
         self._master = master
+        self._experiments = api_ref
+        self.config = config
+
+    def activate(self) -> None:
+        self._experiments.determined_activate_experiment(id=self.id)  # type: ignore
+
+    def archive(self) -> None:
+        self._experiments.determined_archive_experiment(id=self.id)  # type: ignore
+
+    def cancel(self) -> None:
+        self._experiments.determined_cancel_experiment(id=self.id)  # type: ignore
+
+    def delete(self) -> None:
+        self._experiments.determined_delete_experiment(id=self.id)  # type: ignore
+
+    def kill(self) -> None:
+        self._experiments.determined_kill_experiment(id=self.id)  # type: ignore
+
+    def pause(self) -> None:
+        self._experiments.determined_pause_experiment(id=self.id)  # type: ignore
+
+    def unarchive(self) -> None:
+        self._experiments.determined_unarchive_experiment(id=self.id)  # type: ignore
+
+    def wait_till_complete(self, sleep_interval: int = 5) -> None:
+        while True:
+            exp_resp = self._experiments.determined_get_experiment(  # type: ignore
+                experiment_id=self.id
+            )
+            if (
+                exp_resp.experiment.state == ExperimentState.COMPLETED
+                or exp_resp.experiment.state == ExperimentState.CANCELED
+                or exp_resp.experiment.state == ExperimentState.DELETED
+                or exp_resp.experiment.state == ExperimentState.ERROR
+            ):
+                print("Experiment {} is in a terminal state".format(self.id))
+                break
+            elif exp_resp.experiment.state == ExperimentState.PAUSED:
+                raise ValueError("Experiment {} is in paused state".format(self.id))
+            else:
+                # ACTIVE, STOPPING_COMPLETED, etc.
+                print("Waiting for Experiment {} to complete".format(self.id))
+                time.sleep(sleep_interval)
 
     def top_checkpoint(
         self,

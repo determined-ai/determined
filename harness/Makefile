@@ -13,10 +13,10 @@ fmt:
 
 .PHONY: check
 check: gen
-	isort --check-only
+	isort --check-only --skip client
 	black . --check
 	flake8
-	mypy .
+	mypy . --show-error-context --show-error-codes
 
 .PHONY: test
 test: gen

@@ -16,7 +16,7 @@ deps/$(CODEGEN_BIN):
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
-		-l $* -o build/$*
+		-l $* -o build/$* -c config.json
 	touch build/$*
 
 .PHONY: build

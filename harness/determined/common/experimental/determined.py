@@ -1,11 +1,41 @@
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, TextIO
 
-from determined.common import api
+import determined.client
+from determined.client import V1CreateExperimentRequest as CreateExperimentRequest
+from determined.client import V1File as V1File
+from determined.common import api, context, yaml
+from determined.common.api import authentication as auth
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.experiment import ExperimentReference
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.session import Session
 from determined.common.experimental.trial import TrialReference
+
+
+def _path_to_files(path: Path) -> List[V1File]:
+    files = []
+    for item in context.read_context(path)[0]:
+        content = item["content"].decode("utf-8")
+        file = V1File(  # type: ignore
+            path=item["path"],
+            type=item["type"],
+            content=content,
+            mtime=item["mtime"],
+            uid=item["uid"],
+            gid=item["gid"],
+            mode=item["mode"],
+        )
+        files.append(file)
+    return files
+
+
+def _parse_config_file(config_file: TextIO) -> Dict:
+    experiment_config = yaml.safe_load(config_file.read())
+    config_file.close()
+    if not experiment_config or not isinstance(experiment_config, dict):
+        raise ValueError("Invalid experiment config file {}".format(config_file.name))
+    return experiment_config
 
 
 class Determined:
@@ -26,20 +56,68 @@ class Determined:
         user: Optional[str] = None,
     ):
         self._session = Session(master, user)
+        self._auth = auth.Authentication.instance()
+        self._configuration = determined.client.Configuration()  # type: ignore
+
+        # Remove trailing '/' character for Swagger
+        if self._session._master[-1] == "/":
+            self._configuration.host = self._session._master[:-1]
+        else:
+            self._configuration.host = self._session._master
+        self._configuration.username = self._auth.token_store.get_active_user()
+        self._configuration.api_key_prefix["Authorization"] = "Bearer"
+        self._configuration.api_key["Authorization"] = self._auth.get_session_token()
+
+        self._experiments = determined.client.ExperimentsApi(  # type: ignore
+            determined.client.ApiClient(self._configuration)
+        )
+        self._internal = determined.client.InternalApi(  # type: ignore
+            determined.client.ApiClient(self._configuration)
+        )
+        self._trials = determined.client.TrialsApi(  # type: ignore
+            determined.client.ApiClient(self._configuration)
+        )
+
+    def create_experiment(
+        self,
+        model_dir: str,
+        exp_config: object = None,
+    ) -> ExperimentReference:
+        if isinstance(exp_config, str):
+            f = open(exp_config, "r")
+            experiment_config = _parse_config_file(f)
+        elif isinstance(exp_config, Dict):
+            experiment_config = exp_config
+        else:
+            raise ValueError("Invalid experiment config")
+
+        model_context = _path_to_files(Path(model_dir))
+
+        experiment_request = CreateExperimentRequest(  # type: ignore
+            model_definition=model_context,
+            config=yaml.safe_dump(experiment_config),
+        )
+        experiment_response = self._internal.determined_create_experiment(experiment_request)
+        return ExperimentReference(
+            experiment_response.experiment.id,
+            self._session._master,
+            self._experiments,
+            experiment_response.config,
+        )
 
     def get_experiment(self, experiment_id: int) -> ExperimentReference:
         """
         Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
-        return ExperimentReference(experiment_id, self._session._master)
+        return ExperimentReference(experiment_id, self._session._master, self._experiments, None)
 
     def get_trial(self, trial_id: int) -> TrialReference:
         """
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return TrialReference(trial_id, self._session._master)
+        return TrialReference(trial_id, self._session._master, self._trials)
 
     def get_checkpoint(self, uuid: str) -> Checkpoint:
         """
