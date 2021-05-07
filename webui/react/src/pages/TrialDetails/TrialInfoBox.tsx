@@ -90,6 +90,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Durations',
     },
     {
+      content: trial.state === 'ACTIVE' &&
+      `${Object.entries(trial.workloads.last())
+        .find(entry => !!entry[1])?.first()} on batch ${trial.totalBatchesProcessed}`,
+      label: 'Workload Status',
+    },
+    {
       content: bestValidation &&
         <>
           <HumanReadableFloat num={bestValidation} /> {`(${experiment.config.searcher.metric})`}
