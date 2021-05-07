@@ -43,22 +43,11 @@ def main() -> None:
         subrec = layers.SubprocessReceiver(broadcast_client)
         workloads = iter(subrec)
 
-        (
-            prof_start_on_batch,
-            prof_end_after_batch,
-        ) = worker_process_env.env.experiment_config.profiling_interval()
+        global_rank = worker_process_env.rendezvous_info.get_rank()
         local_rank = int(os.getenv("HOROVOD_LOCAL_RANK", 0))
-        with profiler.ProfilerAgent(
-            trial_id=worker_process_env.env.det_trial_id,
-            agent_id=worker_process_env.env.det_agent_id,
-            master_url=worker_process_env.env.master_url,
-            profiling_is_enabled=worker_process_env.env.experiment_config.profiling_enabled(),
-            global_rank=worker_process_env.rendezvous_info.get_rank(),
-            local_rank=local_rank,
-            start_on_batch=prof_start_on_batch,
-            end_after_batch=prof_end_after_batch,
+        with profiler.ProfilerAgent.from_env(
+            worker_process_env.env, global_rank, local_rank
         ) as prof:
-
             with det._catch_sys_exit():
                 with det._catch_init_invalid_hp(workloads):
                     controller = load.prepare_controller(
