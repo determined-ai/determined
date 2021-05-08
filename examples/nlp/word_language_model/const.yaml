@@ -3,11 +3,10 @@ max_restarts: 0
 hyperparameters:
     global_batch_size: 20
     max_grad_norm: 0.25
-    # model_cls: Transformer
+    model_cls: Transformer
     # model_cls: LSTM
     # model_cls: GRU
-    # model_cls: RNN_TANH
-    model_cls: RNN_RELU
+    # model_cls: RNN
 resources:
     slots_per_trial: 1
 records_per_epoch: 59660

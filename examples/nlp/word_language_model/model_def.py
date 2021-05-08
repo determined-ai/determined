@@ -67,10 +67,16 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
-            torch.optim.lr_scheduler.ExponentialLR(self.optimizer, 0.25),
+            torch.optim.lr_scheduler.ReduceLROnPlateau(
+                self.optimizer,
+                factor=0.25,
+                patience=0,
+                threshold=0.001,
+                threshold_mode="abs",
+                verbose=True,
+            ),
             LRScheduler.StepMode.MANUAL_STEP,
         )
-        self.best_val_loss = torch.tensor(float("inf"))
 
     def build_training_data_loader(self):
         train_dataset = data.WikiTextDataset(
@@ -112,7 +118,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
                 params, self.context.get_hparam("max_grad_norm")
             ),
         )
-        return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
+        return {"loss": loss, "lr": float(self.optimizer.param_groups[0]['lr'])}
 
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader):
         total_loss = 0.0
@@ -130,9 +136,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
                 len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
             )
         total_loss /= len(data_loader.dataset) - 1
-        if total_loss >= self.best_val_loss:
-            self.lr_scheduler.step()
-        else:
-            self.best_val_loss = total_loss
-        self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
+        self.lr_scheduler.step(total_loss)
+        if self.model_cls.lower() != "transformer":
+            self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
         return {"validation_loss": total_loss}
