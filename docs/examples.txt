@@ -122,6 +122,11 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`bert_glue_pytorch.tgz
          </examples/bert_glue_pytorch.tgz>`
 
+   -  -  PyTorch
+      -  WikiText-2
+      -  :download:`word_language_model.tgz
+         </examples/word_language_model.tgz>`
+
 ************************
  HP Search Benchmarking
 ************************
