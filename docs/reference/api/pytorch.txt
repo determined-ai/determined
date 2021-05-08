@@ -86,6 +86,8 @@ structures of the following types, which will be fed directly to the
           "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
       }
 
+.. _pytorch-context:
+
 Trial Context
 =============
 
