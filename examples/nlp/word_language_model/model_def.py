@@ -1,3 +1,11 @@
+"""
+This example is to show how to use an the PyTorch Word Language Modeling example with Determined.
+The flags and configurations can be found under const.yaml for single GPU training, and distributed.yaml
+for distributed training across 8 GPUs. For more information
+regarding the optional flags view the original script linked below.
+This implementation is based on:
+https://github.com/pytorch/examples/tree/master/word_language_model
+"""
 from typing import Dict, Sequence, Union, Any
 import torch
 import torch.nn as nn
