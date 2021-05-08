@@ -6,7 +6,7 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Optional
+from typing import Optional, List
 from io import open
 import torch
 from torch.utils.data import Dataset
@@ -16,7 +16,7 @@ import zipfile
 import torch
 
 
-def load_and_cache_dataset(path: Path, use_cached: Optional[bool] = True):
+def load_and_cache_dataset(path: Path, use_cached: Optional[bool] = True) -> "Corpus":
     data_dir = path / "wikitext-2"
     if not data_dir.exists():
         url = "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip"
@@ -124,7 +124,7 @@ class WikiTextDataset(Dataset):
         self.corpus = corpus
         self.data = self.batchify()
 
-    def batchify(self):
+    def batchify(self) -> torch.Tensor:
         data = self.corpus.val if self.valid else self.corpus.train
         # Work out how cleanly we can divide the dataset into bsz parts.
         nbatch = data.size(0) // self.batch_size
@@ -134,23 +134,23 @@ class WikiTextDataset(Dataset):
         data = data.view(self.batch_size, -1).t().contiguous()
         return data
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> torch.Tensor:
         return self.data[i]
 
 
 class BatchSamp:
-    def __init__(self, dataset, bptt):
+    def __init__(self, dataset: Dataset, bptt: int):
         self.data = dataset
         self.data_length = len(dataset) - 1
         self.bptt = bptt
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.data_length // self.bptt
 
-    def __iter__(self):
+    def __iter__(self) -> List[int]:
         for batch in range(0, self.data_length, self.bptt):
             seq_len = min(self.bptt, self.data_length - batch)
             yield list(range(batch, batch + seq_len + 1))

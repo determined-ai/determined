@@ -6,6 +6,7 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
+from typing import Optional, Union
 import math
 import torch
 import torch.nn as nn
@@ -16,7 +17,14 @@ class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
     def __init__(
-        self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, tie_weights=False
+        self,
+        rnn_type: str,
+        ntoken: int,
+        ninp: int,
+        nhid: int,
+        nlayers: int,
+        dropout: Optional[int] = 0.5,
+        tie_weights: Optional[bool] = False,
     ):
         super(RNNModel, self).__init__()
         self.ntoken = ntoken
@@ -47,13 +55,13 @@ class RNNModel(nn.Module):
         self.nhid = nhid
         self.nlayers = nlayers
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         initrange = 0.1
         nn.init.uniform_(self.encoder.weight, -initrange, initrange)
         nn.init.zeros_(self.decoder.weight)
         nn.init.uniform_(self.decoder.weight, -initrange, initrange)
 
-    def forward(self, input, hidden):
+    def forward(self, input: torch.Tensor, hidden: Union[tuple, torch.Tensor]) -> tuple:
         emb = self.drop(self.encoder(input))
         output, hidden = self.rnn(emb, hidden)
         output = self.drop(output)
@@ -61,7 +69,7 @@ class RNNModel(nn.Module):
         decoded = decoded.view(-1, self.ntoken)
         return F.log_softmax(decoded, dim=1), hidden
 
-    def init_hidden(self, bsz):
+    def init_hidden(self, bsz: int) -> torch.Tensor:
         weight = next(self.parameters())
         if self.rnn_type == "LSTM":
             return (
@@ -71,7 +79,9 @@ class RNNModel(nn.Module):
         else:
             return weight.new_zeros(self.nlayers, bsz, self.nhid)
 
-    def repackage_hidden(self, h):
+    def repackage_hidden(
+        self, h: Union[tuple, torch.Tensor]
+    ) -> Union[tuple, torch.Tensor]:
         """Wraps hidden states in new Tensors, to detach them from their history."""
 
         if isinstance(h, torch.Tensor):
@@ -98,7 +108,9 @@ class PositionalEncoding(nn.Module):
         >>> pos_encoder = PositionalEncoding(d_model)
     """
 
-    def __init__(self, d_model, dropout=0.1, max_len=5000):
+    def __init__(
+        self, d_model: int, dropout: Optional[int] = 0.1, max_len: Optional[int] = 5000
+    ):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -112,7 +124,7 @@ class PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0).transpose(0, 1)
         self.register_buffer("pe", pe)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         r"""Inputs of forward function
         Args:
             x: the sequence fed to the positional encoder model (required).
@@ -130,7 +142,15 @@ class PositionalEncoding(nn.Module):
 class TransformerModel(nn.Module):
     """Container module with an encoder, a recurrent or transformer module, and a decoder."""
 
-    def __init__(self, ntoken, ninp, nhead, nhid, nlayers, dropout=0.5):
+    def __init__(
+        self,
+        ntoken: int,
+        ninp: int,
+        nhead: int,
+        nhid: int,
+        nlayers: int,
+        dropout: Optional[int] = 0.5,
+    ):
         super(TransformerModel, self).__init__()
         try:
             from torch.nn import TransformerEncoder, TransformerEncoderLayer
@@ -149,7 +169,7 @@ class TransformerModel(nn.Module):
 
         self.init_weights()
 
-    def _generate_square_subsequent_mask(self, sz):
+    def _generate_square_subsequent_mask(self, sz: int) -> torch.Tensor:
         mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         mask = (
             mask.float()
@@ -158,13 +178,15 @@ class TransformerModel(nn.Module):
         )
         return mask
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         initrange = 0.1
         nn.init.uniform_(self.encoder.weight, -initrange, initrange)
         nn.init.zeros_(self.decoder.weight)
         nn.init.uniform_(self.decoder.weight, -initrange, initrange)
 
-    def forward(self, src, has_mask=True):
+    def forward(
+        self, src: torch.Tensor, has_mask: Optional[bool] = True
+    ) -> torch.Tensor:
 
         if has_mask:
             device = src.device

@@ -86,7 +86,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
             LRScheduler.StepMode.MANUAL_STEP,
         )
 
-    def build_training_data_loader(self):
+    def build_training_data_loader(self) -> DataLoader:
         train_dataset = data.WikiTextDataset(
             self.corpus,
             batch_size=self.context.get_per_slot_batch_size(),
@@ -95,7 +95,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         batch_samp = data.BatchSamp(train_dataset, self.bptt)
         return DataLoader(train_dataset, batch_sampler=batch_samp)
 
-    def build_validation_data_loader(self):
+    def build_validation_data_loader(self) -> DataLoader:
         val_dataset = data.WikiTextDataset(
             self.corpus,
             batch_size=self.eval_batch_size,
@@ -106,7 +106,9 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         batch_samp = data.BatchSamp(val_dataset, self.bptt)
         return DataLoader(val_dataset, batch_sampler=batch_samp)
 
-    def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
+    def train_batch(
+        self, batch: TorchData, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, Union[torch.Tensor, float]]:
         if batch_idx == 0 and self.model_cls.lower() != "transformer":
             self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
         inputs = batch[:-1]
@@ -126,9 +128,9 @@ class WordLanguageModelPyTorch(PyTorchTrial):
                 params, self.context.get_hparam("max_grad_norm")
             ),
         )
-        return {"loss": loss, "lr": float(self.optimizer.param_groups[0]['lr'])}
+        return {"loss": loss, "lr": float(self.optimizer.param_groups[0]["lr"])}
 
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader):
+    def evaluate_full_dataset(self, data_loader: DataLoader) -> Dict[str, torch.Tensor]:
         total_loss = 0.0
         if self.model_cls.lower() != "transformer":
             self.hidden = self.model.init_hidden(self.eval_batch_size)
