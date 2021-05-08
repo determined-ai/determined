@@ -1,8 +1,12 @@
-description: Word_Language_Modeling_Transformer_Distributed 
+description: Word_Language_Modeling_Distributed 
 max_restarts: 0
 hyperparameters:
-  global_batch_size: 50 # per gpu batch size of 24
-  max_grad_norm: 0.25
+    global_batch_size: 50 
+    max_grad_norm: 0.25
+    model_cls: Transformer
+    # model_cls: LSTM
+    # model_cls: GRU
+    # model_cls: RNN
 records_per_epoch: 59660
 searcher:
     name: single
