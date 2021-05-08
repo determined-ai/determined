@@ -1,0 +1,71 @@
+.. _model-hub:
+
+###########
+ Model Hub
+###########
+
+.. rubric:: **Overview**
+
+Determined's **model-hub** library makes it easy to train models from
+popular third-party libraries with a Determined cluster. With
+**model-hub**, use trusted implementations of model architectures with
+Determined's ability to easily scale to distributed training, track
+experiments, share resources, and perform hyperparameter searches.
+
+Each supported third-party library in **model-hub** is accompanied by:
+
+-  Official examples checked for correctness and thoroughly tested for
+   use with Determined.
+-  A base Determined Trial class with common functionality implemented
+   for the user.
+-  A prebuilt docker environment with all dependencies installed and
+   versioned for reproducibility.
+-  A suite of helper functions (if applicable) to allow users to easily
+   write their own Trial classes for use with the third-party library.
+
+.. rubric:: **Getting Started**
+
+For a given task, deep learning practitioners often adapt existing model
+implementations from a trusted third-party library, such as HuggingFace
+Transformers. When beginning your deep learning project in this way, we
+suggest using **model-hub** with the following these steps:
+
+-  Check for a Model Hub library that supports model implementations for
+   your task.
+-  If the Model Hub Library includes an official example fit for your
+   task, copy, customize, and deploy it.
+-  If the Model Hub Library does not include example fit for your task,
+   copy the base Determined Trial class and customize it.
+
+For detailed instructions, check out the documentation for your Model
+Hub library of choice.
+
+.. rubric:: **Available Libraries**
+
+Released libraries
+
+-  :ref:`Model Hub Transformers <model-hub-transformers>`
+
+Future libraries on our roadmap
+
+-  `mmdetection <https://github.com/open-mmlab/mmdetection>`_
+-  `detectron2 <https://github.com/facebookresearch/detectron2>`_
+
+Our initial release of **model-hub** includes support for the
+`Huggingface transformers library
+<https://github.com/huggingface/transformers>`_. We are actively working
+on releasing new third-party libraries. Please check back for updates.
+If you have additional libraries you want to see supported in
+**model-hub** please let us know by filing an issue on `GitHub
+<https://github.com/determined-ai/determined>`_ or reaching out on our
+community `Slack.
+<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_
+
+For next steps, learn more about :ref:`Model Hub Transformers
+<model-hub-transformers>`!
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   transformers/index

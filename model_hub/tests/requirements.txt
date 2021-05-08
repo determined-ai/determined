@@ -1,0 +1,4 @@
+# pytest 6.0 has linter-breaking changes
+pytest>=6.0.1
+# pytest 6.0 is based on mypy 0.780
+mypy==0.780

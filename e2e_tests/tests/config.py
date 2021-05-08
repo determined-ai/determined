@@ -63,6 +63,10 @@ def features_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/features", path)
 
 
+def model_hub_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = yaml.safe_load(f)
@@ -157,6 +161,12 @@ def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("reproducibility", {})
     config["reproducibility"]["experiment_seed"] = seed
+    return config
+
+
+def set_hparam(config: Dict[Any, Any], name: str, value: Any) -> Dict[Any, Any]:
+    config = config.copy()
+    config["hyperparameters"][name] = {"type": "const", "val": value}
     return config
 
 
