@@ -1,3 +1,4 @@
+import { useCallback } from '@storybook/addons';
 import { Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import React, { } from 'react';
@@ -38,7 +39,22 @@ Secondary button with a back arrow.
 const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
-  return <Modal title='Notebook Settings' visible={forceVisible}>
+
+  const handleEditConfig = useCallback(() => {
+    'placeholder';
+  },[]);
+
+  const handleCreateEnvironment = useCallback(() => {
+    'placeholder';
+  },[]);
+
+  return <Modal
+    cancelButtonProps={{ onClick: handleEditConfig }}
+    cancelText='Edit Full Config'
+    okButtonProps={{ onClick: handleCreateEnvironment }}
+    okText='Create Notebook Environment'
+    title='Notebook Settings'
+    visible={forceVisible}>
     <Link><a href=''>Documentation</a></Link>
     <Form labelAlign='left' labelCol={{ span:8 }}>
       <Item label='Notebook Template'><Dropdown options={[]} /></Item>
