@@ -33,6 +33,6 @@ data:
     use_cache: True
 entrypoint: model_def:WordLanguageModelTrial
 bind_mounts:
-    - host_path: /data
+    - host_path: /tmp
       container_path: /data
       read_only: false
