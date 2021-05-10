@@ -1,6 +1,6 @@
 import { Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -38,9 +38,14 @@ Secondary button with a back arrow.
 const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
+  const [ showFullConfig, setShowFullConfig ] = useState(false);
 
   const handleEditConfig = useCallback(() => {
-    'placeholder';
+    setShowFullConfig(true);
+  },[]);
+
+  const handleBack = useCallback(() => {
+    setShowFullConfig(false);
   },[]);
 
   const handleCreateEnvironment = useCallback(() => {
@@ -48,22 +53,26 @@ const NotebookModal: React.FC<Props> = (
   },[]);
 
   return <Modal
-    cancelButtonProps={{ onClick: handleEditConfig }}
-    cancelText='Edit Full Config'
+    cancelButtonProps={{ onClick: showFullConfig? handleBack : handleEditConfig }}
+    cancelText={showFullConfig ? 'Back' : 'Edit Full Config'}
     okButtonProps={{ onClick: handleCreateEnvironment }}
     okText='Create Notebook Environment'
     title='Notebook Settings'
     visible={forceVisible}>
-    <Link><a href=''>Documentation</a></Link>
-    <Form labelAlign='left' labelCol={{ span:8 }}>
-      <Item label='Notebook Template'><Dropdown options={[]} /></Item>
-      <Item label='Name'><Input placeholder='Name' /></Item>
-      <Item label='Resource Pool'><Dropdown options={[]} /></Item>
-      <Item label='Type'>
-        <RadioGroup options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]} />
-      </Item>
-      <Item label='Number of Slots'><Input defaultValue={0} type='number' /></Item>
-    </Form>
+    {showFullConfig? <Input.TextArea defaultValue='' /> :
+      <>
+        <Link><a href=''>Documentation</a></Link>
+        <Form labelAlign='left' labelCol={{ span:8 }}>
+          <Item label='Notebook Template'><Dropdown options={[]} /></Item>
+          <Item label='Name'><Input placeholder='Name' /></Item>
+          <Item label='Resource Pool'><Dropdown options={[]} /></Item>
+          <Item label='Type'>
+            <RadioGroup options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]} />
+          </Item>
+          <Item label='Number of Slots'><Input defaultValue={0} type='number' /></Item>
+        </Form>
+      </>
+    }
   </Modal>;
 };
 
