@@ -3,6 +3,7 @@ import { Form, Input, Select } from 'antd';
 import React, { } from 'react';
 
 import Link from './Link';
+import RadioGroup from './RadioGroup';
 
 const { Option } = Select;
 const { Item } = Form;
@@ -43,6 +44,9 @@ const NotebookModal: React.FC<Props> = (
       <Item label='Notebook Template'><Dropdown options={[]} /></Item>
       <Item label='Name'><Input placeholder='Name' /></Item>
       <Item label='Resource Pool'><Dropdown options={[]} /></Item>
+      <Item label='Type'>
+        <RadioGroup options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]} />
+      </Item>
     </Form>
   </Modal>;
 };
