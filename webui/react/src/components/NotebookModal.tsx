@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import { Input, Select } from 'antd';
+import { Form, Input, Select } from 'antd';
 import React, { } from 'react';
 
 import Link from './Link';
@@ -38,9 +38,11 @@ const NotebookModal: React.FC<Props> = (
 ) => {
   return <Modal title='Notebook Settings' visible={forceVisible}>
     <Link><a href=''>Documentation</a></Link>
-    <LabelledLine content={<Dropdown options={ [] } />} label='Notebook Template' />
-    <LabelledLine content={<Input placeholder='Name' />} label='Name' />
-    <LabelledLine content={<Dropdown options={ [] } />} label='Resource Pool' />
+    <Form labelAlign='left' labelCol={{ span:8 }}>
+      <Form.Item label='Notebook Template'><Dropdown options={[]} /></Form.Item>
+      <Form.Item label='Name'><Input placeholder='Name' /></Form.Item>
+      <Form.Item label='Resource Pool'><Dropdown options={[]} /></Form.Item>
+    </Form>
   </Modal>;
 };
 
@@ -53,7 +55,7 @@ const Dropdown: React.FC<DropdownProps> = ({ options }: DropdownProps) => {
     {options.map(option => <Option key={option} value={option}>{option}</Option>)}
   </Select> : null;
 };
-
+/*
 interface LabelledLineProps {
   content?: JSX.Element;
   label: string;
@@ -65,6 +67,6 @@ const LabelledLine: React.FC<LabelledLineProps> = ({ content, label }: LabelledL
       <label style={{ color: 'dimgray' }}>{label}</label>
       <div style={{ maxWidth:'50%' }}>{content}</div>
     </div> : null;
-};
+}; */
 
 export default NotebookModal;
