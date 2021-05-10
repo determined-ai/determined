@@ -1,8 +1,8 @@
 from typing import Optional
 
-import determined.client
 from determined.common import api, check
 from determined.common.experimental import checkpoint
+from determined.swagger.client.api.trials_api import TrialsApi
 
 
 class TrialReference:
@@ -17,13 +17,13 @@ class TrialReference:
             master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, trial_id: int, master: str, api_ref: Optional[determined.client.TrialsApi]):
+    def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):
         self.id = trial_id
         self._master = master
         self._trials = api_ref
 
     def kill(self) -> None:
-        self._trials.determined_kill_trial(id=self.id)  # type: ignore
+        self._trials.determined_kill_trial(id=self.id)
 
     def top_checkpoint(
         self,

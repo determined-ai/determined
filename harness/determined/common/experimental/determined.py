@@ -1,9 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO
 
-import determined.client
-from determined.client import V1CreateExperimentRequest as CreateExperimentRequest
-from determined.client import V1File as V1File
 from determined.common import api, context, yaml
 from determined.common.api import authentication as auth
 from determined.common.experimental.checkpoint import Checkpoint
@@ -11,13 +8,22 @@ from determined.common.experimental.experiment import ExperimentReference
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.session import Session
 from determined.common.experimental.trial import TrialReference
+from determined.swagger.client.api.experiments_api import ExperimentsApi
+from determined.swagger.client.api.internal_api import InternalApi
+from determined.swagger.client.api.trials_api import TrialsApi
+from determined.swagger.client.api_client import ApiClient
+from determined.swagger.client.configuration import Configuration
+from determined.swagger.client.models.v1_create_experiment_request import (
+    V1CreateExperimentRequest as CreateExperimentRequest,
+)
+from determined.swagger.client.models.v1_file import V1File
 
 
 def _path_to_files(path: Path) -> List[V1File]:
     files = []
     for item in context.read_context(path)[0]:
         content = item["content"].decode("utf-8")
-        file = V1File(  # type: ignore
+        file = V1File(
             path=item["path"],
             type=item["type"],
             content=content,
@@ -57,7 +63,7 @@ class Determined:
     ):
         self._session = Session(master, user)
         self._auth = auth.Authentication.instance()
-        self._configuration = determined.client.Configuration()  # type: ignore
+        self._configuration = Configuration()
 
         # Remove trailing '/' character for Swagger
         if self._session._master[-1] == "/":
@@ -68,15 +74,9 @@ class Determined:
         self._configuration.api_key_prefix["Authorization"] = "Bearer"
         self._configuration.api_key["Authorization"] = self._auth.get_session_token()
 
-        self._experiments = determined.client.ExperimentsApi(  # type: ignore
-            determined.client.ApiClient(self._configuration)
-        )
-        self._internal = determined.client.InternalApi(  # type: ignore
-            determined.client.ApiClient(self._configuration)
-        )
-        self._trials = determined.client.TrialsApi(  # type: ignore
-            determined.client.ApiClient(self._configuration)
-        )
+        self._experiments = ExperimentsApi(ApiClient(self._configuration))
+        self._internal = InternalApi(ApiClient(self._configuration))
+        self._trials = TrialsApi(ApiClient(self._configuration))
 
     def create_experiment(
         self,
@@ -93,7 +93,7 @@ class Determined:
 
         model_context = _path_to_files(Path(model_dir))
 
-        experiment_request = CreateExperimentRequest(  # type: ignore
+        experiment_request = CreateExperimentRequest(
             model_definition=model_context,
             config=yaml.safe_dump(experiment_config),
         )

@@ -3,6 +3,6 @@ line-length = 100
 exclude = '''
 /(
     \_gen.py
-  | determined/client/*
+  | determined/swagger/client/*
 )/
 '''

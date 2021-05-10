@@ -1,13 +1,13 @@
 from determined.common.experimental.determined import Determined
 
 
-def cancel_experiment(det: object) -> None:
+def cancel_experiment(det: Determined) -> None:
     exp1 = det.get_experiment(experiment_id=1)
     print("Cancelling experimet id: {}".format(exp1.id))
     exp1.cancel()
 
 
-def create_experiment_wait(det: object) -> None:
+def create_experiment_wait(det: Determined) -> None:
     exp2 = det.create_experiment(
         exp_config="../tutorials/mnist_pytorch/const.yaml",
         model_dir="../tutorials/mnist_pytorch",

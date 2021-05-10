@@ -1,10 +1,12 @@
 import time
 from typing import Dict, List, Optional
 
-import determined.client
-from determined.client import Determinedexperimentv1State as ExperimentState
 from determined.common import api
 from determined.common.experimental import checkpoint
+from determined.swagger.client.api.experiments_api import ExperimentsApi
+from determined.swagger.client.models.determinedexperimentv1_state import (
+    Determinedexperimentv1State as ExperimentState,
+)
 
 
 class ExperimentReference:
@@ -23,7 +25,7 @@ class ExperimentReference:
         self,
         experiment_id: int,
         master: str,
-        api_ref: determined.client.ExperimentsApi,
+        api_ref: ExperimentsApi,
         config: Optional[Dict] = None,
     ):
         self.id = experiment_id
@@ -32,31 +34,29 @@ class ExperimentReference:
         self.config = config
 
     def activate(self) -> None:
-        self._experiments.determined_activate_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_activate_experiment(id=self.id)
 
     def archive(self) -> None:
-        self._experiments.determined_archive_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_archive_experiment(id=self.id)
 
     def cancel(self) -> None:
-        self._experiments.determined_cancel_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_cancel_experiment(id=self.id)
 
     def delete(self) -> None:
-        self._experiments.determined_delete_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_delete_experiment(id=self.id)
 
     def kill(self) -> None:
-        self._experiments.determined_kill_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_kill_experiment(id=self.id)
 
     def pause(self) -> None:
-        self._experiments.determined_pause_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_pause_experiment(id=self.id)
 
     def unarchive(self) -> None:
-        self._experiments.determined_unarchive_experiment(id=self.id)  # type: ignore
+        self._experiments.determined_unarchive_experiment(id=self.id)
 
     def wait_till_complete(self, sleep_interval: int = 5) -> None:
         while True:
-            exp_resp = self._experiments.determined_get_experiment(  # type: ignore
-                experiment_id=self.id
-            )
+            exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
             if (
                 exp_resp.experiment.state == ExperimentState.COMPLETED
                 or exp_resp.experiment.state == ExperimentState.CANCELED
