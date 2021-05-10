@@ -24,7 +24,7 @@ from model import TransformerModel, RNNModel
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-class WordLanguageModelPyTorch(PyTorchTrial):
+class WordLanguageModelTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
         data_config = self.context.get_data_config()
@@ -131,7 +131,7 @@ class WordLanguageModelPyTorch(PyTorchTrial):
         return {"loss": loss, "lr": float(self.optimizer.param_groups[0]["lr"])}
 
     def evaluate_full_dataset(self, data_loader: DataLoader) -> Dict[str, torch.Tensor]:
-        total_loss = 0.0
+        validation_loss = 0.0
         if self.model_cls.lower() != "transformer":
             self.hidden = self.model.init_hidden(self.eval_batch_size)
         for batch in data_loader:
@@ -142,11 +142,11 @@ class WordLanguageModelPyTorch(PyTorchTrial):
             else:
                 output, self.hidden = self.model(batch[:-1], self.hidden)
                 self.hidden = self.model.repackage_hidden(self.hidden)
-            total_loss += (
+            validation_loss += (
                 len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
             )
-        total_loss /= len(data_loader.dataset) - 1
-        self.lr_scheduler.step(total_loss)
+        validation_loss /= len(data_loader.dataset) - 1
+        self.lr_scheduler.step(validation_loss)
         if self.model_cls.lower() != "transformer":
             self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
-        return {"validation_loss": total_loss}
+        return {"validation_loss": validation_loss}

@@ -1,5 +1,4 @@
-description: Word_Language_Modeling_Distributed 
-max_restarts: 0
+description: word_language_modeling_distributed 
 hyperparameters:
     global_batch_size: 50 
     max_grad_norm: 0.25
@@ -21,8 +20,8 @@ resources:
 data:
     use_bind_mount: True
     bind_mount_path: /mnt/data
-entrypoint: model_def:WordLanguageModelPyTorch
+entrypoint: model_def:WordLanguageModelTrial
 bind_mounts:
-    - host_path: /tmp/
+    - host_path: /data/
       container_path: /mnt/data
       read_only: false

@@ -117,7 +117,7 @@ def test_deformabledetr_coco_pytorch_distributed() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.distributed  # type: ignore
 def test_word_language_transformer_distributed() -> None:
     config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -127,7 +127,7 @@ def test_word_language_transformer_distributed() -> None:
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.distributed  # type: ignore
 def test_word_language_lstm_const() -> None:
     config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -137,7 +137,7 @@ def test_word_language_lstm_const() -> None:
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.distributed  # type: ignore
 def test_word_language_gru_const() -> None:
     config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -147,7 +147,7 @@ def test_word_language_gru_const() -> None:
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.distributed  # type: ignore
 def test_word_language_rnn_const() -> None:
     config = conf.load_config(conf.nlp_examples_path("word_language_model/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

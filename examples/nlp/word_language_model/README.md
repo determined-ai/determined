@@ -6,7 +6,7 @@ from this [PyTorch Word-Level Language Modeling example](https://github.com/pyto
 
 ## Files
 * **model.py**: This file defines both models - the RNN and the Transformer.
-* **data.py**: The data loading and preparation code for the model.
+* **data.py**: The data loading and preparation code for the model. Unless `use_cache: False` is specified in the experiment config file, this code will attempt to load a cached version of the preprocessed data. If the cached version is unavailable, it will download and preprocess the data, and cache it for future use.
 * **model_def.py**: The core code for training. This includes building and compiling the model.
 
 ### Configuration Files
@@ -28,7 +28,7 @@ configuration file in place of `const.yaml`.
 This example defines 4 models - a Transformer, a recurrent neural network with LSTM cells,
 a recurrent neural network with GRU cells, and a recurrent neural network with a simple RNN cell with a `tanh` activation.
 
-To specify which model to use, replace the `model_cls` attribute in the appropriate yaml file with one of the following:
+To specify which model to use, replace the `model_cls` attribute in the appropriate .yaml file with one of the following:
 * `Transformer`
 * `LSTM`
 * `GRU`
