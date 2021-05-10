@@ -1,11 +1,14 @@
 import { Modal } from 'antd';
 import React, { } from 'react';
 
-//interface Props {
-//}
+interface Props {
+  forceVisible?: boolean
+}
 
-const NotebookModal: React.FC = () => {
-  return <Modal visible={true}>
+const NotebookModal: React.FC<Props> = (
+  { forceVisible = false }: Props,
+) => {
+  return <Modal visible={forceVisible}>
     <p>test</p>
   </Modal>;
 };

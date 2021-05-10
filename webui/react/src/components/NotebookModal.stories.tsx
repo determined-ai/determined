@@ -8,5 +8,5 @@ export default {
 };
 
 export const Default = (): React.ReactNode => {
-  return <NotebookModal />;
+  return <NotebookModal forceVisible={true} />;
 };
