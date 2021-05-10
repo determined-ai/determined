@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import { Select } from 'antd';
+import { Input, Select } from 'antd';
 import React, { } from 'react';
 
 const { Option } = Select;
@@ -37,6 +37,7 @@ const NotebookModal: React.FC<Props> = (
   return <Modal visible={forceVisible}>
     <p>test</p>
     <LabelledLine content={<NotebookTemplates />} label='Notebook Template' />
+    <LabelledLine content={<Input placeholder='Name' />} label='Name' />
   </Modal>;
 };
 
@@ -54,8 +55,8 @@ interface LabelledLineProps {
 const LabelledLine: React.FC<LabelledLineProps> = ({ content, label }: LabelledLineProps) => {
   return content ?
     <div style={{ alignItems: 'center', display:'flex', justifyContent:'space-between' }}>
-      <label>{label}</label>
-      {content}
+      <label style={{ color: 'dimgray' }}>{label}</label>
+      <div style={{ maxWidth:'50%' }}>{content}</div>
     </div> : null;
 };
 
