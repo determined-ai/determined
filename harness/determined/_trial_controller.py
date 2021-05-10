@@ -41,6 +41,7 @@ class TrialController(metaclass=abc.ABCMeta):
         load_path: Optional[pathlib.Path],
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
+        prof: profiler.ProfilerAgent,
     ) -> None:
         self.context = context
         self.env = env
@@ -48,6 +49,7 @@ class TrialController(metaclass=abc.ABCMeta):
         self.load_path = load_path
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
+        self.prof = prof
 
         self._check_if_trial_supports_configurations(env)
 
