@@ -59,6 +59,7 @@ def log_in_user(credentials: Credentials) -> int:
     expected = "Password for user '{}':".format(username)
     child.expect(expected, timeout=EXPECT_TIMEOUT)
     child.sendline(password)
+    child.read()
     child.wait()
     return cast(int, child.exitstatus)
 
@@ -72,14 +73,15 @@ def create_user(n_username: str, admin_credentials: Credentials) -> None:
     i = child.expect([expected_password_prompt, pexpect.EOF], timeout=EXPECT_TIMEOUT)
     if i == 0:
         child.sendline(a_password)
+    child.read()
     child.wait()
-    y = child.read()
     child.close()
 
-    assert child.exitstatus == 0, y
+    assert child.exitstatus == 0
     # Now we activate the user.
     child = det_spawn(["-u", a_username, "user", "activate", n_username])
     child.expect(pexpect.EOF, timeout=EXPECT_TIMEOUT)
+    child.read()
     child.wait()
     child.close()
     assert child.exitstatus == 0
@@ -104,6 +106,7 @@ def change_user_password(
     child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)
     child.sendline(target_password)
 
+    child.read()
     child.wait()
     child.close()
     return cast(int, child.exitstatus)
@@ -128,6 +131,7 @@ def log_out_user(username: Optional[str] = None) -> int:
         args = ["user", "logout"]
 
     child = det_spawn(args)
+    child.read()
     child.wait()
     return cast(int, child.exitstatus)
 
@@ -145,6 +149,7 @@ def activate_deactivate_user(
     if i == 0:
         child.sendline(a_password)
 
+    child.read()
     child.wait()
     child.close()
     return cast(int, child.exitstatus)
@@ -181,6 +186,7 @@ def test_logout(auth: Authentication) -> None:
     with logged_in_user(creds):
         # Now we should be able to list experiments.
         child = det_spawn(["e", "list"])
+        child.read()
         child.wait()
         child.close()
         assert child.status == 0
@@ -190,6 +196,7 @@ def test_logout(auth: Authentication) -> None:
     # Now trying to list experiments should result in an error.
     child = det_spawn(["e", "list"])
     child.expect(".*Unauthenticated.*", timeout=EXPECT_TIMEOUT)
+    child.read()
     child.wait()
     assert child.exitstatus != 0
 
@@ -204,6 +211,7 @@ def test_logout(auth: Authentication) -> None:
 
     # Should still be able to list experiments because new user is logged in.
     child = det_spawn(["e", "list"])
+    child.read()
     child.wait()
     child.close()
     assert child.status == 0
@@ -293,6 +301,7 @@ def run_command() -> str:
     child.expect(r"Scheduling.*\(id: (?P<id>.+?)\)")
     command_id = child.match.groupdict().get("id", None)
     assert command_id is not None
+    child.read()
     child.wait()
     assert child.exitstatus == 0
     return cast(str, command_id.decode())
@@ -301,6 +310,7 @@ def run_command() -> str:
 def start_notebook() -> str:
     child = det_spawn(["notebook", "start", "-d"])
     notebook_id = cast(str, child.readline().decode().rstrip())
+    child.read()
     child.wait()
     assert child.exitstatus == 0
 
@@ -310,6 +320,7 @@ def start_notebook() -> str:
 def start_tensorboard(experiment_id: int) -> str:
     child = det_spawn(["tensorboard", "start", "-d", str(experiment_id)])
     tensorboard_id = cast(str, child.readline().decode().rstrip())
+    child.read()
     child.wait()
     assert child.exitstatus == 0
     return tensorboard_id
@@ -328,6 +339,7 @@ def delete_experiments(*experiment_ids: int) -> None:
 
         experiment_id = intersection.pop()
         child = det_spawn(["e", "delete", "--yes", str(experiment_id)])
+        child.read()
         child.wait()
         assert child.exitstatus == 0
         eids.remove(experiment_id)
@@ -348,6 +360,7 @@ def kill_notebooks(*notebook_ids: str) -> None:
 
         notebook_id = intersection.pop()
         child = det_spawn(["notebook", "kill", notebook_id])
+        child.read()
         child.wait()
         assert child.exitstatus == 0
         nids.remove(notebook_id)
@@ -367,6 +380,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
 
         tensorboard_id = intersection.pop()
         child = det_spawn(["tensorboard", "kill", tensorboard_id])
+        child.read()
         child.wait()
         assert child.exitstatus == 0
         tids.remove(tensorboard_id)
@@ -480,6 +494,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> Credentials
             group,
         ]
     )
+    child.read()
     child.wait()
     child.close()
     assert child.exitstatus == 0
@@ -632,16 +647,19 @@ def test_experiment_delete() -> None:
 
         # "det experiment delete" call should fail, because the user is not an admin.
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
+        child.read()
         child.wait()
         assert child.exitstatus > 0
 
     with logged_in_user(ADMIN_CREDENTIALS):
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
+        child.read()
         child.wait()
         assert child.exitstatus == 0
 
         # "det experiment describe" call should fail, because the
         # experiment is no longer in the database.
         child = det_spawn(["experiment", "describe", str(experiment_id)])
+        child.read()
         child.wait()
         assert child.exitstatus > 0
