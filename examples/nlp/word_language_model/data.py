@@ -7,7 +7,6 @@ This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
 from typing import Optional, List
-from io import open
 import torch
 from torch.utils.data import Dataset
 from pathlib import Path
@@ -16,7 +15,7 @@ import zipfile
 import torch
 
 
-def load_and_cache_dataset(path: Path, use_cached: Optional[bool] = True) -> "Corpus":
+def load_and_cache_dataset(path: Path, use_cached: bool = True) -> "Corpus":
     data_dir = path / "wikitext-2"
     if not data_dir.exists():
         url = "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-v1.zip"
@@ -66,9 +65,9 @@ class Corpus(object):
         self,
         path: Path,
         use_cache: bool = False,
-        train: Optional[torch.tensor] = None,
-        val: Optional[torch.tensor] = None,
-        test: Optional[torch.tensor] = None,
+        train: Optional[torch.Tensor] = None,
+        val: Optional[torch.Tensor] = None,
+        test: Optional[torch.Tensor] = None,
         ntokens: Optional[int] = None,
     ) -> None:
         self.dictionary = Dictionary()
@@ -117,7 +116,6 @@ class WikiTextDataset(Dataset):
         corpus: Corpus,
         batch_size: int = 20,
         valid: bool = False,
-        use_cache: bool = True,
     ):
         self.batch_size = batch_size
         self.valid = valid
@@ -142,7 +140,7 @@ class WikiTextDataset(Dataset):
 
 
 class BatchSamp:
-    def __init__(self, dataset: Dataset, bptt: int):
+    def __init__(self, dataset: WikiTextDataset, bptt: int):
         self.data = dataset
         self.data_length = len(dataset) - 1
         self.bptt = bptt
@@ -150,7 +148,7 @@ class BatchSamp:
     def __len__(self) -> int:
         return self.data_length // self.bptt
 
-    def __iter__(self) -> List[int]:
+    def __iter__(self) -> List[List[int]]:
         for batch in range(0, self.data_length, self.bptt):
             seq_len = min(self.bptt, self.data_length - batch)
             yield list(range(batch, batch + seq_len + 1))

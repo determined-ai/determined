@@ -6,20 +6,20 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Dict, Sequence, Union, Any
+from pathlib import Path
+from typing import Dict, Sequence, Union
+
 import torch
 import torch.nn as nn
-import time
-from pathlib import Path
-
 from determined.pytorch import (
     DataLoader,
+    LRScheduler,
     PyTorchTrial,
     PyTorchTrialContext,
-    LRScheduler,
 )
+
 import data
-from model import TransformerModel, RNNModel
+from model import RNNModel, TransformerModel
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -29,34 +29,29 @@ class WordLanguageModelTrial(PyTorchTrial):
         self.context = context
         data_config = self.context.get_data_config()
         hparams = self.context.get_hparams()
-        self.using_bind_mount = data_config.get("use_bind_mount", False)
-        self.use_cache = data_config.get("use_cache", True)
-        self.eval_batch_size = data_config.get("eval_batch_size", 10)
-        self.bind_mount_path = (
-            Path(data_config.get("bind_mount_path")) if self.using_bind_mount else None
-        )
+        using_bind_mount = data_config["use_bind_mount"]
+        use_cache = data_config["use_cache"]
+        self.eval_batch_size = data_config["eval_batch_size"]
 
         download_directory = (
-            self.bind_mount_path if self.using_bind_mount else Path("/tmp")
-        )
-        download_directory = (
-            download_directory / f"data-rank{self.context.distributed.get_rank()}"
-        )
-        self.corpus = data.load_and_cache_dataset(download_directory, self.use_cache)
-        emsize = hparams.get("word_embeddings_size", 200)
-        self.model_cls = hparams.get("model_cls", "transformer")
-        num_heads = hparams.get("num_heads", 2)
-        num_hidden = hparams.get("num_hidden", 200)
-        num_layers = hparams.get("num_layers", 2)
-        dropout = hparams.get("dropout", 0.2)
-        tied = hparams.get("tied", False)
-        self.bptt = hparams.get("bptt", 35)
+            Path(data_config["bind_mount_path"]) if using_bind_mount else Path("/data")
+        ) / f"data-rank{self.context.distributed.get_rank()}"
+
+        self.corpus = data.load_and_cache_dataset(download_directory, use_cache)
+        self.model_cls = hparams["model_cls"]
+        emsize = hparams["word_embeddings_size"]
+        num_hidden = hparams["num_hidden"]
+        num_layers = hparams["num_layers"]
+        dropout = hparams["dropout"]
+        self.bptt = hparams["bptt"]
 
         if self.model_cls.lower() == "transformer":
+            num_heads = hparams["num_heads"]
             self.model = TransformerModel(
                 self.corpus.ntokens, emsize, num_heads, num_hidden, num_layers, dropout
             )
         else:
+            tied = hparams["tied"]
             self.model = RNNModel(
                 self.model_cls,
                 self.corpus.ntokens,
@@ -70,7 +65,7 @@ class WordLanguageModelTrial(PyTorchTrial):
         self.model = self.context.wrap_model(self.model)
         self.criterion = nn.NLLLoss()
 
-        lr = hparams.get("lr", 20)
+        lr = hparams["lr"]
         optimizer = torch.optim.SGD(self.model.parameters(), lr=lr)
         self.optimizer = self.context.wrap_optimizer(optimizer)
 
@@ -90,7 +85,6 @@ class WordLanguageModelTrial(PyTorchTrial):
         train_dataset = data.WikiTextDataset(
             self.corpus,
             batch_size=self.context.get_per_slot_batch_size(),
-            use_cache=self.use_cache,
         )
         batch_samp = data.BatchSamp(train_dataset, self.bptt)
         return DataLoader(train_dataset, batch_sampler=batch_samp)
@@ -99,7 +93,6 @@ class WordLanguageModelTrial(PyTorchTrial):
         val_dataset = data.WikiTextDataset(
             self.corpus,
             batch_size=self.eval_batch_size,
-            use_cache=self.use_cache,
             valid=True,
         )
         self.val_data_len = len(val_dataset) - 1
@@ -145,6 +138,7 @@ class WordLanguageModelTrial(PyTorchTrial):
             validation_loss += (
                 len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
             )
+
         validation_loss /= len(data_loader.dataset) - 1
         self.lr_scheduler.step(validation_loss)
         if self.model_cls.lower() != "transformer":

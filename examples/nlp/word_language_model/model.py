@@ -6,7 +6,7 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Optional, Union
+from typing import Union
 import math
 import torch
 import torch.nn as nn
@@ -23,8 +23,8 @@ class RNNModel(nn.Module):
         ninp: int,
         nhid: int,
         nlayers: int,
-        dropout: Optional[int] = 0.5,
-        tie_weights: Optional[bool] = False,
+        dropout: float = 0.5,
+        tie_weights: bool = False,
     ):
         super(RNNModel, self).__init__()
         self.ntoken = ntoken
@@ -69,7 +69,7 @@ class RNNModel(nn.Module):
         decoded = decoded.view(-1, self.ntoken)
         return F.log_softmax(decoded, dim=1), hidden
 
-    def init_hidden(self, bsz: int) -> torch.Tensor:
+    def init_hidden(self, bsz: int) -> Union[tuple, torch.Tensor]:
         weight = next(self.parameters())
         if self.rnn_type == "LSTM":
             return (
@@ -108,9 +108,7 @@ class PositionalEncoding(nn.Module):
         >>> pos_encoder = PositionalEncoding(d_model)
     """
 
-    def __init__(
-        self, d_model: int, dropout: Optional[int] = 0.1, max_len: Optional[int] = 5000
-    ):
+    def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -149,7 +147,7 @@ class TransformerModel(nn.Module):
         nhead: int,
         nhid: int,
         nlayers: int,
-        dropout: Optional[int] = 0.5,
+        dropout: float = 0.5,
     ):
         super(TransformerModel, self).__init__()
         try:
@@ -184,9 +182,7 @@ class TransformerModel(nn.Module):
         nn.init.zeros_(self.decoder.weight)
         nn.init.uniform_(self.decoder.weight, -initrange, initrange)
 
-    def forward(
-        self, src: torch.Tensor, has_mask: Optional[bool] = True
-    ) -> torch.Tensor:
+    def forward(self, src: torch.Tensor, has_mask: bool = True) -> torch.Tensor:
 
         if has_mask:
             device = src.device

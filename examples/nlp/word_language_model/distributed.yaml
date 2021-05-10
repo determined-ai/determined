@@ -6,6 +6,18 @@ hyperparameters:
     # model_cls: LSTM
     # model_cls: GRU
     # model_cls: RNN
+    word_embeddings_size: 200
+    num_hidden: 200
+    num_layers: 2
+    dropout: 0.2
+    bptt: 35
+    lr: 20
+    # Transformer Model Only Hyperparameters
+    num_heads: 2
+    # RNN Model Only Hyperparameters
+    # tied: False
+resources:
+    slots_per_trial: 8
 records_per_epoch: 59660
 searcher:
     name: single
@@ -15,13 +27,12 @@ searcher:
     smaller_is_better: true
 min_validation_period:
     epochs: 1
-resources:
-    slots_per_trial: 8
 data:
     use_bind_mount: True
-    bind_mount_path: /mnt/data
+    bind_mount_path: /data
+    use_cache: True
 entrypoint: model_def:WordLanguageModelTrial
 bind_mounts:
-    - host_path: /data/
-      container_path: /mnt/data
+    - host_path: /data
+      container_path: /data
       read_only: false
