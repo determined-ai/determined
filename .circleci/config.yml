@@ -1991,7 +1991,19 @@ workflows:
               mark: ["distributed"]
               gpu-agent-instance-type: ["p2.8xlarge"]
               cpu-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [3]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-model-hub
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["model-hub"]
+              mark: ["model-hub"]
+              gpu-agent-instance-type: ["p2.8xlarge"]
+              cpu-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
 
