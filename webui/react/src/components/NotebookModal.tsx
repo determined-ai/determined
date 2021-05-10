@@ -39,13 +39,10 @@ const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ form ] = Form.useForm();
 
-  const handleEditConfig = useCallback(() => {
-    setShowFullConfig(true);
-  },[]);
-
-  const handleBack = useCallback(() => {
-    setShowFullConfig(false);
+  const handleSecondary = useCallback(() => {
+    setShowFullConfig(!showFullConfig);
   },[]);
 
   const handleCreateEnvironment = useCallback(() => {
@@ -53,7 +50,7 @@ const NotebookModal: React.FC<Props> = (
   },[]);
 
   return <Modal
-    cancelButtonProps={{ onClick: showFullConfig? handleBack : handleEditConfig }}
+    cancelButtonProps={{ onClick: handleSecondary }}
     cancelText={showFullConfig ? 'Back' : 'Edit Full Config'}
     okButtonProps={{ onClick: handleCreateEnvironment }}
     okText='Create Notebook Environment'
@@ -77,7 +74,7 @@ const NotebookModal: React.FC<Props> = (
 };
 
 interface DropdownProps {
-  options?: string[]
+  options?: string[];
 }
 
 const Dropdown: React.FC<DropdownProps> = ({ options }: DropdownProps) => {
