@@ -1,7 +1,6 @@
-import { useCallback } from '@storybook/addons';
 import { Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
-import React, { } from 'react';
+import React, { useCallback } from 'react';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -63,6 +62,7 @@ const NotebookModal: React.FC<Props> = (
       <Item label='Type'>
         <RadioGroup options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]} />
       </Item>
+      <Item label='Number of Slots'><Input defaultValue={0} type='number' /></Item>
     </Form>
   </Modal>;
 };
