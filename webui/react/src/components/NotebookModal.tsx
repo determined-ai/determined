@@ -42,11 +42,27 @@ const NotebookModal: React.FC<Props> = (
   const [ form ] = Form.useForm();
 
   const handleSecondary = useCallback(() => {
-    setShowFullConfig(!showFullConfig);
+    setShowFullConfig(show => !show);
   },[]);
 
   const handleCreateEnvironment = useCallback(() => {
-    'placeholder';
+    null;
+  },[]);
+
+  const handleNameUpdate = useCallback((e) => {
+    form.setFieldsValue({ name: e });
+  },[]);
+
+  const handlTemplateUpdate = useCallback((e) => {
+    form.setFieldsValue({ template: e });
+  },[]);
+
+  const handleResourcePoolUpdate = useCallback((e) => {
+    form.setFieldsValue({ pool: e });
+  },[]);
+
+  const handleTypeUpdate = useCallback((e) => {
+    form.setFieldsValue({ type: e });
   },[]);
 
   return <Modal
@@ -60,11 +76,17 @@ const NotebookModal: React.FC<Props> = (
       <>
         <Link><a href=''>Documentation</a></Link>
         <Form labelAlign='left' labelCol={{ span:8 }}>
-          <Item label='Notebook Template'><Dropdown options={[]} /></Item>
-          <Item label='Name'><Input placeholder='Name' /></Item>
-          <Item label='Resource Pool'><Dropdown options={[]} /></Item>
+          <Item label='Notebook Template'>
+            <Dropdown options={[]} onChange={handlTemplateUpdate} />
+          </Item>
+          <Item label='Name'><Input placeholder='Name' onChange={handleNameUpdate} /></Item>
+          <Item label='Resource Pool'>
+            <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
+          </Item>
           <Item label='Type'>
-            <RadioGroup options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]} />
+            <RadioGroup
+              options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
+              onChange={(e) => handleTypeUpdate(e)} />
           </Item>
           <Item label='Number of Slots'><Input defaultValue={0} type='number' /></Item>
         </Form>
@@ -74,11 +96,12 @@ const NotebookModal: React.FC<Props> = (
 };
 
 interface DropdownProps {
+  onChange: (e: string) => void;
   options?: string[];
 }
 
-const Dropdown: React.FC<DropdownProps> = ({ options }: DropdownProps) => {
-  return options? <Select style={{ minWidth:120 }}>
+const Dropdown: React.FC<DropdownProps> = ({ options, onChange }: DropdownProps) => {
+  return options? <Select style={{ minWidth:120 }} onChange={onChange}>
     {options.map(option => <Option key={option} value={option}>{option}</Option>)}
   </Select> : null;
 };
