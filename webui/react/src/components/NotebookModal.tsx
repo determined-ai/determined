@@ -35,15 +35,20 @@ const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
   return <Modal title='Notebook Settings' visible={forceVisible}>
-    <LabelledLine content={<NotebookTemplates />} label='Notebook Template' />
+    <LabelledLine content={<Dropdown options={ [] } />} label='Notebook Template' />
     <LabelledLine content={<Input placeholder='Name' />} label='Name' />
+    <LabelledLine content={<Dropdown options={ [] } />} label='Resource Pool' />
   </Modal>;
 };
 
-const NotebookTemplates: React.FC = () => {
-  return <Select style={{ minWidth:120 }}>
-    <Option key='placeholder' value='placeholder'>placeholder</Option>
-  </Select>;
+interface DropdownProps {
+  options?: string[]
+}
+
+const Dropdown: React.FC<DropdownProps> = ({ options }: DropdownProps) => {
+  return options? <Select style={{ minWidth:120 }}>
+    {options.map(option => <Option key={option} value={option}>{option}</Option>)}
+  </Select> : null;
 };
 
 interface LabelledLineProps {
