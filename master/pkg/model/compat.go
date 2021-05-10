@@ -69,15 +69,6 @@ func ToModelBindMount(b expconf.BindMount) BindMount {
 	}
 }
 
-// // ToModelBindMountsConfig converts new expconf bind mounts into old model bind mounts.
-// func ToModelBindMount (b expconf.BindMount) BindMount {
-// 	var out BindMountsConfig
-// 	for _, m := range b {
-// 		out = append(out, ToModelBindMount(m))
-// 	}
-// 	return out
-// }
-
 // ToExpconf translates old model objects into an expconf object.
 func (r RuntimeItems) ToExpconf() expconf.EnvironmentVariablesMap {
 	return schemas.WithDefaults(expconf.EnvironmentVariablesMap{

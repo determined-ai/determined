@@ -262,12 +262,16 @@ func (a *apiServer) PreviewHPSearch(
 	// Parse the provided experiment config.
 	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, status.Errorf(
+			codes.InvalidArgument, "invalid experiment configuration: %s", err,
+		)
 	}
 
 	// Get the useful subconfigs for preview search.
 	if config.RawSearcher == nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration; missing searcher")
+		return nil, status.Errorf(
+			codes.InvalidArgument, "invalid experiment configuration; missing searcher",
+		)
 	}
 	sc := *config.RawSearcher
 	hc := config.RawHyperparameters
@@ -277,13 +281,13 @@ func (a *apiServer) PreviewHPSearch(
 	hc = schemas.WithDefaults(hc).(expconf.Hyperparameters)
 
 	// Make sure the searcher config has all eventuallyRequired fields.
-	err = schemas.IsComplete(sc)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid searcher configuration")
+	if err = schemas.IsComplete(sc); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid searcher configuration: %s", err)
 	}
-	err = schemas.IsComplete(hc)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid hyperparameters configuration")
+	if err = schemas.IsComplete(hc); err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument, "invalid hyperparameters configuration: %s", err,
+		)
 	}
 
 	sm := searcher.NewSearchMethod(sc)

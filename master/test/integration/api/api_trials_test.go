@@ -135,7 +135,6 @@ func trialDetailAPITests(
 
 			step := testutils.StepModel(trial.ID)
 			step.ID = id
-			step.TotalBatches = id * experiment.Config.SchedulingUnit
 			step.TotalBatches = id * experiment.Config.SchedulingUnit()
 			err = db.AddStep(step)
 			assert.NilError(t, err, "failed to insert step")

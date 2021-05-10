@@ -128,7 +128,8 @@ func (c *TaskContainerDefaultsConfig) MergeIntoConfig(config *expconf.Experiment
 		image = &i
 	}
 
-	defaultedResources := schemas.WithDefaults(resources).(expconf.ResourcesConfig)
+	// We just update config.RawResources so we know it can't be nil.
+	defaultedResources := schemas.WithDefaults(*config.RawResources).(expconf.ResourcesConfig)
 	podSpec := c.CPUPodSpec
 	if defaultedResources.SlotsPerTrial() > 0 {
 		podSpec = c.GPUPodSpec

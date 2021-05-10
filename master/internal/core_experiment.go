@@ -375,7 +375,6 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		if terr != nil {
 			return nil, false, nil, terr
 		}
-		// XXX: refactor the definition of "sane" to not use required properties?  This is bad.
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
 			return nil, false, nil, yerr

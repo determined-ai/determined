@@ -13,7 +13,6 @@ import (
 	"net/http/pprof"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
@@ -50,7 +49,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -444,18 +442,11 @@ func closeWithErrCheck(name string, closer io.Closer) {
 func (m *Master) tryRestoreExperiment(sema chan struct{}, e *model.Experiment) {
 	sema <- struct{}{}
 	defer func() { <-sema }()
-	// Check if the returned config is the zero value, i.e. the config could not be parsed
-	// correctly. If the config could not be parsed, mark the experiment as errored.
-	// XXX: is this even slightly right??
-	if !reflect.DeepEqual(e.Config, expconf.ExperimentConfig{}) {
-		err := m.restoreExperiment(e)
-		if err == nil {
-			return
-		}
-		log.WithError(err).Errorf("failed to restore experiment: %d", e.ID)
-	} else {
-		log.Errorf("failed to parse experiment config: %d", e.ID)
+	err := m.restoreExperiment(e)
+	if err == nil {
+		return
 	}
+	log.WithError(err).Errorf("failed to restore experiment: %d", e.ID)
 	e.State = model.ErrorState
 	if err := m.db.TerminateExperimentInRestart(e.ID, e.State); err != nil {
 		log.WithError(err).Error("failed to mark experiment as errored")

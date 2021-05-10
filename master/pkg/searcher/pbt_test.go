@@ -8,7 +8,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -302,77 +301,6 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 func TestPBTExplore(t *testing.T) {
 	for i := uint32(0); i < 1; i++ {
 		testPBTExploreWithSeed(t, i)
-	}
-}
-
-func TestPBTValidation(t *testing.T) {
-	// XXX make sure test passes with IsComplete and then delete test
-	goodConfig := func() expconf.PBTConfig {
-		return expconf.PBTConfig{
-			RawPopulationSize:  ptrs.IntPtr(10),
-			RawNumRounds:       ptrs.IntPtr(10),
-			RawLengthPerRound:  lengthPtr(expconf.NewLengthInBatches(1000)),
-			RawReplaceFunction: replaceConfigPtr(expconf.PBTReplaceConfig{}),
-			RawExploreFunction: exploreConfigPtr(expconf.PBTExploreConfig{}),
-		}
-	}
-
-	validatePBTConfig := func(config expconf.PBTConfig) error {
-		searcherConfig := expconf.SearcherConfig{
-			RawMetric:    ptrs.StringPtr("metric"),
-			RawPBTConfig: &config,
-		}
-		return schemas.IsComplete(searcherConfig)
-	}
-
-	assert.NilError(t, validatePBTConfig(goodConfig()))
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawPopulationSize = ptrs.IntPtr(0)
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "population_size")
-		badConfig.RawPopulationSize = ptrs.IntPtr(-1)
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "population_size")
-	}
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawNumRounds = ptrs.IntPtr(0)
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "num_rounds")
-		badConfig.RawNumRounds = ptrs.IntPtr(-1)
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "num_rounds")
-	}
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawLengthPerRound = lengthPtr(expconf.NewLengthInBatches(0))
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "length_per_round")
-		badConfig.RawLengthPerRound = lengthPtr(expconf.NewLengthInBatches(-1))
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "length_per_round")
-	}
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawExploreFunction.PerturbFactor = -.1
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "perturb_factor")
-		badConfig.RawExploreFunction.PerturbFactor = 1.1
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "perturb_factor")
-	}
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawReplaceFunction.TruncateFraction = -.1
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "truncate_fraction")
-		badConfig.RawReplaceFunction.TruncateFraction = .6
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "truncate_fraction")
-	}
-
-	{
-		badConfig := goodConfig()
-		badConfig.RawExploreFunction.ResampleProbability = -.1
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "resample_probability")
-		badConfig.RawExploreFunction.ResampleProbability = 1.1
-		assert.ErrorContains(t, validatePBTConfig(badConfig), "resample_probability")
 	}
 }
 
