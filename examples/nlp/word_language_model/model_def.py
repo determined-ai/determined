@@ -31,7 +31,7 @@ class WordLanguageModelTrial(PyTorchTrial):
         hparams = self.context.get_hparams()
         using_bind_mount = data_config["use_bind_mount"]
         use_cache = data_config["use_cache"]
-        self.eval_batch_size = data_config["eval_batch_size"]
+        self.eval_batch_size = hparams["eval_batch_size"]
 
         download_directory = (
             Path(data_config["bind_mount_path"]) if using_bind_mount else Path("/data")

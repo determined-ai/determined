@@ -1,6 +1,7 @@
 description: word_language_modeling_const
 hyperparameters:
     global_batch_size: 20
+    eval_batch_size: 10
     max_grad_norm: 0.25
     model_cls: Transformer
     # model_cls: LSTM
