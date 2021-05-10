@@ -2,6 +2,8 @@ import { Modal } from 'antd';
 import { Input, Select } from 'antd';
 import React, { } from 'react';
 
+import Link from './Link';
+
 const { Option } = Select;
 
 interface Props {
@@ -35,6 +37,7 @@ const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
   return <Modal title='Notebook Settings' visible={forceVisible}>
+    <Link><a href=''>Documentation</a></Link>
     <LabelledLine content={<Dropdown options={ [] } />} label='Notebook Template' />
     <LabelledLine content={<Input placeholder='Name' />} label='Name' />
     <LabelledLine content={<Dropdown options={ [] } />} label='Resource Pool' />
