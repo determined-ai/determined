@@ -5,6 +5,7 @@ import React, { } from 'react';
 import Link from './Link';
 
 const { Option } = Select;
+const { Item } = Form;
 
 interface Props {
   forceVisible?: boolean;
@@ -39,9 +40,9 @@ const NotebookModal: React.FC<Props> = (
   return <Modal title='Notebook Settings' visible={forceVisible}>
     <Link><a href=''>Documentation</a></Link>
     <Form labelAlign='left' labelCol={{ span:8 }}>
-      <Form.Item label='Notebook Template'><Dropdown options={[]} /></Form.Item>
-      <Form.Item label='Name'><Input placeholder='Name' /></Form.Item>
-      <Form.Item label='Resource Pool'><Dropdown options={[]} /></Form.Item>
+      <Item label='Notebook Template'><Dropdown options={[]} /></Item>
+      <Item label='Name'><Input placeholder='Name' /></Item>
+      <Item label='Resource Pool'><Dropdown options={[]} /></Item>
     </Form>
   </Modal>;
 };
