@@ -42,7 +42,8 @@ message Experiment {
         "state",
         "archived",
         "num_trials",
-        "username"
+        "username",
+        "searcher_type"
       ]
     }
   };
@@ -68,6 +69,8 @@ message Experiment {
   string username = 10;
   // The resource pool the experiment was created in
   string resource_pool = 11;
+  // The type of searcher for the experiment
+  string searcher_type = 12;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

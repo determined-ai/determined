@@ -18,7 +18,7 @@ func (e *ExperimentConfigV0) SetBindMounts(val BindMountsConfigV0) {
 
 func (e ExperimentConfigV0) CheckpointPolicy() string {
 	if e.RawCheckpointPolicy == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawCheckpointPolicy")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .CheckpointPolicy")
 	}
 	return *e.RawCheckpointPolicy
 }
@@ -29,7 +29,7 @@ func (e *ExperimentConfigV0) SetCheckpointPolicy(val string) {
 
 func (e ExperimentConfigV0) CheckpointStorage() CheckpointStorageConfigV0 {
 	if e.RawCheckpointStorage == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawCheckpointStorage")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .CheckpointStorage")
 	}
 	return *e.RawCheckpointStorage
 }
@@ -40,7 +40,7 @@ func (e *ExperimentConfigV0) SetCheckpointStorage(val CheckpointStorageConfigV0)
 
 func (e ExperimentConfigV0) DataLayer() DataLayerConfigV0 {
 	if e.RawDataLayer == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDataLayer")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .DataLayer")
 	}
 	return *e.RawDataLayer
 }
@@ -59,7 +59,7 @@ func (e *ExperimentConfigV0) SetData(val map[string]interface{}) {
 
 func (e ExperimentConfigV0) Debug() bool {
 	if e.RawDebug == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDebug")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Debug")
 	}
 	return *e.RawDebug
 }
@@ -70,7 +70,7 @@ func (e *ExperimentConfigV0) SetDebug(val bool) {
 
 func (e ExperimentConfigV0) Description() string {
 	if e.RawDescription == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawDescription")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Description")
 	}
 	return *e.RawDescription
 }
@@ -89,7 +89,7 @@ func (e *ExperimentConfigV0) SetEntrypoint(val *string) {
 
 func (e ExperimentConfigV0) Environment() EnvironmentConfigV0 {
 	if e.RawEnvironment == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawEnvironment")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Environment")
 	}
 	return *e.RawEnvironment
 }
@@ -124,7 +124,7 @@ func (e *ExperimentConfigV0) SetLabels(val LabelsV0) {
 
 func (e ExperimentConfigV0) MaxRestarts() int {
 	if e.RawMaxRestarts == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMaxRestarts")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .MaxRestarts")
 	}
 	return *e.RawMaxRestarts
 }
@@ -135,7 +135,7 @@ func (e *ExperimentConfigV0) SetMaxRestarts(val int) {
 
 func (e ExperimentConfigV0) MinCheckpointPeriod() LengthV0 {
 	if e.RawMinCheckpointPeriod == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMinCheckpointPeriod")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .MinCheckpointPeriod")
 	}
 	return *e.RawMinCheckpointPeriod
 }
@@ -146,7 +146,7 @@ func (e *ExperimentConfigV0) SetMinCheckpointPeriod(val LengthV0) {
 
 func (e ExperimentConfigV0) MinValidationPeriod() LengthV0 {
 	if e.RawMinValidationPeriod == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawMinValidationPeriod")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .MinValidationPeriod")
 	}
 	return *e.RawMinValidationPeriod
 }
@@ -157,7 +157,7 @@ func (e *ExperimentConfigV0) SetMinValidationPeriod(val LengthV0) {
 
 func (e ExperimentConfigV0) Optimizations() OptimizationsConfigV0 {
 	if e.RawOptimizations == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawOptimizations")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Optimizations")
 	}
 	return *e.RawOptimizations
 }
@@ -168,7 +168,7 @@ func (e *ExperimentConfigV0) SetOptimizations(val OptimizationsConfigV0) {
 
 func (e ExperimentConfigV0) PerformInitialValidation() bool {
 	if e.RawPerformInitialValidation == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawPerformInitialValidation")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .PerformInitialValidation")
 	}
 	return *e.RawPerformInitialValidation
 }
@@ -179,7 +179,7 @@ func (e *ExperimentConfigV0) SetPerformInitialValidation(val bool) {
 
 func (e ExperimentConfigV0) Profiling() ProfilingConfigV0 {
 	if e.RawProfiling == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawProfiling")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Profiling")
 	}
 	return *e.RawProfiling
 }
@@ -190,7 +190,7 @@ func (e *ExperimentConfigV0) SetProfiling(val ProfilingConfigV0) {
 
 func (e ExperimentConfigV0) RecordsPerEpoch() int {
 	if e.RawRecordsPerEpoch == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawRecordsPerEpoch")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .RecordsPerEpoch")
 	}
 	return *e.RawRecordsPerEpoch
 }
@@ -201,7 +201,7 @@ func (e *ExperimentConfigV0) SetRecordsPerEpoch(val int) {
 
 func (e ExperimentConfigV0) Reproducibility() ReproducibilityConfigV0 {
 	if e.RawReproducibility == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawReproducibility")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Reproducibility")
 	}
 	return *e.RawReproducibility
 }
@@ -212,7 +212,7 @@ func (e *ExperimentConfigV0) SetReproducibility(val ReproducibilityConfigV0) {
 
 func (e ExperimentConfigV0) Resources() ResourcesConfigV0 {
 	if e.RawResources == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawResources")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Resources")
 	}
 	return *e.RawResources
 }
@@ -223,7 +223,7 @@ func (e *ExperimentConfigV0) SetResources(val ResourcesConfigV0) {
 
 func (e ExperimentConfigV0) SchedulingUnit() int {
 	if e.RawSchedulingUnit == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawSchedulingUnit")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .SchedulingUnit")
 	}
 	return *e.RawSchedulingUnit
 }
@@ -234,7 +234,7 @@ func (e *ExperimentConfigV0) SetSchedulingUnit(val int) {
 
 func (e ExperimentConfigV0) Searcher() SearcherConfigV0 {
 	if e.RawSearcher == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .RawSearcher")
+		panic("You must call WithDefaults on ExperimentConfigV0 before .Searcher")
 	}
 	return *e.RawSearcher
 }

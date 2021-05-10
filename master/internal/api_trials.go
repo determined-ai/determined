@@ -3,11 +3,17 @@ package internal
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -546,16 +552,11 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 
 	id := uuid.New()
-	ret, err := a.askAtDefaultSystem(trial, trialWatchPreemption{id: id})
-	if err != nil {
+	var signal <-chan bool
+	if err := a.askAtDefaultSystem(trial, trialWatchPreemption{id: id}, &signal); err != nil {
 		return err
 	}
 	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
-
-	signal, ok := ret.(<-chan bool)
-	if !ok {
-		return unexpectedMessageError(trial, ret)
-	}
 
 	preempt := <-signal
 	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
@@ -573,22 +574,175 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 }
 
+func (a *apiServer) GetCurrentTrialSearcherOperation(
+	_ context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
+) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
+	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
+	if err != nil {
+		return nil, err
+	}
+
+	var resp searcher.ValidateAfter
+	if err := a.askAtDefaultSystem(exp, trialGetCurrentOperation{
+		trialID: int(req.TrialId),
+	}, &resp); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetCurrentTrialSearcherOperationResponse{
+		Op: &experimentv1.SearcherOperation{
+			Union: &experimentv1.SearcherOperation_ValidateAfter{
+				ValidateAfter: resp.ToProto(),
+			},
+		},
+	}, nil
+}
+
+func (a *apiServer) CompleteTrialSearcherValidation(
+	_ context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
+) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
+		return nil, err
+	}
+	exp := actor.Addr("experiments", eID)
+
+	// TODO(DET-5210): Sending a trial snapshot along forces an experiment snapshot,
+	// but with a nil snapshot it won't save the trial snapshot. At the end of push
+	// arch, we should just remove trial snapshots entirely (they should snapshotted
+	// but separately, not through/with experiments, since it's really just run id and restarts).
+	if err = a.askAtDefaultSystem(exp, trialCompleteOperation{
+		metric: req.CompletedOperation.SearcherMetric,
+		op:     searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
+		trialSnapshot: trialSnapshot{
+			trialID:   int(req.TrialId),
+			requestID: rID,
+		},
+	}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.CompleteTrialSearcherValidationResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialSearcherEarlyExit(
+	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
+) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
+		return nil, err
+	}
+	exp := actor.Addr("experiments", eID)
+
+	// TODO(DET-5210): Ditto comment in apiServer.ReportTrialSearcherValidation.
+	if err = a.askAtDefaultSystem(exp, trialReportEarlyExit{
+		reason: workload.ExitedReasonFromProto(req.EarlyExit.Reason),
+		trialSnapshot: trialSnapshot{
+			trialID:   int(req.TrialId),
+			requestID: rID,
+		},
+	}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialSearcherEarlyExitResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialProgress(
+	_ context.Context, req *apiv1.ReportTrialProgressRequest,
+) (*apiv1.ReportTrialProgressResponse, error) {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
+		return nil, err
+	}
+	exp := actor.Addr("experiments", eID)
+
+	if err = a.askAtDefaultSystem(exp, trialReportProgress{
+		requestID: rID,
+		progress:  model.PartialUnits(req.Progress),
+	}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialProgressResponse{}, nil
+}
+
+func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID)
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return actor.Address{}, trialNotFound
+	case err != nil:
+		return actor.Address{}, err
+	}
+	return actor.Addr("experiments", eID, rID), nil
+}
+
+func (a *apiServer) experimentActorFromTrialID(trialID int) (actor.Address, error) {
+	eID, _, err := a.m.db.TrialExperimentAndRequestID(trialID)
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return actor.Address{}, trialNotFound
+	case err != nil:
+		return actor.Address{}, err
+	}
+	return actor.Addr("experiments", eID), nil
+}
+
+// askAtDefaultSystem asks addr the req and puts the response into what v points at.
 func (a *apiServer) askAtDefaultSystem(
-	addr actor.Address, msg interface{},
-) (interface{}, error) {
-	switch resp := a.m.system.AskAt(addr, msg); {
-	case resp.Source() == nil, resp.Empty(), resp.Get() == nil:
-		return nil, status.Errorf(
+	addr actor.Address, req interface{}, v interface{},
+) error {
+	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
+		return status.Errorf(
+			codes.Internal,
+			`ask to actor %s contains valid but unsettable response holder %T`, addr, v,
+		)
+	}
+	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
+	switch resp := a.m.system.AskAt(addr, req); {
+	case resp.Source() == nil:
+		return status.Errorf(
 			codes.NotFound,
-			"actor %s could not be found or the actor did not respond", addr,
+			"actor %s could not be found", addr,
+		)
+	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
+		return status.Errorf(
+			codes.NotFound,
+			"actor %s did not respond", addr,
 		)
 	case resp.Error() != nil:
-		return nil, status.Errorf(
-			codes.Internal,
-			"actor %s returned error resp %s", addr, resp.Error(),
-		)
+		switch {
+		case errors.Is(resp.Error(), api.ErrBadRequest):
+			return status.Errorf(
+				codes.InvalidArgument,
+				resp.Error().Error(),
+			)
+		case errors.Is(resp.Error(), api.ErrNotFound):
+			return status.Errorf(
+				codes.NotFound,
+				resp.Error().Error(),
+			)
+		default:
+			return status.Errorf(
+				codes.Internal,
+				"actor %s returned error: %s", addr, resp.Error(),
+			)
+		}
 	default:
-		return resp.Get(), nil
+		if expectingResponse {
+			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
+				return unexpectedMessageError(addr, resp)
+			}
+			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
+		}
+		return nil
 	}
 }
 
@@ -597,17 +751,6 @@ func unexpectedMessageError(addr actor.Address, resp interface{}) error {
 		codes.Internal,
 		"actor %s returned unexpected message (%T): %v", addr, resp, resp,
 	)
-}
-
-func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
-	switch eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID); {
-	case errors.Is(err, db.ErrNotFound):
-		return actor.Address{}, trialNotFound
-	case err != nil:
-		return actor.Address{}, err
-	default:
-		return actor.Addr("experiments", eID, rID), nil
-	}
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

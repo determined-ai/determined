@@ -3,7 +3,7 @@ docutils==0.15.2
 
 pillow
 pytorch-lightning==1.2.0
-rstfmt==0.0.7
+rstfmt==0.0.9
 sphinx-argparse>=0.2.5
 sphinx-copybutton
 sphinx-sitemap>=2.2.0

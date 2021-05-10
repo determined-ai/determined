@@ -309,8 +309,7 @@ export interface Checkpoint extends StartEndTimes {
 }
 
 export interface Workload extends StartEndTimes {
-  numBatches: number;
-  priorBatchesProcessed: number;
+  totalBatches: number;
 }
 
 export interface CheckpointWorkload extends Workload {
@@ -455,9 +454,11 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
 export type TaskType = CommandType | 'Experiment';
 
+export type ArchiveFilters = typeof ALL_VALUE | 'archived' | 'unarchived'
+
 export interface ExperimentFilters {
   labels?: string[];
-  showArchived: boolean;
+  showArchived: ArchiveFilters;
   states: string[];
   username?: string;
 }

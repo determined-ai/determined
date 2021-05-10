@@ -313,10 +313,9 @@ const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorklo
   return {
     endTime: data.endTime as unknown as string,
     metrics: data.metrics ? filterNonScalarMetrics(data.metrics) : undefined,
-    numBatches: data.numBatches,
-    priorBatchesProcessed: data.priorBatchesProcessed,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
+    totalBatches: data.totalBatches,
   };
 };
 
@@ -329,11 +328,10 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
 
   return {
     endTime: data.endTime as unknown as string,
-    numBatches: data.numBatches,
-    priorBatchesProcessed: data.priorBatchesProcessed,
     resources,
     startTime:data.startTime as unknown as string,
     state: decodeCheckpointState(data.state),
+    totalBatches: data.totalBatches,
     uuid: data.uuid,
   };
 };

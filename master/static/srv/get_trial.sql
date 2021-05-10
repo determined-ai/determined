@@ -17,8 +17,7 @@ FROM
                 s.state,
                 s.start_time,
                 s.end_time,
-                s.num_batches,
-                s.prior_batches_processed,
+                s.total_batches,
 
            (SELECT row_to_json(r3)
             FROM

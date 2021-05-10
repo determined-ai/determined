@@ -217,7 +217,7 @@ FROM (
                         FROM steps s
                         WHERE s.trial_id = t.id
                        ) AS num_steps,
-                       (SELECT coalesce(sum(s.num_batches), 0)
+                       (SELECT coalesce(max(s.total_batches), 0)
                         FROM steps s
                         WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
                        ) AS total_batches_processed,
@@ -339,8 +339,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
-                     s.prior_batches_processed,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.total_batches,
                      -- Drop batch_metrics field from metrics column because it
                      -- can be very large and compute average on the fly for legacy
                      -- metrics.
@@ -463,7 +462,7 @@ FROM (
                            (SELECT row_to_json(s)
                             FROM (
                                 SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                                    s.num_batches, s.prior_batches_processed,
+                                    s.total_batches,
                                     (SELECT row_to_json(v)
                                     FROM (
                                         SELECT v.end_time, v.id, v.metrics, v.start_time,
@@ -557,8 +556,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
-                     s.prior_batches_processed, s.total_batches,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,  s.total_batches,
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
@@ -676,9 +674,9 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id)
+        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
@@ -1113,7 +1111,7 @@ WITH const AS (
                    (SELECT row_to_json(s)
                     FROM (
                         SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                            s.num_batches, s.prior_batches_processed,
+                            s.total_batches,
                             (SELECT row_to_json(v)
                             FROM (
                                 SELECT v.end_time, v.id, v.metrics, v.start_time,
@@ -1323,14 +1321,13 @@ SELECT row_to_json(r1)::text
 FROM (
     SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
            t.warm_start_checkpoint_id,
-           (SELECT coalesce(sum(s.num_batches), 0)
+           (SELECT coalesce(max(s.total_batches), 0)
             FROM steps s
             WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
            ) AS total_batches_processed,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
-                SELECT s.end_time, s.id, s.state, s.start_time, s.num_batches,
-                       s.prior_batches_processed,
+                SELECT s.end_time, s.id, s.state, s.start_time, s.total_batches,
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
@@ -1383,10 +1380,9 @@ func (db *PgDB) AddStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+	(trial_id, id, total_batches, state, start_time, end_time)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time
 )`, step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
@@ -1409,10 +1405,9 @@ func (db *PgDB) AddNoOpStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+	(trial_id, id, total_batches, state, start_time, end_time)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time
 )`,
 		step)
 	if err != nil {
@@ -1427,8 +1422,7 @@ func (db *PgDB) StepByTotalBatches(trialID, totalBatches int) (*model.Step, erro
 	var step model.Step
 	if err := db.query(`
 SELECT 
-	trial_id, id, total_batches, state, start_time, end_time, metrics, 
-	num_batches, prior_batches_processed
+	trial_id, id, total_batches, state, start_time, end_time, metrics
 FROM steps
 WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {
 		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, totalBatches)

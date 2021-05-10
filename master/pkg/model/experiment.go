@@ -186,9 +186,10 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID     int              `db:"id"`
-	State  State            `db:"state"`
-	Config ExperimentConfig `db:"config"`
+	ID             int              `db:"id"`
+	State          State            `db:"state"`
+	Config         ExperimentConfig `db:"config"`
+	OriginalConfig string           `db:"original_config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -214,6 +215,7 @@ type ExperimentDescriptor struct {
 // that the experiment ID will not be set.
 func NewExperiment(
 	config ExperimentConfig,
+	originalConfig string,
 	modelDefinitionBytes []byte,
 	parentID *int,
 	archived bool,
@@ -231,6 +233,7 @@ func NewExperiment(
 	return &Experiment{
 		State:                PausedState,
 		Config:               config,
+		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),
 		ParentID:             parentID,
@@ -294,27 +297,23 @@ func NewTrial(
 
 // Step represents a row from the `steps` table.
 type Step struct {
-	TrialID               int        `db:"trial_id"`
-	ID                    int        `db:"id"`
-	TotalBatches          int        `db:"total_batches"`
-	State                 State      `db:"state"`
-	StartTime             time.Time  `db:"start_time"`
-	EndTime               *time.Time `db:"end_time"`
-	NumBatches            int        `db:"num_batches"`
-	PriorBatchesProcessed int        `db:"prior_batches_processed"`
-	Metrics               JSONObj    `db:"metrics"`
+	TrialID      int        `db:"trial_id"`
+	ID           int        `db:"id"`
+	TotalBatches int        `db:"total_batches"`
+	State        State      `db:"state"`
+	StartTime    time.Time  `db:"start_time"`
+	EndTime      *time.Time `db:"end_time"`
+	Metrics      JSONObj    `db:"metrics"`
 }
 
 // NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
+func NewStep(trialID, stepID, totalBatches int) *Step {
 	return &Step{
-		TrialID:               trialID,
-		ID:                    stepID,
-		TotalBatches:          numBatches + priorBatchesProcessed,
-		State:                 ActiveState,
-		StartTime:             time.Now().UTC(),
-		NumBatches:            numBatches,
-		PriorBatchesProcessed: priorBatchesProcessed,
+		TrialID:      trialID,
+		ID:           stepID,
+		TotalBatches: totalBatches,
+		State:        ActiveState,
+		StartTime:    time.Now().UTC(),
 	}
 }
 
@@ -322,13 +321,11 @@ func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
 func NewNoOpStep(trialID, stepID int) *Step {
 	now := time.Now().UTC()
 	return &Step{
-		TrialID:               trialID,
-		ID:                    stepID,
-		State:                 CompletedState,
-		StartTime:             now,
-		EndTime:               &now,
-		NumBatches:            0,
-		PriorBatchesProcessed: 0,
+		TrialID:   trialID,
+		ID:        stepID,
+		State:     CompletedState,
+		StartTime: now,
+		EndTime:   &now,
 	}
 }
 

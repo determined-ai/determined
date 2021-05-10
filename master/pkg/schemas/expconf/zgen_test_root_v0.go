@@ -18,7 +18,7 @@ func (t *TestRootV0) SetValX(val int) {
 
 func (t TestRootV0) SubObj() TestSubV0 {
 	if t.RawSubObj == nil {
-		panic("You must call WithDefaults on TestRootV0 before .RawSubObj")
+		panic("You must call WithDefaults on TestRootV0 before .SubObj")
 	}
 	return *t.RawSubObj
 }

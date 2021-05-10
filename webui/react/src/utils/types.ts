@@ -281,11 +281,11 @@ export const getMetricValue = (workload?: Workload, metricName?: string): number
 };
 
 export const getBatchNumber = (
-  data: {batch: number} | {numBatches: number, priorBatchesProcessed: number},
+  data: {batch: number} | {totalBatches: number},
 ): number => {
   if ('batch' in data) {
     return data.batch;
   } else {
-    return data.numBatches + data.priorBatchesProcessed;
+    return data.totalBatches;
   }
 };

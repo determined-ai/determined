@@ -115,14 +115,14 @@ class ProfilingConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/profiling.json"
     enabled: Optional[bool] = None
     begin_on_batch: Optional[int] = None
-    end_on_batch: Optional[int] = None
+    end_after_batch: Optional[int] = None
 
     @schemas.auto_init
     def __init__(
         self,
         enabled: Optional[bool] = None,
         begin_on_batch: Optional[int] = None,
-        end_on_batch: Optional[int] = None,
+        end_after_batch: Optional[int] = None,
     ) -> None:
         pass
 

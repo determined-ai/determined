@@ -50,7 +50,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
     return {
       ...cp,
-      batch: cp.numBatches + cp.priorBatchesProcessed,
+      batch: cp.totalBatches,
       experimentId: trial.experimentId,
       trialId: trial.id,
     };

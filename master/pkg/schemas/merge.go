@@ -28,7 +28,7 @@ type Mergable interface {
 //    // Use the cluster checkpoint storage if the user did not specify one.
 //    config.RawCheckpointStorage = schemas.Merge(
 //        config.RawCheckpointStorage, &cluster_default_storage
-//    ).(CheckpointStorageConfig)
+//    ).(*CheckpointStorageConfig)
 //
 func Merge(obj interface{}, src interface{}) interface{} {
 	name := fmt.Sprintf("%T", obj)

@@ -509,6 +509,53 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Get the current searcher operation.
+  rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
+      returns (GetCurrentTrialSearcherOperationResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/searcher/operation"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Reports to the searcher that the trial has completed the given searcher
+  // operation.
+  rpc CompleteTrialSearcherValidation(CompleteTrialSearcherValidationRequest)
+      returns (CompleteTrialSearcherValidationResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/searcher/completed_operation"
+      body: "completed_operation"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Reports to the searcher that the trial has completed the current
+  // requested amount of training with the given searcher validation
+  // metric.
+  rpc ReportTrialSearcherEarlyExit(ReportTrialSearcherEarlyExitRequest)
+      returns (ReportTrialSearcherEarlyExitResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/early_exit"
+      body: "early_exit"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // For bookkeeping, updates the progress towards to current requested searcher
+  // training length.
+  rpc ReportTrialProgress(ReportTrialProgressRequest)
+      returns (ReportTrialProgressResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/progress"
+      body: "progress"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {

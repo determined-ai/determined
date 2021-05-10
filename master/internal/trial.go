@@ -312,7 +312,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case trialWatchPreemption:
 		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
 		w := make(chan bool, 2)
-		if t.PendingGracefulTermination {
+		if t.PendingGracefulTermination || t.experimentState != model.ActiveState {
 			w <- true
 			close(w)
 			ctx.Respond((<-chan bool)(w))
@@ -711,13 +711,21 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 			validationMetrics: *msg.ValidationMetrics,
 		}).Get().(bool)
 	}
-	reportValidation, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
+	op, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
 	switch {
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	case reportValidation:
+	case op != nil:
+		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher.Metric)
+		if err != nil {
+			return err
+		}
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}
+			return trialCompleteOperation{
+				op:            *op,
+				metric:        m,
+				trialSnapshot: s,
+			}
 		}); err != nil {
 			return errors.Wrap(err, "failed to report validation with snapshot")
 		}

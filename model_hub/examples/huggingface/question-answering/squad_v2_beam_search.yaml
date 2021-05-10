@@ -1,0 +1,50 @@
+description: huggingface_squad_v2_with_beam_search
+hyperparameters:
+  pretrained_model_name_or_path: xlnet-large-cased
+  model_mode: question-answering
+  use_pretrained_weights: true
+  use_apex_amp: false
+  cache_dir: null
+  # Training Args
+  global_batch_size: 4
+  learning_rate: 3e-5
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  lr_scheduler_type: linear
+  num_warmup_steps: 0
+data:
+  dataset_name: squad_v2
+  train_file: null
+  validation_file: null
+  overwrite_cache: false
+  preprocessing_num_workers: null
+  max_seq_length: 384
+  pad_to_max_length: true
+  version_2_with_negative: true
+  null_score_diff_threshold: 0
+  doc_stride: 128
+  n_best_size: 20
+  max_answer_length: 30
+  output_dir: /tmp
+# Number of records per epoch differs based on max_seq_length.
+records_per_epoch: 132240
+min_validation_period:
+  batches: 5000
+searcher:
+  name: single
+  metric: f1
+  max_length:
+    epochs: 4
+  smaller_is_better: false
+environment:
+  image: determinedai/model-hub-transformers:0.15.3.dev0
+resources:
+  slots_per_trial: 1
+# We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
+# host_path on the agent instance disk for reuse if the same experiment is run on this instance.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /root/.cache
+  - host_path: /tmp
+    container_path: /tmp
+entrypoint: qa_beam_search_trial:QABeamSearchTrial
