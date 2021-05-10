@@ -55,18 +55,5 @@ const Dropdown: React.FC<DropdownProps> = ({ options }: DropdownProps) => {
     {options.map(option => <Option key={option} value={option}>{option}</Option>)}
   </Select> : null;
 };
-/*
-interface LabelledLineProps {
-  content?: JSX.Element;
-  label: string;
-}
-
-const LabelledLine: React.FC<LabelledLineProps> = ({ content, label }: LabelledLineProps) => {
-  return content ?
-    <div style={{ alignItems: 'center', display:'flex', justifyContent:'space-between' }}>
-      <label style={{ color: 'dimgray' }}>{label}</label>
-      <div style={{ maxWidth:'50%' }}>{content}</div>
-    </div> : null;
-}; */
 
 export default NotebookModal;
