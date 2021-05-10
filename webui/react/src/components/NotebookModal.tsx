@@ -34,8 +34,7 @@ Secondary button with a back arrow.
 const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
-  return <Modal visible={forceVisible}>
-    <p>test</p>
+  return <Modal title='Notebook Settings' visible={forceVisible}>
     <LabelledLine content={<NotebookTemplates />} label='Notebook Template' />
     <LabelledLine content={<Input placeholder='Name' />} label='Name' />
   </Modal>;
