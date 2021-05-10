@@ -164,3 +164,54 @@ func (a *apiServer) actorRequest(addr string, req actor.Message, v interface{}) 
 	reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
 	return nil
 }
+
+// askAtDefaultSystem asks addr the req and puts the response into what v points at.
+func (a *apiServer) askAtDefaultSystem(
+	addr actor.Address, req interface{}, v interface{},
+) error {
+	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
+		return status.Errorf(
+			codes.Internal,
+			`ask to actor %s contains valid but unsettable response holder %T`, addr, v,
+		)
+	}
+	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
+	switch resp := a.m.system.AskAt(addr, req); {
+	case resp.Source() == nil:
+		return status.Errorf(
+			codes.NotFound,
+			"actor %s could not be found", addr,
+		)
+	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
+		return status.Errorf(
+			codes.NotFound,
+			"actor %s did not respond", addr,
+		)
+	case resp.Error() != nil:
+		switch {
+		case errors.Is(resp.Error(), api.ErrBadRequest):
+			return status.Errorf(
+				codes.InvalidArgument,
+				resp.Error().Error(),
+			)
+		case errors.Is(resp.Error(), api.ErrNotFound):
+			return status.Errorf(
+				codes.NotFound,
+				resp.Error().Error(),
+			)
+		default:
+			return status.Errorf(
+				codes.Internal,
+				"actor %s returned error: %s", addr, resp.Error(),
+			)
+		}
+	default:
+		if expectingResponse {
+			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
+				return unexpectedMessageError(addr, resp)
+			}
+			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
+		}
+		return nil
+	}
+}

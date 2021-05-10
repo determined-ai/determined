@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -673,6 +672,42 @@ func (a *apiServer) ReportTrialProgress(
 	return &apiv1.ReportTrialProgressResponse{}, nil
 }
 
+func (a *apiServer) ReportTrialTrainingMetrics(
+	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
+) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
+	if err := a.checkTrialExists(int(req.TrainingMetrics.TrialId)); err != nil {
+		return nil, err
+	}
+	if err := a.m.db.AddTrainingMetrics(ctx, req.TrainingMetrics); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialTrainingMetricsResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialValidationMetrics(
+	ctx context.Context, req *apiv1.ReportTrialValidationMetricsRequest,
+) (*apiv1.ReportTrialValidationMetricsResponse, error) {
+	if err := a.checkTrialExists(int(req.ValidationMetrics.TrialId)); err != nil {
+		return nil, err
+	}
+	if err := a.m.db.AddValidationMetrics(ctx, req.ValidationMetrics); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
+}
+
+func (a *apiServer) ReportTrialCheckpointMetadata(
+	ctx context.Context, req *apiv1.ReportTrialCheckpointMetadataRequest,
+) (*apiv1.ReportTrialCheckpointMetadataResponse, error) {
+	if err := a.checkTrialExists(int(req.CheckpointMetadata.TrialId)); err != nil {
+		return nil, err
+	}
+	if err := a.m.db.AddCheckpointMetadata(ctx, req.CheckpointMetadata); err != nil {
+		return nil, err
+	}
+	return &apiv1.ReportTrialCheckpointMetadataResponse{}, nil
+}
+
 func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID)
 	switch {
@@ -695,53 +730,14 @@ func (a *apiServer) experimentActorFromTrialID(trialID int) (actor.Address, erro
 	return actor.Addr("experiments", eID), nil
 }
 
-// askAtDefaultSystem asks addr the req and puts the response into what v points at.
-func (a *apiServer) askAtDefaultSystem(
-	addr actor.Address, req interface{}, v interface{},
-) error {
-	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
-		return status.Errorf(
-			codes.Internal,
-			`ask to actor %s contains valid but unsettable response holder %T`, addr, v,
-		)
-	}
-	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
-	switch resp := a.m.system.AskAt(addr, req); {
-	case resp.Source() == nil:
-		return status.Errorf(
-			codes.NotFound,
-			"actor %s could not be found", addr,
-		)
-	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
-		return status.Errorf(
-			codes.NotFound,
-			"actor %s did not respond", addr,
-		)
-	case resp.Error() != nil:
-		switch {
-		case errors.Is(resp.Error(), api.ErrBadRequest):
-			return status.Errorf(
-				codes.InvalidArgument,
-				resp.Error().Error(),
-			)
-		case errors.Is(resp.Error(), api.ErrNotFound):
-			return status.Errorf(
-				codes.NotFound,
-				resp.Error().Error(),
-			)
-		default:
-			return status.Errorf(
-				codes.Internal,
-				"actor %s returned error: %s", addr, resp.Error(),
-			)
-		}
+func (a *apiServer) checkTrialExists(id int) error {
+	ok, err := a.m.db.CheckTrialExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "trial %d not found", id)
 	default:
-		if expectingResponse {
-			if reflect.ValueOf(v).Elem().Type() != reflect.ValueOf(resp.Get()).Type() {
-				return unexpectedMessageError(addr, resp)
-			}
-			reflect.ValueOf(v).Elem().Set(reflect.ValueOf(resp.Get()))
-		}
 		return nil
 	}
 }
