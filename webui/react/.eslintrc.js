@@ -120,7 +120,6 @@ module.exports = {
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
-    'jest': { version: 'detect' },
     'react': { version: 'detect' },
   },
 };
