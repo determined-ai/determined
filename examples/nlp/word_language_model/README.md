@@ -35,10 +35,8 @@ To specify which model to use, replace the `model_cls` attribute in the appropri
 * `RNN`
 
 ## Results
-Graphs TBD
-<!-- Note: The purpose of these graphs is to show a Unets model running in Determined 
+Note: The purpose of this table is to show the word language modeling models running in Determined 
 for a set number of epochs, demonstrating the acceleration of model training time 
 achieved with Determined’s distributed training.
 
-![Single GPU vs. Distributed Training with Determined AI](Cumulative_Batches.png)
-![Single GPU vs. Distributed Training Validation Accuracy](Validation_Accuracy.png) -->
+![Single GPU vs. Distributed Training with Determined AI](validation_loss_table.png)
