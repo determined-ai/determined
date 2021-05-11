@@ -72,7 +72,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const handleShowHParams = useCallback(() => setShowHParams(true), []);
   const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
-  const workloadStatus: string = Object.entries(trial.workloads.last()).find(e => !!e[1])?.first();
+  const workloadStatus: string = Object.entries(trial.workloads.last()).find(e => !!e[1])?.first() || '';
 
   const infoRows = [
     {
