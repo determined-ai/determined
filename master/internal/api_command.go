@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -47,14 +49,14 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 	if req.Config != nil {
 		configBytes, err := protojson.Marshal(req.Config)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrapf(err, "failed to parse config: %s", configBytes)
 		}
 		cmdParams.ConfigBytes = configBytes
 	}
 	if len(req.Data) != 0 {
 		var data map[string]interface{}
 		if err := json.Unmarshal(req.Data, &data); err != nil {
-			return nil, nil, err
+			return nil, nil, errors.Wrapf(err, "failed to parse data: %s", req.Data)
 		}
 		cmdParams.Data = data
 	}

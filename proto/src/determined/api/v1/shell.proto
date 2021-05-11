@@ -31,6 +31,8 @@ message GetShellsRequest {
   int32 offset = 3;
   // Limit the number of shells. A value of 0 denotes no limit.
   int32 limit = 4;
+  // Limit shells to those that are owned by the specified users.
+  repeated string users = 5;
 }
 // Response to GetShellsRequest.
 message GetShellsResponse {
@@ -79,4 +81,6 @@ message LaunchShellRequest {
 message LaunchShellResponse {
   // The requested shell.
   determined.shell.v1.Shell shell = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

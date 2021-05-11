@@ -3,10 +3,8 @@ package command
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
 
 	"github.com/ghodss/yaml"
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -33,10 +31,6 @@ type CommandParams struct {
 	Template    *string                `json:"template"`
 	UserFiles   archive.Archive        `json:"user_files"`
 	Data        map[string]interface{} `json:"data"`
-}
-
-func respondBadRequest(ctx *actor.Context, err error) {
-	ctx.Respond(echo.NewHTTPError(http.StatusBadRequest, err.Error()))
 }
 
 // parseCommandRequest parses an API request from the following components:

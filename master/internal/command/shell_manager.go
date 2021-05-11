@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -54,8 +53,14 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
+		users := make(map[string]bool)
+		for _, user := range msg.Users {
+			users[user] = true
+		}
 		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
-			resp.Shells = append(resp.Shells, shell.(*shellv1.Shell))
+			if typed := shell.(*shellv1.Shell); len(users) == 0 || users[typed.Username] {
+				resp.Shells = append(resp.Shells, typed)
+			}
 		}
 		ctx.Respond(resp)
 
@@ -66,9 +71,6 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		ctx.Respond(summary.ID)
-
-	case echo.Context:
-		s.handleAPIRequest(ctx, msg)
 	}
 	return nil
 }
@@ -114,37 +116,6 @@ func (s *shellManager) processLaunchRequest(
 	summary := summaryFut.Get().(summary)
 	ctx.Log().Infof("created shell %s", a.Address().Local())
 	return &summary, http.StatusOK, err
-}
-
-func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		req := ShellLaunchRequest{
-			User:          &user,
-			CommandParams: &params,
-		}
-		summary, statusCode, err := s.processLaunchRequest(ctx, req)
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
 }
 
 func (s *shellManager) newShell(
