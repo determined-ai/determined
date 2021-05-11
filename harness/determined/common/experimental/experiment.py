@@ -5,7 +5,7 @@ from determined.common import api
 from determined.common.experimental import checkpoint
 from determined.swagger.client.api.experiments_api import ExperimentsApi
 from determined.swagger.client.models.determinedexperimentv1_state import (
-    Determinedexperimentv1State as ExperimentState,
+    Determinedexperimentv1State,
 )
 
 
@@ -19,10 +19,6 @@ class ExperimentReference:
         master (string, optional): The URL of the Determined master. If this
             class is obtained via :class:`~determined.experimental.Determined`, the
             master URL is automatically passed into this constructor.
-        api_ref (ExperimentsApi, optional): The API-entry point is automatically
-            passed into this constructor.
-        config (dict, optional): When an experiment is created, the context is passed
-            from :class:`~determined.experimental.Determined`.
     """
 
     def __init__(
@@ -38,45 +34,24 @@ class ExperimentReference:
         self.config = config
 
     def activate(self) -> None:
-        """
-        Activate the experiment.
-        """
         self._experiments.determined_activate_experiment(id=self.id)
 
     def archive(self) -> None:
-        """
-        Archive the experiment.
-        """
         self._experiments.determined_archive_experiment(id=self.id)
 
     def cancel(self) -> None:
-        """
-        Cancel the experiment.
-        """
         self._experiments.determined_cancel_experiment(id=self.id)
 
     def delete(self) -> None:
-        """
-        Delete the experiment.
-        """
         self._experiments.determined_delete_experiment(id=self.id)
 
     def kill(self) -> None:
-        """
-        Kill the experiment.
-        """
         self._experiments.determined_kill_experiment(id=self.id)
 
     def pause(self) -> None:
-        """
-        Pause the experiment.
-        """
         self._experiments.determined_pause_experiment(id=self.id)
 
     def unarchive(self) -> None:
-        """
-        Unarchive the experiment.
-        """
         self._experiments.determined_unarchive_experiment(id=self.id)
 
     def wait_till_complete(self, sleep_interval: int = 5) -> None:
@@ -89,15 +64,15 @@ class ExperimentReference:
         """
         while True:
             exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
-            if (
-                exp_resp.experiment.state == ExperimentState.COMPLETED
-                or exp_resp.experiment.state == ExperimentState.CANCELED
-                or exp_resp.experiment.state == ExperimentState.DELETED
-                or exp_resp.experiment.state == ExperimentState.ERROR
+            if exp_resp.experiment.state in (
+                Determinedexperimentv1State.COMPLETED,
+                Determinedexperimentv1State.CANCELED,
+                Determinedexperimentv1State.DELETED,
+                Determinedexperimentv1State.ERROR,
             ):
                 print("Experiment {} is in a terminal state".format(self.id))
                 break
-            elif exp_resp.experiment.state == ExperimentState.PAUSED:
+            elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
                 raise ValueError("Experiment {} is in paused state".format(self.id))
             else:
                 # ACTIVE, STOPPING_COMPLETED, etc.

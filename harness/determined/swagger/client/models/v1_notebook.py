@@ -38,7 +38,8 @@ class V1Notebook(object):
         'container': 'V1Container',
         'username': 'str',
         'service_address': 'str',
-        'resource_pool': 'str'
+        'resource_pool': 'str',
+        'exit_status': 'str'
     }
 
     attribute_map = {
@@ -49,10 +50,11 @@ class V1Notebook(object):
         'container': 'container',
         'username': 'username',
         'service_address': 'serviceAddress',
-        'resource_pool': 'resourcePool'
+        'resource_pool': 'resourcePool',
+        'exit_status': 'exitStatus'
     }
 
-    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, username=None, service_address=None, resource_pool=None):  # noqa: E501
+    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, username=None, service_address=None, resource_pool=None, exit_status=None):  # noqa: E501
         """V1Notebook - a model defined in Swagger"""  # noqa: E501
 
         self._id = None
@@ -63,6 +65,7 @@ class V1Notebook(object):
         self._username = None
         self._service_address = None
         self._resource_pool = None
+        self._exit_status = None
         self.discriminator = None
 
         self.id = id
@@ -75,6 +78,8 @@ class V1Notebook(object):
         if service_address is not None:
             self.service_address = service_address
         self.resource_pool = resource_pool
+        if exit_status is not None:
+            self.exit_status = exit_status
 
     @property
     def id(self):
@@ -269,6 +274,27 @@ class V1Notebook(object):
             raise ValueError("Invalid value for `resource_pool`, must not be `None`")  # noqa: E501
 
         self._resource_pool = resource_pool
+
+    @property
+    def exit_status(self):
+        """Gets the exit_status of this V1Notebook.  # noqa: E501
+
+
+        :return: The exit_status of this V1Notebook.  # noqa: E501
+        :rtype: str
+        """
+        return self._exit_status
+
+    @exit_status.setter
+    def exit_status(self, exit_status):
+        """Sets the exit_status of this V1Notebook.
+
+
+        :param exit_status: The exit_status of this V1Notebook.  # noqa: E501
+        :type: str
+        """
+
+        self._exit_status = exit_status
 
     def to_dict(self):
         """Returns the model properties as a dict"""

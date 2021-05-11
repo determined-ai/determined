@@ -37,7 +37,8 @@ class V1Command(object):
         'start_time': 'datetime',
         'container': 'V1Container',
         'username': 'str',
-        'resource_pool': 'str'
+        'resource_pool': 'str',
+        'exit_status': 'str'
     }
 
     attribute_map = {
@@ -47,10 +48,11 @@ class V1Command(object):
         'start_time': 'startTime',
         'container': 'container',
         'username': 'username',
-        'resource_pool': 'resourcePool'
+        'resource_pool': 'resourcePool',
+        'exit_status': 'exitStatus'
     }
 
-    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, username=None, resource_pool=None):  # noqa: E501
+    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, username=None, resource_pool=None, exit_status=None):  # noqa: E501
         """V1Command - a model defined in Swagger"""  # noqa: E501
 
         self._id = None
@@ -60,6 +62,7 @@ class V1Command(object):
         self._container = None
         self._username = None
         self._resource_pool = None
+        self._exit_status = None
         self.discriminator = None
 
         self.id = id
@@ -70,6 +73,8 @@ class V1Command(object):
             self.container = container
         self.username = username
         self.resource_pool = resource_pool
+        if exit_status is not None:
+            self.exit_status = exit_status
 
     @property
     def id(self):
@@ -241,6 +246,27 @@ class V1Command(object):
             raise ValueError("Invalid value for `resource_pool`, must not be `None`")  # noqa: E501
 
         self._resource_pool = resource_pool
+
+    @property
+    def exit_status(self):
+        """Gets the exit_status of this V1Command.  # noqa: E501
+
+
+        :return: The exit_status of this V1Command.  # noqa: E501
+        :rtype: str
+        """
+        return self._exit_status
+
+    @exit_status.setter
+    def exit_status(self, exit_status):
+        """Sets the exit_status of this V1Command.
+
+
+        :param exit_status: The exit_status of this V1Command.  # noqa: E501
+        :type: str
+        """
+
+        self._exit_status = exit_status
 
     def to_dict(self):
         """Returns the model properties as a dict"""

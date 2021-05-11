@@ -31,21 +31,26 @@ class V1LaunchShellResponse(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'shell': 'V1Shell'
+        'shell': 'V1Shell',
+        'config': 'object'
     }
 
     attribute_map = {
-        'shell': 'shell'
+        'shell': 'shell',
+        'config': 'config'
     }
 
-    def __init__(self, shell=None):  # noqa: E501
+    def __init__(self, shell=None, config=None):  # noqa: E501
         """V1LaunchShellResponse - a model defined in Swagger"""  # noqa: E501
 
         self._shell = None
+        self._config = None
         self.discriminator = None
 
         if shell is not None:
             self.shell = shell
+        if config is not None:
+            self.config = config
 
     @property
     def shell(self):
@@ -69,6 +74,27 @@ class V1LaunchShellResponse(object):
         """
 
         self._shell = shell
+
+    @property
+    def config(self):
+        """Gets the config of this V1LaunchShellResponse.  # noqa: E501
+
+
+        :return: The config of this V1LaunchShellResponse.  # noqa: E501
+        :rtype: object
+        """
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        """Sets the config of this V1LaunchShellResponse.
+
+
+        :param config: The config of this V1LaunchShellResponse.  # noqa: E501
+        :type: object
+        """
+
+        self._config = config
 
     def to_dict(self):
         """Returns the model properties as a dict"""

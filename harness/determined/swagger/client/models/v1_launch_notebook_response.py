@@ -31,20 +31,25 @@ class V1LaunchNotebookResponse(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'notebook': 'V1Notebook'
+        'notebook': 'V1Notebook',
+        'config': 'object'
     }
 
     attribute_map = {
-        'notebook': 'notebook'
+        'notebook': 'notebook',
+        'config': 'config'
     }
 
-    def __init__(self, notebook=None):  # noqa: E501
+    def __init__(self, notebook=None, config=None):  # noqa: E501
         """V1LaunchNotebookResponse - a model defined in Swagger"""  # noqa: E501
 
         self._notebook = None
+        self._config = None
         self.discriminator = None
 
         self.notebook = notebook
+        if config is not None:
+            self.config = config
 
     @property
     def notebook(self):
@@ -70,6 +75,27 @@ class V1LaunchNotebookResponse(object):
             raise ValueError("Invalid value for `notebook`, must not be `None`")  # noqa: E501
 
         self._notebook = notebook
+
+    @property
+    def config(self):
+        """Gets the config of this V1LaunchNotebookResponse.  # noqa: E501
+
+
+        :return: The config of this V1LaunchNotebookResponse.  # noqa: E501
+        :rtype: object
+        """
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        """Sets the config of this V1LaunchNotebookResponse.
+
+
+        :param config: The config of this V1LaunchNotebookResponse.  # noqa: E501
+        :type: object
+        """
+
+        self._config = config
 
     def to_dict(self):
         """Returns the model properties as a dict"""

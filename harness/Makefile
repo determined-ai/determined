@@ -16,7 +16,7 @@ check: gen
 	isort --check-only --skip client
 	black . --check
 	flake8
-	mypy . --show-error-context --show-error-codes
+	mypy .
 
 .PHONY: test
 test: gen

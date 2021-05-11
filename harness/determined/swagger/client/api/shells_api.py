@@ -143,6 +143,7 @@ class ShellsApi(object):
         :param str order_by: Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
         :param int offset: Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
         :param int limit: Limit the number of shells. A value of 0 denotes no limit.
+        :param list[str] users: Limit shells to those that are owned by the specified users.
         :return: V1GetShellsResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -167,12 +168,13 @@ class ShellsApi(object):
         :param str order_by: Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
         :param int offset: Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
         :param int limit: Limit the number of shells. A value of 0 denotes no limit.
+        :param list[str] users: Limit shells to those that are owned by the specified users.
         :return: V1GetShellsResponse
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['sort_by', 'order_by', 'offset', 'limit']  # noqa: E501
+        all_params = ['sort_by', 'order_by', 'offset', 'limit', 'users']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -201,6 +203,9 @@ class ShellsApi(object):
             query_params.append(('offset', params['offset']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'users' in params:
+            query_params.append(('users', params['users']))  # noqa: E501
+            collection_formats['users'] = 'multi'  # noqa: E501
 
         header_params = {}
 

@@ -39,7 +39,10 @@ class V1Shell(object):
         'private_key': 'str',
         'public_key': 'str',
         'username': 'str',
-        'resource_pool': 'str'
+        'resource_pool': 'str',
+        'exit_status': 'str',
+        'addresses': 'list[object]',
+        'agent_user_group': 'object'
     }
 
     attribute_map = {
@@ -51,10 +54,13 @@ class V1Shell(object):
         'private_key': 'privateKey',
         'public_key': 'publicKey',
         'username': 'username',
-        'resource_pool': 'resourcePool'
+        'resource_pool': 'resourcePool',
+        'exit_status': 'exitStatus',
+        'addresses': 'addresses',
+        'agent_user_group': 'agentUserGroup'
     }
 
-    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, private_key=None, public_key=None, username=None, resource_pool=None):  # noqa: E501
+    def __init__(self, id=None, description=None, state=None, start_time=None, container=None, private_key=None, public_key=None, username=None, resource_pool=None, exit_status=None, addresses=None, agent_user_group=None):  # noqa: E501
         """V1Shell - a model defined in Swagger"""  # noqa: E501
 
         self._id = None
@@ -66,6 +72,9 @@ class V1Shell(object):
         self._public_key = None
         self._username = None
         self._resource_pool = None
+        self._exit_status = None
+        self._addresses = None
+        self._agent_user_group = None
         self.discriminator = None
 
         self.id = id
@@ -80,6 +89,12 @@ class V1Shell(object):
             self.public_key = public_key
         self.username = username
         self.resource_pool = resource_pool
+        if exit_status is not None:
+            self.exit_status = exit_status
+        if addresses is not None:
+            self.addresses = addresses
+        if agent_user_group is not None:
+            self.agent_user_group = agent_user_group
 
     @property
     def id(self):
@@ -297,6 +312,69 @@ class V1Shell(object):
             raise ValueError("Invalid value for `resource_pool`, must not be `None`")  # noqa: E501
 
         self._resource_pool = resource_pool
+
+    @property
+    def exit_status(self):
+        """Gets the exit_status of this V1Shell.  # noqa: E501
+
+
+        :return: The exit_status of this V1Shell.  # noqa: E501
+        :rtype: str
+        """
+        return self._exit_status
+
+    @exit_status.setter
+    def exit_status(self, exit_status):
+        """Sets the exit_status of this V1Shell.
+
+
+        :param exit_status: The exit_status of this V1Shell.  # noqa: E501
+        :type: str
+        """
+
+        self._exit_status = exit_status
+
+    @property
+    def addresses(self):
+        """Gets the addresses of this V1Shell.  # noqa: E501
+
+
+        :return: The addresses of this V1Shell.  # noqa: E501
+        :rtype: list[object]
+        """
+        return self._addresses
+
+    @addresses.setter
+    def addresses(self, addresses):
+        """Sets the addresses of this V1Shell.
+
+
+        :param addresses: The addresses of this V1Shell.  # noqa: E501
+        :type: list[object]
+        """
+
+        self._addresses = addresses
+
+    @property
+    def agent_user_group(self):
+        """Gets the agent_user_group of this V1Shell.  # noqa: E501
+
+
+        :return: The agent_user_group of this V1Shell.  # noqa: E501
+        :rtype: object
+        """
+        return self._agent_user_group
+
+    @agent_user_group.setter
+    def agent_user_group(self, agent_user_group):
+        """Sets the agent_user_group of this V1Shell.
+
+
+        :param agent_user_group: The agent_user_group of this V1Shell.  # noqa: E501
+        :type: object
+        """
+
+        self._agent_user_group = agent_user_group
 
     def to_dict(self):
         """Returns the model properties as a dict"""

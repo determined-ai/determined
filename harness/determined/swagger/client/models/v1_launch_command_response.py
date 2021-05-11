@@ -31,21 +31,26 @@ class V1LaunchCommandResponse(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'command': 'V1Command'
+        'command': 'V1Command',
+        'config': 'object'
     }
 
     attribute_map = {
-        'command': 'command'
+        'command': 'command',
+        'config': 'config'
     }
 
-    def __init__(self, command=None):  # noqa: E501
+    def __init__(self, command=None, config=None):  # noqa: E501
         """V1LaunchCommandResponse - a model defined in Swagger"""  # noqa: E501
 
         self._command = None
+        self._config = None
         self.discriminator = None
 
         if command is not None:
             self.command = command
+        if config is not None:
+            self.config = config
 
     @property
     def command(self):
@@ -69,6 +74,27 @@ class V1LaunchCommandResponse(object):
         """
 
         self._command = command
+
+    @property
+    def config(self):
+        """Gets the config of this V1LaunchCommandResponse.  # noqa: E501
+
+
+        :return: The config of this V1LaunchCommandResponse.  # noqa: E501
+        :rtype: object
+        """
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        """Sets the config of this V1LaunchCommandResponse.
+
+
+        :param config: The config of this V1LaunchCommandResponse.  # noqa: E501
+        :type: object
+        """
+
+        self._config = config
 
     def to_dict(self):
         """Returns the model properties as a dict"""

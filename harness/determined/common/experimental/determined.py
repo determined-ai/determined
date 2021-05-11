@@ -13,9 +13,7 @@ from determined.swagger.client.api.internal_api import InternalApi
 from determined.swagger.client.api.trials_api import TrialsApi
 from determined.swagger.client.api_client import ApiClient
 from determined.swagger.client.configuration import Configuration
-from determined.swagger.client.models.v1_create_experiment_request import (
-    V1CreateExperimentRequest as CreateExperimentRequest,
-)
+from determined.swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined.swagger.client.models.v1_file import V1File
 
 
@@ -62,21 +60,21 @@ class Determined:
         user: Optional[str] = None,
     ):
         self._session = Session(master, user)
-        self._auth = auth.Authentication.instance()
-        self._configuration = Configuration()
 
-        # Remove trailing '/' character for Swagger
-        if self._session._master[-1] == "/":
-            self._configuration.host = self._session._master[:-1]
-        else:
-            self._configuration.host = self._session._master
-        self._configuration.username = self._auth.token_store.get_active_user()
-        self._configuration.api_key_prefix["Authorization"] = "Bearer"
-        self._configuration.api_key["Authorization"] = self._auth.get_session_token()
+        host = self._session._master
+        if host[-1] == "/":
+            host = host[:-1]
+        userauth = auth.Authentication.instance()
 
-        self._experiments = ExperimentsApi(ApiClient(self._configuration))
-        self._internal = InternalApi(ApiClient(self._configuration))
-        self._trials = TrialsApi(ApiClient(self._configuration))
+        configuration = Configuration()
+        configuration.host = host
+        configuration.username = userauth.token_store.get_active_user()
+        configuration.api_key_prefix["Authorization"] = "Bearer"
+        configuration.api_key["Authorization"] = userauth.get_session_token()
+
+        self._experiments = ExperimentsApi(ApiClient(configuration))
+        self._internal = InternalApi(ApiClient(configuration))
+        self._trials = TrialsApi(ApiClient(configuration))
 
     def create_experiment(
         self,
@@ -93,7 +91,7 @@ class Determined:
 
         model_context = _path_to_files(Path(model_dir))
 
-        experiment_request = CreateExperimentRequest(
+        experiment_request = V1CreateExperimentRequest(
             model_definition=model_context,
             config=yaml.safe_dump(experiment_config),
         )

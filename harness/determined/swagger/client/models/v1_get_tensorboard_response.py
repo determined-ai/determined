@@ -31,21 +31,26 @@ class V1GetTensorboardResponse(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'tensorboard': 'V1Tensorboard'
+        'tensorboard': 'V1Tensorboard',
+        'config': 'object'
     }
 
     attribute_map = {
-        'tensorboard': 'tensorboard'
+        'tensorboard': 'tensorboard',
+        'config': 'config'
     }
 
-    def __init__(self, tensorboard=None):  # noqa: E501
+    def __init__(self, tensorboard=None, config=None):  # noqa: E501
         """V1GetTensorboardResponse - a model defined in Swagger"""  # noqa: E501
 
         self._tensorboard = None
+        self._config = None
         self.discriminator = None
 
         if tensorboard is not None:
             self.tensorboard = tensorboard
+        if config is not None:
+            self.config = config
 
     @property
     def tensorboard(self):
@@ -69,6 +74,27 @@ class V1GetTensorboardResponse(object):
         """
 
         self._tensorboard = tensorboard
+
+    @property
+    def config(self):
+        """Gets the config of this V1GetTensorboardResponse.  # noqa: E501
+
+
+        :return: The config of this V1GetTensorboardResponse.  # noqa: E501
+        :rtype: object
+        """
+        return self._config
+
+    @config.setter
+    def config(self, config):
+        """Sets the config of this V1GetTensorboardResponse.
+
+
+        :param config: The config of this V1GetTensorboardResponse.  # noqa: E501
+        :type: object
+        """
+
+        self._config = config
 
     def to_dict(self):
         """Returns the model properties as a dict"""

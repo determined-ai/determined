@@ -1,10 +1,7 @@
 from setuptools import find_packages, setup
 
 packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
-client_pkg = find_packages(where="determined/swagger")
-
-for pkg in client_pkg:
-    packages.append("determined.swagger." + pkg)
+packages += [f"determined.swagger.{pkg}" for pkg in find_packages(where="determined/swagger")]
 
 setup(
     name="determined",

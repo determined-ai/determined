@@ -21,6 +21,7 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 
 .PHONY: build
 build: build/typescript-fetch build/python
+	bash ./compare_swagger_python.sh
 
 .PHONY: clean-deps
 clean-deps:
