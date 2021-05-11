@@ -29,7 +29,7 @@ export type MetricsAggregateInterface = {
 
 export const convertMetricsToUplotData =
   (data: Record<number, Record<string, number>>, nameList: string[]): AlignedData => {
-    const series: Array<number[]> = [];
+    const series: (number | null)[][] = [];
     const timeSerie: number[] = [];
 
     Object.entries(data).forEach(([ timeString, timeNameList ]) => {
@@ -40,7 +40,7 @@ export const convertMetricsToUplotData =
           series[nameIndex] = [];
         }
 
-        series[nameIndex].push(timeNameList[name] || undefined);
+        series[nameIndex].push(timeNameList[name] || null);
       });
     });
 
