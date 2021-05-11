@@ -72,8 +72,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const handleShowHParams = useCallback(() => setShowHParams(true), []);
   const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
-  const workloadStatus: string = Object.entries(trial.workloads.last())
-    .find(e => !!e[1])?.first() || '';
+  const workloadStatus: string | undefined =
+    Object.entries(trial.workloads.last()).find(e => !!e[1])?.first();
 
   const infoRows = [
     {
@@ -93,9 +93,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Durations',
     },
     {
-      content: trial.state === 'ACTIVE' &&
-      `${capitalize(workloadStatus)}
-      on batch ${trial.totalBatchesProcessed}`,
+      content: (trial.state === 'ACTIVE' && workloadStatus !== undefined) &&
+      `${capitalize(workloadStatus)} on batch ${trial.totalBatchesProcessed}`,
       label: 'Current Workload',
     },
     {
