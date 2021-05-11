@@ -79,31 +79,32 @@ const NotebookModal: React.FC<Props> = (
     </>}
     title='Notebook Settings'
     visible={forceVisible}>
-    {showFullConfig? <Input.TextArea defaultValue='' /> :
+    {showFullConfig?
       <>
-        <Link><a href=''>Documentation</a></Link>
-        <Form form={form} labelCol={{ span:8 }}>
-          <Item label='Notebook Template'>
-            <Dropdown options={[]} onChange={handlTemplateUpdate} />
-          </Item>
-          <Item label='Name' name="name" required>
-            <Input placeholder='Name' onChange={handleNameUpdate} />
-          </Item>
-          <Item label='Resource Pool' name="pool">
-            <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
-          </Item>
-          <Item label='Type' name='type' required>
-            <RadioGroup
-              options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
-              onChange={(e) => handleTypeUpdate(e)} />
-          </Item>
-          { resourceType === 'GPU'?
-            <Item label='Number of Slots' name="slots" required>
-              <Input defaultValue={0} type='number' />
-            </Item> : null
-          }
-        </Form>
-      </>
+        <Link path="/docs/reference/command-notebook-config.html">Documentation</Link>
+        <Input.TextArea defaultValue='' />
+      </> :
+      <Form form={form} labelCol={{ span:8 }}>
+        <Item label='Notebook Template'>
+          <Dropdown options={[]} onChange={handlTemplateUpdate} />
+        </Item>
+        <Item label='Name' name="name" required>
+          <Input placeholder='Name' onChange={handleNameUpdate} />
+        </Item>
+        <Item label='Resource Pool' name="pool">
+          <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
+        </Item>
+        <Item label='Type' name='type' required>
+          <RadioGroup
+            options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
+            onChange={(e) => handleTypeUpdate(e)} />
+        </Item>
+        { resourceType === 'GPU'?
+          <Item label='Number of Slots' name="slots" required>
+            <Input defaultValue={0} type='number' />
+          </Item> : null
+        }
+      </Form>
     }
   </Modal>;
 };
