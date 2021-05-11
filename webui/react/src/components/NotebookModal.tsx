@@ -1,4 +1,4 @@
-import { Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -72,29 +72,31 @@ const NotebookModal: React.FC<Props> = (
   },[ form ]);
 
   return <Modal
-    cancelButtonProps={{ onClick: handleSecondary }}
-    cancelText={showFullConfig ? 'Back' : 'Edit Full Config'}
-    okButtonProps={{ onClick: handleCreateEnvironment }}
-    okText='Create Notebook Environment'
+    footer={<>
+      <Button onClick={handleSecondary}>{showFullConfig ? 'Back' : 'Edit Full Config'}</Button>
+      <Button type="primary" onClick={handleCreateEnvironment}>Create Notebook Environment</Button>
+    </>}
     title='Notebook Settings'
     visible={forceVisible}>
     {showFullConfig? <Input.TextArea defaultValue='' /> :
       <>
         <Link><a href=''>Documentation</a></Link>
-        <Form labelAlign='left' labelCol={{ span:8 }}>
+        <Form labelCol={{ span:8 }}>
           <Item label='Notebook Template'>
             <Dropdown options={[]} onChange={handlTemplateUpdate} />
           </Item>
-          <Item label='Name'><Input placeholder='Name' onChange={handleNameUpdate} /></Item>
+          <Item label='Name' required>
+            <Input placeholder='Name' onChange={handleNameUpdate} />
+          </Item>
           <Item label='Resource Pool'>
             <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
           </Item>
-          <Item label='Type'>
+          <Item label='Type' required>
             <RadioGroup
               options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
               onChange={(e) => handleTypeUpdate(e)} />
           </Item>
-          <Item label='Number of Slots'><Input defaultValue={0} type='number' /></Item>
+          <Item label='Number of Slots' required><Input defaultValue={0} type='number' /></Item>
         </Form>
       </>
     }
