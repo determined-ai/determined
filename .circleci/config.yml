@@ -2000,7 +2000,7 @@ workflows:
           matrix:
             parameters:
               cluster-id-prefix: ["model-hub"]
-              mark: ["model-hub"]
+              mark: ["model_hub"]
               gpu-agent-instance-type: ["p2.8xlarge"]
               cpu-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
