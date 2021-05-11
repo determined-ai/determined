@@ -96,7 +96,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       content: trial.state === 'ACTIVE' &&
       `${capitalize(workloadStatus)}
       on batch ${trial.totalBatchesProcessed}`,
-      label: 'Workload Status',
+      label: 'Current Workload',
     },
     {
       content: bestValidation &&
