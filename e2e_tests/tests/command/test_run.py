@@ -389,17 +389,17 @@ def test_killed_pending_command_terminates() -> None:
         "cmd", "run", "--config", "resources.slots=1048576", "sleep infinity"
     ) as command:
         for _ in range(10):
-            assert cmd.get_command(command.task_id)["state"] == "PENDING"
+            assert cmd.get_command(command.task_id)["state"] == "STATE_PENDING"
             time.sleep(1)
 
     # The command is killed when the context is exited; now it should reach TERMINATED soon.
     for _ in range(5):
-        if cmd.get_command(command.task_id)["state"] == "TERMINATED":
+        if cmd.get_command(command.task_id)["state"] == "STATE_TERMINATED":
             break
         time.sleep(1)
     else:
         state = cmd.get_command(command.task_id)["state"]
-        raise AssertionError(f"Task was in state {state} rather than TERMINATED")
+        raise AssertionError(f"Task was in state {state} rather than STATE_TERMINATED")
 
 
 @pytest.mark.e2e_gpu  # type: ignore

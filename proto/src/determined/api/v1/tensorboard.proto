@@ -33,6 +33,8 @@ message GetTensorboardsRequest {
   int32 offset = 3;
   // Limit the number of tensorboards. A value of 0 denotes no limit.
   int32 limit = 4;
+  // Limit tensorboards to those that are owned by the specified users.
+  repeated string users = 5;
 }
 // Response to GetTensorboardsRequest.
 message GetTensorboardsResponse {
@@ -51,6 +53,8 @@ message GetTensorboardRequest {
 message GetTensorboardResponse {
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }
 
 // Kill the requested tensorboard.
@@ -84,4 +88,6 @@ message LaunchTensorboardResponse {
   };
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }
