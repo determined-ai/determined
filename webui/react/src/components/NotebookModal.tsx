@@ -101,7 +101,7 @@ const NotebookModal: React.FC<Props> = (
         </Item>
         { resourceType === 'GPU'?
           <Item label='Number of Slots' name="slots" required>
-            <Input defaultValue={0} type='number' />
+            <Input defaultValue={1} type='number' />
           </Item> : null
         }
       </Form>
