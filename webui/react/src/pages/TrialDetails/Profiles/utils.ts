@@ -40,7 +40,7 @@ export const convertMetricsToUplotData =
           series[nameIndex] = [];
         }
 
-        series[nameIndex].push(timeNameList[name] || 0);
+        series[nameIndex].push(timeNameList[name] || undefined);
       });
     });
 
