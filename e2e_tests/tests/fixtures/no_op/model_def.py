@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod
+from determined import horovod, profiler, workload
 from determined.common import check
 
 
@@ -22,8 +22,25 @@ class NoOpTrialController(det.CallbackTrialController):
 
     CHECKPOINT_FILENAME = "no_op_checkpoint"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        prof: profiler.ProfilerAgent,
+        context: det.TrialContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
+        super().__init__(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
         check_startup_hook_ran = self.env.hparams.get("check_startup_hook_ran", False)
         if check_startup_hook_ran:
@@ -65,8 +82,25 @@ class NoOpTrialController(det.CallbackTrialController):
             self.load(self.load_path)
 
     @staticmethod
-    def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
-        return NoOpTrialController(*args, **kwargs)
+    def from_trial(
+        trial_inst: "det.Trial",
+        prof: profiler.ProfilerAgent,
+        context: det.TrialContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> det.TrialController:
+        return NoOpTrialController(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:

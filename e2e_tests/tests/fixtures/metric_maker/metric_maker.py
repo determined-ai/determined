@@ -1,10 +1,10 @@
 import pathlib
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import numpy as np
 
 import determined as det
-from determined import horovod
+from determined import horovod, profiler, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -68,8 +68,25 @@ class MetricMaker(det.CallbackTrialController):
     based on hyperparameters.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        prof: profiler.ProfilerAgent,
+        context: det.TrialContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
+        super().__init__(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
         self.value = self.env.hparams["starting_base_value"]
         self.training_structure = self.env.hparams["training_structure"]
@@ -77,8 +94,25 @@ class MetricMaker(det.CallbackTrialController):
         self.gain_per_batch = self.env.hparams["gain_per_batch"]
 
     @staticmethod
-    def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
-        return MetricMaker(*args, **kwargs)
+    def from_trial(
+        trial_inst: "det.Trial",
+        prof: profiler.ProfilerAgent,
+        context: det.TrialContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> det.TrialController:
+        return MetricMaker(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
