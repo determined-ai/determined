@@ -11,7 +11,7 @@ import {
 } from 'types';
 import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
-import { humanReadableBytes } from 'utils/string';
+import { humanReadableBytes, capitalize } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { trialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
@@ -93,7 +93,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     },
     {
       content: trial.state === 'ACTIVE' &&
-      `${workloadStatus[0].toUpperCase() + workloadStatus.slice(1)}
+      `${capitalize(workloadStatus)}
       on batch ${trial.totalBatchesProcessed}`,
       label: 'Workload Status',
     },
