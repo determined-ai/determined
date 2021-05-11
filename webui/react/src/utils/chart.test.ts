@@ -1,5 +1,6 @@
-import { defaultNumericRange,
-  distance, getNumericRange, normalizeRange, updateRange } from './chart';
+import {
+  defaultNumericRange, distance, getNumericRange, normalizeRange, updateRange,
+} from './chart';
 
 describe('defaultNumericRange', () => {
   it('Default', () => {
