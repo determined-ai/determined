@@ -51,19 +51,19 @@ const NotebookModal: React.FC<Props> = (
 
   const handleNameUpdate = useCallback((e) => {
     form.setFieldsValue({ name: e });
-  },[]);
+  },[ form ]);
 
   const handlTemplateUpdate = useCallback((e) => {
     form.setFieldsValue({ template: e });
-  },[]);
+  },[ form ]);
 
   const handleResourcePoolUpdate = useCallback((e) => {
     form.setFieldsValue({ pool: e });
-  },[]);
+  },[ form ]);
 
   const handleTypeUpdate = useCallback((e) => {
     form.setFieldsValue({ type: e });
-  },[]);
+  },[ form ]);
 
   return <Modal
     cancelButtonProps={{ onClick: handleSecondary }}
