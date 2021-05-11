@@ -1,6 +1,6 @@
 import { Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -41,12 +41,18 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ form ] = Form.useForm();
 
+  useEffect(()=> {
+    if(showFullConfig) {
+      null; //call api to generate configuration
+    }
+  }, [ showFullConfig ]);
+
   const handleSecondary = useCallback(() => {
     setShowFullConfig(show => !show);
   },[]);
 
   const handleCreateEnvironment = useCallback(() => {
-    null;
+    null; //call api to create environment
   },[]);
 
   const handleNameUpdate = useCallback((e) => {
