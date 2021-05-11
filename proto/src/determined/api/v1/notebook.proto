@@ -103,4 +103,6 @@ message LaunchNotebookResponse {
   };
   // The requested notebook.
   determined.notebook.v1.Notebook notebook = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

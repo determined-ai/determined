@@ -81,4 +81,6 @@ message LaunchCommandRequest {
 message LaunchCommandResponse {
   // The requested command.
   determined.command.v1.Command command = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

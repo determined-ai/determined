@@ -53,6 +53,8 @@ message GetTensorboardRequest {
 message GetTensorboardResponse {
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }
 
 // Kill the requested tensorboard.
@@ -86,4 +88,6 @@ message LaunchTensorboardResponse {
   };
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

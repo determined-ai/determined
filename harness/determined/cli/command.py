@@ -129,7 +129,7 @@ def list(args: Namespace) -> None:
     if args.all:
         params = {}  # type: Dict[str, Any]
     else:
-        params = {"user": api.Authentication.instance().get_session_user()}
+        params = {"users": [api.Authentication.instance().get_session_user()]}
 
     res = api.get(args.master, api_full_path, params=params).json()[api_path]
 

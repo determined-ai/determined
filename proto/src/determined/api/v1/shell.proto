@@ -81,4 +81,6 @@ message LaunchShellRequest {
 message LaunchShellResponse {
   // The requested shell.
   determined.shell.v1.Shell shell = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

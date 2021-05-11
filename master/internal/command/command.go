@@ -396,7 +396,6 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.owner.Username,
 		ResourcePool:   c.config.Resources.ResourcePool,
-		Config:         protoutils.ToStruct(c.config),
 		ExitStatus:     exitStatus,
 	}, nil
 }
@@ -415,7 +414,6 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.owner.Username,
 		ResourcePool: c.config.Resources.ResourcePool,
-		Config:       protoutils.ToStruct(c.config),
 		ExitStatus:   exitStatus,
 	}
 }
@@ -441,7 +439,6 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		PublicKey:      c.metadata["publicKey"].(string),
 		Username:       c.owner.Username,
 		ResourcePool:   c.config.Resources.ResourcePool,
-		Config:         protoutils.ToStruct(c.config),
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
 		AgentUserGroup: protoutils.ToStruct(c.agentUserGroup),
@@ -473,7 +470,6 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		TrialIds:       tids,
 		Username:       c.owner.Username,
 		ResourcePool:   c.config.Resources.ResourcePool,
-		Config:         protoutils.ToStruct(c.config),
 		ExitStatus:     exitStatus,
 	}
 }
