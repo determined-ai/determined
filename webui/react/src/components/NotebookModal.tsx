@@ -39,6 +39,7 @@ const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
 
   useEffect(()=> {
@@ -56,20 +57,20 @@ const NotebookModal: React.FC<Props> = (
   },[]);
 
   const handleNameUpdate = useCallback((e) => {
-    form.setFieldsValue({ name: e });
-  },[ form ]);
+    e;
+  },[ ]);
 
   const handlTemplateUpdate = useCallback((e) => {
-    form.setFieldsValue({ template: e });
-  },[ form ]);
+    e;
+  },[ ]);
 
   const handleResourcePoolUpdate = useCallback((e) => {
-    form.setFieldsValue({ pool: e });
-  },[ form ]);
+    e;
+  },[ ]);
 
   const handleTypeUpdate = useCallback((e) => {
-    form.setFieldsValue({ type: e });
-  },[ form ]);
+    setResourceType(e);
+  },[]);
 
   return <Modal
     footer={<>
@@ -81,22 +82,26 @@ const NotebookModal: React.FC<Props> = (
     {showFullConfig? <Input.TextArea defaultValue='' /> :
       <>
         <Link><a href=''>Documentation</a></Link>
-        <Form labelCol={{ span:8 }}>
+        <Form form={form} labelCol={{ span:8 }}>
           <Item label='Notebook Template'>
             <Dropdown options={[]} onChange={handlTemplateUpdate} />
           </Item>
-          <Item label='Name' required>
+          <Item label='Name' name="name" required>
             <Input placeholder='Name' onChange={handleNameUpdate} />
           </Item>
-          <Item label='Resource Pool'>
+          <Item label='Resource Pool' name="pool">
             <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
           </Item>
-          <Item label='Type' required>
+          <Item label='Type' name='type' required>
             <RadioGroup
               options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
               onChange={(e) => handleTypeUpdate(e)} />
           </Item>
-          <Item label='Number of Slots' required><Input defaultValue={0} type='number' /></Item>
+          { resourceType === 'GPU'?
+            <Item label='Number of Slots' name="slots" required>
+              <Input defaultValue={0} type='number' />
+            </Item> : null
+          }
         </Form>
       </>
     }
