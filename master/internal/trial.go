@@ -608,8 +608,8 @@ func (t *trial) processAllocated(
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
 
-	if err = t.db.ResetRunStart(t.id); err != nil {
-		ctx.Log().WithError(err).Error("failed to reset run start")
+	if err = t.db.SaveTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)

@@ -8,10 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/api"
-
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
 	"github.com/golang-migrate/migrate"
 	postgresM "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file" // Load migrations from files.
@@ -21,9 +17,11 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
@@ -1383,12 +1381,14 @@ VALUES (
 	return nil
 }
 
-// ResetRunStart resets the run start for a trial to now().
-func (db *PgDB) ResetRunStart(trialID int) error {
+// SaveTrialRun saves a new run for the trial.
+func (db *PgDB) SaveTrialRun(trialID, runID int) error {
+	// XXX: Revisit.
 	_, err := db.sql.Exec(`
-UPDATE trials
-SET run_start = now()
-WHERE id = $1`, trialID)
+INSERT INTO trial_runs (id, start_time, trial_id)
+VALUES ($2, now(), $1)
+ON CONFLICT (id, trial_id)
+DO UPDATE SET start_time = now()`, trialID, runID)
 	return err
 }
 
@@ -1402,21 +1402,6 @@ SELECT
 FROM steps
 WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {
 		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, totalBatches)
-	}
-	return &step, nil
-}
-
-// StepByPriorBatches looks up a step by (TrialID, PriorBatches) pair,
-// returning an error if none exists.
-func (db *PgDB) StepByPriorBatches(trialID, priorBatches int) (*model.Step, error) {
-	var step model.Step
-	if err := db.query(`
-SELECT 
-	trial_id, id, total_batches, state, start_time, end_time, metrics, 
-	num_batches, prior_batches_processed
-FROM steps
-WHERE trial_id = $1 AND prior_batches_processed = $2`, &step, trialID, priorBatches); err != nil {
-		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, priorBatches)
 	}
 	return &step, nil
 }
@@ -1442,7 +1427,7 @@ func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrainingMetri
 	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
 		var cRunID int
 		switch err := tx.QueryRowxContext(ctx, `
-SELECT id
+SELECT coalesce(max(id), 0)
 FROM trial_runs
 WHERE trial_id = $1
 `, m.TrialId).Scan(&cRunID); {
@@ -1457,7 +1442,7 @@ UPDATE raw_steps SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches >= $3;
-`, m.TrialId, m.TrialRunId, m.BatchesTrained); err != nil {
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
 			return errors.Wrap(err, "archiving training metrics")
 		}
 
@@ -1466,7 +1451,7 @@ UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches > $3;
-`, m.TrialId, m.TrialRunId, m.BatchesTrained); err != nil {
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
 
@@ -1487,10 +1472,10 @@ WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, id, trial_run_id, state, start_time,
-	 end_time, metrics, total_batches, total_inputs)
+	 end_time, metrics, total_batches, total_inputs, total_epochs)
 VALUES
 	(:trial_id, :id, :trial_run_id, :state, :start_time,
-	 now(), :metrics, :total_batches, :total_inputs)
+	 now(), :metrics, :total_batches, :total_inputs, :total_epochs)
 `, model.Step{
 			TrialID:    int(m.TrialId),
 			ID:         id,
@@ -1502,8 +1487,9 @@ VALUES
 				"avg_metrics":   m.Metrics,
 				"batch_metrics": m.BatchMetrics,
 			},
-			TotalBatches: int(m.BatchesTrained),
-			TotalInputs:  int(m.RecordsTrained),
+			TotalBatches: int(m.TotalBatches),
+			TotalRecords: int(m.TotalRecords),
+			TotalEpochs:  m.TotalEpochs,
 		}); err != nil {
 			return errors.Wrap(err, "inserting training metrics")
 		}
@@ -1523,7 +1509,7 @@ UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
   AND trial_run_id < $2
   AND total_batches >= $2;
-`, m.TrialId, m.BatchesTrained); err != nil {
+`, m.TrialId, m.TotalBatches); err != nil {
 			return errors.Wrap(err, "archiving validations")
 		}
 
@@ -1534,9 +1520,11 @@ WHERE trial_id = $1
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
-	(trial_id, trial_run_id, state, start_time, end_time, metrics, total_batches, total_inputs)
+	(trial_id, trial_run_id, state, start_time, end_time,
+	 metrics, total_batches, total_inputs, total_epochs)
 VALUES
-	(:trial_id, :trial_run_id, :state, :start_time, now(), :metrics, :total_batches, :total_inputs)
+	(:trial_id, :trial_run_id, :state, :start_time, now(),
+	 :metrics, :total_batches, :total_inputs, :total_epochs)
 `, model.Validation{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
@@ -1546,8 +1534,9 @@ VALUES
 				// TODO(brad): Is it OK to drop num_inputs?
 				"validation_metrics": m.Metrics,
 			},
-			TotalBatches: int(m.BatchesTrained),
-			TotalInputs:  int(m.RecordsTrained),
+			TotalBatches: int(m.TotalBatches),
+			TotalRecords: int(m.TotalRecords),
+			TotalEpochs:  m.TotalEpochs,
 		}); err != nil {
 			return errors.Wrap(err, "inserting validation metrics")
 		}
@@ -1577,18 +1566,18 @@ WHERE trial_id = $1
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_checkpoints
 	(trial_id, trial_run_id, state, start_time, end_time, total_batches,
-	 total_inputs, uuid, resources, framework, format, determined_version)
+	 total_inputs, total_epochs, uuid, resources, framework, format, determined_version)
 VALUES
 	(:trial_id, :trial_run_id, :state, :start_time, now(), :total_batches,
-	 :total_inputs, :uuid, :resources, :framework, :format, :determined_version)
+	 :total_inputs, :total_epochs, :uuid, :resources, :framework, :format, :determined_version)
 `, model.Checkpoint{
-			TrialID:    int(m.TrialId),
-			TrialRunID: int(m.TrialRunId),
-			State:      model.CompletedState,
-			StartTime:  startTime,
-			//EndTime           *time.Time `db:"end_time" json:"end_time"`
+			TrialID:           int(m.TrialId),
+			TrialRunID:        int(m.TrialRunId),
+			State:             model.CompletedState,
+			StartTime:         startTime,
 			TotalBatches:      int(m.TotalBatches),
-			TotalInputs:       int(m.TotalInputs),
+			TotalRecords:      int(m.TotalRecords),
+			TotalEpochs:       m.TotalEpochs,
 			UUID:              &m.Uuid,
 			Resources:         model.JSONObjFromMapStringInt64(m.Resources),
 			Framework:         m.Framework,
@@ -1620,20 +1609,6 @@ SELECT greatest(
 		return time.Time{}, errors.Wrap(err, "getting prior training metrics")
 	}
 	return endTime, nil
-}
-
-// UpdateStepByPriorBatches updates an existing step. Fields that are nil or zero are not
-// updated.  end_time is set if the step moves to a terminal state.
-func (db *PgDB) UpdateStepByPriorBatches(
-	trialID, priorBatches int, newState model.State, metrics model.JSONObj) error {
-	if len(newState) == 0 && len(metrics) == 0 {
-		return nil
-	}
-	step, err := db.StepByPriorBatches(trialID, priorBatches)
-	if err != nil {
-		return errors.Wrapf(err, "error finding step (%v, %v) to update", trialID, priorBatches)
-	}
-	return db.updateStep(step, newState, metrics)
 }
 
 func (db *PgDB) updateStep(step *model.Step, newState model.State, metrics model.JSONObj) error {
