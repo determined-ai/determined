@@ -22,9 +22,25 @@ except ImportError:
 
 class PyTorchTrialController(det.LoopTrialController):
     def __init__(
-        self, trial_inst: det.Trial, prof: profiler.ProfilerAgent, *args: Any, **kwargs: Any
+        self,
+        trial_inst: det.Trial,
+        context: Any,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+        prof: profiler.ProfilerAgent,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
@@ -61,8 +77,6 @@ class PyTorchTrialController(det.LoopTrialController):
             for optimizer in self.context.optimizers:
                 hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
-        self.prof = prof
-
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         # Initialize the correct horovod.
@@ -86,8 +100,26 @@ class PyTorchTrialController(det.LoopTrialController):
         # torch.backends.cudnn.benchmark = False
 
     @staticmethod
-    def from_trial(*args: Any, **kwargs: Any) -> det.TrialController:
-        return PyTorchTrialController(*args, **kwargs)
+    def from_trial(
+        trial_inst: "det.Trial",
+        prof: profiler.ProfilerAgent,
+        context: det.TrialContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> det.TrialController:
+        return PyTorchTrialController(
+            trial_inst=trial_inst,
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
     @staticmethod
     def from_native(*args: Any, **kwargs: Any) -> det.TrialController:

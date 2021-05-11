@@ -140,11 +140,21 @@ def prepare_controller(
 
     if env.experiment_config.native_enabled():
         controller = load_native_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config, prof
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
     else:
         controller = load_trial_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config, prof
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
 
     return controller

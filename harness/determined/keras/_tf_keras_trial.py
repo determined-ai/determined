@@ -283,16 +283,18 @@ class TFKerasTrialController(det.LoopTrialController):
         tf_keras_callbacks = trial.keras_callbacks()
 
         return TFKerasTrialController(
-            context.model,
-            session,
-            keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
-            prof,
-            context,
-            env,
-            workloads,
-            load_path,
-            rendezvous_info,
-            hvd_config,
+            model=context.model,
+            session=session,
+            train_config=keras.TFKerasTrainConfig(
+                training_data, validation_data, tf_keras_callbacks
+            ),
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
 
     @staticmethod
@@ -333,16 +335,16 @@ class TFKerasTrialController(det.LoopTrialController):
         )
 
         return TFKerasTrialController(
-            context.model,
-            session,
-            train_config,
-            prof,
-            context,
-            env,
-            workloads,
-            load_path,
-            rendezvous_info,
-            hvd_config,
+            model=context.model,
+            session=session,
+            train_config=train_config,
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
 
     def __init__(
@@ -350,11 +352,23 @@ class TFKerasTrialController(det.LoopTrialController):
         model: tf.keras.models.Model,
         session: tf.compat.v1.ConfigProto,
         train_config: keras.TFKerasTrainConfig,
+        context: Any,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
         prof: profiler.ProfilerAgent,
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
         self.model = model
         self.session = session
@@ -389,8 +403,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # If a load path is provided, load weights and restore the data location.
         self._load()
-
-        self.prof = prof
 
         self._configure_callbacks(train_config.callbacks)
 

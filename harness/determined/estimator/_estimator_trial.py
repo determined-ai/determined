@@ -353,13 +353,22 @@ class EstimatorTrialController(det.LoopTrialController):
         val_spec: tf.estimator.EvalSpec,
         serving_input_receiver_fns: Dict[str, estimator.ServingInputReceiverFn],
         context: estimator.EstimatorContext,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
         prof: profiler.ProfilerAgent,
-        *args: Any,
-        **kwargs: Any,
     ) -> None:
-        super().__init__(context, *args, **kwargs)  # type: ignore
-
-        self.prof = prof
+        super().__init__(
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
+        )
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
@@ -464,8 +473,10 @@ class EstimatorTrialController(det.LoopTrialController):
         prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
-        *args: Any,
-        **kwargs: Any,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
     ) -> det.TrialController:
         check.is_instance(
             context,
@@ -480,19 +491,29 @@ class EstimatorTrialController(det.LoopTrialController):
         trial_inst = cast(EstimatorTrial, trial_inst)
 
         return EstimatorTrialController(
-            trial_inst.build_estimator(),
-            trial_inst.build_train_spec(),
-            trial_inst.build_validation_spec(),
-            trial_inst.build_serving_input_receiver_fns(),
-            context,
-            prof,
-            env,
-            *args,
-            **kwargs,
+            estimator=trial_inst.build_estimator(),
+            user_train_spec=trial_inst.build_train_spec(),
+            val_spec=trial_inst.build_validation_spec(),
+            serving_input_receiver_fns=trial_inst.build_serving_input_receiver_fns(),
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
 
     @staticmethod
-    def from_native(context: det.NativeContext, *args: Any, **kwargs: Any) -> det.TrialController:
+    def from_native(
+        context: det.NativeContext,
+        prof: profiler.ProfilerAgent,
+        env: det.EnvContext,
+        workloads: workload.Stream,
+        load_path: Optional[pathlib.Path],
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+    ) -> det.TrialController:
         check.is_instance(
             context,
             estimator.EstimatorNativeContext,
@@ -508,13 +529,17 @@ class EstimatorTrialController(det.LoopTrialController):
         )
 
         return EstimatorTrialController(
-            context.estimator,
-            context.train_spec,
-            context.eval_spec,
-            context.serving_input_receiver_fns,
-            context,
-            *args,
-            **kwargs,
+            estimator=context.estimator,
+            user_train_spec=context.train_spec,
+            val_spec=context.eval_spec,
+            serving_input_receiver_fns=context.serving_input_receiver_fns,
+            context=context,
+            env=env,
+            workloads=workloads,
+            load_path=load_path,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            prof=prof,
         )
 
     def _check_and_repeat_train_input_fn(self, f: Callable) -> Callable:
