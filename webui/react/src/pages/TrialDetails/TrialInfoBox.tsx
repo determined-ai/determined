@@ -11,7 +11,7 @@ import {
 } from 'types';
 import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
-import { humanReadableBytes, capitalize } from 'utils/string';
+import { capitalize, humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { trialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
@@ -72,7 +72,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const handleShowHParams = useCallback(() => setShowHParams(true), []);
   const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
-  const workloadStatus: string = Object.entries(trial.workloads.last()).find(e => !!e[1])?.first() || '';
+  const workloadStatus: string = Object.entries(trial.workloads.last())
+    .find(e => !!e[1])?.first() || '';
 
   const infoRows = [
     {
