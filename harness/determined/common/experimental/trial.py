@@ -15,6 +15,8 @@ class TrialReference:
         master (string, optional): The URL of the Determined master. If this
             class is obtained via :class:`determined.experimental.Determined`, the
             master URL is automatically passed into this constructor.
+        api_ref (TrialsApi, optional): The API-entry point is automatically passed
+            into this constructor.
     """
 
     def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):
@@ -23,6 +25,9 @@ class TrialReference:
         self._trials = api_ref
 
     def kill(self) -> None:
+        """
+        Kill the trial.
+        """
         self._trials.determined_kill_trial(id=self.id)
 
     def top_checkpoint(

@@ -19,6 +19,10 @@ class ExperimentReference:
         master (string, optional): The URL of the Determined master. If this
             class is obtained via :class:`~determined.experimental.Determined`, the
             master URL is automatically passed into this constructor.
+        api_ref (ExperimentsApi, optional): The API-entry point is automatically
+            passed into this constructor.
+        config (dict, optional): When an experiment is created, the context is passed
+            from :class:`~determined.experimental.Determined`.
     """
 
     def __init__(
@@ -34,27 +38,55 @@ class ExperimentReference:
         self.config = config
 
     def activate(self) -> None:
+        """
+        Activate the experiment.
+        """
         self._experiments.determined_activate_experiment(id=self.id)
 
     def archive(self) -> None:
+        """
+        Archive the experiment.
+        """
         self._experiments.determined_archive_experiment(id=self.id)
 
     def cancel(self) -> None:
+        """
+        Cancel the experiment.
+        """
         self._experiments.determined_cancel_experiment(id=self.id)
 
     def delete(self) -> None:
+        """
+        Delete the experiment.
+        """
         self._experiments.determined_delete_experiment(id=self.id)
 
     def kill(self) -> None:
+        """
+        Kill the experiment.
+        """
         self._experiments.determined_kill_experiment(id=self.id)
 
     def pause(self) -> None:
+        """
+        Pause the experiment.
+        """
         self._experiments.determined_pause_experiment(id=self.id)
 
     def unarchive(self) -> None:
+        """
+        Unarchive the experiment.
+        """
         self._experiments.determined_unarchive_experiment(id=self.id)
 
     def wait_till_complete(self, sleep_interval: int = 5) -> None:
+        """
+        Wait for experiment to reach complete or a terminal state.
+
+        Arguments:
+            sleep_interval (int, optional): An interval time in seconds before checking
+            next experiement state.
+        """
         while True:
             exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
             if (

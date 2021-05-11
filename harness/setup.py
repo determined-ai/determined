@@ -1,5 +1,11 @@
 from setuptools import find_packages, setup
 
+packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
+client_pkg = find_packages(where="determined/swagger")
+
+for pkg in client_pkg:
+    packages.append("determined.swagger." + pkg)
+
 setup(
     name="determined",
     version="0.15.6.dev0",
@@ -10,7 +16,7 @@ setup(
     long_description="See https://docs.determined.ai/ for more information.",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    packages=packages,
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
     include_package_data=True,
