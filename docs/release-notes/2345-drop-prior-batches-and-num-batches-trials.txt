@@ -1,7 +1,0 @@
-:orphan:
-
-**Changes**
-
--  Rest API: ``prior_batches_processed`` and ``num_inputs`` were dropped
-   in favor of ``total_batches`` for the trial detail API (``GET
-   /api/v1/trials/:id``).

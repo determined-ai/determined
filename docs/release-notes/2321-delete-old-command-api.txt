@@ -1,8 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  API: removed some old endpoints of Commands, Shells, TensorBoards,
-   and Shells. In the meantime, the CLI moves to the corresponding new
-   API endpoints. The latest CLI is not backwards compatible with the
-   old versions of clusters.
