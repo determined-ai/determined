@@ -2,4 +2,4 @@ UPDATE experiments
 SET config = jsonb_set(config, '{name}',
   to_jsonb(coalesce(config->>'description', 'Experiment ' || id)::text)
 )
-WHERE NULLIF(config->>'name', '') IS NULL;
+WHERE config->>'name' IS NULL;
