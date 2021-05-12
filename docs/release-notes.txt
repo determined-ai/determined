@@ -21,7 +21,7 @@ Version 0.15.4
    transformers library for NLP <https://huggingface.co/transformers>`__.
    See :ref:`model-hub` to get started.
 
-** Minor Changes **
+**Minor Changes**
 
 -  API: Remove redundant APIs for commands, shells, TensorBoards, and
    notebooks. The CLI now uses updated versions of these endpoints;
