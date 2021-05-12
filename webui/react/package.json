@@ -12,7 +12,7 @@
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
+    "storybook": "DISABLE_ESLINT_PLUGIN=true NODE_PATH=src start-storybook -p 9009 -s public",
     "build-storybook": "NODE_PATH=src build-storybook -s public -o build-storybook"
   },
   "dependencies": {
