@@ -1,7 +1,6 @@
+import { globalStorage } from 'globalStorage';
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
-
-import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
@@ -36,6 +35,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   StreamingUnimplemented: Api.UnimplementedApiFetchParamCreator(ApiConfig),
+  Templates: new Api.TemplatesApi(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
 };
@@ -64,6 +64,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingUnimplemented = Api.UnimplementedApiFetchParamCreator(config);
   detApi.Tensorboards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
+  detApi.Templates = new Api.TemplatesApi(config);
 };
 
 /* Helpers */
