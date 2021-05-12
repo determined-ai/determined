@@ -256,12 +256,9 @@ class _PyTorchReducerContext:
     case we would rename it with a public name first.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, allgather_fn: Callable[[Any], List[Any]] = default_allgather_fn) -> None:
         self._wrapped_reducers = []  # type: List[_WrappedReducer]
-        self._allgather_fn = default_allgather_fn
-
-    def _set_allgather_fn(self, fn: Callable) -> None:
-        self._allgather_fn = fn
+        self._allgather_fn = allgather_fn
 
     def reset_reducers(self) -> None:
         for wrapped in self._wrapped_reducers:

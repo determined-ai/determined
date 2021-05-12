@@ -117,20 +117,13 @@ class _SimpleMetricReducer(MetricReducer):
         return self.reduce_fn(flat_metrics)
 
 
-def default_allgather_fn(metrics: Any) -> List:
-    """
-    A noop allgather implementation to ensure that custom reducers work outside of Determined.
-    """
-    return [metrics]
-
-
 class _EstimatorReducerContext:
     """
     Context class that contains only the reducer-related information.
     """
 
-    def __init__(self) -> None:
-        self._allgather_fn = default_allgather_fn  # type: Callable[[Any], List]
+    def __init__(self, allgather_fn: Callable[[Any], List[Any]]) -> None:
+        self._allgather_fn = allgather_fn
         # allgather is not parallelizable, so we have to strictly order how they are placed in the
         # graph via tf.control_dependencies().
         self._allgather_ops = []  # type: List[tf.Operation]

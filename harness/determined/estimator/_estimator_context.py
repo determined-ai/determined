@@ -34,8 +34,13 @@ class EstimatorContext(estimator._EstimatorReducerContext):
     workflow that uses the ``tf.estimator`` API.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        allgather_fn: Callable[[Any], List[Any]],
+    ) -> None:
+        super().__init__(allgather_fn)
         self.env = env
         self.hvd_config = hvd_config
 
@@ -125,15 +130,25 @@ class EstimatorContext(estimator._EstimatorReducerContext):
 
 
 class EstimatorTrialContext(det.TrialContext, EstimatorContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.TrialContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        det.TrialContext.__init__(self, env, hvd_config, rendezvous_info)
+        EstimatorContext.__init__(self, env, hvd_config, self.distributed._zmq_allgather)
 
 
 class EstimatorNativeContext(det.NativeContext, EstimatorContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.NativeContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        det.NativeContext.__init__(self, env, hvd_config, rendezvous_info)
+        EstimatorContext.__init__(self, env, hvd_config, self.distributed._zmq_allgather)
 
         # TODO(DET-1931): Figure out the right interface to set it.
         self.serving_input_receiver_fns = {}  # type: Dict[str, ServingInputReceiverFn]

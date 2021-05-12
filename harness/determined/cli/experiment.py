@@ -174,7 +174,7 @@ def local_experiment(args: Namespace) -> None:
     determined.common.set_logger(bool(experiment_config.get("debug", False)))
 
     with det._local_execution_manager(args.model_def.resolve()):
-        trial_class = load.load_trial_implementation(experiment_config["entrypoint"])
+        trial_class = load.trial_class_from_entrypoint(experiment_config["entrypoint"])
         experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 

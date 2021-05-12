@@ -135,6 +135,7 @@ def _init_cluster_mode(
             context = native_context_cls(
                 env=load.RunpyGlobals.get_instance().env,
                 hvd_config=load.RunpyGlobals.get_instance().hvd_config,
+                rendezvous_info=load.RunpyGlobals.get_instance().rendezvous_info,
             )
             load.RunpyGlobals.set_runpy_native_result(context, controller_cls)
             context._set_train_fn(_stop_loading_implementation)
@@ -178,11 +179,11 @@ def _load_trial_on_local(
     hparams: Dict[str, Any],
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
-        trial_class = load.load_trial_implementation(config["entrypoint"])
+        trial_class = load.trial_class_from_entrypoint(config["entrypoint"])
         env, rendezvous_info, hvd_config = det._make_local_execution_env(
             managed_training=managed_training, test_mode=False, config=config, hparams=hparams
         )
-        trial_context = trial_class.trial_context_class(env, hvd_config)
+        trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
     return trial_class, trial_context
 
 
@@ -209,7 +210,11 @@ def test_one_batch(
     if native_context_cls is not None and controller_cls is not None:
         # Case 1: test one batch for Native implementation.
         controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
-        context = native_context_cls(env=env, hvd_config=hvd_config)
+        context = native_context_cls(
+            env=env,
+            hvd_config=hvd_config,
+            rendezvous_info=rendezvous_info,
+        )
 
         def train_fn() -> None:
             controller = cast(Type[det.TrialController], controller_cls).from_native(
@@ -398,5 +403,5 @@ def create_trial_instance(
     env, rendezvous_info, hvd_config = det._make_local_execution_env(
         managed_training=False, test_mode=False, config=config, hparams=hparams
     )
-    trial_context = trial_def.trial_context_class(env, hvd_config)
+    trial_context = trial_def.trial_context_class(env, hvd_config, rendezvous_info=rendezvous_info)
     return trial_def(trial_context)
