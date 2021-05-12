@@ -33,7 +33,7 @@ searcher:
     epochs: 3
   smaller_is_better: false
 environment:
-  image: determinedai/model-hub-transformers:0.15.4rc1
+  image: determinedai/model-hub-transformers:0.15.4
 resources:
   slots_per_trial: 1
 # We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
