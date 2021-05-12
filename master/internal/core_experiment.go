@@ -397,8 +397,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
-	err = schemas.IsComplete(config)
-	if err != nil {
+	if err = schemas.IsComplete(config); err != nil {
 		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
