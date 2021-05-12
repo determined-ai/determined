@@ -1,6 +1,9 @@
 import { Button, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
+//eslint-disable-next-line
 import React, { useCallback, useEffect, useState } from 'react';
+import { getResourcePools } from 'services/api';
+import { ResourcePool } from 'types';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -39,6 +42,7 @@ const NotebookModal: React.FC<Props> = (
   { forceVisible = false }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
 
@@ -47,9 +51,10 @@ const NotebookModal: React.FC<Props> = (
   }, []);
 
   useEffect(() => {
-    null; //get slots per agent and cpuCapacityPerAgent
-    //Type form field should ONLY appear if both slotsPerAgent and
-    //cpuCapacityPerAgent are both greater than 0
+    const fetchResourcePools = async () => {
+      setResourcePools( await getResourcePools({}));
+    };
+    fetchResourcePools();
   }, []);
 
   useEffect(()=> {
@@ -75,7 +80,10 @@ const NotebookModal: React.FC<Props> = (
   },[ ]);
 
   const handleResourcePoolUpdate = useCallback((e) => {
-    e;
+    e; //get slots per agent and cpuCapacityPerAgent
+
+    //Type form field should ONLY appear if both slotsPerAgent and
+    //cpuCapacityPerAgent are both greater than 0
   },[ ]);
 
   const handleTypeUpdate = useCallback((e) => {
@@ -114,7 +122,9 @@ const NotebookModal: React.FC<Props> = (
           <Input placeholder='Name' onChange={handleNameUpdate} />
         </Item>
         <Item label='Resource Pool' name="pool">
-          <Dropdown options={[]} onChange={handleResourcePoolUpdate} />
+          <Dropdown
+            options={resourcePools.map(pool => pool.name)}
+            onChange={handleResourcePoolUpdate} />
         </Item>
         <Item label='Type' name='type' required>
           <RadioGroup
