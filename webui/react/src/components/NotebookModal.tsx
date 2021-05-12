@@ -42,6 +42,16 @@ const NotebookModal: React.FC<Props> = (
   const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
 
+  useEffect(() => {
+    null; //get templates from api
+  }, []);
+
+  useEffect(() => {
+    null; //get slots per agent and cpuCapacityPerAgent
+    //Type form field should ONLY appear if both slotsPerAgent and
+    //cpuCapacityPerAgent are both greater than 0
+  }, []);
+
   useEffect(()=> {
     if(showFullConfig) {
       null; //call api to generate configuration
