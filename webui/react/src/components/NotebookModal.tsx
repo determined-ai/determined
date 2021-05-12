@@ -1,7 +1,7 @@
 import { Button, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
-//eslint-disable-next-line
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { getResourcePools } from 'services/api';
 import { ResourcePool } from 'types';
 
