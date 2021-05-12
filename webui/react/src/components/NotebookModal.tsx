@@ -81,7 +81,19 @@ const NotebookModal: React.FC<Props> = (
     visible={forceVisible}>
     {showFullConfig?
       <>
-        <Link path="/docs/reference/command-notebook-config.html">Documentation</Link>
+        <div style={{
+          backgroundColor:'rgb(230,230,230)',
+          border:'1px solid rgb(200,200,200)',
+          marginBottom: '4px',
+          padding: 2,
+          textAlign:'center',
+        }}
+        >
+          <Link path="/docs/reference/command-notebook-config.html">
+          Read about notebook settings
+          </Link>
+        </div>
+
         <Input.TextArea defaultValue='' />
       </> :
       <Form form={form} labelCol={{ span:8 }}>
