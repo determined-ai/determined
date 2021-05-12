@@ -31,9 +31,6 @@ const (
 
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
-	// TODO DISCUSS we could leave this out and fill with experiment config at api level.
-	// We can't fall back to experiment description at this point. Does the new JSON Schema support
-	// solve this?
 	defaultName := fmt.Sprintf(
 		"Experiment (%s)",
 		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
