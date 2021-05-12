@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
@@ -125,7 +126,7 @@ func (s *tournamentSearch) progress(trialProgress map[model.RequestID]model.Part
 	return sum / float64(len(s.subSearches))
 }
 
-func (s *tournamentSearch) Unit() model.Unit {
+func (s *tournamentSearch) Unit() expconf.Unit {
 	return s.subSearches[0].Unit()
 }
 

@@ -13,6 +13,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // TaskContainerDefaultsConfig configures docker defaults for all containers.
@@ -104,4 +107,41 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 	errs = append(errs, validatePodSpec(c.GPUPodSpec)...)
 
 	return errs
+}
+
+// MergeIntoConfig sets any unset ExperimentConfig values that are defined by TaskContainerDefaults.
+func (c *TaskContainerDefaultsConfig) MergeIntoConfig(config *expconf.ExperimentConfig) {
+	if c == nil {
+		return
+	}
+
+	// Merge Resources-related settings into the config.
+	resources := expconf.ResourcesConfig{
+		RawDevices: c.Devices.ToExpconf(),
+	}
+	config.RawResources = schemas.Merge(config.RawResources, &resources).(*expconf.ResourcesConfig)
+
+	// Merge Environment-related settings into the config.
+	var image *expconf.EnvironmentImageMapV0
+	if c.Image != nil {
+		i := c.Image.ToExpconf()
+		image = &i
+	}
+
+	// We just update config.RawResources so we know it can't be nil.
+	defaultedResources := schemas.WithDefaults(*config.RawResources).(expconf.ResourcesConfig)
+	podSpec := c.CPUPodSpec
+	if defaultedResources.SlotsPerTrial() > 0 {
+		podSpec = c.GPUPodSpec
+	}
+
+	env := expconf.EnvironmentConfig{
+		RawAddCapabilities:  c.AddCapabilities,
+		RawDropCapabilities: c.DropCapabilities,
+		RawForcePullImage:   ptrs.BoolPtr(c.ForcePullImage),
+		RawImage:            image,
+		RawPodSpec:          podSpec,
+		RawRegistryAuth:     c.RegistryAuth,
+	}
+	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env).(*expconf.EnvironmentConfig)
 }

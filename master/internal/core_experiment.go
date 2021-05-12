@@ -20,8 +20,9 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -204,7 +205,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 
 	// Make a Regex to remove everything but a whitelist of characters.
 	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
-	cleanDescription := reg.ReplaceAllString(expConfig.Description, "")
+	cleanDescription := reg.ReplaceAllString(expConfig.Description(), "")
 
 	// Truncate description to a smaller size to both accommodate file name and path size
 	// limits on different platforms as well as get users more accustom to picking shorter
@@ -279,31 +280,37 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 	if patch.Resources != nil {
+		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
-			dbExp.Config.Resources.MaxSlots = patch.Resources.MaxSlots.Value
+			resources.SetMaxSlots(patch.Resources.MaxSlots.Value)
 		}
 		if patch.Resources.Weight != nil {
-			dbExp.Config.Resources.Weight = *patch.Resources.Weight
+			resources.SetWeight(*patch.Resources.Weight)
 		}
+		dbExp.Config.SetResources(resources)
 	}
 	if patch.Description != nil {
-		dbExp.Config.Description = *patch.Description
+		dbExp.Config.SetDescription(*patch.Description)
 	}
+	labels := dbExp.Config.Labels()
 	for label, keep := range patch.Labels {
-		switch _, ok := dbExp.Config.Labels[label]; {
+		switch _, ok := labels[label]; {
 		case ok && keep == nil:
-			delete(dbExp.Config.Labels, label)
+			delete(labels, label)
 		case !ok && keep != nil:
-			if dbExp.Config.Labels == nil {
-				dbExp.Config.Labels = make(model.Labels)
+			if labels == nil {
+				labels = make(expconf.Labels)
 			}
-			dbExp.Config.Labels[label] = true
+			labels[label] = true
 		}
 	}
+	dbExp.Config.SetLabels(labels)
 	if patch.CheckpointStorage != nil {
-		dbExp.Config.CheckpointStorage.SaveExperimentBest = patch.CheckpointStorage.SaveExperimentBest
-		dbExp.Config.CheckpointStorage.SaveTrialBest = patch.CheckpointStorage.SaveTrialBest
-		dbExp.Config.CheckpointStorage.SaveTrialLatest = patch.CheckpointStorage.SaveTrialLatest
+		storage := dbExp.Config.CheckpointStorage()
+		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
+		storage.SetSaveTrialBest(patch.CheckpointStorage.SaveTrialBest)
+		storage.SetSaveTrialLatest(patch.CheckpointStorage.SaveTrialLatest)
+		dbExp.Config.SetCheckpointStorage(storage)
 	}
 
 	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
@@ -356,44 +363,41 @@ type CreateExperimentParams struct {
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	*model.Experiment, bool, *tasks.TaskSpec, error,
 ) {
-	resources := model.ParseJustResources([]byte(params.ConfigBytes))
-	taskSpec := m.makeTaskSpec(resources.ResourcePool, resources.SlotsPerTrial)
-
-	config := model.DefaultExperimentConfig(&taskSpec.TaskContainerDefaults)
-
-	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
+	// Read the config as the user provided it.
+	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
 	if err != nil {
 		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	config.CheckpointStorage = *checkpointStorage
-
+	// Apply the template that the user specified.
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
 			return nil, false, nil, terr
 		}
-		if yerr := yaml.Unmarshal(template.Config, &config, yaml.DisallowUnknownFields); yerr != nil {
+		var tc expconf.ExperimentConfig
+		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
 			return nil, false, nil, yerr
 		}
+		// Merge the template into the config.
+		config = schemas.Merge(config, tc).(expconf.ExperimentConfig)
 	}
 
-	if yerr := yaml.Unmarshal(
-		[]byte(params.ConfigBytes), &config, yaml.DisallowUnknownFields,
-	); yerr != nil {
-		return nil, false, nil, errors.Wrap(yerr, "invalid experiment configuration")
-	}
+	// Merge the appropriate TaskContainerDefaults into the config.
+	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
+	taskSpec := m.makeTaskSpec(resources.ResourcePool(), resources.SlotsPerTrial())
+	taskSpec.TaskContainerDefaults.MergeIntoConfig(&config)
 
-	if config.Environment.PodSpec == nil {
-		if config.Resources.SlotsPerTrial == 0 {
-			config.Environment.PodSpec = m.config.TaskContainerDefaults.CPUPodSpec
-		} else {
-			config.Environment.PodSpec = m.config.TaskContainerDefaults.GPUPodSpec
-		}
-	}
+	// Merge in the master's checkpoint storage into the config.
+	config.RawCheckpointStorage = schemas.Merge(
+		config.RawCheckpointStorage, &m.config.CheckpointStorage,
+	).(*expconf.CheckpointStorageConfig)
 
-	err = check.Validate(config)
-	if err != nil {
+	// Lastly, apply any json-schema-defined defaults.
+	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
+
+	// Make sure the experiment config has all eventuallyRequired fields.
+	if err = schemas.IsComplete(config); err != nil {
 		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
