@@ -121,7 +121,7 @@ const NotebookModal: React.FC<Props> = (
           textAlign:'center',
         }}
         >
-          <Link path="/docs/reference/command-notebook-config.html">
+          <Link external path="/docs/reference/command-notebook-config.html">
           Read about notebook settings
           </Link>
         </div>
