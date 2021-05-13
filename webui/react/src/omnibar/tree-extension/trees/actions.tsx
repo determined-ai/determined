@@ -1,9 +1,9 @@
 import { message, Modal } from 'antd';
 import React from 'react';
 
-import { dfsStaticRoutes } from 'omnibar/AsyncTree';
-import root from 'omnibar/trees';
-import { FinalAction } from 'omnibar/types';
+import root from 'omnibar/tree-extension/trees';
+import { FinalAction } from 'omnibar/tree-extension/types';
+import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
 import { routeAll } from 'routes/utils';
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeAll(url));

@@ -1,8 +1,8 @@
 import { setServerAddress } from 'dev';
 import { globalStorage } from 'globalStorage';
 import { userPreferencesStorage } from 'hooks/useStorage';
-import { alertAction } from 'omnibar/trees/actions';
-import { Children, TreeNode } from 'omnibar/types';
+import { alertAction } from 'omnibar/tree-extension/trees/actions';
+import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { serverAddress } from 'routes/utils';
 
 const dev: TreeNode[] = [

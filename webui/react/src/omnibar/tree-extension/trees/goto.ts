@@ -1,5 +1,5 @@
-import { visitAction } from 'omnibar/trees/actions';
-import { Children, TreeNode } from 'omnibar/types';
+import { visitAction } from 'omnibar/tree-extension/trees/actions';
+import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
 import { getExperiments, getExpTrials } from 'services/api';
 import { getNotebooks, getTensorboards } from 'services/api';

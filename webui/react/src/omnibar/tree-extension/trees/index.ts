@@ -1,7 +1,7 @@
-import { displayHelp, parseIds, visitAction } from 'omnibar/trees/actions';
-import dev from 'omnibar/trees/dev';
-import locations from 'omnibar/trees/goto';
-import { Children, LeafNode, NLNode } from 'omnibar/types';
+import { displayHelp, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
+import dev from 'omnibar/tree-extension/trees/dev';
+import locations from 'omnibar/tree-extension/trees/goto';
+import { Children, LeafNode, NLNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, getExperiments, getNotebooks, getTensorboards,
   killExperiment, killNotebook, killTensorboard, openOrCreateTensorboard,

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { BaseNode } from 'omnibar/types';
+import { BaseNode } from 'omnibar/tree-extension/types';
 
 // Based on omnibar/src/modifier/AnchorRenderer.tsx
 

@@ -4,11 +4,11 @@ import { GlobalHotKeys } from 'react-hotkeys';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { exposeStore } from 'omnibar/exposedStore';
-import * as Tree from 'omnibar/TreeExtension';
-import TreeNode from 'omnibar/TreeNode';
+import * as Tree from 'omnibar/tree-extension/index';
+import TreeNode from 'omnibar/tree-extension/TreeNode';
+import { BaseNode } from 'omnibar/tree-extension/types';
 
 import css from './Omnibar.module.scss';
-import { BaseNode } from './types';
 
 const globalKeymap = { HIDE_OMNIBAR: [ 'esc' ] };
 

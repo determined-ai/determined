@@ -3,13 +3,13 @@ import Fuse from 'fuse.js';
 
 import { StoreAction } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { getNodeChildren, isLeafNode,
-  isNLNode, isTreeNode, traverseTree } from 'omnibar/AsyncTree';
 import { store } from 'omnibar/exposedStore';
-import root from 'omnibar/trees/index';
+import root from 'omnibar/tree-extension/trees/index';
 import {
   BaseNode, Children, LeafNode, NLNode, TreePath,
-} from 'omnibar/types';
+} from 'omnibar/tree-extension/types';
+import { getNodeChildren, isLeafNode,
+  isNLNode, isTreeNode, traverseTree } from 'omnibar/tree-extension/utils';
 import { noOp } from 'services/utils';
 
 const SEPARATOR = ' ';
