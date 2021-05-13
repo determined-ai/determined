@@ -1,4 +1,4 @@
-import { Button, Modal } from 'antd';
+import { Button, InputNumber, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -147,8 +147,11 @@ const NotebookModal: React.FC<Props> = (
             onChange={(e) => handleTypeUpdate(e)} />
         </Item>
         { resourceType === 'GPU'?
-          <Item label='Number of Slots' name="slots" required>
-            <Input type='number' />
+          <Item
+            label='Number of Slots'
+            name="slots"
+            rules={[ { message: 'Please choose a number of slots', required: true } ]}>
+            <InputNumber min={1} />
           </Item> : null
         }
       </Form>
