@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/command/v1/command.proto";
 import "determined/util/v1/util.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of commands.
 message GetCommandsRequest {
@@ -79,6 +80,9 @@ message LaunchCommandRequest {
 }
 // Response to LaunchCommandRequest.
 message LaunchCommandResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notebook", "config" ] }
+  };
   // The requested command.
   determined.command.v1.Command command = 1;
   // The config;

@@ -46,7 +46,6 @@ type shellManager struct {
 // ShellLaunchRequest describes a request to launch a new shell.
 type ShellLaunchRequest struct {
 	CommandParams *CommandParams
-	User          *model.User
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -79,19 +78,10 @@ func (s *shellManager) processLaunchRequest(
 	ctx *actor.Context,
 	req ShellLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), s.db, *req.User, req.CommandParams, s.makeTaskSpec, false,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &s.defaultAgentUserGroup
-	}
+	params := req.CommandParams
 
 	var passphrase *string
-	if pwd, ok := commandReq.Data["passphrase"]; ok {
+	if pwd, ok := params.Data["passphrase"]; ok {
 		if typed, typedOK := pwd.(string); typedOK {
 			passphrase = &typed
 		}
@@ -103,7 +93,7 @@ func (s *shellManager) processLaunchRequest(
 
 	ctx.Log().Info("creating shell")
 
-	shell := s.newShell(commandReq, keys)
+	shell := s.newShell(params, keys)
 	if err = check.Validate(shell.config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -119,10 +109,10 @@ func (s *shellManager) processLaunchRequest(
 }
 
 func (s *shellManager) newShell(
-	req *commandRequest,
+	params *CommandParams,
 	keyPair ssh.PrivateAndPublicKeys,
 ) *command {
-	config := req.Config
+	config := params.FullConfig
 
 	// Postprocess the config.
 	if config.Description == "" {
@@ -145,26 +135,26 @@ func (s *shellManager) newShell(
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	additionalFiles := archive.Archive{
-		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
-		req.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
+		params.AgentUserGroup.OwnedArchiveItem(
 			shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
 		),
-		req.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
 		),
-		req.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
 		),
-		req.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			shellSSHDConfigFile,
 			etc.MustStaticFile(etc.SSHDConfigResource),
 			0644,
 			tar.TypeReg,
 		),
-		req.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			shellEntrypointScript,
 			etc.MustStaticFile(etc.ShellEntrypointResource),
 			0700,
@@ -174,8 +164,8 @@ func (s *shellManager) newShell(
 
 	return &command{
 		taskID:          taskID,
-		config:          config,
-		userFiles:       req.UserFiles,
+		config:          *config,
+		userFiles:       params.UserFiles,
 		additionalFiles: additionalFiles,
 		metadata: map[string]interface{}{
 			"privateKey": string(keyPair.PrivateKey),
@@ -188,9 +178,12 @@ func (s *shellManager) newShell(
 		},
 
 		serviceAddress: &serviceAddress,
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       &req.TaskSpec,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		proxyTCP: true,
 
