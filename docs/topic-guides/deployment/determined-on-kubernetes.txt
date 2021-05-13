@@ -24,7 +24,7 @@ deploys an instance of the Determined master and a Postgres database in
 the Kubernetes cluster. Once the master is up and running, users can
 submit :ref:`experiments <quick-start-first-job>` and launch
 :ref:`notebooks <how-to-notebooks>`, :ref:`tensorboards
-<how-to-tensorboard>`, commands, and shells. When new workloads are
+<how-to-tensorboard>`, :ref:`commands, and shells <commands-and-shells>`. When new workloads are
 submitted to the Determined master, the master launches pods and
 configMaps on the Kubernetes cluster to execute those workloads. Users
 of Determined shouldn't need to interact with Kubernetes directly after
