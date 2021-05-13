@@ -1,7 +1,7 @@
 import { displayHelp, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import dev from 'omnibar/tree-extension/trees/dev';
 import locations from 'omnibar/tree-extension/trees/goto';
-import { Children, LeafNode, NLNode } from 'omnibar/tree-extension/types';
+import { Children, LeafNode, NonLeafNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, getExperiments, getNotebooks, getTensorboards,
   killExperiment, killNotebook, killTensorboard, openOrCreateTensorboard,
@@ -9,7 +9,7 @@ import { activateExperiment, archiveExperiment, getExperiments, getNotebooks, ge
 import { launchNotebook } from 'utils/task';
 import { activeRunStates, terminalCommandStates, terminalRunStates } from 'utils/types';
 
-const root: NLNode = {
+const root: NonLeafNode = {
   options: [
     {
       options: async (): Promise<Children> => {

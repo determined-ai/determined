@@ -1,10 +1,10 @@
 import { isAsyncFunction } from 'utils/data';
 
-import { Children, LeafNode, NLNode, TreeNode, TreePath } from './types';
+import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from './types';
 
 export const isLeafNode = (node: TreeNode): node is LeafNode =>
   'onAction' in node && !('options' in node);
-export const isNLNode = (node: TreeNode): node is NLNode =>
+export const isNLNode = (node: TreeNode): node is NonLeafNode =>
   !('onAction' in node) && ('options' in node || 'onCustomInput' in node);
 
 export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
@@ -25,7 +25,7 @@ export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
 /*
   Given a start node and a path: string[] get the TreePath.
 */
-export const traverseTree = async (address: string[], startNode: NLNode): Promise<TreePath> => {
+export const traverseTree = async (address: string[], startNode: NonLeafNode): Promise<TreePath> => {
   let curNode: TreeNode = startNode;
   const path: TreePath = [ curNode ];
   let i = 0;

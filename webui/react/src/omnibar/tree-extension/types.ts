@@ -9,8 +9,8 @@ export interface BaseNode {
 
 export type Children = TreeNode[];
 export type TreePath = TreeNode[];
-export type TreeNode = LeafNode | NLNode;
-export type ComputedChildren = (arg?: NLNode) => Eventually<Children>;
+export type TreeNode = LeafNode | NonLeafNode;
+export type ComputedChildren = (arg?: NonLeafNode) => Eventually<Children>;
 export type FinalAction = (node?: LeafNode) => Eventually<void>;
 
 export interface LeafNode extends BaseNode {
@@ -18,7 +18,7 @@ export interface LeafNode extends BaseNode {
 }
 // Non-leaf Node
 
-export interface NLNode extends BaseNode {
+export interface NonLeafNode extends BaseNode {
   onCustomInput?: (input: string) => Eventually<Children>;
   options?: Children | ComputedChildren; // leaf nodes have no children
 }

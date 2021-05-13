@@ -7,17 +7,22 @@ export enum KeyEvent {
   KeyDown = 'KeyDown'
 }
 
+export enum KeyCode {
+  Space = 'Space',
+  Escape = 'Escape',
+}
+
 export const keyEmitter = new EventEmitter();
 
-const specialKeyCodes = new Set([
-  'Escape',
+const specialKeyCodes = new Set<KeyCode>([
+  KeyCode.Escape,
 ]);
 
 let listenerCount = 0;
 
 const useKeyTracker = (): void => {
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    if (e.target && !specialKeyCodes.has(e.code)) {
+    if (e.target && !specialKeyCodes.has(e.code as KeyCode)) {
       const element = e.target as Element;
       if ([ 'input', 'textarea' ].includes(element.tagName.toLowerCase())) return;
       if (element.getAttribute('contenteditable')) return;
@@ -26,7 +31,7 @@ const useKeyTracker = (): void => {
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target && !specialKeyCodes.has(e.code)) {
+    if (e.target && !specialKeyCodes.has(e.code as KeyCode)) {
       const element = e.target as Element;
       if ([ 'input', 'textarea' ].includes(element.tagName.toLowerCase())) return;
       if (element.getAttribute('contenteditable')) return;

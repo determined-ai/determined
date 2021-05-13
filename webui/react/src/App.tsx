@@ -8,7 +8,7 @@ import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
-import useKeyTracker,{ keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import useKeyTracker,{ KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -65,9 +65,9 @@ const AppView: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (omnibar.isShowing && e.key === 'Escape') {
+      if (omnibar.isShowing && e.code === KeyCode.Escape) {
         storeDispatch({ type: StoreAction.HideOmnibar });
-      } else if (!omnibar.isShowing && e.code === 'Space' && e.ctrlKey) {
+      } else if (!omnibar.isShowing && e.code === KeyCode.Space && e.ctrlKey) {
         storeDispatch({ type: StoreAction.ShowOmnibar });
       }
     };
