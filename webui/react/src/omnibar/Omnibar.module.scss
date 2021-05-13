@@ -1,19 +1,27 @@
 .base {
-  background-color: rgba(0, 0, 0, 0.45);
   height: 100%;
   left: 0;
   position: absolute;
   top: 0;
   width: 100%;
-  z-index: 1011;
 
+  .backdrop {
+    background-color: rgba(0, 0, 0, 0.45);
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 1011;
+  }
   .bar {
     left: 50%;
     min-width: 500px;
-    position: absolute;
+    position: relative;
     top: 33.33%;
     transform: translate(-50%, -50%);
     width: calc(max(40vw, 300px));
+    z-index: 1012;
 
     input {
       border-radius: 3px;

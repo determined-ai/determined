@@ -1,7 +1,6 @@
 import { Button, notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { GlobalHotKeys } from 'react-hotkeys';
 
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
@@ -9,7 +8,7 @@ import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
-import useKeyTracker from 'hooks/useKeyTracker';
+import useKeyTracker,{ keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -21,8 +20,6 @@ import { correctViewportHeight, refreshPage } from 'utils/browser';
 import css from './App.module.scss';
 import { paths } from './routes/utils';
 
-const globalKeymap = { SHOW_OMNIBAR: [ 'ctrl+space' ] };
-
 const AppView: React.FC = () => {
   const resize = useResize();
   const [ canceler ] = useState(new AbortController());
@@ -32,11 +29,6 @@ const AppView: React.FC = () => {
   const fetchInfo = useFetchInfo(canceler);
 
   useKeyTracker();
-  const globalKeyHandler = {
-    SHOW_OMNIBAR:
-    (): void => storeDispatch({ type: StoreAction.ShowOmnibar }),
-  };
-
   useRouteTracker();
   useTheme();
 
@@ -71,6 +63,22 @@ const AppView: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (omnibar.isShowing && e.key === 'Escape') {
+        storeDispatch({ type: StoreAction.HideOmnibar });
+      } else if (!omnibar.isShowing && e.code === 'Space' && e.ctrlKey) {
+        storeDispatch({ type: StoreAction.ShowOmnibar });
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [ omnibar.isShowing, storeDispatch ]);
+
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
@@ -80,7 +88,6 @@ const AppView: React.FC = () => {
         <main>
           <Router routes={appRoutes} />
           {omnibar.isShowing && <Omnibar />}
-          <GlobalHotKeys handlers={globalKeyHandler} keyMap={globalKeymap} />
         </main>
       </Navigation>
     </div>
