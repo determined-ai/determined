@@ -1,5 +1,5 @@
 import { visitAction } from 'omnibar/actions';
-import { Children, TreeNode } from 'omnibar/AsyncTree';
+import { Children, TreeNode } from 'omnibar/types';
 import { paths } from 'routes/utils';
 import { getExperiments, getExpTrials } from 'services/api';
 import { getNotebooks, getTensorboards } from 'services/api';

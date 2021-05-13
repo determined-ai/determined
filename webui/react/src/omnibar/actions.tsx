@@ -3,8 +3,9 @@ import React from 'react';
 
 import { routeAll } from 'routes/utils';
 
-import { dfsStaticRoutes, FinalAction } from './AsyncTree';
+import { dfsStaticRoutes } from './AsyncTree';
 import root from './sampleTree';
+import { FinalAction } from './types';
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
 export const visitAction = (url: string) => ((): void => routeAll(url));
 export const noOp = (): void => undefined;

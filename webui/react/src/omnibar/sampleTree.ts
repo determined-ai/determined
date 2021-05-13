@@ -1,7 +1,7 @@
 import { displayHelp, parseIds, visitAction } from 'omnibar/actions';
-import { Children, LeafNode, NLNode } from 'omnibar/AsyncTree';
 import dev from 'omnibar/nodes/dev';
 import locations from 'omnibar/nodes/locations';
+import { Children, LeafNode, NLNode } from 'omnibar/types';
 import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, getExperiments, getNotebooks, getTensorboards,
   killExperiment, killNotebook, killTensorboard, openOrCreateTensorboard,

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { BaseNode } from 'omnibar/AsyncTree';
+import { BaseNode } from 'omnibar/types';
 
 // Based on omnibar/src/modifier/AnchorRenderer.tsx
 

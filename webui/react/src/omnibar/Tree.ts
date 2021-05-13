@@ -3,10 +3,14 @@ import Fuse from 'fuse.js';
 
 import { StoreAction } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { BaseNode, Children, getNodeChildren, isLeafNode,
-  isNLNode, isTreeNode, LeafNode, traverseTree, TreePath } from 'omnibar/AsyncTree';
+import { getNodeChildren, isLeafNode,
+  isNLNode, isTreeNode, traverseTree } from 'omnibar/AsyncTree';
 import { store } from 'omnibar/exposedStore';
 import root from 'omnibar/sampleTree';
+import {
+  BaseNode, Children,
+  LeafNode, TreePath,
+} from 'omnibar/types';
 import { noOp } from 'services/utils';
 
 const SEPARATOR = ' ';

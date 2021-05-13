@@ -7,8 +7,8 @@ import { exposeStore } from 'omnibar/exposedStore';
 import BaseRenderer from 'omnibar/modifiers/anchor/BaseRenderer';
 import * as Tree from 'omnibar/Tree';
 
-import { BaseNode } from './AsyncTree';
 import css from './Omnibar.module.scss';
+import { BaseNode } from './types';
 
 const globalKeymap = { HIDE_OMNIBAR: [ 'esc' ] };
 

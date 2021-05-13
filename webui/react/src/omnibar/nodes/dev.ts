@@ -2,7 +2,7 @@ import { setServerAddress } from 'dev';
 import { globalStorage } from 'globalStorage';
 import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/actions';
-import { Children, TreeNode } from 'omnibar/AsyncTree';
+import { Children, TreeNode } from 'omnibar/types';
 import { serverAddress } from 'routes/utils';
 
 const dev: TreeNode[] = [
