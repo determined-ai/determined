@@ -7,13 +7,13 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
-import { launchNotebook } from 'utils/task';
 
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
+import NotebookModal from './NotebookModal';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -55,7 +55,7 @@ const NavigationSideBar: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const storage = useStorage('navigation');
   const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
-  const [ isShowingCpu, setIsShowingCpu ] = useState(false);
+  const [ showNotebookModal, setShowNotebookModal ] = useState(false);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -64,10 +64,6 @@ const NavigationSideBar: React.FC = () => {
   const username = auth.user?.username || 'Anonymous';
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
-
-  const handleNotebookLaunch = useCallback(() => launchNotebook(1), []);
-  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), []);
-  const handleVisibleChange = useCallback((visible: boolean) => setIsShowingCpu(visible), []);
 
   const handleCollapse = useCallback(() => {
     const newCollapsed = !isCollapsed;
@@ -120,8 +116,11 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={handleNotebookLaunch}>Launch Notebook</Button>
+                onClick={() => setShowNotebookModal(true)}>Launch Notebook</Button>
             </div>
+            <NotebookModal
+              visible={showNotebookModal}
+              onCancel={() => setShowNotebookModal(false)} />
           </section>
           <section className={css.top}>
             <NavigationItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />

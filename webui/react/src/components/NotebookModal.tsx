@@ -1,5 +1,6 @@
 import { Button, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
+import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getResourcePools } from 'services/api';
@@ -12,7 +13,7 @@ import RadioGroup from './RadioGroup';
 const { Option } = Select;
 const { Item } = Form;
 
-interface Props {
+interface Props extends ModalProps {
   visible?: boolean;
 }
 
@@ -40,7 +41,7 @@ Secondary button with a back arrow.
 */
 
 const NotebookModal: React.FC<Props> = (
-  { visible = false }: Props,
+  { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
@@ -99,7 +100,8 @@ const NotebookModal: React.FC<Props> = (
       <Button type="primary" onClick={handleCreateEnvironment}>Create Notebook Environment</Button>
     </>}
     title='Notebook Settings'
-    visible={visible}>
+    visible={visible}
+    {...props}>
     {showFullConfig?
       <>
         <div style={{
