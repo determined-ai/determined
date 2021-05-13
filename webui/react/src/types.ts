@@ -454,11 +454,14 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
 export type TaskType = CommandType | 'Experiment';
 
-export type ArchiveFilters = typeof ALL_VALUE | 'archived' | 'unarchived'
+export enum ArchiveFilter {
+  Archived = 'archived',
+  Unarchived = 'unarchived',
+}
 
 export interface ExperimentFilters {
+  archived?: ArchiveFilter;
   labels?: string[];
-  showArchived: ArchiveFilters;
   states?: string[];
   users?: string[];
 }

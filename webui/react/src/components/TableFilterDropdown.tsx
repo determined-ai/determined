@@ -9,6 +9,7 @@ import Icon from './Icon';
 import css from './TableFilterDropdown.module.scss';
 
 interface Props extends FilterDropdownProps {
+  multiple?: boolean;
   onFilter?: (keys: string[]) => void;
   onReset?: () => void;
   searchable?: boolean;
@@ -22,6 +23,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   clearFilters,
   confirm,
   filters,
+  multiple,
   onFilter,
   onReset,
   searchable,
@@ -54,12 +56,15 @@ const TableFilterDropdown: React.FC<Props> = ({
     if (!value) return;
 
     setSelectedMap(prev => {
-      const newMap = { ...prev };
-      if (newMap[value]) delete newMap[value];
-      else newMap[value] = true;
-      return newMap;
+      if (multiple) {
+        const newMap = { ...prev };
+        if (newMap[value]) delete newMap[value];
+        else newMap[value] = true;
+        return newMap;
+      }
+      return prev[value] ? {} : { [value]: true };
     });
-  }, []);
+  }, [ multiple ]);
 
   const handleReset = useCallback(() => {
     setSelectedMap({});
@@ -96,7 +101,9 @@ const TableFilterDropdown: React.FC<Props> = ({
   useEffect(() => {
     if (prevVisible !== visible && visible) {
       setSearch('');
-      setSelectedMap(values.reduce((acc, value) => {
+
+      const valuesAsList = Array.isArray(values) ? values : [ values ];
+      setSelectedMap(valuesAsList.reduce((acc, value) => {
         acc[value] = true;
         return acc;
       }, {} as Record<string, boolean>));

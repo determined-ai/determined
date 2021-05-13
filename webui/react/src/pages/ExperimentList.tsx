@@ -3,11 +3,9 @@ import { Button, Input, Modal } from 'antd';
 import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
 import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import {
   defaultRowClassName, ExperimentRenderer,
@@ -33,10 +31,11 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
+import { capitalize } from 'utils/string';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
@@ -55,7 +54,7 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
-const URL_ALL = '';
+const URL_ALL = 'all';
 
 const STORAGE_PATH = 'experiment-list';
 const STORAGE_FILTERS_KEY = 'filters';
@@ -63,7 +62,7 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
-  showArchived: 'unarchived',
+  archived: undefined,
   states: undefined,
   users: undefined,
 };
@@ -84,18 +83,13 @@ const ExperimentList: React.FC = () => {
       users: [ auth.user?.username ],
     },
   );
-  const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
-  const validatedInitFilters = archiveOptions
-    .includes(initFilters.showArchived) ? initFilters :
-    { ...initFilters, showArchived: defaultFilters.showArchived };
-  storage.set(STORAGE_FILTERS_KEY, validatedInitFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
-  const [ filters, setFilters ] = useState<ExperimentFilters>(validatedInitFilters);
+  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
@@ -112,7 +106,7 @@ const ExperimentList: React.FC = () => {
     const url = parseUrl(window.location.href);
 
     // archived
-    searchParams.append('archived', filters.showArchived);
+    searchParams.append('archived', filters.archived ? filters.archived : URL_ALL);
 
     // labels
     if (filters.labels && filters.labels.length > 0) {
@@ -167,11 +161,7 @@ const ExperimentList: React.FC = () => {
 
     // archived
     const archived = urlSearchParams.get('archived');
-    const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
-    if (archived !== null &&
-      ((archiveOptions.includes(archived)))) {
-      filters.showArchived = archived as ArchiveFilters;
-    }
+    filters.archived = archived === URL_ALL ? undefined : archived as ArchiveFilter;
 
     // labels
     if (urlSearchParams.get('label') != null) {
@@ -230,10 +220,6 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
-  const hasFiltersApplied = useMemo(() => {
-    return filters.showArchived !== ALL_VALUE || !!filters.states || !!filters.users;
-  }, [ filters ]);
-
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -285,9 +271,7 @@ const ExperimentList: React.FC = () => {
       const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
       const response = await getExperiments(
         {
-          archived: filters.showArchived === ALL_VALUE ? undefined :
-            filters.showArchived === 'unarchived' ? false :
-              true,
+          archived: filters.archived ? filters.archived !== 'unarchived' : undefined,
           description: search,
           labels: filters.labels,
           limit: pagination.limit,
@@ -338,6 +322,24 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
+  const handleArchiveFilterApply = useCallback((archived: string[]) => {
+    const archivedFilter = archived.length === 1 ? archived[0] as ArchiveFilter : undefined;
+    handleFilterChange({ ...filters, archived: archivedFilter });
+  }, [ handleFilterChange, filters ]);
+
+  const handleArchiveFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, archived: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      values={filters.archived ? [ filters.archived ] : undefined}
+      onFilter={handleArchiveFilterApply}
+      onReset={handleArchiveFilterReset}
+    />
+  ), [ filters.archived, handleArchiveFilterApply, handleArchiveFilterReset ]);
+
   const handleLabelFilterApply = useCallback((labels: string[]) => {
     handleFilterChange({ ...filters, labels });
   }, [ handleFilterChange, filters ]);
@@ -349,6 +351,7 @@ const ExperimentList: React.FC = () => {
   const labelFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
       {...filterProps}
+      multiple
       searchable
       values={filters.labels}
       onFilter={handleLabelFilterApply}
@@ -367,6 +370,7 @@ const ExperimentList: React.FC = () => {
   const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
       {...filterProps}
+      multiple
       values={filters.states}
       onFilter={handleStateFilterApply}
       onReset={handleStateFilterReset} />
@@ -383,6 +387,7 @@ const ExperimentList: React.FC = () => {
   const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
       {...filterProps}
+      multiple
       searchable
       values={filters.users}
       onFilter={handleUserFilterApply}
@@ -410,6 +415,13 @@ const ExperimentList: React.FC = () => {
         column.filterDropdown = labelFilterDropdown;
         column.filters = labels.map(label => ({ text: label, value: label }));
       }
+      if (column.key === 'archived') {
+        column.filterDropdown = archiveFilterDropdown;
+        column.filters = [
+          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
+          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
+        ];
+      }
       if (column.key === V1GetExperimentsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
         column.filters = Object.values(RunState)
@@ -429,6 +441,7 @@ const ExperimentList: React.FC = () => {
 
     return newColumns;
   }, [
+    archiveFilterDropdown,
     handleActionComplete,
     experimentTags,
     labelFilterDropdown,
@@ -443,10 +456,6 @@ const ExperimentList: React.FC = () => {
     setSearch(e.target.value || '');
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, []);
-
-  const handleArchiveChange = useCallback((value: ArchiveFilters): void => {
-    handleFilterChange({ ...filters, showArchived: value });
-  }, [ filters, handleFilterChange ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -566,9 +575,6 @@ const ExperimentList: React.FC = () => {
             value={search}
             onChange={handleSearchChange}
           />
-          <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
-            <ArchiveSelectFilter value={filters.showArchived} onChange={handleArchiveChange} />
-          </ResponsiveFilters>
         </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
