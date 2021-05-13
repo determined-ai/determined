@@ -608,7 +608,9 @@ func (t *trial) processAllocated(
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
 
-	if err = t.db.SaveTrialRun(t.id, t.RunID); err != nil {
+	// TODO(brad): When we support tracking runs for more than trials, this logic should
+	// likely be generalized by moving it rather than duplicating it for all task types.
+	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
 		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
 
@@ -1125,6 +1127,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	terminationSent := t.TerminationSent
+
+	if err := t.db.CompleteTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to mark trial run completed")
+	}
 
 	t.RunID++
 

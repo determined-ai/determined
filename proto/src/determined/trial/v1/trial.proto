@@ -198,7 +198,6 @@ message ValidationMetrics {
 
 // The checkpoint metadata for some trial checkpoint.
 message CheckpointMetadata {
-  // XXX: Clean up required on all these.
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
       required: [

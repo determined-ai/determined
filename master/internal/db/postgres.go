@@ -1381,14 +1381,22 @@ VALUES (
 	return nil
 }
 
-// SaveTrialRun saves a new run for the trial.
-func (db *PgDB) SaveTrialRun(trialID, runID int) error {
-	// XXX: Revisit.
+// AddTrialRun saves a new run for the trial.
+func (db *PgDB) AddTrialRun(trialID, runID int) error {
 	_, err := db.sql.Exec(`
-INSERT INTO trial_runs (id, start_time, trial_id)
-VALUES ($2, now(), $1)
-ON CONFLICT (id, trial_id)
+INSERT INTO runs (run_type, run_type_fk, id)
+VALUES ('TRIAL', $1, $2)
+ON CONFLICT (run_type, run_type_fk, id)
 DO UPDATE SET start_time = now()`, trialID, runID)
+	return err
+}
+
+// CompleteTrialRun the given run.
+func (db *PgDB) CompleteTrialRun(trialID, runID int) error {
+	_, err := db.sql.Exec(`
+UPDATE runs
+SET end_time = now()
+WHERE run_type = 'TRIAL' AND run_type_fk = $1 AND id = $2`, trialID, runID)
 	return err
 }
 
@@ -1472,10 +1480,10 @@ WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, id, trial_run_id, state, start_time,
-	 end_time, metrics, total_batches, total_inputs, total_epochs)
+	 end_time, metrics, total_batches, total_records, total_epochs)
 VALUES
 	(:trial_id, :id, :trial_run_id, :state, :start_time,
-	 now(), :metrics, :total_batches, :total_inputs, :total_epochs)
+	 now(), :metrics, :total_batches, :total_records, :total_epochs)
 `, model.Step{
 			TrialID:    int(m.TrialId),
 			ID:         id,
@@ -1521,10 +1529,10 @@ WHERE trial_id = $1
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
 	(trial_id, trial_run_id, state, start_time, end_time,
-	 metrics, total_batches, total_inputs, total_epochs)
+	 metrics, total_batches, total_records, total_epochs)
 VALUES
 	(:trial_id, :trial_run_id, :state, :start_time, now(),
-	 :metrics, :total_batches, :total_inputs, :total_epochs)
+	 :metrics, :total_batches, :total_records, :total_epochs)
 `, model.Validation{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
@@ -1566,10 +1574,10 @@ WHERE trial_id = $1
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_checkpoints
 	(trial_id, trial_run_id, state, start_time, end_time, total_batches,
-	 total_inputs, total_epochs, uuid, resources, framework, format, determined_version)
+	 total_records, total_epochs, uuid, resources, framework, format, determined_version)
 VALUES
 	(:trial_id, :trial_run_id, :state, :start_time, now(), :total_batches,
-	 :total_inputs, :total_epochs, :uuid, :resources, :framework, :format, :determined_version)
+	 :total_records, :total_epochs, :uuid, :resources, :framework, :format, :determined_version)
 `, model.Checkpoint{
 			TrialID:           int(m.TrialId),
 			TrialRunID:        int(m.TrialRunId),
