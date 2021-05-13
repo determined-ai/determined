@@ -1,8 +1,11 @@
 :orphan:
 
 **New Features**
-- Introduction of experiment notes and name. Read docs for more info.
+
+-  Introduction of experiment notes and name. Check out the docs for
+   more info.
 
 **Breaking Changes**
 
-- Experiment configuration's `description` field is no longer auto filled.
+-  Experiment configuration's `description` field is no longer auto
+   filled.
