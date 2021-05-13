@@ -14,6 +14,7 @@ import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialAct
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
+import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
 import { paths, routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
@@ -28,6 +29,7 @@ enum TabType {
   Hyperparameters = 'hyperparameters',
   Overview = 'overview',
   Profiles = 'profiles',
+  Workloads = 'workloads',
 }
 
 interface Params {
@@ -246,6 +248,9 @@ const TrialDetailsComp: React.FC = () => {
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
           <TrialDetailsHyperparameters experiment={experiment} trial={trial} />
+        </TabPane>
+        <TabPane key={TabType.Workloads} tab="Workloads">
+          <TrialDetailsWorkloads experiment={experiment} trial={trial} />
         </TabPane>
         {tabKey === TabType.Profiles && (
           <TabPane key={TabType.Profiles} tab="Profiles">
