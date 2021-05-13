@@ -322,7 +322,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 		hpi.SetMetricHPImportance(lossHpi, loss, model.TrainingMetric)
 	}
 
-	searcherMetric := config.Searcher().Metric()
+	searcherMetric := config.Searcher.Metric
 	triggerForSearcherMetric := false
 	searcherMetricHpi := hpi.GetMetricHPImportance(searcherMetric, model.ValidationMetric)
 	if !searcherMetricHpi.Pending {

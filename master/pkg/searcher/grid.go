@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
@@ -25,13 +24,13 @@ type (
 	// one trial is generated per point on the grid and trained for the specified number of steps.
 	gridSearch struct {
 		defaultSearchMethod
-		expconf.GridConfig
+		model.GridConfig
 		gridSearchState
 		trials int
 	}
 )
 
-func newGridSearch(config expconf.GridConfig) SearchMethod {
+func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{
 		GridConfig: config,
 		gridSearchState: gridSearchState{
@@ -46,8 +45,8 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	s.trials = len(grid)
 	s.RemainingTrials = append(s.RemainingTrials, grid...)
 	initialTrials := s.trials
-	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = min(s.trials, s.MaxConcurrentTrials())
+	if s.MaxConcurrentTrials > 0 {
+		initialTrials = min(s.trials, s.MaxConcurrentTrials)
 	}
 	var ops []Operation
 	for trial := 0; trial < initialTrials; trial++ {
@@ -55,7 +54,7 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
@@ -63,11 +62,11 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *gridSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
-	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
+	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
 	unitsCompleted := sumTrialLengths(trialProgress)
-	unitsExpected := s.MaxLength().Units * s.trials
+	unitsExpected := s.MaxLength.Units * s.trials
 	return float64(unitsCompleted) / float64(unitsExpected)
 }
 
@@ -83,7 +82,7 @@ func (s *gridSearch) trialExitedEarly(
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
@@ -98,17 +97,17 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 		s.RemainingTrials = s.RemainingTrials[:len(s.RemainingTrials)-1]
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.PendingTrials++
 	}
 	return ops, nil
 }
 
-func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
+func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}
-	params.Each(func(name string, param expconf.Hyperparameter) {
+	params.Each(func(name string, param model.Hyperparameter) {
 		names = append(names, name)
 		values = append(values, grid(param))
 	})
@@ -143,66 +142,60 @@ func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample 
 	}
 }
 
-func grid(h expconf.Hyperparameter) []interface{} {
+func grid(h model.Hyperparameter) []interface{} {
 	switch {
-	case h.RawConstHyperparameter != nil:
-		p := *h.RawConstHyperparameter
-		return []interface{}{p.Val()}
-	case h.RawIntHyperparameter != nil:
-		p := *h.RawIntHyperparameter
+	case h.ConstHyperparameter != nil:
+		p := *h.ConstHyperparameter
+		return []interface{}{p.Val}
+	case h.IntHyperparameter != nil:
+		p := *h.IntHyperparameter
 		// Dereferencing is okay because initialization of GridSearch has checked p.Count is non-nil.
-		count := *p.Count()
+		count := *p.Count
 
 		// Clamp to the maximum number of integers in the range.
-		count = min(count, p.Maxval()-p.Minval()+1)
+		count = min(count, p.Maxval-p.Minval+1)
 
 		vals := make([]interface{}, count)
 		// Includes temporary validation, for invalid count
 		if count == 1 {
-			vals[0] = int(math.Round(float64(p.Minval()+p.Maxval()) / 2.0))
+			vals[0] = int(math.Round(float64(p.Minval+p.Maxval) / 2.0))
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = int(
-					math.Round(
-						float64(p.Minval()) + float64(i*(p.Maxval()-p.Minval()))/float64(count-1),
-					),
-				)
+				vals[i] = int(math.Round(float64(p.Minval) + float64(i*(p.Maxval-p.Minval))/float64(count-1)))
 			}
 		}
 		return vals
-	case h.RawDoubleHyperparameter != nil:
-		p := *h.RawDoubleHyperparameter
+	case h.DoubleHyperparameter != nil:
+		p := *h.DoubleHyperparameter
 		// Dereferencing is okay because initialization of GridSearch has checked p.Count is non-nil.
-		count := *p.Count()
+		count := *p.Count
 		vals := make([]interface{}, count)
 
 		if count == 1 {
-			vals[0] = (p.Minval() + p.Maxval()) / 2.0
+			vals[0] = (p.Minval + p.Maxval) / 2.0
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = p.Minval() + float64(i)*(p.Maxval()-p.Minval())/float64(count-1)
+				vals[i] = p.Minval + float64(i)*(p.Maxval-p.Minval)/float64(count-1)
 			}
 		}
 		return vals
-	case h.RawLogHyperparameter != nil:
-		p := *h.RawLogHyperparameter
-		count := *p.Count()
+	case h.LogHyperparameter != nil:
+		p := *h.LogHyperparameter
+		count := *p.Count
 		vals := make([]interface{}, count)
 
 		// Includes temporary validation, for invalid count.
 		if count == 1 {
-			vals[0] = math.Pow(p.Base(), (p.Minval()+p.Maxval())/2.0)
+			vals[0] = math.Pow(p.Base, (p.Minval+p.Maxval)/2.0)
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = math.Pow(
-					p.Base(), p.Minval()+float64(i)*(p.Maxval()-p.Minval())/float64(count-1),
-				)
+				vals[i] = math.Pow(p.Base, p.Minval+float64(i)*(p.Maxval-p.Minval)/float64(count-1))
 			}
 		}
 		return vals
-	case h.RawCategoricalHyperparameter != nil:
-		p := *h.RawCategoricalHyperparameter
-		return p.Vals()
+	case h.CategoricalHyperparameter != nil:
+		p := *h.CategoricalHyperparameter
+		return p.Vals
 	default:
 		panic(fmt.Sprintf("unexpected hyperparameter type %+v", h))
 	}

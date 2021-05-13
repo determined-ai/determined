@@ -5,9 +5,7 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const RandomTournamentSearch SearchMethodType = "random_tournament"
@@ -15,14 +13,14 @@ const RandomTournamentSearch SearchMethodType = "random_tournament"
 func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
 		RandomTournamentSearch,
-		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.IntPtr(2),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(300)),
-		}).(expconf.RandomConfig)),
-		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(200)),
-		}).(expconf.RandomConfig)),
+		newRandomSearch(model.RandomConfig{
+			MaxTrials: 2,
+			MaxLength: model.NewLengthInBatches(300),
+		}),
+		newRandomSearch(model.RandomConfig{
+			MaxTrials: 3,
+			MaxLength: model.NewLengthInBatches(200),
+		}),
 	)
 	expected := [][]ValidateAfter{
 		toOps("300B"),
@@ -35,10 +33,7 @@ func TestRandomTournamentSearcher(t *testing.T) {
 }
 
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
-	conf := expconf.RandomConfig{
-		RawMaxTrials: ptrs.IntPtr(5), RawMaxLength: lengthPtr(expconf.NewLengthInBatches(800)),
-	}
-	conf = schemas.WithDefaults(conf).(expconf.RandomConfig)
+	conf := model.RandomConfig{MaxTrials: 5, MaxLength: model.NewLengthInBatches(800)}
 	gen := func() SearchMethod {
 		return newTournamentSearch(
 			RandomTournamentSearch,
@@ -60,29 +55,31 @@ func TestTournamentSearchMethod(t *testing.T) {
 		newConstantPredefinedTrial(toOps("1000B 3000B"), 0.1),
 	}
 
-	adaptiveConfig1 := expconf.SearcherConfig{
-		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawDivisor:   ptrs.Float64Ptr(3),
+	adaptiveConfig1 := model.SearcherConfig{
+		AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			Metric:          "error",
+			NumRungs:        3,
+			SmallerIsBetter: true,
+			MaxLength:       model.NewLengthInBatches(9000),
+			MaxTrials:       3,
+			Divisor:         3,
 		},
 	}
-	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1).(expconf.SearcherConfig)
 	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
 
-	adaptiveConfig2 := expconf.SearcherConfig{
-		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.IntPtr(3),
-			RawMaxLength: lengthPtr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.IntPtr(3),
-			RawDivisor:   ptrs.Float64Ptr(3),
+	adaptiveConfig2 := model.SearcherConfig{
+		AsyncHalvingConfig: &model.AsyncHalvingConfig{
+			Metric:          "error",
+			NumRungs:        3,
+			SmallerIsBetter: true,
+			MaxLength:       model.NewLengthInBatches(9000),
+			MaxTrials:       3,
+			Divisor:         3,
 		},
 	}
-	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2).(expconf.SearcherConfig)
 	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)
 
-	params := expconf.Hyperparameters{}
+	params := model.Hyperparameters{}
 
 	method := newTournamentSearch(AdaptiveSearch, adaptiveMethod1, adaptiveMethod2)
 

@@ -328,7 +328,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if !t.idSet {
 			return nil
 		}
-		if t.Restarts > t.experiment.Config.MaxRestarts() {
+		if t.Restarts > t.experiment.Config.MaxRestarts {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
 			}
@@ -356,9 +356,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.trialClosing() {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState {
-			slotsNeeded := t.experiment.Config.Resources().SlotsPerTrial()
-			label := t.experiment.Config.Resources().AgentLabel()
-			resourcePool := t.experiment.Config.Resources().ResourcePool()
+			slotsNeeded := t.experiment.Config.Resources.SlotsPerTrial
+			label := t.experiment.Config.Resources.AgentLabel
+			resourcePool := t.experiment.Config.Resources.ResourcePool
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
@@ -579,7 +579,7 @@ func (t *trial) processAllocated(
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
-		if t.experiment.Config.PerformInitialValidation() {
+		if t.experiment.Config.PerformInitialValidation {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
@@ -716,7 +716,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case op != nil:
-		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher().Metric())
+		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher.Metric)
 		if err != nil {
 			return err
 		}
@@ -1075,7 +1075,7 @@ func (t *trial) reset() error {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts() ||
+	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
@@ -1166,9 +1166,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.Restarts, t.experiment.Config.MaxRestarts(), status)
+		t.Restarts, t.experiment.Config.MaxRestarts, status)
 	t.Restarts++
-	if t.Restarts <= t.experiment.Config.MaxRestarts() {
+	if t.Restarts <= t.experiment.Config.MaxRestarts {
 		ctx.Log().Infof("resetting trial %d", t.id)
 		if err := t.reset(); err != nil {
 			ctx.Log().Warn("failed to reset trial", err)

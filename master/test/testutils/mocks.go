@@ -7,9 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 var (
@@ -30,32 +27,24 @@ func (f ExperimentModelOptionFunc) apply(experiment *model.Experiment) {
 
 // ExperimentModel returns a new experiment with the specified options.
 func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
-	maxLength := expconf.NewLengthInBatches(100)
-	config := expconf.ExperimentConfig{
-		RawSearcher: &expconf.SearcherConfig{
-			RawMetric: ptrs.StringPtr("loss"),
-			RawSingleConfig: &expconf.SingleConfig{
-				RawMaxLength: &maxLength,
-			},
-		},
-		RawEntrypoint: ptrs.StringPtr("model_def:SomeTrialClass"),
-		RawHyperparameters: expconf.Hyperparameters{
-			expconf.GlobalBatchSize: expconf.Hyperparameter{
-				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 64},
-			},
-		},
-		RawCheckpointStorage: &expconf.CheckpointStorageConfig{
-			RawSharedFSConfig: &expconf.SharedFSConfig{
-				RawHostPath: ptrs.StringPtr("/"),
-			},
+	c := model.DefaultExperimentConfig(&internal.DefaultConfig().TaskContainerDefaults)
+	c.Entrypoint = "model_def:SomeTrialClass"
+	c.Searcher = model.SearcherConfig{
+		Metric: "loss",
+		SingleConfig: &model.SingleConfig{
+			MaxLength: model.NewLengthInBatches(100),
 		},
 	}
-	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
-	internal.DefaultConfig().TaskContainerDefaults.MergeIntoConfig(&config)
+	c.Hyperparameters = model.Hyperparameters{
+		model.GlobalBatchSize: model.Hyperparameter{
+			ConstHyperparameter: &model.ConstHyperparameter{Val: 64},
+		},
+	}
+	c.CheckpointStorage.SharedFSConfig.HostPath = "/"
 
 	e := &model.Experiment{
 		State:                model.ActiveState,
-		Config:               config,
+		Config:               c,
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
 		ModelDefinitionBytes: []byte{},
