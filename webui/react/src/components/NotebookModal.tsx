@@ -50,7 +50,7 @@ const NotebookModal: React.FC<Props> = (
   const [ form ] = Form.useForm();
 
   useEffect(() => {
-    null; //get templates from api
+    setTemplates([]); //get templates from api
   }, []);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ const NotebookModal: React.FC<Props> = (
       </> :
       <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
         <Item label='Notebook Template' name='template'>
-          <Dropdown options={[]} onChange={handlTemplateUpdate} />
+          <Dropdown options={templates} onChange={handlTemplateUpdate} />
         </Item>
         <Item label='Name' name="name">
           <Input placeholder='Name' onChange={handleNameUpdate} />
