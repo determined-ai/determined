@@ -50,7 +50,10 @@ const ITEM_STYLE: React.CSSProperties = {
   wordWrap: 'break-word',
 };
 
-const BaseRenderer: ResultRenderer<BaseNode> = (props) => {
+/*
+Renders a single option presented by the Tree Omnibar extention.
+*/
+const TreeNode: ResultRenderer<BaseNode> = (props) => {
   const { item, isSelected, isHighlighted, style, ...rest } = props;
 
   const mergedStyle = { ...ITEM_STYLE, ...style };
@@ -72,4 +75,4 @@ const BaseRenderer: ResultRenderer<BaseNode> = (props) => {
   );
 };
 
-export default BaseRenderer;
+export default TreeNode;

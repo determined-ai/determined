@@ -4,8 +4,8 @@ import { GlobalHotKeys } from 'react-hotkeys';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { exposeStore } from 'omnibar/exposedStore';
-import BaseRenderer from 'omnibar/modifiers/anchor/BaseRenderer';
 import * as Tree from 'omnibar/Tree';
+import TreeNode from 'omnibar/TreeNode';
 
 import css from './Omnibar.module.scss';
 import { BaseNode } from './types';
@@ -37,7 +37,7 @@ const Omnibar: React.FC = () => {
           extensions={[ Tree.extension ]}
           maxResults={7}
           placeholder='Type a command or "help" for more info.'
-          render={BaseRenderer}
+          render={TreeNode}
           onAction={Tree.onAction as any} />
       </div>
       <GlobalHotKeys handlers={globalKeyHandler} keyMap={globalKeymap} />
