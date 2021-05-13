@@ -14,7 +14,7 @@ import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
-import Omnibar from 'omnibar/Component';
+import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
