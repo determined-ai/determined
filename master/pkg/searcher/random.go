@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
@@ -26,12 +23,12 @@ type (
 	// is trained for the specified number of steps, and then validation metrics are computed.
 	randomSearch struct {
 		defaultSearchMethod
-		expconf.RandomConfig
+		model.RandomConfig
 		randomSearchState
 	}
 )
 
-func newRandomSearch(config expconf.RandomConfig) SearchMethod {
+func newRandomSearch(config model.RandomConfig) SearchMethod {
 	return &randomSearch{
 		RandomConfig: config,
 		randomSearchState: randomSearchState{
@@ -40,12 +37,9 @@ func newRandomSearch(config expconf.RandomConfig) SearchMethod {
 	}
 }
 
-func newSingleSearch(config expconf.SingleConfig) SearchMethod {
+func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig: schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.IntPtr(1),
-			RawMaxLength: lengthPtr(config.MaxLength()),
-		}).(expconf.RandomConfig),
+		RandomConfig: model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
 		randomSearchState: randomSearchState{
 			SearchMethodType: SingleSearch,
 		},
@@ -54,14 +48,14 @@ func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 
 func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
-	initialTrials := s.MaxTrials()
-	if s.MaxConcurrentTrials() > 0 {
-		initialTrials = min(s.MaxTrials(), s.MaxConcurrentTrials())
+	initialTrials := s.MaxTrials
+	if s.MaxConcurrentTrials > 0 {
+		initialTrials = min(s.MaxTrials, s.MaxConcurrentTrials)
 	}
 	for trial := 0; trial < initialTrials; trial++ {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.CreatedTrials++
 		s.PendingTrials++
@@ -70,11 +64,11 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *randomSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
-	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
+	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
 	unitsCompleted := sumTrialLengths(trialProgress)
-	unitsExpected := s.MaxLength().Units * s.MaxTrials()
+	unitsExpected := s.MaxLength.Units * s.MaxTrials
 	return float64(unitsCompleted) / float64(unitsExpected)
 }
 
@@ -88,7 +82,7 @@ func (s *randomSearch) trialExitedEarly(
 		var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		// We don't increment CreatedTrials here because this trial is replacing the invalid trial.
 		s.PendingTrials++
@@ -100,10 +94,10 @@ func (s *randomSearch) trialExitedEarly(
 func (s *randomSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
 	s.PendingTrials--
 	var ops []Operation
-	if s.CreatedTrials < s.MaxTrials() {
+	if s.CreatedTrials < s.MaxTrials {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength))
 		ops = append(ops, NewClose(create.RequestID))
 		s.CreatedTrials++
 		s.PendingTrials++

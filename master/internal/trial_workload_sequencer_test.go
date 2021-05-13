@@ -5,17 +5,16 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
+	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
-func defaultExperimentConfig() (expconf.ExperimentConfig, error) {
+func TestTrialWorkloadSequencer(t *testing.T) {
 	yam := `
 checkpoint_storage:
   type: s3
@@ -36,18 +35,10 @@ searcher:
 reproducibility:
   experiment_seed: 42
 checkpoint_policy: none
-entrypoint: model_def:MyTrial
 `
-	expConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(yam))
-	if err != nil {
-		return expconf.ExperimentConfig{}, nil
-	}
-	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
-}
 
-func TestTrialWorkloadSequencer(t *testing.T) {
-	expConfig, err := defaultExperimentConfig()
-	assert.NilError(t, err)
+	expConfig := model.DefaultExperimentConfig(nil)
+	assert.NilError(t, yaml.Unmarshal([]byte(yam), &expConfig, yaml.DisallowUnknownFields))
 
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
@@ -56,8 +47,8 @@ func TestTrialWorkloadSequencer(t *testing.T) {
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	schedulingUnit := expConfig.SchedulingUnit()
-	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Batches, 500))
+	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
 
 	trainWorkload1 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -159,7 +150,7 @@ func TestTrialWorkloadSequencer(t *testing.T) {
 	assert.Assert(t, !s.UpToDate())
 
 	// Check that workload() returns an error before setTrialID is set
-	_, err = s.Workload()
+	_, err := s.Workload()
 	assert.Error(t, err, "cannot call sequencer.Workload() before sequencer.SetTrialID()")
 
 	s.SetTrialID(1)
@@ -305,9 +296,8 @@ func TestTrialWorkloadSequencer(t *testing.T) {
 }
 
 func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
-	expConfig, err := defaultExperimentConfig()
-	assert.NilError(t, err)
-	expConfig.SetMinCheckpointPeriod(expconf.NewLengthInBatches(100))
+	expConfig := model.DefaultExperimentConfig(nil)
+	expConfig.MinCheckpointPeriod = model.NewLengthInBatches(100)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
@@ -318,7 +308,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Batches, 500))
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
 	s.OperationRequested(train)
 
 	msg := workload.CompletedMessage{
@@ -327,7 +317,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
-			NumBatches:            expConfig.SchedulingUnit(),
+			NumBatches:            expConfig.SchedulingUnit,
 			PriorBatchesProcessed: 0,
 		},
 	}
@@ -343,8 +333,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 }
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
-	expConfig, err := defaultExperimentConfig()
-	assert.NilError(t, err)
+	expConfig := model.DefaultExperimentConfig(nil)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
@@ -355,7 +344,7 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Records, 24))
+	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Records, 24))
 	s.OperationRequested(
 		train,
 	)
