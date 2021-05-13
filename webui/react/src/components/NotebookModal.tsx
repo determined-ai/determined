@@ -46,6 +46,7 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<string[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ showResourceType, setShowResourceType ] = useState(false);
   const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
 
@@ -76,10 +77,6 @@ const NotebookModal: React.FC<Props> = (
     [ ],
   );
 
-  const handleNameUpdate = useCallback((e) => {
-    e;
-  },[ ]);
-
   const handlTemplateUpdate = useCallback((e) => {
     e;
   },[ ]);
@@ -89,6 +86,7 @@ const NotebookModal: React.FC<Props> = (
 
     //Type form field should ONLY appear if both slotsPerAgent and
     //cpuCapacityPerAgent are both greater than 0
+    setShowResourceType(true);
   },[ ]);
 
   const handleTypeUpdate = useCallback((e) => {
@@ -131,21 +129,22 @@ const NotebookModal: React.FC<Props> = (
           <Dropdown options={templates} onChange={handlTemplateUpdate} />
         </Item>
         <Item label='Name' name="name">
-          <Input placeholder='Name' onChange={handleNameUpdate} />
+          <Input placeholder='Name' />
         </Item>
         <Item label='Resource Pool' name="pool">
           <Dropdown
             options={resourcePools.map(pool => pool.name)}
             onChange={handleResourcePoolUpdate} />
         </Item>
-        <Item
+        {showResourceType && <Item
           label='Type'
           name='type'
           rules={[ { message: 'Please choose a resource type', required: true } ]}>
           <RadioGroup
             options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
             onChange={(e) => handleTypeUpdate(e)} />
-        </Item>
+        </Item>}
+
         { resourceType === 'GPU'?
           <Item
             label='Number of Slots'
