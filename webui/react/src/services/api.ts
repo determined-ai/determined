@@ -3,14 +3,14 @@ import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
-  LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams, PatchExperimentParams,
-  SingleEntityParams, TaskLogsParams, TrialDetailsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
+  GetTrialsParams, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
+  PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails,
+  ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, Template, TrialDetails,
   TrialPagination, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
@@ -164,7 +164,7 @@ export const killTensorboard = generateDetApi<
 >(Config.killTensorboard);
 
 export const getTemplates = generateDetApi<
-EmptyParams, Api.V1GetTemplatesResponse, void
+GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]
 >(Config.getTemplates);
 
 export const launchNotebook = generateDetApi<

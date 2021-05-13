@@ -4,7 +4,7 @@ import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { getResourcePools, getTemplates } from 'services/api';
-import { ResourcePool } from 'types';
+import { ResourcePool, Template } from 'types';
 import { launchNotebook } from 'utils/task';
 
 import Link from './Link';
@@ -44,7 +44,7 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ templates, setTemplates ] = useState<string[]>([]);
+  const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ showResourceType, setShowResourceType ] = useState(false);
   const [ resourceType, setResourceType ] = useState(undefined);
@@ -52,10 +52,9 @@ const NotebookModal: React.FC<Props> = (
 
   useEffect(() => {
     const fetchTemplates = async () => {
-      console.log(await getTemplates({}));
+      setTemplates(await getTemplates({}));
     };
     fetchTemplates();
-    setTemplates([]); //get templates from api
   }, []);
 
   useEffect(() => {
@@ -130,7 +129,9 @@ const NotebookModal: React.FC<Props> = (
       </> :
       <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
         <Item label='Notebook Template' name='template'>
-          <Dropdown options={templates} onChange={handlTemplateUpdate} />
+          <Dropdown
+            options={templates.map(template => template.name)}
+            onChange={handlTemplateUpdate} />
         </Item>
         <Item label='Name' name="name">
           <Input placeholder='Name' />

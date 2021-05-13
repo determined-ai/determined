@@ -14,7 +14,7 @@ import {
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails, TrialPagination,
+  ExperimentPagination, Log, ResourcePool, Telemetry, Template, TrialDetails, TrialPagination,
   ValidationHistory,
 } from 'types';
 
@@ -422,10 +422,17 @@ export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardRespo
     .determinedKillTensorboard(params.commandId),
 };
 
-export const getTemplates: DetApi<EmptyParams,Api.V1GetTemplatesResponse, void> = {
+export const getTemplates: DetApi<GetTemplatesParams,Api.V1GetTemplatesResponse, Template[]> = {
   name: 'getTemplates',
-  postProcess: noOp,
-  request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(params.sortBy),
+  postProcess: (response) => (response.templates|| [])
+    .map(template => decoder.mapV1Template(template)),
+  request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.name,
+  ),
 };
 
 export const launchNotebook: DetApi<
