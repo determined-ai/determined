@@ -1,0 +1,18 @@
+description: text_classification_tf
+hyperparameters:
+  global_batch_size: 32
+  dense1: 5
+  embedding_dim: 16
+records_per_epoch: 60000
+debug: true
+searcher:
+  name: single
+  metric: val_sparse_categorical_accuracy
+  smaller_is_better: false
+  max_length:
+    epochs: 5
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0
+    cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-baefbf7
+entrypoint: model_def:MultiTextClassificationTrial

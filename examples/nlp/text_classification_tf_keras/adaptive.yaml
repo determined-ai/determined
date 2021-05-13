@@ -1,0 +1,21 @@
+description: text_classification_tf
+hyperparameters:
+  global_batch_size: 32
+  dense1: 5
+  embedding_dim:
+    type: int
+    minval: 16
+    maxval: 32
+records_per_epoch: 60000
+searcher:
+  name: adaptive_asha
+  metric: val_sparse_categorical_accuracy
+  smaller_is_better: false
+  max_length:
+    epochs: 5
+  max_trials: 10
+environment:
+  image:
+    gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.12.0
+    cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-baefbf7
+entrypoint: model_def:MultiTextClassificationTrial
