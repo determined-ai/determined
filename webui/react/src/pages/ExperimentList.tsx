@@ -28,10 +28,10 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
-import { validateDetApiEnum } from 'services/utils';
+import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
   ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
@@ -282,10 +282,7 @@ const ExperimentList: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = !filters.states ? undefined : filters.states.map(state => {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        return encodeExperimentState(state as RunState) as any;
-      });
+      const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
       const response = await getExperiments(
         {
           archived: filters.showArchived === ALL_VALUE ? undefined :
@@ -297,7 +294,7 @@ const ExperimentList: React.FC = () => {
           offset: pagination.offset,
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
-          states,
+          states: validateDetApiEnumList(Determinedexperimentv1State, states),
           users: filters.users,
         },
         { signal: canceler.signal },
