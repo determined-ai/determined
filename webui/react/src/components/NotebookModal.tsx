@@ -44,6 +44,7 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ templates, setTemplates ] = useState<string[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
@@ -70,9 +71,9 @@ const NotebookModal: React.FC<Props> = (
   },[]);
 
   const handleCreateEnvironment = useCallback(
-    () =>
-      launchNotebook(resourceType === 'GPU'? form.getFieldValue('slots') : 0),
-    [ resourceType, form ],
+    (values) =>
+      launchNotebook(values.resourceType === 'GPU'? values.slots : 0),
+    [ ],
   );
 
   const handleNameUpdate = useCallback((e) => {
@@ -97,7 +98,17 @@ const NotebookModal: React.FC<Props> = (
   return <Modal
     footer={<>
       <Button onClick={handleSecondary}>{showFullConfig ? 'Back' : 'Edit Full Config'}</Button>
-      <Button type="primary" onClick={handleCreateEnvironment}>Create Notebook Environment</Button>
+      <Button
+        type="primary"
+        onClick={() => {
+          form.validateFields().then(values => {
+            console.log(values);
+            //handleCreateEnvironment(values);
+          }).catch(info => {
+            console.log(info);
+          });
+        }
+        }>Create Notebook Environment</Button>
     </>}
     title='Notebook Settings'
     visible={visible}
@@ -116,14 +127,13 @@ const NotebookModal: React.FC<Props> = (
           Read about notebook settings
           </Link>
         </div>
-
         <Input.TextArea defaultValue='' />
       </> :
-      <Form form={form} labelCol={{ span:8 }}>
-        <Item label='Notebook Template'>
+      <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
+        <Item label='Notebook Template' name='template'>
           <Dropdown options={[]} onChange={handlTemplateUpdate} />
         </Item>
-        <Item label='Name' name="name" required>
+        <Item label='Name' name="name">
           <Input placeholder='Name' onChange={handleNameUpdate} />
         </Item>
         <Item label='Resource Pool' name="pool">
@@ -131,14 +141,17 @@ const NotebookModal: React.FC<Props> = (
             options={resourcePools.map(pool => pool.name)}
             onChange={handleResourcePoolUpdate} />
         </Item>
-        <Item label='Type' name='type' required>
+        <Item
+          label='Type'
+          name='type'
+          rules={[ { message: 'Please choose a resource type', required: true } ]}>
           <RadioGroup
             options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
             onChange={(e) => handleTypeUpdate(e)} />
         </Item>
         { resourceType === 'GPU'?
           <Item label='Number of Slots' name="slots" required>
-            <Input defaultValue={1} type='number' />
+            <Input type='number' />
           </Item> : null
         }
       </Form>
