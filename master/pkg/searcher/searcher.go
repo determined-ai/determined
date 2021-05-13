@@ -13,7 +13,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 type (
@@ -37,14 +36,14 @@ type (
 
 	// Searcher encompasses the state as the searcher progresses using the provided search method.
 	Searcher struct {
-		hparams expconf.Hyperparameters
+		hparams model.Hyperparameters
 		method  SearchMethod
 		SearcherState
 	}
 )
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
-func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparameters) *Searcher {
+func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters) *Searcher {
 	return &Searcher{
 		hparams: hparams,
 		method:  method,

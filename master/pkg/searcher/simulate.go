@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -40,11 +39,11 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 		var keyParts []string
 		for _, op := range ops {
 			switch op.Length.Unit {
-			case expconf.Records:
+			case model.Records:
 				keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
-			case expconf.Batches:
+			case model.Batches:
 				keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
-			case expconf.Epochs:
+			case model.Epochs:
 				keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 			}
 		}

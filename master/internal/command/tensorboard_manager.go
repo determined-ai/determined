@@ -23,9 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -163,6 +160,10 @@ func (t *tensorboardManager) newTensorBoard(
 	params *CommandParams,
 	req TensorboardRequest,
 ) (*command, error) {
+	// Warning! Since certain fields are incompatible with the current model.Experiment,
+	// internally this avoids loading certain parts of the experiment configuration so
+	// we can load their tensorboards still.
+	// TODO(DET-4009): Fix this in the experiment configuration backwards compatibility project.
 	exps, err := t.getTensorBoardConfigs(req)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -182,7 +183,7 @@ func (t *tensorboardManager) newTensorBoard(
 		),
 	}
 
-	uniqMounts := map[expconf.BindMount]bool{}
+	uniqMounts := map[model.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
 	taskID := sproto.NewTaskID()
@@ -195,28 +196,27 @@ func (t *tensorboardManager) newTensorBoard(
 	for _, exp := range exps {
 		var logBasePath string
 
-		switch c := exp.Config.CheckpointStorage().GetUnionMember().(type) {
-		case expconf.SharedFSConfig:
+		switch c := exp.Config.CheckpointStorage; {
+		case c.SharedFSConfig != nil:
 			// Mount the checkpoint location into the TensorBoard container to
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
-			sharedFSMount := schemas.WithDefaults(expconf.BindMount{
-				RawContainerPath: model.DefaultSharedFSContainerPath,
-				RawHostPath:      c.HostPath(),
-				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
-			}).(expconf.BindMount)
-			uniqMounts[sharedFSMount] = true
-			logBasePath = c.PathInContainer()
+			uniqMounts[model.BindMount{
+				ContainerPath: model.DefaultSharedFSContainerPath,
+				HostPath:      c.SharedFSConfig.HostPath,
+				Propagation:   model.DefaultSharedFSPropagation,
+			}] = true
+			logBasePath = c.SharedFSConfig.PathInContainer()
 
-		case expconf.S3Config:
-			if c.AccessKey() != nil {
-				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.AccessKey()
+		case c.S3Config != nil:
+			if c.S3Config.AccessKey != nil {
+				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.S3Config.AccessKey
 			}
-			if c.SecretKey() != nil {
-				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.SecretKey()
+			if c.S3Config.SecretKey != nil {
+				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.S3Config.SecretKey
 			}
-			if c.EndpointURL() != nil {
-				endpoint, urlErr := url.Parse(*c.EndpointURL())
+			if c.S3Config.EndpointURL != nil {
+				endpoint, urlErr := url.Parse(*c.S3Config.EndpointURL)
 				if urlErr != nil {
 					return nil, echo.NewHTTPError(http.StatusInternalServerError,
 						"unable to parse checkpoint_storage.s3.endpoint_url")
@@ -224,7 +224,7 @@ func (t *tensorboardManager) newTensorBoard(
 
 				// The TensorBoard container needs access to the original URL
 				// and the URL in "host:port" form.
-				uniqEnvVars["DET_S3_ENDPOINT"] = *c.EndpointURL()
+				uniqEnvVars["DET_S3_ENDPOINT"] = *c.S3Config.EndpointURL
 				uniqEnvVars["S3_ENDPOINT"] = endpoint.Host
 
 				uniqEnvVars["S3_USE_HTTPS"] = "0"
@@ -233,28 +233,24 @@ func (t *tensorboardManager) newTensorBoard(
 				}
 			}
 
-			uniqEnvVars["AWS_BUCKET"] = c.Bucket()
+			uniqEnvVars["AWS_BUCKET"] = c.S3Config.Bucket
 
-			logBasePath = "s3://" + c.Bucket()
+			logBasePath = "s3://" + c.S3Config.Bucket
 
-		case expconf.GCSConfig:
-			logBasePath = "gs://" + c.Bucket()
+		case c.GCSConfig != nil:
+			logBasePath = "gs://" + c.GCSConfig.Bucket
 
-		case expconf.HDFSConfig:
-			logBasePath = "hdfs://" + c.Path()
+		case c.HDFSConfig != nil:
+			logBasePath = "hdfs://" + c.HDFSConfig.Path
 
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
-			for _, mount := range exp.Config.BindMounts() {
+			for _, mount := range exp.Config.BindMounts {
 				uniqMounts[mount] = true
 			}
 
 		default:
-			return nil, echo.NewHTTPError(
-				http.StatusBadRequest, fmt.Sprintf(
-					"unknown storage backend for experiment: %T", c,
-				),
-			)
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "unknown storage backend for experiment")
 		}
 
 		if len(exp.TrialIDs) == 0 {
@@ -351,7 +347,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	var err error
 
 	for _, id := range req.ExperimentIDs {
-		exp, err = t.db.ExperimentByID(id)
+		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(id)
 		if err != nil {
 			return nil, err
 		}
@@ -365,7 +361,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 			return nil, err
 		}
 
-		exp, err = t.db.ExperimentByID(expID)
+		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(expID)
 		if err != nil {
 			return nil, err
 		}
@@ -392,11 +388,11 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	return configs, nil
 }
 
-func getMounts(m map[expconf.BindMount]bool) []model.BindMount {
+func getMounts(m map[model.BindMount]bool) []model.BindMount {
 	var bindMounts []model.BindMount
 
 	for mount := range m {
-		bindMounts = append(bindMounts, model.ToModelBindMount(mount))
+		bindMounts = append(bindMounts, mount)
 	}
 
 	return bindMounts

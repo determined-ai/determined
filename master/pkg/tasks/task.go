@@ -71,7 +71,7 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	envVars = append(envVars, env.EnvironmentVariables().For(deviceType)...)
+	envVars = append(envVars, env.EnvironmentVariables.For(deviceType)...)
 
 	network := t.TaskContainerDefaults.NetworkMode
 	if t.UseHostMode() {
@@ -85,26 +85,26 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 
 	resources := t.ResourcesConfig()
 	var devices []docker.DeviceMapping
-	for _, device := range resources.Devices() {
+	for _, device := range resources.Devices {
 		devices = append(devices, docker.DeviceMapping{
-			PathOnHost:        device.HostPath(),
-			PathInContainer:   device.ContainerPath(),
-			CgroupPermissions: device.Mode(),
+			PathOnHost:        device.HostPath,
+			PathInContainer:   device.ContainerPath,
+			CgroupPermissions: device.Mode,
 		})
 	}
 
 	spec := container.Spec{
 		PullSpec: container.PullSpec{
-			Registry:  env.RegistryAuth(),
-			ForcePull: env.ForcePullImage(),
+			Registry:  env.RegistryAuth,
+			ForcePull: env.ForcePullImage,
 		},
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
 				User:         getUser(t.AgentUserGroup),
-				ExposedPorts: toPortSet(env.Ports()),
+				ExposedPorts: toPortSet(env.Ports),
 				Env:          envVars,
 				Cmd:          t.Entrypoint(),
-				Image:        env.Image().For(deviceType),
+				Image:        env.Image.For(deviceType),
 				WorkingDir:   ContainerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
@@ -112,8 +112,8 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 				Mounts:          t.Mounts(),
 				PublishAllPorts: true,
 				ShmSize:         shmSize,
-				CapAdd:          env.AddCapabilities(),
-				CapDrop:         env.DropCapabilities(),
+				CapAdd:          env.AddCapabilities,
+				CapDrop:         env.DropCapabilities,
 
 				Resources: docker.Resources{
 					Devices: devices,

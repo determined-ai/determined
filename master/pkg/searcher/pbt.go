@@ -5,9 +5,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // PBTSearch implements population-based training (PBT). See https://arxiv.org/abs/1711.09846 for
@@ -27,15 +27,14 @@ type (
 
 	pbtSearch struct {
 		defaultSearchMethod
-		expconf.PBTConfig
+		model.PBTConfig
 		pbtSearchState
-		SmallerIsBetter bool
 	}
 )
 
 const pbtExitedMetricValue = math.MaxFloat64
 
-func newPBTSearch(config expconf.PBTConfig, smallerIsBetter bool) SearchMethod {
+func newPBTSearch(config model.PBTConfig) SearchMethod {
 	return &pbtSearch{
 		PBTConfig: config,
 		pbtSearchState: pbtSearchState{
@@ -45,7 +44,6 @@ func newPBTSearch(config expconf.PBTConfig, smallerIsBetter bool) SearchMethod {
 			EarlyExitTrials:      make(map[model.RequestID]bool),
 			SearchMethodType:     PBTSearch,
 		},
-		SmallerIsBetter: smallerIsBetter,
 	}
 }
 
@@ -62,12 +60,12 @@ func (s *pbtSearch) Restore(state json.RawMessage) error {
 
 func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
-	for trial := 0; trial < s.PopulationSize(); trial++ {
+	for trial := 0; trial < s.PopulationSize; trial++ {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.TrialParams[create.RequestID] = create.Hparams
 		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.LengthPerRound()))
+		ops = append(ops, NewValidateAfter(create.RequestID, s.LengthPerRound))
 	}
 	return ops, nil
 }
@@ -89,13 +87,13 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 	var ops []Operation
 
 	s.TrialRoundsCompleted[requestID]++
-	if len(s.Metrics) < s.PopulationSize() {
+	if len(s.Metrics) < s.PopulationSize {
 		return ops, nil
 	}
 
 	// We've finished all the rounds, so close everything.
 	s.RoundsCompleted++
-	if s.RoundsCompleted >= s.NumRounds() {
+	if s.RoundsCompleted >= s.NumRounds {
 		for requestID := range s.Metrics {
 			if !s.EarlyExitTrials[requestID] {
 				ops = append(ops, NewClose(requestID))
@@ -106,7 +104,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 
 	// We have all the results and another round to run; now apply truncation to select which trials
 	// to close and which to copy.
-	numTruncate := int(s.ReplaceFunction().TruncateFraction * float64(s.PopulationSize()))
+	numTruncate := int(s.TruncateFraction * float64(s.PopulationSize))
 
 	// Sort trials by metric value.
 	trialIDs := make([]model.RequestID, 0, len(s.Metrics))
@@ -145,7 +143,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 
 			ops = append(ops,
 				create,
-				NewValidateAfter(create.RequestID, s.LengthPerRound()))
+				NewValidateAfter(create.RequestID, s.LengthPerRound))
 		}
 	}
 
@@ -153,7 +151,7 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
 		if !s.EarlyExitTrials[requestID] {
 			ops = append(ops, NewValidateAfter(
-				requestID, s.LengthPerRound().MultInt(s.TrialRoundsCompleted[requestID]+1)))
+				requestID, s.LengthPerRound.MultInt(s.TrialRoundsCompleted[requestID]+1)))
 		} else {
 			s.Metrics[requestID] = pbtExitedMetricValue
 		}
@@ -167,33 +165,33 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 // multiplicative factor.
 func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 	params := make(hparamSample)
-	ctx.hparams.Each(func(name string, sampler expconf.Hyperparameter) {
-		if ctx.rand.UnitInterval() < s.ExploreFunction().ResampleProbability {
+	ctx.hparams.Each(func(name string, sampler model.Hyperparameter) {
+		if ctx.rand.UnitInterval() < s.ResampleProbability {
 			params[name] = sampleOne(sampler, ctx.rand)
 		} else {
 			val := old[name]
 			decrease := ctx.rand.UnitInterval() < .5
 			var multiplier float64
 			if decrease {
-				multiplier = 1 - s.ExploreFunction().PerturbFactor
+				multiplier = 1 - s.PerturbFactor
 			} else {
-				multiplier = 1 + s.ExploreFunction().PerturbFactor
+				multiplier = 1 + s.PerturbFactor
 			}
 			switch {
-			case sampler.RawIntHyperparameter != nil:
-				h := sampler.RawIntHyperparameter
+			case sampler.IntHyperparameter != nil:
+				h := sampler.IntHyperparameter
 				if decrease {
-					val = intClamp(int(math.Floor(float64(val.(int))*multiplier)), h.Minval(), h.Maxval())
+					val = intClamp(int(math.Floor(float64(val.(int))*multiplier)), h.Minval, h.Maxval)
 				} else {
-					val = intClamp(int(math.Ceil(float64(val.(int))*multiplier)), h.Minval(), h.Maxval())
+					val = intClamp(int(math.Ceil(float64(val.(int))*multiplier)), h.Minval, h.Maxval)
 				}
-			case sampler.RawDoubleHyperparameter != nil:
-				h := sampler.RawDoubleHyperparameter
-				val = doubleClamp(val.(float64)*multiplier, h.Minval(), h.Maxval())
-			case sampler.RawLogHyperparameter != nil:
-				h := sampler.RawLogHyperparameter
-				minval := math.Pow(h.Base(), h.Minval())
-				maxval := math.Pow(h.Base(), h.Maxval())
+			case sampler.DoubleHyperparameter != nil:
+				h := sampler.DoubleHyperparameter
+				val = doubleClamp(val.(float64)*multiplier, h.Minval, h.Maxval)
+			case sampler.LogHyperparameter != nil:
+				h := sampler.LogHyperparameter
+				minval := math.Pow(h.Base, h.Minval)
+				maxval := math.Pow(h.Base, h.Maxval)
 				val = doubleClamp(val.(float64)*multiplier, minval, maxval)
 			}
 			params[name] = val
@@ -204,7 +202,7 @@ func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 
 func (s *pbtSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {
 	unitsCompleted := sumTrialLengths(trialProgress)
-	unitsExpected := s.LengthPerRound().MultInt(s.PopulationSize()).MultInt(s.NumRounds()).Units
+	unitsExpected := s.LengthPerRound.MultInt(s.PopulationSize).MultInt(s.NumRounds).Units
 	return float64(unitsCompleted) / float64(unitsExpected)
 }
 

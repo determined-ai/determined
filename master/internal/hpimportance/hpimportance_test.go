@@ -7,8 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestComputeHPImportance(t *testing.T) {
@@ -18,51 +16,50 @@ func TestComputeHPImportance(t *testing.T) {
 		CoresPerWorker: 1,
 		MaxTrees:       100,
 	}
-	expConfig := expconf.ExperimentConfig{
-		RawHyperparameters: expconf.Hyperparameters{
-			"dropout1": expconf.Hyperparameter{
-				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-					RawMinval: 0.2,
-					RawMaxval: 0.8,
+	expConfig := &model.ExperimentConfig{
+		Hyperparameters: model.Hyperparameters{
+			"dropout1": model.Hyperparameter{
+				DoubleHyperparameter: &model.DoubleHyperparameter{
+					Minval: 0.2,
+					Maxval: 0.8,
 				},
 			},
 			"dropout2": {
-				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-					RawMinval: 0.2,
-					RawMaxval: 0.8,
+				DoubleHyperparameter: &model.DoubleHyperparameter{
+					Minval: 0.2,
+					Maxval: 0.8,
 				},
 			},
 			"global_batch_size": {
-				RawConstHyperparameter: &expconf.ConstHyperparameter{
-					RawVal: 64,
+				ConstHyperparameter: &model.ConstHyperparameter{
+					Val: 64,
 				},
 			},
 			"learning_rate": {
-				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-					RawMinval: .0001,
-					RawMaxval: 1.0,
+				DoubleHyperparameter: &model.DoubleHyperparameter{
+					Minval: .0001,
+					Maxval: 1.0,
 				},
 			},
 			"n_filters1": {
-				RawIntHyperparameter: &expconf.IntHyperparameter{
-					RawMinval: 8,
-					RawMaxval: 64,
+				IntHyperparameter: &model.IntHyperparameter{
+					Minval: 8,
+					Maxval: 64,
 				},
 			},
 			"n_filters2": {
-				RawIntHyperparameter: &expconf.IntHyperparameter{
-					RawMinval: 8,
-					RawMaxval: 72,
+				IntHyperparameter: &model.IntHyperparameter{
+					Minval: 8,
+					Maxval: 72,
 				},
 			},
 			"n_filters3": {
-				RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
-					RawVals: []interface{}{"val1", "val2"},
+				CategoricalHyperparameter: &model.CategoricalHyperparameter{
+					Vals: []interface{}{"val1", "val2"},
 				},
 			},
 		},
 	}
-	expConfig = schemas.WithDefaults(expConfig).(expconf.ExperimentConfig)
 
 	data := map[int][]model.HPImportanceTrialData{
 		10: {

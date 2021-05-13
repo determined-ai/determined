@@ -18,8 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // MakeTaskSpecFn is a workaround for the delayed initialization that we have around how tasks are
@@ -38,7 +36,7 @@ type InnerSpec interface {
 	// Entrypoint returns the command and arguments to run in the container for this task.
 	Entrypoint() []string
 	// Environment returns the container environment for this task.
-	Environment(TaskSpec) expconf.EnvironmentConfig
+	Environment(TaskSpec) model.Environment
 	// EnvVars returns the environment variables to set for this task (apart from the base ones set for
 	// all containers).
 	EnvVars(TaskSpec) map[string]string
@@ -54,7 +52,7 @@ type InnerSpec interface {
 	// UseHostMode indicates whether host mode networking would be desirable for this task.
 	UseHostMode() bool
 	//ResourcesConfig returns the resources config of the model
-	ResourcesConfig() expconf.ResourcesConfig
+	ResourcesConfig() model.ResourcesConfig
 }
 
 // This alias allows TaskSpec to privately embed the public InnerSpec so that it can reuse (some of)
@@ -126,7 +124,7 @@ func (t *TaskSpec) Archives() []container.RunArchive {
 }
 
 // Environment returns the container environment for this task.
-func (t *TaskSpec) Environment() expconf.EnvironmentConfig { return t.inner.Environment(*t) }
+func (t *TaskSpec) Environment() model.Environment { return t.inner.Environment(*t) }
 
 // EnvVars returns the environment variables that should be set in the container for this task.
 func (t *TaskSpec) EnvVars() map[string]string {
@@ -159,9 +157,7 @@ func (s StartCommand) Description() string { return "cmd" }
 func (s StartCommand) Entrypoint() []string { return s.Config.Entrypoint }
 
 // Environment implements InnerSpec.
-func (s StartCommand) Environment(TaskSpec) expconf.EnvironmentConfig {
-	return s.Config.Environment.ToExpconf()
-}
+func (s StartCommand) Environment(TaskSpec) model.Environment { return s.Config.Environment }
 
 // EnvVars implements InnerSpec.
 func (s StartCommand) EnvVars(TaskSpec) map[string]string { return nil }
@@ -170,9 +166,7 @@ func (s StartCommand) EnvVars(TaskSpec) map[string]string { return nil }
 func (s StartCommand) LoggingFields() map[string]string { return nil }
 
 // Mounts implements InnerSpec.
-func (s StartCommand) Mounts() []mount.Mount {
-	return ToDockerMounts(s.Config.BindMounts.ToExpconf())
-}
+func (s StartCommand) Mounts() []mount.Mount { return ToDockerMounts(s.Config.BindMounts) }
 
 // ShmSize implements InnerSpec.
 func (s StartCommand) ShmSize() int64 {
@@ -189,14 +183,12 @@ func (s StartCommand) UseFluentLogging() bool { return false }
 func (s StartCommand) UseHostMode() bool { return false }
 
 // ResourcesConfig implements InnerSpec.
-func (s StartCommand) ResourcesConfig() expconf.ResourcesConfig {
-	return s.Config.Resources.ToExpconf()
-}
+func (s StartCommand) ResourcesConfig() model.ResourcesConfig { return s.Config.Resources }
 
 // GCCheckpoints is a description of a task for running checkpoint GC.
 type GCCheckpoints struct {
 	ExperimentID       int
-	ExperimentConfig   expconf.ExperimentConfig
+	ExperimentConfig   model.ExperimentConfig
 	ToDelete           json.RawMessage
 	DeleteTensorboards bool
 }
@@ -251,20 +243,10 @@ func (g GCCheckpoints) Entrypoint() []string {
 }
 
 // Environment implements InnerSpec.
-func (g GCCheckpoints) Environment(t TaskSpec) expconf.EnvironmentConfig {
-	// Keep only the EnvironmentVariables provided by the experiment's config.
-	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: g.ExperimentConfig.Environment().RawEnvironmentVariables,
-	}
-
-	// Fill the rest of the environment with default values.
-	defaultConfig := expconf.ExperimentConfig{}
-	t.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
-
-	if defaultConfig.RawEnvironment != nil {
-		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
-	}
-	return schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+func (g GCCheckpoints) Environment(t TaskSpec) model.Environment {
+	env := model.DefaultExperimentConfig(&t.TaskContainerDefaults).Environment
+	env.EnvironmentVariables = g.ExperimentConfig.Environment.EnvironmentVariables
+	return env
 }
 
 // EnvVars implements InnerSpec.
@@ -275,11 +257,11 @@ func (g GCCheckpoints) LoggingFields() map[string]string { return nil }
 
 // Mounts implements InnerSpec.
 func (g GCCheckpoints) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(g.ExperimentConfig.BindMounts())
-	if fs := g.ExperimentConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
+	mounts := ToDockerMounts(g.ExperimentConfig.BindMounts)
+	if fs := g.ExperimentConfig.CheckpointStorage.SharedFSConfig; fs != nil {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
-			Source: fs.HostPath(),
+			Source: fs.HostPath,
 			Target: model.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
 				Propagation: model.DefaultSharedFSPropagation,
@@ -299,13 +281,13 @@ func (g GCCheckpoints) UseFluentLogging() bool { return false }
 func (g GCCheckpoints) UseHostMode() bool { return false }
 
 // ResourcesConfig implements InnerSpec.
-func (g GCCheckpoints) ResourcesConfig() expconf.ResourcesConfig {
-	return g.ExperimentConfig.Resources()
+func (g GCCheckpoints) ResourcesConfig() model.ResourcesConfig {
+	return g.ExperimentConfig.Resources
 }
 
 // StartTrial is a description of a task for running a trial container.
 type StartTrial struct {
-	ExperimentConfig    expconf.ExperimentConfig
+	ExperimentConfig    model.ExperimentConfig
 	ModelDefinition     archive.Archive
 	HParams             map[string]interface{}
 	TrialSeed           uint32
@@ -364,13 +346,14 @@ func (s StartTrial) Entrypoint() []string {
 }
 
 // Environment implements InnerSpec.
-func (s StartTrial) Environment(t TaskSpec) expconf.EnvironmentConfig {
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	for i, port := range rendezvousPorts(trialUniquePortOffset(t.Devices)) {
-		ports[fmt.Sprintf("trial-%d", i)] = port
+func (s StartTrial) Environment(t TaskSpec) model.Environment {
+	env := s.ExperimentConfig.Environment
+	if env.Ports == nil {
+		env.Ports = make(map[string]int)
 	}
-	env.SetPorts(ports)
+	for i, port := range rendezvousPorts(trialUniquePortOffset(t.Devices)) {
+		env.Ports[fmt.Sprintf("trial-%d", i)] = port
+	}
 	return env
 }
 
@@ -404,34 +387,34 @@ func (s StartTrial) LoggingFields() map[string]string {
 
 // Mounts implements InnerSpec.
 func (s StartTrial) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts())
+	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts)
 	addMount := func(source, target string, bindOpts *mount.BindOptions) {
 		mounts = append(mounts, mount.Mount{
 			Type: mount.TypeBind, Source: source, Target: target, BindOptions: bindOpts,
 		})
 	}
 
-	if c := s.ExperimentConfig.CheckpointStorage().RawSharedFSConfig; c != nil {
+	if c := s.ExperimentConfig.CheckpointStorage.SharedFSConfig; c != nil {
 		addMount(
-			c.HostPath(),
+			c.HostPath,
 			model.DefaultSharedFSContainerPath,
 			&mount.BindOptions{Propagation: model.DefaultSharedFSPropagation},
 		)
 	}
 
-	if c := s.ExperimentConfig.DataLayer().RawSharedFSConfig; c != nil {
-		if c.HostStoragePath() != nil && c.ContainerStoragePath() != nil {
-			addMount(*c.HostStoragePath(), *c.ContainerStoragePath(), nil)
+	if c := s.ExperimentConfig.DataLayer.SharedFSConfig; c != nil {
+		if c.HostStoragePath != nil && c.ContainerStoragePath != nil {
+			addMount(*c.HostStoragePath, *c.ContainerStoragePath, nil)
 		}
 	}
-	if c := s.ExperimentConfig.DataLayer().RawS3Config; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
+	if c := s.ExperimentConfig.DataLayer.S3Config; c != nil {
+		if c.LocalCacheHostPath != nil && c.LocalCacheContainerPath != nil {
+			addMount(*c.LocalCacheHostPath, *c.LocalCacheContainerPath, nil)
 		}
 	}
-	if c := s.ExperimentConfig.DataLayer().RawGCSConfig; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
+	if c := s.ExperimentConfig.DataLayer.GCSConfig; c != nil {
+		if c.LocalCacheHostPath != nil && c.LocalCacheContainerPath != nil {
+			addMount(*c.LocalCacheHostPath, *c.LocalCacheContainerPath, nil)
 		}
 	}
 
@@ -446,13 +429,11 @@ func (s StartTrial) UseHostMode() bool { return s.IsMultiAgent }
 
 // ShmSize implements InnerSpec.
 func (s StartTrial) ShmSize() int64 {
-	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
+	if shm := s.ExperimentConfig.Resources.ShmSize; shm != nil {
 		return int64(*shm)
 	}
 	return 0
 }
 
 // ResourcesConfig implements InnerSpec.
-func (s StartTrial) ResourcesConfig() expconf.ResourcesConfig {
-	return s.ExperimentConfig.Resources()
-}
+func (s StartTrial) ResourcesConfig() model.ResourcesConfig { return s.ExperimentConfig.Resources }
