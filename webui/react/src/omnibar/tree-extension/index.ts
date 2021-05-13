@@ -20,7 +20,9 @@ interface TreeRequest {
 }
 
 const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest> => {
-  const sections = input.split(SEPARATOR);
+  const repeatedSeparator = new RegExp(SEPARATOR + '+', 'g');
+  const cleanedInput = input.replace(repeatedSeparator, SEPARATOR);
+  const sections = cleanedInput.split(SEPARATOR);
   const query = sections[sections.length-1];
   const address = sections.slice(0,sections.length-1);
   const path = await traverseTree(address, root);
@@ -34,7 +36,7 @@ const absPathToAddress = (path: TreePath): string[] => (path.map(tn => tn.title)
 
 const noResultsNode: LeafNode = {
   closeBar: true,
-  label: 'no sub branches: exit',
+  label: 'no matching options',
   onAction: noOp,
   title: 'Exit',
 };

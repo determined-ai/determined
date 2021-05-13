@@ -10,14 +10,15 @@ interface Props {
   children?: React.ReactNode;
 }
 
-interface UI {
-  chromeCollapsed: boolean;
-  showChrome: boolean;
-  showSpinner: boolean;
-}
-
 interface OmnibarState {
   isShowing: boolean;
+}
+
+interface UI {
+  chromeCollapsed: boolean;
+  omnibar: OmnibarState;
+  showChrome: boolean;
+  showSpinner: boolean;
 }
 
 export interface State {
@@ -25,7 +26,6 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
-  omnibar: OmnibarState
   ui: UI;
   users: DetailedUser[];
 }
@@ -101,6 +101,7 @@ const initInfo = {
 };
 const initUI = {
   chromeCollapsed: false,
+  omnibar: { isShowing: false },
   showChrome: true,
   showSpinner: false,
 };
@@ -109,7 +110,6 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
-  omnibar: { isShowing: false },
   ui: initUI,
   users: [],
 };
@@ -197,11 +197,11 @@ const reducer = (state: State, action: Action): State => {
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
     case StoreAction.HideOmnibar:
-      if (!state.omnibar.isShowing) return state;
-      return { ...state, omnibar: { ...state.omnibar, isShowing: false } };
+      if (!state.ui.omnibar.isShowing) return state;
+      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };
     case StoreAction.ShowOmnibar:
-      if (state.omnibar.isShowing) return state;
-      return { ...state, omnibar: { ...state.omnibar, isShowing: true } };
+      if (state.ui.omnibar.isShowing) return state;
+      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
     default:
       return state;
   }

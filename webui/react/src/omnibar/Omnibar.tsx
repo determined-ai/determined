@@ -11,7 +11,7 @@ import css from './Omnibar.module.scss';
 
 const Omnibar: React.FC = () => {
   const storeDispatch = useStoreDispatch();
-  const { omnibar } = useStore();
+  const { ui } = useStore();
 
   const hideBar = useCallback(
     () => storeDispatch({ type: StoreAction.HideOmnibar }),
@@ -19,8 +19,8 @@ const Omnibar: React.FC = () => {
   );
 
   useEffect(() => {
-    exposeStore({ dispatch: storeDispatch, state: { omnibar } });
-  }, [ storeDispatch, omnibar ]);
+    exposeStore({ dispatch: storeDispatch, state: { ui } });
+  }, [ storeDispatch, ui ]);
 
   return (
     <div className={css.base}>
@@ -37,7 +37,5 @@ const Omnibar: React.FC = () => {
     </div>
   );
 };
-
-export const keymap = { HIDE_OMNIBAR: 'esc' };
 
 export default Omnibar;

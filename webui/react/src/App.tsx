@@ -23,7 +23,7 @@ import { paths } from './routes/utils';
 const AppView: React.FC = () => {
   const resize = useResize();
   const [ canceler ] = useState(new AbortController());
-  const { info, omnibar } = useStore();
+  const { info, ui } = useStore();
   const storeDispatch = useStoreDispatch();
 
   const fetchInfo = useFetchInfo(canceler);
@@ -65,9 +65,9 @@ const AppView: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (omnibar.isShowing && e.code === KeyCode.Escape) {
+      if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
         storeDispatch({ type: StoreAction.HideOmnibar });
-      } else if (!omnibar.isShowing && e.code === KeyCode.Space && e.ctrlKey) {
+      } else if (!ui.omnibar.isShowing && e.code === KeyCode.Space && e.ctrlKey) {
         storeDispatch({ type: StoreAction.ShowOmnibar });
       }
     };
@@ -77,7 +77,7 @@ const AppView: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [ omnibar.isShowing, storeDispatch ]);
+  }, [ ui.omnibar.isShowing, storeDispatch ]);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
@@ -87,7 +87,7 @@ const AppView: React.FC = () => {
       <Navigation>
         <main>
           <Router routes={appRoutes} />
-          {omnibar.isShowing && <Omnibar />}
+          {ui.omnibar.isShowing && <Omnibar />}
         </main>
       </Navigation>
     </div>

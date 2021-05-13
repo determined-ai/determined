@@ -25,7 +25,10 @@ export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
 /*
   Given a start node and a path: string[] get the TreePath.
 */
-export const traverseTree = async (address: string[], startNode: NonLeafNode): Promise<TreePath> => {
+export const traverseTree = async (
+  address: string[],
+  startNode: NonLeafNode,
+): Promise<TreePath> => {
   let curNode: TreeNode = startNode;
   const path: TreePath = [ curNode ];
   let i = 0;
