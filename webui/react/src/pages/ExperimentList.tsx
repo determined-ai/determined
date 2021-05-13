@@ -392,6 +392,7 @@ const ExperimentList: React.FC = () => {
   const columns = useMemo(() => {
     const labelRenderer = (value: string, record: ExperimentItem) => (
       <TagList
+        compact
         tags={record.labels}
         onChange={experimentTags.handleTagListChange(record.id)}
       />

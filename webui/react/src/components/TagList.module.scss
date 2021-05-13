@@ -1,6 +1,5 @@
 .base {
   display: inline;
-  vertical-align: bottom;
 
   & > * {
     cursor: pointer;
@@ -17,7 +16,7 @@
     border-color: var(--theme-colors-action-normal);
   }
   .tagInput {
-    top: 0.5rem;
-    vertical-align: top;
+    margin: 0;
+    top: -1px;
   }
 }

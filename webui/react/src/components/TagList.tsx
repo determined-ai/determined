@@ -2,19 +2,24 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Link from 'components/Link';
 import { toRem } from 'utils/dom';
 import { alphanumericSorter } from 'utils/sort';
 import { toHtmlId, truncate } from 'utils/string';
 
 import css from './TagList.module.scss';
 
-const TAG_MAX_LENGTH = 20;
 interface Props {
+  compact?: boolean;
   onChange?: (tags: string[]) => void;
   tags: string[];
 }
 
+const TAG_MAX_LENGTH = 20;
+const COMPACT_MAX_THRESHOLD = 3;
+
 const EditableTagList: React.FC<Props> = ({
+  compact,
   tags,
   onChange,
 }: Props) => {
@@ -27,6 +32,7 @@ const EditableTagList: React.FC<Props> = ({
     inputWidth: 82,
   };
   const [ state, setState ] = useState(initialState);
+  const [ showMore, setShowMore ] = useState(false);
   const inputRef = useRef<Input>(null);
   const editInputRef = useRef<Input>(null);
 
@@ -70,6 +76,7 @@ const EditableTagList: React.FC<Props> = ({
     e.persist();
     setState(state => ({ ...state, editOldInputValue: e.target?.value }));
   }, []);
+
   const handleEditInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
     setState(state => ({ ...state, editInputValue: e.target?.value }));
@@ -101,6 +108,14 @@ const EditableTagList: React.FC<Props> = ({
       {tags
         .sort((a, b) => alphanumericSorter(a, b))
         .map((tag, index) => {
+          if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
+            if (index > COMPACT_MAX_THRESHOLD) return null;
+            return (
+              <Link key="more" onClick={() => setShowMore(true)}>
+                +{tags.length - COMPACT_MAX_THRESHOLD} more
+              </Link>
+            );
+          }
           if (editInputIndex === index) {
             return (
               <Input
@@ -158,7 +173,7 @@ const EditableTagList: React.FC<Props> = ({
           onChange={handleInputChange}
           onPressEnter={handleInputConfirm} />
       ) : (
-        <Tag className={css.tagPlus + ' tagPlus'} onClick={handleTagPlus}>
+        <Tag className={css.tagPlus} onClick={handleTagPlus}>
           <PlusOutlined /> New Tag
         </Tag>
       )}
