@@ -4,7 +4,7 @@ import { GlobalHotKeys } from 'react-hotkeys';
 
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { exposeStore } from 'omnibar/exposedStore';
-import * as Tree from 'omnibar/Tree';
+import * as Tree from 'omnibar/TreeExtension';
 import TreeNode from 'omnibar/TreeNode';
 
 import css from './Omnibar.module.scss';

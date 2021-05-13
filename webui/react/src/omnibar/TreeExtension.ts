@@ -9,7 +9,7 @@ import { store } from 'omnibar/exposedStore';
 import root from 'omnibar/sampleTree';
 import {
   BaseNode, Children,
-  LeafNode, TreePath,
+  LeafNode, NLNode, TreePath,
 } from 'omnibar/types';
 import { noOp } from 'services/utils';
 
@@ -20,7 +20,7 @@ interface TreeRequest {
   query: string;
 }
 
-const parseInput = async (input: string): Promise<TreeRequest> => {
+const parseInput = async (input: string, root: NLNode): Promise<TreeRequest> => {
   const sections = input.split(SEPARATOR);
   const query = sections[sections.length-1];
   const address = sections.slice(0,sections.length-1);
@@ -40,8 +40,8 @@ const noResultsNode: LeafNode = {
   title: 'Exit',
 };
 
-const query = async (input: string): Promise<Children> => {
-  const { path, query } = await parseInput(input);
+const queryTree = async (input: string, root: NLNode): Promise<Children> => {
+  const { path, query } = await parseInput(input, root);
   const node = path[path.length-1];
   const children = await getNodeChildren(node);
   const fuse = new Fuse(
@@ -69,7 +69,8 @@ const query = async (input: string): Promise<Children> => {
 
 export const extension = async(input: string): Promise<Children> => {
   try {
-    return await query(input);
+    // query the default tree.
+    return await queryTree(input, root);
   } catch (e) {
     handleError({
       error: e,
@@ -87,7 +88,7 @@ export const onAction = async (
   if (!!item && isTreeNode(item)) {
     const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
     if (!input) return Promise.resolve();
-    const { path } = await parseInput(input.value);
+    const { path } = await parseInput(input.value, root);
     // update the omnibar text to reflect the current path
     input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
         + item.title;
