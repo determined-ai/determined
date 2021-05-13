@@ -46,11 +46,11 @@ build-agent: build-proto
 	$(MAKE) -C agent build
 
 .PHONY: build-master
-build-master: build-proto build-webui build-docs
+build-master: build-proto
 	$(MAKE) -C master build
 
 .PHONY: build
-build: build-master build-agent
+build: build-master build-agent build-webui build-docs 
 
 .PHONY: clean-%
 clean-%:
