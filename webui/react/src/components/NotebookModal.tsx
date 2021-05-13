@@ -102,11 +102,8 @@ const NotebookModal: React.FC<Props> = (
         type="primary"
         onClick={() => {
           form.validateFields().then(values => {
-            console.log(values);
-            //handleCreateEnvironment(values);
-          }).catch(info => {
-            console.log(info);
-          });
+            handleCreateEnvironment(values);
+          }).catch();
         }
         }>Create Notebook Environment</Button>
     </>}
