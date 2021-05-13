@@ -32,6 +32,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
       title: 'Value',
     },
   ], []);
+
   const dataSource: HyperParameter[] = useMemo(() => {
     return Object.entries(trial.hparams).map(([ hyperparameter, value ]) => {
       return {
@@ -47,6 +48,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
       columns={columns}
       dataSource={dataSource}
       pagination={false}
+      size="small"
     />
   );
 };
