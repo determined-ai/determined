@@ -3,7 +3,7 @@ import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { getResourcePools } from 'services/api';
+import { getResourcePools, getTemplates } from 'services/api';
 import { ResourcePool } from 'types';
 import { launchNotebook } from 'utils/task';
 
@@ -51,6 +51,10 @@ const NotebookModal: React.FC<Props> = (
   const [ form ] = Form.useForm();
 
   useEffect(() => {
+    const fetchTemplates = async () => {
+      console.log(await getTemplates({}));
+    };
+    fetchTemplates();
     setTemplates([]); //get templates from api
   }, []);
 

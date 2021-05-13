@@ -8,9 +8,9 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
   ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
-  HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
-  PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
+  GetTrialsParams, HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse,
+  LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
@@ -420,6 +420,12 @@ export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardRespo
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Tensorboards
     .determinedKillTensorboard(params.commandId),
+};
+
+export const getTemplates: DetApi<EmptyParams,Api.V1GetTemplatesResponse, void> = {
+  name: 'getTemplates',
+  postProcess: noOp,
+  request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(params.sortBy),
 };
 
 export const launchNotebook: DetApi<
