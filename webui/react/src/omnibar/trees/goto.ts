@@ -1,4 +1,4 @@
-import { visitAction } from 'omnibar/actions';
+import { visitAction } from 'omnibar/trees/actions';
 import { Children, TreeNode } from 'omnibar/types';
 import { paths } from 'routes/utils';
 import { getExperiments, getExpTrials } from 'services/api';

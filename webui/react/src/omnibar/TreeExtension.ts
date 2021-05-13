@@ -6,10 +6,9 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { getNodeChildren, isLeafNode,
   isNLNode, isTreeNode, traverseTree } from 'omnibar/AsyncTree';
 import { store } from 'omnibar/exposedStore';
-import root from 'omnibar/sampleTree';
+import root from 'omnibar/trees/index';
 import {
-  BaseNode, Children,
-  LeafNode, NLNode, TreePath,
+  BaseNode, Children, LeafNode, NLNode, TreePath,
 } from 'omnibar/types';
 import { noOp } from 'services/utils';
 

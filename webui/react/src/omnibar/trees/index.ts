@@ -1,6 +1,6 @@
-import { displayHelp, parseIds, visitAction } from 'omnibar/actions';
-import dev from 'omnibar/nodes/dev';
-import locations from 'omnibar/nodes/locations';
+import { displayHelp, parseIds, visitAction } from 'omnibar/trees/actions';
+import dev from 'omnibar/trees/dev';
+import locations from 'omnibar/trees/goto';
 import { Children, LeafNode, NLNode } from 'omnibar/types';
 import { paths } from 'routes/utils';
 import { activateExperiment, archiveExperiment, getExperiments, getNotebooks, getTensorboards,
