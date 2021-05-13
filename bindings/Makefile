@@ -1,5 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
+CLIENT_PATH := ../harness/determined/swagger/client
 
 .PHONY: all
 all: get-deps
@@ -21,7 +22,9 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 
 .PHONY: build
 build: build/typescript-fetch build/python
-	bash ./compare_swagger_python.sh
+	cp -rf ./build/python/determined.swagger.client/ ./build/python/determined/swagger/client
+	cp -rf ./build/python/determined/swagger/client/ $(CLIENT_PATH)
+	test -z "$(shell git status --porcelain '$(CLIENT_PATH)')"
 
 .PHONY: clean-deps
 clean-deps:
