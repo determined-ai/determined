@@ -121,26 +121,6 @@ const NavigationSideBar: React.FC = () => {
               <Button
                 className={css.launchButton}
                 onClick={handleNotebookLaunch}>Launch Notebook</Button>
-              <Dropdown
-                content={(
-                  <Menu>
-                    {isCollapsed && <Menu.Item onClick={handleNotebookLaunch}>
-                      Launch Notebook
-                    </Menu.Item>}
-                    <Menu.Item onClick={handleCpuNotebookLaunch}>
-                      Launch CPU-only Notebook
-                    </Menu.Item>
-                  </Menu>
-                )}
-                offset={isCollapsed ? { x: 8, y: 0 } : { x: 0, y: 8 }}
-                placement={isCollapsed ? Placement.RightTop : Placement.BottomRight}
-                onVisibleChange={handleVisibleChange}>
-                <Button className={css.launchIcon}>
-                  <Icon
-                    name={isCollapsed ? 'add-small' : (isShowingCpu ? 'arrow-up': 'arrow-down')}
-                    size="tiny" />
-                </Button>
-              </Dropdown>
             </div>
           </section>
           <section className={css.top}>
