@@ -147,7 +147,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
     const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
     setDefaultMetrics(defaultMetrics);
     const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
-    setDefaultMetrics(defaultMetrics);
     setMetrics(initMetrics);
   }, [ experiment, metricNames, storage, storageTableMetricsKey ]);
 
