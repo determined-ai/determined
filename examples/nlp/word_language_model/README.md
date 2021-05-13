@@ -25,14 +25,13 @@ const.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const.yaml`.
 
 ### Specifying the Model
-This example defines 4 models - a Transformer, a recurrent neural network with LSTM cells,
-a recurrent neural network with GRU cells, and a recurrent neural network with a simple RNN cell with a `tanh` activation.
+This example defines 3 models - a Transformer, a recurrent neural network with LSTM cells,
+and a recurrent neural network with GRU cells. We do not include the recurrent neural network with the `tanh` and `ReLU` activations due to numerical instability.
 
 To specify which model to use, replace the `model_cls` attribute in the appropriate .yaml file with one of the following:
 * `Transformer`
 * `LSTM`
 * `GRU`
-* `RNN`
 
 ## Results
 Note: The purpose of this table is to show the word language modeling models running in Determined 

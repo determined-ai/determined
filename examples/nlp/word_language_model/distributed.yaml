@@ -1,12 +1,11 @@
 description: word_language_modeling_distributed 
 hyperparameters:
-    global_batch_size: 50 
+    global_batch_size: 50
     eval_batch_size: 10
     max_grad_norm: 0.25
     model_cls: Transformer
     # model_cls: LSTM
     # model_cls: GRU
-    # model_cls: RNN
     word_embeddings_size: 200
     num_hidden: 200
     num_layers: 2
@@ -15,7 +14,7 @@ hyperparameters:
     lr: 20
     # Transformer Model Only Hyperparameters
     num_heads: 2
-    # RNN Model Only Hyperparameters
+    # LSTM/GRU Model Only Hyperparameters
     # tied: False
 resources:
     slots_per_trial: 8

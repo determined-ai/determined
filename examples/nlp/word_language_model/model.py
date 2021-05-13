@@ -30,10 +30,8 @@ class RNNModel(nn.Module):
         self.ntoken = ntoken
         self.drop = nn.Dropout(dropout)
         self.encoder = nn.Embedding(ntoken, ninp)
-        if rnn_type in ["LSTM", "GRU"]:
-            self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
-        else:
-            self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity="tanh", dropout=dropout)
+        assert rnn_type in ["LSTM", "GRU"]
+        self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
 
         # Optionally tie weights as in:
