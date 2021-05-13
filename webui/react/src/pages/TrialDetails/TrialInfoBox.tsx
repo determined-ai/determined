@@ -1,4 +1,4 @@
-import { Button, List, Modal } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
@@ -7,9 +7,7 @@ import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
-  TrialHyperParameters,
 } from 'types';
-import { isObject } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { capitalize, humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
@@ -23,19 +21,7 @@ interface Props {
   trial: TrialDetails;
 }
 
-const hyperparamsView = (params: TrialHyperParameters) => {
-  return <List
-    dataSource={Object.entries(params)}
-    renderItem={([ label, value ]) => {
-      const textValue = isObject(value) ? JSON.stringify(value, null, 2) : value.toString();
-      return <List.Item>{label}: {textValue}</List.Item>;
-    }}
-    size="small"
-  />;
-};
-
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
-  const [ showHParams, setShowHParams ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const { metric } = experiment.config.searcher || {};
@@ -69,8 +55,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-  const handleShowHParams = useCallback(() => setShowHParams(true), []);
-  const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
   const workloadStatus: string | undefined =
     Object.entries(trial.workloads.last()).find(e => !!e[1])?.first();
@@ -122,24 +106,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       content: totalCheckpointsSize,
       label: 'Total Checkpoint Size',
     },
-    {
-      content: <Button onClick={handleShowHParams}>Show</Button>,
-      label: 'H-params',
-    },
   ];
 
   return (
     <Section bodyBorder maxHeight title="Summary">
       <InfoBox rows={infoRows} />
-      <Modal
-        bodyStyle={{ padding: 0 }}
-        cancelButtonProps={{ style: { display: 'none' } }}
-        title={`Trial ${trial.id} Hyperparameters`}
-        visible={showHParams}
-        onCancel={handleHideHParams}
-        onOk={handleHideHParams}>
-        {hyperparamsView(trial.hparams)}
-      </Modal>
     </Section>
   );
 };

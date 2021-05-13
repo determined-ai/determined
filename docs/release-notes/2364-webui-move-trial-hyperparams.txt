@@ -1,0 +1,6 @@
+:orphan:
+
+**Changes**
+
+-  Webui: moving hyperparameters in a dedicated tab in the trial detail
+   page.
