@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { getResourcePools } from 'services/api';
 import { ResourcePool } from 'types';
+import { launchNotebook } from 'utils/task';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -12,7 +13,7 @@ const { Option } = Select;
 const { Item } = Form;
 
 interface Props {
-  forceVisible?: boolean;
+  visible?: boolean;
 }
 
 /*
@@ -39,7 +40,7 @@ Secondary button with a back arrow.
 */
 
 const NotebookModal: React.FC<Props> = (
-  { forceVisible = false }: Props,
+  { visible = false }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
@@ -67,9 +68,11 @@ const NotebookModal: React.FC<Props> = (
     setShowFullConfig(show => !show);
   },[]);
 
-  const handleCreateEnvironment = useCallback(() => {
-    null; //call api to create environment
-  },[]);
+  const handleCreateEnvironment = useCallback(
+    () =>
+      launchNotebook(resourceType === 'GPU'? form.getFieldValue('slots') : 0),
+    [ resourceType, form ],
+  );
 
   const handleNameUpdate = useCallback((e) => {
     e;
@@ -96,7 +99,7 @@ const NotebookModal: React.FC<Props> = (
       <Button type="primary" onClick={handleCreateEnvironment}>Create Notebook Environment</Button>
     </>}
     title='Notebook Settings'
-    visible={forceVisible}>
+    visible={visible}>
     {showFullConfig?
       <>
         <div style={{
