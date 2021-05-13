@@ -1,4 +1,4 @@
-import { Button, InputNumber, Modal } from 'antd';
+import { Button, Col, InputNumber, Modal, Row } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -128,6 +128,28 @@ const NotebookModal: React.FC<Props> = (
         <Input.TextArea defaultValue='' />
       </> :
       <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
+        <Row justify='end'>
+          <Item
+            label='Type'
+            labelCol={{ span:8 }}
+            name='type'
+            rules={[ { message: 'Please choose a resource type', required: true } ]}>
+            <RadioGroup
+              options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
+              onChange={(e) => handleTypeUpdate(e)} />
+          </Item>
+          <Col span={11}>
+            { resourceType === 'GPU'?
+              <Item
+                label='Number of Slots'
+                labelCol={{ span:14 }}
+                name="slots"
+                rules={[ { message: 'Please choose a number of slots', required: true } ]}>
+                <InputNumber min={1} />
+              </Item> : null
+            }
+          </Col>
+        </Row>
         <Item label='Notebook Template' name='template'>
           <Dropdown
             options={templates.map(template => template.name)}
@@ -141,23 +163,6 @@ const NotebookModal: React.FC<Props> = (
             options={resourcePools.map(pool => pool.name)}
             onChange={handleResourcePoolUpdate} />
         </Item>
-        {showResourceType && <Item
-          label='Type'
-          name='type'
-          rules={[ { message: 'Please choose a resource type', required: true } ]}>
-          <RadioGroup
-            options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
-            onChange={(e) => handleTypeUpdate(e)} />
-        </Item>}
-
-        { resourceType === 'GPU'?
-          <Item
-            label='Number of Slots'
-            name="slots"
-            rules={[ { message: 'Please choose a number of slots', required: true } ]}>
-            <InputNumber min={1} />
-          </Item> : null
-        }
       </Form>
     }
   </Modal>;
