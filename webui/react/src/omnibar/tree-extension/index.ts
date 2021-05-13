@@ -9,7 +9,7 @@ import {
   BaseNode, Children, LeafNode, NLNode, TreePath,
 } from 'omnibar/tree-extension/types';
 import { getNodeChildren, isLeafNode,
-  isNLNode, isTreeNode, traverseTree } from 'omnibar/tree-extension/utils';
+  isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
 import { noOp } from 'services/utils';
 
 const SEPARATOR = ' ';
@@ -84,26 +84,23 @@ export const onAction = async (
   item: BaseNode,
   query: (input: string) => void,
 ): Promise<void> => {
-  if (!!item && isTreeNode(item)) {
-    const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
-    if (!input) return Promise.resolve();
-    const { path } = await parseInput(input.value, root);
-    // update the omnibar text to reflect the current path
-    input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
+  const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
+  if (!input) return Promise.resolve();
+  const { path } = await parseInput(input.value, root);
+  // update the omnibar text to reflect the current path
+  input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
         + item.title;
-    if (isLeafNode(item)) {
-      await item.onAction(item);
-      if (item.closeBar || path.find(n => n.title === 'goto')) {
-        store?.dispatch({ type: StoreAction.HideOmnibar });
-      } else {
-        message.info('Action executed.', 1);
-      }
+  if (isLeafNode(item)) {
+    await item.onAction(item);
+    if (item.closeBar || path.find(n => n.title === 'goto')) {
+      store?.dispatch({ type: StoreAction.HideOmnibar });
     } else {
-      // trigger the query.
-      input.value = input.value + SEPARATOR;
-      query(input.value);
+      message.info('Action executed.', 1);
     }
-
+  } else {
+    // trigger the query.
+    input.value = input.value + SEPARATOR;
+    query(input.value);
   }
   return Promise.resolve();
 };

@@ -6,8 +6,6 @@ export const isLeafNode = (node: TreeNode): node is LeafNode =>
   'onAction' in node && !('options' in node);
 export const isNLNode = (node: TreeNode): node is NLNode =>
   !('onAction' in node) && ('options' in node || 'onCustomInput' in node);
-export const isTreeNode = (node: TreeNode): node is TreeNode =>
-  'title' in node && node.title !== undefined && (isLeafNode(node) || isNLNode(node));
 
 export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
   if (isLeafNode(node)) return [];

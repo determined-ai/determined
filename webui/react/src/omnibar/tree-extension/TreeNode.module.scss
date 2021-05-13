@@ -1,0 +1,29 @@
+// Based on omnibar/src/modifier/AnchorRenderer.tsx
+
+.base {
+  border-bottom-width: 1px;
+  border-color: var(--theme-colors-monochrome-12);
+  border-left-width: 1px;
+  border-right-width: 1px;
+  border-style: solid;
+  border-top-width: 0;
+  box-sizing: border-box;
+  color: var(--theme-colors-monochrome-0);
+  display: block;
+  font-size: 24px;
+  height: 50px;
+  line-height: 50px;
+  max-width: calc(max(50vw, 300px));
+  overflow-y: hidden;
+  padding-left: 15px;
+  padding-right: 15px;
+  text-decoration: none;
+  word-break: break-word;
+  word-wrap: break-all;
+}
+.selected {
+  background-color: var(--theme-colors-monochrome-13);
+}
+.highlighted {
+  background-color: var(--theme-colors-monochrome-12);
+}
