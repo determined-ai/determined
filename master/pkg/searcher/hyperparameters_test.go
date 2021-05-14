@@ -5,18 +5,20 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestSamplingReproducibility(t *testing.T) {
-	spec := model.Hyperparameters{
-		"cat": {CategoricalHyperparameter: &model.CategoricalHyperparameter{
-			Vals: []interface{}{0, 1, 2, 3, 4, 5, 6}}},
-		"const":  {ConstHyperparameter: &model.ConstHyperparameter{Val: "val"}},
-		"double": {DoubleHyperparameter: &model.DoubleHyperparameter{Minval: 0, Maxval: 100}},
-		"int":    {IntHyperparameter: &model.IntHyperparameter{Minval: 0, Maxval: 100}},
-		"log":    {LogHyperparameter: &model.LogHyperparameter{Base: 10, Minval: -2, Maxval: 2}},
+	spec := expconf.Hyperparameters{
+		"cat": {RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
+			RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6}}},
+		"const":  {RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "val"}},
+		"double": {RawDoubleHyperparameter: &expconf.DoubleHyperparameter{RawMinval: 0, RawMaxval: 100}},
+		"int":    {RawIntHyperparameter: &expconf.IntHyperparameter{RawMinval: 0, RawMaxval: 100}},
+		"log": {
+			RawLogHyperparameter: &expconf.LogHyperparameter{RawBase: 10, RawMinval: -2, RawMaxval: 2},
+		},
 	}
 
 	// Run the checks multiple times; map iteration order, if it has an effect on the result, is an
