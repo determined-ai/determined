@@ -140,7 +140,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoConfig(config *expconf.Experiment
 		RawDropCapabilities: c.DropCapabilities,
 		RawForcePullImage:   ptrs.BoolPtr(c.ForcePullImage),
 		RawImage:            image,
-		RawPodSpec:          podSpec,
+		RawPodSpec:          (*expconf.PodSpec)(podSpec),
 		RawRegistryAuth:     c.RegistryAuth,
 	}
 	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env).(*expconf.EnvironmentConfig)

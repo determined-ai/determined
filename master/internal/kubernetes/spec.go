@@ -419,7 +419,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, env.PodSpec(), scheduler)
+		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {

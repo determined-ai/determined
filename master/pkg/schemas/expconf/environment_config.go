@@ -12,7 +12,35 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-//go:generate ../gen.sh --import github.com/docker/docker/api/types,k8sV1:k8s.io/api/core/v1
+// PodSpec is just a k8sV1.Pod with custom methods, since k8sV1.Pod is not reflect-friendly.
+type PodSpec k8sV1.Pod
+
+// Copy implements the schemas.Copyable interface.
+func (p PodSpec) Copy() interface{} {
+	k8sP := k8sV1.Pod(p)
+	return PodSpec(*k8sP.DeepCopy())
+}
+
+// Merge implements the schemas.Mergable interface.
+func (p PodSpec) Merge(other interface{}) interface{} {
+	out := k8sV1.Pod{}
+	k8sP := k8sV1.Pod(p)
+	k8sOther := k8sV1.Pod(other.(PodSpec))
+	// Copy the low-priority values first.
+	k8sOther.DeepCopyInto(&out)
+	// Overwrite the object with high-priority values.
+	// DeepCopyInto will only copy non-nil values, so this will effectively merge the objects.
+	k8sP.DeepCopyInto(&out)
+	return PodSpec(out)
+}
+
+// WithDefaults implements the schemas.Defaultable interface.
+func (p PodSpec) WithDefaults() interface{} {
+	pod := k8sV1.Pod(p)
+	return PodSpec(*pod.DeepCopy())
+}
+
+//go:generate ../gen.sh --import github.com/docker/docker/api/types
 // EnvironmentConfigV0 configures the environment of a Determined command or experiment.
 type EnvironmentConfigV0 struct {
 	RawImage                *EnvironmentImageMapV0     `json:"image"`
@@ -21,7 +49,7 @@ type EnvironmentConfigV0 struct {
 	RawPorts          map[string]int    `json:"ports"`
 	RawRegistryAuth   *types.AuthConfig `json:"registry_auth"`
 	RawForcePullImage *bool             `json:"force_pull_image"`
-	RawPodSpec        *k8sV1.Pod        `json:"pod_spec"`
+	RawPodSpec        *PodSpec          `json:"pod_spec"`
 
 	RawAddCapabilities  []string `json:"add_capabilities"`
 	RawDropCapabilities []string `json:"drop_capabilities"`
@@ -34,17 +62,17 @@ type EnvironmentImageMapV0 struct {
 	RawGPU *string `json:"gpu"`
 }
 
-// RuntimeDefaults implements the RuntimeDefaultable interface.
-func (e EnvironmentImageMapV0) RuntimeDefaults() interface{} {
-	if e.RawCPU == nil {
-		cpu := DefaultCPUImage
-		e.RawCPU = &cpu
+// WithDefaults implements the Defaultable interface.
+func (e EnvironmentImageMapV0) WithDefaults() interface{} {
+	cpu := DefaultCPUImage
+	gpu := DefaultGPUImage
+	if e.RawCPU != nil {
+		cpu = *e.RawCPU
 	}
-	if e.RawGPU == nil {
-		gpu := DefaultGPUImage
-		e.RawGPU = &gpu
+	if e.RawGPU != nil {
+		gpu = *e.RawGPU
 	}
-	return e
+	return EnvironmentImageMapV0{RawCPU: &cpu, RawGPU: &gpu}
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.

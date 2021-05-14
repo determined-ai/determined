@@ -96,6 +96,6 @@ func (e Environment) ToExpconf() expconf.EnvironmentConfig {
 		RawPorts:                e.Ports,
 		RawRegistryAuth:         e.RegistryAuth,
 		RawForcePullImage:       ptrs.BoolPtr(e.ForcePullImage),
-		RawPodSpec:              e.PodSpec,
+		RawPodSpec:              (*expconf.PodSpec)(e.PodSpec),
 	}).(expconf.EnvironmentConfig)
 }

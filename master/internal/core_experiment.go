@@ -205,7 +205,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 
 	// Make a Regex to remove everything but a whitelist of characters.
 	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
-	cleanDescription := reg.ReplaceAllString(expConfig.Description(), "")
+	cleanDescription := reg.ReplaceAllString(expConfig.Description().String(), "")
 
 	// Truncate description to a smaller size to both accommodate file name and path size
 	// limits on different platforms as well as get users more accustom to picking shorter
@@ -290,7 +290,9 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		dbExp.Config.SetResources(resources)
 	}
 	if patch.Description != nil {
-		dbExp.Config.SetDescription(*patch.Description)
+		description := dbExp.Config.Description()
+		description.SetString(*patch.Description)
+		dbExp.Config.SetDescription(description)
 	}
 	labels := dbExp.Config.Labels()
 	for label, keep := range patch.Labels {

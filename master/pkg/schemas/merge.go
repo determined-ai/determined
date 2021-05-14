@@ -7,7 +7,8 @@ import (
 
 // Mergable means an object can have custom behvaiors for schemas.Merge.
 type Mergable interface {
-	// Merge should take a struct and return the same struct.
+	// Merge should take a struct and return the same struct.  It must not be defined as a method
+	// against a pointer of the type or it will not work.
 	Merge(interface{}) interface{}
 }
 
@@ -84,9 +85,15 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 		return merge(obj.Elem(), src.Elem(), name)
 	}
 
-	// Detect Mergables.
-	if mergeable, ok := obj.Interface().(Mergable); ok {
-		return reflect.ValueOf(mergeable.Merge(src.Interface()))
+	// Detect Mergables, but disallow pointers.  The reason is that if you have a method like:
+	//    func (t Thing) Merge(other interface{}) interface{}
+	// then Merge() will return a plain Thing object, but a pointer to a Thing will still be treated
+	// as mergable.  Then, schemas.Merge(&t, &t2).(*Thing) would panic because it returns the wrong
+	// type.
+	if obj.Kind() != reflect.Ptr {
+		if mergeable, ok := obj.Interface().(Mergable); ok {
+			return reflect.ValueOf(mergeable.Merge(src.Interface()))
+		}
 	}
 
 	switch obj.Kind() {
