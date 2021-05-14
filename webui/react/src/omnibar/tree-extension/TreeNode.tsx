@@ -28,7 +28,7 @@ const TreeNode: ResultRenderer<BaseNode> = (props) => {
     classes.push(css.selected);
   }
 
-  if (isHighlighted) {
+  if (isHighlighted && !isSelected) {
     classes.push(css.highlighted);
   }
 
@@ -36,7 +36,12 @@ const TreeNode: ResultRenderer<BaseNode> = (props) => {
 
   return (
     <li className={classes.join(' ')} {...rest} title={textualRepr}>
-      {textualRepr}
+      <span>
+        {textualRepr}
+      </span>
+      {isSelected &&
+        <i className={css.shortcut}>↩</i>
+      }
     </li>
   );
 };
