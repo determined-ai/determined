@@ -142,7 +142,6 @@ class SocketManager(workload.Source):
                 # If there's only one container, there's nothing to do for
                 # rendezvous.
                 addrs, rank = msg["addrs"], msg["rank"]
-                addrs2 = msg["addrs2"]
 
                 # The rendezvous info contains the external addresses for
                 # all the containers, but we need to set what to actually
@@ -150,11 +149,9 @@ class SocketManager(workload.Source):
                 # wildcard interface, on a fixed port that matches the one
                 # the agent is hardcoded to expose in all trial containers.
                 # TODO(DET-916): Make number of ports configurable.
-                rendezvous_ports = self.env.rendezvous_ports()
-                addrs[rank] = f"0.0.0.0:{rendezvous_ports[0]}"
-                addrs2[rank] = f"0.0.0.0:{rendezvous_ports[1]}"
+                addrs[rank] = f"0.0.0.0:{self.env.rendezvous_port()}"
 
-                return det.RendezvousInfo(addrs, addrs2, rank)
+                return det.RendezvousInfo(addrs, rank)
 
             elif msg["type"] == "RUN_WORKLOAD":
                 raise ValueError("Received workload before rendezvous info")

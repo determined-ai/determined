@@ -171,16 +171,6 @@ func TestRendezvousInfo(t *testing.T) {
 
 	rep := rmsgs[0]
 
-	t.Run("Container addresses are sorted by ContainerPort", func(t *testing.T) {
-		for _, c := range rep.Containers {
-			var cports []int
-			for _, addr := range c.Addresses {
-				cports = append(cports, addr.ContainerPort)
-			}
-			assert.Assert(t, sort.IntsAreSorted(cports), cports)
-		}
-	})
-
 	t.Run("Rendezvous addrs are sorted", func(t *testing.T) {
 		var addrs []int
 		for _, addr := range rep.Addrs {
@@ -188,15 +178,6 @@ func TestRendezvousInfo(t *testing.T) {
 			addrs = append(addrs, i)
 		}
 		assert.Assert(t, sort.IntsAreSorted(addrs), addrs)
-	})
-
-	t.Run("Rendezvous addrs2 are sorted", func(t *testing.T) {
-		var addrs2 []int
-		for _, addr := range rep.Addrs2 {
-			i, _ := strconv.Atoi(addr)
-			addrs2 = append(addrs2, i)
-		}
-		assert.Assert(t, sort.IntsAreSorted(addrs2), addrs2)
 	})
 
 	t.Run("Rendezvous information is the same for all containers", func(t *testing.T) {
