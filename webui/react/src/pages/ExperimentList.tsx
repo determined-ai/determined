@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
+import tableCss from 'components/ResponsiveTable.module.scss';
 import {
   defaultRowClassName, ExperimentRenderer,
   getFullPaginationConfig, MINIMUM_PAGE_SIZE,
@@ -409,11 +410,15 @@ const ExperimentList: React.FC = () => {
 
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
+
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === 'labels') {
         column.render = labelRenderer;
         column.filterDropdown = labelFilterDropdown;
         column.filters = labels.map(label => ({ text: label, value: label }));
+        column.onHeaderCell = () => {
+          return filters.labels ? { className: tableCss.headerFilterOn } : {};
+        };
       }
       if (column.key === 'archived') {
         column.filterDropdown = archiveFilterDropdown;
@@ -421,6 +426,9 @@ const ExperimentList: React.FC = () => {
           { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
           { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
         ];
+        column.onHeaderCell = () => {
+          return filters.archived ? { className: tableCss.headerFilterOn } : {};
+        };
       }
       if (column.key === V1GetExperimentsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;
@@ -430,10 +438,16 @@ const ExperimentList: React.FC = () => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
+        column.onHeaderCell = () => {
+          return filters.states ? { className: tableCss.headerFilterOn } : {};
+        };
       }
       if (column.key === V1GetExperimentsRequestSortBy.USER) {
         column.filterDropdown = userFilterDropdown;
         column.filters = users.map(user => ({ text: user.username, value: user.username }));
+        column.onHeaderCell = () => {
+          return filters.users ? { className: tableCss.headerFilterOn } : {};
+        };
       }
       if (column.key === 'action') column.render = actionRenderer;
       return column;
@@ -444,6 +458,7 @@ const ExperimentList: React.FC = () => {
     archiveFilterDropdown,
     handleActionComplete,
     experimentTags,
+    filters,
     labelFilterDropdown,
     labels,
     sorter,
