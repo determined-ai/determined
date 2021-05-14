@@ -80,12 +80,11 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, err
 	}
 
-	tensorboardConfig := command.TensorboardRequest{
+	tensorboardLaunchReq := command.TensorboardRequest{
 		CommandParams: params,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
 	}
-	tensorboardLaunchReq := command.TensorboardRequestWithUser{Tensorboard: tensorboardConfig}
 	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
 	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
 		return nil, err

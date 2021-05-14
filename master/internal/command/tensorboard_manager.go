@@ -46,12 +46,6 @@ type TensorboardRequest struct {
 	TrialIDs      []int `json:"trial_ids"`
 }
 
-// TensorboardRequestWithUser accompanies TensorboardRequest with a user.
-type TensorboardRequestWithUser struct {
-	Tensorboard TensorboardRequest
-	User        *model.User
-}
-
 type tensorboardConfig struct {
 	model.Experiment
 	TrialIDs []int
@@ -105,8 +99,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		}
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
-	case TensorboardRequestWithUser:
-		summary, statusCode, err := t.processLaunchRequest(ctx, &msg.Tensorboard)
+	case TensorboardRequest:
+		summary, statusCode, err := t.processLaunchRequest(ctx, &msg)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode,
 				errors.Wrap(err, "failed to launch Tensorboard").Error(),
