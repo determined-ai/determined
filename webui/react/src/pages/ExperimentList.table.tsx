@@ -89,7 +89,9 @@ export const columns: ColumnType<ExperimentItem>[] = [
   {
     align: 'right',
     className: 'fullCell',
+    fixed: 'right',
     key: 'action',
     title: '',
+    width: 40,
   },
 ];
