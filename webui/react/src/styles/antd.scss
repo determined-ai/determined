@@ -170,6 +170,9 @@ html {
   .ant-table-thead > tr > th:only-child {
     border-width: var(--theme-sizes-border-width);
   }
+  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
+    background-color: var(--theme-colors-monochrome-13);
+  }
   .ant-table-tbody > tr > td {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
