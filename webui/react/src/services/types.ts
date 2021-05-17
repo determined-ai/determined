@@ -117,7 +117,14 @@ export interface LaunchTensorboardParams {
 }
 
 export interface LaunchNotebookParams {
-  config?: { resources?: { slots?: number } };
+  config?: {
+    description?: string;
+    resources?: {
+      resource_pool?: string;
+      slots?: number;
+    }
+  };
+  preview?: boolean;
   templateName?: string;
 }
 

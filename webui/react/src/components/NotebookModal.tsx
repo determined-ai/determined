@@ -5,8 +5,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import { getResourcePools, getTemplates } from 'services/api';
-import { ResourcePool, Template } from 'types';
-import { launchNotebook } from 'utils/task';
+import { RawJson, ResourcePool, Template } from 'types';
+import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
 import RadioGroup from './RadioGroup';
@@ -45,7 +45,7 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ fullConfig, setFullConfig ] = useState('');
+  const [ fullConfig, setFullConfig ] = useState<RawJson>();
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
@@ -68,11 +68,20 @@ const NotebookModal: React.FC<Props> = (
   }, []);
 
   useEffect(()=> {
-    if(showFullConfig) {
-      null; //call api to generate configuration
-      //setFullConfig(value)
-    }
-  }, [ showFullConfig ]);
+    const fetchConfig = async (values: RawJson) => {
+      if(showFullConfig) {
+        console.log(values);
+        const fullConfig = await previewNotebook(
+          values.slots,
+          values.template,
+          values.name,
+          values.pool,
+        );
+        setFullConfig(fullConfig);
+      }
+    };
+    fetchConfig(form.getFieldsValue(true));
+  }, [ showFullConfig, form ]);
 
   const handleConfigChange = useCallback((value) => {
     setFullConfig(value);
@@ -85,7 +94,7 @@ const NotebookModal: React.FC<Props> = (
   const handleCreateEnvironment = useCallback(
     (values) =>{
       if (showFullConfig) {
-        //launchNotebook with full config
+        launchNotebook(0,'',fullConfig);
       } else {
         if(values.template !== '') {
           launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
@@ -94,7 +103,7 @@ const NotebookModal: React.FC<Props> = (
         }
       }
     },
-    [ ],
+    [ fullConfig, showFullConfig ],
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {
@@ -128,7 +137,11 @@ const NotebookModal: React.FC<Props> = (
 
   return <Modal
     footer={<>
-      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
+      <Button onClick={() => {
+        form.validateFields().then(values => {
+          handleSecondary();
+        }).catch();
+      }}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
       <Button
         type="primary"
         onClick={() => {
@@ -158,7 +171,7 @@ const NotebookModal: React.FC<Props> = (
         <MonacoEditor
           height={400}
           language='yaml'
-          value={fullConfig}
+          value={JSON.stringify(fullConfig, null, 2)}
           onChange={handleConfigChange} />
       </> :
       <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>

@@ -1,19 +1,37 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { launchNotebook as apiLaunchNotebook } from 'services/api';
+import { previewNotebook as apiPreviewNotebook } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
-  ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
+  ExperimentItem, ExperimentOld, ExperimentTask, RawJson, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
-export const launchNotebook = async (slots: number, templateName?: string): Promise<void> => {
+export const launchNotebook = async (
+  slots: number,
+  templateName?: string,
+  config?: RawJson,
+  name?: string,
+  pool?:string,
+): Promise<void> => {
   try {
-    const notebook = await apiLaunchNotebook({
-      config: { resources: { slots } },
-      templateName: templateName,
-    });
+    let notebook;
+    if (config) {
+      notebook = await apiLaunchNotebook({
+        config,
+        templateName: templateName === '' ? undefined : templateName,
+      });
+    } else {
+      notebook = await apiLaunchNotebook({
+        config: {
+          description: name === '' ? undefined : name,
+          resources: { resource_pool: pool === '' ? undefined : pool, slots },
+        },
+        templateName: templateName === '' ? undefined : templateName,
+      });
+    }
     openCommand(notebook);
   } catch (e) {
     handleError({
@@ -27,6 +45,32 @@ export const launchNotebook = async (slots: number, templateName?: string): Prom
     });
   }
 };
+
+export const previewNotebook =
+  async (slots: number, templateName?: string, name?: string, pool?: string): Promise<RawJson> => {
+    try {
+      const config = await apiPreviewNotebook({
+        config: {
+          description: name === '' ? undefined : name,
+          resources: { resource_pool: pool === '' ? undefined : pool, slots },
+        },
+        preview: true,
+        templateName: templateName === '' ? undefined : templateName,
+      });
+      return config;
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to Preview Notebook',
+        silent: false,
+        type: ErrorType.Server,
+      });
+      return { error: 'Could not preview notebook' };
+    }
+  };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {

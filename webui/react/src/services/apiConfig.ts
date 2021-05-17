@@ -14,8 +14,8 @@ import {
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination, Log, ResourcePool, Telemetry, Template, TrialDetails, TrialPagination,
-  ValidationHistory,
+  ExperimentPagination, Log, RawJson, ResourcePool, Telemetry, Template, TrialDetails,
+  TrialPagination, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -440,6 +440,15 @@ export const launchNotebook: DetApi<
 > = {
   name: 'launchNotebook',
   postProcess: (response) => decoder.mapV1Notebook(response.notebook),
+  request: (params: LaunchNotebookParams) => detApi.Notebooks
+    .determinedLaunchNotebook(params),
+};
+
+export const previewNotebook: DetApi<
+  LaunchNotebookParams, Api.V1LaunchNotebookResponse, RawJson
+> = {
+  name: 'previewNotebook',
+  postProcess: (response) => response.config,
   request: (params: LaunchNotebookParams) => detApi.Notebooks
     .determinedLaunchNotebook(params),
 };

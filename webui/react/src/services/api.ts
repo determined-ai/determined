@@ -10,8 +10,8 @@ import {
 import { generateApi, generateDetApi } from 'services/utils';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentPagination, Log, ResourcePool, Telemetry, Template, TrialDetails,
-  TrialPagination, ValidationHistory,
+  ExperimentBase, ExperimentPagination, Log, RawJson, ResourcePool, Telemetry, Template,
+  TrialDetails, TrialPagination, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
@@ -170,6 +170,10 @@ GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]
 export const launchNotebook = generateDetApi<
   LaunchNotebookParams, Api.V1LaunchNotebookResponse, CommandTask
 >(Config.launchNotebook);
+
+export const previewNotebook = generateDetApi<
+  LaunchNotebookParams, Api.V1LaunchNotebookResponse, RawJson
+  >(Config.previewNotebook);
 
 export const launchTensorboard = generateDetApi<
   LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
