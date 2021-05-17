@@ -143,14 +143,6 @@ def wrap_metrics(
         return {"metrics": metrics, "stop_requested": stop_requested, "invalid_hp": invalid_hp}
 
 
-def sizeof_dict(dict: Dict[str, Any]) -> int:
-    """
-    Serializes dict object to json and calculates size in bytes.
-    """
-    dict_json = json_encode(dict)
-    return len(dict_json.encode())
-
-
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
     def json_serializer(obj: Any) -> Any:
         if isinstance(obj, datetime.datetime):

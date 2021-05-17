@@ -141,11 +141,6 @@ class _TrialWorkloadManager(WorkloadManager):
             in_response = cast(workload.Metrics, in_response)
             metrics = in_response["metrics"]
 
-            metrics_size = det.util.sizeof_dict(metrics)
-
-            if metrics_size >= constants.MAX_METRICS_SIZE:
-                raise AssertionError(f"Metrics size {metrics_size} exceeded max size {constants.MAX_METRICS_SIZE}.")
-
             metrics = cast(workload.Metrics, metrics)
 
             if in_response.get("invalid_hp", False):

@@ -2,7 +2,7 @@ import logging
 import socket
 import ssl
 from typing import Any, Optional
-
+from determined.util import constants
 import lomond
 import lomond.session
 import simplejson
@@ -194,10 +194,17 @@ class SocketManager(workload.Source):
             if isinstance(metrics, workload.Skipped):
                 return
 
+            metrics_json = util.json_encode(metrics)
+
+            metrics_size = len(metrics_json)
+
+            if metrics_size >= constants.MAX_METRICS_SIZE:
+                raise AssertionError(f"Metrics size {metrics_size} exceeded max size {constants.MAX_METRICS_SIZE}.")
+
             duration = metrics["end_time"] - metrics["start_time"]
             logging.info(f"Workload completed: {metrics['workload']} (duration {duration})")
 
-            self.socket.send_text(util.json_encode(metrics))
+            self.socket.send_text(metrics_json)
 
         yield wkld, [], respond
 
