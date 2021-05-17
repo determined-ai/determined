@@ -3,13 +3,14 @@ import math
 import pathlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
-
+import sys
 import determined as det
 from determined import tensorboard, workload
-from determined.common import storage
+from determined.common import storage, constants
 from determined.common.check import (
     check_eq,
     check_len,
+    check_lt,
     check_not_eq,
     check_not_isinstance,
     check_not_none,
@@ -141,6 +142,12 @@ class _TrialWorkloadManager(WorkloadManager):
 
             in_response = cast(workload.Metrics, in_response)
             metrics = in_response["metrics"]
+
+            metrics_size = det.util.sizeof_dict(metrics)
+
+            if metrics_size >= constants.MAX_METRICS_SIZE:
+                raise AssertionError(f"Metrics size {metrics_size} exceeded max size {constants.MAX_METRICS_SIZE}.")
+
             metrics = cast(workload.Metrics, metrics)
 
             if in_response.get("invalid_hp", False):

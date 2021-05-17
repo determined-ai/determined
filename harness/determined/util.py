@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
 import numpy as np
 import simplejson
-
+import sys
 import determined as det
 from determined import constants
 from determined.common import check, util
@@ -142,6 +142,14 @@ def wrap_metrics(
         return metrics
     else:
         return {"metrics": metrics, "stop_requested": stop_requested, "invalid_hp": invalid_hp}
+
+
+def sizeof_dict(dict: Dict[str, Any]) -> int:
+    """
+    Serializes dict object to json and calculates size in bytes.
+    """
+    dict_json = json_encode(dict)
+    return len(dict_json.encode())
 
 
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
