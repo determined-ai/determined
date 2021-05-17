@@ -185,7 +185,7 @@ commands:
       determined:
         type: boolean
         default: false
-      model-hub: 
+      model-hub:
         type: boolean
         default: false
       extras-requires:
@@ -1432,7 +1432,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.15-gke.1501"
+        default: "1.18.17-gke.100"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1502,7 +1502,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.15-gke.1501"
+        default: "1.18.17-gke.100"
       machine-type:
         type: string
         default: "n1-standard-8"
