@@ -87,6 +87,7 @@ const NotebookModal: React.FC<Props> = (
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {
+    e;
     /*
     if (e === '') {
       setResourceTypeOptions([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
@@ -116,7 +117,7 @@ const NotebookModal: React.FC<Props> = (
 
   return <Modal
     footer={<>
-      <Button onClick={handleSecondary}>{showFullConfig ? 'Back' : 'Edit Full Config'}</Button>
+      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
       <Button
         type="primary"
         onClick={() => {
@@ -124,9 +125,9 @@ const NotebookModal: React.FC<Props> = (
             handleCreateEnvironment(values);
           }).catch();
         }
-        }>Create Notebook Environment</Button>
+        }>Launch</Button>
     </>}
-    title='Notebook Settings'
+    title='Launch JupyterLab'
     visible={visible}
     {...props}>
     {showFullConfig?
