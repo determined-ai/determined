@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Unit is the type of unit for specifying lengths.
@@ -55,13 +56,13 @@ type PartialUnits float64
 
 // UnitContext contains all the context for switching the Unit of a Length freely.
 type UnitContext struct {
-	defaultUnit     Unit
+	defaultUnit     expconf.Unit
 	globalBatchSize int
 	recordsPerEpoch int
 }
 
 // NewUnitContext creates a new UnitContext.
-func NewUnitContext(defaultUnit Unit, globalBatchSize, recordsPerEpoch int) UnitContext {
+func NewUnitContext(defaultUnit expconf.Unit, globalBatchSize, recordsPerEpoch int) UnitContext {
 	return UnitContext{defaultUnit, globalBatchSize, recordsPerEpoch}
 }
 
@@ -157,11 +158,11 @@ func NewLengthInEpochs(epochs int) Length {
 // UnitsFromBatches return the number of units completed by the given batches, rounded up.
 func UnitsFromBatches(ctx UnitContext, batches int) PartialUnits {
 	switch ctx.defaultUnit {
-	case Records:
+	case expconf.Records:
 		return PartialUnits(float64(batches * ctx.globalBatchSize))
-	case Batches:
+	case expconf.Batches:
 		return PartialUnits(float64(batches))
-	case Epochs:
+	case expconf.Epochs:
 		return PartialUnits(float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch))
 	default:
 		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
@@ -208,14 +209,14 @@ func (l Length) DivInt(other int) Length {
 
 // ToNearestBatch converts a training length to the nearest batch, potentially truncating some units
 // if they are provided as records or epochs.
-func (l Length) ToNearestBatch(ctx UnitContext) int {
+func (u UnitContext) ToNearestBatch(l expconf.Length) int {
 	switch l.Unit {
-	case Records:
-		return l.Units / ctx.globalBatchSize
-	case Batches:
+	case expconf.Records:
+		return l.Units / u.globalBatchSize
+	case expconf.Batches:
 		return l.Units
-	case Epochs:
-		return (l.Units * ctx.recordsPerEpoch) / ctx.globalBatchSize
+	case expconf.Epochs:
+		return (l.Units * u.recordsPerEpoch) / u.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}
@@ -223,16 +224,16 @@ func (l Length) ToNearestBatch(ctx UnitContext) int {
 
 // EqualWithinBatch returns true is the given length and batches are equal within one
 // batch size.
-func (l Length) EqualWithinBatch(batches int, ctx UnitContext) bool {
+func (u UnitContext) EqualWithinBatch(l expconf.Length, batches int) bool {
 	switch l.Unit {
-	case Records:
-		diff := abs(l.Units - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
-	case Batches:
+	case expconf.Records:
+		diff := abs(l.Units - batches*u.globalBatchSize)
+		return diff < u.globalBatchSize
+	case expconf.Batches:
 		return l.Units == batches
-	case Epochs:
-		diff := abs(l.Units*ctx.recordsPerEpoch - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
+	case expconf.Epochs:
+		diff := abs(l.Units*u.recordsPerEpoch - batches*u.globalBatchSize)
+		return diff < u.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}
