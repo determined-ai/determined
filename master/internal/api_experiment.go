@@ -507,11 +507,13 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	paths := req.UpdateMask.GetPaths()
+	updateNotes := false
 	for _, path := range paths {
 		switch {
 		case path == "name":
 			exp.Name = req.Experiment.Name
 		case path == "notes":
+			updateNotes = true
 			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
@@ -539,12 +541,22 @@ func (a *apiServer) PatchExperiment(
 		return nil, errors.Wrap(err, "failed to marshal experiment patches")
 	}
 
-	if _, err := a.m.db.RawQuery(
-		"patch_experiment",
-		req.Experiment.Id,
-		marshalledPatches,
-		exp.Notes,
-	); err != nil {
+	if updateNotes {
+		_, err = a.m.db.RawQuery(
+			"patch_experiment_with_notes",
+			req.Experiment.Id,
+			marshalledPatches,
+			req.Experiment.Notes,
+		)
+	} else {
+		_, err = a.m.db.RawQuery(
+			"patch_experiment",
+			req.Experiment.Id,
+			marshalledPatches,
+		)
+	}
+
+	if err != nil {
 		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
 	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
