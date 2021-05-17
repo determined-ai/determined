@@ -1,0 +1,38 @@
+description: word_language_modeling_const
+hyperparameters:
+    global_batch_size: 20
+    eval_batch_size: 10
+    max_grad_norm: 0.25
+    model_cls: Transformer
+    # model_cls: LSTM
+    # model_cls: GRU
+    word_embeddings_size: 200
+    num_hidden: 200
+    num_layers: 2
+    dropout: 0.2
+    bptt: 35
+    lr: 20
+    # Transformer Model Only Hyperparameters
+    num_heads: 2
+    # LSTM/GRU Model Only Hyperparameters
+    # tied: False
+resources:
+    slots_per_trial: 1
+records_per_epoch: 59660
+searcher:
+    name: single
+    metric: validation_loss
+    max_length:
+        epochs: 40
+    smaller_is_better: true
+min_validation_period:
+    epochs: 1
+data:
+    use_bind_mount: True
+    bind_mount_path: /data
+    use_cache: True
+entrypoint: model_def:WordLanguageModelTrial
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+      read_only: false
