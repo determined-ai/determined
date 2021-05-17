@@ -76,8 +76,13 @@ const NotebookModal: React.FC<Props> = (
   },[]);
 
   const handleCreateEnvironment = useCallback(
-    (values) =>
-      launchNotebook(values.resourceType === 'GPU'? values.slots : 0),
+    (values) =>{
+      if(values.template !== '') {
+        launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
+      } else {
+        launchNotebook(values.resourceType === 'GPU'? values.slots : 0);
+      }
+    },
     [ ],
   );
 

@@ -8,9 +8,12 @@ import {
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
-export const launchNotebook = async (slots: number): Promise<void> => {
+export const launchNotebook = async (slots: number, templateName?: string): Promise<void> => {
   try {
-    const notebook = await apiLaunchNotebook({ config: { resources: { slots } } });
+    const notebook = await apiLaunchNotebook({
+      config: { resources: { slots } },
+      templateName: templateName,
+    });
     openCommand(notebook);
   } catch (e) {
     handleError({

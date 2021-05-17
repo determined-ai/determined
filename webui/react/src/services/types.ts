@@ -118,6 +118,7 @@ export interface LaunchTensorboardParams {
 
 export interface LaunchNotebookParams {
   config?: { resources?: { slots?: number } };
+  templateName?: string;
 }
 
 export interface LogsParams {
