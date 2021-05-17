@@ -122,9 +122,16 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`bert_glue_pytorch.tgz
          </examples/bert_glue_pytorch.tgz>`
 
+<<<<<<< HEAD
    -  -  Tensorflow
       -  UCSD
       -  :download:`amazon_reviews.gz </examples/amazon_reviews.gz>`
+=======
+   -  -  PyTorch
+      -  WikiText-2
+      -  :download:`word_language_model.tgz
+         </examples/word_language_model.tgz>`
+>>>>>>> e1e4b9e0... feat: Add PyTorch Word language Modeling example to Determined's Example [DET-5226] (#2352)
 
    -  -  PyTorch (:ref:`Model Hub Transformers
          <model-hub-transformers>`)
