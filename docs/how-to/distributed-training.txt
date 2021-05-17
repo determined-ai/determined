@@ -142,6 +142,29 @@ distributed training:
    can also be used to check if any other tasks are using GPUs and
    preventing your experiment from using all the GPUs on a machine.
 
+***********************
+ Distributed Inference
+***********************
+
+PyTorch users can also use the existing distributed training workflow
+with PytorchTrial to accelerate their inference workloads. This workflow
+is not yet officially supported, so users must specify certain
+training-specific artifacts that are not used for inference. To run a
+distributed batch inference job, create a new PyTorchTrial and follow
+these steps:
+
+-  Load the trained model and build the inference dataset using
+   ``build_validation_data_loader()``.
+-  Specify the inference step using ``evaluate_batch()`` or
+   ``evaluate_full_dataset()``.
+-  Register a dummy ``optimizer``.
+-  Specify a ``build_training_data_loader()`` that returns a dummy
+   dataloader.
+-  Specify a no-op ``train_batch()`` that returns an empty map of metrics.
+
+Once the new PyTorchTrial object is created, use the experiment
+configuration to distribute inference in the same way as training.
+
 ************
  Next Steps
 ************
