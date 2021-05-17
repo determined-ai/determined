@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import queue
 import threading
 import time
@@ -45,7 +46,7 @@ class ShutdownMessage:
     pass
 
 
-DEBUG = True
+DEBUG = os.getenv("DET_PROFILER_DEBUG", default=False)
 
 
 def debug_log(*args: Any) -> None:
