@@ -68,15 +68,12 @@ func (e *ExperimentConfigV0) SetDebug(val bool) {
 	e.RawDebug = &val
 }
 
-func (e ExperimentConfigV0) Description() string {
-	if e.RawDescription == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .Description")
-	}
-	return *e.RawDescription
+func (e ExperimentConfigV0) Description() Description {
+	return e.RawDescription
 }
 
-func (e *ExperimentConfigV0) SetDescription(val string) {
-	e.RawDescription = &val
+func (e *ExperimentConfigV0) SetDescription(val Description) {
+	e.RawDescription = val
 }
 
 func (e ExperimentConfigV0) Entrypoint() *string {

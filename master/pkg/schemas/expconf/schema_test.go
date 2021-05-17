@@ -100,6 +100,8 @@ func objectForURL(url string) interface{} {
 		return &BindMountsConfigV0{}
 	case "http://determined.ai/schemas/expconf/v0/devices.json":
 		return &DevicesConfigV0{}
+	case "http://determined.ai/schemas/expconf/v0/environment.json":
+		return &EnvironmentConfigV0{}
 	// For union member schemas, just return the union type.
 	case "http://determined.ai/schemas/expconf/v0/searcher.json",
 		"http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json",
