@@ -74,3 +74,6 @@ node_modules/
 
 # gobin directory used for tests
 gobin
+
+# MacOS system files
+*.DS_Store
