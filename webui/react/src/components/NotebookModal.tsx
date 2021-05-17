@@ -81,10 +81,6 @@ const NotebookModal: React.FC<Props> = (
     [ ],
   );
 
-  const handlTemplateUpdate = useCallback((e) => {
-    e;
-  },[ ]);
-
   const handleResourcePoolUpdate = useCallback((e) => {
     /*
     if (e === '') {
@@ -168,9 +164,7 @@ const NotebookModal: React.FC<Props> = (
           </Col>
         </Row>
         <Item label='Notebook Template' name='template'>
-          <Dropdown
-            options={templates.map(template => template.name)}
-            onChange={handlTemplateUpdate} />
+          <Dropdown options={templates.map(template => template.name)} />
         </Item>
         <Item label='Name' name="name">
           <Input placeholder='Name' />
@@ -186,7 +180,7 @@ const NotebookModal: React.FC<Props> = (
 };
 
 interface DropdownProps {
-  onChange: (e: string) => void;
+  onChange?: (e: string) => void;
   options?: string[];
 }
 
