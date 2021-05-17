@@ -161,6 +161,7 @@ class _TrialWorkloadManager(WorkloadManager):
                 return
 
             batch_metrics = metrics["batch_metrics"]
+
             # Sanity-check training metrics.
             det.util.validate_batch_metrics(batch_metrics)
             check_len(batch_metrics, wkld.num_batches)
