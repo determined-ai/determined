@@ -2,6 +2,7 @@ import { Button, Col, InputNumber, Modal, Row } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
+import MonacoEditor from 'react-monaco-editor';
 
 import { getResourcePools, getTemplates } from 'services/api';
 import { ResourcePool, Template } from 'types';
@@ -44,6 +45,7 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
+  const [ fullConfig, setFullConfig ] = useState('');
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
@@ -68,8 +70,13 @@ const NotebookModal: React.FC<Props> = (
   useEffect(()=> {
     if(showFullConfig) {
       null; //call api to generate configuration
+      //setFullConfig(value)
     }
   }, [ showFullConfig ]);
+
+  const handleConfigChange = useCallback((value) => {
+    setFullConfig(value);
+  },[]);
 
   const handleSecondary = useCallback(() => {
     setShowFullConfig(show => !show);
@@ -77,10 +84,14 @@ const NotebookModal: React.FC<Props> = (
 
   const handleCreateEnvironment = useCallback(
     (values) =>{
-      if(values.template !== '') {
-        launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
+      if (showFullConfig) {
+        //launchNotebook with full config
       } else {
-        launchNotebook(values.resourceType === 'GPU'? values.slots : 0);
+        if(values.template !== '') {
+          launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
+        } else {
+          launchNotebook(values.resourceType === 'GPU'? values.slots : 0);
+        }
       }
     },
     [ ],
@@ -144,7 +155,11 @@ const NotebookModal: React.FC<Props> = (
           Read about notebook settings
           </Link>
         </div>
-        <Input.TextArea defaultValue='' />
+        <MonacoEditor
+          height={400}
+          language='yaml'
+          value={fullConfig}
+          onChange={handleConfigChange} />
       </> :
       <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
         <Row justify='end'>
