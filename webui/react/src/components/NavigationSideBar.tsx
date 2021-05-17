@@ -117,6 +117,12 @@ const NavigationSideBar: React.FC = () => {
               <Button
                 className={css.launchButton}
                 onClick={() => setShowNotebookModal(true)}>Launch Notebook</Button>
+              {isCollapsed?
+                <Button className={css.launchIcon} onClick={() => setShowNotebookModal(true)}>
+                  <Icon
+                    name={'add-small'}
+                    size="tiny" />
+                </Button> : null}
             </div>
             <NotebookModal
               visible={showNotebookModal}
