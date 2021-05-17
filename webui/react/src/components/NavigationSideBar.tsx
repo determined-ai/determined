@@ -116,7 +116,7 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => setShowNotebookModal(true)}>Launch Notebook</Button>
+                onClick={() => setShowNotebookModal(true)}>Launch JupyterLab</Button>
               {isCollapsed?
                 <Button className={css.launchIcon} onClick={() => setShowNotebookModal(true)}>
                   <Icon
