@@ -1467,11 +1467,20 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving validations")
 		}
 
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_checkpoints SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches > $3;
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving checkpoints")
+		}
+
 		// TODO(DET-5210): This can go away when step ID does.
 		var id int
 		if err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(max(id), 1)
-FROM steps
+SELECT coalesce(max(id), 0) + 1
+FROM raw_steps
 WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
 			return errors.Wrap(err, "querying next step id")
 		}
@@ -1625,6 +1634,8 @@ SELECT coalesce(greatest(
 		LEFT JOIN runs r ON t.id = r.run_type_fk
 		WHERE t.id = $1
 	      AND r.run_type = 'TRIAL'
+	    ORDER BY r.id DESC
+	    LIMIT 1
 	)), now())
 `, trialID).Scan(&endTime); err != nil {
 		return time.Time{}, errors.Wrap(err, "deriving start time")
