@@ -11,9 +11,6 @@ CREATE TABLE public.runs (
     CONSTRAINT trial_runs_id_trial_id_unique UNIQUE (run_type, run_type_fk, id)
 );
 
-ALTER TABLE public.trials
-    ADD COLUMN metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
-
 AlTER TABLE public.steps
     ADD COLUMN total_records integer NOT NULL DEFAULT 0,
     ADD COLUMN total_epochs real NOT NULL DEFAULT 0,

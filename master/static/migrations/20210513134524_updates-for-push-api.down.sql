@@ -1,6 +1,3 @@
-ALTER TABLE public.trials
-    DROP COLUMN metadata;
-
 DROP TYPE public.run_type;
 
 DROP TABLE public.runs;

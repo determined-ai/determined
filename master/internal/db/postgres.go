@@ -1445,16 +1445,8 @@ func (db *PgDB) UpdateStep(
 // training and validation metrics are cleaned up.
 func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrainingMetrics) error {
 	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
-		var cRunID int
-		switch err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(max(id), 0)
-FROM trial_runs
-WHERE trial_id = $1
-`, m.TrialId).Scan(&cRunID); {
-		case err != nil:
-			return errors.Wrap(err, "querying current run")
-		case int(m.TrialRunId) < cRunID:
-			return api.AsErrBadRequest("stale training metrics for run %d during %d", m.TrialRunId, cRunID)
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -1478,13 +1470,13 @@ WHERE trial_id = $1
 		// TODO(DET-5210): This can go away when step ID does.
 		var id int
 		if err := tx.QueryRowxContext(ctx, `
-SELECT max(id)
+SELECT coalesce(max(id), 1)
 FROM steps
 WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
-			return errors.Wrap(err, "querying next id")
+			return errors.Wrap(err, "querying next step id")
 		}
 
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, int(m.TrialId))
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
 		if err != nil {
 			return err
 		}
@@ -1503,7 +1495,6 @@ VALUES
 			State:      model.CompletedState,
 			StartTime:  startTime,
 			Metrics: map[string]interface{}{
-				// TODO(brad): Is it OK to drop num_inputs?
 				"avg_metrics":   m.Metrics,
 				"batch_metrics": m.BatchMetrics,
 			},
@@ -1524,6 +1515,10 @@ func (db *PgDB) AddValidationMetrics(
 	ctx context.Context, m *trialv1.ValidationMetrics,
 ) error {
 	return db.withTransaction("add validation metrics", func(tx *sqlx.Tx) error {
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
+		}
+
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_validations SET archived = true
 WHERE trial_id = $1
@@ -1533,7 +1528,7 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving validations")
 		}
 
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, int(m.TrialId))
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
 		if err != nil {
 			return err
 		}
@@ -1551,7 +1546,6 @@ VALUES
 			State:      model.CompletedState,
 			StartTime:  startTime,
 			Metrics: map[string]interface{}{
-				// TODO(brad): Is it OK to drop num_inputs?
 				"validation_metrics": m.Metrics,
 			},
 			TotalBatches: int(m.TotalBatches),
@@ -1569,6 +1563,10 @@ func (db *PgDB) AddCheckpointMetadata(
 	ctx context.Context, m *trialv1.CheckpointMetadata,
 ) error {
 	return db.withTransaction("add checkpoint metadata", func(tx *sqlx.Tx) error {
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
+		}
+
 		if _, err := tx.ExecContext(ctx, `
 UPDATE raw_checkpoints SET archived = true
 WHERE trial_id = $1
@@ -1578,7 +1576,7 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving checkpoints")
 		}
 
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, int(m.TrialId))
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
 		if err != nil {
 			return err
 		}
@@ -1612,23 +1610,43 @@ VALUES
 
 // derivePriorWorkloadEndTime approximates the start time of currently reported metrics since
 // resource allocation uses these times.
-func derivePriorWorkloadEndTime(ctx context.Context, tx *sqlx.Tx, trialID int) (time.Time, error) {
+func derivePriorWorkloadEndTime(
+	ctx context.Context, tx *sqlx.Tx, trialID int32,
+) (time.Time, error) {
 	var endTime time.Time
 	if err := tx.QueryRowxContext(ctx, `
-SELECT greatest(
+SELECT coalesce(greatest(
 	(SELECT max(end_time) FROM raw_steps WHERE trial_id = $1),
 	(SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
 	(SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
 	(
 	    SELECT coalesce(r.start_time, t.start_time)
 		FROM trials t
-		LEFT JOIN trial_runs r ON t.id = r.trial_id
+		LEFT JOIN runs r ON t.id = r.run_type_fk
 		WHERE t.id = $1
-	))
+	      AND r.run_type = 'TRIAL'
+	)), now())
 `, trialID).Scan(&endTime); err != nil {
-		return time.Time{}, errors.Wrap(err, "getting prior training metrics")
+		return time.Time{}, errors.Wrap(err, "deriving start time")
 	}
 	return endTime, nil
+}
+
+func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
+	var cRunID int
+	switch err := tx.QueryRowxContext(ctx, `
+SELECT coalesce(max(id), 0)
+FROM runs
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1
+`, trialID).Scan(&cRunID); {
+	case err != nil:
+		return errors.Wrap(err, "querying current run")
+	case int(runID) != cRunID:
+		return api.AsErrBadRequest("invalid run id, %d != %d", runID, cRunID)
+	default:
+		return nil
+	}
 }
 
 func (db *PgDB) updateStep(step *model.Step, newState model.State, metrics model.JSONObj) error {
