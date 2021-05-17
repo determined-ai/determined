@@ -1,0 +1,81 @@
+.. _howto-profiling:
+
+#################################
+ How To: Profile Your Experiment
+#################################
+
+When you want to improve the training speed of your model, the first
+thing you need to do is understand why training is slow. To do this, you
+need to profile your training code. There are many different layers you
+can look at, from raw throughput all the way to GPU kernals.
+
+Determined provides two tools out-of-the-box for profiling your training
+- System Metrics and Timings.
+
+****************
+ System Metrics
+****************
+
+System Metrics are statistics around hardware usage, such as GPU
+utilization and network throughput. These metrics are useful for seeing
+whether your training is using the hardware effectively. When the System
+Metrics reported for an experiment are below what you expect from your
+hardware, that is a sign that the software may be able to be optimized
+to make better use of the hardware resources.
+
+Specifically, Determined tracks:
+
+-  GPU utilization
+-  GPU memory usage
+-  Network throughput (sent)
+-  Network throughput (received)
+-  Disk IOPS
+-  Disk throughput (read)
+-  Disk throughput (write)
+-  Host memory sage
+-  Average CPU utilization across cores
+
+For distributed training, these metrics are collected for every agent.
+The data is broken down per agent. GPU metrics can be further broken
+down by GPU.
+
+Note: System Metrics record agent-level metrics, so when there are
+multiple experiments on the agent, it is difficult to analyze. We
+suggest that profiling is done when the experiment is the only thing
+running on the agent.
+
+*******************************
+ Example: Gradient Aggregation
+*******************************
+
+TODO: Walk through how to use System Metrics to look at Gradient
+Aggregation
+
+*********
+ Timings
+*********
+
+The other class of profiling that Determined handles is Timings. This
+tracks how long training events take, such as retrieving data from the
+data loader, moving data host-to-device, running the forward/backwards
+pass, or executing callbacks.
+
+This provides a fairly high-level picture of where you might want to
+spend your time further investigating the code.
+
+Specifically, Determined tracks:
+
+-  ``dataloader_next`` (amount of time to retrieve the next item from
+   the dataloader)
+-  ``to_device`` (amount of time transfering input from host to device)
+-  ``train_batch`` (amount of time user-defined ``train_batch`` function
+   takes to execute\*)
+-  ``step_lr_schedulers`` (amount time taken to update the LR schedules)
+-  ``from_device`` (amount of time transfering output from device to
+   host)
+-  ``reduce_metrics`` (amount of time taken to calculate global metrics
+   in distributed training)
+
+\* ``train_batch`` is typically the forward pass and the backwards pass.
+
+Timings are currently only supported in PyTorch.
