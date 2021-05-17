@@ -1,6 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
-import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import { sort } from 'fp-ts/lib/ReadonlyNonEmptyArray';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -9,8 +10,9 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  defaultRowClassName, ExperimentRenderer,
-  getFullPaginationConfig, MINIMUM_PAGE_SIZE,
+  archivedRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
+  ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
+  relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
@@ -43,7 +45,6 @@ import {
 import { openCommand } from 'wait';
 
 import css from './ExperimentList.module.scss';
-import { columns as defaultColumns } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -342,7 +343,7 @@ const ExperimentList: React.FC = () => {
   ), [ filters.archived, handleArchiveFilterApply, handleArchiveFilterReset ]);
 
   const handleLabelFilterApply = useCallback((labels: string[]) => {
-    handleFilterChange({ ...filters, labels });
+    handleFilterChange({ ...filters, labels: labels.length !== 0 ? labels : undefined });
   }, [ handleFilterChange, filters ]);
 
   const handleLabelFilterReset = useCallback(() => {
@@ -361,7 +362,7 @@ const ExperimentList: React.FC = () => {
   ), [ filters.labels, handleLabelFilterApply, handleLabelFilterReset ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
-    handleFilterChange({ ...filters, states });
+    handleFilterChange({ ...filters, states: states.length !== 0 ? states : undefined });
   }, [ handleFilterChange, filters ]);
 
   const handleStateFilterReset = useCallback(() => {
@@ -378,7 +379,7 @@ const ExperimentList: React.FC = () => {
   ), [ filters.states, handleStateFilterApply, handleStateFilterReset ]);
 
   const handleUserFilterApply = useCallback((users: string[]) => {
-    handleFilterChange({ ...filters, users });
+    handleFilterChange({ ...filters, users: users.length !== 0 ? users : undefined });
   }, [ handleFilterChange, filters ]);
 
   const handleUserFilterReset = useCallback(() => {
@@ -396,7 +397,7 @@ const ExperimentList: React.FC = () => {
   ), [ filters.users, handleUserFilterApply, handleUserFilterReset ]);
 
   const columns = useMemo(() => {
-    const labelRenderer = (value: string, record: ExperimentItem) => (
+    const labelsRenderer = (value: string, record: ExperimentItem) => (
       <TagList
         compact
         tags={record.labels}
@@ -408,52 +409,113 @@ const ExperimentList: React.FC = () => {
       <TaskActionDropdown task={experimentToTask(record)} onComplete={handleActionComplete} />
     );
 
-    const newColumns = [ ...defaultColumns ].map(column => {
-      column.sortOrder = null;
-
-      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === 'labels') {
-        column.render = labelRenderer;
-        column.filterDropdown = labelFilterDropdown;
-        column.filters = labels.map(label => ({ text: label, value: label }));
-        column.onHeaderCell = () => {
-          return filters.labels ? { className: tableCss.headerFilterOn } : {};
-        };
-      }
-      if (column.key === 'archived') {
-        column.filterDropdown = archiveFilterDropdown;
-        column.filters = [
-          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
-          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
-        ];
-        column.onHeaderCell = () => {
-          return filters.archived ? { className: tableCss.headerFilterOn } : {};
-        };
-      }
-      if (column.key === V1GetExperimentsRequestSortBy.STATE) {
-        column.filterDropdown = stateFilterDropdown;
-        column.filters = Object.values(RunState)
+    const tableColumns: ColumnsType<ExperimentItem> = [
+      {
+        dataIndex: 'id',
+        key: V1GetExperimentsRequestSortBy.ID,
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'ID',
+      },
+      {
+        dataIndex: 'name',
+        key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'Name',
+        width: 240,
+      },
+      {
+        dataIndex: 'labels',
+        filterDropdown: labelFilterDropdown,
+        filters: labels.map(label => ({ text: label, value: label })),
+        key: 'labels',
+        onHeaderCell: () => filters.labels ? { className: tableCss.headerFilterOn } : {},
+        render: labelsRenderer,
+        title: 'Labels',
+        width: 120,
+      },
+      {
+        key: V1GetExperimentsRequestSortBy.STARTTIME,
+        render: (_: number, record: ExperimentItem): React.ReactNode =>
+          relativeTimeRenderer(new Date(record.startTime)),
+        sorter: true,
+        title: 'Start Time',
+      },
+      {
+        key: 'duration',
+        render: expermentDurationRenderer,
+        title: 'Duration',
+      },
+      {
+        dataIndex: 'numTrials',
+        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        sorter: true,
+        title: 'Trials',
+      },
+      {
+        filterDropdown: stateFilterDropdown,
+        filters: Object.values(RunState)
           .filter(value => value !== RunState.Unspecified)
           .map((value) => ({
             text: <Badge state={value} type={BadgeType.State} />,
             value,
-          }));
-        column.onHeaderCell = () => {
-          return filters.states ? { className: tableCss.headerFilterOn } : {};
-        };
-      }
-      if (column.key === V1GetExperimentsRequestSortBy.USER) {
-        column.filterDropdown = userFilterDropdown;
-        column.filters = users.map(user => ({ text: user.username, value: user.username }));
-        column.onHeaderCell = () => {
-          return filters.users ? { className: tableCss.headerFilterOn } : {};
-        };
-      }
-      if (column.key === 'action') column.render = actionRenderer;
+          })),
+        key: V1GetExperimentsRequestSortBy.STATE,
+        onHeaderCell: () => filters.states ? { className: tableCss.headerFilterOn } : {},
+        render: stateRenderer,
+        sorter: true,
+        title: 'State',
+      },
+      {
+        dataIndex: 'resourcePool',
+        key: 'resourcePool',
+        sorter: true,
+        title: 'Resource Pool',
+      },
+      {
+        key: V1GetExperimentsRequestSortBy.PROGRESS,
+        render: experimentProgressRenderer,
+        sorter: true,
+        title: 'Progress',
+      },
+      {
+        dataIndex: 'archived',
+        filterDropdown: archiveFilterDropdown,
+        filters: [
+          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
+          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
+        ],
+        key: 'archived',
+        onHeaderCell: () => filters.archived ? { className: tableCss.headerFilterOn } : {},
+        render: archivedRenderer,
+        title: 'Archived',
+      },
+      {
+        filterDropdown: userFilterDropdown,
+        filters: users.map(user => ({ text: user.username, value: user.username })),
+        key: V1GetExperimentsRequestSortBy.USER,
+        onHeaderCell: () => filters.users ? { className: tableCss.headerFilterOn } : {},
+        render: userRenderer,
+        sorter: true,
+        title: 'User',
+      },
+      {
+        align: 'right',
+        className: 'fullCell',
+        fixed: 'right',
+        key: 'action',
+        render: actionRenderer,
+        title: '',
+        width: 40,
+      },
+    ];
+
+    return tableColumns.map(column => {
+      column.sortOrder = null;
+      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       return column;
     });
-
-    return newColumns;
   }, [
     archiveFilterDropdown,
     handleActionComplete,
@@ -570,7 +632,7 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     fetchExperiments();
     setIsLoading(true);
-  }, [ fetchExperiments ]);
+  }, [ fetchExperiments, filters, pagination, search, sorter ]);
 
   useEffect(() => {
     return () => canceler.abort();

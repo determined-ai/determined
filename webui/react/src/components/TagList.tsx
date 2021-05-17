@@ -111,7 +111,7 @@ const EditableTagList: React.FC<Props> = ({
           if (compact && !showMore && index >= COMPACT_MAX_THRESHOLD) {
             if (index > COMPACT_MAX_THRESHOLD) return null;
             return (
-              <Link key="more" onClick={() => setShowMore(true)}>
+              <Link className={css.showMore} key="more" onClick={() => setShowMore(true)}>
                 +{tags.length - COMPACT_MAX_THRESHOLD} more
               </Link>
             );

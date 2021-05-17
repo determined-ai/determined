@@ -7,6 +7,9 @@
     height: 2rem;
     margin: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium) var(--theme-sizes-layout-micro) 0;
   }
+  .showMore {
+    white-space: nowrap;
+  }
   .tagPlus {
     background: var(--theme-colors-monochrome-17);
     border-style: dashed;
