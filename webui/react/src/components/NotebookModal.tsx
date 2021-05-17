@@ -46,7 +46,8 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ showResourceType, setShowResourceType ] = useState(false);
+  const [ resourceTypeOptions, setResourceTypeOptions ] =
+    useState<{id:string, label:string}[]>([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
   const [ resourceType, setResourceType ] = useState(undefined);
   const [ form ] = Form.useForm();
 
@@ -85,11 +86,27 @@ const NotebookModal: React.FC<Props> = (
   },[ ]);
 
   const handleResourcePoolUpdate = useCallback((e) => {
-    e; //get slots per agent and cpuCapacityPerAgent
+    /*
+    if (e === '') {
+      setResourceTypeOptions([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
+    } else {
+      const pool = resourcePools.find(p => p.name === e);
+      if (pool){
+        const options = [];
+        if (pool.cpuContainerCapacityPerAgent > 0) {
+          options.push({ id:'CPU', label:'CPU' });
+        }
+        if (pool.slotsPerAgent > 0) {
+          options.push({ id:'GPU', label:'GPU' });
+        }
+        setResourceTypeOptions(options)
+      }
+    }
+    */
 
     //Type form field should ONLY appear if both slotsPerAgent and
     //cpuCapacityPerAgent are both greater than 0
-    setShowResourceType(true);
+
   },[ ]);
 
   const handleTypeUpdate = useCallback((e) => {
@@ -135,7 +152,7 @@ const NotebookModal: React.FC<Props> = (
             name='type'
             rules={[ { message: 'Please choose a resource type', required: true } ]}>
             <RadioGroup
-              options={[ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]}
+              options={resourceTypeOptions}
               onChange={(e) => handleTypeUpdate(e)} />
           </Item>
           <Col span={11}>
@@ -174,7 +191,8 @@ interface DropdownProps {
 }
 
 const Dropdown: React.FC<DropdownProps> = ({ options, onChange }: DropdownProps) => {
-  return options? <Select style={{ minWidth:120 }} onChange={onChange}>
+  return options? <Select defaultValue='' style={{ minWidth:120 }} onChange={onChange}>
+    <Option key='empty' value=''>---Empty---</Option>
     {options.map(option => <Option key={option} value={option}>{option}</Option>)}
   </Select> : null;
 };
