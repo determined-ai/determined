@@ -328,6 +328,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if !t.idSet {
 			return nil
 		}
+
+		if err := t.db.EndTrialRuns(t.id); err != nil {
+			ctx.Log().WithError(err).Error(`
+				failed to close trial runs on exit, if this was an unexpected exit
+				then manual intervention may be needed to correct resource allocation accounting`)
+		}
+
 		if t.Restarts > t.experiment.Config.MaxRestarts() {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)

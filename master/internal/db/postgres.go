@@ -1396,7 +1396,19 @@ func (db *PgDB) CompleteTrialRun(trialID, runID int) error {
 	_, err := db.sql.Exec(`
 UPDATE runs
 SET end_time = now()
-WHERE run_type = 'TRIAL' AND run_type_fk = $1 AND id = $2`, trialID, runID)
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1 AND id = $2`, trialID, runID)
+	return err
+}
+
+// EndTrialRuns sets the end time on all open runs to now.
+func (db *PgDB) EndTrialRuns(trialID int) error {
+	_, err := db.sql.Exec(`
+UPDATE runs
+SET end_time = now()
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1
+  AND end_time IS NULL`, trialID)
 	return err
 }
 
