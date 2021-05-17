@@ -3,14 +3,12 @@ import math
 import pathlib
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
-import sys
 import determined as det
 from determined import tensorboard, workload
 from determined.common import storage, constants
 from determined.common.check import (
     check_eq,
     check_len,
-    check_lt,
     check_not_eq,
     check_not_isinstance,
     check_not_none,

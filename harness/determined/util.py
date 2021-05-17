@@ -13,7 +13,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
 import numpy as np
 import simplejson
-import sys
 import determined as det
 from determined import constants
 from determined.common import check, util
