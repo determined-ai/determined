@@ -160,7 +160,8 @@ these steps:
 -  Register a dummy ``optimizer``.
 -  Specify a ``build_training_data_loader()`` that returns a dummy
    dataloader.
--  Specify a no-op ``train_batch()`` that returns an empty map of metrics.
+-  Specify a no-op ``train_batch()`` that returns an empty map of
+   metrics.
 
 Once the new PyTorchTrial object is created, use the experiment
 configuration to distribute inference in the same way as training.
