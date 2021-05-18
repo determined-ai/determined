@@ -13,7 +13,7 @@ It is adapted from Tensorflow's
 
 ###Configuration Files
 * `const.yaml`: Train the model on a single GPU with constant hyperparameter values.
-* `distributed.yaml`: Same as const.yaml, but trains the model with multiple GPUs (distributed training).
+* `distributed.yaml`: Same as const.yaml, but trains the model with multiple GPUs.
 * `adaptive.yaml`: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
 
 ##Data
