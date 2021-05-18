@@ -51,8 +51,8 @@ Following the diagram, a standard execution would be:
 There are two types of resources used to run Determined: core resources
 that enable the Determined platform, and periphery resources that add
 optional functionality. The section below provides additional detail on
-these resources, and users can deploy these resources in GCP by following
-the :ref:`install-gcp` guide.
+these resources, and users can deploy these resources in GCP by
+following the :ref:`install-gcp` guide.
 
 Core Resources
 ==============

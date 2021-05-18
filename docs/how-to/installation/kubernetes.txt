@@ -237,8 +237,8 @@ running your cluster.
    created, users can configure an Ingress to forward TLS encrypted data
    to the NodePort service.
 
-An example of how to configure an Ingress, which will
-perform TLS termination in the load-balancer by default:
+An example of how to configure an Ingress, which will perform TLS
+termination in the load-balancer by default:
 
 .. code:: yaml
 
