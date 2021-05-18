@@ -66,7 +66,7 @@ const ExperimentOverview: React.FC<Props> = ({
 
     const idRenderer: Renderer<TrialItem> = (_, record) => (
       <Link path={paths.trialDetails(record.id, experiment.id)}>
-        <span>{record.id}</span>
+        <span>Trial {record.id}</span>
       </Link>
     );
 
