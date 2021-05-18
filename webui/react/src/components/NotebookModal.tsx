@@ -46,7 +46,6 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ fullConfig, setFullConfig ] = useState<string>('');
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
@@ -82,10 +81,6 @@ const NotebookModal: React.FC<Props> = (
     };
     fetchConfig(form.getFieldsValue(true));
   }, [ showFullConfig, form ]);
-
-  const handleConfigChange = useCallback((value) => {
-    //setFullConfig(value);
-  },[]);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) {
@@ -153,9 +148,7 @@ const NotebookModal: React.FC<Props> = (
     visible={visible}
     {...props}>
     {showFullConfig?
-      <Form
-        form={form}
-        onValuesChange={handleConfigChange}>
+      <Form form={form}>
         <div style={{
           backgroundColor:'rgb(230,230,230)',
           border:'1px solid rgb(200,200,200)',
