@@ -9,7 +9,7 @@ import simplejson
 
 import determined as det
 from determined import layers, util, workload
-from determined.util import constants
+from determined.common import constants
 
 
 class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
