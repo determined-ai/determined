@@ -93,7 +93,7 @@ const NotebookModal: React.FC<Props> = (
   const handleCreateEnvironment = useCallback(
     (values) =>{
       if (showFullConfig) {
-        launchNotebook(JSON.parse(form.getFieldValue('config')));
+        launchNotebook(yaml.load(form.getFieldValue('config')) as RawJson);
       } else {
         launchNotebook(
           undefined,
