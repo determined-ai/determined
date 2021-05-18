@@ -56,10 +56,7 @@ official_examples = [
         "features/custom_reducers_mnist_pytorch",
         "features/custom_reducers_mnist_pytorch/const.yaml",
     ),
-    (
-        "nlp/text_classification_tf_keras",
-        "nlp/text_classification_tf_keras/const.yaml"
-    )
+    ("nlp/text_classification_tf_keras", "nlp/text_classification_tf_keras/const.yaml"),
 ]
 
 
