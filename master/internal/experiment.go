@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -27,8 +29,9 @@ type (
 		create searcher.Create
 		trialSnapshot
 	}
-	trialReportValidation struct {
-		metrics workload.ValidationMetrics
+	trialCompleteOperation struct {
+		op     searcher.ValidateAfter
+		metric float64
 		trialSnapshot
 	}
 	trialReportEarlyExit struct {
@@ -42,6 +45,12 @@ type (
 	trialQueryIsBestValidation struct {
 		validationMetrics workload.ValidationMetrics
 	}
+
+	// Searcher-related messages.
+	trialGetCurrentOperation struct {
+		trialID int
+	}
+
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
@@ -86,6 +95,8 @@ type (
 		agentUserGroup *model.AgentUserGroup
 		taskSpec       *tasks.TaskSpec
 
+		TrialCurrentOperation map[model.RequestID]searcher.ValidateAfter
+
 		faultToleranceEnabled bool
 		restored              bool
 	}
@@ -102,20 +113,26 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	// Validate the ResourcePool setting.  The reason to do it now and not in postExperiment like
 	// all the other validations is that the resource pool should be revalidated every time the
 	// master restarts.
-	if err := sproto.ValidateRP(master.system, conf.Resources.ResourcePool); err != nil {
+	resources := conf.Resources()
+	poolName := resources.ResourcePool()
+	if err := sproto.ValidateRP(master.system, poolName); err != nil {
 		return nil, err
 	}
 	// If the resource pool isn't set, fill in the default.
-	if expModel.Config.Resources.ResourcePool == "" {
-		if expModel.Config.Resources.SlotsPerTrial == 0 {
-			expModel.Config.Resources.ResourcePool = sproto.GetDefaultCPUResourcePool(master.system)
+	if poolName == "" {
+		if resources.SlotsPerTrial() == 0 {
+			poolName = sproto.GetDefaultCPUResourcePool(master.system)
 		} else {
-			expModel.Config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(master.system)
+			poolName = sproto.GetDefaultGPUResourcePool(master.system)
 		}
+		resources.SetResourcePool(poolName)
+		conf.SetResources(resources)
 	}
 
-	method := searcher.NewSearchMethod(conf.Searcher)
-	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
+	method := searcher.NewSearchMethod(conf.Searcher())
+	search := searcher.NewSearcher(
+		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
+	)
 
 	// Call InitialOperations which adds operations to the record in the Searcher. These
 	// will be sent back to their respective trials in experiment prestart. This allows them to
@@ -127,7 +144,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
-		master.db, conf.Searcher.SourceTrialID, conf.Searcher.SourceCheckpointUUID)
+		master.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
 	if err != nil {
 		return nil, err
 	}
@@ -166,6 +183,8 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		agentUserGroup: agentUserGroup,
 		taskSpec:       taskSpec,
 
+		TrialCurrentOperation: map[model.RequestID]searcher.ValidateAfter{},
+
 		faultToleranceEnabled: true,
 	}, nil
 }
@@ -180,12 +199,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
 		ctx.Tell(e.rm, sproto.SetGroupMaxSlots{
-			MaxSlots: e.Config.Resources.MaxSlots,
+			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rm, sproto.SetGroupWeight{Weight: e.Config.Resources().Weight(), Handler: ctx.Self()})
 		ctx.Tell(e.rm, sproto.SetGroupPriority{
-			Priority: e.Config.Resources.Priority,
+			Priority: e.Config.Resources().Priority(),
 			Handler:  ctx.Self(),
 		})
 
@@ -201,11 +220,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case trialReportValidation:
-		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metrics)
+	case trialCompleteOperation:
+		if msg.op != e.TrialCurrentOperation[msg.op.RequestID] &&
+			ctx.ExpectingResponse() {
+			ctx.Respond(api.AsErrBadRequest(
+				"expected op %v but received op %v",
+				e.TrialCurrentOperation[msg.requestID], msg.op,
+			))
+			return nil
+		}
+		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
+		if err != nil && ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
 		e.processOperations(ctx, ops, err)
 	case trialQueryIsBestValidation:
 		ctx.Respond(e.isBestValidation(msg.validationMetrics))
@@ -216,6 +246,18 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
+	case trialGetCurrentOperation:
+		requestID, ok := e.searcher.RequestID(msg.trialID)
+		if !ok {
+			ctx.Respond(api.AsErrNotFound("trial %d not found", msg.trialID))
+			return nil
+		}
+		if op, ok := e.TrialCurrentOperation[requestID]; ok {
+			ctx.Respond(op)
+			return nil
+		}
+		ctx.Respond(api.AsErrNotFound("trial %d has no operations", msg.trialID))
+		return nil
 	case sendNextWorkload:
 		// Pass this back to the trial; this message is just used to allow the trial to synchronize
 		// with the searcher.
@@ -239,11 +281,15 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case model.State:
 		e.updateState(ctx, msg)
 	case sproto.SetGroupMaxSlots:
-		e.Config.Resources.MaxSlots = msg.MaxSlots
+		resources := e.Config.Resources()
+		resources.SetMaxSlots(msg.MaxSlots)
+		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 	case sproto.SetGroupWeight:
-		e.Config.Resources.Weight = msg.Weight
+		resources := e.Config.Resources()
+		resources.SetWeight(msg.Weight)
+		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 
@@ -374,7 +420,10 @@ func (e *experiment) restoreTrialsFromPriorOperations(
 		case searcher.Create:
 			requestIDs = append(requestIDs, op.RequestID)
 			trialOpsByRequestID[op.RequestID] = append(trialOpsByRequestID[op.RequestID], op)
-		case searcher.Requested:
+		case searcher.ValidateAfter:
+			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
+			e.TrialCurrentOperation[op.GetRequestID()] = op
+		case searcher.Close:
 			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
 		}
 	}
@@ -422,7 +471,10 @@ func (e *experiment) processOperations(
 				return
 			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
-		case searcher.Requested:
+		case searcher.ValidateAfter:
+			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
+			e.TrialCurrentOperation[op.GetRequestID()] = op
+		case searcher.Close:
 			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 		case searcher.Shutdown:
 			if op.Failure {
@@ -458,13 +510,13 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 }
 
 func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
-	metricName := e.Config.Searcher.Metric
+	metricName := e.Config.Searcher().Metric()
 	validation, err := metrics.Metric(metricName)
 	if err != nil {
 		// TODO: Better error handling here.
 		return false
 	}
-	smallerIsBetter := e.Config.Searcher.SmallerIsBetter
+	smallerIsBetter := e.Config.Searcher().SmallerIsBetter()
 	isBest := (e.BestValidation == nil) ||
 		(smallerIsBetter && validation <= *e.BestValidation) ||
 		(!smallerIsBetter && validation >= *e.BestValidation)

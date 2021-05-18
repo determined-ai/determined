@@ -10,7 +10,7 @@ import (
 
 func (s S3DataLayerConfigV0) Bucket() string {
 	if s.RawBucket == nil {
-		panic("You must call WithDefaults on S3DataLayerConfigV0 before .RawBucket")
+		panic("You must call WithDefaults on S3DataLayerConfigV0 before .Bucket")
 	}
 	return *s.RawBucket
 }
@@ -21,7 +21,7 @@ func (s *S3DataLayerConfigV0) SetBucket(val string) {
 
 func (s S3DataLayerConfigV0) BucketDirectoryPath() string {
 	if s.RawBucketDirectoryPath == nil {
-		panic("You must call WithDefaults on S3DataLayerConfigV0 before .RawBucketDirectoryPath")
+		panic("You must call WithDefaults on S3DataLayerConfigV0 before .BucketDirectoryPath")
 	}
 	return *s.RawBucketDirectoryPath
 }

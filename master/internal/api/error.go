@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/labstack/echo/v4"
 )
 
@@ -33,4 +35,30 @@ func JSONErrorHandler(err error, c echo.Context) {
 			c.Logger().Error(err)
 		}
 	}
+}
+
+var (
+	// ErrBadRequest is the inner error for errors that convert to a 400. Currently
+	// only apiServer.askAtDefaultSystem respects this.
+	ErrBadRequest = errors.New("bad request")
+	// ErrNotFound is the inner error for errors that convert to a 404.
+	ErrNotFound = errors.New("not found")
+)
+
+// AsErrBadRequest returns an error that wraps ErrBadRequest, so that errors.Is can identify it.
+func AsErrBadRequest(msg string, args ...interface{}) error {
+	return errors.Wrapf(
+		ErrBadRequest,
+		msg,
+		args...,
+	)
+}
+
+// AsErrNotFound returns an error that wraps ErrNotFound, so that errors.Is can identify it.
+func AsErrNotFound(msg string, args ...interface{}) error {
+	return errors.Wrapf(
+		ErrNotFound,
+		msg,
+		args...,
+	)
 }

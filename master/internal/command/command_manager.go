@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -35,15 +34,20 @@ type commandManager struct {
 // CommandLaunchRequest describes a request to launch a new command.
 type CommandLaunchRequest struct {
 	CommandParams *CommandParams
-	User          *model.User
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetCommandsRequest:
 		resp := &apiv1.GetCommandsResponse{}
+		users := make(map[string]bool)
+		for _, user := range msg.Users {
+			users[user] = true
+		}
 		for _, command := range ctx.AskAll(&commandv1.Command{}, ctx.Children()...).GetAll() {
-			resp.Commands = append(resp.Commands, command.(*commandv1.Command))
+			if typed := command.(*commandv1.Command); len(users) == 0 || users[typed.Username] {
+				resp.Commands = append(resp.Commands, typed)
+			}
 		}
 		ctx.Respond(resp)
 
@@ -57,9 +61,6 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		ctx.Respond(summary.ID)
-
-	case echo.Context:
-		c.handleAPIRequest(ctx, msg)
 	}
 	return nil
 }
@@ -68,20 +69,9 @@ func (c *commandManager) processLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), c.db, *req.User, req.CommandParams, c.makeTaskSpec, false,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &c.defaultAgentUserGroup
-	}
-
 	ctx.Log().Info("creating command")
 
-	command := c.newCommand(commandReq)
+	command := c.newCommand(req.CommandParams)
 	if err := check.Validate(command.config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -96,39 +86,8 @@ func (c *commandManager) processLaunchRequest(
 	return &summary, http.StatusOK, nil
 }
 
-func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		req := CommandLaunchRequest{
-			User:          &user,
-			CommandParams: &params,
-		}
-		summary, statusCode, err := c.processLaunchRequest(ctx, req)
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
-func (c *commandManager) newCommand(req *commandRequest) *command {
-	config := req.Config
+func (c *commandManager) newCommand(params *CommandParams) *command {
+	config := params.FullConfig
 
 	// Postprocess the config.
 	if config.Description == "" {
@@ -140,16 +99,18 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    sproto.NewTaskID(),
-		config:    config,
-		userFiles: req.UserFiles,
-
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       &req.TaskSpec,
+		config:    *params.FullConfig,
+		userFiles: params.UserFiles,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		db: c.db,
 	}

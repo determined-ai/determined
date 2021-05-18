@@ -1,8 +1,8 @@
 package db
 
 import (
+	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -17,7 +17,11 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
@@ -217,7 +221,7 @@ FROM (
                         FROM steps s
                         WHERE s.trial_id = t.id
                        ) AS num_steps,
-                       (SELECT coalesce(sum(s.num_batches), 0)
+                       (SELECT coalesce(max(s.total_batches), 0)
                         FROM steps s
                         WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
                        ) AS total_batches_processed,
@@ -339,8 +343,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
-                     s.prior_batches_processed,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.total_batches,
                      -- Drop batch_metrics field from metrics column because it
                      -- can be very large and compute average on the fly for legacy
                      -- metrics.
@@ -371,7 +374,7 @@ FROM (
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -463,7 +466,7 @@ FROM (
                            (SELECT row_to_json(s)
                             FROM (
                                 SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                                    s.num_batches, s.prior_batches_processed,
+                                    s.total_batches,
                                     (SELECT row_to_json(v)
                                     FROM (
                                         SELECT v.end_time, v.id, v.metrics, v.start_time,
@@ -557,8 +560,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
-                     s.prior_batches_processed, s.total_batches,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,  s.total_batches,
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
@@ -568,7 +570,7 @@ FROM (
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state, 
+                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -676,9 +678,9 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id)
+        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
@@ -693,27 +695,6 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 	if err := db.query(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id
-FROM experiments
-WHERE id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutBackwardsIncompatibleFieldsByID looks up an experiment by ID in a database,
-// returning an error if none exists.
-// TODO(DET-4009): Remove when we have a better story for backwards compatibility.
-func (db *PgDB) ExperimentWithoutBackwardsIncompatibleFieldsByID(
-	id int,
-) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT id, state,
-  config #- '{searcher}' #- '{min_validation_period}' #- '{min_checkpoint_period}' AS config,
-  model_definition, start_time, end_time, archived,
-  git_remote, git_commit, git_committer, git_commit_date, owner_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -885,61 +866,43 @@ WHERE id = :id`
 
 // DeleteExperiment deletes an existing experiment.
 func (db *PgDB) DeleteExperiment(id int) error {
-	tx, err := db.sql.Begin()
-	if err != nil {
-		return errors.Wrap(err, "error starting transaction")
-	}
-	defer func() {
-		if tx == nil {
-			return
-		}
-
-		if rErr := tx.Rollback(); rErr != nil {
-			log.Errorf("error during rollback: %v", rErr)
-		}
-	}()
-
-	// This delete cascades to checkpoints and validations.
-	_, err = tx.Exec(`
+	return db.withTransaction("delete experiment", func(tx *sqlx.Tx) error {
+		// This delete cascades to checkpoints and validations.
+		// TODO(DET-5210): If/When validations and checkpoints are no longer linked
+		// to steps, this delete will not work properly.
+		if _, err := tx.Exec(`
 DELETE FROM steps
 WHERE trial_id IN (SELECT id FROM trials WHERE experiment_id = $1)
-`, id)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting steps for experiment %v", id)
-	}
-	err = db.deleteSnapshotsForExperiment(id)(tx)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
-	}
-	_, err = tx.Exec(`
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting steps for experiment %v", id)
+		}
+
+		if err := db.deleteSnapshotsForExperiment(id)(tx); err != nil {
+			return errors.Wrapf(err, "error deleting snapshots for experiment %v", id)
+		}
+
+		if _, err := tx.Exec(`
 DELETE FROM trials
 WHERE experiment_id = $1;
-`, id)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting trials for experiment %v", id)
-	}
-	result, err := tx.Exec(`
+`, id); err != nil {
+			return errors.Wrapf(err, "error deleting trials for experiment %v", id)
+		}
+
+		result, err := tx.Exec(`
 DELETE FROM experiments
 WHERE id = $1
 `, id)
-	if err != nil {
-		return errors.Wrapf(err, "error deleting experiment %v", id)
-	}
-	num, err := result.RowsAffected()
-	if err != nil {
-		return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
-	}
-	if num != 1 {
-		return errors.Errorf("error deleting non-existing experiment %v", id)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return errors.Wrapf(err, "error committing delete from experiment %v", id)
-	}
-
-	tx = nil
-
-	return nil
+		if err != nil {
+			return errors.Wrapf(err, "error deleting experiment %v", id)
+		}
+		switch num, err := result.RowsAffected(); {
+		case err != nil:
+			return errors.Wrapf(err, "error in RowsAffected when deleting experiment %v", id)
+		case num != 1:
+			return errors.Errorf("error deleting non-existing experiment %v", id)
+		}
+		return nil
+	})
 }
 
 // ExperimentHasCheckpointsInRegistry checks if the experiment has any checkpoints in the registry.
@@ -973,19 +936,19 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 }
 
 // ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (*model.ExperimentConfig, error) {
+func (db *PgDB) ExperimentConfig(id int) (expconf.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments
 WHERE id = $1`, id)
 	if err != nil {
-		return nil, err
+		return expconf.ExperimentConfig{}, err
 	}
-	var expConfig model.ExperimentConfig
-	if err = json.Unmarshal(expConfigBytes, &expConfig); err != nil {
-		return nil, errors.WithStack(err)
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML(expConfigBytes)
+	if err != nil {
+		return expconf.ExperimentConfig{}, errors.WithStack(err)
 	}
-	return &expConfig, nil
+	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
@@ -994,9 +957,9 @@ WHERE id = $1`, id)
 func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
-SELECT coalesce(extract(epoch from sum(steps.end_time - steps.start_time)), 0)
-FROM steps, trials
-WHERE trials.experiment_id = $1 AND steps.trial_id = trials.id
+SELECT coalesce(extract(epoch from sum(s.end_time - s.start_time)), 0)
+FROM raw_steps s, trials t
+WHERE t.experiment_id = $1 AND s.trial_id = t.id
 `, id); err != nil {
 		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
 	}
@@ -1040,8 +1003,8 @@ func (db *PgDB) ExperimentNumSteps(id int) (int64, error) {
 	var numSteps int64
 	if err := db.sql.Get(&numSteps, `
 SELECT count(*)
-FROM steps, trials
-WHERE trials.experiment_id = $1 AND steps.trial_id = trials.id
+FROM raw_steps s, trials t
+WHERE t.experiment_id = $1 AND s.trial_id = t.id
 `, id); err != nil {
 		return 0, errors.Wrapf(err, "querying for number of steps of experiment %v", id)
 	}
@@ -1113,7 +1076,7 @@ WITH const AS (
                    (SELECT row_to_json(s)
                     FROM (
                         SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                            s.num_batches, s.prior_batches_processed,
+                            s.total_batches,
                             (SELECT row_to_json(v)
                             FROM (
                                 SELECT v.end_time, v.id, v.metrics, v.start_time,
@@ -1250,7 +1213,7 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 func (db *PgDB) RollBackTrial(id, totalBatches int) error {
 	// This delete cascades to checkpoints and validations.
 	_, err := db.sql.Exec(`
-DELETE FROM steps
+DELETE FROM raw_steps
 WHERE trial_id = $1 AND total_batches > $2
 `, id, totalBatches)
 	if err != nil {
@@ -1260,7 +1223,7 @@ WHERE trial_id = $1 AND total_batches > $2
 	// This explicitly deletes any unfinished validations for the current step. These can occur
 	// any time we checkpoint before we validate.
 	_, err = db.sql.Exec(`
-DELETE FROM validations
+DELETE FROM raw_validations
 WHERE trial_id = $1 AND total_batches = $2 AND state != 'COMPLETED'
 `, id, totalBatches)
 	if err != nil {
@@ -1323,14 +1286,13 @@ SELECT row_to_json(r1)::text
 FROM (
     SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
            t.warm_start_checkpoint_id,
-           (SELECT coalesce(sum(s.num_batches), 0)
+           (SELECT coalesce(max(s.total_batches), 0)
             FROM steps s
             WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
            ) AS total_batches_processed,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
-                SELECT s.end_time, s.id, s.state, s.start_time, s.num_batches,
-                       s.prior_batches_processed,
+                SELECT s.end_time, s.id, s.state, s.start_time, s.total_batches,
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
@@ -1344,7 +1306,7 @@ FROM (
                         FROM (
                             SELECT v.end_time, v.id, v.metrics, v.state, v.start_time
                             FROM validations v
-                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches 
+                            WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                   AND v.metrics IS NOT NULL
                         ) r4
                        ) AS validation,
@@ -1382,11 +1344,10 @@ func (db *PgDB) AddStep(step *model.Step) error {
 		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
 	}
 	err = db.namedExecOne(`
-INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+INSERT INTO raw_steps
+	(trial_id, id, total_batches, state, start_time, end_time)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time
 )`, step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
@@ -1408,11 +1369,10 @@ func (db *PgDB) AddNoOpStep(step *model.Step) error {
 		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
 	}
 	err = db.namedExecOne(`
-INSERT INTO steps
-(trial_id, id, total_batches, state, start_time, end_time, num_batches, prior_batches_processed)
+INSERT INTO raw_steps
+	(trial_id, id, total_batches, state, start_time, end_time)
 VALUES (
-	:trial_id, :id, :total_batches, :state, :start_time, :end_time, 
-	:num_batches, :prior_batches_processed
+	:trial_id, :id, :total_batches, :state, :start_time, :end_time
 )`,
 		step)
 	if err != nil {
@@ -1421,14 +1381,44 @@ VALUES (
 	return nil
 }
 
+// AddTrialRun saves a new run for the trial.
+func (db *PgDB) AddTrialRun(trialID, runID int) error {
+	_, err := db.sql.Exec(`
+INSERT INTO runs (run_type, run_type_fk, id)
+VALUES ('TRIAL', $1, $2)
+ON CONFLICT (run_type, run_type_fk, id)
+DO UPDATE SET start_time = now()`, trialID, runID)
+	return err
+}
+
+// CompleteTrialRun the given run.
+func (db *PgDB) CompleteTrialRun(trialID, runID int) error {
+	_, err := db.sql.Exec(`
+UPDATE runs
+SET end_time = now()
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1 AND id = $2`, trialID, runID)
+	return err
+}
+
+// EndTrialRuns sets the end time on all open runs to now.
+func (db *PgDB) EndTrialRuns(trialID int) error {
+	_, err := db.sql.Exec(`
+UPDATE runs
+SET end_time = now()
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1
+  AND end_time IS NULL`, trialID)
+	return err
+}
+
 // StepByTotalBatches looks up a step by (TrialID, TotalBatches) pair,
 // returning an error if none exists.
 func (db *PgDB) StepByTotalBatches(trialID, totalBatches int) (*model.Step, error) {
 	var step model.Step
 	if err := db.query(`
-SELECT 
-	trial_id, id, total_batches, state, start_time, end_time, metrics, 
-	num_batches, prior_batches_processed
+SELECT
+	trial_id, id, total_batches, state, start_time, end_time, metrics
 FROM steps
 WHERE trial_id = $1 AND total_batches = $2`, &step, trialID, totalBatches); err != nil {
 		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, totalBatches)
@@ -1447,6 +1437,230 @@ func (db *PgDB) UpdateStep(
 	if err != nil {
 		return errors.Wrapf(err, "error finding step (%v, %v) to update", trialID, totalBatches)
 	}
+	return db.updateStep(step, newState, metrics)
+}
+
+// AddTrainingMetrics adds a completed step to the database with the given training metrics.
+// If these training metrics occur before any others, a rollback is assumed and later
+// training and validation metrics are cleaned up.
+func (db *PgDB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrainingMetrics) error {
+	return db.withTransaction("add training metrics", func(tx *sqlx.Tx) error {
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_steps SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches >= $3;
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving training metrics")
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_validations SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches > $3;
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving validations")
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_checkpoints SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches > $3;
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving checkpoints")
+		}
+
+		// TODO(DET-5210): This can go away when step ID does.
+		var id int
+		if err := tx.QueryRowxContext(ctx, `
+SELECT coalesce(max(id), 0) + 1
+FROM raw_steps
+WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
+			return errors.Wrap(err, "querying next step id")
+		}
+
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.NamedExecContext(ctx, `
+INSERT INTO raw_steps
+	(trial_id, id, trial_run_id, state, start_time,
+	 end_time, metrics, total_batches, total_records, total_epochs)
+VALUES
+	(:trial_id, :id, :trial_run_id, :state, :start_time,
+	 now(), :metrics, :total_batches, :total_records, :total_epochs)
+`, model.Step{
+			TrialID:    int(m.TrialId),
+			ID:         id,
+			TrialRunID: int(m.TrialRunId),
+			State:      model.CompletedState,
+			StartTime:  startTime,
+			Metrics: map[string]interface{}{
+				"avg_metrics":   m.Metrics,
+				"batch_metrics": m.BatchMetrics,
+			},
+			TotalBatches: int(m.TotalBatches),
+			TotalRecords: int(m.TotalRecords),
+			TotalEpochs:  m.TotalEpochs,
+		}); err != nil {
+			return errors.Wrap(err, "inserting training metrics")
+		}
+		return nil
+	})
+}
+
+// AddValidationMetrics adds a completed validation to the database with the given
+// validation metrics. If these validation metrics occur before any others, a rollback
+// is assumed and later metrics are cleaned up from the database.
+func (db *PgDB) AddValidationMetrics(
+	ctx context.Context, m *trialv1.ValidationMetrics,
+) error {
+	return db.withTransaction("add validation metrics", func(tx *sqlx.Tx) error {
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_validations SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches >= $2;
+`, m.TrialId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving validations")
+		}
+
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.NamedExecContext(ctx, `
+INSERT INTO raw_validations
+	(trial_id, trial_run_id, state, start_time, end_time,
+	 metrics, total_batches, total_records, total_epochs)
+VALUES
+	(:trial_id, :trial_run_id, :state, :start_time, now(),
+	 :metrics, :total_batches, :total_records, :total_epochs)
+`, model.Validation{
+			TrialID:    int(m.TrialId),
+			TrialRunID: int(m.TrialRunId),
+			State:      model.CompletedState,
+			StartTime:  startTime,
+			Metrics: map[string]interface{}{
+				"validation_metrics": m.Metrics,
+			},
+			TotalBatches: int(m.TotalBatches),
+			TotalRecords: int(m.TotalRecords),
+			TotalEpochs:  m.TotalEpochs,
+		}); err != nil {
+			return errors.Wrap(err, "inserting validation metrics")
+		}
+		return nil
+	})
+}
+
+// AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
+func (db *PgDB) AddCheckpointMetadata(
+	ctx context.Context, m *trialv1.CheckpointMetadata,
+) error {
+	return db.withTransaction("add checkpoint metadata", func(tx *sqlx.Tx) error {
+		if err := checkTrialRunID(ctx, tx, m.TrialId, m.TrialRunId); err != nil {
+			return err
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+UPDATE raw_checkpoints SET archived = true
+WHERE trial_id = $1
+  AND trial_run_id < $2
+  AND total_batches >= $3;
+`, m.TrialId, m.TrialRunId, m.TotalBatches); err != nil {
+			return errors.Wrap(err, "archiving checkpoints")
+		}
+
+		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.NamedExecContext(ctx, `
+INSERT INTO raw_checkpoints
+	(trial_id, trial_run_id, state, start_time, end_time, total_batches,
+	 total_records, total_epochs, uuid, resources, framework, format, determined_version)
+VALUES
+	(:trial_id, :trial_run_id, :state, :start_time, now(), :total_batches,
+	 :total_records, :total_epochs, :uuid, :resources, :framework, :format, :determined_version)
+`, model.Checkpoint{
+			TrialID:           int(m.TrialId),
+			TrialRunID:        int(m.TrialRunId),
+			State:             model.CompletedState,
+			StartTime:         startTime,
+			TotalBatches:      int(m.TotalBatches),
+			TotalRecords:      int(m.TotalRecords),
+			TotalEpochs:       m.TotalEpochs,
+			UUID:              &m.Uuid,
+			Resources:         model.JSONObjFromMapStringInt64(m.Resources),
+			Framework:         m.Framework,
+			Format:            m.Format,
+			DeterminedVersion: m.DeterminedVersion,
+		}); err != nil {
+			return errors.Wrap(err, "inserting checkpoint metadata")
+		}
+		return nil
+	})
+}
+
+// derivePriorWorkloadEndTime approximates the start time of currently reported metrics since
+// resource allocation uses these times.
+func derivePriorWorkloadEndTime(
+	ctx context.Context, tx *sqlx.Tx, trialID int32,
+) (time.Time, error) {
+	var endTime time.Time
+	if err := tx.QueryRowxContext(ctx, `
+SELECT coalesce(greatest(
+	(SELECT max(end_time) FROM raw_steps WHERE trial_id = $1),
+	(SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
+	(SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
+	(
+	    SELECT coalesce(r.start_time, t.start_time)
+		FROM trials t
+		LEFT JOIN runs r ON t.id = r.run_type_fk
+		WHERE t.id = $1
+	      AND r.run_type = 'TRIAL'
+	    ORDER BY r.id DESC
+	    LIMIT 1
+	)), now())
+`, trialID).Scan(&endTime); err != nil {
+		return time.Time{}, errors.Wrap(err, "deriving start time")
+	}
+	return endTime, nil
+}
+
+func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
+	var cRunID int
+	switch err := tx.QueryRowxContext(ctx, `
+SELECT coalesce(max(id), 0)
+FROM runs
+WHERE run_type = 'TRIAL'
+  AND run_type_fk = $1
+`, trialID).Scan(&cRunID); {
+	case err != nil:
+		return errors.Wrap(err, "querying current run")
+	case int(runID) != cRunID:
+		return api.AsErrBadRequest("invalid run id, %d != %d", runID, cRunID)
+	default:
+		return nil
+	}
+}
+
+func (db *PgDB) updateStep(step *model.Step, newState model.State, metrics model.JSONObj) error {
 	toUpdate := []string{}
 	if len(newState) != 0 {
 		if !model.StepTransitions[step.State][newState] {
@@ -1463,13 +1677,13 @@ func (db *PgDB) UpdateStep(
 	}
 	if len(metrics) != 0 {
 		if len(step.Metrics) != 0 {
-			return errors.Errorf("step (%v, %v) already has metrics", trialID, totalBatches)
+			return errors.Errorf("step (%v, %v) already has metrics", step.TrialID, step.ID)
 		}
 		step.Metrics = metrics
 		toUpdate = append(toUpdate, "metrics")
 	}
-	err = db.namedExecOne(fmt.Sprintf(`
-UPDATE steps
+	err := db.namedExecOne(fmt.Sprintf(`
+UPDATE raw_steps
 %v
 WHERE trial_id = :trial_id
 AND id = :id`, setClause(toUpdate)), step)
@@ -1594,25 +1808,11 @@ func (db *PgDB) AddCheckpoint(checkpoint *model.Checkpoint) error {
 	if !checkpoint.IsNew() {
 		return errors.Errorf("unexpected state for new checkpoint: %v", checkpoint)
 	}
-	var count int
-	err := db.namedGet(&count, `
-SELECT COUNT(*)
-FROM checkpoints
-WHERE trial_id = :trial_id
-AND total_batches = :total_batches`, checkpoint)
-	if err != nil {
-		return errors.Wrapf(err, "error checking at-most-one checkpoint %v", *checkpoint)
-	}
-	if count > 0 {
-		return errors.Errorf("duplicate checkpoint for trial %v total batch %v",
-			checkpoint.TrialID, checkpoint.TotalBatches)
-	}
-	err = db.namedGet(&checkpoint.ID, `
+	if err := db.namedGet(&checkpoint.ID, `
 INSERT INTO checkpoints
 (trial_id, total_batches, state, start_time, metadata, determined_version)
 VALUES (:trial_id, :total_batches, :state, :start_time, :metadata, :determined_version)
-RETURNING id`, checkpoint)
-	if err != nil {
+RETURNING id`, checkpoint); err != nil {
 		return errors.Wrapf(err, "error inserting checkpoint %v", *checkpoint)
 	}
 	return nil
@@ -1910,8 +2110,8 @@ func (db *PgDB) RawQuery(queryName string, params ...interface{}) ([]byte, error
 }
 
 // withTransaction executes a function with a transaction.
-func (db *PgDB) withTransaction(name string, exec func(tx *sql.Tx) error) error {
-	tx, err := db.sql.Begin()
+func (db *PgDB) withTransaction(name string, exec func(tx *sqlx.Tx) error) error {
+	tx, err := db.sql.Beginx()
 	if err != nil {
 		return errors.Wrapf(err, "failed to start transaction (%s)", name)
 	}
@@ -1983,7 +2183,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 	if lastDatePtr == nil {
 		var firstDatePtr *time.Time
 		err := db.sql.QueryRow(
-			`SELECT date_trunc('day', min(start_time)) FROM steps`,
+			`SELECT date_trunc('day', min(start_time)) FROM raw_steps`,
 		).Scan(&firstDatePtr)
 		if err != nil {
 			return errors.Wrap(err, "failed to find first step")

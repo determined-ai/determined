@@ -10,7 +10,7 @@ import (
 
 func (p PBTConfigV0) PopulationSize() int {
 	if p.RawPopulationSize == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .RawPopulationSize")
+		panic("You must call WithDefaults on PBTConfigV0 before .PopulationSize")
 	}
 	return *p.RawPopulationSize
 }
@@ -21,7 +21,7 @@ func (p *PBTConfigV0) SetPopulationSize(val int) {
 
 func (p PBTConfigV0) NumRounds() int {
 	if p.RawNumRounds == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .RawNumRounds")
+		panic("You must call WithDefaults on PBTConfigV0 before .NumRounds")
 	}
 	return *p.RawNumRounds
 }
@@ -32,7 +32,7 @@ func (p *PBTConfigV0) SetNumRounds(val int) {
 
 func (p PBTConfigV0) LengthPerRound() LengthV0 {
 	if p.RawLengthPerRound == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .RawLengthPerRound")
+		panic("You must call WithDefaults on PBTConfigV0 before .LengthPerRound")
 	}
 	return *p.RawLengthPerRound
 }
@@ -43,7 +43,7 @@ func (p *PBTConfigV0) SetLengthPerRound(val LengthV0) {
 
 func (p PBTConfigV0) ReplaceFunction() PBTReplaceConfig {
 	if p.RawReplaceFunction == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .RawReplaceFunction")
+		panic("You must call WithDefaults on PBTConfigV0 before .ReplaceFunction")
 	}
 	return *p.RawReplaceFunction
 }
@@ -54,7 +54,7 @@ func (p *PBTConfigV0) SetReplaceFunction(val PBTReplaceConfig) {
 
 func (p PBTConfigV0) ExploreFunction() PBTExploreConfig {
 	if p.RawExploreFunction == nil {
-		panic("You must call WithDefaults on PBTConfigV0 before .RawExploreFunction")
+		panic("You must call WithDefaults on PBTConfigV0 before .ExploreFunction")
 	}
 	return *p.RawExploreFunction
 }

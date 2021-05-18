@@ -22,7 +22,7 @@ type ExperimentConfigV0 struct {
 	RawDataLayer                *DataLayerConfigV0          `json:"data_layer"`
 	RawData                     map[string]interface{}      `json:"data"`
 	RawDebug                    *bool                       `json:"debug"`
-	RawDescription              *string                     `json:"description"`
+	RawDescription              Description                 `json:"description"`
 	RawEntrypoint               *string                     `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
@@ -41,23 +41,6 @@ type ExperimentConfigV0 struct {
 	RawSearcher                 *SearcherConfigV0           `json:"searcher"`
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
-}
-
-func runtimeDefaultDescription() *string {
-	s := fmt.Sprintf(
-		"Experiment (%s)",
-		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep),
-	)
-	return &s
-}
-
-// RuntimeDefaults implements the RuntimeDefaultable interface.
-func (e ExperimentConfigV0) RuntimeDefaults() interface{} {
-	// Description has runtime defaults.
-	if e.RawDescription == nil {
-		e.RawDescription = runtimeDefaultDescription()
-	}
-	return e
 }
 
 // Unit implements the model.InUnits interface.
@@ -91,8 +74,55 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	if err != nil {
 		return err
 	}
-	*e = config
+	// This *should* be a copy without any changes, unless perhaps we just shimmed the bytes that
+	// were in the database, but to ensure we never allow any un-defaulted experiments anywhere
+	// inside the system, we call WithDefaults here.
+	*e = schemas.WithDefaults(config).(ExperimentConfigV0)
 	return nil
+}
+
+// Description is a container struct for handling runtime defaults. It has to be a container so that
+// it can be responsible for allocating the nil pointer if one is not provided.  It would be nice if
+// you could use `type Description *string` but go won't let you create methods on such a type.
+type Description struct {
+	RawString *string
+}
+
+// WithDefaults implements the Defaultable interface.
+func (d Description) WithDefaults() interface{} {
+	var s string
+	if d.RawString != nil {
+		s = *d.RawString
+	} else {
+		s = fmt.Sprintf(
+			"Experiment (%s)",
+			petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep),
+		)
+	}
+	return Description{&s}
+}
+
+// String is part of the Getter/Setter API.
+func (d Description) String() string {
+	if d.RawString == nil {
+		panic("You must call WithDefaults on Description before .String")
+	}
+	return *d.RawString
+}
+
+// SetString is part of the Getter/Setter API.
+func (d *Description) SetString(s string) {
+	d.RawString = &s
+}
+
+// MarshalJSON marshals makes the Description container transparent to marshaling.
+func (d Description) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.RawString)
+}
+
+// UnmarshalJSON marshals makes the Description container transparent to unmarshaling.
+func (d *Description) UnmarshalJSON(bytes []byte) error {
+	return json.Unmarshal(bytes, &d.RawString)
 }
 
 // InUnits is describes a type that is in terms of a specific unit.
@@ -222,13 +252,15 @@ type ReproducibilityConfigV0 struct {
 	RawExperimentSeed *uint32 `json:"experiment_seed"`
 }
 
-// RuntimeDefaults implements the RuntimeDefaultable interface.
-func (r ReproducibilityConfigV0) RuntimeDefaults() interface{} {
-	if r.RawExperimentSeed == nil {
-		t := uint32(time.Now().Unix())
-		r.RawExperimentSeed = &t
+// WithDefaults implements the Defaultable interface.
+func (r ReproducibilityConfigV0) WithDefaults() interface{} {
+	var seed uint32
+	if r.RawExperimentSeed != nil {
+		seed = *r.RawExperimentSeed
+	} else {
+		seed = uint32(time.Now().Unix())
 	}
-	return r
+	return ReproducibilityConfigV0{&seed}
 }
 
 //go:generate ../gen.sh

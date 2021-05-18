@@ -1,0 +1,82 @@
+.. _model-hub-transformers:
+
+########################
+ Model Hub Transformers
+########################
+
+.. rubric:: **Overview**
+
+`The Huggingface transformers library
+<https://github.com/huggingface/transformers>`_ is the de-facto library
+for natural language processing (NLP) models. It provides pretrained
+weights for leading NLP models and allows users to easily use these
+pretrained models for the most common NLP tasks like language modeling,
+text classification, and question answering among others.
+
+**model-hub** makes it easy for users to train transformer models in
+Determined while keeping the developer experience as close as possible
+to what it's like working directly with **transformers**. Our library
+serves as an alternative to HuggingFace's `Trainer Class
+<https://huggingface.co/transformers/main_classes/trainer.html>`_ and
+provides access to all of Determined's benefits including:
+
+-  Easy :ref:`multi-node distributed training <multi-gpu-training>` with
+   no code modifications. Determined automatically sets up the
+   distributed backend for you.
+
+-  Experiment monitoring and tracking, artifact tracking, and
+   :ref:`state-of-the-art hyperparameter search <hyperparameter-tuning>`
+   without requiring third-party integrations.
+
+-  :ref:`Automated cluster management, fault tolerance, and job
+   rescheduling <benefits-of-determined>` so you don't have to worry
+   about provisioning resources or babysitting your experiments.
+
+.. note::
+
+   Model Hub Transformers is similar to the ``no_trainer`` version of
+   **transformers** examples in that we allow users to have more control
+   over the training and evaluation routines if desired.
+
+Given the benefits above, we think this library will be particularly
+useful to you if any of the following apply:
+
+-  You are an Determined user that wants to get started quickly with
+   **transformers**.
+
+-  You are a **transformers** user that wants to easily run more
+   advanced workflows like multi-node distributed training and advanced
+   hyperparameter search.
+
+-  You are a **transformers** user looking for a single platform to
+   manage experiments, handle checkpoints with automated fault
+   tolerance, and perform hyperparameter search/visualization.
+
+.. rubric:: **Getting Started**
+
+The easiest way to use Model Hub Transformers is to start with an
+existing example Trial. Model Hub Transformers includes thoroughly
+tested :ref:`implementations of all core transformers tasks
+<model-hub-transformers-examples>`.
+
+Model Hub Transformers Trials are infinitely customizable. Learn about
+how to customize or build your own Trial by checking out the :ref:`Model
+Hub Transformers Tutorial <model-hub-transformers-tutorial>`.
+
+.. rubric:: **Limitations**
+
+While we strive to offer as many of the features supported in
+HuggingFace **transformers**, the following features are not currently
+supported:
+
+-  Tensorflow version of transformers
+-  Support for deepspeed and fairscale
+-  Running on TPUs
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+
+   tutorial
+   examples
+   api

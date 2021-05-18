@@ -8,8 +8,8 @@ html {
 
   /* Button */
 
-  .ant-btn[disabled],
-  .ant-btn[disabled]:hover {
+  .ant-btn[disabled]:not(.ant-btn-link),
+  .ant-btn[disabled]:not(.ant-btn-link):hover {
     background-color: var(--theme-colors-monochrome-15);
     border-color: var(--theme-colors-monochrome-12);
     color: var(--theme-colors-monochrome-9);
@@ -169,6 +169,9 @@ html {
   }
   .ant-table-thead > tr > th:only-child {
     border-width: var(--theme-sizes-border-width);
+  }
+  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
+    background-color: var(--theme-colors-monochrome-13);
   }
   .ant-table-tbody > tr > td {
     border-color: var(--theme-colors-monochrome-13);

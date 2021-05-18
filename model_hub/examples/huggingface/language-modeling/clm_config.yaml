@@ -1,0 +1,43 @@
+description: huggingface_clm_trial
+hyperparameters:
+  pretrained_model_name_or_path: gpt2
+  model_mode: causal-lm
+  use_pretrained_weights: true
+  use_apex_amp: false
+  cache_dir: null
+  # Training Args
+  global_batch_size: 8
+  learning_rate: 5e-5
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  lr_scheduler_type: linear
+  num_warmup_steps: 0
+data:
+  dataset_name: wikitext
+  dataset_config_name: wikitext-2-raw-v1
+  train_file: null
+  validation_file: null
+  max_seq_length: null
+  overwrite_cache: false
+  validation_split_percentage: 5
+  preprocessing_num_workers: null
+# Number of records per epoch differs based on max_seq_length.
+records_per_epoch: 2318
+min_validation_period:
+  batches: 500
+searcher:
+  name: single
+  metric: perplexity
+  max_length:
+    epochs: 3
+  smaller_is_better: true
+environment:
+  image: determinedai/model-hub-transformers:0.15.5.dev0
+resources:
+  slots_per_trial: 4
+# We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
+# host_path on the agent instance disk for reuse if the same experiment is run on this instance.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /root/.cache
+entrypoint: clm_trial:CLMTrial

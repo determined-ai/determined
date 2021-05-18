@@ -2,6 +2,7 @@
 -e common
 -e cli
 -e deploy
+-e model_hub
 -r docs/requirements.txt
 -r harness/tests/requirements.txt
 -r e2e_tests/tests/requirements.txt

@@ -12,7 +12,6 @@ import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
-import tagListCss from 'components/TagList.module.scss';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, ExperimentBase } from 'types';
@@ -92,7 +91,6 @@ const ExperimentInfoBox: React.FC<Props> = (
     },
     {
       content: <TagList
-        className={tagListCss.noMargin}
         tags={experiment.config.labels || []}
         onChange={experimentTags.handleTagListChange(experiment.id)}
       />,
@@ -130,7 +128,7 @@ const ExperimentInfoBox: React.FC<Props> = (
               selectOnLineNumbers: true,
             }}
             theme="vs-light"
-            value={yaml.safeDump(experiment.configRaw)} />
+            value={yaml.dump(experiment.configRaw)} />
         </React.Suspense>
       </Modal>
     </Section>

@@ -10,7 +10,7 @@ import (
 
 func (e EnvironmentImageMapV0) CPU() string {
 	if e.RawCPU == nil {
-		panic("You must call WithDefaults on EnvironmentImageMapV0 before .RawCPU")
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .CPU")
 	}
 	return *e.RawCPU
 }
@@ -21,7 +21,7 @@ func (e *EnvironmentImageMapV0) SetCPU(val string) {
 
 func (e EnvironmentImageMapV0) GPU() string {
 	if e.RawGPU == nil {
-		panic("You must call WithDefaults on EnvironmentImageMapV0 before .RawGPU")
+		panic("You must call WithDefaults on EnvironmentImageMapV0 before .GPU")
 	}
 	return *e.RawGPU
 }

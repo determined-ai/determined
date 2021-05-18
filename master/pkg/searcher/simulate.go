@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -41,11 +40,11 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 		var keyParts []string
 		for _, op := range ops {
 			switch op.Length.Unit {
-			case model.Records:
+			case expconf.Records:
 				keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
-			case model.Batches:
+			case expconf.Batches:
 				keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
-			case model.Epochs:
+			case expconf.Epochs:
 				keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 			}
 		}
@@ -123,9 +122,8 @@ func Simulate(
 			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
 			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 
-			metrics := generateMetrics(
-				random, trialIDs[requestID], trialOpIdxs[requestID], valFunc, metricName)
-			ops, err := s.ValidationCompleted(trialIDs[requestID], metrics)
+			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
+			ops, err := s.ValidationCompleted(trialIDs[requestID], metric, operation)
 			if err != nil {
 				return simulation, err
 			}
@@ -228,15 +226,4 @@ func pickTrial(
 
 	choice := random.Intn(len(candidates))
 	return candidates[choice], nil
-}
-
-func generateMetrics(
-	random *rand.Rand, trialID, opIdx int, valFunc ValidationFunction, metric string,
-) workload.ValidationMetrics {
-	return workload.ValidationMetrics{
-		NumInputs: 1,
-		Metrics: map[string]interface{}{
-			metric: valFunc(random, trialID, opIdx),
-		},
-	}
 }

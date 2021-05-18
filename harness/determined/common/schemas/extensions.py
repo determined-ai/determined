@@ -224,6 +224,11 @@ def compareProperties(
             yield jsonschema.ValidationError(f"{a_path} must be less than {b_path}")
         return
 
+    if typ == "a<=b":
+        if a > b:
+            yield jsonschema.ValidationError(f"{a_path} must be less than {b_path}")
+        return
+
     if typ == "a_is_subdir_of_b":
         a_norm = os.path.normpath(a)
         b_norm = os.path.normpath(b)

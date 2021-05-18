@@ -10,7 +10,7 @@ import (
 
 func (r RandomConfigV0) MaxLength() LengthV0 {
 	if r.RawMaxLength == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxLength")
+		panic("You must call WithDefaults on RandomConfigV0 before .MaxLength")
 	}
 	return *r.RawMaxLength
 }
@@ -21,7 +21,7 @@ func (r *RandomConfigV0) SetMaxLength(val LengthV0) {
 
 func (r RandomConfigV0) MaxTrials() int {
 	if r.RawMaxTrials == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxTrials")
+		panic("You must call WithDefaults on RandomConfigV0 before .MaxTrials")
 	}
 	return *r.RawMaxTrials
 }
@@ -32,7 +32,7 @@ func (r *RandomConfigV0) SetMaxTrials(val int) {
 
 func (r RandomConfigV0) MaxConcurrentTrials() int {
 	if r.RawMaxConcurrentTrials == nil {
-		panic("You must call WithDefaults on RandomConfigV0 before .RawMaxConcurrentTrials")
+		panic("You must call WithDefaults on RandomConfigV0 before .MaxConcurrentTrials")
 	}
 	return *r.RawMaxConcurrentTrials
 }

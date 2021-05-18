@@ -22,6 +22,19 @@ class GPU(NamedTuple):
     memoryUtil: float
 
 
+warned_fields = set()
+
+
+def float_or_default(fields: dict, key: str, default: float) -> float:
+    try:
+        return float(fields[key])
+    except ValueError:
+        if key not in warned_fields:
+            warned_fields.add(key)
+            logging.warning(f"Unable to get {key} from nvidia-smi")
+        return default
+
+
 def get_gpus() -> List[GPU]:
     try:
         proc = subprocess.Popen(
@@ -48,12 +61,13 @@ def get_gpus() -> List[GPU]:
                     GPU(
                         id=int(fields["index"]),
                         uuid=fields["uuid"].strip(),
-                        load=float(fields["utilization.gpu"]) / 100,
-                        memoryUtil=float(fields["memory.used"]) / float(fields["memory.total"]),
+                        load=float_or_default(fields, "utilization.gpu", 0.0) / 100,
+                        memoryUtil=float_or_default(fields, "memory.used", 0.0)
+                        / float_or_default(fields, "memory.total", 1.0),
                     )
                 )
             except ValueError:
-                logging.warning(f"Ignoring unexpected nvidia-smi output: {fields}")
+                logging.warning(f"Ignoring GPU with unexpected nvidia-smi output: {fields}")
     if proc.returncode:
         logging.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
     return gpus

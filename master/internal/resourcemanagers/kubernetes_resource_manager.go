@@ -134,6 +134,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		Preemptible:                  false,
 		MinAgents:                    0,
 		MaxAgents:                    0,
+		SlotsPerAgent:                int32(k.config.MaxSlotsPerPod),
 		CpuContainerCapacityPerAgent: 0,
 		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
 		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,

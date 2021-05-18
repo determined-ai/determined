@@ -727,6 +727,7 @@ var (
         "image": {
             "type": [
                 "object",
+                "string",
                 "null"
             ],
             "default": {},
@@ -1641,6 +1642,13 @@ var (
             ],
             "default": false
         },
+        "grad_updates_size_file": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "mixed_precision": {
             "enum": [
                 null,
@@ -1698,17 +1706,17 @@ var (
             "default": null,
             "minimum": 0
         },
-        "end_on_batch": {
+        "end_after_batch": {
             "type": [
                 "integer",
                 "null"
             ],
             "default": null,
-            "minimum": 1
+            "minimum": 0
         }
     },
     "conditional": {
-        "$comment": "when enabled=true, assert begin < end",
+        "$comment": "when enabled=true, assert begin <= end",
         "when": {
             "required": [
                 "enabled"
@@ -1722,20 +1730,20 @@ var (
         "enforce": {
             "required": [
                 "begin_on_batch",
-                "end_on_batch"
+                "end_after_batch"
             ],
             "propeties": {
                 "begin_on_batch": {
                     "type": "integer"
                 },
-                "end_on_batch": {
+                "end_after_batch": {
                     "type": "integer"
                 }
             },
             "compareProperties": {
-                "type": "a<b",
+                "type": "a<=b",
                 "a": "begin_on_batch",
-                "b": "end_on_batch"
+                "b": "end_after_batch"
             }
         }
     }
@@ -1873,7 +1881,7 @@ var (
                 "string",
                 "null"
             ],
-            "default": null
+            "default": ""
         },
         "shm_size": {
             "type": [
@@ -2570,7 +2578,7 @@ var (
     },
     "additionalProperties": false,
     "eventuallyRequired": [
-        "type",
+        "name",
         "metric"
     ],
     "properties": {

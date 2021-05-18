@@ -26,7 +26,7 @@ func (t *TestUnionBV0) SetValB(val int) {
 
 func (t TestUnionBV0) CommonVal() string {
 	if t.RawCommonVal == nil {
-		panic("You must call WithDefaults on TestUnionBV0 before .RawCommonVal")
+		panic("You must call WithDefaults on TestUnionBV0 before .CommonVal")
 	}
 	return *t.RawCommonVal
 }

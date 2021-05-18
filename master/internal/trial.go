@@ -312,7 +312,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case trialWatchPreemption:
 		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
 		w := make(chan bool, 2)
-		if t.PendingGracefulTermination {
+		if t.PendingGracefulTermination || t.experimentState != model.ActiveState {
 			w <- true
 			close(w)
 			ctx.Respond((<-chan bool)(w))
@@ -328,7 +328,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if !t.idSet {
 			return nil
 		}
-		if t.Restarts > t.experiment.Config.MaxRestarts {
+
+		if err := t.db.EndTrialRuns(t.id); err != nil {
+			ctx.Log().WithError(err).Error(`
+				failed to close trial runs on exit, if this was an unexpected exit
+				then manual intervention may be needed to correct resource allocation accounting`)
+		}
+
+		if t.Restarts > t.experiment.Config.MaxRestarts() {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
 			}
@@ -356,9 +363,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.trialClosing() {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState {
-			slotsNeeded := t.experiment.Config.Resources.SlotsPerTrial
-			label := t.experiment.Config.Resources.AgentLabel
-			resourcePool := t.experiment.Config.Resources.ResourcePool
+			slotsNeeded := t.experiment.Config.Resources().SlotsPerTrial()
+			label := t.experiment.Config.Resources().AgentLabel()
+			resourcePool := t.experiment.Config.Resources().ResourcePool()
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
@@ -579,7 +586,7 @@ func (t *trial) processAllocated(
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
-		if t.experiment.Config.PerformInitialValidation {
+		if t.experiment.Config.PerformInitialValidation() {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
@@ -606,6 +613,12 @@ func (t *trial) processAllocated(
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
+	}
+
+	// TODO(brad): When we support tracking runs for more than trials, this logic should
+	// likely be generalized by moving it rather than duplicating it for all task types.
+	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
@@ -711,13 +724,21 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 			validationMetrics: *msg.ValidationMetrics,
 		}).Get().(bool)
 	}
-	reportValidation, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
+	op, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
 	switch {
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	case reportValidation:
+	case op != nil:
+		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher().Metric())
+		if err != nil {
+			return err
+		}
 		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialReportValidation{metrics: *msg.ValidationMetrics, trialSnapshot: s}
+			return trialCompleteOperation{
+				op:            *op,
+				metric:        m,
+				trialSnapshot: s,
+			}
 		}); err != nil {
 			return errors.Wrap(err, "failed to report validation with snapshot")
 		}
@@ -904,9 +925,15 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		var addresses []*rendezvousAddress
 
 		var addrs []cproto.Address
+		// Track container ports and only add uniques to addrs.
+		// Sometime around Docker 20.10.6, Docker started, seemingly randomly,
+		// binding multiple host ports to a container port very rarely.
+		containerPorts := map[int]bool{}
 		for _, addr := range caddr.Addresses {
-			if MinLocalRendezvousPort <= addr.ContainerPort && addr.ContainerPort <= MaxLocalRendezvousPort {
+			if MinLocalRendezvousPort <= addr.ContainerPort &&
+				addr.ContainerPort <= MaxLocalRendezvousPort && !containerPorts[addr.ContainerPort] {
 				addrs = append(addrs, addr)
+				containerPorts[addr.ContainerPort] = true
 			}
 
 			addresses = append(addresses, &rendezvousAddress{
@@ -1061,7 +1088,7 @@ func (t *trial) reset() error {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts ||
+	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts() ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
@@ -1108,6 +1135,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 
 	terminationSent := t.TerminationSent
 
+	if err := t.db.CompleteTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to mark trial run completed")
+	}
+
 	t.RunID++
 
 	if t.task != nil {
@@ -1152,9 +1183,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.Restarts, t.experiment.Config.MaxRestarts, status)
+		t.Restarts, t.experiment.Config.MaxRestarts(), status)
 	t.Restarts++
-	if t.Restarts <= t.experiment.Config.MaxRestarts {
+	if t.Restarts <= t.experiment.Config.MaxRestarts() {
 		ctx.Log().Infof("resetting trial %d", t.id)
 		if err := t.reset(); err != nil {
 			ctx.Log().Warn("failed to reset trial", err)

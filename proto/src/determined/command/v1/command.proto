@@ -37,4 +37,6 @@ message Command {
   string username = 10;
   // The name of the resource pool the command was created in
   string resource_pool = 11;
+  // The exit status;
+  string exit_status = 12;
 }

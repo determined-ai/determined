@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
@@ -38,7 +39,7 @@ func (a *apiServer) KillShell(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -48,10 +49,7 @@ func (a *apiServer) LaunchShell(
 		return nil, err
 	}
 
-	shellLaunchReq := command.ShellLaunchRequest{
-		CommandParams: cmdParams,
-		User:          user,
-	}
+	shellLaunchReq := command.ShellLaunchRequest{CommandParams: params}
 	shellIDFut := a.m.system.AskAt(shellsAddr, shellLaunchReq)
 	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err
@@ -64,6 +62,7 @@ func (a *apiServer) LaunchShell(
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell: shell.Get().(*shellv1.Shell),
+		Shell:  shell.Get().(*shellv1.Shell),
+		Config: protoutils.ToStruct(*params.FullConfig),
 	}, nil
 }

@@ -1,6 +1,0 @@
-syntax = "proto3";
-
-package determined.api.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
-
-import "determined/task/v1/task.proto";

@@ -10,16 +10,16 @@ import (
 
 func (t TensorboardStorageConfigV0) GetUnionMember() interface{} {
 	if t.RawSharedFSConfigV0 != nil {
-		return nil
+		return *t.RawSharedFSConfigV0
 	}
 	if t.RawHDFSConfig != nil {
-		return nil
+		return *t.RawHDFSConfig
 	}
 	if t.RawS3Config != nil {
-		return nil
+		return *t.RawS3Config
 	}
 	if t.RawGCSConfig != nil {
-		return nil
+		return *t.RawGCSConfig
 	}
 	panic("no union member defined")
 }

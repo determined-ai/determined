@@ -8,6 +8,7 @@ import "google/protobuf/struct.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/shell/v1/shell.proto";
 import "determined/util/v1/util.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of shells.
 message GetShellsRequest {
@@ -31,6 +32,8 @@ message GetShellsRequest {
   int32 offset = 3;
   // Limit the number of shells. A value of 0 denotes no limit.
   int32 limit = 4;
+  // Limit shells to those that are owned by the specified users.
+  repeated string users = 5;
 }
 // Response to GetShellsRequest.
 message GetShellsResponse {
@@ -77,6 +80,11 @@ message LaunchShellRequest {
 }
 // Response to LaunchShellRequest.
 message LaunchShellResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notebook", "config" ] }
+  };
   // The requested shell.
   determined.shell.v1.Shell shell = 1;
+  // The config;
+  google.protobuf.Struct config = 2;
 }

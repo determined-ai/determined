@@ -8,6 +8,43 @@
  Version 0.15
 **************
 
+Version 0.15.4
+==============
+
+**Release Date:** May 12, 2021
+
+**New Features**
+
+-  Model Hub: Publish Determined's Model Hub library to make it easy to
+   train models from supported third-party libraries with a Determined
+   cluster. The first library supported in Model Hub is the `HuggingFace
+   transformers library for NLP
+   <https://huggingface.co/transformers>`__. See :ref:`model-hub` to get
+   started.
+
+**Minor Changes**
+
+-  API: Remove redundant APIs for commands, shells, TensorBoards, and
+   notebooks. The CLI now uses updated versions of these endpoints;
+   related CLI commands on versions 0.15.4 and beyond are not
+   backward-compatible with previous versions of Determined clusters.
+
+-  API: Update the trial detail endpoint (``GET /api/v1/trials/:id``),
+   dropping ``prior_batches_processed`` and ``num_inputs`` in favor of
+   ``total_batches``.
+
+Version 0.15.3
+==============
+
+**Release Date:** May 5, 2021
+
+**Bug Fixes**
+
+-  Images: Fix GPU support in CUDA 10.2 + Tensorflow 1.15 images.
+-  Trials: Update to match ``websockets>= 9.0`` library API change.
+-  Trials: Fix a bug that caused trials to panic upon receiving too many
+   rendezvous addresses.
+
 Version 0.15.2
 ==============
 

@@ -10,7 +10,7 @@ import (
 
 func (p ProfilingConfigV0) Enabled() bool {
 	if p.RawEnabled == nil {
-		panic("You must call WithDefaults on ProfilingConfigV0 before .RawEnabled")
+		panic("You must call WithDefaults on ProfilingConfigV0 before .Enabled")
 	}
 	return *p.RawEnabled
 }
@@ -27,12 +27,12 @@ func (p *ProfilingConfigV0) SetBeginOnBatch(val *int) {
 	p.RawBeginOnBatch = val
 }
 
-func (p ProfilingConfigV0) EndOnBatch() *int {
-	return p.RawEndOnBatch
+func (p ProfilingConfigV0) EndAfterBatch() *int {
+	return p.RawEndAfterBatch
 }
 
-func (p *ProfilingConfigV0) SetEndOnBatch(val *int) {
-	p.RawEndOnBatch = val
+func (p *ProfilingConfigV0) SetEndAfterBatch(val *int) {
+	p.RawEndAfterBatch = val
 }
 
 func (p ProfilingConfigV0) ParsedSchema() interface{} {

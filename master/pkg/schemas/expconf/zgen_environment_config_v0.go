@@ -5,14 +5,13 @@ package expconf
 import (
 	"github.com/docker/docker/api/types"
 	"github.com/santhosh-tekuri/jsonschema/v2"
-	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
 func (e EnvironmentConfigV0) Image() EnvironmentImageMapV0 {
 	if e.RawImage == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawImage")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .Image")
 	}
 	return *e.RawImage
 }
@@ -23,7 +22,7 @@ func (e *EnvironmentConfigV0) SetImage(val EnvironmentImageMapV0) {
 
 func (e EnvironmentConfigV0) EnvironmentVariables() EnvironmentVariablesMapV0 {
 	if e.RawEnvironmentVariables == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawEnvironmentVariables")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .EnvironmentVariables")
 	}
 	return *e.RawEnvironmentVariables
 }
@@ -50,7 +49,7 @@ func (e *EnvironmentConfigV0) SetRegistryAuth(val *types.AuthConfig) {
 
 func (e EnvironmentConfigV0) ForcePullImage() bool {
 	if e.RawForcePullImage == nil {
-		panic("You must call WithDefaults on EnvironmentConfigV0 before .RawForcePullImage")
+		panic("You must call WithDefaults on EnvironmentConfigV0 before .ForcePullImage")
 	}
 	return *e.RawForcePullImage
 }
@@ -59,11 +58,11 @@ func (e *EnvironmentConfigV0) SetForcePullImage(val bool) {
 	e.RawForcePullImage = &val
 }
 
-func (e EnvironmentConfigV0) PodSpec() *k8sV1.Pod {
+func (e EnvironmentConfigV0) PodSpec() *PodSpec {
 	return e.RawPodSpec
 }
 
-func (e *EnvironmentConfigV0) SetPodSpec(val *k8sV1.Pod) {
+func (e *EnvironmentConfigV0) SetPodSpec(val *PodSpec) {
 	e.RawPodSpec = val
 }
 

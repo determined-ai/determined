@@ -150,13 +150,13 @@ func (a AdaptiveASHAConfigV0) Unit() Unit {
 
 // PBTReplaceConfig configures replacement for a PBT search.
 type PBTReplaceConfig struct {
-	RawTruncateFraction float64 `json:"truncate_fraction"`
+	TruncateFraction float64 `json:"truncate_fraction"`
 }
 
 // PBTExploreConfig configures exploration for a PBT search.
 type PBTExploreConfig struct {
-	RawResampleProbability float64 `json:"resample_probability"`
-	RawPerturbFactor       float64 `json:"perturb_factor"`
+	ResampleProbability float64 `json:"resample_probability"`
+	PerturbFactor       float64 `json:"perturb_factor"`
 }
 
 //go:generate ../gen.sh

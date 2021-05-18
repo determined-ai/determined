@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/fluent"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -26,7 +27,13 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const fluentBaseDir = "/run/determined/fluent/"
+const (
+	fluentBaseDir       = "/run/determined/fluent/"
+	coscheduler         = "coscheduler"
+	preemptionScheduler = "preemption"
+	gcTask              = "gc"
+	cmdTask             = "cmd"
+)
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	return k8sV1.ResourceRequirements{
@@ -41,10 +48,10 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 
 func (p *pod) configureEnvVars(
 	envVarsMap map[string]string,
-	environment model.Environment,
+	environment expconf.EnvironmentConfig,
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
-	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
+	for _, envVar := range environment.EnvironmentVariables().For(deviceType) {
 		envVarSplit := strings.Split(envVar, "=")
 		if len(envVarSplit) != 2 {
 			return nil, errors.Errorf("unable to split envVar %s", envVar)
@@ -175,16 +182,27 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if scheduler != "coscheduler" || newPod.Spec.SchedulerName != "" ||
-		p.taskSpec.Description() == "cmd" {
+	if p.taskSpec.Description() == cmdTask {
+		return
+	}
+
+	if scheduler == coscheduler || scheduler == preemptionScheduler {
+		if newPod.Spec.SchedulerName == "" {
+			newPod.Spec.SchedulerName = scheduler
+		}
+		p.configureCoscheduler(newPod, scheduler)
+	}
+}
+
+func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
+	if newPod.Spec.SchedulerName != scheduler {
 		return
 	}
 
 	resources := p.taskSpec.ResourcesConfig()
 	var minAvailable int
 
-	newPod.Spec.SchedulerName = scheduler
-	if p.taskSpec.Description() == "gc" {
+	if p.taskSpec.Description() == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -193,9 +211,9 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-		minAvailable = 1
+		minAvailable = 0
 	} else {
-		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial) / float64(p.gpus)))
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.gpus)))
 	}
 
 	if newPod.Spec.PriorityClassName == "" {
@@ -296,7 +314,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	env := spec.Environment()
 
-	for _, port := range env.Ports {
+	for _, port := range env.Ports() {
 		p.ports = append(p.ports, port)
 	}
 
@@ -308,7 +326,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	initContainer := configureInitContainer(
 		len(runArchives),
 		initContainerVolumeMounts,
-		env.Image.For(deviceType),
+		env.Image().For(deviceType),
 		configureImagePullPolicy(env),
 	)
 
@@ -392,7 +410,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		Name:            model.DeterminedK8ContainerName,
 		Command:         spec.Entrypoint(),
 		Env:             envVars,
-		Image:           env.Image.For(deviceType),
+		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
 		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
@@ -401,7 +419,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	}
 
 	p.pod = p.configurePodSpec(
-		ctx, volumes, initContainer, container, sidecars, env.PodSpec, scheduler)
+		ctx, volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
 
 	p.configMap, err = p.configureConfigMapSpec(runArchives, fluentFiles)
 	if err != nil {
@@ -441,9 +459,9 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.Secur
 	return nil
 }
 
-func configureImagePullPolicy(environment model.Environment) k8sV1.PullPolicy {
+func configureImagePullPolicy(environment expconf.EnvironmentConfig) k8sV1.PullPolicy {
 	pullPolicy := k8sV1.PullAlways
-	if !environment.ForcePullImage {
+	if !environment.ForcePullImage() {
 		pullPolicy = k8sV1.PullIfNotPresent
 	}
 	return pullPolicy
