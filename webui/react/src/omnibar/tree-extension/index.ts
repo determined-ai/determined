@@ -1,15 +1,14 @@
 import { message } from 'antd';
 import Fuse from 'fuse.js';
 
-import { StoreAction } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { store } from 'omnibar/exposedStore';
 import root from 'omnibar/tree-extension/trees/index';
 import {
-  BaseNode, Children, LeafNode, NonLeafNode, TreePath,
+  Children, LeafNode, NonLeafNode, TreeNode, TreePath,
 } from 'omnibar/tree-extension/types';
-import { getNodeChildren, isLeafNode,
-  isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
+import {
+  getNodeChildren, isLeafNode, isNLNode, traverseTree,
+} from 'omnibar/tree-extension/utils';
 import { noOp } from 'services/utils';
 
 const SEPARATOR = ' ';
@@ -83,7 +82,7 @@ export const extension = async(input: string): Promise<Children> => {
 };
 
 export const onAction = async (
-  item: BaseNode,
+  item: TreeNode,
   query: (input: string) => void,
 ): Promise<void> => {
   const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
@@ -94,9 +93,7 @@ export const onAction = async (
         + item.title;
   if (isLeafNode(item)) {
     await item.onAction(item);
-    if (item.closeBar || path.find(n => n.title === 'goto')) {
-      store?.dispatch({ type: StoreAction.HideOmnibar });
-    } else {
+    if (!item.closeBar && !path.find(n => n.title === 'goto')) {
       message.info('Action executed.', 1);
     }
   } else {

@@ -1,11 +1,15 @@
 import { isAsyncFunction } from 'utils/data';
 
-import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from './types';
+import { BaseNode, Children, LeafNode, NonLeafNode, TreeNode, TreePath } from './types';
 
-export const isLeafNode = (node: TreeNode): node is LeafNode =>
-  'onAction' in node && !('options' in node);
-export const isNLNode = (node: TreeNode): node is NonLeafNode =>
-  !('onAction' in node) && ('options' in node || 'onCustomInput' in node);
+export const isBaseNode = (obj: unknown): obj is BaseNode =>
+  obj instanceof Object && 'title' in obj;
+export const isLeafNode = (obj: unknown): obj is LeafNode =>
+  isBaseNode(obj) && 'onAction' in obj && !('options' in obj);
+export const isNLNode = (obj: unknown): obj is NonLeafNode =>
+  isBaseNode(obj) && !('onAction' in obj) && ('options' in obj || 'onCustomInput' in obj);
+export const isTreeNode = (obj: unknown): obj is TreeNode =>
+  isNLNode(obj) || isLeafNode(obj);
 
 export const getNodeChildren = async (node: TreeNode): Promise<Children> => {
   if (isLeafNode(node)) return [];
