@@ -1,6 +1,7 @@
 import { Button, Col, InputNumber, Modal, Row } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
+import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
@@ -45,7 +46,7 @@ const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ fullConfig, setFullConfig ] = useState<RawJson>();
+  const [ fullConfig, setFullConfig ] = useState<string>('');
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
@@ -70,30 +71,34 @@ const NotebookModal: React.FC<Props> = (
   useEffect(()=> {
     const fetchConfig = async (values: RawJson) => {
       if(showFullConfig) {
-        const fullConfig = await previewNotebook(
+        const config = await previewNotebook(
           values.slots,
           values.template,
           values.name,
           values.pool,
         );
-        setFullConfig(fullConfig);
+        form.setFieldsValue({ config: JSON.stringify(config, null, 2) });
       }
     };
     fetchConfig(form.getFieldsValue(true));
   }, [ showFullConfig, form ]);
 
   const handleConfigChange = useCallback((value) => {
-    setFullConfig(value);
+    //setFullConfig(value);
   },[]);
 
   const handleSecondary = useCallback(() => {
-    setShowFullConfig(show => !show);
-  },[]);
+    if (showFullConfig) {
+      setShowFullConfig(show => !show);
+    } else {
+      form.validateFields().then(() => setShowFullConfig(show => !show)).catch();
+    }
+  },[ form, showFullConfig ]);
 
   const handleCreateEnvironment = useCallback(
     (values) =>{
       if (showFullConfig) {
-        launchNotebook(0,'',fullConfig);
+        launchNotebook(0,'',JSON.parse(form.getFieldValue('config')));
       } else {
         if(values.template !== '') {
           launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
@@ -102,7 +107,7 @@ const NotebookModal: React.FC<Props> = (
         }
       }
     },
-    [ fullConfig, showFullConfig ],
+    [ showFullConfig, form ],
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {
@@ -134,11 +139,7 @@ const NotebookModal: React.FC<Props> = (
 
   return <Modal
     footer={<>
-      <Button onClick={() => {
-        form.validateFields().then(() => {
-          handleSecondary();
-        }).catch();
-      }}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
+      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
       <Button
         type="primary"
         onClick={() => {
@@ -152,7 +153,9 @@ const NotebookModal: React.FC<Props> = (
     visible={visible}
     {...props}>
     {showFullConfig?
-      <>
+      <Form
+        form={form}
+        onValuesChange={handleConfigChange}>
         <div style={{
           backgroundColor:'rgb(230,230,230)',
           border:'1px solid rgb(200,200,200)',
@@ -165,19 +168,30 @@ const NotebookModal: React.FC<Props> = (
           Read about notebook settings
           </Link>
         </div>
-        <MonacoEditor
-          height={400}
-          language='yaml'
-          value={JSON.stringify(fullConfig, null, 2)}
-          onChange={handleConfigChange} />
-      </> :
+        <Item
+          name='config'
+          rules={[ { message: 'Invalid YAML', required: true }, () => ({
+            validator(_, value) {
+              try {
+                yaml.load(value);
+                return Promise.resolve();
+              } catch(err) {
+                return Promise.reject(new Error('Invalid YAML'));
+              }
+            },
+          }) ]}>
+          <MonacoEditor
+            height={400}
+            language='yaml' />
+        </Item>
+      </Form> :
       <Form form={form} initialValues={{ pool: '', slots:1, template: '' }} labelCol={{ span:8 }}>
         <Row justify='end'>
           <Item
             label='Type'
             labelCol={{ span:8 }}
             name='type'
-            rules={[ { message: 'Please choose a resource type', required: true } ]}>
+            rules={[ { message: 'Choose a resource type', required: true } ]}>
             <RadioGroup
               options={resourceTypeOptions}
               onChange={handleTypeUpdate} />
