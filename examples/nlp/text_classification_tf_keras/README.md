@@ -7,15 +7,14 @@ It is adapted from Tensorflow's
 [word embedding](https://www.tensorflow.org/tutorials/text/word_embeddings) tutorial.
 
 ## Files
-* `model_def.py`: main trial class for your model containing the model definition, initialization
-  methods, and methods for loading training and validation data.
+* `model_def.py`: The core code for training. This includes building and compiling the model.
   
-* `data.py`: methods for downloading and processing data and datasets for use in the model
+* `data.py`: The data loading and preparation code for the model.
 
 ###Configuration Files
-* `const.yaml`: model training with constant hyperparameter values
-* `distribyted.yaml`: trains the model with multiple GPUs (distributed training)
-* `adaptive.yaml`: performs hyperparameter search on specified hyperparameter values
+* `const.yaml`: Train the model on a single GPU with constant hyperparameter values.
+* `distributed.yaml`: Same as const.yaml, but trains the model with multiple GPUs (distributed training).
+* `adaptive.yaml`: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
 
 ##Data
 This example uses [UCSD's Amazon review datasets](http://deepyeti.ucsd.edu/jianmo/amazon/) but can be easily adapted to 
@@ -27,7 +26,7 @@ https://docs.determined.ai/latest/index.html
 
 Run the following command:
 
-`det -m <master host:port> experiment create -f adaptive.yaml .`
+`det -m <master host:port> experiment create -f const.yaml .`
 
 The other configurations can be run by specifying the appropriate configuration file in place of adaptive.yaml.
 
