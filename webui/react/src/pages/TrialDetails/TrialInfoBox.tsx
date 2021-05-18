@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
-import InfoBox, { InfoboxStyle } from 'components/InfoBox';
+import Grid, { GridMode } from 'components/Grid';
+import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import { ShirtSize } from 'themes';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
@@ -45,37 +47,31 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
 
-  const infoRows = [
-    {
-      content: shortEnglishHumannizer(getDuration({ startTime: trial.startTime })) + ' ago',
-      label: 'Start Time',
-    },
-    {
-      content: shortEnglishHumannizer(durations.train),
-      label: 'Training Time',
-    },
-    {
-      content: shortEnglishHumannizer(durations.validation),
-      label: 'Validation Time',
-    },
-    {
-      content: shortEnglishHumannizer(durations.checkpoint),
-      label: 'Checkpointing Time',
-    },
-    {
-      content: totalCheckpointsSize,
-      label: 'Total Checkpoint Size',
-    },
-    {
-      content: bestCheckpoint && <>Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}</>,
-      label: 'Best Checkpoint',
-      onClick: handleShowBestCheckpoint,
-    },
-  ];
-
   return (
     <Section>
-      <InfoBox rows={infoRows} style={InfoboxStyle.Boxed} />
+      <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
+        <OverviewStats title="Start Time">
+          {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+        </OverviewStats>
+        <OverviewStats title="Training Time">
+          {shortEnglishHumannizer(durations.train)}
+        </OverviewStats>
+        <OverviewStats title="Validation Time">
+          {shortEnglishHumannizer(durations.validation)}
+        </OverviewStats>
+        <OverviewStats title="Checkpointing Time">
+          {shortEnglishHumannizer(durations.checkpoint)}
+        </OverviewStats>
+        <OverviewStats title="Total Checkpoint Size">
+          {totalCheckpointsSize}
+        </OverviewStats>
+        {bestCheckpoint && (
+          <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
+            Batch {bestCheckpoint.batch}
+          </OverviewStats>
+        )}
+      </Grid>
+
       {bestCheckpoint && (
         <CheckpointModal
           checkpoint={bestCheckpoint}
