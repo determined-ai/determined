@@ -2,13 +2,14 @@ import logging
 import socket
 import ssl
 from typing import Any, Optional
-from determined.util import constants
+
 import lomond
 import lomond.session
 import simplejson
 
 import determined as det
 from determined import layers, util, workload
+from determined.util import constants
 
 
 class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
@@ -199,7 +200,9 @@ class SocketManager(workload.Source):
             metrics_size = len(metrics_json)
 
             if metrics_size >= constants.MAX_METRICS_SIZE:
-                raise AssertionError(f"Metrics size {metrics_size} exceeded max size {constants.MAX_METRICS_SIZE}.")
+                raise AssertionError(
+                    f"Metrics size {metrics_size} exceeded max size {constants.MAX_METRICS_SIZE}."
+                )
 
             duration = metrics["end_time"] - metrics["start_time"]
             logging.info(f"Workload completed: {metrics['workload']} (duration {duration})")
