@@ -65,10 +65,14 @@ const AppView: React.FC = () => {
 
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
-      if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
+      if (e.code === KeyCode.Space && e.ctrlKey) {
+        if (ui.omnibar.isShowing) {
+          storeDispatch({ type: StoreAction.HideOmnibar });
+        } else {
+          storeDispatch({ type: StoreAction.ShowOmnibar });
+        }
+      } else if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
         storeDispatch({ type: StoreAction.HideOmnibar });
-      } else if (!ui.omnibar.isShowing && e.code === KeyCode.Space && e.ctrlKey) {
-        storeDispatch({ type: StoreAction.ShowOmnibar });
       }
     };
 

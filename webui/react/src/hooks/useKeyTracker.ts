@@ -20,22 +20,33 @@ const specialKeyCodes = new Set<KeyCode>([
 
 let listenerCount = 0;
 
+const shouldIgnoreKBEvent = (e: KeyboardEvent): boolean => {
+  if (
+    !e.target
+    || specialKeyCodes.has(e.code as KeyCode)
+    || e.ctrlKey
+    || e.altKey
+    || e.metaKey
+  ) return false;
+
+  const target = e.target as Element;
+  if (
+    [ 'input', 'textarea' ].includes(target.tagName.toLowerCase())
+    || !!target.getAttribute('contenteditable')
+  ) {
+    return true;
+  }
+  return false;
+};
+
 const useKeyTracker = (): void => {
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    if (e.target && !specialKeyCodes.has(e.code as KeyCode)) {
-      const element = e.target as Element;
-      if ([ 'input', 'textarea' ].includes(element.tagName.toLowerCase())) return;
-      if (element.getAttribute('contenteditable')) return;
-    }
+    if (shouldIgnoreKBEvent(e)) return;
     keyEmitter.emit(KeyEvent.KeyUp, e);
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.target && !specialKeyCodes.has(e.code as KeyCode)) {
-      const element = e.target as Element;
-      if ([ 'input', 'textarea' ].includes(element.tagName.toLowerCase())) return;
-      if (element.getAttribute('contenteditable')) return;
-    }
+    if (shouldIgnoreKBEvent(e)) return;
     keyEmitter.emit(KeyEvent.KeyDown, e);
   }, []);
 
