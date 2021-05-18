@@ -181,6 +181,26 @@ const NotebookModal: React.FC<Props> = (
         </Item>
       </Form> :
       <Form form={form} initialValues={{ pool: '', slots:1, template: '' }} labelCol={{ span:8 }}>
+        <Item label='Notebook Template' name='template'>
+          <Select
+            style={{ minWidth:120 }}>
+            <Option key='' value=''>---Empty---</Option>
+            {templates.map(temp =>
+              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+          </Select>
+        </Item>
+        <Item label='Name' name="name">
+          <Input placeholder='Name' />
+        </Item>
+        <Item label='Resource Pool' name="pool">
+          <Select
+            style={{ minWidth:120 }}
+            onChange={handleResourcePoolUpdate}>
+            <Option key='' value=''>---Empty---</Option>
+            {resourcePools.map(pool =>
+              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+          </Select>
+        </Item>
         <Row justify='end'>
           <Item
             label='Type'
@@ -203,26 +223,6 @@ const NotebookModal: React.FC<Props> = (
             }
           </Col>
         </Row>
-        <Item label='Notebook Template' name='template'>
-          <Select
-            style={{ minWidth:120 }}>
-            <Option key='' value=''>---Empty---</Option>
-            {templates.map(temp =>
-              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
-          </Select>
-        </Item>
-        <Item label='Name' name="name">
-          <Input placeholder='Name' />
-        </Item>
-        <Item label='Resource Pool' name="pool">
-          <Select
-            style={{ minWidth:120 }}
-            onChange={handleResourcePoolUpdate}>
-            <Option key='' value=''>---Empty---</Option>
-            {resourcePools.map(pool =>
-              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
-          </Select>
-        </Item>
       </Form>
     }
   </Modal>;
