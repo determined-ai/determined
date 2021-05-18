@@ -138,3 +138,24 @@
       - "ABCD=1234"
     gpu:
       - "ABCD=1234"
+
+- name: whole environment with no objects
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment.json
+  case:
+    image: "alpine"
+    environment_variables:
+      - "ABCD=1234"
+
+- name: whole environment with all objects
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment.json
+  case:
+    image:
+      cpu: "alpine"
+      gpu: "alpine"
+    environment_variables:
+      cpu:
+        - "ABCD=1234"
+      gpu:
+        - "ABCD=1234"

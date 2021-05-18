@@ -727,6 +727,7 @@ var (
         "image": {
             "type": [
                 "object",
+                "string",
                 "null"
             ],
             "default": {},
