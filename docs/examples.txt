@@ -121,10 +121,10 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  GLUE
       -  :download:`bert_glue_pytorch.tgz
          </examples/bert_glue_pytorch.tgz>`
-   -  -   Tensorflow
+
+   -  -  Tensorflow
       -  UCSD
-      -  :download:`amazon_reviews.gz
-         </examples/amazon_reviews.gz>`
+      -  :download:`amazon_reviews.gz </examples/amazon_reviews.gz>`
 
 ************************
  HP Search Benchmarking
