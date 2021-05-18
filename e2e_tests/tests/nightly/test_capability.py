@@ -52,3 +52,24 @@ def test_deformabledetr_coco_pytorch_const() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("deformabledetr_coco_pytorch"), 1
     )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_word_language_transformer_const() -> None:
+    config = conf.load_config(conf.nlp_examples_path("word_language_model/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = config.copy()
+    config["hyperparameters"]["model_cls"] = "Transformer"
+
+    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
+
+
+@pytest.mark.nightly  # type: ignore
+def test_word_language_lstm_const() -> None:
+    config = conf.load_config(conf.nlp_examples_path("word_language_model/const.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+    config = config.copy()
+    config["hyperparameters"]["model_cls"] = "LSTM"
+    config["hyperparameters"]["tied"] = False
+
+    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)

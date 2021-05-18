@@ -10,7 +10,6 @@ import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
 import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
-import TrialLogs from 'pages/TrialLogs';
 import Wait from 'pages/Wait';
 
 import Routes from './routes';
@@ -27,7 +26,6 @@ const routeComponentMap: Record<string, FC> = {
   taskList: TaskList,
   taskLogs: TaskLogs,
   trialDetails: TrialDetails,
-  trialLogs: TrialLogs,
   wait: Wait,
 };
 

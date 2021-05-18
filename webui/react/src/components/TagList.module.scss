@@ -1,13 +1,14 @@
 .base {
   display: inline;
-  margin-left: var(--theme-sizes-layout-medium);
-  vertical-align: bottom;
 
   & > * {
     cursor: pointer;
     font-size: var(--theme-sizes-font-small);
     height: 2rem;
-    margin-right: var(--theme-sizes-layout-medium);
+    margin: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium) var(--theme-sizes-layout-micro) 0;
+  }
+  .showMore {
+    white-space: nowrap;
   }
   .tagPlus {
     background: var(--theme-colors-monochrome-17);
@@ -18,10 +19,7 @@
     border-color: var(--theme-colors-action-normal);
   }
   .tagInput {
-    top: 0.5rem;
-    vertical-align: top;
-  }
-  &.noMargin {
-    margin-left: 0;
+    margin: 0;
+    top: -1px;
   }
 }

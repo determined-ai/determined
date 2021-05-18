@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -12,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
@@ -80,19 +82,23 @@ func (a *apiServer) NotebookLogs(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to prepare launch params")
 	}
 
-	notebookLaunchReq := command.NotebookLaunchRequest{
-		CommandParams: cmdParams,
-		User:          user,
+	if req.Preview {
+		return &apiv1.LaunchNotebookResponse{
+			Notebook: &notebookv1.Notebook{},
+			Config:   protoutils.ToStruct(*params.FullConfig),
+		}, nil
 	}
+
+	notebookLaunchReq := command.NotebookLaunchRequest{CommandParams: params}
 	notebookIDFut := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)
 	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
 		return nil, err
@@ -106,5 +112,6 @@ func (a *apiServer) LaunchNotebook(
 
 	return &apiv1.LaunchNotebookResponse{
 		Notebook: notebook.Get().(*notebookv1.Notebook),
+		Config:   protoutils.ToStruct(*params.FullConfig),
 	}, nil
 }

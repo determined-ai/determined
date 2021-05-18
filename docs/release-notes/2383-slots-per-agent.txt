@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  API: return a SlotsPerAgent field in the resource pool API. This
+   returns the slot number on each dynamic agent on AWS, GCP, or K8s. If
+   no dynamic agent is configured, return -1.

@@ -1,9 +1,7 @@
 import { Button, Space, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
-import { paths } from 'routes/utils';
 import { openOrCreateTensorboard } from 'services/api';
 import { RunState, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/step';
@@ -12,7 +10,6 @@ import { openCommand } from 'wait';
 
 export enum Action {
   Continue = 'Continue',
-  Logs = 'Logs',
   Tensorboard = 'Tensorboard',
 }
 
@@ -36,7 +33,6 @@ const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
 const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
-    Logs: false,
     Tensorboard: false,
   });
 
@@ -64,11 +60,6 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
         loading={buttonStates.Tensorboard}
         onClick={handleCreateTensorboard}>View in TensorBoard</Button>,
       showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
-    },
-    {
-      button: <Button key={Action.Logs}>
-        <Link path={paths.trialLogs(trial.id, trial.experimentId)}>Logs</Link>
-      </Button>,
     },
   ];
 

@@ -117,6 +117,8 @@ message ResourcePool {
   // When using dynamic agents, the maximum number of agents that can exist in
   // the resource pool.
   int32 max_agents = 13;
+  // The number of slots that exists on an dynamic agent.
+  int32 slots_per_agent = 14;
   // The maximum number of CPU containers that can run on an individual agent
   int32 cpu_container_capacity_per_agent = 15;
   // The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or

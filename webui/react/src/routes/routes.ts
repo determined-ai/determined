@@ -2,18 +2,6 @@ import { RouteConfig } from './types';
 
 const routes: RouteConfig[] = [
   {
-    id: 'trialLogs',
-    needAuth: true,
-    path: '/experiments/:experimentId/trials/:trialId/logs',
-    title: 'Trial Logs',
-  },
-  {
-    id: 'trialLogs',
-    needAuth: true,
-    path: '/trials/:trialId/logs',
-    title: 'Trial Logs',
-  },
-  {
     id: 'trialDetails',
     needAuth: true,
     path: '/experiments/:experimentId/trials/:trialId/:tab?',
@@ -22,7 +10,7 @@ const routes: RouteConfig[] = [
   {
     id: 'trialDetails',
     needAuth: true,
-    path: '/trials/:trialId',
+    path: '/trials/:trialId/:tab?',
     title: 'Trial',
   },
   {

@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
@@ -69,23 +70,20 @@ func (a *apiServer) LaunchTensorboard(
 		trialIds = append(trialIds, int(id))
 	}
 
-	cmdParams, user, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
+		MustZeroSlot: true,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	tensorboardConfig := command.TensorboardRequest{
-		CommandParams: cmdParams,
+	tensorboardLaunchReq := command.TensorboardRequest{
+		CommandParams: params,
 		ExperimentIDs: experimentIds,
 		TrialIDs:      trialIds,
-	}
-	tensorboardLaunchReq := command.TensorboardRequestWithUser{
-		Tensorboard: tensorboardConfig,
-		User:        user,
 	}
 	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
 	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
@@ -103,5 +101,6 @@ func (a *apiServer) LaunchTensorboard(
 
 	return &apiv1.LaunchTensorboardResponse{
 		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
+		Config:      protoutils.ToStruct(*params.FullConfig),
 	}, err
 }

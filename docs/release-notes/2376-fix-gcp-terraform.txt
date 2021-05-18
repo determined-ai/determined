@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Deploy: Add support for ``terraform`` 0.15 in ``det deploy gcp``.

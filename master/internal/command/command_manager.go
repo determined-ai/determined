@@ -34,7 +34,6 @@ type commandManager struct {
 // CommandLaunchRequest describes a request to launch a new command.
 type CommandLaunchRequest struct {
 	CommandParams *CommandParams
-	User          *model.User
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -70,20 +69,9 @@ func (c *commandManager) processLaunchRequest(
 	ctx *actor.Context,
 	req CommandLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), c.db, *req.User, req.CommandParams, c.makeTaskSpec, false,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &c.defaultAgentUserGroup
-	}
-
 	ctx.Log().Info("creating command")
 
-	command := c.newCommand(commandReq)
+	command := c.newCommand(req.CommandParams)
 	if err := check.Validate(command.config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -98,8 +86,8 @@ func (c *commandManager) processLaunchRequest(
 	return &summary, http.StatusOK, nil
 }
 
-func (c *commandManager) newCommand(req *commandRequest) *command {
-	config := req.Config
+func (c *commandManager) newCommand(params *CommandParams) *command {
+	config := params.FullConfig
 
 	// Postprocess the config.
 	if config.Description == "" {
@@ -111,16 +99,18 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    sproto.NewTaskID(),
-		config:    config,
-		userFiles: req.UserFiles,
-
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       &req.TaskSpec,
+		config:    *params.FullConfig,
+		userFiles: params.UserFiles,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		db: c.db,
 	}

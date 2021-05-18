@@ -35,14 +35,6 @@ func (t *TestRootV0) SetSubUnion(val *TestUnionV0) {
 	t.RawSubUnion = val
 }
 
-func (t TestRootV0) RuntimeDefaultable() *int {
-	return t.RawRuntimeDefaultable
-}
-
-func (t *TestRootV0) SetRuntimeDefaultable(val *int) {
-	t.RawRuntimeDefaultable = val
-}
-
 func (t TestRootV0) DefaultedArray() []string {
 	return t.RawDefaultedArray
 }
@@ -57,6 +49,14 @@ func (t TestRootV0) NodefaultArray() []string {
 
 func (t *TestRootV0) SetNodefaultArray(val []string) {
 	t.RawNodefaultArray = val
+}
+
+func (t TestRootV0) RuntimeDefaultable() TestRuntimeDefaultable {
+	return t.RawRuntimeDefaultable
+}
+
+func (t *TestRootV0) SetRuntimeDefaultable(val TestRuntimeDefaultable) {
+	t.RawRuntimeDefaultable = val
 }
 
 func (t TestRootV0) ParsedSchema() interface{} {
