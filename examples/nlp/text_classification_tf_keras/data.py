@@ -23,11 +23,12 @@ dataset_path = Path('dataset')
 
 
 # Downloads gzipped json file, parses output to training/testing dataset structure,
-# and saves to local directories
-def initialize_datasets():
-    raw_json_samples = download_data(dataset_url, raw_data_file)
+# and saves to local directories under base_directory
+def initialize_datasets(base_directory):
+    base_directory.mkdir(parents=True, exist_ok=True)
+    raw_json_samples = download_data(dataset_url, base_directory / raw_data_file)
     dataset = extract_dataset(raw_json_samples)
-    save_files(dataset, dataset_path)
+    save_files(dataset, base_directory / dataset_path)
 
 
 # Download gzip file from url, write to output file, and return json content
@@ -84,18 +85,6 @@ def parse_review(review_data):
     return str(review_json['overall']), review_json.get('reviewText', '')
 
 
-def load_training_data():
-    training_ds = tf.keras.preprocessing.text_dataset_from_directory(
-        dataset_path / 'train')
-    return training_ds
-
-
-def load_testing_data():
-    testing_ds = tf.keras.preprocessing.text_dataset_from_directory(
-        dataset_path / 'test')
-    return testing_ds
-
-
 # Cleans text input: removes tags, punctuation
 def standardize_text(input_data):
     lowercase = tf.strings.lower(input_data)
@@ -105,26 +94,41 @@ def standardize_text(input_data):
                                     '')
 
 
-# Create text tokenizer for mapping words to numerican inputs
-def create_vectorization_layer(training_text=None):
-    max_features = 10000
-    sequence_length = 250
+class DataInitializer:
+    def __init__(self, dist_rank):
+        self.rank = dist_rank
+        self.base_directory = self.get_base_data_directory(dist_rank)
+        if not (self.base_directory / raw_data_file).exists():
+            initialize_datasets(self.base_directory)
 
-    vectorization_layer = TextVectorization(
-        standardize=standardize_text,
-        max_tokens=max_features,
-        output_mode='int',
-        output_sequence_length=sequence_length)
+    # Create text tokenizer for mapping words to numerical inputs
+    def create_vectorization_layer(self, training_text=None):
+        max_features = 10000
+        sequence_length = 250
 
-    if not training_text:
-        training_data = load_training_data()
-        training_text = training_data.map(lambda text, label: text)
+        vectorization_layer = TextVectorization(
+            standardize=standardize_text,
+            max_tokens=max_features,
+            output_mode='int',
+            output_sequence_length=sequence_length)
 
-    vectorization_layer.adapt(training_text)
-    return vectorization_layer
+        if not training_text:
+            training_data = self.load_training_data()
+            training_text = training_data.map(lambda text, label: text)
 
+        vectorization_layer.adapt(training_text)
+        return vectorization_layer
 
-if not raw_data_file.exists():
-    initialize_datasets()
+    def load_training_data(self):
+        training_ds = tf.keras.preprocessing.text_dataset_from_directory(
+            self.base_directory / dataset_path / 'train')
+        return training_ds
 
+    def load_testing_data(self):
+        testing_ds = tf.keras.preprocessing.text_dataset_from_directory(
+            self.base_directory / dataset_path / 'test')
+        return testing_ds
 
+    @staticmethod
+    def get_base_data_directory(dist_rank):
+        return Path('data') / str(dist_rank)

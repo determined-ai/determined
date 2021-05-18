@@ -1,4 +1,4 @@
-description: text_classification_tf
+description: text_classification_tf_distributed
 hyperparameters:
   global_batch_size: 64
   dense1: 5
