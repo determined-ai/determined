@@ -1,0 +1,6 @@
+:orphan:
+
+**Changes**
+
+-  Webui: moving Trial Information table in a dedicated Workloads tab in
+   the trial detail page.
