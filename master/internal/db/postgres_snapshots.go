@@ -1,7 +1,7 @@
 package db
 
 import (
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/pkg/errors"
 
@@ -54,7 +54,7 @@ func (db *PgDB) SaveSnapshot(
 	experimentID int, trialID int, requestID model.RequestID,
 	version int, experimentSnapshot []byte, trialSnapshot []byte,
 ) error {
-	return db.withTransaction("save snapshot", func(tx *sql.Tx) error {
+	return db.withTransaction("save snapshot", func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 INSERT INTO experiment_snapshots (experiment_id, content, version)
 VALUES ($1, $2, $3)
@@ -88,8 +88,8 @@ func (db *PgDB) DeleteSnapshotsForExperiment(experimentID int) error {
 	return db.withTransaction("delete snapshots", db.deleteSnapshotsForExperiment(experimentID))
 }
 
-func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sql.Tx) error {
-	return func(tx *sql.Tx) error {
+func (db *PgDB) deleteSnapshotsForExperiment(experimentID int) func(tx *sqlx.Tx) error {
+	return func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 DELETE FROM experiment_snapshots
 WHERE experiment_id = $1`, experimentID); err != nil {
@@ -107,7 +107,7 @@ WHERE experiment_id = $1`, experimentID); err != nil {
 // DeleteSnapshotsForTerminalExperiments deletes all snapshots for
 // terminal state experiments from the database.
 func (db *PgDB) DeleteSnapshotsForTerminalExperiments() error {
-	return db.withTransaction("delete snapshots", func(tx *sql.Tx) error {
+	return db.withTransaction("delete snapshots", func(tx *sqlx.Tx) error {
 		if _, err := tx.Exec(`
 DELETE FROM experiment_snapshots
 WHERE experiment_id IN (
