@@ -12,7 +12,7 @@ import { throttle } from 'throttle-debounce';
 import Icon from 'components/Icon';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useScroll from 'hooks/useScroll';
-import { LogViewerTimestampFilterComponentProp } from 'pages/TrialLogs/TrialLogFilters';
+import { LogViewerTimestampFilterComponentProp } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
@@ -22,7 +22,6 @@ import { ansiToHtml, copyToClipboard, toPixel, toRem } from 'utils/dom';
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
 import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
-import Page, { Props as PageProps } from './Page';
 import Section from './Section';
 
 export interface LogViewerTimestampFilter {
@@ -38,7 +37,6 @@ interface Props {
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogFilter: (canceler: AbortController) => FetchArgs;
   onFetchLogTail: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
-  pageProps: Partial<PageProps>;
 }
 
 export interface ListMeasure {
@@ -99,7 +97,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
   onFetchLogBefore,
   onFetchLogFilter,
   onFetchLogTail,
-  ...props
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -223,7 +220,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       const linesLabel = logs.length === 1 ? 'entry' : 'entries';
       notification.open({
         description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: `Available ${props.pageProps.title} Copied`,
+        message: 'Available logs Copied',
       });
     } catch (e) {
       notification.warn({
@@ -231,7 +228,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         message: 'Unable to Copy to Clipboard',
       });
     }
-  }, [ logs, props.pageProps.title ]);
+  }, [ logs ]);
 
   const handleDownload = useCallback(() => {
     if (onDownloadClick) onDownloadClick();
@@ -445,53 +442,52 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ dateTimeWidth ]);
 
   return (
-    <Page {...props.pageProps} options={logOptions}>
-      <Section
-        bodyBorder
-        bodyDynamic
-        bodyNoPadding
-        filters={FilterComponent && <FilterComponent
-          filter={filter}
-          filterOptions={filterOptions}
-          onChange={setFilter}
-        />}
-        maxHeight>
-        <div className={css.base} ref={baseRef}>
-          <div className={css.container} ref={container}>
-            <VariableSizeList
-              height={listMeasure.height}
-              itemCount={logs.length}
-              itemData={logs}
-              itemSize={getItemHeight}
-              ref={listRef}
-              width='100%'
-              onItemsRendered={onItemsRendered}
-            >
-              {LogViewerRow}
-            </VariableSizeList>
-          </div>
-          <div className={css.scrollTo}>
-            <Tooltip placement="left" title="Scroll to Top">
-              <Button
-                aria-label="Scroll to Top"
-                className={[ css.scrollToTop, css.show ].join(' ')}
-                icon={<Icon name="arrow-up" />}
-                onClick={handleScrollToTop} />
-            </Tooltip>
-            <Tooltip
-              placement="left"
-              title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
-            >
-              <Button
-                aria-label="Enable Tailing"
-                className={enableTailingClasses.join(' ')}
-                icon={<Icon name="arrow-down" />}
-                onClick={handleEnableTailing} />
-            </Tooltip>
-          </div>
+    <Section
+      bodyBorder
+      bodyNoPadding
+      filters={FilterComponent && <FilterComponent
+        filter={filter}
+        filterOptions={filterOptions}
+        onChange={setFilter}
+      />}
+      maxHeight
+      options={logOptions}
+    >
+      <div className={css.base} ref={baseRef}>
+        <div className={css.container} ref={container}>
+          <VariableSizeList
+            height={listMeasure.height}
+            itemCount={logs.length}
+            itemData={logs}
+            itemSize={getItemHeight}
+            ref={listRef}
+            width='100%'
+            onItemsRendered={onItemsRendered}
+          >
+            {LogViewerRow}
+          </VariableSizeList>
         </div>
-      </Section>
-    </Page>
+        <div className={css.scrollTo}>
+          <Tooltip placement="left" title="Scroll to Top">
+            <Button
+              aria-label="Scroll to Top"
+              className={[ css.scrollToTop, css.show ].join(' ')}
+              icon={<Icon name="arrow-up" />}
+              onClick={handleScrollToTop} />
+          </Tooltip>
+          <Tooltip
+            placement="left"
+            title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
+          >
+            <Button
+              aria-label="Enable Tailing"
+              className={enableTailingClasses.join(' ')}
+              icon={<Icon name="arrow-down" />}
+              onClick={handleEnableTailing} />
+          </Tooltip>
+        </div>
+      </div>
+    </Section>
   );
 };
 

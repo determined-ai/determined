@@ -1,42 +1,28 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import React, { useCallback, useState } from 'react';
 
 import LogViewerTimestamp, { TAIL_SIZE } from 'components/LogViewerTimestamp';
-import Message, { MessageType } from 'components/Message';
-import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
-import useRestApi from 'hooks/useRestApi';
-import { paths, serverAddress } from 'routes/utils';
-import { getTrialDetails } from 'services/api';
+import TrialLogFilters, { TrialLogFiltersInterface } from 'pages/TrialDetails/Logs/TrialLogFilters';
+import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
-import { TrialDetailsParams } from 'services/types';
-import { TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
-import TrialLogFilters, { TrialLogFiltersInterface } from './TrialLogs/TrialLogFilters';
-
-interface Params {
-  experimentId?: string;
-  trialId: string;
+export interface Props {
+  experiment: ExperimentBase;
+  trial: TrialDetails;
 }
 
-const TrialLogs: React.FC = () => {
-  const { experimentId: experimentIdParam, trialId: trialIdParam } = useParams<Params>();
-  const history = useHistory();
-  const trialId = parseInt(trialIdParam);
+const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
-  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
-
-  const title = `Trial ${trialId} Logs`;
-  const experimentId = trial.data?.experimentId;
 
   const fetchLogAfter =
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
-        trialId,
+        trial.id,
         TAIL_SIZE,
         false,
         filters.agentIds,
@@ -50,12 +36,12 @@ const TrialLogs: React.FC = () => {
         'ORDER_BY_ASC',
         { signal: canceler.signal },
       );
-    }, [ trialId ]);
+    }, [ trial.id ]);
 
   const fetchLogBefore =
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
-        trialId,
+        trial.id,
         TAIL_SIZE,
         false,
         filters.agentIds,
@@ -69,20 +55,20 @@ const TrialLogs: React.FC = () => {
         'ORDER_BY_DESC',
         { signal: canceler.signal },
       );
-    }, [ trialId ]);
+    }, [ trial.id ]);
 
   const fetchLogFilter = useCallback((canceler: AbortController) => {
     return detApi.StreamingExperiments.determinedTrialLogsFields(
-      trialId,
+      trial.id,
       true,
       { signal: canceler.signal },
     );
-  }, [ trialId ]);
+  }, [ trial.id ]);
 
   const fetchLogTail =
     useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
-        trialId,
+        trial.id,
         0,
         true,
         filters.agentIds,
@@ -96,7 +82,7 @@ const TrialLogs: React.FC = () => {
         'ORDER_BY_ASC',
         { signal: canceler.signal },
       );
-    }, [ trialId ]);
+    }, [ trial.id ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -105,73 +91,43 @@ const TrialLogs: React.FC = () => {
     }
 
     try {
-      await downloadTrialLogs(trialId);
+      await downloadTrialLogs(trial.id);
     } catch (e) {
       handleError({
         error: e,
         message: 'trial log download failed.',
         publicMessage: `
-          Failed to download trial ${trialId} logs.
-          If the problem persists please try our CLI "det trial logs ${trialId}"
+          Failed to download trial ${trial.id} logs.
+          If the problem persists please try our CLI "det trial logs ${trial.id}"
         `,
         publicSubject: 'Download Failed',
         type: ErrorType.Ui,
       });
     }
-  }, [ downloadModal, trialId ]);
+  }, [ downloadModal, trial.id ]);
 
   const handleDownloadLogs = useCallback(() => {
     const modal = Modal.confirm({
       content: <div>
         We recommend using the Determined CLI to download trial logs:
         <code className="block">
-          det -m {serverAddress()} trial logs {trialId} &gt;
-          experiment_{experimentId}_trial_{trialId}_logs.txt
+          det -m {serverAddress()} trial logs {trial.id} &gt;
+          experiment_{experiment.id}_trial_{trial.id}_logs.txt
         </code>
       </div>,
       icon: <ExclamationCircleOutlined />,
       okText: 'Proceed to Download',
       onOk: handleDownloadConfirm,
-      title: `Confirm Download for Trial ${trialId} Logs`,
+      title: `Confirm Download for Trial ${trial.id} Logs`,
       width: 640,
     });
     setDownloadModal(modal);
-  }, [ experimentId, handleDownloadConfirm, trialId ]);
-
-  useEffect(() => {
-    // Experiment id does not exist in route, reroute to the one with it
-    if (!experimentIdParam && experimentId) {
-      history.replace(paths.trialLogs(trialId, experimentId));
-    }
-  }, [ experimentId, experimentIdParam, history, trialId ]);
-
-  if (!experimentId || !trialId) {
-    return <Spinner />;
-  }
-
-  if (trial.errorCount > 0 && !trial.isLoading) {
-    return <Message title={`Unable to find Trial ${trialId}`} type={MessageType.Warning} />;
-  }
+  }, [ experiment.id, handleDownloadConfirm, trial.id ]);
 
   return (
     <LogViewerTimestamp
       fetchToLogConverter={jsonToTrialLog}
       FilterComponent={TrialLogFilters}
-      pageProps={{
-        breadcrumb: [
-          { breadcrumbName: 'Experiments', path: paths.experimentList() },
-          {
-            breadcrumbName: `Experiment ${experimentId}`,
-            path: paths.experimentDetails(experimentId),
-          },
-          {
-            breadcrumbName: `Trial ${trialId}`,
-            path: paths.trialDetails(trialId, experimentId),
-          },
-          { breadcrumbName: 'Logs', path: '#' },
-        ],
-        title,
-      }}
       onDownloadClick={handleDownloadLogs}
       onFetchLogAfter={fetchLogAfter}
       onFetchLogBefore={fetchLogBefore}
@@ -181,4 +137,4 @@ const TrialLogs: React.FC = () => {
   );
 };
 
-export default TrialLogs;
+export default TrialDetailsLogs;

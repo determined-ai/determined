@@ -12,6 +12,7 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
+import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
@@ -27,6 +28,7 @@ const { TabPane } = Tabs;
 
 enum TabType {
   Hyperparameters = 'hyperparameters',
+  Logs = 'logs',
   Overview = 'overview',
   Profiles = 'profiles',
   Workloads = 'workloads',
@@ -257,6 +259,9 @@ const TrialDetailsComp: React.FC = () => {
             <TrialDetailsProfiles experiment={experiment} trial={trial} />
           </TabPane>
         )}
+        <TabPane key={TabType.Logs} tab="Logs">
+          <TrialDetailsLogs experiment={experiment} trial={trial} />
+        </TabPane>
       </Tabs>
       <CreateExperimentModal
         config={contModalConfig}
