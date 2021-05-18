@@ -173,6 +173,11 @@ html {
   .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
     background-color: var(--theme-colors-monochrome-13);
   }
+  .ant-table-thead > tr > th > .ant-table-filter-column > .ant-table-filter-trigger-container > .ant-table-filter-trigger {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
   .ant-table-tbody > tr > td {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
