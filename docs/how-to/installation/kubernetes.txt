@@ -212,12 +212,12 @@ master itself. To configure TLS, users should set
 deploy a NodePort service for the master. Users can then configure an
 `Ingress
 <https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>`__
-that performs TLS termination in the load balancer and forward plain
-test to the NodePort service, or forwards TLS encrypted data. Please
+that performs TLS termination in the load balancer and forwards plain
+text to the NodePort service, or forwards TLS encrypted data. Please
 note when configuring an Ingress that you need to have an `Ingress
 controller
 <https://github.com/bitnami/charts/tree/master/bitnami/nginx-ingress-controller>`__
-runing your cluster.
+running your cluster.
 
 #. **TLS termination in a load-balancer (e.g., nginx).** This option
    will provide TLS encryption between the client and the load-balancer,
