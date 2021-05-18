@@ -18,7 +18,8 @@ class MultiTextClassificationTrial(TFKerasTrial):
             layers.Dropout(0.2),
             layers.GlobalAveragePooling1D(),
             layers.Dropout(0.2),
-            layers.Dense(self.context.get_hparam("dense1"))])
+            layers.Dense(self.context.get_hparam("dense1"))
+        ])
         model = self.context.wrap_model(model)
         optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
