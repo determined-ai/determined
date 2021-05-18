@@ -62,21 +62,23 @@ const goto = async (url: string) => {
 /*
  * Taiko `elements()` often return duplicate elements after upgrading to 1.2.3.
  * Use the text values of the element as a hash to dedupe the elements.
+ * A hash id is generated using the content of the element, and the same id is
+ * used for deduping. Sometimes the content of the element can change while
+ * we attempt to generate a hash id, so an optional `hashSelector` allows us to
+ * specifically target a specific content of a given element to be the unique id.
  */
-const getElements = async (
-  selector: string,
-  options?: t.DollarOptions | t.RelativeSearchElement,
-  ...args: t.RelativeSearchElement[]
-): Promise<t.Element[]> => {
+const getElements = async (selector: string, hashSelector?: string): Promise<t.Element[]> => {
   const map: Record<string, boolean> = {};
-  const elements = await t.$(selector, options, ...args).elements();
+  const elements = await t.$(selector).elements();
   const dedupedElements = [];
 
   for (const element of elements) {
-    const hash = (await element.text()).replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
-    console.log('HASH:', hash);
-    if (!map[hash]) {
-      map[hash] = true;
+    const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
+    const hashText = await hashElement.text();
+    const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+
+    if (!map[hashId]) {
+      map[hashId] = true;
       dedupedElements.push(element);
     }
   }
@@ -251,7 +253,7 @@ export default class StepImplementation {
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
-    const rows = await getElements('tr[data-row-key]');
+    const rows = await getElements('tr[data-row-key]', '.ant-table-cell:nth-child(2)');
     const expectedCount = parseInt(count);
     await assert.strictEqual(rows.length, expectedCount);
   }
@@ -287,6 +289,28 @@ export default class StepImplementation {
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
   }
 
+  @Step('Scroll table to the <direction>')
+  public async scrollTable(direction: string) {
+    const tableSelector = '.ant-table-content';
+    const scrollAmount = 1000;
+    if (direction === 'down') {
+      await t.scrollDown(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'left') {
+      await t.scrollLeft(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'right') {
+      await t.scrollRight(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'up') {
+      await t.scrollUp(t.$(tableSelector), scrollAmount);
+    }
+  }
+
+  @Step('Filter table header <label> with option <option>')
+  public async filterTable(label: string, option: string) {
+    await t.click(t.$('.ant-table-filter-trigger-container', t.near(label)));
+    await t.click(option, t.within(t.$('.ant-table-filter-dropdown')));
+    await t.click(t.button('Ok'), t.within(t.$('.ant-table-filter-dropdown')));
+  }
+
   /* Notebook and TensorBoard Steps */
 
   @Step('Launch notebook')
@@ -310,7 +334,10 @@ export default class StepImplementation {
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
     const expectedCount = parseInt(count);
-    const cards = await getElements('[class*=TaskCard_base]');
+    const cards = await getElements(
+      '[class*=TaskCard_base]',
+      '[class*=TaskCard_badges] span:first-of-type',
+    );
     await assert.strictEqual(cards.length, expectedCount);
   }
 
@@ -318,19 +345,19 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Open TensorBoard from experiment row <row>')
   public async openExperimentInTensorBoard(row: string) {
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Toggle show archived button')
   public async toggleShowArchived() {
-    await t.click(t.text('Show Archived'));
+    await t.click(t.text('Show'));
   }
 
   /* Experiment Detail Page Steps */

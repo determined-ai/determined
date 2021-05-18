@@ -24,6 +24,7 @@ _INTEG_MARKERS = {
     "cloud",
     "parallel",
     "nightly",
+    "model_hub",
 }
 
 

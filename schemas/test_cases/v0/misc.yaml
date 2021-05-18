@@ -133,7 +133,7 @@
   case:
     enabled: false
     begin_on_batch: null
-    end_on_batch: null
+    end_after_batch: null
 
 - name: profiling is valid when full
   matches:
@@ -141,13 +141,21 @@
   case:
     enabled: true
     begin_on_batch: 10
-    end_on_batch: 100
+    end_after_batch: 100
 
-- name: profiling is invalid when end <= begin
+- name: profiling is valid when begin == end
+  matches:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
+  case:
+    enabled: true
+    begin_on_batch: 10
+    end_after_batch: 10
+
+- name: profiling is invalid when begin < end
   errors:
     http://determined.ai/schemas/expconf/v0/profiling.json:
-      - "begin_on_batch must be less than end_on_batch"
+      - "begin_on_batch must be less than end_after_batch"
   case:
     enabled: true
     begin_on_batch: 100
-    end_on_batch: 1
+    end_after_batch: 1

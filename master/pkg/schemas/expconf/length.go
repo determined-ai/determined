@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
 // Unit is the type of unit for specifying lengths.
@@ -14,21 +15,38 @@ type Unit string
 
 // All the units available for lengths.
 const (
-	Records Unit = "records"
-	Batches Unit = "batches"
-	Epochs  Unit = "epoches"
+	Records     Unit = "records"
+	Batches     Unit = "batches"
+	Epochs      Unit = "epoches"
+	Unspecified Unit = "unspecified"
 )
 
-// UnitContext contains all the context for switching the Unit of a Length freely.
-type UnitContext struct {
-	defaultUnit     Unit
-	globalBatchSize int
-	recordsPerEpoch int
+// ToProto converts the internal representation of a unit to protobuf.
+func (u Unit) ToProto() experimentv1.TrainingLength_Units {
+	switch u {
+	case Records:
+		return experimentv1.TrainingLength_UNITS_RECORDS
+	case Batches:
+		return experimentv1.TrainingLength_UNITS_BATCHES
+	case Epochs:
+		return experimentv1.TrainingLength_UNITS_EPOCHS
+	default:
+		return experimentv1.TrainingLength_UNITS_UNSPECIFIED
+	}
 }
 
-// NewUnitContext creates a new UnitContext.
-func NewUnitContext(defaultUnit Unit, globalBatchSize, recordsPerEpoch int) UnitContext {
-	return UnitContext{defaultUnit, globalBatchSize, recordsPerEpoch}
+// UnitFromProto returns a model.Unit from its protobuf representation.
+func UnitFromProto(u experimentv1.TrainingLength_Units) Unit {
+	switch u {
+	case experimentv1.TrainingLength_UNITS_RECORDS:
+		return Records
+	case experimentv1.TrainingLength_UNITS_BATCHES:
+		return Batches
+	case experimentv1.TrainingLength_UNITS_EPOCHS:
+		return Epochs
+	default:
+		return Unspecified
+	}
 }
 
 // LengthV0 a training duration in terms of records, batches or epochs.
@@ -84,6 +102,22 @@ func (l *LengthV0) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// ToProto converts a model.Length to its protobuf representation.
+func (l LengthV0) ToProto() *experimentv1.TrainingLength {
+	return &experimentv1.TrainingLength{
+		Units:  l.Unit.ToProto(),
+		Length: int32(l.Units),
+	}
+}
+
+// LengthFromProto returns a model.Length from its protobuf representation.
+func LengthFromProto(l *experimentv1.TrainingLength) Length {
+	return Length{
+		Unit:  UnitFromProto(l.Units),
+		Units: int(l.Length),
+	}
+}
+
 // NewLength returns a new length with the specified unit and length.
 func NewLength(unit Unit, units int) LengthV0 {
 	return LengthV0{Unit: unit, Units: units}
@@ -102,20 +136,6 @@ func NewLengthInBatches(batches int) LengthV0 {
 // NewLengthInEpochs returns a new LengthV0 in terms of epochs.
 func NewLengthInEpochs(epochs int) LengthV0 {
 	return LengthV0{Unit: Epochs, Units: epochs}
-}
-
-// UnitsFromBatches return the number of units completed by the given batches, rounded up.
-func UnitsFromBatches(batches int, ctx UnitContext) float64 {
-	switch ctx.defaultUnit {
-	case Records:
-		return float64(batches * ctx.globalBatchSize)
-	case Batches:
-		return float64(batches)
-	case Epochs:
-		return float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch)
-	default:
-		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
-	}
 }
 
 func (l LengthV0) String() string {
@@ -154,43 +174,4 @@ func (l LengthV0) Div(other LengthV0) LengthV0 {
 // DivInt divides a length by an int.
 func (l LengthV0) DivInt(other int) LengthV0 {
 	return NewLength(l.Unit, l.Units/other)
-}
-
-// ToNearestBatch converts a training length to the nearest batch, potentially truncating some units
-// if they are provided as records or epochs.
-func (l LengthV0) ToNearestBatch(ctx UnitContext) int {
-	switch l.Unit {
-	case Records:
-		return l.Units / ctx.globalBatchSize
-	case Batches:
-		return l.Units
-	case Epochs:
-		return (l.Units * ctx.recordsPerEpoch) / ctx.globalBatchSize
-	default:
-		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
-	}
-}
-
-// EqualWithinBatch returns true is the given length and batches are equal within one
-// batch size.
-func (l LengthV0) EqualWithinBatch(batches int, ctx UnitContext) bool {
-	switch l.Unit {
-	case Records:
-		diff := abs(l.Units - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
-	case Batches:
-		return l.Units == batches
-	case Epochs:
-		diff := abs(l.Units*ctx.recordsPerEpoch - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
-	default:
-		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
-	}
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

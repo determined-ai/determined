@@ -255,6 +255,10 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
         "DevicesConfigV0",
         "HyperparametersV0",
         "LabelsV0",
+        # Technically Description is a struct containing a string pointer, which exists only to
+        # handle the semantics of runtime defaultables.  But it has the same mechanics as a map or
+        # slice alias, so we include it here.
+        "Description",
     ]
 
     # Disallow pointers for required fields in all cases.
@@ -345,7 +349,7 @@ def go_getters_and_setters(
             lines.append(f"func ({x} {gotype}) {getter}() {defaulted_type} {{")
             lines.append(f"\tif {x}.{field} == nil {{")
             lines.append(
-                f'\t\tpanic("You must call WithDefaults on {gotype} before .{field}")'
+                f'\t\tpanic("You must call WithDefaults on {gotype} before .{getter}")'
             )
             lines.append("\t}")
             lines.append(f"\treturn *{x}.{field}")
@@ -373,7 +377,7 @@ def go_unions(
     lines.append(f"func ({x} {gotype}) GetUnionMember() interface{{}} {{")
     for field, _ in union_spec:
         lines.append(f"\tif {x}.{field} != nil {{")
-        lines.append("\t\treturn nil")
+        lines.append(f"\t\treturn *{x}.{field}")
         lines.append("\t}")
     lines.append('\tpanic("no union member defined")')
     lines.append("}")

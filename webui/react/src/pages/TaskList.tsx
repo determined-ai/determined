@@ -256,10 +256,13 @@ const TaskList: React.FC = () => {
     const { columnKey, order } = sorter as SorterResult<CommandTask>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
-    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
-    setSorter({ descend: order === 'descend', key: columnKey as string });
+    const updatedSorter = { descend: order === 'descend', key: columnKey as string };
+    storage.set(STORAGE_SORTER_KEY, updatedSorter);
+    setSorter(updatedSorter);
 
-    storage.set(STORAGE_FILTERS_KEY, { ...filters, limit: tablePagination.pageSize });
+    const updatedFilters = { ...filters, limit: tablePagination.pageSize };
+    storage.set(STORAGE_FILTERS_KEY, updatedFilters);
+    setFilters(updatedFilters);
   }, [ columns, filters, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);

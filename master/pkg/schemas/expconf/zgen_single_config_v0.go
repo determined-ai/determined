@@ -10,7 +10,7 @@ import (
 
 func (s SingleConfigV0) MaxLength() LengthV0 {
 	if s.RawMaxLength == nil {
-		panic("You must call WithDefaults on SingleConfigV0 before .RawMaxLength")
+		panic("You must call WithDefaults on SingleConfigV0 before .MaxLength")
 	}
 	return *s.RawMaxLength
 }

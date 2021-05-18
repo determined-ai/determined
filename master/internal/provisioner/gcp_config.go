@@ -48,7 +48,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-1c26118",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-baefbf7",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
@@ -258,7 +258,7 @@ func (t gceInstanceType) name() string {
 	return fmt.Sprintf("%s-%s-%d", t.MachineType, t.GPUType, t.GPUNum)
 }
 
-func (t gceInstanceType) slots() int {
+func (t gceInstanceType) Slots() int {
 	return t.GPUNum
 }
 

@@ -6,7 +6,13 @@ import (
 	"sort"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
+
+func lengthPtr(val expconf.Length) *expconf.Length {
+	return &val
+}
 
 func getBracketMaxTrials(
 	maxTrials int, divisor float64, brackets []int) []int {
@@ -64,42 +70,41 @@ func getBracketMaxConcurrentTrials(
 	return bracketMaxConcurrentTrials
 }
 
-func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
-	modeFunc := parseAdaptiveMode(config.Mode)
+func newAdaptiveASHASearch(config expconf.AdaptiveASHAConfig, smallerIsBetter bool) SearchMethod {
+	modeFunc := parseAdaptiveMode(config.Mode())
 
-	brackets := config.BracketRungs
+	brackets := config.BracketRungs()
 	if len(brackets) == 0 {
-		config.MaxRungs = min(
-			config.MaxRungs,
-			int(math.Log(float64(config.MaxLength.Units))/math.Log(config.Divisor))+1)
-		config.MaxRungs = min(
-			config.MaxRungs,
-			int(math.Log(float64(config.MaxTrials))/math.Log(config.Divisor))+1)
-		brackets = modeFunc(config.MaxRungs)
+		maxRungs := config.MaxRungs()
+		maxRungs = min(
+			maxRungs,
+			int(math.Log(float64(config.MaxLength().Units))/math.Log(config.Divisor()))+1)
+		maxRungs = min(
+			maxRungs,
+			int(math.Log(float64(config.MaxTrials()))/math.Log(config.Divisor()))+1)
+		brackets = modeFunc(maxRungs)
 	}
 	// We prioritize brackets that perform more early stopping to try to max speedups early on.
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
 	bracketMaxTrials := getBracketMaxTrials(
-		config.MaxTrials, config.Divisor, brackets)
+		config.MaxTrials(), config.Divisor(), brackets)
 	bracketMaxConcurrentTrials := getBracketMaxConcurrentTrials(
-		config.MaxConcurrentTrials, config.Divisor, bracketMaxTrials)
+		config.MaxConcurrentTrials(), config.Divisor(), bracketMaxTrials)
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
-		c := model.AsyncHalvingConfig{
-			Metric:              config.Metric,
-			SmallerIsBetter:     config.SmallerIsBetter,
-			NumRungs:            numRungs,
-			MaxLength:           config.MaxLength,
-			MaxTrials:           bracketMaxTrials[i],
-			Divisor:             config.Divisor,
-			MaxConcurrentTrials: bracketMaxConcurrentTrials[i],
-			StopOnce:            config.StopOnce,
+		c := expconf.AsyncHalvingConfig{
+			RawNumRungs:            ptrs.IntPtr(numRungs),
+			RawMaxLength:           lengthPtr(config.MaxLength()),
+			RawMaxTrials:           &bracketMaxTrials[i],
+			RawDivisor:             ptrs.Float64Ptr(config.Divisor()),
+			RawMaxConcurrentTrials: ptrs.IntPtr(bracketMaxConcurrentTrials[i]),
+			RawStopOnce:            ptrs.BoolPtr(config.StopOnce()),
 		}
-		if config.StopOnce {
-			methods = append(methods, newAsyncHalvingStoppingSearch(c))
+		if config.StopOnce() {
+			methods = append(methods, newAsyncHalvingStoppingSearch(c, smallerIsBetter))
 		} else {
-			methods = append(methods, newAsyncHalvingSearch(c))
+			methods = append(methods, newAsyncHalvingSearch(c, smallerIsBetter))
 		}
 	}
 
@@ -128,7 +133,7 @@ func aggressiveMode(maxRungs int) []int {
 	return []int{maxRungs}
 }
 
-func parseAdaptiveMode(rawMode model.AdaptiveMode) adaptiveMode {
+func parseAdaptiveMode(rawMode expconf.AdaptiveMode) adaptiveMode {
 	switch rawMode {
 	case model.ConservativeMode:
 		return conservativeMode

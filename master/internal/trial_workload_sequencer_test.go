@@ -5,16 +5,17 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/workload"
 
-	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
-func TestTrialWorkloadSequencer(t *testing.T) {
+func defaultExperimentConfig() (expconf.ExperimentConfig, error) {
 	yam := `
 checkpoint_storage:
   type: s3
@@ -35,10 +36,18 @@ searcher:
 reproducibility:
   experiment_seed: 42
 checkpoint_policy: none
+entrypoint: model_def:MyTrial
 `
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(yam))
+	if err != nil {
+		return expconf.ExperimentConfig{}, nil
+	}
+	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
+}
 
-	expConfig := model.DefaultExperimentConfig(nil)
-	assert.NilError(t, yaml.Unmarshal([]byte(yam), &expConfig, yaml.DisallowUnknownFields))
+func TestTrialWorkloadSequencer(t *testing.T) {
+	expConfig, err := defaultExperimentConfig()
+	assert.NilError(t, err)
 
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
@@ -47,8 +56,8 @@ checkpoint_policy: none
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
-	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
+	schedulingUnit := expConfig.SchedulingUnit()
+	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Batches, 500))
 
 	trainWorkload1 := workload.Workload{
 		Kind:                  workload.RunStep,
@@ -150,7 +159,7 @@ checkpoint_policy: none
 	assert.Assert(t, !s.UpToDate())
 
 	// Check that workload() returns an error before setTrialID is set
-	_, err := s.Workload()
+	_, err = s.Workload()
 	assert.Error(t, err, "cannot call sequencer.Workload() before sequencer.SetTrialID()")
 
 	s.SetTrialID(1)
@@ -165,84 +174,84 @@ checkpoint_policy: none
 	isNotBestVal := func() bool { return false }
 
 	// Complete first RUN_STEP.
-	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err := s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload1,
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload1)
 
 	// Complete second RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload2,
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, validationWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload2)
 
 	// Complete first COMPUTE_VALIDATION_METRICS.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          validationWorkload2,
 		ValidationMetrics: &workload.ValidationMetrics{},
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload3)
 
 	// Complete third and fourth RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload3,
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload4)
 
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload4,
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, validationWorkload4)
 
 	// Complete second COMPUTE_VALIDATION_METRICS.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          validationWorkload4,
 		ValidationMetrics: &workload.ValidationMetrics{},
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, checkpointWorkload4)
 
 	// Complete first CHECKPOINT_MODEL.
 	fakeCheckpointMetrics := workload.CheckpointMetrics{UUID: uuid.New()}
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          checkpointWorkload4,
 		CheckpointMetrics: &fakeCheckpointMetrics,
 	}, isNotBestVal)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
 	// Complete last RUN_STEP.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload5,
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, checkpointWorkload5)
@@ -256,34 +265,35 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload5)
 
 	// Replay last RUN_STEP after rollback.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: trainWorkload5,
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, checkpointWorkload5)
 
 	// Complete last CHECKPOINT_MODEL.
 	fakeCheckpointMetrics = workload.CheckpointMetrics{UUID: uuid.New()}
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          checkpointWorkload5,
 		CheckpointMetrics: &fakeCheckpointMetrics,
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, validationWorkload5)
 
 	// Complete last COMPUTE_VALIDATION_METRICS.
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          validationWorkload5,
 		ValidationMetrics: &workload.ValidationMetrics{},
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, true, "expected to need to report a validation for %v", train)
+	assert.Assert(t, completedOp != nil, "expected to report a validation")
+	assert.Equal(t, *completedOp, train, "reported incorrect validation") // nolint:staticcheck
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
 	// Check that we are up to date now.
@@ -295,8 +305,9 @@ checkpoint_policy: none
 }
 
 func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig(nil)
-	expConfig.MinCheckpointPeriod = model.NewLengthInBatches(100)
+	expConfig, err := defaultExperimentConfig()
+	assert.NilError(t, err)
+	expConfig.SetMinCheckpointPeriod(expconf.NewLengthInBatches(100))
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
@@ -307,7 +318,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Batches, 500))
+	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Batches, 500))
 	s.OperationRequested(train)
 
 	msg := workload.CompletedMessage{
@@ -316,23 +327,24 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
-			NumBatches:            expConfig.SchedulingUnit,
+			NumBatches:            expConfig.SchedulingUnit(),
 			PriorBatchesProcessed: 0,
 		},
 	}
-	reportVal, err := s.WorkloadCompleted(msg, nil)
+	completedOp, err := s.WorkloadCompleted(msg, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 
 	exitedReason := workload.ExitedReason("not ok")
 	immediateExit, err := s.WorkloadFailed(msg, exitedReason)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 	assert.Equal(t, immediateExit, true, "should have been exiting early, immediately")
 }
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig(nil)
+	expConfig, err := defaultExperimentConfig()
+	assert.NilError(t, err)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
@@ -343,12 +355,12 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	s := newTrialWorkloadSequencer(experiment, create, nil)
 	s.SetTrialID(1)
 
-	train := searcher.NewValidateAfter(create.RequestID, model.NewLength(model.Records, 24))
+	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Records, 24))
 	s.OperationRequested(
 		train,
 	)
 
-	reportVal, err := s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err := s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.RunStep,
 			ExperimentID:          1,
@@ -359,10 +371,10 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 		},
 	}, nil)
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 
 	fakeCheckpointMetrics := &workload.CheckpointMetrics{UUID: uuid.New()}
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.CheckpointModel,
 			ExperimentID:          1,
@@ -373,9 +385,9 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 		CheckpointMetrics: fakeCheckpointMetrics,
 	}, func() bool { return false })
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, false, "should not have finished %v yet", train)
+	assert.Assert(t, completedOp == nil, "should not have finished %v yet", train)
 
-	reportVal, err = s.WorkloadCompleted(workload.CompletedMessage{
+	completedOp, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload: workload.Workload{
 			Kind:                  workload.ComputeValidationMetrics,
 			ExperimentID:          1,
@@ -386,5 +398,6 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 		ValidationMetrics: &workload.ValidationMetrics{},
 	}, func() bool { return false })
 	assert.NilError(t, err)
-	assert.Equal(t, reportVal, true, "should have finished %v", train)
+	assert.Assert(t, completedOp != nil, "expected to report a validation")
+	assert.Equal(t, *completedOp, train, "reported incorrect validation") // nolint:staticcheck
 }

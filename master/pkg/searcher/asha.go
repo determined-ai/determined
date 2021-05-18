@@ -5,9 +5,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // AsyncHalvingSearch implements a search using the asynchronous successive halving algorithm
@@ -27,7 +27,8 @@ type (
 	}
 
 	asyncHalvingSearch struct {
-		model.AsyncHalvingConfig
+		expconf.AsyncHalvingConfig
+		SmallerIsBetter bool
 		asyncHalvingSearchState
 	}
 
@@ -40,10 +41,10 @@ type (
 
 	// rung describes a set of trials that are to be trained for the same number of units.
 	rung struct {
-		UnitsNeeded   model.Length  `json:"units_needed"`
-		Metrics       []trialMetric `json:"metrics"`
-		StartTrials   int           `json:"start_trials"`
-		PromoteTrials int           `json:"promote_trials"`
+		UnitsNeeded   expconf.Length `json:"units_needed"`
+		Metrics       []trialMetric  `json:"metrics"`
+		StartTrials   int            `json:"start_trials"`
+		PromoteTrials int            `json:"promote_trials"`
 		// field below used by asha.go.
 		OutstandingTrials int `json:"outstanding_trials"`
 	}
@@ -51,19 +52,20 @@ type (
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
-	rungs := make([]*rung, 0, config.NumRungs)
+func newAsyncHalvingSearch(config expconf.AsyncHalvingConfig, smallerIsBetter bool) SearchMethod {
+	rungs := make([]*rung, 0, config.NumRungs())
 	unitsNeeded := 0
-	for id := 0; id < config.NumRungs; id++ {
+	for id := 0; id < config.NumRungs(); id++ {
 		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
-		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		unitsNeeded += max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
-		rungs = append(rungs, &rung{UnitsNeeded: model.NewLength(config.Unit(), unitsNeeded)})
+		downsamplingRate := math.Pow(config.Divisor(), float64(config.NumRungs()-id-1))
+		unitsNeeded += max(int(float64(config.MaxLength().Units)/downsamplingRate), 1)
+		rungs = append(rungs, &rung{UnitsNeeded: expconf.NewLength(config.Unit(), unitsNeeded)})
 	}
 
 	return &asyncHalvingSearch{
 		AsyncHalvingConfig: config,
+		SmallerIsBetter:    smallerIsBetter,
 		asyncHalvingSearchState: asyncHalvingSearchState{
 			Rungs:            rungs,
 			TrialRungs:       make(map[model.RequestID]int),
@@ -134,11 +136,11 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 	var ops []Operation
 	var maxConcurrentTrials int
 
-	if s.MaxConcurrentTrials > 0 {
-		maxConcurrentTrials = min(s.MaxConcurrentTrials, s.MaxTrials)
+	if s.MaxConcurrentTrials() > 0 {
+		maxConcurrentTrials = min(s.MaxConcurrentTrials(), s.MaxTrials())
 	} else {
 		maxConcurrentTrials = max(
-			min(int(math.Pow(s.Divisor, float64(s.NumRungs-1))), s.MaxTrials),
+			min(int(math.Pow(s.Divisor(), float64(s.NumRungs()-1))), s.MaxTrials()),
 			1)
 	}
 
@@ -170,18 +172,12 @@ func (s *asyncHalvingSearch) trialClosed(
 }
 
 func (s *asyncHalvingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metrics workload.ValidationMetrics,
+	ctx context, requestID model.RequestID, metric float64,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	// Extract the relevant metric as a float.
-	metric, err := metrics.Metric(s.Metric)
-	if err != nil {
-		return nil, err
-	}
 	if !s.SmallerIsBetter {
 		metric *= -1
 	}
-
 	return s.promoteAsync(ctx, requestID, metric), nil
 }
 
@@ -197,7 +193,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 
 	var ops []Operation
 	// If the trial has completed the top rung's validation, close the trial.
-	if rungIndex == s.NumRungs-1 {
+	if rungIndex == s.NumRungs()-1 {
 		rung.Metrics = append(rung.Metrics,
 			trialMetric{
 				RequestID: requestID,
@@ -215,13 +211,13 @@ func (s *asyncHalvingSearch) promoteAsync(
 		for _, promotionID := range rung.promotionsAsync(
 			requestID,
 			metric,
-			s.Divisor,
+			s.Divisor(),
 		) {
 			s.TrialRungs[promotionID] = rungIndex + 1
 			nextRung.OutstandingTrials++
 			if !s.EarlyExitTrials[promotionID] {
 				unitsNeeded := max(nextRung.UnitsNeeded.Units-rung.UnitsNeeded.Units, 1)
-				ops = append(ops, NewValidateAfter(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
+				ops = append(ops, NewValidateAfter(promotionID, expconf.NewLength(s.Unit(), unitsNeeded)))
 				addedTrainWorkload = true
 				s.PendingTrials++
 			} else {
@@ -234,7 +230,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 	}
 
 	allTrials := len(s.TrialRungs) - s.InvalidTrials
-	if !addedTrainWorkload && allTrials < s.MaxTrials {
+	if !addedTrainWorkload && allTrials < s.MaxTrials() {
 		s.PendingTrials++
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
@@ -244,7 +240,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 	}
 
 	// Only close out trials once we have reached the MaxTrials for the searcher.
-	if len(s.Rungs[0].Metrics) == s.MaxTrials {
+	if len(s.Rungs[0].Metrics) == s.MaxTrials() {
 		ops = append(ops, s.closeOutRungs()...)
 	}
 	return ops
@@ -271,15 +267,15 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 }
 
 func (s *asyncHalvingSearch) progress(map[model.RequestID]model.PartialUnits) float64 {
-	if s.MaxConcurrentTrials > 0 && s.PendingTrials > s.MaxConcurrentTrials {
+	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
 	allTrials := len(s.Rungs[0].Metrics)
 	// Give ourselves an overhead of 20% of MaxTrials when calculating progress.
-	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials))
-	if allTrials == s.MaxTrials {
+	progress := float64(allTrials) / (1.2 * float64(s.MaxTrials()))
+	if allTrials == s.MaxTrials() {
 		numValidTrials := float64(s.TrialsCompleted) - float64(s.InvalidTrials)
-		progressNoOverhead := numValidTrials / float64(s.MaxTrials)
+		progressNoOverhead := numValidTrials / float64(s.MaxTrials())
 		progress = math.Max(progressNoOverhead, progress)
 	}
 	return progress

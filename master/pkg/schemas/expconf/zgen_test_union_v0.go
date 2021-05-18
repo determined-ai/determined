@@ -10,10 +10,10 @@ import (
 
 func (t TestUnionV0) GetUnionMember() interface{} {
 	if t.RawA != nil {
-		return nil
+		return *t.RawA
 	}
 	if t.RawB != nil {
-		return nil
+		return *t.RawB
 	}
 	panic("no union member defined")
 }

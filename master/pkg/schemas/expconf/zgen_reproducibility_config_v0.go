@@ -10,7 +10,7 @@ import (
 
 func (r ReproducibilityConfigV0) ExperimentSeed() uint32 {
 	if r.RawExperimentSeed == nil {
-		panic("You must call WithDefaults on ReproducibilityConfigV0 before .RawExperimentSeed")
+		panic("You must call WithDefaults on ReproducibilityConfigV0 before .ExperimentSeed")
 	}
 	return *r.RawExperimentSeed
 }

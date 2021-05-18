@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Operation represents the base interface for possible operations that a search method can return.
@@ -158,12 +161,22 @@ func (c Checkpoint) String() string {
 // its total batches trained equals the specified length.
 type ValidateAfter struct {
 	RequestID model.RequestID
-	Length    model.Length
+	Length    expconf.Length
 }
 
 // NewValidateAfter returns a new train operation.
-func NewValidateAfter(requestID model.RequestID, length model.Length) ValidateAfter {
+func NewValidateAfter(requestID model.RequestID, length expconf.Length) ValidateAfter {
 	return ValidateAfter{requestID, length}
+}
+
+// ValidateAfterFromProto returns a ValidateAfter operation from its protobuf representation.
+func ValidateAfterFromProto(
+	rID model.RequestID, op *experimentv1.ValidateAfterOperation,
+) ValidateAfter {
+	return ValidateAfter{
+		RequestID: rID,
+		Length:    expconf.LengthFromProto(op.Length),
+	}
 }
 
 func (t ValidateAfter) String() string {
@@ -172,6 +185,13 @@ func (t ValidateAfter) String() string {
 
 // GetRequestID implemented Requested.
 func (t ValidateAfter) GetRequestID() model.RequestID { return t.RequestID }
+
+// ToProto converts a searcher.ValidateAfter to its protobuf representation.
+func (t ValidateAfter) ToProto() *experimentv1.ValidateAfterOperation {
+	return &experimentv1.ValidateAfterOperation{
+		Length: t.Length.ToProto(),
+	}
+}
 
 // Close the trial with the given trial id.
 type Close struct {

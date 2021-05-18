@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Images: fix GPU support in CUDA 10.2 + Tensorflow 1.15 images.

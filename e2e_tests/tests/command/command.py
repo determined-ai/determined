@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 from contextlib import contextmanager
-from typing import IO, Any, Dict, Generator, Optional, cast
+from typing import IO, Any, Generator, Optional
 
 import requests
 
@@ -82,17 +82,17 @@ def interactive_command(*args: str) -> Generator:
 
 def get_num_running_commands() -> int:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "commands")
+    r = api.get(conf.make_master_url(), "api/v1/commands")
     assert r.status_code == requests.codes.ok, r.text
 
-    return len([command for _id, command in r.json().items() if command["state"] == "RUNNING"])
+    return len([command for command in r.json()["commands"] if command["state"] == "STATE_RUNNING"])
 
 
-def get_command(id: str) -> Dict[str, Any]:
+def get_command(id: str) -> Any:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "commands")
+    r = api.get(conf.make_master_url(), "api/v1/commands/" + id)
     assert r.status_code == requests.codes.ok, r.text
-    return cast(Dict[str, Any], r.json()["/commands/" + id])
+    return r.json()["command"]
 
 
 def get_command_config(command_type: str, id: str) -> str:

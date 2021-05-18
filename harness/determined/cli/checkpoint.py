@@ -84,7 +84,7 @@ def list(args: Namespace) -> None:
     values = [
         [
             c["trial_id"],
-            c["step"]["prior_batches_processed"] + c["step"]["num_batches"],
+            c["step"]["total_batches"],
             c["state"],
             api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
             c["uuid"],

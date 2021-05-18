@@ -1,0 +1,5 @@
+.headerFilterOn {
+  :global(.ant-table-filter-column .ant-table-filter-trigger-container .ant-table-filter-trigger) {
+    color: var(--theme-colors-action-normal);
+  }
+}

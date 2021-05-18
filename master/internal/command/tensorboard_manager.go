@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -24,6 +23,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -45,12 +47,6 @@ type TensorboardRequest struct {
 
 	ExperimentIDs []int `json:"experiment_ids"`
 	TrialIDs      []int `json:"trial_ids"`
-}
-
-// TensorboardRequestWithUser accompanies TensorboardRequest with a user.
-type TensorboardRequestWithUser struct {
-	Tensorboard TensorboardRequest
-	User        *model.User
 }
 
 type tensorboardConfig struct {
@@ -75,13 +71,17 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}
+		users := make(map[string]bool)
+		for _, user := range msg.Users {
+			users[user] = true
+		}
 		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
-			resp.Tensorboards = append(resp.Tensorboards, tensorboard.(*tensorboardv1.Tensorboard))
+			if typed := tensorboard.(*tensorboardv1.Tensorboard); len(users) == 0 || users[typed.Username] {
+				resp.Tensorboards = append(resp.Tensorboards, typed)
+			}
 		}
 		ctx.Respond(resp)
 
-	case echo.Context:
-		t.handleAPIRequest(ctx, msg)
 	case tensorboardTick:
 		services := ctx.Ask(t.proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
 		for _, boardRef := range ctx.Children() {
@@ -102,8 +102,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		}
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
-	case TensorboardRequestWithUser:
-		summary, statusCode, err := t.processLaunchRequest(ctx, msg.User, &msg.Tensorboard)
+	case TensorboardRequest:
+		summary, statusCode, err := t.processLaunchRequest(ctx, &msg)
 		if err != nil || statusCode > 200 {
 			ctx.Respond(echo.NewHTTPError(statusCode,
 				errors.Wrap(err, "failed to launch Tensorboard").Error(),
@@ -118,22 +118,10 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 func (t *tensorboardManager) processLaunchRequest(
 	ctx *actor.Context,
-	user *model.User,
 	req *TensorboardRequest,
 ) (*summary, int, error) {
-	// Tensorboards always use zero slots. We need to know this when parsing the command
-	// request to make sure that we fill in the correct default value for 'slots' if the
-	// user didn't set it explicitly.
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), t.db, *user, req.CommandParams, t.makeTaskSpec, true,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &t.defaultAgentUserGroup
-	}
+	var err error
+	params := req.CommandParams
 
 	if len(req.ExperimentIDs) == 0 && len(req.TrialIDs) == 0 {
 		err = errors.New("must set experiment or trial ids")
@@ -143,7 +131,7 @@ func (t *tensorboardManager) processLaunchRequest(
 	ctx.Log().Infof("creating tensorboard (experiment id(s): %v trial id(s): %v)",
 		req.ExperimentIDs, req.TrialIDs)
 
-	b, err := t.newTensorBoard(commandReq, *req)
+	b, err := t.newTensorBoard(params, *req)
 
 	if err != nil {
 		err = errors.Wrap(err, "failed to create tensorboard")
@@ -165,50 +153,10 @@ func (t *tensorboardManager) processLaunchRequest(
 	return &summary, http.StatusOK, nil
 }
 
-func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		type params struct {
-			CommandParams
-			ExperimentIDs []int `json:"experiment_ids"`
-			TrialIDs      []int `json:"trial_ids"`
-		}
-		boundParams := params{}
-		if err := apiCtx.Bind(&boundParams); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		summary, statusCode, err := t.processLaunchRequest(ctx, &user, &TensorboardRequest{
-			CommandParams: &boundParams.CommandParams,
-			ExperimentIDs: boundParams.ExperimentIDs,
-			TrialIDs:      boundParams.TrialIDs,
-		})
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
 func (t *tensorboardManager) newTensorBoard(
-	commandReq *commandRequest,
+	params *CommandParams,
 	req TensorboardRequest,
 ) (*command, error) {
-	// Warning! Since certain fields are incompatible with the current model.Experiment,
-	// internally this avoids loading certain parts of the experiment configuration so
-	// we can load their tensorboards still.
-	// TODO(DET-4009): Fix this in the experiment configuration backwards compatibility project.
 	exps, err := t.getTensorBoardConfigs(req)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -221,47 +169,48 @@ func (t *tensorboardManager) newTensorBoard(
 	var logDirs []string
 
 	additionalFiles := archive.Archive{
-		commandReq.AgentUserGroup.OwnedArchiveItem(
+		params.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
 		),
 	}
 
-	uniqMounts := map[model.BindMount]bool{}
+	uniqMounts := map[expconf.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
 	taskID := sproto.NewTaskID()
 	serviceAddress := fmt.Sprintf(tensorboardServiceAddress, taskID)
 
-	config := commandReq.Config
+	config := params.FullConfig
 
 	uniqEnvVars["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 	for _, exp := range exps {
 		var logBasePath string
 
-		switch c := exp.Config.CheckpointStorage; {
-		case c.SharedFSConfig != nil:
+		switch c := exp.Config.CheckpointStorage().GetUnionMember().(type) {
+		case expconf.SharedFSConfig:
 			// Mount the checkpoint location into the TensorBoard container to
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
-			uniqMounts[model.BindMount{
-				ContainerPath: model.DefaultSharedFSContainerPath,
-				HostPath:      c.SharedFSConfig.HostPath,
-				Propagation:   model.DefaultSharedFSPropagation,
-			}] = true
-			logBasePath = c.SharedFSConfig.PathInContainer()
+			sharedFSMount := schemas.WithDefaults(expconf.BindMount{
+				RawContainerPath: model.DefaultSharedFSContainerPath,
+				RawHostPath:      c.HostPath(),
+				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
+			}).(expconf.BindMount)
+			uniqMounts[sharedFSMount] = true
+			logBasePath = c.PathInContainer()
 
-		case c.S3Config != nil:
-			if c.S3Config.AccessKey != nil {
-				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.S3Config.AccessKey
+		case expconf.S3Config:
+			if c.AccessKey() != nil {
+				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.AccessKey()
 			}
-			if c.S3Config.SecretKey != nil {
-				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.S3Config.SecretKey
+			if c.SecretKey() != nil {
+				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.SecretKey()
 			}
-			if c.S3Config.EndpointURL != nil {
-				endpoint, urlErr := url.Parse(*c.S3Config.EndpointURL)
+			if c.EndpointURL() != nil {
+				endpoint, urlErr := url.Parse(*c.EndpointURL())
 				if urlErr != nil {
 					return nil, echo.NewHTTPError(http.StatusInternalServerError,
 						"unable to parse checkpoint_storage.s3.endpoint_url")
@@ -269,7 +218,7 @@ func (t *tensorboardManager) newTensorBoard(
 
 				// The TensorBoard container needs access to the original URL
 				// and the URL in "host:port" form.
-				uniqEnvVars["DET_S3_ENDPOINT"] = *c.S3Config.EndpointURL
+				uniqEnvVars["DET_S3_ENDPOINT"] = *c.EndpointURL()
 				uniqEnvVars["S3_ENDPOINT"] = endpoint.Host
 
 				uniqEnvVars["S3_USE_HTTPS"] = "0"
@@ -278,36 +227,40 @@ func (t *tensorboardManager) newTensorBoard(
 				}
 			}
 
-			uniqEnvVars["AWS_BUCKET"] = c.S3Config.Bucket
+			uniqEnvVars["AWS_BUCKET"] = c.Bucket()
 
-			logBasePath = "s3://" + c.S3Config.Bucket
+			logBasePath = "s3://" + c.Bucket()
 
-		case c.GCSConfig != nil:
-			logBasePath = "gs://" + c.GCSConfig.Bucket
+		case expconf.GCSConfig:
+			logBasePath = "gs://" + c.Bucket()
 
-		case c.HDFSConfig != nil:
-			logBasePath = "hdfs://" + c.HDFSConfig.Path
+		case expconf.HDFSConfig:
+			logBasePath = "hdfs://" + c.Path()
 
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
-			for _, mount := range exp.Config.BindMounts {
+			for _, mount := range exp.Config.BindMounts() {
 				uniqMounts[mount] = true
 			}
 
 		default:
-			return nil, echo.NewHTTPError(http.StatusBadRequest, "unknown storage backend for experiment")
+			return nil, echo.NewHTTPError(
+				http.StatusBadRequest, fmt.Sprintf(
+					"unknown storage backend for experiment: %T", c,
+				),
+			)
 		}
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, commandReq.TaskSpec.ClusterID, exp.ID)
+				logBasePath, params.TaskSpec.ClusterID, exp.ID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, commandReq.TaskSpec.ClusterID, exp.ID, id)
+				id, logBasePath, params.TaskSpec.ClusterID, exp.ID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -327,7 +280,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	additionalFiles = append(additionalFiles,
-		commandReq.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
+		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
@@ -357,12 +310,12 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
-	setPodSpec(&config, commandReq.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,
-		config:          config,
-		userFiles:       commandReq.UserFiles,
+		config:          *config,
+		userFiles:       params.UserFiles,
 		additionalFiles: additionalFiles,
 		metadata: map[string]interface{}{
 			"experiment_ids": req.ExperimentIDs,
@@ -374,9 +327,12 @@ func (t *tensorboardManager) newTensorBoard(
 			},
 		},
 		serviceAddress: &serviceAddress,
-		owner:          commandReq.Owner,
-		agentUserGroup: commandReq.AgentUserGroup,
-		taskSpec:       &commandReq.TaskSpec,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		db: t.db,
 	}, nil
@@ -389,7 +345,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	var err error
 
 	for _, id := range req.ExperimentIDs {
-		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(id)
+		exp, err = t.db.ExperimentByID(id)
 		if err != nil {
 			return nil, err
 		}
@@ -403,7 +359,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 			return nil, err
 		}
 
-		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(expID)
+		exp, err = t.db.ExperimentByID(expID)
 		if err != nil {
 			return nil, err
 		}
@@ -430,11 +386,11 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	return configs, nil
 }
 
-func getMounts(m map[model.BindMount]bool) []model.BindMount {
+func getMounts(m map[expconf.BindMount]bool) []model.BindMount {
 	var bindMounts []model.BindMount
 
 	for mount := range m {
-		bindMounts = append(bindMounts, mount)
+		bindMounts = append(bindMounts, model.ToModelBindMount(mount))
 	}
 
 	return bindMounts

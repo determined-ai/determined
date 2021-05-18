@@ -26,7 +26,7 @@ func (b *BindMountV0) SetContainerPath(val string) {
 
 func (b BindMountV0) ReadOnly() bool {
 	if b.RawReadOnly == nil {
-		panic("You must call WithDefaults on BindMountV0 before .RawReadOnly")
+		panic("You must call WithDefaults on BindMountV0 before .ReadOnly")
 	}
 	return *b.RawReadOnly
 }
@@ -37,7 +37,7 @@ func (b *BindMountV0) SetReadOnly(val bool) {
 
 func (b BindMountV0) Propagation() string {
 	if b.RawPropagation == nil {
-		panic("You must call WithDefaults on BindMountV0 before .RawPropagation")
+		panic("You must call WithDefaults on BindMountV0 before .Propagation")
 	}
 	return *b.RawPropagation
 }

@@ -31,8 +31,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-1c26118
-        gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-1c26118
+        cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-baefbf7
+        gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-baefbf7
       pod_spec: null
       ports:
         qwer: 1234
@@ -83,6 +83,7 @@
       average_aggregated_gradients: true
       average_training_metrics: false
       gradient_compression: false
+      grad_updates_size_file: "/tmp/hi I am a size file"
       mixed_precision: O0
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
@@ -90,7 +91,7 @@
     profiling:
       enabled: true
       begin_on_batch: 0
-      end_on_batch: 1
+      end_after_batch: 1
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
@@ -187,7 +188,7 @@
     profiling:
       enabled: false
       begin_on_batch: null
-      end_on_batch: null
+      end_after_batch: null
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"
@@ -200,7 +201,7 @@
       weight: 1
       max_slots: null
       priority: null
-      resource_pool: null
+      resource_pool: ''
     scheduling_unit: 100
     searcher:
       max_length:

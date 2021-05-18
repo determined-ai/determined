@@ -10,13 +10,13 @@ import (
 
 func (d DataLayerConfigV0) GetUnionMember() interface{} {
 	if d.RawSharedFSConfig != nil {
-		return nil
+		return *d.RawSharedFSConfig
 	}
 	if d.RawS3Config != nil {
-		return nil
+		return *d.RawS3Config
 	}
 	if d.RawGCSConfig != nil {
-		return nil
+		return *d.RawGCSConfig
 	}
 	panic("no union member defined")
 }

@@ -12,6 +12,7 @@ import time
 sys.path.append("./detr")
 
 import torch
+import filelock
 
 from determined.pytorch import (
     DataLoader,
@@ -91,9 +92,10 @@ class DETRTrial(PyTorchTrial):
         self.context = context
         self.hparams = AttrDict(self.context.get_hparams())
 
-        # If backend is local download data in rank 0 slot.
+        # If backend is local download data.
         if self.hparams.backend == "local":
-            if self.context.distributed.get_local_rank() == 0:
+            # Use a file lock so only one worker on each node does the download.
+            with filelock.FileLock(os.path.join(self.hparams.data_dir, "download.lock")):
                 if not all(
                     [
                         os.path.isdir(os.path.join(self.hparams.data_dir, d))
@@ -101,13 +103,6 @@ class DETRTrial(PyTorchTrial):
                     ]
                 ):
                     download_coco_from_source(self.hparams.data_dir)
-            else:
-                # Other slots wait until rank 0 is done downloading, which will
-                # correspond to the head writing a done.txt file.
-                while not os.path.isfile(
-                    os.path.join(self.hparams.data_dir, "done.txt")
-                ):
-                    time.sleep(10)
 
         self.cat_ids = []
 

@@ -76,6 +76,22 @@ func comparePropertiesValidate(
 			)
 		}
 
+	case "a<=b":
+		aNum, err := a.(json.Number).Float64()
+		if err != nil {
+			panic("length is not a number")
+		}
+		bNum, err := b.(json.Number).Float64()
+		if err != nil {
+			panic("length is not a number")
+		}
+		if aNum > bNum {
+			return ctx.Error(
+				"compareProperties",
+				fmt.Sprintf("%v must be less than %v", cmp.A, cmp.B),
+			)
+		}
+
 	case "a_is_subdir_of_b":
 		aPath := filepath.Clean(a.(string))
 		bPath := filepath.Clean(b.(string))

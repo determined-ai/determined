@@ -16,11 +16,10 @@ const sampleExperiment: ExperimentOld = generateOldExperiment(3);
 
 const sampleTrialItem: TrialItem = {
   bestAvailableCheckpoint: {
-    numBatches: 100,
-    priorBatchesProcessed: 9900,
     resources: { noOpCheckpoint: 1542 },
     startTime: Date.now.toString(),
     state: CheckpointState.Completed,
+    totalBatches: 10000,
 
   },
   experimentId: 1,

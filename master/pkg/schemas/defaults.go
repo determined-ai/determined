@@ -7,11 +7,13 @@ import (
 	"strings"
 )
 
-// RuntimeDefaultable means there are runtime values for filling in an object, like choosing a
-// random seed based on the wall clock.
-type RuntimeDefaultable interface {
-	// RuntimeDefaults must apply the runtime-defined default values.
-	RuntimeDefaults() interface{}
+// Defaultable means an object can have custom behvaiors for schemas.WithDefaults.  This is useful
+// for implementing "runtime default" behaviors, like experiment seed or description.  It is also
+// useful for working around types we do not own and which schemas.WithDefaults() would puke on.
+type Defaultable interface {
+	// Defaultable should return the same type.  It must not be defined as a method against a
+	// pointer of the type or it will not work.
+	WithDefaults() interface{}
 }
 
 // WithDefaults will recurse through structs, maps, and slices, setting default values for any
@@ -29,10 +31,10 @@ type RuntimeDefaultable interface {
 //    // Use the cluster checkpoint storage if the user did not specify one.
 //    config.RawCheckpointStorage = schemas.Merge(
 //        config.RawCheckpointStorage, &cluster_default_storage
-//    ).(CheckpointStorageConfig)
+//    ).(*expconf.CheckpointStorageConfig)
 //
 //    // Define any remaining undefined values.
-//    config = schemas.WithDefaults(config).(ExperimentConfig)
+//    config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
 //
 func WithDefaults(obj interface{}) interface{} {
 	vObj := reflect.ValueOf(obj)
@@ -81,6 +83,12 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 			}
 			// Use a clean copy of default bytes from obj, rather than a nil value.
 			obj = allocateWithDefaultBytes(obj.Type(), defaultBytes)
+		}
+	}
+
+	if obj.Kind() != reflect.Ptr {
+		if defaultable, ok := obj.Interface().(Defaultable); ok {
+			return reflect.ValueOf(defaultable.WithDefaults())
 		}
 	}
 
@@ -143,13 +151,6 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 
 	default:
 		out = cpy(obj)
-	}
-
-	// Any non-pointer, non-interface type may be RuntimeDefaultable.
-	if out.Kind() != reflect.Ptr && out.IsValid() {
-		if defaultable, ok := out.Interface().(RuntimeDefaultable); ok {
-			out = reflect.ValueOf(defaultable.RuntimeDefaults())
-		}
 	}
 
 	// fmt.Printf("withDefaults on %v (%T) returning %T\n", name, obj.Interface(), out.Interface())

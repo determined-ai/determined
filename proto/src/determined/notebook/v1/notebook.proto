@@ -39,4 +39,6 @@ message Notebook {
   string service_address = 11;
   // The name of the resource pool the Notebook was created in
   string resource_pool = 12;
+  // The exit status;
+  string exit_status = 13;
 }

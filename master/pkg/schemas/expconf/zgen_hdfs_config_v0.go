@@ -10,7 +10,7 @@ import (
 
 func (h HDFSConfigV0) URL() string {
 	if h.RawURL == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .RawURL")
+		panic("You must call WithDefaults on HDFSConfigV0 before .URL")
 	}
 	return *h.RawURL
 }
@@ -21,7 +21,7 @@ func (h *HDFSConfigV0) SetURL(val string) {
 
 func (h HDFSConfigV0) Path() string {
 	if h.RawPath == nil {
-		panic("You must call WithDefaults on HDFSConfigV0 before .RawPath")
+		panic("You must call WithDefaults on HDFSConfigV0 before .Path")
 	}
 	return *h.RawPath
 }

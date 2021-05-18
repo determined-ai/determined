@@ -1,0 +1,6 @@
+:orphan:
+
+**Changes**
+
+-  Webui: Trial Logs have been moved to a dedicated tab in the trial
+   detail page.

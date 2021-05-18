@@ -106,11 +106,12 @@ not be creating spot instances when you expect it to. If this is
 preventing Determined from creating spot instances, this will be visible
 in the master logs.
 
-Many users want to reduce costs by using spot, but have deadlines and
-are not willing to delay their experiments. In this case, it may be best
-to not set ``spot_max_price`` and pay whatever the market price is. Your
-mileage may vary, but at Determined, we have regularly seen 70% cost
-reductions when using V100s, without specifying a ``spot_max_price``.
+Many users want to reduce costs by using spot instances, but have
+deadlines and are not willing to delay their experiments. In this case,
+it may be best to not set ``spot_max_price`` and pay whatever the market
+price is. Your mileage may vary, but at Determined, we have regularly
+seen 70% cost reductions when using V100s, without specifying a
+``spot_max_price``.
 
 *****************
  Troubleshooting

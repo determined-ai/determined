@@ -95,9 +95,9 @@ func (p *Provisioner) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-// SlotsPerInstance returns the number of slots per instance the provisioner launches.
+// SlotsPerInstance returns the number of Slots per instance the provisioner launches.
 func (p *Provisioner) SlotsPerInstance() int {
-	return p.provider.instanceType().slots()
+	return p.provider.instanceType().Slots()
 }
 
 func (p *Provisioner) provision(ctx *actor.Context) {

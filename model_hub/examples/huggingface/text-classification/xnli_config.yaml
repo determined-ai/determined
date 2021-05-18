@@ -1,0 +1,46 @@
+description: huggingface_xnli_trial
+hyperparameters:
+  pretrained_model_name_or_path: bert-base-multilingual-cased
+  model_mode: sequence-classification
+  finetuning_task: xnli
+  use_apex_amp: false
+  use_pretrained_weights: true
+  do_lower_case: false
+  # Training Args
+  global_batch_size: 32
+  learning_rate: 5e-5
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  lr_scheduler_type: linear
+  num_warmup_steps: 0
+data:
+  dataset_name: xnli
+  language: de
+  train_language: en
+  max_seq_length: 128
+  train_file: null
+  validation_file: null
+  preprocessing_num_workers: null
+  cache_dir: null
+  overwrite_cache: false
+  pad_to_max_length: true
+# Number of records per epoch differs based on max_seq_length.
+records_per_epoch: 392702
+min_validation_period:
+  batches: 500
+searcher:
+  name: single
+  metric: accuracy
+  max_length:
+    epochs: 2
+  smaller_is_better: false
+environment:
+  image: determinedai/model-hub-transformers:0.15.5.dev0
+resources:
+  slots_per_trial: 2
+# We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
+# host_path on the agent instance disk for reuse if the same experiment is run on this instance.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /root/.cache
+entrypoint: xnli_trial:XNLITrial

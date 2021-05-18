@@ -10,7 +10,7 @@ import (
 
 func (o OptimizationsConfigV0) AggregationFrequency() int {
 	if o.RawAggregationFrequency == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawAggregationFrequency")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .AggregationFrequency")
 	}
 	return *o.RawAggregationFrequency
 }
@@ -21,7 +21,7 @@ func (o *OptimizationsConfigV0) SetAggregationFrequency(val int) {
 
 func (o OptimizationsConfigV0) AverageAggregatedGradients() bool {
 	if o.RawAverageAggregatedGradients == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawAverageAggregatedGradients")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .AverageAggregatedGradients")
 	}
 	return *o.RawAverageAggregatedGradients
 }
@@ -32,7 +32,7 @@ func (o *OptimizationsConfigV0) SetAverageAggregatedGradients(val bool) {
 
 func (o OptimizationsConfigV0) AverageTrainingMetrics() bool {
 	if o.RawAverageTrainingMetrics == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawAverageTrainingMetrics")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .AverageTrainingMetrics")
 	}
 	return *o.RawAverageTrainingMetrics
 }
@@ -43,7 +43,7 @@ func (o *OptimizationsConfigV0) SetAverageTrainingMetrics(val bool) {
 
 func (o OptimizationsConfigV0) GradientCompression() bool {
 	if o.RawGradientCompression == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawGradientCompression")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .GradientCompression")
 	}
 	return *o.RawGradientCompression
 }
@@ -62,7 +62,7 @@ func (o *OptimizationsConfigV0) SetGradUpdateSizeFile(val *string) {
 
 func (o OptimizationsConfigV0) MixedPrecision() string {
 	if o.RawMixedPrecision == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawMixedPrecision")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .MixedPrecision")
 	}
 	return *o.RawMixedPrecision
 }
@@ -73,7 +73,7 @@ func (o *OptimizationsConfigV0) SetMixedPrecision(val string) {
 
 func (o OptimizationsConfigV0) TensorFusionThreshold() int {
 	if o.RawTensorFusionThreshold == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawTensorFusionThreshold")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .TensorFusionThreshold")
 	}
 	return *o.RawTensorFusionThreshold
 }
@@ -84,7 +84,7 @@ func (o *OptimizationsConfigV0) SetTensorFusionThreshold(val int) {
 
 func (o OptimizationsConfigV0) TensorFusionCycleTime() int {
 	if o.RawTensorFusionCycleTime == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawTensorFusionCycleTime")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .TensorFusionCycleTime")
 	}
 	return *o.RawTensorFusionCycleTime
 }
@@ -95,7 +95,7 @@ func (o *OptimizationsConfigV0) SetTensorFusionCycleTime(val int) {
 
 func (o OptimizationsConfigV0) AutoTuneTensorFusion() bool {
 	if o.RawAutoTuneTensorFusion == nil {
-		panic("You must call WithDefaults on OptimizationsConfigV0 before .RawAutoTuneTensorFusion")
+		panic("You must call WithDefaults on OptimizationsConfigV0 before .AutoTuneTensorFusion")
 	}
 	return *o.RawAutoTuneTensorFusion
 }

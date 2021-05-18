@@ -36,7 +36,8 @@ def run(cmd: List[str], config) -> None:
 
 
 def run_forget(cmd: List[str], logfile, config) -> subprocess.Popen:
-    return subprocess.Popen(cmd, stdout=logfile)
+    out_target = logfile if logfile is not None else sys.stdout
+    return subprocess.Popen(cmd, stdout=out_target)
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -70,7 +71,7 @@ def wait_until(condition, timeout=1, *args):
     return False
 
 
-def setup_cluster(logfile, config):
+def setup_cluster(config, logfile=None):
     logger.info("setting up the cluster..")
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
     cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
@@ -94,7 +95,7 @@ def det_cluster(config):
     try:
         log_path = str(test_cluster_dir.joinpath("cluster.stdout.log"))
         with open(log_path, "w") as f:
-            yield setup_cluster(f, config)
+            yield setup_cluster(config, f)
 
     finally:
         teardown_cluster(config)

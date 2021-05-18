@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.15.3.dev0",
+    version="0.15.5.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -23,7 +23,7 @@ setup(
         "numpy>=1.16.2",
         "psutil",
         "pyzmq>=18.1.0",
-        "yogadl==0.1.3",
+        "yogadl==0.1.4",
         # Common:
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
@@ -31,7 +31,6 @@ setup(
         "hdfs>=2.2.2",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
-        "ruamel.yaml>=0.15.78",
         "simplejson",
         "termcolor>=1.1.0",
         # boto3 1.14.11+ has consistent urllib3 requirements which we have to manually resolve.
@@ -46,8 +45,9 @@ setup(
         "gitpython>=3.1.3",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil",
-        "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
+        # det preview-search "pretty-dumps" a sub-yaml with an API added in 0.15.29
+        "ruamel.yaml>=0.15.29",
         # Deploy
         "docker[ssh]>=3.7.3",
         "google-api-python-client>=1.12.1",

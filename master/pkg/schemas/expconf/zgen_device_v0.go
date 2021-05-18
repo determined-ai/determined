@@ -26,7 +26,7 @@ func (d *DeviceV0) SetContainerPath(val string) {
 
 func (d DeviceV0) Mode() string {
 	if d.RawMode == nil {
-		panic("You must call WithDefaults on DeviceV0 before .RawMode")
+		panic("You must call WithDefaults on DeviceV0 before .Mode")
 	}
 	return *d.RawMode
 }

@@ -4,8 +4,6 @@ WITH validations_vt AS (
       SELECT 'STATE_' || v.state as state,
         v.start_time,
         v.end_time,
-        s.num_batches,
-        s.prior_batches_processed,
         v.total_batches,
         v.metrics->'num_inputs' as num_inputs,
         v.metrics->'validation_metrics' as metrics
@@ -21,11 +19,9 @@ trainings_vt AS (
       SELECT s.start_time,
         s.end_time,
         'STATE_' || s.state as state,
-        s.num_batches,
-        s.prior_batches_processed,
-        s.total_batches,
         s.metrics->'avg_metrics' as metrics,
-        s.metrics->'num_inputs' as num_inputs
+        s.metrics->'num_inputs' as num_inputs,
+        s.total_batches
       FROM steps s
       WHERE s.trial_id = $1
     ) AS r1
@@ -38,8 +34,6 @@ checkpoints_vt AS (
         c.end_time,
         c.uuid,
         c.total_batches,
-        s.num_batches,
-        s.prior_batches_processed,
         c.resources
       FROM checkpoints c
         INNER JOIN steps s ON c.trial_id = s.trial_id
@@ -47,9 +41,9 @@ checkpoints_vt AS (
       WHERE c.trial_id = $1
     ) AS r1
 )
-SELECT v.validation::jsonb - 'total_batches' AS validation,
-  t.training::jsonb - 'total_batches' AS training,
-  c.checkpoint::jsonb - 'total_batches' AS checkpoint
+SELECT v.validation::jsonb AS validation,
+  t.training::jsonb AS training,
+  c.checkpoint::jsonb AS checkpoint
 FROM trainings_vt t
   FULL JOIN checkpoints_vt c ON false
   FULL JOIN validations_vt v ON false

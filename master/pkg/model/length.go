@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Unit is the type of unit for specifying lengths.
@@ -14,23 +17,52 @@ type Unit string
 
 // All the units available for lengths.
 const (
-	Records Unit = "records"
-	Batches Unit = "batches"
-	Epochs  Unit = "epoches"
+	Records     Unit = "records"
+	Batches     Unit = "batches"
+	Epochs      Unit = "epoches"
+	Unspecified Unit = "unspecified"
 )
+
+// ToProto converts the internal representation of a unit to protobuf.
+func (u Unit) ToProto() experimentv1.TrainingLength_Units {
+	switch u {
+	case Records:
+		return experimentv1.TrainingLength_UNITS_RECORDS
+	case Batches:
+		return experimentv1.TrainingLength_UNITS_BATCHES
+	case Epochs:
+		return experimentv1.TrainingLength_UNITS_EPOCHS
+	default:
+		return experimentv1.TrainingLength_UNITS_UNSPECIFIED
+	}
+}
+
+// UnitFromProto returns a model.Unit from its protobuf representation.
+func UnitFromProto(u experimentv1.TrainingLength_Units) Unit {
+	switch u {
+	case experimentv1.TrainingLength_UNITS_RECORDS:
+		return Records
+	case experimentv1.TrainingLength_UNITS_BATCHES:
+		return Batches
+	case experimentv1.TrainingLength_UNITS_EPOCHS:
+		return Epochs
+	default:
+		return Unspecified
+	}
+}
 
 // PartialUnits represent partial epochs, batches or records where the Unit is implied.
 type PartialUnits float64
 
 // UnitContext contains all the context for switching the Unit of a Length freely.
 type UnitContext struct {
-	defaultUnit     Unit
+	defaultUnit     expconf.Unit
 	globalBatchSize int
 	recordsPerEpoch int
 }
 
 // NewUnitContext creates a new UnitContext.
-func NewUnitContext(defaultUnit Unit, globalBatchSize, recordsPerEpoch int) UnitContext {
+func NewUnitContext(defaultUnit expconf.Unit, globalBatchSize, recordsPerEpoch int) UnitContext {
 	return UnitContext{defaultUnit, globalBatchSize, recordsPerEpoch}
 }
 
@@ -87,6 +119,22 @@ func (l *Length) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// ToProto converts a model.Length to its protobuf representation.
+func (l Length) ToProto() *experimentv1.TrainingLength {
+	return &experimentv1.TrainingLength{
+		Units:  l.Unit.ToProto(),
+		Length: int32(l.Units),
+	}
+}
+
+// LengthFromProto returns a model.Length from its protobuf representation.
+func LengthFromProto(l *experimentv1.TrainingLength) Length {
+	return Length{
+		Unit:  UnitFromProto(l.Units),
+		Units: int(l.Length),
+	}
+}
+
 // NewLength returns a new length with the specified unit and length.
 func NewLength(unit Unit, units int) Length {
 	return Length{Unit: unit, Units: units}
@@ -110,11 +158,11 @@ func NewLengthInEpochs(epochs int) Length {
 // UnitsFromBatches return the number of units completed by the given batches, rounded up.
 func UnitsFromBatches(ctx UnitContext, batches int) PartialUnits {
 	switch ctx.defaultUnit {
-	case Records:
+	case expconf.Records:
 		return PartialUnits(float64(batches * ctx.globalBatchSize))
-	case Batches:
+	case expconf.Batches:
 		return PartialUnits(float64(batches))
-	case Epochs:
+	case expconf.Epochs:
 		return PartialUnits(float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch))
 	default:
 		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
@@ -161,14 +209,14 @@ func (l Length) DivInt(other int) Length {
 
 // ToNearestBatch converts a training length to the nearest batch, potentially truncating some units
 // if they are provided as records or epochs.
-func (l Length) ToNearestBatch(ctx UnitContext) int {
+func (u UnitContext) ToNearestBatch(l expconf.Length) int {
 	switch l.Unit {
-	case Records:
-		return l.Units / ctx.globalBatchSize
-	case Batches:
+	case expconf.Records:
+		return l.Units / u.globalBatchSize
+	case expconf.Batches:
 		return l.Units
-	case Epochs:
-		return (l.Units * ctx.recordsPerEpoch) / ctx.globalBatchSize
+	case expconf.Epochs:
+		return (l.Units * u.recordsPerEpoch) / u.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}
@@ -176,16 +224,16 @@ func (l Length) ToNearestBatch(ctx UnitContext) int {
 
 // EqualWithinBatch returns true is the given length and batches are equal within one
 // batch size.
-func (l Length) EqualWithinBatch(batches int, ctx UnitContext) bool {
+func (u UnitContext) EqualWithinBatch(l expconf.Length, batches int) bool {
 	switch l.Unit {
-	case Records:
-		diff := abs(l.Units - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
-	case Batches:
+	case expconf.Records:
+		diff := abs(l.Units - batches*u.globalBatchSize)
+		return diff < u.globalBatchSize
+	case expconf.Batches:
 		return l.Units == batches
-	case Epochs:
-		diff := abs(l.Units*ctx.recordsPerEpoch - batches*ctx.globalBatchSize)
-		return diff < ctx.globalBatchSize
+	case expconf.Epochs:
+		diff := abs(l.Units*u.recordsPerEpoch - batches*u.globalBatchSize)
+		return diff < u.globalBatchSize
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}

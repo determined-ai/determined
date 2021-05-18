@@ -26,7 +26,7 @@ func (r *ResourcesConfigV0) SetMaxSlots(val *int) {
 
 func (r ResourcesConfigV0) SlotsPerTrial() int {
 	if r.RawSlotsPerTrial == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .RawSlotsPerTrial")
+		panic("You must call WithDefaults on ResourcesConfigV0 before .SlotsPerTrial")
 	}
 	return *r.RawSlotsPerTrial
 }
@@ -37,7 +37,7 @@ func (r *ResourcesConfigV0) SetSlotsPerTrial(val int) {
 
 func (r ResourcesConfigV0) Weight() float64 {
 	if r.RawWeight == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .RawWeight")
+		panic("You must call WithDefaults on ResourcesConfigV0 before .Weight")
 	}
 	return *r.RawWeight
 }
@@ -48,7 +48,7 @@ func (r *ResourcesConfigV0) SetWeight(val float64) {
 
 func (r ResourcesConfigV0) NativeParallel() bool {
 	if r.RawNativeParallel == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .RawNativeParallel")
+		panic("You must call WithDefaults on ResourcesConfigV0 before .NativeParallel")
 	}
 	return *r.RawNativeParallel
 }
@@ -67,7 +67,7 @@ func (r *ResourcesConfigV0) SetShmSize(val *int) {
 
 func (r ResourcesConfigV0) AgentLabel() string {
 	if r.RawAgentLabel == nil {
-		panic("You must call WithDefaults on ResourcesConfigV0 before .RawAgentLabel")
+		panic("You must call WithDefaults on ResourcesConfigV0 before .AgentLabel")
 	}
 	return *r.RawAgentLabel
 }
@@ -76,12 +76,15 @@ func (r *ResourcesConfigV0) SetAgentLabel(val string) {
 	r.RawAgentLabel = &val
 }
 
-func (r ResourcesConfigV0) ResourcePool() *string {
-	return r.RawResourcePool
+func (r ResourcesConfigV0) ResourcePool() string {
+	if r.RawResourcePool == nil {
+		panic("You must call WithDefaults on ResourcesConfigV0 before .ResourcePool")
+	}
+	return *r.RawResourcePool
 }
 
-func (r *ResourcesConfigV0) SetResourcePool(val *string) {
-	r.RawResourcePool = val
+func (r *ResourcesConfigV0) SetResourcePool(val string) {
+	r.RawResourcePool = &val
 }
 
 func (r ResourcesConfigV0) Priority() *int {
