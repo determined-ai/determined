@@ -93,13 +93,15 @@ const NotebookModal: React.FC<Props> = (
   const handleCreateEnvironment = useCallback(
     (values) =>{
       if (showFullConfig) {
-        launchNotebook(0,'',JSON.parse(form.getFieldValue('config')));
+        launchNotebook(JSON.parse(form.getFieldValue('config')));
       } else {
-        if(values.template !== '') {
-          launchNotebook(values.resourceType === 'GPU'? values.slots : 0, values.template);
-        } else {
-          launchNotebook(values.resourceType === 'GPU'? values.slots : 0);
-        }
+        launchNotebook(
+          undefined,
+          values.resourceType === 'GPU'? values.slots : 0,
+          values.template === ''? undefined : values.template,
+          values.name,
+          values.pool,
+        );
       }
     },
     [ showFullConfig, form ],

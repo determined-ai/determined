@@ -10,9 +10,9 @@ import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 export const launchNotebook = async (
-  slots: number,
-  templateName?: string,
   config?: RawJson,
+  slots?: number,
+  templateName?: string,
   name?: string,
   pool?:string,
 ): Promise<void> => {
@@ -47,7 +47,7 @@ export const launchNotebook = async (
 };
 
 export const previewNotebook =
-  async (slots: number, templateName?: string, name?: string, pool?: string): Promise<RawJson> => {
+  async (slots?: number, templateName?: string, name?: string, pool?: string): Promise<RawJson> => {
     try {
       const config = await apiPreviewNotebook({
         config: {
