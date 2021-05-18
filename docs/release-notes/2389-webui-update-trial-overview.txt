@@ -1,0 +1,5 @@
+:orphan:
+
+**Changes**
+
+-  Webui: layout update of trial overview tab.
