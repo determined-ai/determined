@@ -40,8 +40,8 @@ configure the behavior of the master or agent using environment
 variables, specify an environment variable starting with ``DET_``
 followed by the name of the configuration variable. Underscores (``_``)
 should be used to indicate nested options: for example, the
-``scheduler.fit`` master configuration option can be specified via an
-environment variable named ``DET_SCHEDULER_FIT``.
+``logging.type`` master configuration option can be specified via an
+environment variable named ``DET_LOGGING_TYPE``.
 
 The equivalent of the agent configuration file shown above can be
 specified by setting two environment variables, ``DET_MASTER_HOST`` and
