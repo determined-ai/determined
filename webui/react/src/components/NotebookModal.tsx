@@ -76,7 +76,7 @@ const NotebookModal: React.FC<Props> = (
           values.name,
           values.pool,
         );
-        form.setFieldsValue({ config: JSON.stringify(config, null, 2) });
+        form.setFieldsValue({ config: yaml.dump(config) });
       }
     };
     fetchConfig(form.getFieldsValue(true));
@@ -177,7 +177,12 @@ const NotebookModal: React.FC<Props> = (
           }) ]}>
           <MonacoEditor
             height={400}
-            language='yaml' />
+            language='yaml'
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              selectOnLineNumbers: true,
+            }} />
         </Item>
       </Form> :
       <Form form={form} initialValues={{ pool: '', slots:1, template: '' }} labelCol={{ span:8 }}>
