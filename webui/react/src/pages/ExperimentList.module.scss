@@ -1,22 +1,6 @@
 .base {
   display: flex;
   flex-direction: column;
-
-  .header {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--theme-sizes-layout-medium);
-  }
-  .search {
-    margin-right: var(--theme-sizes-layout-medium);
-    max-width: 30rem;
-  }
-  .nameColumn {
-    line-height: 2.8rem;
-    word-break: break-word;
-    word-wrap: break-word;
-  }
 }
 :global(.ant-table-tbody) tr [class*=tagPlus] {
   opacity: 0;

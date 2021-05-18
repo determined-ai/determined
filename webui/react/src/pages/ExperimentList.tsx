@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -557,11 +557,6 @@ const ExperimentList: React.FC = () => {
     users,
   ]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, []);
-
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorboard(
@@ -669,18 +664,6 @@ const ExperimentList: React.FC = () => {
   return (
     <Page id="experiments" title="Experiments">
       <div className={css.base}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            aria-label="Search Filters"
-            autoFocus
-            className={css.search}
-            placeholder="name"
-            prefix={<Icon name="search" size="small" />}
-            value={search}
-            onChange={handleSearchChange}
-          />
-        </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
