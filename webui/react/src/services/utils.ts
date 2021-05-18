@@ -178,7 +178,7 @@ export const consumeStream = async <T = unknown>(
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any => {
-  if (isObject(enumObject)) {
+  if (isObject(enumObject) && value !== undefined) {
     const enumRecord = enumObject as Record<string, string>;
     const stringValue = value as string;
     const validOptions = Object
@@ -188,6 +188,22 @@ export const validateDetApiEnum = (enumObject: unknown, value?: unknown): any =>
     return enumRecord.UNSPECIFIED;
   }
   return undefined;
+};
+
+/*
+ * This is the same as validateDetApiEnum but validates a list of values.
+ * If the validated list is empty, this will return undefined because our
+ * API will skip filtering if it sees an `undefined` value for a filter
+ * query parameter.
+ */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateDetApiEnumList = (enumObject: unknown, values?: unknown[]): any => {
+  if (!Array.isArray(values)) return undefined;
+
+  const enumValues = values
+    .map(value => validateDetApiEnum(enumObject, value))
+    .filter(enumValue => enumValue !== (enumObject as { UNSPECIFIED: unknown }).UNSPECIFIED);
+  return enumValues.length !== 0 ? enumValues : undefined;
 };
 
 /* eslint-disable-next-line */
