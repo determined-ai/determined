@@ -547,6 +547,7 @@ export interface ResourcePool {
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
   slotsAvailable: number;
+  slotsPerAgent?: number;
   slotsUsed: number;
   type: V1ResourcePoolType;
 }

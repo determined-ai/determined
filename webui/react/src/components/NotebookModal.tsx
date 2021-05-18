@@ -110,20 +110,19 @@ const NotebookModal: React.FC<Props> = (
   const handleResourcePoolUpdate = useCallback((e) => {
     if (e === '') {
       setResourceTypeOptions([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
-    }/* else {
+    } else {
       const pool = resourcePools.find(p => p.name === e);
       if (pool){
         const options = [];
         if (pool.cpuContainerCapacityPerAgent > 0) {
           options.push({ id:'CPU', label:'CPU' });
         }
-        if (pool.slotsPerAgent > 0) {
+        if (pool.slotsPerAgent && pool.slotsPerAgent > 0) {
           options.push({ id:'GPU', label:'GPU' });
         }
-        setResourceTypeOptions(options)
+        setResourceTypeOptions(options);
       }
     }
-    */
 
     //Type form field should ONLY appear if both slotsPerAgent and
     //cpuCapacityPerAgent are both greater than 0
