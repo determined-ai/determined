@@ -258,7 +258,7 @@ func (t gceInstanceType) name() string {
 	return fmt.Sprintf("%s-%s-%d", t.MachineType, t.GPUType, t.GPUNum)
 }
 
-func (t gceInstanceType) slots() int {
+func (t gceInstanceType) Slots() int {
 	return t.GPUNum
 }
 

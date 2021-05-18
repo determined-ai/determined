@@ -76,7 +76,7 @@ func newGCPCluster(
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,
-		AgentUseGPUs:                 config.GCP.InstanceType.slots() > 0,
+		AgentUseGPUs:                 config.GCP.InstanceType.Slots() > 0,
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,

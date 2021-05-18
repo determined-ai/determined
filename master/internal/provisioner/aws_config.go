@@ -196,7 +196,7 @@ func (t ec2InstanceType) name() string {
 	return string(t)
 }
 
-func (t ec2InstanceType) slots() int {
+func (t ec2InstanceType) Slots() int {
 	if s, ok := ec2InstanceSlots[t]; ok {
 		return s
 	}
