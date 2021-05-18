@@ -555,6 +555,39 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Record training metrics for specified training.
+  rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
+      returns (ReportTrialTrainingMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{training_metrics.trial_id}/training_metrics"
+      body: "training_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Record validation metrics.
+  rpc ReportTrialValidationMetrics(ReportTrialValidationMetricsRequest)
+      returns (ReportTrialValidationMetricsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{validation_metrics.trial_id}/validation_metrics"
+      body: "validation_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Record a checkpoint.
+  rpc ReportTrialCheckpointMetadata(ReportTrialCheckpointMetadataRequest)
+      returns (ReportTrialCheckpointMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{checkpoint_metadata.trial_id}/checkpoint_metadata"
+      body: "checkpoint_metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {

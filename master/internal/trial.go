@@ -328,6 +328,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if !t.idSet {
 			return nil
 		}
+
+		if err := t.db.EndTrialRuns(t.id); err != nil {
+			ctx.Log().WithError(err).Error(`
+				failed to close trial runs on exit, if this was an unexpected exit
+				then manual intervention may be needed to correct resource allocation accounting`)
+		}
+
 		if t.Restarts > t.experiment.Config.MaxRestarts() {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
@@ -606,6 +613,12 @@ func (t *trial) processAllocated(
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
+	}
+
+	// TODO(brad): When we support tracking runs for more than trials, this logic should
+	// likely be generalized by moving it rather than duplicating it for all task types.
+	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
@@ -1121,6 +1134,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	terminationSent := t.TerminationSent
+
+	if err := t.db.CompleteTrialRun(t.id, t.RunID); err != nil {
+		ctx.Log().WithError(err).Error("failed to mark trial run completed")
+	}
 
 	t.RunID++
 

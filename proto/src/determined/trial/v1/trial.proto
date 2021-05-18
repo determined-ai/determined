@@ -136,6 +136,9 @@ message TrialProfilerMetricsBatch {
 
 // Signals to the experiment the trial early exited.
 message TrialEarlyExit {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "reason" ] }
+  };
   // The reason for an early exit.
   enum ExitedReason {
     // Zero-value (not allowed).
@@ -147,4 +150,84 @@ message TrialEarlyExit {
   }
   // The reason for the exit.
   ExitedReason reason = 1;
+}
+
+// The training metrics for some duration of training.
+message TrainingMetrics {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
+    }
+  };
+  // The trial associated with these metrics.
+  int32 trial_id = 1;
+  // The trial run associated with these metrics.
+  int32 trial_run_id = 2;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_batches = 3;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_records = 4;
+  // The number of epochs trained on when these metrics were reported.
+  float total_epochs = 5;
+  // The metrics for this bit of training (reduced over the reporting period).
+  google.protobuf.Struct metrics = 6;
+  // The batch metrics for this bit of training.
+  repeated google.protobuf.Struct batch_metrics = 7;
+}
+
+// The validation metrics at some point of training.
+message ValidationMetrics {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
+    }
+  };
+  // The trial associated with these metrics.
+  int32 trial_id = 1;
+  // The trial run associated with these metrics.
+  int32 trial_run_id = 2;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_batches = 3;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_records = 4;
+  // The number of epochs trained on when these metrics were reported.
+  float total_epochs = 5;
+  // The metrics.
+  google.protobuf.Struct metrics = 6;
+}
+
+// The checkpoint metadata for some trial checkpoint.
+message CheckpointMetadata {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "trial_id",
+        "trial_run_id",
+        "uuid",
+        "framework",
+        "format",
+        "determined_version"
+      ]
+    }
+  };
+  // The ID of the trial associated with the checkpoint.
+  int32 trial_id = 1;
+  // The run of the trial assocaited with the checkpoint.
+  int32 trial_run_id = 2;
+  // UUID of the checkpoint.
+  string uuid = 3;
+  // Dictionary of file paths to file sizes in bytes of all files.
+  map<string, int64> resources = 4;
+  // The framework associated with the checkpoint.
+  string framework = 5;
+  // The format of the checkpoint.
+  string format = 6;
+  // The Determined version associated with the checkpoint.
+  string determined_version = 7;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_batches = 8;
+  // The number of batches trained on when these metrics were reported.
+  int32 total_records = 9;
+  // The number of epochs trained on when these metrics were reported.
+  float total_epochs = 10;
 }
