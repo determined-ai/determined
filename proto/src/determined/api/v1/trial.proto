@@ -339,3 +339,36 @@ message ReportTrialProgressRequest {
 }
 // Response to ReportTrialProgressRequest
 message ReportTrialProgressResponse {}
+
+// Persist the given training metrics for the trial.
+message ReportTrialTrainingMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "training_metrics" ] }
+  };
+  // The training metrics to persist.
+  determined.trial.v1.TrainingMetrics training_metrics = 1;
+}
+// Response to ReportTrialTrainingMetricsRequest
+message ReportTrialTrainingMetricsResponse {}
+
+// Persist the given validation metrics for the trial.
+message ReportTrialValidationMetricsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "validation_metrics" ] }
+  };
+  // The training metrics to persist.
+  determined.trial.v1.ValidationMetrics validation_metrics = 1;
+}
+// Response to ReportTrialValidationMetricsRequest
+message ReportTrialValidationMetricsResponse {}
+
+// Persist the given checkpoint metadata for the trial.
+message ReportTrialCheckpointMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "checkpoint_metadata" ] }
+  };
+  // The training metrics to persist.
+  determined.trial.v1.CheckpointMetadata checkpoint_metadata = 1;
+}
+// Response to ReportTrialCheckpointMetadataRequest
+message ReportTrialCheckpointMetadataResponse {}

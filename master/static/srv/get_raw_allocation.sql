@@ -26,21 +26,21 @@ workloads AS (
                 trial_id,
                 tstzrange(start_time, end_time) AS range
             FROM
-                steps
+                raw_steps
             UNION ALL
             SELECT
                 'validation' AS kind,
                 trial_id,
                 tstzrange(start_time, end_time) AS range
             FROM
-                validations
+                raw_validations
             UNION ALL
             SELECT
                 'checkpoint' AS kind,
                 trial_id,
                 tstzrange(start_time, end_time) AS range
             FROM
-                checkpoints
+                raw_checkpoints
         ) AS all_workloads,
         const
     WHERE

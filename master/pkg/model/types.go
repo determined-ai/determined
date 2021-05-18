@@ -10,6 +10,15 @@ import (
 // JSONObj is a JSON object that converts to a []byte in SQL queries.
 type JSONObj map[string]interface{}
 
+// JSONObjFromMapStringInt64 converts map[string]int64 to a JSONObj.
+func JSONObjFromMapStringInt64(m map[string]int64) JSONObj {
+	r := make(JSONObj)
+	for k, v := range m {
+		r[k] = v
+	}
+	return r
+}
+
 // Value marshals a []byte.
 func (j JSONObj) Value() (driver.Value, error) {
 	bytes, err := json.Marshal(j)
