@@ -206,15 +206,17 @@ const NotebookModal: React.FC<Props> = (
           </Select>
         </Item>
         <Row justify='end'>
-          <Item
-            label='Type'
-            labelCol={{ span:8 }}
-            name='type'
-            rules={[ { message: 'Choose a resource type', required: true } ]}>
-            <RadioGroup
-              options={resourceTypeOptions}
-              onChange={handleTypeUpdate} />
-          </Item>
+          <Col span={8}>
+            <Item
+              label='Type'
+              labelCol={{ span:8 }}
+              name='type'
+              rules={[ { message: 'Choose a resource type', required: true } ]}>
+              <RadioGroup
+                options={resourceTypeOptions}
+                onChange={handleTypeUpdate} />
+            </Item>
+          </Col>
           <Col span={11}>
             { resourceType === 'GPU'?
               <Item
