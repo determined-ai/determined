@@ -70,7 +70,6 @@ const NotebookModal: React.FC<Props> = (
   useEffect(()=> {
     const fetchConfig = async (values: RawJson) => {
       if(showFullConfig) {
-        console.log(values);
         const fullConfig = await previewNotebook(
           values.slots,
           values.template,
@@ -107,11 +106,9 @@ const NotebookModal: React.FC<Props> = (
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {
-    e;
-    /*
     if (e === '') {
       setResourceTypeOptions([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
-    } else {
+    }/* else {
       const pool = resourcePools.find(p => p.name === e);
       if (pool){
         const options = [];
@@ -138,7 +135,7 @@ const NotebookModal: React.FC<Props> = (
   return <Modal
     footer={<>
       <Button onClick={() => {
-        form.validateFields().then(values => {
+        form.validateFields().then(() => {
           handleSecondary();
         }).catch();
       }}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
