@@ -44,8 +44,6 @@ import {
 } from 'utils/types';
 import { openCommand } from 'wait';
 
-import css from './ExperimentList.module.scss';
-
 enum Action {
   Activate = 'Activate',
   Archive = 'Archive',
@@ -663,46 +661,44 @@ const ExperimentList: React.FC = () => {
 
   return (
     <Page id="experiments" title="Experiments">
-      <div className={css.base}>
-        <TableBatch selectedRowCount={selectedRowKeys.length}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+      <TableBatch selectedRowCount={selectedRowKeys.length}>
+        <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
-          </Button>
-          <Button
-            disabled={!hasActivatable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
-          <Button
-            disabled={!hasPausable}
-            onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
-          <Button
-            disabled={!hasArchivable}
-            onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
-          <Button
-            disabled={!hasUnarchivable}
-            onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
-          <Button
-            disabled={!hasCancelable}
-            onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
-          <Button
-            danger
-            disabled={!hasKillable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
-        </TableBatch>
-        <ResponsiveTable<ExperimentItem>
-          columns={columns}
-          dataSource={experiments}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        />
-      </div>
+        </Button>
+        <Button
+          disabled={!hasActivatable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
+        <Button
+          disabled={!hasPausable}
+          onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
+        <Button
+          disabled={!hasArchivable}
+          onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
+        <Button
+          disabled={!hasUnarchivable}
+          onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
+        <Button
+          disabled={!hasCancelable}
+          onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
+        <Button
+          danger
+          disabled={!hasKillable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
+      </TableBatch>
+      <ResponsiveTable<ExperimentItem>
+        columns={columns}
+        dataSource={experiments}
+        loading={isLoading}
+        pagination={getFullPaginationConfig(pagination, total)}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="id"
+        rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+        showSorterTooltip={false}
+        size="small"
+        onChange={handleTableChange}
+      />
     </Page>
   );
 };
