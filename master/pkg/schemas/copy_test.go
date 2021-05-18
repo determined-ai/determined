@@ -80,3 +80,33 @@ func TestCopyNested(t *testing.T) {
 	obj := Copy(src).(A)
 	assert.DeepEqual(t, obj, src)
 }
+
+type E struct {
+	// C is a reflect-friendly public member.
+	C C
+	// d is a reflect-unfriendly private member.
+	d D
+}
+
+// Copy implements the Copyable interface.
+func (e E) Copy() interface{} {
+	return E{
+		C: Copy(e.C).(C),
+		d: Copy(e.d).(D),
+	}
+}
+
+// assertDeepEqual is needed since DeepEqual fails on E for the same reason as Copy.
+func (e E) assertDeepEqual(t *testing.T, other E) {
+	assert.DeepEqual(t, e.C, other.C)
+	assert.DeepEqual(t, e.d, other.d)
+}
+
+func TestCopyable(t *testing.T) {
+	src := E{
+		C: C{I: 6, D: map[string]D{"help": {I: 1, S: "im"}, "trapped": {I: 2, S: "in a"}}},
+		d: D{I: 1, S: "unittest factory"},
+	}
+	obj := Copy(src).(E)
+	obj.assertDeepEqual(t, src)
+}

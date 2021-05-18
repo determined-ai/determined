@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  API: add a preview parameter to the Notebook launching API. If set,
+   this API will return a full configuration that is populated with the
+   template and Notebook configuration.

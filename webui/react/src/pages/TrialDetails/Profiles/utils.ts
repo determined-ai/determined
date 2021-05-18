@@ -28,19 +28,19 @@ export type MetricsAggregateInterface = {
 };
 
 export const convertMetricsToUplotData =
-  (data: Record<number, Record<string, number>>): AlignedData => {
-    const series: Array<number[]> = [];
+  (data: Record<number, Record<string, number>>, nameList: string[]): AlignedData => {
+    const series: (number | null)[][] = [];
     const timeSerie: number[] = [];
 
-    Object.entries(data).forEach(([ timeString, nameList ]) => {
+    Object.entries(data).forEach(([ timeString, timeNameList ]) => {
       timeSerie.push(parseInt(timeString));
 
-      Object.keys(nameList).forEach((name, nameIndex) => {
+      nameList.forEach((name, nameIndex) => {
         if (!series[nameIndex]) {
           series[nameIndex] = [];
         }
 
-        series[nameIndex].push(nameList[name]);
+        series[nameIndex].push(timeNameList[name] || null);
       });
     });
 

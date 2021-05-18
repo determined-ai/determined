@@ -109,8 +109,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
 		telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
-
 		return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
+	case actor.ChildStopped:
+		telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
+		ctx.Self().Stop()
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
 		for cid := range a.containers {

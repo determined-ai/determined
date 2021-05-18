@@ -292,6 +292,10 @@ class RegistryAuthConfigV0(schemas.SchemaBase):
     ) -> None:
         pass
 
+    def to_dict(self, explicit_nones: bool = False) -> Any:
+        # Match go's docker library's omitempty behavior.
+        return super().to_dict(explicit_nones=False)
+
 
 class EnvironmentConfigV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment.json"

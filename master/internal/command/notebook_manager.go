@@ -13,7 +13,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	requestContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -43,24 +42,6 @@ var (
 	notebookEntrypoint  = []string{jupyterEntrypoint}
 	jupyterReadyPattern = regexp.MustCompile("Jupyter Notebook .*is running at")
 )
-
-func generateNotebookDescription() (string, error) {
-	tmpl := "Notebook ({{.PetName}})"
-
-	t, err := template.New("").Parse(strings.TrimSpace(tmpl))
-	if err != nil {
-		return "", errors.Wrap(err, "parsing template")
-	}
-
-	petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
-
-	var buf strings.Builder
-	err = t.Execute(&buf, map[string]string{"PetName": petName})
-	if err != nil {
-		return "", errors.Wrap(err, "executing template")
-	}
-	return buf.String(), nil
-}
 
 func generateServiceAddress(taskID string) (string, error) {
 	tmpl := "/proxy/{{.TaskID}}/lab/tree/Notebook.ipynb?reset"
@@ -112,27 +93,15 @@ type notebookManager struct {
 // NotebookLaunchRequest describes a request to launch a new notebook.
 type NotebookLaunchRequest struct {
 	CommandParams *CommandParams
-	User          *model.User
 }
 
 func (n *notebookManager) processLaunchRequest(
 	ctx *actor.Context,
 	req NotebookLaunchRequest,
 ) (*summary, int, error) {
-	commandReq, err := parseCommandRequest(
-		ctx.Self().System(), n.db, *req.User, req.CommandParams, n.makeTaskSpec, false,
-	)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	if commandReq.AgentUserGroup == nil {
-		commandReq.AgentUserGroup = &n.defaultAgentUserGroup
-	}
-
 	ctx.Log().Info("creating notebook")
 
-	notebook, err := n.newNotebook(commandReq)
+	notebook, err := n.newNotebook(req.CommandParams)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -155,8 +124,14 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetNotebooksRequest:
 		resp := &apiv1.GetNotebooksResponse{}
+		users := make(map[string]bool)
+		for _, user := range msg.Users {
+			users[user] = true
+		}
 		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
-			resp.Notebooks = append(resp.Notebooks, notebook.(*notebookv1.Notebook))
+			if typed := notebook.(*notebookv1.Notebook); len(users) == 0 || users[typed.Username] {
+				resp.Notebooks = append(resp.Notebooks, typed)
+			}
 		}
 		ctx.Respond(resp)
 
@@ -167,46 +142,12 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		ctx.Respond(summary.ID)
-
-	case echo.Context:
-		n.handleAPIRequest(ctx, msg)
 	}
 	return nil
 }
 
-func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		userFilter := apiCtx.QueryParam("user")
-		ctx.Respond(apiCtx.JSON(
-			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
-
-	case echo.POST:
-		var params CommandParams
-		if err := apiCtx.Bind(&params); err != nil {
-			respondBadRequest(ctx, err)
-			return
-		}
-		user := apiCtx.(*requestContext.DetContext).MustGetUser()
-		req := NotebookLaunchRequest{
-			User:          &user,
-			CommandParams: &params,
-		}
-		summary, statusCode, err := n.processLaunchRequest(ctx, req)
-		if err != nil || statusCode > 200 {
-			ctx.Respond(echo.NewHTTPError(statusCode, err.Error()))
-			return
-		}
-		ctx.Respond(apiCtx.JSON(http.StatusOK, summary))
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
-func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
-	config := req.Config
+func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
+	config := params.FullConfig
 	taskID := sproto.NewTaskID()
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
@@ -226,14 +167,11 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(&config, req.TaskSpec.TaskContainerDefaults)
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	if config.Description == "" {
-		var err error
-		config.Description, err = generateNotebookDescription()
-		if err != nil {
-			return nil, errors.Wrap(err, "generating notebook name")
-		}
+		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
+		config.Description = fmt.Sprintf("Notebook (%s)", petName)
 	}
 
 	serviceAddress, err := generateServiceAddress(string(taskID))
@@ -248,23 +186,23 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	return &command{
 		taskID:    taskID,
-		config:    config,
-		userFiles: req.UserFiles,
+		config:    *config,
+		userFiles: params.UserFiles,
 		additionalFiles: archive.Archive{
-			req.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
-			req.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-			req.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-			req.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
-			req.AgentUserGroup.OwnedArchiveItem(
+			params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+			params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+			params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+			params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+			params.AgentUserGroup.OwnedArchiveItem(
 				jupyterEntrypoint,
 				etc.MustStaticFile(etc.NotebookEntrypointResource),
 				0700,
 				tar.TypeReg,
 			),
-			req.AgentUserGroup.OwnedArchiveItem(
+			params.AgentUserGroup.OwnedArchiveItem(
 				notebookConfigFile, notebookConfigContent, 0644, tar.TypeReg,
 			),
-			req.AgentUserGroup.OwnedArchiveItem(
+			params.AgentUserGroup.OwnedArchiveItem(
 				notebookDefaultPage,
 				etc.MustStaticFile(etc.NotebookTemplateResource),
 				0644,
@@ -279,9 +217,12 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		},
 		serviceAddress: &serviceAddress,
 
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
-		taskSpec:       &req.TaskSpec,
+		owner: commandOwner{
+			ID:       params.User.ID,
+			Username: params.User.Username,
+		},
+		agentUserGroup: params.AgentUserGroup,
+		taskSpec:       params.TaskSpec,
 
 		db: n.db,
 	}, nil

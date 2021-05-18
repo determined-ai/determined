@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.15.3.dev0
+    default: 0.15.5.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -185,7 +185,7 @@ commands:
       determined:
         type: boolean
         default: false
-      model-hub: 
+      model-hub:
         type: boolean
         default: false
       extras-requires:
@@ -1432,7 +1432,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.15-gke.1501"
+        default: "1.18.17-gke.100"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1502,7 +1502,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.15-gke.1501"
+        default: "1.18.17-gke.100"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1991,7 +1991,19 @@ workflows:
               mark: ["distributed"]
               gpu-agent-instance-type: ["p2.8xlarge"]
               cpu-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [3]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-model-hub
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["model-hub"]
+              mark: ["model_hub"]
+              gpu-agent-instance-type: ["p2.8xlarge"]
+              cpu-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
 

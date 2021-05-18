@@ -18,7 +18,7 @@ Determined while keeping the developer experience as close as possible
 to what it's like working directly with **transformers**. Our library
 serves as an alternative to HuggingFace's `Trainer Class
 <https://huggingface.co/transformers/main_classes/trainer.html>`_ and
-provides access all of Determined's benefits including:
+provides access to all of Determined's benefits including:
 
 -  Easy :ref:`multi-node distributed training <multi-gpu-training>` with
    no code modifications. Determined automatically sets up the

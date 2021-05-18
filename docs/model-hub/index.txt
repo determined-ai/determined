@@ -28,7 +28,7 @@ Each supported third-party library in **model-hub** is accompanied by:
 For a given task, deep learning practitioners often adapt existing model
 implementations from a trusted third-party library, such as HuggingFace
 Transformers. When beginning your deep learning project in this way, we
-suggest using **model-hub** with the following these steps:
+suggest using **model-hub** with the following steps:
 
 -  Check for a Model Hub library that supports model implementations for
    your task.

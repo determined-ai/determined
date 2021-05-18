@@ -18,7 +18,7 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
 
   const chartData: AlignedData = useMemo(() => {
-    return convertMetricsToUplotData(timingMetrics.dataByBatch);
+    return convertMetricsToUplotData(timingMetrics.dataByBatch, timingMetrics.names);
   }, [ timingMetrics ]);
   const chartOptions: Options = useMemo(() => {
     return {

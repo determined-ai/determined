@@ -28,8 +28,8 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
   );
 
   const chartData: AlignedData = useMemo(() => {
-    return convertMetricsToUplotData(systemMetrics.dataByUnixTime);
-  }, [ systemMetrics.dataByUnixTime ]);
+    return convertMetricsToUplotData(systemMetrics.dataByUnixTime, systemMetrics.names);
+  }, [ systemMetrics.dataByUnixTime, systemMetrics.names ]);
 
   const xMin = useMemo(() => {
     return chartData && chartData[0] && chartData[0][0] ? chartData[0][0] : 0;

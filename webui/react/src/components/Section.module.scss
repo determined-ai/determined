@@ -28,6 +28,7 @@
   .options {
     display: flex;
     margin-bottom: var(--theme-sizes-layout-medium);
+    margin-left: auto;
   }
   .title + .options {
     margin-left: var(--theme-sizes-layout-medium);
