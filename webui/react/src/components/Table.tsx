@@ -7,6 +7,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
+import { paths } from 'routes/utils';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
@@ -56,6 +57,10 @@ export const defaultPaginationConfig = {
 };
 
 /* Table Column Renderers */
+
+export const archivedRenderer = (archived: boolean): React.ReactNode => {
+  return archived ? <Icon name="checkmark" /> : null;
+};
 
 export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
   return shortEnglishHumannizer(getDuration(times));
@@ -130,30 +135,23 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
 
 /* Experiment Table Column Renderers */
 
-export const experimentDescriptionRenderer: ExperimentRenderer = (_, record) => {
-  // TODO handle displaying labels not fitting the column width
-  const labels = [ 'object detection', 'pytorch' ]; // TODO get from config
-  const labelEls = labels.map((text, idx) => <Badge key={idx}>{text}</Badge>);
-  return (
-    <div className={css.nameColumn}>
-      <div>{record.name || ''}</div>
-      <div>{labelEls}</div>
-    </div>
-  );
-};
-
 export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
   return shortEnglishHumannizer(getDuration(record));
+};
+
+export const experimentNameRenderer = (
+  value: string | number | undefined,
+  record: ExperimentItem,
+): React.ReactNode => {
+  return (
+    <Link path={paths.experimentDetails(record.id)}>{value === undefined ? '' : value}</Link>
+  );
 };
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   return record.progress ? <ProgressBar
     percent={record.progress * 100}
     state={record.state} /> : null;
-};
-
-export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
-  return record.archived ? <Icon name="checkmark" /> : null;
 };
 
 /* Table Helper Functions */

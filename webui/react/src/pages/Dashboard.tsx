@@ -16,7 +16,9 @@ import useStorage from 'hooks/useStorage';
 import {
   getCommands, getExperiments, getNotebooks, getShells, getTensorboards,
 } from 'services/api';
+import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
+import { validateDetApiEnumList } from 'services/utils';
 import { ShirtSize } from 'themes';
 import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
@@ -72,10 +74,7 @@ const Dashboard: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        return encodeExperimentState(state as RunState) as any;
-      });
+      const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
       const users = filters.username ? [ filters.username ] : undefined;
       const response = await getExperiments(
         {
@@ -83,7 +82,7 @@ const Dashboard: React.FC = () => {
           limit: 50,
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_START_TIME',
-          states,
+          states: validateDetApiEnumList(Determinedexperimentv1State, states),
           users,
         },
         { signal: canceler.signal },

@@ -19,18 +19,18 @@ Specification to test the experiment list page.
   |Activate           |false   |
   |Pause              |true    |
   |Archive            |false   |
-  |Unarchive          |true    |
+  |Unarchive          |false   |
   |Cancel             |false   |
   |Kill               |false   |
 * Toggle all table row selection
 
-// Temporarily disabled following cbafb09b1f600e329e6bfd1ca545accfadf060e7.
-// ## Filter experiments by archived
+## Filter experiments by archived
 
-// * Toggle show archived button
-// * Should have "4" table rows
-// * Toggle show archived button
-// * Should have "3" table rows
+* Scroll table to the "right"
+* Filter table header "Archived" with option "Archived"
+* Should have "1" table rows
+* Filter table header "Archived" with option "Unarchived"
+* Should have "3" table rows
 
 ## Sign out
 
