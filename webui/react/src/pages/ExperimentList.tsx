@@ -1,7 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
-import { sort } from 'fp-ts/lib/ReadonlyNonEmptyArray';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
