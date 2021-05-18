@@ -171,7 +171,7 @@ const NotebookModal: React.FC<Props> = (
           value={JSON.stringify(fullConfig, null, 2)}
           onChange={handleConfigChange} />
       </> :
-      <Form form={form} initialValues={{ slots:1 }} labelCol={{ span:8 }}>
+      <Form form={form} initialValues={{ pool: '', slots:1, template: '' }} labelCol={{ span:8 }}>
         <Row justify='end'>
           <Item
             label='Type'
@@ -180,7 +180,7 @@ const NotebookModal: React.FC<Props> = (
             rules={[ { message: 'Please choose a resource type', required: true } ]}>
             <RadioGroup
               options={resourceTypeOptions}
-              onChange={(e) => handleTypeUpdate(e)} />
+              onChange={handleTypeUpdate} />
           </Item>
           <Col span={11}>
             { resourceType === 'GPU'?
@@ -195,31 +195,28 @@ const NotebookModal: React.FC<Props> = (
           </Col>
         </Row>
         <Item label='Notebook Template' name='template'>
-          <Dropdown options={templates.map(template => template.name)} />
+          <Select
+            style={{ minWidth:120 }}>
+            <Option key='' value=''>---Empty---</Option>
+            {templates.map(temp =>
+              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+          </Select>
         </Item>
         <Item label='Name' name="name">
           <Input placeholder='Name' />
         </Item>
         <Item label='Resource Pool' name="pool">
-          <Dropdown
-            options={resourcePools.map(pool => pool.name)}
-            onChange={handleResourcePoolUpdate} />
+          <Select
+            style={{ minWidth:120 }}
+            onChange={handleResourcePoolUpdate}>
+            <Option key='' value=''>---Empty---</Option>
+            {resourcePools.map(pool =>
+              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+          </Select>
         </Item>
       </Form>
     }
   </Modal>;
-};
-
-interface DropdownProps {
-  onChange?: (e: string) => void;
-  options?: string[];
-}
-
-const Dropdown: React.FC<DropdownProps> = ({ options, onChange }: DropdownProps) => {
-  return options? <Select defaultValue='' style={{ minWidth:120 }} onChange={onChange}>
-    <Option key='empty' value=''>---Empty---</Option>
-    {options.map(option => <Option key={option} value={option}>{option}</Option>)}
-  </Select> : null;
 };
 
 export default NotebookModal;
