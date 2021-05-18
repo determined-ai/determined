@@ -221,7 +221,7 @@ running your cluster.
 
 #. **TLS termination in a load-balancer (e.g., nginx).** This option
    will provide TLS encryption between the client and the load-balancer,
-   with all communication inside the cluster performed via http. To
+   with all communication inside the cluster performed via HTTP. To
    configure this option set ``useNodePortForMaster`` to ``true`` and
    then configure an Ingress service to perform TLS termination and
    forward the plain text traffic to the Determined master.
@@ -229,16 +229,16 @@ running your cluster.
 #. **TLS termination in the Determined master.** This option will
    provide TLS encrytption inside the Kubernetes cluster. All
    communication with the master will encrypted. Communication between
-   task containers (distributed triaining) will not be encrypted. To
-   configure this option create a Kuberentes TLS secret within the
+   task containers (distributed training) will not be encrypted. To
+   configure this option create a Kubernetes TLS secret within the
    namespace where Determined is being installed and set ``tlsSecret``
    to be the name of this secret. Users will also have to set
    ``useNodePortForMaster`` to ``true``. Once the NodePort service is
    created, users can configure an Ingress to forward TLS encrypted data
    to the NodePort service.
 
-An example of how to configure an Ingress, by default this Ingress will
-perform TLS termination in the load-balancer:
+An example of how to configure an Ingress, which will
+perform TLS termination in the load-balancer by default:
 
 .. code:: yaml
 
@@ -253,7 +253,7 @@ perform TLS termination in the load-balancer:
        # to forward TLS encrypted data to the NodePort service and
        # perform TLS termination in the Determined master. In order
        # to configure ssl-passthrough, your nginx ingress controller
-       # must be running with --enable-ssl-passthrough option enabled.
+       # must be running with the --enable-ssl-passthrough option enabled.
        #
        # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
    spec:
@@ -311,7 +311,7 @@ Determined run:
 ``determined-helm-chart`` is a relative path to where the
 :download:`Determined Helm Chart </helm/determined-0.5.0.tgz>` is
 located. It may take a few minutes for all resources to come up. If you
-encounter issues during installation please follow our list of
+encounter issues during installation please refer to our list of
 :ref:`useful kubectl commands <useful-kubectl-commands>`. Helm will
 install Determined within the default namespace. If you wish to install
 Determined into a non-default namespace, add ``-n <namespace name>`` to
