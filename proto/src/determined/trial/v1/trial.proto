@@ -156,7 +156,7 @@ message TrialEarlyExit {
 message TrainingMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "trial_id", "trial_run_id", "batches_trained", "metrics" ]
+      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
     }
   };
   // The trial associated with these metrics.
@@ -179,7 +179,7 @@ message TrainingMetrics {
 message ValidationMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "trial_id", "trial_run_id", "batches_trained", "metrics" ]
+      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
     }
   };
   // The trial associated with these metrics.
