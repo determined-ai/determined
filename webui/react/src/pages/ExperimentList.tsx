@@ -15,6 +15,7 @@ import {
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { useStore } from 'contexts/Store';
@@ -343,6 +344,26 @@ const ExperimentList: React.FC = () => {
     />
   ), [ filters.archived, handleArchiveFilterApply, handleArchiveFilterReset ]);
 
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    setSearch(newSearch);
+    setPagination(prev => ({ ...prev, offset: 0 }));
+  }, []);
+
+  const handleNameSearchReset = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={search}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, search ]);
+
   const handleLabelFilterApply = useCallback((labels: string[]) => {
     handleFilterChange({ ...filters, labels: labels.length !== 0 ? labels : undefined });
   }, [ handleFilterChange, filters ]);
@@ -420,7 +441,10 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'name',
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+        onHeaderCell: () => search ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
@@ -524,8 +548,11 @@ const ExperimentList: React.FC = () => {
     filters,
     labelFilterDropdown,
     labels,
+    nameFilterSearch,
+    search,
     sorter,
     stateFilterDropdown,
+    tableSearchIcon,
     userFilterDropdown,
     users,
   ]);
