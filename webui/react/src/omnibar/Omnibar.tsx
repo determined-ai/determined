@@ -18,8 +18,11 @@ const Omnibar: React.FC = () => {
   );
 
   const onAction = useCallback((item, query) => {
+    // ideally we could useRef here but can we w/o modifying the omnibar package?
+    const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
+    if (!input) return;
     if (isTreeNode(item)) {
-      return Tree.onAction(item, query);
+      return Tree.onAction(input, item, query);
     }
   }, []);
 

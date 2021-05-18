@@ -82,14 +82,13 @@ export const extension = async(input: string): Promise<Children> => {
 };
 
 export const onAction = async (
+  inputEl: HTMLInputElement,
   item: TreeNode,
-  query: (input: string) => void,
+  query: (inputEl: string) => void,
 ): Promise<void> => {
-  const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
-  if (!input) return Promise.resolve();
-  const { path } = await parseInput(input.value, root);
+  const { path } = await parseInput(inputEl.value, root);
   // update the omnibar text to reflect the current path
-  input.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
+  inputEl.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
         + item.title;
   if (isLeafNode(item)) {
     await item.onAction(item);
@@ -98,8 +97,8 @@ export const onAction = async (
     }
   } else {
     // trigger the query.
-    input.value = input.value + SEPARATOR;
-    query(input.value);
+    inputEl.value = inputEl.value + SEPARATOR;
+    query(inputEl.value);
   }
   return Promise.resolve();
 };
