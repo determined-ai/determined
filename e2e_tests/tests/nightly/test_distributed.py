@@ -21,6 +21,14 @@ def test_fashion_mnist_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+def test_imagenet_pytorch_distributed() -> None:
+    config = conf.load_config(conf.tutorials_path("imagenet_pytorch/distributed_cifar.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("imagenet_pytorch"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
 def test_cifar10_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
