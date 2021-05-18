@@ -68,11 +68,11 @@ func (e *ExperimentConfigV0) SetDebug(val bool) {
 	e.RawDebug = &val
 }
 
-func (e ExperimentConfigV0) Description() Description {
+func (e ExperimentConfigV0) Description() *string {
 	return e.RawDescription
 }
 
-func (e *ExperimentConfigV0) SetDescription(val Description) {
+func (e *ExperimentConfigV0) SetDescription(val *string) {
 	e.RawDescription = val
 }
 
@@ -150,6 +150,14 @@ func (e ExperimentConfigV0) MinValidationPeriod() LengthV0 {
 
 func (e *ExperimentConfigV0) SetMinValidationPeriod(val LengthV0) {
 	e.RawMinValidationPeriod = &val
+}
+
+func (e ExperimentConfigV0) Name() Name {
+	return e.RawName
+}
+
+func (e *ExperimentConfigV0) SetName(val Name) {
+	e.RawName = val
 }
 
 func (e ExperimentConfigV0) Optimizations() OptimizationsConfigV0 {

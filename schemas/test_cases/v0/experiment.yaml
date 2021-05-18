@@ -25,7 +25,7 @@
       container_storage_path: null
       type: shared_fs
     debug: false
-    description: pytorch-noop
+    description: pytorch-noop description
     entrypoint: long.module.path.model_def:NoopPytorchTrial
     environment:
       environment_variables: {}
@@ -77,6 +77,7 @@
     max_restarts: 5
     min_validation_period:
       batches: 0
+    name: pytorch-noop
     optimizations:
       aggregation_frequency: 1
       auto_tune_tensor_fusion: false
@@ -151,7 +152,7 @@
       container_storage_path: null
       host_storage_path: null
     debug: false
-    description: '*'
+    description: null
     entrypoint: model_def:MyTrial
     environment:
       environment_variables:
@@ -176,6 +177,7 @@
       batches: 0
     min_validation_period:
       batches: 0
+    name: '*'
     optimizations:
       aggregation_frequency: 1
       auto_tune_tensor_fusion: false

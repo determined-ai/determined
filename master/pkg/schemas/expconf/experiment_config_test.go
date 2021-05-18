@@ -33,10 +33,10 @@ func TestBindMountsMerge(t *testing.T) {
 	assert.Assert(t, out.RawBindMounts[1].RawHostPath == "/host/e2")
 }
 
-func TestDescription(t *testing.T) {
+func TestName(t *testing.T) {
 	config := ExperimentConfig{
-		RawDescription: Description{
-			RawString: ptrs.StringPtr("my_description"),
+		RawName: Name{
+			RawString: ptrs.StringPtr("my_name"),
 		},
 	}
 
@@ -48,13 +48,13 @@ func TestDescription(t *testing.T) {
 	err = json.Unmarshal(bytes, &rawObj)
 	assert.NilError(t, err)
 
-	var expect interface{} = "my_description"
-	assert.DeepEqual(t, rawObj["description"], expect)
+	var expect interface{} = "my_name"
+	assert.DeepEqual(t, rawObj["name"], expect)
 
 	// Test unmarshaling.
 	newConfig := ExperimentConfig{}
 	err = json.Unmarshal(bytes, &newConfig)
 	assert.NilError(t, err)
 
-	assert.DeepEqual(t, newConfig.Description().String(), "my_description")
+	assert.DeepEqual(t, newConfig.Name().String(), "my_name")
 }

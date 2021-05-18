@@ -31,12 +31,12 @@ const (
 
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
-	defaultName := fmt.Sprintf(
+	defaultDescription := fmt.Sprintf(
 		"Experiment (%s)",
 		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
 
 	defaultConfig := ExperimentConfig{
-		Name: defaultName,
+		Description: defaultDescription,
 		CheckpointStorage: CheckpointStorageConfig{
 			SaveExperimentBest: 0,
 			SaveTrialBest:      1,
