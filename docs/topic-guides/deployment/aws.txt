@@ -15,7 +15,7 @@ A master node (a single, non-GPU instance) manages the cluster,
 provisioning and terminating agent nodes dynamically as new workloads
 are started by users. The master stores metadata in an external
 database; using AWS Aurora or RDS is recommended. Users interact with
-the cluster by using a CLI or a visiting the WebUI hosted on the master.
+the cluster by using a CLI or visiting the WebUI hosted on the master.
 Nodes in the cluster communicate with one another over a Virtual Private
 Cloud (VPC); users interact with the master via a designated external
 port configured during installation.
