@@ -70,5 +70,6 @@ def test_word_language_lstm_const() -> None:
     config = conf.set_max_length(config, {"batches": 200})
     config = config.copy()
     config["hyperparameters"]["model_cls"] = "LSTM"
+    config["hyperparameters"]["tied"] = False
 
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
