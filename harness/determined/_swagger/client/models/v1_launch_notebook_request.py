@@ -33,21 +33,24 @@ class V1LaunchNotebookRequest(object):
     swagger_types = {
         'config': 'object',
         'template_name': 'str',
-        'files': 'list[V1File]'
+        'files': 'list[V1File]',
+        'preview': 'bool'
     }
 
     attribute_map = {
         'config': 'config',
         'template_name': 'templateName',
-        'files': 'files'
+        'files': 'files',
+        'preview': 'preview'
     }
 
-    def __init__(self, config=None, template_name=None, files=None):  # noqa: E501
+    def __init__(self, config=None, template_name=None, files=None, preview=None):  # noqa: E501
         """V1LaunchNotebookRequest - a model defined in Swagger"""  # noqa: E501
 
         self._config = None
         self._template_name = None
         self._files = None
+        self._preview = None
         self.discriminator = None
 
         if config is not None:
@@ -56,6 +59,8 @@ class V1LaunchNotebookRequest(object):
             self.template_name = template_name
         if files is not None:
             self.files = files
+        if preview is not None:
+            self.preview = preview
 
     @property
     def config(self):
@@ -125,6 +130,29 @@ class V1LaunchNotebookRequest(object):
         """
 
         self._files = files
+
+    @property
+    def preview(self):
+        """Gets the preview of this V1LaunchNotebookRequest.  # noqa: E501
+
+        Preview a launching request without actually creating a Notebook.  # noqa: E501
+
+        :return: The preview of this V1LaunchNotebookRequest.  # noqa: E501
+        :rtype: bool
+        """
+        return self._preview
+
+    @preview.setter
+    def preview(self, preview):
+        """Sets the preview of this V1LaunchNotebookRequest.
+
+        Preview a launching request without actually creating a Notebook.  # noqa: E501
+
+        :param preview: The preview of this V1LaunchNotebookRequest.  # noqa: E501
+        :type: bool
+        """
+
+        self._preview = preview
 
     def to_dict(self):
         """Returns the model properties as a dict"""

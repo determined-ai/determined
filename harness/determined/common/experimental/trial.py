@@ -1,8 +1,8 @@
 from typing import Optional
 
+from determined._swagger.client.api.trials_api import TrialsApi
 from determined.common import api, check
 from determined.common.experimental import checkpoint
-from determined.swagger.client.api.trials_api import TrialsApi
 
 
 class TrialReference:
@@ -12,9 +12,6 @@ class TrialReference:
 
     Arguments:
         trial_id (int): The trial ID.
-        master (string, optional): The URL of the Determined master. If this
-            class is obtained via :class:`determined.experimental.Determined`, the
-            master URL is automatically passed into this constructor.
     """
 
     def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):

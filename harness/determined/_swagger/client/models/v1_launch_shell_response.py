@@ -49,8 +49,7 @@ class V1LaunchShellResponse(object):
 
         if shell is not None:
             self.shell = shell
-        if config is not None:
-            self.config = config
+        self.config = config
 
     @property
     def shell(self):
@@ -93,6 +92,8 @@ class V1LaunchShellResponse(object):
         :param config: The config of this V1LaunchShellResponse.  # noqa: E501
         :type: object
         """
+        if config is None:
+            raise ValueError("Invalid value for `config`, must not be `None`")  # noqa: E501
 
         self._config = config
 

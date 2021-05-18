@@ -1,12 +1,12 @@
 import time
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from determined.common import api
-from determined.common.experimental import checkpoint
-from determined.swagger.client.api.experiments_api import ExperimentsApi
-from determined.swagger.client.models.determinedexperimentv1_state import (
+from determined._swagger.client.api.experiments_api import ExperimentsApi
+from determined._swagger.client.models.determinedexperimentv1_state import (
     Determinedexperimentv1State,
 )
+from determined.common import api
+from determined.common.experimental import checkpoint
 
 
 class ExperimentReference:
@@ -16,9 +16,6 @@ class ExperimentReference:
 
     Arguments:
         experiment_id (int): The ID of this experiment.
-        master (string, optional): The URL of the Determined master. If this
-            class is obtained via :class:`~determined.experimental.Determined`, the
-            master URL is automatically passed into this constructor.
     """
 
     def __init__(
@@ -26,12 +23,10 @@ class ExperimentReference:
         experiment_id: int,
         master: str,
         api_ref: ExperimentsApi,
-        config: Optional[Dict] = None,
     ):
         self.id = experiment_id
         self._master = master
         self._experiments = api_ref
-        self.config = config
 
     def activate(self) -> None:
         self._experiments.determined_activate_experiment(id=self.id)
@@ -45,6 +40,10 @@ class ExperimentReference:
     def delete(self) -> None:
         self._experiments.determined_delete_experiment(id=self.id)
 
+    def get_config(self) -> object:
+        exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
+        return exp_resp.config
+
     def kill(self) -> None:
         self._experiments.determined_kill_experiment(id=self.id)
 
@@ -54,14 +53,15 @@ class ExperimentReference:
     def unarchive(self) -> None:
         self._experiments.determined_unarchive_experiment(id=self.id)
 
-    def wait_till_complete(self, sleep_interval: int = 5) -> None:
+    def wait(self, interval: int = 5) -> None:
         """
         Wait for experiment to reach complete or a terminal state.
 
         Arguments:
-            sleep_interval (int, optional): An interval time in seconds before checking
+            interval (int, optional): An interval time in seconds before checking
             next experiement state.
         """
+        elapsed_time = 0
         while True:
             exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
             if exp_resp.experiment.state in (
@@ -70,14 +70,23 @@ class ExperimentReference:
                 Determinedexperimentv1State.DELETED,
                 Determinedexperimentv1State.ERROR,
             ):
-                print("Experiment {} is in a terminal state".format(self.id))
                 break
             elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
-                raise ValueError("Experiment {} is in paused state".format(self.id))
+                raise ValueError(
+                    "Experiment {} is in paused state. Make sure the experiment is active.".format(
+                        self.id
+                    )
+                )
             else:
                 # ACTIVE, STOPPING_COMPLETED, etc.
-                print("Waiting for Experiment {} to complete".format(self.id))
-                time.sleep(sleep_interval)
+                time.sleep(interval)
+                elapsed_time += interval
+                if elapsed_time % 60 == 0:
+                    print(
+                        "Waiting for Experiment {} to complete. Elapsed {} minutes".format(
+                            self.id, elapsed_time / 60
+                        )
+                    )
 
     def top_checkpoint(
         self,

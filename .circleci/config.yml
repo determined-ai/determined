@@ -1188,6 +1188,7 @@ jobs:
       - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
+      - run: make -C bindings check
 
   test-unit-harness:
     docker:

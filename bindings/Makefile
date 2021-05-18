@@ -1,6 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
-CLIENT_PATH := ../harness/determined/swagger/client
+CLIENT_PATH := ../harness/determined/_swagger/client
 
 .PHONY: all
 all: get-deps
@@ -19,11 +19,19 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l $* -o build/$* -c config.json
 	touch build/$*
+	if [ $* = "python" ] ; then \
+		rm -rf $(CLIENT_PATH); \
+		mkdir -p $(CLIENT_PATH)\api; \
+		mkdir -p $(CLIENT_PATH)\models; \
+		cp -rf ./build/python/determined._swagger.client/ $(CLIENT_PATH); \
+		cp -rf ./build/python/determined/_swagger/client/ $(CLIENT_PATH); \
+	fi
 
 .PHONY: build
 build: build/typescript-fetch build/python
-	cp -rf ./build/python/determined.swagger.client/ ./build/python/determined/swagger/client
-	cp -rf ./build/python/determined/swagger/client/ $(CLIENT_PATH)
+
+.PHONY: check
+check:
 	test -z "$(shell git status --porcelain '$(CLIENT_PATH)')"
 
 .PHONY: clean-deps

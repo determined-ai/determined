@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
-packages += [f"determined.swagger.{pkg}" for pkg in find_packages(where="determined/swagger")]
+packages += [f"determined._swagger.{pkg}" for pkg in find_packages(where="determined/_swagger")]
 
 setup(
     name="determined",

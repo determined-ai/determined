@@ -48,8 +48,7 @@ class V1LaunchNotebookResponse(object):
         self.discriminator = None
 
         self.notebook = notebook
-        if config is not None:
-            self.config = config
+        self.config = config
 
     @property
     def notebook(self):
@@ -94,6 +93,8 @@ class V1LaunchNotebookResponse(object):
         :param config: The config of this V1LaunchNotebookResponse.  # noqa: E501
         :type: object
         """
+        if config is None:
+            raise ValueError("Invalid value for `config`, must not be `None`")  # noqa: E501
 
         self._config = config
 

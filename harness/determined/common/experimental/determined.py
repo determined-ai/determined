@@ -1,23 +1,18 @@
-from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+import pathlib
+from typing import Any, Dict, List, Optional, Union
 
-from determined.common import api, context, yaml
-from determined.common.api import authentication as auth
-from determined.common.experimental.checkpoint import Checkpoint
-from determined.common.experimental.experiment import ExperimentReference
-from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
-from determined.common.experimental.session import Session
-from determined.common.experimental.trial import TrialReference
-from determined.swagger.client.api.experiments_api import ExperimentsApi
-from determined.swagger.client.api.internal_api import InternalApi
-from determined.swagger.client.api.trials_api import TrialsApi
-from determined.swagger.client.api_client import ApiClient
-from determined.swagger.client.configuration import Configuration
-from determined.swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
-from determined.swagger.client.models.v1_file import V1File
+from determined._swagger.client.api.experiments_api import ExperimentsApi
+from determined._swagger.client.api.internal_api import InternalApi
+from determined._swagger.client.api.trials_api import TrialsApi
+from determined._swagger.client.api_client import ApiClient
+from determined._swagger.client.configuration import Configuration
+from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
+from determined._swagger.client.models.v1_file import V1File
+from determined.common import api, check, context, yaml
+from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
-def _path_to_files(path: Path) -> List[V1File]:
+def _path_to_files(path: pathlib.Path) -> List[V1File]:
     files = []
     for item in context.read_context(path)[0]:
         content = item["content"].decode("utf-8")
@@ -32,14 +27,6 @@ def _path_to_files(path: Path) -> List[V1File]:
         )
         files.append(file)
     return files
-
-
-def _parse_config_file(config_file: TextIO) -> Dict:
-    experiment_config = yaml.safe_load(config_file.read())
-    config_file.close()
-    if not experiment_config or not isinstance(experiment_config, dict):
-        raise ValueError("Invalid experiment config file {}".format(config_file.name))
-    return experiment_config
 
 
 class Determined:
@@ -59,12 +46,12 @@ class Determined:
         master: Optional[str] = None,
         user: Optional[str] = None,
     ):
-        self._session = Session(master, user)
+        self._session = session.Session(master, user)
 
         host = self._session._master
         if host[-1] == "/":
-            host = host[:-1]
-        userauth = auth.Authentication.instance()
+            host = host.rstrip("/")
+        userauth = api.authentication.Authentication.instance()
 
         configuration = Configuration()
         configuration.host = host
@@ -78,56 +65,63 @@ class Determined:
 
     def create_experiment(
         self,
+        config: Union[str, pathlib.Path, Dict],
         model_dir: str,
-        exp_config: object = None,
-    ) -> ExperimentReference:
-        if isinstance(exp_config, str):
-            f = open(exp_config, "r")
-            experiment_config = _parse_config_file(f)
-        elif isinstance(exp_config, Dict):
-            experiment_config = exp_config
-        else:
-            raise ValueError("Invalid experiment config")
+    ) -> experiment.ExperimentReference:
+        check.is_instance(
+            config, (str, pathlib.Path, dict), "config parameter must be dictionary or path"
+        )
+        if isinstance(config, str):
+            with open(config) as f:
+                experiment_config = yaml.safe_load(f)
+        elif isinstance(config, pathlib.Path):
+            with config.open() as f:
+                experiment_config = yaml.safe_load(f)
+        elif isinstance(config, Dict):
+            experiment_config = config
 
-        model_context = _path_to_files(Path(model_dir))
+        model_context = _path_to_files(pathlib.Path(model_dir))
 
         experiment_request = V1CreateExperimentRequest(
             model_definition=model_context,
             config=yaml.safe_dump(experiment_config),
         )
         experiment_response = self._internal.determined_create_experiment(experiment_request)
-        return ExperimentReference(
+        return experiment.ExperimentReference(
             experiment_response.experiment.id,
             self._session._master,
             self._experiments,
-            experiment_response.config,
         )
 
-    def get_experiment(self, experiment_id: int) -> ExperimentReference:
+    def get_experiment(self, experiment_id: int) -> experiment.ExperimentReference:
         """
         Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
-        return ExperimentReference(experiment_id, self._session._master, self._experiments, None)
+        return experiment.ExperimentReference(
+            experiment_id,
+            self._session._master,
+            self._experiments,
+        )
 
-    def get_trial(self, trial_id: int) -> TrialReference:
+    def get_trial(self, trial_id: int) -> trial.TrialReference:
         """
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return TrialReference(trial_id, self._session._master, self._trials)
+        return trial.TrialReference(trial_id, self._session._master, self._trials)
 
-    def get_checkpoint(self, uuid: str) -> Checkpoint:
+    def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
         r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
-        return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
+        return checkpoint.Checkpoint.from_json(r["checkpoint"], master=self._session._master)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
-    ) -> Model:
+    ) -> model.Model:
         """
         Add a model to the model registry.
 
@@ -142,24 +136,24 @@ class Determined:
             body={"description": description, "metadata": metadata},
         )
 
-        return Model.from_json(r.json().get("model"), self._session._master)
+        return model.Model.from_json(r.json().get("model"), self._session._master)
 
-    def get_model(self, name: str) -> Model:
+    def get_model(self, name: str) -> model.Model:
         """
         Get the :class:`~determined.experimental.Model` from the model registry
         with the provided name. If no model with that name is found in the registry,
         an exception is raised.
         """
         r = api.get(self._session._master, "/api/v1/models/{}".format(name))
-        return Model.from_json(r.json().get("model"), self._session._master)
+        return model.Model.from_json(r.json().get("model"), self._session._master)
 
     def get_models(
         self,
-        sort_by: ModelSortBy = ModelSortBy.NAME,
-        order_by: ModelOrderBy = ModelOrderBy.ASCENDING,
+        sort_by: model.ModelSortBy = model.ModelSortBy.NAME,
+        order_by: model.ModelOrderBy = model.ModelOrderBy.ASCENDING,
         name: str = "",
         description: str = "",
-    ) -> List[Model]:
+    ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
 
@@ -184,4 +178,4 @@ class Determined:
         )
 
         models = r.json().get("models")
-        return [Model.from_json(m, self._session._master) for m in models]
+        return [model.Model.from_json(m, self._session._master) for m in models]

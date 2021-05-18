@@ -6,7 +6,7 @@ exclude =
     build,
     dist,
     _gen.py,
-    determined/swagger/client
+    determined/_swagger/client
 
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is

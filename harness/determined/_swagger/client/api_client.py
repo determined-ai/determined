@@ -23,9 +23,9 @@ import tempfile
 import six
 from six.moves.urllib.parse import quote
 
-from determined.swagger.client.configuration import Configuration
-import determined.swagger.client.models
-from determined.swagger.client import rest
+from determined._swagger.client.configuration import Configuration
+import determined._swagger.client.models
+from determined._swagger.client import rest
 
 
 class ApiClient(object):
@@ -266,7 +266,7 @@ class ApiClient(object):
             if klass in self.NATIVE_TYPES_MAPPING:
                 klass = self.NATIVE_TYPES_MAPPING[klass]
             else:
-                klass = getattr(determined.swagger.client.models, klass)
+                klass = getattr(determined._swagger.client.models, klass)
 
         if klass in self.PRIMITIVE_TYPES:
             return self.__deserialize_primitive(data, klass)

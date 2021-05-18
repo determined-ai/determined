@@ -44,6 +44,7 @@ class V1ResourcePool(object):
         'preemptible': 'bool',
         'min_agents': 'int',
         'max_agents': 'int',
+        'slots_per_agent': 'int',
         'cpu_container_capacity_per_agent': 'int',
         'scheduler_type': 'V1SchedulerType',
         'scheduler_fitting_policy': 'V1FittingPolicy',
@@ -77,6 +78,7 @@ class V1ResourcePool(object):
         'preemptible': 'preemptible',
         'min_agents': 'minAgents',
         'max_agents': 'maxAgents',
+        'slots_per_agent': 'slotsPerAgent',
         'cpu_container_capacity_per_agent': 'cpuContainerCapacityPerAgent',
         'scheduler_type': 'schedulerType',
         'scheduler_fitting_policy': 'schedulerFittingPolicy',
@@ -96,7 +98,7 @@ class V1ResourcePool(object):
         'details': 'details'
     }
 
-    def __init__(self, name=None, description=None, type=None, num_agents=None, slots_available=None, slots_used=None, cpu_container_capacity=None, cpu_containers_running=None, default_gpu_pool=None, default_cpu_pool=None, preemptible=None, min_agents=None, max_agents=None, cpu_container_capacity_per_agent=None, scheduler_type=None, scheduler_fitting_policy=None, location=None, image_id=None, instance_type=None, master_url=None, master_cert_name=None, startup_script=None, container_startup_script=None, agent_docker_network=None, agent_docker_runtime=None, agent_docker_image=None, agent_fluent_image=None, max_idle_agent_period=None, max_agent_starting_period=None, details=None):  # noqa: E501
+    def __init__(self, name=None, description=None, type=None, num_agents=None, slots_available=None, slots_used=None, cpu_container_capacity=None, cpu_containers_running=None, default_gpu_pool=None, default_cpu_pool=None, preemptible=None, min_agents=None, max_agents=None, slots_per_agent=None, cpu_container_capacity_per_agent=None, scheduler_type=None, scheduler_fitting_policy=None, location=None, image_id=None, instance_type=None, master_url=None, master_cert_name=None, startup_script=None, container_startup_script=None, agent_docker_network=None, agent_docker_runtime=None, agent_docker_image=None, agent_fluent_image=None, max_idle_agent_period=None, max_agent_starting_period=None, details=None):  # noqa: E501
         """V1ResourcePool - a model defined in Swagger"""  # noqa: E501
 
         self._name = None
@@ -112,6 +114,7 @@ class V1ResourcePool(object):
         self._preemptible = None
         self._min_agents = None
         self._max_agents = None
+        self._slots_per_agent = None
         self._cpu_container_capacity_per_agent = None
         self._scheduler_type = None
         self._scheduler_fitting_policy = None
@@ -144,6 +147,8 @@ class V1ResourcePool(object):
         self.preemptible = preemptible
         self.min_agents = min_agents
         self.max_agents = max_agents
+        if slots_per_agent is not None:
+            self.slots_per_agent = slots_per_agent
         self.cpu_container_capacity_per_agent = cpu_container_capacity_per_agent
         self.scheduler_type = scheduler_type
         self.scheduler_fitting_policy = scheduler_fitting_policy
@@ -468,6 +473,29 @@ class V1ResourcePool(object):
             raise ValueError("Invalid value for `max_agents`, must not be `None`")  # noqa: E501
 
         self._max_agents = max_agents
+
+    @property
+    def slots_per_agent(self):
+        """Gets the slots_per_agent of this V1ResourcePool.  # noqa: E501
+
+        The number of slots that exists on an dynamic agent.  # noqa: E501
+
+        :return: The slots_per_agent of this V1ResourcePool.  # noqa: E501
+        :rtype: int
+        """
+        return self._slots_per_agent
+
+    @slots_per_agent.setter
+    def slots_per_agent(self, slots_per_agent):
+        """Sets the slots_per_agent of this V1ResourcePool.
+
+        The number of slots that exists on an dynamic agent.  # noqa: E501
+
+        :param slots_per_agent: The slots_per_agent of this V1ResourcePool.  # noqa: E501
+        :type: int
+        """
+
+        self._slots_per_agent = slots_per_agent
 
     @property
     def cpu_container_capacity_per_agent(self):
