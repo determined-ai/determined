@@ -24,13 +24,13 @@ Specification to test the experiment list page.
   |Kill               |false   |
 * Toggle all table row selection
 
-## Filter experiments by archived
+// ## Filter experiments by archived
 
-* Scroll table to the "right"
-* Filter table header "Archived" with option "Archived"
-* Should have "1" table rows
-* Filter table header "Archived" with option "Unarchived"
-* Should have "3" table rows
+// * Scroll table to the "right"
+// * Filter table header "Archived" with option "Archived"
+// * Should have "1" table rows
+// * Filter table header "Archived" with option "Unarchived"
+// * Should have "3" table rows
 
 ## Sign out
 
