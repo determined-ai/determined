@@ -38,8 +38,12 @@ const AppView: React.FC = () => {
   useEffect(() => {
     setupAnalytics(info);
 
-    // Check to make sure the WebUI version matches the platform version.
-    if (info.version !== process.env.VERSION) {
+    /*
+     * Check to make sure the WebUI version matches the platform version.
+     * If the release is a release candidate or a dev tag, skip this notification.
+     */
+    const versionPieces = info.version.split('.') || [];
+    if (versionPieces.length === 3 && info.version !== process.env.VERSION) {
       const btn = <Button type="primary" onClick={refreshPage}>Update Now</Button>;
       const message = 'New WebUI Version';
       const description = <div>
