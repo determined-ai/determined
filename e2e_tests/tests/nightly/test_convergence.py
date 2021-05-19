@@ -310,7 +310,9 @@ def test_data_layer_mnist_tf_keras_accuracy() -> None:
 
 @pytest.mark.nightly
 def test_text_classification_tf_keras_accuracy() -> None:
-    config = conf.load_config(conf.features_examples_path("text_classification_tf_keras/const.yaml"))
+    config = conf.load_config(
+        conf.features_examples_path("text_classification_tf_keras/const.yaml")
+    )
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.features_examples_path("text_classification_tf_keras"), 1
     )
@@ -333,5 +335,5 @@ def test_text_classification_tf_keras_accuracy() -> None:
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_text_classification_tf_keras_accuracy()
