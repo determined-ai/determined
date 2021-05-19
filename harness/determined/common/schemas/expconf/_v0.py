@@ -868,6 +868,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     max_restarts: Optional[int] = None
     min_checkpoint_period: Optional[LengthV0] = None
     min_validation_period: Optional[LengthV0] = None
+    name: Optional[str] = None
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
@@ -897,6 +898,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         max_restarts: Optional[int] = None,
         min_checkpoint_period: Optional[LengthV0] = None,
         min_validation_period: Optional[LengthV0] = None,
+        name: Optional[str] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
@@ -910,8 +912,8 @@ class ExperimentConfigV0(schemas.SchemaBase):
         pass
 
     def runtime_defaults(self) -> None:
-        if self.description is None:
-            self.description = "Experiment (really-bad-petname)"
+        if self.name is None:
+            self.name = "Experiment (really-bad-petname)"
 
 
 # Test Structs Below:
