@@ -174,13 +174,13 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED: "id",
 		apiv1.GetExperimentsRequest_SORT_BY_ID:          "id",
 		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION: "description",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
 		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:  "start_time",
 		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "progress",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -209,8 +209,8 @@ func (a *apiServer) GetExperiments(
 		archivedExpr,
 		userFilterExpr,
 		labelFilterExpr,
-		req.Description,
-		req.Name,
+		fmt.Sprintf("%%%s%%", req.Description),
+		fmt.Sprintf("%%%s%%", req.Name),
 		req.Offset,
 		req.Limit,
 	)
