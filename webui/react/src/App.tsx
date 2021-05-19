@@ -40,10 +40,9 @@ const AppView: React.FC = () => {
 
     /*
      * Check to make sure the WebUI version matches the platform version.
-     * If the release is a release candidate or a dev tag, skip this notification.
+     * Skip this check for development version.
      */
-    const versionPieces = info.version.split('.') || [];
-    if (versionPieces.length === 3 && info.version !== process.env.VERSION) {
+    if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
       const btn = <Button type="primary" onClick={refreshPage}>Update Now</Button>;
       const message = 'New WebUI Version';
       const description = <div>
