@@ -25,6 +25,7 @@ setup(
         "pyzmq>=18.1.0",
         "yogadl==0.1.4",
         # Common:
+        "backoff",
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
         "google-cloud-core<1.4.2",
@@ -55,7 +56,9 @@ setup(
         "docker-compose>=1.13.0",
         "tqdm",
         "appdirs",
-        "backoff",
+        # docker-compose has a requirement not properly propagated with semi-old pip installations;
+        # so we expose that requirement here.
+        "websocket-client<1",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],
