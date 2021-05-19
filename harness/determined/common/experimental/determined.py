@@ -48,13 +48,10 @@ class Determined:
     ):
         self._session = session.Session(master, user)
 
-        host = self._session._master
-        if host[-1] == "/":
-            host = host.rstrip("/")
         userauth = api.authentication.Authentication.instance()
 
         configuration = Configuration()
-        configuration.host = host
+        configuration.host = self._session._master.rstrip("/")
         configuration.username = userauth.token_store.get_active_user()
         configuration.api_key_prefix["Authorization"] = "Bearer"
         configuration.api_key["Authorization"] = userauth.get_session_token()
