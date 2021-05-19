@@ -172,6 +172,14 @@ export interface Command {
   user: User;
 }
 
+export interface NotebookConfig {
+  name?: string;
+  pool?: string;
+  slots?: number;
+  template?: string;
+  type?: 'CPU' | 'GPU'
+}
+
 export enum CheckpointStorageType {
   AWS = 'aws',
   GCS = 'gcs',

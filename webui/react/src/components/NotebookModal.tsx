@@ -7,7 +7,7 @@ import MonacoEditor from 'react-monaco-editor';
 
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTemplates } from 'services/api';
-import { RawJson, ResourcePool, Template } from 'types';
+import { NotebookConfig, RawJson, ResourcePool, Template } from 'types';
 import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
@@ -51,7 +51,7 @@ const NotebookModal: React.FC<Props> = (
   }, []);
 
   useEffect(()=> {
-    const fetchConfig = async (values: RawJson) => {
+    const fetchConfig = async (values: NotebookConfig) => {
       if(showFullConfig) {
         const config = await previewNotebook(
           values.slots,
@@ -65,7 +65,7 @@ const NotebookModal: React.FC<Props> = (
     fetchConfig(form.getFieldsValue(true));
   }, [ showFullConfig, form ]);
 
-  const storeConfig = useCallback((_, values) => {
+  const storeConfig = useCallback((_, values: NotebookConfig) => {
     delete values.name;
     storage.set(STORAGE_KEY,values);
   }, [ storage ]);
