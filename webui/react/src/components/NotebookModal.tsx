@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
+import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTemplates } from 'services/api';
 import { RawJson, ResourcePool, Template } from 'types';
 import { launchNotebook, previewNotebook } from 'utils/task';
@@ -15,42 +16,24 @@ import RadioGroup from './RadioGroup';
 const { Option } = Select;
 const { Item } = Form;
 
+const STORAGE_PATH = 'notebook-launch';
+const STORAGE_KEY = 'notebook-config';
+
 interface Props extends ModalProps {
   visible?: boolean;
 }
 
-/*
-Proposed WebUI flow for notebook creation.
-User clicks “Launch Notebooks” from the navigation bar.
-A modal opens up with a form with the following items:
-Link to the documentation
-Dropdown for notebook templates.
-Text box for name.
-Dropdown for resource pool. <optional>
-Radio button for CPU-only (0 slot) or GPU slots (will depend on resource pool selection)
-cpuContainerCapacityPerAgent > 0 if resource pool has cpu capacity
-slotsPerAgent > 0 if resource pool has GPU capacity
-Text box for number of slots. (will only show if GPU is selected)
-Primary button with the label “Create Notebook Environment”
-Secondary button with the label “Edit full config”.
-If the user clicks on “Edit full config”, the content area of the modal
-switches to a view with the following items: (this action will require an API call to
-  interpolate the user selected values into the config to populate the config editor)
-Link to the documentation.
-Editor with the full content populated with the name, resource pool, number of slots, and template.
-Primary button with the label “Create Notebook Environment”
-Secondary button with a back arrow.
-*/
-
 const NotebookModal: React.FC<Props> = (
   { visible = false, ...props }: Props,
 ) => {
+  const storage = useStorage(STORAGE_PATH);
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
     useState<{id:string, label:string}[]>([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
-  const [ resourceType, setResourceType ] = useState(undefined);
+  const [ resourceType, setResourceType ] =
+    useState(storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
   const [ form ] = Form.useForm();
 
   useEffect(() => {
@@ -81,6 +64,12 @@ const NotebookModal: React.FC<Props> = (
     };
     fetchConfig(form.getFieldsValue(true));
   }, [ showFullConfig, form ]);
+
+  const storeConfig = useCallback((_, values) => {
+    delete values.name;
+    console.log(values);
+    storage.set(STORAGE_KEY,values);
+  }, []);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) {
@@ -182,7 +171,16 @@ const NotebookModal: React.FC<Props> = (
             }} />
         </Item>
       </Form> :
-      <Form form={form} initialValues={{ pool: '', slots:1, template: '' }} labelCol={{ span:8 }}>
+      <Form
+        form={form}
+        initialValues={storage.getWithDefault(STORAGE_KEY, {
+          pool: '',
+          slots:1,
+          template: '',
+          type: undefined,
+        })}
+        labelCol={{ span:8 }}
+        onValuesChange={storeConfig}>
         <Item label='Notebook Template' name='template'>
           <Select
             style={{ minWidth:120 }}>
