@@ -9,7 +9,7 @@ interface Props {
 
 const OverviewStats: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
-  if (props.onClick) classes.push(css.baseClickable);
+  if (props.onClick) classes.push(css.clickable);
 
   return (
     <div className={classes.join(' ')} onClick={props.onClick}>

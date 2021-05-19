@@ -19,7 +19,7 @@
     & > small { font-size: var(--theme-sizes-font-medium); }
   }
 }
-.baseClickable {
+.clickable {
   cursor: pointer;
 
   .info {
