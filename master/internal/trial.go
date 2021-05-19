@@ -925,15 +925,10 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		var addresses []*rendezvousAddress
 
 		var addrs []cproto.Address
-		// Track container ports and only add uniques to addrs.
-		// Sometime around Docker 20.10.6, Docker started, seemingly randomly,
-		// binding multiple host ports to a container port very rarely.
-		containerPorts := map[int]bool{}
 		for _, addr := range caddr.Addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort &&
-				addr.ContainerPort <= MaxLocalRendezvousPort && !containerPorts[addr.ContainerPort] {
+				addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
-				containerPorts[addr.ContainerPort] = true
 			}
 
 			addresses = append(addresses, &rendezvousAddress{
