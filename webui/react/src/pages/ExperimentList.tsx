@@ -162,12 +162,14 @@ const ExperimentList: React.FC = () => {
 
     // archived
     const archived = urlSearchParams.get('archived');
-    filters.archived = archived === URL_ALL ? undefined : archived as ArchiveFilter;
+    if (archived != null) {
+      filters.archived = archived === URL_ALL ? undefined : archived as ArchiveFilter;
+    }
 
     // labels
-    if (urlSearchParams.get('label') != null) {
-      const labels = urlSearchParams.getAll('label');
-      filters.labels = (labels.includes(URL_ALL) ? undefined : labels);
+    const label = urlSearchParams.getAll('label');
+    if (label!= null) {
+      filters.labels = (label.includes(URL_ALL) ? undefined : label);
     }
 
     // limit
@@ -204,15 +206,15 @@ const ExperimentList: React.FC = () => {
     }
 
     // states
-    if (urlSearchParams.get('state') != null) {
-      const states = urlSearchParams.getAll('state');
-      filters.states = (states.includes(URL_ALL) ? undefined : states);
+    const state = urlSearchParams.getAll('state');
+    if (state != null) {
+      filters.states = (state.includes(URL_ALL) ? undefined : state);
     }
 
     // users
-    if (urlSearchParams.get('user') != null) {
-      const users = urlSearchParams.getAll('user');
-      filters.users = (users.includes(URL_ALL) ? undefined : users);
+    const user = urlSearchParams.getAll('user');
+    if (user != null) {
+      filters.users = (user.includes(URL_ALL) ? undefined : user);
     }
 
     setFilters(filters);
