@@ -1,3 +1,4 @@
+import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -25,10 +26,14 @@ import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
 const STORAGE_LIMIT_KEY = 'limit';
+const STORAGE_SORTER_KEY = 'sorter';
 const VIEW_CHOICE_KEY = 'view-choice';
+
+const defaultSorter = { descend: false, key: 'name' };
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
   const { agents, cluster: overview } = useStore();
@@ -38,6 +43,7 @@ const ClusterOverview: React.FC = () => {
     return GridListView.Grid;
   });
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ sorter, setSorter ] = useState(initSorter);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
@@ -98,13 +104,17 @@ const ClusterOverview: React.FC = () => {
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
+      column.sortOrder = null;
       if (column.key === 'description') column.render = descriptionRender;
       if (column.key === 'chart') column.render = slotsBarRender;
+      if (column.key === sorter.key) {
+        column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      }
       return column;
     });
 
     return newColumns;
-  }, [ agents, getTotalGpuSlots ]);
+  }, [ agents, getTotalGpuSlots, sorter ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
@@ -114,13 +124,21 @@ const ClusterOverview: React.FC = () => {
   }, [ storage ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<ResourcePool>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as string });
+
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
     setPagination(prev => ({
       ...prev,
       limit: tablePagination.pageSize,
       offset: (tablePagination.current - 1) * tablePagination.pageSize,
     }));
-  }, [ storage ]);
+  }, [ columns, storage ]);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
