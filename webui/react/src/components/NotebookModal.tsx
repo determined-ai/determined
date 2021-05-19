@@ -67,9 +67,8 @@ const NotebookModal: React.FC<Props> = (
 
   const storeConfig = useCallback((_, values) => {
     delete values.name;
-    console.log(values);
     storage.set(STORAGE_KEY,values);
-  }, []);
+  }, [ storage ]);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) {
