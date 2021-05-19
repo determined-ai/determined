@@ -34,6 +34,7 @@ const ClusterOverview: React.FC = () => {
     return GridListView.Grid;
   });
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
@@ -42,6 +43,7 @@ const ClusterOverview: React.FC = () => {
     try {
       const resourcePools = await getResourcePools({});
       setResourcePools(resourcePools);
+      setTotal(resourcePools.length || 0);
     } catch (e) {}
   }, []);
 
@@ -171,7 +173,7 @@ const ClusterOverview: React.FC = () => {
           columns={columns}
           dataSource={resourcePools}
           loading={!agents} // TODO replace with resource pools
-          pagination={getPaginationConfig(resourcePools.length, 10)}
+          pagination={getPaginationConfig(resourcePools.length, total)}
           rowClassName={defaultRowClassName({ clickable: true })}
           rowKey="name"
           scroll={{ x: 1000 }}
