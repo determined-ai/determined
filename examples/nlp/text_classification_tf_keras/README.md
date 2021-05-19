@@ -8,7 +8,6 @@ It is adapted from Tensorflow's
 
 ## Files
 * `model_def.py`: The core code for training. This includes building and compiling the model.
-  
 * `data.py`: The data loading and preparation code for the model.
 
 ###Configuration Files
