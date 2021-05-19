@@ -23,7 +23,7 @@ interface Props extends Omit<ModalFuncProps, 'type'> {
 }
 
 const getExperimentName = (config: RawJson) => {
-  return config.description || '';
+  return config.name || '';
 };
 
 const getMaxLengthType = (config: RawJson) => {
@@ -63,8 +63,8 @@ const CreateExperimentModal: React.FC<Props> = ({
     const formValues = form.getFieldsValue();
     const newConfig = clone(config);
 
-    if (formValues.description) {
-      newConfig.description = formValues.description;
+    if (formValues.name) {
+      newConfig.name = formValues.name;
     }
     if (formValues.maxLength) {
       newConfig.searcher.max_length = { [maxLengthType]: parseInt(formValues.maxLength) };
@@ -91,7 +91,7 @@ const CreateExperimentModal: React.FC<Props> = ({
       const newConfig = (yaml.load(newConfigString) || {}) as RawJson;
 
       form.setFields([
-        { name: 'description', value: getExperimentName(newConfig) },
+        { name: 'name', value: getExperimentName(newConfig) },
         {
           name: 'maxLength',
           value: !isFork ? getMaxLengthValue(newConfig) : undefined,
@@ -167,14 +167,14 @@ const CreateExperimentModal: React.FC<Props> = ({
       <Form
         form={form}
         initialValues={{
-          description: experimentName,
           maxLength: !isFork ? maxLengthValue : undefined,
+          name: experimentName,
         }}
         labelCol={{ span: 8 }}
         name="basic">
         <Form.Item
-          label="Experiment description"
-          name="description"
+          label="Experiment name"
+          name="name"
           rules={[
             { message: 'Please provide a new experiment name.', required: true },
           ]}>

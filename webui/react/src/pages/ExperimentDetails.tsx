@@ -113,7 +113,7 @@ const ExperimentDetails: React.FC = () => {
       setTimeout(() => startPolling(), 100);
     } catch (e) {
       setForkModalError(e.response?.data?.message || 'Unable to create experiment.');
-      let errorMessage = 'Unable to fork experiment with the provide config.';
+      let errorMessage = 'Unable to fork experiment with the provided config.';
       if (e.name === 'YAMLException') {
         errorMessage = e.message;
       } else if (e.response?.data?.message) {
