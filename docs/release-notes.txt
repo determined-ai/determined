@@ -16,7 +16,7 @@ Version 0.15.5
 **Bug Fixes**
 
 -  Fix an issue where the master would attempt to schedule onto agents
-   that have previously disconnected.
+   that had previously disconnected.
 
 **Deprecated Features**
 
