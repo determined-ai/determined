@@ -1,7 +1,9 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { Agent, Auth, ClusterOverview, DetailedUser, DeterminedInfo, ResourceType } from 'types';
+import {
+  Agent, Auth, ClusterOverview, DetailedUser, DeterminedInfo, NotebookConfig, ResourceType,
+} from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
@@ -44,6 +46,7 @@ export enum StoreAction {
 
   // Info
   SetInfo,
+  SetNotebookConfig,
 
   // UI
   CollapseUIChrome,
@@ -69,6 +72,7 @@ export type Action =
 | { type: StoreAction.SetAuth; value: Auth }
 | { type: StoreAction.SetAuthCheck }
 | { type: StoreAction.SetInfo; value: DeterminedInfo }
+| { type: StoreAction.SetNotebookConfig; value: NotebookConfig }
 | { type: StoreAction.CollapseUIChrome }
 | { type: StoreAction.ExpandUIChrome }
 | { type: StoreAction.HideUIChrome }

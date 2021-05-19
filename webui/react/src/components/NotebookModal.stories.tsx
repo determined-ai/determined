@@ -1,12 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreDecorator from 'storybook/StoreDecorator';
 
 import NotebookModal from './NotebookModal';
 
 export default {
   component: NotebookModal,
+  decorators: [ StoreDecorator ],
   title: 'NotebookModal',
 };
 
-export const Default = (): React.ReactNode => {
+const NotebookModalContainer = () => {
+  const storeDispatch = useStoreDispatch();
+
+  useEffect(() => {
+    storeDispatch({ type: StoreAction.SetNotebookConfig, value: {} });
+  }, [ storeDispatch ]);
+
   return <NotebookModal visible={true} />;
+};
+
+export const Default = (): React.ReactNode => {
+  return <NotebookModalContainer />;
 };
