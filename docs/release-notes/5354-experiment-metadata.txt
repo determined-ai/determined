@@ -4,8 +4,8 @@
 
 -  Introduction of experiment notes and name. Check out the docs for
    more info.
--  Add new parameters to `/api/v1/experiments` to filter and sort experiments
-   by name.
+-  Add new parameters to `/api/v1/experiments` to filter and sort
+   experiments by name.
 
 **Breaking Changes**
 
@@ -14,5 +14,6 @@
 
 **Improvements**
 
-- The query parameters to filter experiments returned by `/api/v1/experiments`
-  based on their description or name field are now treated as case insensitive.
+-  The query parameters to filter experiments returned by
+   `/api/v1/experiments` based on their description or name field are
+   now treated as case insensitive.
