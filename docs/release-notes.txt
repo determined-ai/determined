@@ -8,6 +8,23 @@
  Version 0.15
 **************
 
+Version 0.15.5
+==============
+
+**Release Date:** May 18, 2021
+
+**Bug Fixes**
+
+-  Fix an issue where the master would attempt to schedule onto agents
+   that had previously disconnected.
+
+**Deprecated Features**
+
+-  Deprecate the ``scheduler`` and ``provisioner`` fields in the master
+   configuration in favor of ``resource_manager`` and
+   ``resource_pools``. They will be removed in the next minor release,
+   Determined 0.16.0. See :ref:`resource-pools` for more information.
+
 Version 0.15.4
 ==============
 
