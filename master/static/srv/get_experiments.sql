@@ -34,8 +34,9 @@ WITH filtered_exps AS (
                 ))
             )
         AND ($5 = '' OR POSITION($5 IN (e.config->>'description')) > 0)
+        AND ($6 = '' OR POSITION($6 IN (e.config->>'name')) > 0)
 ), page_info AS (
-    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $6, $7) AS page_info
+    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $7, $8) AS page_info
 )
 SELECT
    (SELECT coalesce(json_agg(paginated_exps), '[]'::json) FROM (

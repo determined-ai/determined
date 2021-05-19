@@ -180,6 +180,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:  "num_trials",
 		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:    "progress",
 		apiv1.GetExperimentsRequest_SORT_BY_USER:        "username",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -209,6 +210,7 @@ func (a *apiServer) GetExperiments(
 		userFilterExpr,
 		labelFilterExpr,
 		req.Description,
+		req.Name,
 		req.Offset,
 		req.Limit,
 	)
