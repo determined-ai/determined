@@ -1,10 +1,10 @@
 package model
 
 import (
-	"fmt"
 	"time"
 
-	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Configuration constants for task name generator.
@@ -31,12 +31,10 @@ const (
 
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
-	defaultDescription := fmt.Sprintf(
-		"Experiment (%s)",
-		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
+	conf := schemas.WithDefaults(expconf.ExperimentConfig{}).(expconf.ExperimentConfig)
 
 	defaultConfig := ExperimentConfig{
-		Description: defaultDescription,
+		Name: conf.RawName.String(),
 		CheckpointStorage: CheckpointStorageConfig{
 			SaveExperimentBest: 0,
 			SaveTrialBest:      1,
