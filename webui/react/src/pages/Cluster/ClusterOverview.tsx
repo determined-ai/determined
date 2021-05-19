@@ -8,7 +8,9 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
+import {
+  defaultRowClassName, getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
 import { agentsToOverview, useStore } from 'contexts/Store';
 import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -16,16 +18,18 @@ import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { ResourcePool, ResourceState, ResourceType } from 'types';
+import { Pagination, ResourcePool, ResourceState, ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
+const STORAGE_LIMIT_KEY = 'limit';
 const VIEW_CHOICE_KEY = 'view-choice';
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
   const { agents, cluster: overview } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
@@ -34,6 +38,7 @@ const ClusterOverview: React.FC = () => {
     return GridListView.Grid;
   });
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
 
@@ -108,6 +113,15 @@ const ClusterOverview: React.FC = () => {
     setSelectedView(value);
   }, [ storage ]);
 
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
+    setPagination(prev => ({
+      ...prev,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    }));
+  }, [ storage ]);
+
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
@@ -173,12 +187,13 @@ const ClusterOverview: React.FC = () => {
           columns={columns}
           dataSource={resourcePools}
           loading={!agents} // TODO replace with resource pools
-          pagination={getPaginationConfig(resourcePools.length, total)}
+          pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: true })}
           rowKey="name"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"
+          onChange={handleTableChange}
           onRow={handleTableRow}
         />
         }
