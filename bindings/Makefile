@@ -17,7 +17,7 @@ deps/$(CODEGEN_BIN):
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
-		-l $* -o build/$* -c config.json
+		-l $* -o build/$*
 	touch build/$*
 
 build/python.stamp: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
