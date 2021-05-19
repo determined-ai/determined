@@ -20,11 +20,12 @@ const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 
 interface Props extends ModalProps {
+  onLaunch?: () => void;
   visible?: boolean;
 }
 
 const NotebookModal: React.FC<Props> = (
-  { visible = false, ...props }: Props,
+  { visible = false, onLaunch = (() => null), ...props }: Props,
 ) => {
   const storage = useStorage(STORAGE_PATH);
   const [ showFullConfig, setShowFullConfig ] = useState(false);
@@ -91,8 +92,9 @@ const NotebookModal: React.FC<Props> = (
           values.pool,
         );
       }
+      onLaunch();
     },
-    [ showFullConfig, form ],
+    [ showFullConfig, form, onLaunch ],
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {

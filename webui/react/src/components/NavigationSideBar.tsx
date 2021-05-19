@@ -126,7 +126,8 @@ const NavigationSideBar: React.FC = () => {
             </div>
             <NotebookModal
               visible={showNotebookModal}
-              onCancel={() => setShowNotebookModal(false)} />
+              onCancel={() => setShowNotebookModal(false)}
+              onLaunch={() => setShowNotebookModal(false)} />
           </section>
           <section className={css.top}>
             <NavigationItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />

@@ -315,13 +315,16 @@ export default class StepImplementation {
 
   @Step('Launch notebook')
   public async launchNotebook() {
-    await clickAndCloseTab(t.button('Launch Notebook'));
+    await t.click(t.button('Launch JupyterLab'));
+    await t.click(t.text('GPU'));
+    await clickAndCloseTab(t.button('Launch'));
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
-    await t.click(t.$('[class*=NavigationSideBar_launchIcon]'));
-    await clickAndCloseTab(t.text('Launch CPU-only Notebook'));
+    await t.click(t.button('Launch JupyterLab'));
+    await t.click(t.text('CPU'));
+    await clickAndCloseTab(t.button('Launch'));
   }
 
   @Step('Launch tensorboard')
