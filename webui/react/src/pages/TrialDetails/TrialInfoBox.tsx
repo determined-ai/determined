@@ -49,7 +49,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   return (
     <Section>
-      <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
+      <Grid gap={ShirtSize.medium} minItemWidth={18} mode={GridMode.AutoFill}>
         <OverviewStats title="Start Time">
           {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
         </OverviewStats>
