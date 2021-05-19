@@ -6,12 +6,14 @@ from typing import Any, Dict, Optional, Type
 from determined.common.check import check_eq, check_in, check_type
 
 from .base import StorageManager, StorageMetadata
+from .azure import AzureStorageManager
 from .gcs import GCSStorageManager
 from .hdfs import HDFSStorageManager
 from .s3 import S3StorageManager
 from .shared import SharedFSStorageManager
 
 __all__ = [
+    "AzureStorageManager",
     "GCSStorageManager",
     "StorageManager",
     "StorageMetadata",
@@ -21,6 +23,7 @@ __all__ = [
 
 
 _STORAGE_MANAGERS = {
+    "blob": AzureStorageManager,
     "gcs": GCSStorageManager,
     "s3": S3StorageManager,
     "shared_fs": SharedFSStorageManager,
@@ -61,6 +64,13 @@ def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManag
             config["storage_path"] = config.get("tensorboard_path", None)
         else:
             config["storage_path"] = config.get("checkpoint_path", None)
+    elif identifier == "blob":
+        if not ("connection_string" in config or "account_url" in config):
+            raise ValueError(
+                "At least one of [connection_string, account_url] must be specified for Azure Blob Storage, but none were."
+            )
+        if not "container" in config:
+            raise ValueError("Container name must be specified for Azure Blob Storage.")
 
     config.pop("tensorboard_path", None)
     config.pop("checkpoint_path", None)

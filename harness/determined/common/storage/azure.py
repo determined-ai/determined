@@ -11,7 +11,7 @@ from determined.common import util
 from determined.common.storage.base import StorageManager, StorageMetadata
 
 
-class BlobStorageManager(StorageManager):
+class AzureStorageManager(StorageManager):
     """
     Store and load checkpoints from Azure Blob Storage.
 
@@ -56,7 +56,7 @@ class BlobStorageManager(StorageManager):
             else:
                 logging.error("Failed while trying to create container {}.".format(container))
                 raise e
-        self.container = container if container.endswith("/") else container[:-1]
+        self.container = container if not container.endswith("/") else container[:-1]
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to Azure Blob Storage and deletes the original files."""
@@ -94,7 +94,7 @@ class BlobStorageManager(StorageManager):
                 logging.debug(
                     "Uploading blob {} to container {}.".format(blob_name, container_name)
                 )
-                with open(abs_path, "r") as f:
+                with open(abs_path, "rb") as f:
                     self.client.get_blob_client(container_name, blob_name).upload_blob(f.read())
 
     @util.preserve_random_state
@@ -116,11 +116,14 @@ class BlobStorageManager(StorageManager):
             logging.debug(
                 "Downloading blob {} from container {}.".format(blob_name, container_name)
             )
-            with open(abs_path, "w") as f:
+            with open(abs_path, "wb") as f:
                 stream = self.client.get_blob_client(container_name, blob_name).download_blob()
                 stream.readinto(f)
 
     @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
         logging.info("Deleting checkpoint {} from Azure Blob Storage".format(metadata.storage_id))
-        self.client.get_blob_client(self.container, metadata.storage_id).delete_blob()
+        for rel_path in metadata.resources.keys():
+            if not rel_path.endswith("/"):
+                rel_path = "{}/{}".format(metadata.storage_id, rel_path)
+                self.client.get_blob_client(self.container, rel_path).delete_blob()
