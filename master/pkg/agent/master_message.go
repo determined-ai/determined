@@ -62,7 +62,7 @@ type ContainerStarted struct {
 // started information.
 func (c ContainerStarted) Addresses() []container.Address {
 	proxy := c.ProxyAddress
-	proxyIsIPv4 := len(net.ParseIP(proxy)) == net.IPv4len
+	proxyIsIPv4 := net.ParseIP(proxy).To4() != nil
 
 	info := c.ContainerInfo
 
