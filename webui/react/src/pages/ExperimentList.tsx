@@ -275,9 +275,9 @@ const ExperimentList: React.FC = () => {
       const response = await getExperiments(
         {
           archived: filters.archived ? filters.archived !== 'unarchived' : undefined,
-          description: search,
           labels: filters.labels,
           limit: pagination.limit,
+          name: search,
           offset: pagination.offset,
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
@@ -442,7 +442,7 @@ const ExperimentList: React.FC = () => {
         dataIndex: 'name',
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+        key: V1GetExperimentsRequestSortBy.NAME,
         onHeaderCell: () => search !== '' ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
