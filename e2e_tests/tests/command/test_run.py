@@ -1,5 +1,4 @@
 import copy
-import os
 import re
 import subprocess
 import tempfile
@@ -513,46 +512,3 @@ def test_k8_sidecars(using_k8s: bool) -> None:
         )
 
         _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
-
-
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-@pytest.mark.parametrize("aggregation_frequency", [1, 4, 8])  # type: ignore
-@pytest.mark.parametrize("average_aggregated_gradients", [True, False])  # type: ignore
-def test_horovod_optimizer(
-    tf2: bool, aggregation_frequency: int, average_aggregated_gradients: bool
-) -> None:
-    image = conf.TF1_GPU_IMAGE
-    if tf2:
-        image = conf.TF2_GPU_IMAGE
-    if not tf2 and "CUDA" in os.environ and os.environ["CUDA"] == "11":
-        # TODO: (DET-4918): we should ensure a consistent way to have tests that can run against
-        # both major TensorFlow versions do so regularly (but not others).
-        pytest.skip(
-            "CUDA 11 is not supported by TensorFlow 1.x, and this test will fail if it is "
-            "run against TensorFlow 2.x without expecting it."
-        )
-
-    config = {
-        "environment": {
-            "image": image,
-        },
-        "resources": {
-            "slots": 4,
-        },
-    }
-
-    cmd = (
-        "horovodrun -np 4 -H localhost:4 python /run/determined/workdir/grad_aggregation_test.py"
-        f" --aggregation-frequency {aggregation_frequency}"
-    )
-
-    if not tf2:
-        cmd += " --tf1"
-
-    if average_aggregated_gradients:
-        cmd += " --average-aggregated-gradients"
-
-    _run_cmd_with_config_expecting_success(
-        cmd=cmd, config=config, context_path="tests/fixtures/tf_keras_grad_aggregation"
-    )
