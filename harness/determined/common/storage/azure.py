@@ -1,11 +1,11 @@
 import contextlib
-from azure.storage.blob import BlobServiceClient
-from azure.core.exceptions import ResourceExistsError, HttpResponseError
-import contextlib
 import logging
 import os
 import tempfile
 from typing import Iterator, Optional
+
+from azure.core.exceptions import HttpResponseError, ResourceExistsError
+from azure.storage.blob import BlobServiceClient
 
 from determined.common import util
 from determined.common.storage.base import StorageManager, StorageMetadata
