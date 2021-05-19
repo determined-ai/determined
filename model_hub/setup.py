@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="model-hub",
-    version="0.15.5rc1",
+    version="0.15.5",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
