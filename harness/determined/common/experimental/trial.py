@@ -9,9 +9,6 @@ class TrialReference:
     """
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
-
-    Arguments:
-        trial_id (int): The trial ID.
     """
 
     def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):

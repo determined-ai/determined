@@ -13,9 +13,6 @@ class ExperimentReference:
     """
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
-
-    Arguments:
-        experiment_id (int): The ID of this experiment.
     """
 
     def __init__(

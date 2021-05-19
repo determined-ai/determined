@@ -71,6 +71,7 @@ from determined._swagger.client.models.v1_archive_experiment_response import V1A
 from determined._swagger.client.models.v1_aws_custom_tag import V1AwsCustomTag
 from determined._swagger.client.models.v1_cancel_experiment_response import V1CancelExperimentResponse
 from determined._swagger.client.models.v1_checkpoint import V1Checkpoint
+from determined._swagger.client.models.v1_checkpoint_metadata import V1CheckpointMetadata
 from determined._swagger.client.models.v1_checkpoint_workload import V1CheckpointWorkload
 from determined._swagger.client.models.v1_command import V1Command
 from determined._swagger.client.models.v1_complete_trial_searcher_validation_response import V1CompleteTrialSearcherValidationResponse
@@ -187,8 +188,11 @@ from determined._swagger.client.models.v1_post_user_response import V1PostUserRe
 from determined._swagger.client.models.v1_preview_hp_search_request import V1PreviewHPSearchRequest
 from determined._swagger.client.models.v1_preview_hp_search_response import V1PreviewHPSearchResponse
 from determined._swagger.client.models.v1_put_template_response import V1PutTemplateResponse
+from determined._swagger.client.models.v1_report_trial_checkpoint_metadata_response import V1ReportTrialCheckpointMetadataResponse
 from determined._swagger.client.models.v1_report_trial_progress_response import V1ReportTrialProgressResponse
 from determined._swagger.client.models.v1_report_trial_searcher_early_exit_response import V1ReportTrialSearcherEarlyExitResponse
+from determined._swagger.client.models.v1_report_trial_training_metrics_response import V1ReportTrialTrainingMetricsResponse
+from determined._swagger.client.models.v1_report_trial_validation_metrics_response import V1ReportTrialValidationMetricsResponse
 from determined._swagger.client.models.v1_resource_allocation_aggregated_entry import V1ResourceAllocationAggregatedEntry
 from determined._swagger.client.models.v1_resource_allocation_aggregated_response import V1ResourceAllocationAggregatedResponse
 from determined._swagger.client.models.v1_resource_allocation_aggregation_period import V1ResourceAllocationAggregationPeriod
@@ -210,6 +214,7 @@ from determined._swagger.client.models.v1_slot import V1Slot
 from determined._swagger.client.models.v1_template import V1Template
 from determined._swagger.client.models.v1_tensorboard import V1Tensorboard
 from determined._swagger.client.models.v1_training_length import V1TrainingLength
+from determined._swagger.client.models.v1_training_metrics import V1TrainingMetrics
 from determined._swagger.client.models.v1_trial_early_exit import V1TrialEarlyExit
 from determined._swagger.client.models.v1_trial_logs_fields_response import V1TrialLogsFieldsResponse
 from determined._swagger.client.models.v1_trial_logs_response import V1TrialLogsResponse
@@ -225,3 +230,4 @@ from determined._swagger.client.models.v1_unarchive_experiment_response import V
 from determined._swagger.client.models.v1_user import V1User
 from determined._swagger.client.models.v1_validate_after_operation import V1ValidateAfterOperation
 from determined._swagger.client.models.v1_validation_history_entry import V1ValidationHistoryEntry
+from determined._swagger.client.models.v1_validation_metrics import V1ValidationMetrics
