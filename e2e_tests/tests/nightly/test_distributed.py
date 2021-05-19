@@ -136,3 +136,12 @@ def test_word_language_lstm_const() -> None:
     config["hyperparameters"]["tied"] = False
 
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
+
+
+@pytest.mark.distributed  # type: ignore
+def test_text_classification_tf_keras_distributed() -> None:
+    config = conf.load_config(conf.nlp_examples_path("text_classification_tf_keras/distributed.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("text_classification_tf_keras"), 1)
+
