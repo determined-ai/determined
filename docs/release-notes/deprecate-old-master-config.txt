@@ -1,8 +1,0 @@
-:orphan:
-
-**Deprecation**
-
--  Master Configuration: deprecate ``scheduler`` and ``provisioner``
-   fields in the master configuration in favor of ``resource_manager``
-   and ``resource pools``. They will be remove in the future version
-   0.16.0. For more information see :ref:`resource-pools`.
