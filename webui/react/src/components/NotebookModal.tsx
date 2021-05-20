@@ -1,4 +1,4 @@
-import { Button, Col, InputNumber, Modal, Row } from 'antd';
+import { Button, InputNumber, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
@@ -34,13 +34,9 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ resourceTypeOptions, setResourceTypeOptions ] =
-    useState<{id:ResourceType, label:ResourceType}[]>(
-      [ { id:ResourceType.CPU, label:ResourceType.CPU },
-        { id:ResourceType.GPU, label:ResourceType.GPU } ],
-    );
-  const [ resourceType, setResourceType ] =
-    useState(storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
+  const [ showResourceType, setShowResourceType ] = useState(true);
+  const [ resourceType, setResourceType ] = useState<ResourceType | undefined>
+  (storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
   const [ form ] = Form.useForm();
 
   const fetchTemplates = useCallback(async () => {
@@ -67,7 +63,7 @@ const NotebookModal: React.FC<Props> = (
     try {
       const values: NotebookConfig = form.getFieldsValue(true);
       const config = await previewNotebook(
-        values.type === 'CPU'? 0 : values.slots,
+        values.type === ResourceType.CPU ? 0 : values.slots,
         values.template === 'default'? undefined : values.template,
         values.name,
         values.pool,
@@ -102,40 +98,34 @@ const NotebookModal: React.FC<Props> = (
       } else {
         launchNotebook(
           undefined,
-          values.resourceType === 'CPU'? 0 : values.slots,
-          values.template === 'default'? undefined : values.template,
+          resourceType === ResourceType.CPU ? 0 : values.slots,
+          values.template === 'default' ? undefined : values.template,
           values.name,
           values.pool,
         );
       }
       if (onLaunch) onLaunch();
     },
-    [ showFullConfig, form, onLaunch ],
+    [ showFullConfig, form, onLaunch, resourceType ],
   );
 
-  const handleResourcePoolUpdate = useCallback((e) => {
-    if (e === '') {
-      setResourceTypeOptions([ { id:ResourceType.CPU, label:ResourceType.CPU },
-        { id:ResourceType.GPU, label:ResourceType.GPU } ]);
-    } else {
-      const pool = resourcePools.find(pool => pool.name === e);
-      if (pool){
-        const options = [];
-        if (pool.cpuContainerCapacityPerAgent > 0) {
-          options.push({ id:ResourceType.CPU, label:ResourceType.CPU });
-        }
-        if (pool.slotsPerAgent && pool.slotsPerAgent > 0) {
-          options.push({ id:ResourceType.GPU, label:ResourceType.GPU });
-        }
-        setResourceTypeOptions(options);
-        form.setFieldsValue({ type: undefined });
-        setResourceType(undefined);
+  const handleResourcePoolUpdate = useCallback((e: string) => {
+    const pool = resourcePools.find(pool => pool.name === e);
+    if (pool){
+      if (pool.cpuContainerCapacityPerAgent > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0) {
+        setShowResourceType(true);
+      } else if (pool.cpuContainerCapacityPerAgent > 0) {
+        setResourceType(ResourceType.CPU);
+        setShowResourceType(false);
+      } else if (pool.slotsPerAgent && pool.slotsPerAgent > 0) {
+        setResourceType(ResourceType.GPU);
+        setShowResourceType(false);
       }
     }
-  },[ resourcePools, form ]);
+  },[ resourcePools ]);
 
   const handleTypeUpdate = useCallback((e) => {
-    setResourceType(e);
+    setResourceType(e as ResourceType);
   },[]);
 
   return <Modal
@@ -153,7 +143,7 @@ const NotebookModal: React.FC<Props> = (
     title="Launch JupyterLab"
     visible={visible}
     {...props}>
-    {showFullConfig?
+    {showFullConfig ?
       <Form form={form}>
         <div className={css.note}
         >
@@ -161,7 +151,7 @@ const NotebookModal: React.FC<Props> = (
           Read about notebook settings
           </Link>
         </div><React.Suspense
-          fallback={<div className={css.loading}><Spinner className="minHeight" /></div>}>
+          fallback={<div className={css.loading}><Spinner /></div>}>
           <Item
             name="config"
             rules={[ { message: 'Invalid YAML', required: true }, () => ({
@@ -215,30 +205,24 @@ const NotebookModal: React.FC<Props> = (
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
           </Select>
         </Item>
-        <Row justify="end">
-          <Col span={8}>
-            <Item
-              label="Type"
-              labelCol={{ span:8 }}
-              name="type"
-              rules={[ { message: 'Select a resource type', required: true } ]}>
-              <RadioGroup
-                options={resourceTypeOptions}
-                onChange={handleTypeUpdate} />
-            </Item>
-          </Col>
-          <Col span={11}>
-            { resourceType === 'GPU'?
-              <Item
-                label="Number of Slots"
-                labelCol={{ span:14 }}
-                name="slots"
-                rules={[ { message: 'Please choose a number of slots', required: true } ]}>
-                <InputNumber min={1} />
-              </Item> : null
-            }
-          </Col>
-        </Row>
+        {showResourceType && <Item
+          label="Type"
+          name="type"
+          rules={[ { message: 'Select a resource type', required: true } ]}>
+          <RadioGroup
+            options={[ { id:ResourceType.CPU, label:ResourceType.CPU },
+              { id:ResourceType.GPU, label:ResourceType.GPU } ]}
+            onChange={handleTypeUpdate} />
+        </Item>}
+        { resourceType === 'GPU' ?
+          <Item
+            initialValue={1}
+            label="Number of Slots"
+            name="slots"
+            rules={[ { message: 'Please choose a number of slots', required: true } ]}>
+            <InputNumber min={1} />
+          </Item> : null
+        }
       </Form>
     }
   </Modal>;
