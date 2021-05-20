@@ -1,3 +1,4 @@
+import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -8,7 +9,9 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
-import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
+import {
+  defaultRowClassName, getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
 import { agentsToOverview, useStore } from 'contexts/Store';
 import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
@@ -16,16 +19,22 @@ import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { ResourcePool, ResourceState, ResourceType } from 'types';
+import { Pagination, ResourcePool, ResourceState, ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import css from './ClusterOverview.module.scss';
 
 const STORAGE_PATH = 'cluster';
+const STORAGE_LIMIT_KEY = 'limit';
+const STORAGE_SORTER_KEY = 'sorter';
 const VIEW_CHOICE_KEY = 'view-choice';
+
+const defaultSorter = { descend: false, key: 'name' };
 
 const ClusterOverview: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initView = storage.get<GridListView>(VIEW_CHOICE_KEY);
   const { agents, cluster: overview } = useStore();
   const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
@@ -34,6 +43,9 @@ const ClusterOverview: React.FC = () => {
     return GridListView.Grid;
   });
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ sorter, setSorter ] = useState(initSorter);
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
+  const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
 
   const fetchAgents = useFetchAgents(canceler);
@@ -42,6 +54,7 @@ const ClusterOverview: React.FC = () => {
     try {
       const resourcePools = await getResourcePools({});
       setResourcePools(resourcePools);
+      setTotal(resourcePools.length || 0);
     } catch (e) {}
   }, []);
 
@@ -91,13 +104,17 @@ const ClusterOverview: React.FC = () => {
     };
 
     const newColumns = [ ...defaultColumns ].map(column => {
+      column.sortOrder = null;
       if (column.key === 'description') column.render = descriptionRender;
       if (column.key === 'chart') column.render = slotsBarRender;
+      if (column.key === sorter.key) {
+        column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      }
       return column;
     });
 
     return newColumns;
-  }, [ agents, getTotalGpuSlots ]);
+  }, [ agents, getTotalGpuSlots, sorter ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
@@ -105,6 +122,23 @@ const ClusterOverview: React.FC = () => {
     storage.set(VIEW_CHOICE_KEY, value);
     setSelectedView(value);
   }, [ storage ]);
+
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<ResourcePool>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as string });
+
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
+    setPagination(prev => ({
+      ...prev,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    }));
+  }, [ columns, storage ]);
 
   const handleTableRow = useCallback((record: ResourcePool) => {
     const handleClick = (event: React.MouseEvent) => {
@@ -171,12 +205,13 @@ const ClusterOverview: React.FC = () => {
           columns={columns}
           dataSource={resourcePools}
           loading={!agents} // TODO replace with resource pools
-          pagination={getPaginationConfig(resourcePools.length, 10)}
+          pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: true })}
           rowKey="name"
           scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small"
+          onChange={handleTableChange}
           onRow={handleTableRow}
         />
         }
