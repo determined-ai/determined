@@ -32,7 +32,7 @@ def load_controller_from_trial(
 
     # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
     controller_class.pre_execute_hook(env, hvd_config)
-    trial_context = trial_class.trial_context_class(env, hvd_config)
+    trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
 
     # Step 3: Instantiate the user's Trial.
     trial_inst = trial_class(trial_context)
@@ -57,7 +57,7 @@ def load_trial_implementation_controller(
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
-    trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
+    trial_class = load.trial_class_from_entrypoint(env.experiment_config["entrypoint"])
     return load_controller_from_trial(
         trial_class=trial_class,
         env=env,
@@ -81,7 +81,9 @@ def load_native_implementation_controller(
         f"configuration: {env.experiment_config}",
     )
 
-    context, trial_class, controller_class = load.load_native_implementation(env, hvd_config)
+    context, trial_class, controller_class = load.load_native_implementation(
+        env, hvd_config, rendezvous_info
+    )
 
     if trial_class is not None:
         return load_controller_from_trial(

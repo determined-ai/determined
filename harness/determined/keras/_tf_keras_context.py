@@ -380,8 +380,13 @@ class TFKerasContext:
 
 
 class TFKerasTrialContext(det.TrialContext, TFKerasContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        det.TrialContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        det.TrialContext.__init__(self, env, hvd_config, rendezvous_info)
         TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:
@@ -401,8 +406,13 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
 
 
 class TFKerasNativeContext(det.NativeContext, TFKerasContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        det.NativeContext.__init__(self, env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        det.NativeContext.__init__(self, env, hvd_config, rendezvous_info)
         TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:

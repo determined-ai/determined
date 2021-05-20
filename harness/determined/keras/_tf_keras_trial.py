@@ -931,7 +931,7 @@ class TFKerasTrialController(det.LoopTrialController):
             # Use a global ZMQ barrier here because we have observed cases where hvd.allreduce
             # may hang when called minutes apart by different workers which may happen if
             # workers complete evaluation at different speeds.
-            self._global_barrier()
+            _ = self.context.distributed._zmq_gather(None)
 
             num_inputs = hvd.allreduce(num_inputs, average=False, name="validation_num_inputs")
             if isinstance(num_inputs, EagerTensor):

@@ -17,7 +17,7 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, ipc, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -378,8 +378,6 @@ class EstimatorTrialController(det.LoopTrialController):
 
         # Used to send Terminate response following post-trial close callback.
         self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
-
-        context._set_allgather_fn(self.allgather_metrics)
 
         self._init_model()
 
@@ -770,34 +768,17 @@ class EstimatorTrialController(det.LoopTrialController):
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         check.true(self.hvd_config.use)
-        if self.is_chief:
-            self.train_process_comm_chief = cast(
-                ipc.ZMQBroadcastServer, self.train_process_comm_chief
-            )
-            logging.debug(f"Chief {hvd.rank()} beginning receiving validation metrics.")
-            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
-            self.train_process_comm_chief.broadcast(None)
-            logging.debug(f"Chief {hvd.rank()} done receiving validation metrics.")
-            for metric_name in metrics:
-                if isinstance(metrics[metric_name], numbers.Number):
-                    metrics[metric_name] /= hvd.size()
-                else:
-                    logging.warning(f"Skipping averaging metric: {metric_name}.")
-            for metric_name in metrics.keys():
-                for worker_metric in worker_metrics:
-                    if isinstance(worker_metric[metric_name], numbers.Number):
-                        metrics[metric_name] += worker_metric[metric_name] / hvd.size()
-            return metrics
-        else:
-            self.train_process_comm_worker = cast(
-                ipc.ZMQBroadcastClient, self.train_process_comm_worker
-            )
-            logging.debug(f"Worker {hvd.rank()} sending metrics.")
-            self.train_process_comm_worker.send(metrics)
-            # Synchronize with the chief so that there is no risk of accidentally calling send()
-            # for a future gather before all workers have called send() on this gather.
-            _ = self.train_process_comm_worker.recv()
+        all_metrics = self.context.distributed._zmq_gather(metrics)
+        if not self.is_chief:
             return None
+        assert all_metrics is not None, "chief did not get metrics from _zmq_gather()"
+
+        for key in metrics:
+            if isinstance(metrics[key], numbers.Number):
+                metrics[key] = sum(m[key] for m in all_metrics) / hvd.size()
+            else:
+                logging.warning(f"Skipping averaging metric: {key}.")
+        return metrics
 
 
 class EstimatorTrial(det.Trial):

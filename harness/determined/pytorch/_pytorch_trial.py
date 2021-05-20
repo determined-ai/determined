@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, ipc, pytorch, util, workload
+from determined import horovod, pytorch, util, workload
 from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
@@ -27,7 +27,6 @@ class PyTorchTrialController(det.LoopTrialController):
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
-        self.context._set_allgather_fn(self.allgather_metrics)
         self.callbacks = self.trial.build_callbacks()
 
         check.gt_eq(
@@ -543,37 +542,19 @@ class PyTorchTrialController(det.LoopTrialController):
         # The chief receives the metric from every other training process.
         check.true(self.hvd_config.use)
 
-        metrics_lists = {}  # type: Dict[str, Any]
-        batches_per_process = []  # type: List[int]
-        if self.is_chief:
-            self.train_process_comm_chief = cast(
-                ipc.ZMQBroadcastServer, self.train_process_comm_chief
-            )
-            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
-            self.train_process_comm_chief.broadcast(None)
-            worker_metrics = cast(List[ipc.MetricsInfo], worker_metrics)
+        # all_args is a list of [(metrics, num_batches), ...] for each worker.
+        all_args = self.context.distributed._zmq_gather((metrics, num_batches))
 
-            for metric_name in metrics.keys():
-                metrics_lists[metric_name] = [metrics[metric_name]]
-                for worker_metric in worker_metrics:
-                    metrics_lists[metric_name].append(worker_metric.metrics[metric_name])
-
-            batches_per_process.append(num_batches)
-            for worker_metric in worker_metrics:
-                batches_per_process.append(worker_metric.num_batches)
-
-            return metrics_lists, batches_per_process
-        else:
-            self.train_process_comm_worker = cast(
-                ipc.ZMQBroadcastClient, self.train_process_comm_worker
-            )
-            self.train_process_comm_worker.send(
-                ipc.MetricsInfo(metrics=metrics, num_batches=num_batches)
-            )
-            # Synchronize with the chief so that there is no risk of accidentally calling send()
-            # for a future gather before all workers have called send() on this gather.
-            _ = self.train_process_comm_worker.recv()
+        if not self.is_chief:
             return None, None
+
+        # Reshape so e.g. all_metrics = [metrics, metrics, ...].
+        all_metrics, all_num_batches = zip(*all_args)
+
+        # convert all_metrics from List[Dict[str, Any]] to Dict[str, List[Any]].
+        metrics_lists = {key: [m[key] for m in all_metrics] for key in metrics}
+
+        return metrics_lists, all_num_batches
 
     def _load(self) -> None:
         if not self.load_path:

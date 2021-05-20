@@ -1,5 +1,5 @@
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from typing import Any, Callable, List, Optional, Tuple, cast
 
 import zmq
 from zmq.error import ZMQBindError, ZMQError
@@ -17,17 +17,6 @@ class _OneSidedBarrier:
 
     def __init__(self, message: Any) -> None:
         self.message = message
-
-
-class MetricsInfo:
-    """
-    MetricsInfo contains validation metrics and the number of batches used to generate those
-    metrics. Used to communicate metrics between training processes.
-    """
-
-    def __init__(self, metrics: Dict[str, Any], num_batches: int):
-        self.metrics = metrics
-        self.num_batches = num_batches
 
 
 class ConnectedMessage:
