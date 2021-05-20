@@ -21,8 +21,8 @@ resource pool handles scheduling and instance provisioning
 independently.
 
 When you configure a cluster, you set which pool is the default for CPU
-tasks and which pool is the default for GPU tasks. CPU-only tasks such a
-Tensorboards will run on the default CPU pool unless you specify that it
+tasks and which pool is the default for GPU tasks. CPU-only tasks such as
+Tensorboards will run on the default CPU pool unless you specify that they
 should run in a different pool when launching the task. Tasks which
 require a slot, such as experiments or GPU-notebooks, will use the
 default GPU pool unless otherwise specified. For this reason we
@@ -34,7 +34,7 @@ cluster on AWS or GCP via ``det deploy``.
 Here are some scenarios where it can be valuable to use multiple
 resource pools:
 
--  *Use GPU for training while using CPUs for TensorBoard.*
+-  *Use GPU for training while using CPUs for Tensorboard.*
 
    You create one pool, ``aws-v100``, that provisions ``p3dn.24xlarge``
    instances (large V100 EC2 instances) and another pool, ``aws-cpu``
@@ -42,9 +42,9 @@ resource pools:
    instances). You train your experiments using the ``aws-v100`` pool,
    while you run your Tensorboards in the ``aws-cpu`` pool. When your
    experiments complete, the ``aws-v100 pool`` can scale down to zero to
-   save money, but you can continue to run your TensorBoard. Without
+   save money, but you can continue to run your Tensorboard. Without
    resource pools, you would have needed to keep a ``p3dn.24xlarge``
-   instance running to keep the TensorBoard alive. By default
+   instance running to keep the Tensorboard alive. By default
    Tensorboard will always run on the default CPU pool.
 
 -  *Use GPUs in different availability zones on AWS.*
@@ -78,7 +78,7 @@ resource pools:
 
    You have one pool with less expensive GPUs that you use for initial
    prototyping on small data sets and another pool that you use for
-   training more mature models on large datasets,
+   training more mature models on large datasets.
 
 *************
  Limitations
@@ -91,9 +91,9 @@ will need to manually decide to shift an experiment from one pool to
 another.
 
 We do not currently allow a cluster to have resource pools in multiple
-AWS regions/GCP zones or across multiple cloud providers. If the master
-is running in one AWS region/GCP zone, all resource pools must also be
-in that AWS region/GCP zone.
+AWS/GCP regions or across multiple cloud providers. If the master
+is running in one AWS/GCP region, all resource pools must also be
+in that AWS/GCP region.
 
 If you create a task that needs slots and specify a pool that will never
 have slots (i.e. a pool with CPU-only instances), that task can never
