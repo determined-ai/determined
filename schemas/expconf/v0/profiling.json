@@ -18,7 +18,7 @@
                 "integer",
                 "null"
             ],
-            "default": null,
+            "default": 0,
             "minimum": 0
         },
         "end_after_batch": {
@@ -31,10 +31,12 @@
         }
     },
     "conditional": {
-        "$comment": "when enabled=true, assert begin <= end",
+        "$comment": "when enabled=true and both begin and end are present, assert begin <= end",
         "when": {
             "required": [
-                "enabled"
+                "enabled",
+                "begin_on_batch",
+                "end_after_batch"
             ],
             "properties": {
                 "enabled": {
