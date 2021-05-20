@@ -163,7 +163,7 @@ export const killTensorboard = generateDetApi<
   CommandIdParams, Api.V1KillTensorboardResponse, void
 >(Config.killTensorboard);
 
-export const getTemplates = generateDetApi<
+export const getTaskTemplates = generateDetApi<
 GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]
 >(Config.getTemplates);
 

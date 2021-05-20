@@ -3,15 +3,18 @@ import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 
 import useStorage from 'hooks/useStorage';
-import { getResourcePools, getTemplates } from 'services/api';
-import { NotebookConfig, RawJson, ResourcePool, Template } from 'types';
+import { getResourcePools, getTaskTemplates } from 'services/api';
+import { NotebookConfig, RawJson, ResourcePool, ResourceType, Template } from 'types';
 import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
+import css from './NotebookModal.module.scss';
 import RadioGroup from './RadioGroup';
+import Spinner from './Spinner';
+
+const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
 
 const { Option } = Select;
 const { Item } = Form;
@@ -25,46 +28,59 @@ interface Props extends ModalProps {
 }
 
 const NotebookModal: React.FC<Props> = (
-  { visible = false, onLaunch = (() => null), ...props }: Props,
+  { visible = false, onLaunch, ...props }: Props,
 ) => {
   const storage = useStorage(STORAGE_PATH);
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceTypeOptions, setResourceTypeOptions ] =
-    useState<{id:string, label:string}[]>([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
+    useState<{id:ResourceType, label:ResourceType}[]>(
+      [ { id:ResourceType.CPU, label:ResourceType.CPU },
+        { id:ResourceType.GPU, label:ResourceType.GPU } ],
+    );
   const [ resourceType, setResourceType ] =
     useState(storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
   const [ form ] = Form.useForm();
 
+  const fetchTemplates = useCallback(async () => {
+    try {
+      setTemplates(await getTaskTemplates({}));
+    } catch {}
+  },[]);
+
   useEffect(() => {
-    const fetchTemplates = async () => {
-      setTemplates(await getTemplates({}));
-    };
     fetchTemplates();
+  }, [ fetchTemplates ]);
+
+  const fetchResourcePools = useCallback(async () => {
+    try {
+      setResourcePools( await getResourcePools({}));
+    } catch {}
   }, []);
 
   useEffect(() => {
-    const fetchResourcePools = async () => {
-      setResourcePools( await getResourcePools({}));
-    };
     fetchResourcePools();
-  }, []);
+  }, [ fetchResourcePools ]);
+
+  const fetchConfig = useCallback(async () => {
+    try {
+      const values: NotebookConfig = form.getFieldsValue(true);
+      const config = await previewNotebook(
+        values.type === 'CPU'? 0 : values.slots,
+        values.template === 'default'? undefined : values.template,
+        values.name,
+        values.pool,
+      );
+      form.setFieldsValue({ config: yaml.dump(config) });
+    } catch {}
+  }, [ form ]);
 
   useEffect(()=> {
-    const fetchConfig = async (values: NotebookConfig) => {
-      if(showFullConfig) {
-        const config = await previewNotebook(
-          values.slots,
-          values.template,
-          values.name,
-          values.pool,
-        );
-        form.setFieldsValue({ config: yaml.dump(config) });
-      }
-    };
-    fetchConfig(form.getFieldsValue(true));
-  }, [ showFullConfig, form ]);
+    if (showFullConfig){
+      fetchConfig();
+    }
+  }, [ showFullConfig, fetchConfig ]);
 
   const storeConfig = useCallback((_, values: NotebookConfig) => {
     delete values.name;
@@ -86,32 +102,33 @@ const NotebookModal: React.FC<Props> = (
       } else {
         launchNotebook(
           undefined,
-          values.resourceType === 'GPU'? values.slots : 0,
-          values.template === ''? undefined : values.template,
+          values.resourceType === 'CPU'? 0 : values.slots,
+          values.template === 'default'? undefined : values.template,
           values.name,
           values.pool,
         );
       }
-      onLaunch();
+      if (onLaunch) onLaunch();
     },
     [ showFullConfig, form, onLaunch ],
   );
 
   const handleResourcePoolUpdate = useCallback((e) => {
     if (e === '') {
-      setResourceTypeOptions([ { id:'CPU', label:'CPU' }, { id:'GPU', label:'GPU' } ]);
+      setResourceTypeOptions([ { id:ResourceType.CPU, label:ResourceType.CPU },
+        { id:ResourceType.GPU, label:ResourceType.GPU } ]);
     } else {
       const pool = resourcePools.find(pool => pool.name === e);
       if (pool){
         const options = [];
         if (pool.cpuContainerCapacityPerAgent > 0) {
-          options.push({ id:'CPU', label:'CPU' });
+          options.push({ id:ResourceType.CPU, label:ResourceType.CPU });
         }
         if (pool.slotsPerAgent && pool.slotsPerAgent > 0) {
-          options.push({ id:'GPU', label:'GPU' });
+          options.push({ id:ResourceType.GPU, label:ResourceType.GPU });
         }
         setResourceTypeOptions(options);
-        form.setFieldsValue({ type:undefined });
+        form.setFieldsValue({ type: undefined });
         setResourceType(undefined);
       }
     }
@@ -133,82 +150,78 @@ const NotebookModal: React.FC<Props> = (
         }
         }>Launch</Button>
     </>}
-    title='Launch JupyterLab'
+    title="Launch JupyterLab"
     visible={visible}
     {...props}>
     {showFullConfig?
       <Form form={form}>
-        <div style={{
-          backgroundColor:'rgb(230,230,230)',
-          border:'1px solid rgb(200,200,200)',
-          marginBottom: '4px',
-          padding: 2,
-          textAlign:'center',
-        }}
+        <div className={css.note}
         >
           <Link external path="/docs/reference/command-notebook-config.html">
           Read about notebook settings
           </Link>
-        </div>
-        <Item
-          name='config'
-          rules={[ { message: 'Invalid YAML', required: true }, () => ({
-            validator(_, value) {
-              try {
-                yaml.load(value);
-                return Promise.resolve();
-              } catch(err) {
-                return Promise.reject(new Error('Invalid YAML'));
-              }
-            },
-          }) ]}>
-          <MonacoEditor
-            height={400}
-            language='yaml'
-            options={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              selectOnLineNumbers: true,
-            }} />
-        </Item>
+        </div><React.Suspense
+          fallback={<div className={css.loading}><Spinner className="minHeight" /></div>}>
+          <Item
+            name="config"
+            rules={[ { message: 'Invalid YAML', required: true }, () => ({
+              validator(_, value) {
+                try {
+                  yaml.load(value);
+                  return Promise.resolve();
+                } catch(err) {
+                  return Promise.reject(new Error('Invalid YAML'));
+                }
+              },
+            }) ]}>
+            <MonacoEditor
+              height={400}
+              language="yaml"
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                selectOnLineNumbers: true,
+              }} />
+          </Item>
+        </React.Suspense>
       </Form> :
       <Form
         form={form}
         initialValues={storage.getWithDefault(STORAGE_KEY, {
-          pool: '',
           slots:1,
-          template: '',
+          template: 'default',
           type: undefined,
         })}
         labelCol={{ span:8 }}
         onValuesChange={storeConfig}>
-        <Item label='Notebook Template' name='template'>
-          <Select
-            style={{ minWidth:120 }}>
-            <Option key='' value=''>---Empty---</Option>
+        <Item label="Notebook Template" name="template">
+          <Select>
+            <Option key="default" value="default">Default Task Template</Option>
             {templates.map(temp =>
               <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
           </Select>
         </Item>
-        <Item label='Name' name="name">
-          <Input placeholder='Name' />
+        <Item label="Name" name="name">
+          <Input placeholder="Name" />
         </Item>
-        <Item label='Resource Pool' name="pool">
+        <Item
+          label="Resource Pool"
+          name="pool"
+          rules={[ { message: 'Select a resource pool', required: true } ]}>
           <Select
-            style={{ minWidth:120 }}
+            placeholder="Select a resource pool"
             onChange={handleResourcePoolUpdate}>
-            <Option key='' value=''>---Empty---</Option>
             {resourcePools.map(pool =>
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
           </Select>
         </Item>
-        <Row justify='end'>
+        <Row justify="end">
           <Col span={8}>
             <Item
-              label='Type'
+              label="Type"
               labelCol={{ span:8 }}
-              name='type'
-              rules={[ { message: 'Choose a resource type', required: true } ]}>
+              name="type"
+              rules={[ { message: 'Select a resource type', required: true } ]}>
               <RadioGroup
                 options={resourceTypeOptions}
                 onChange={handleTypeUpdate} />
@@ -217,7 +230,7 @@ const NotebookModal: React.FC<Props> = (
           <Col span={11}>
             { resourceType === 'GPU'?
               <Item
-                label='Number of Slots'
+                label="Number of Slots"
                 labelCol={{ span:14 }}
                 name="slots"
                 rules={[ { message: 'Please choose a number of slots', required: true } ]}>

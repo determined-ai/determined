@@ -15,7 +15,7 @@ const NotebookModalContainer = () => {
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetNotebookConfig, value: {} });
+    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
   }, [ storeDispatch ]);
 
   return <NotebookModal visible={true} />;
