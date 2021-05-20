@@ -44,7 +44,7 @@
     "screenfull": "^5.0.2",
     "smoothscroll-polyfill": "^0.4.4",
     "sprintf-js": "^1.1.2",
-    "timeago-react": "^3.0.1",
+    "timeago-react": "^3.0.2",
     "uplot": "^1.6.9",
     "websocket": "^1.0.34"
   },
