@@ -1,5 +1,4 @@
 import getpass
-import os
 import shutil
 import subprocess
 import sys
@@ -104,7 +103,6 @@ def _open_shell(
     with keyfile:
         keyfile.write(shell["privateKey"])
         keyfile.flush()
-        os.chmod("/tmp/key", 0o600)
         check_len(shell["addresses"], 1, "Cannot find address for shell")
         _, port = shell["addresses"][0]["host_ip"], shell["addresses"][0]["host_port"]
 
