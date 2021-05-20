@@ -5,7 +5,7 @@ import sys
 import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import IO, Any, Dict, List, Union
 
 import appdirs
 from termcolor import colored
@@ -56,14 +56,26 @@ def start_shell(args: Namespace) -> None:
     if ready:
         shell = api.get(args.master, "api/v1/shells/{}".format(resp["id"])).json()["shell"]
         check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-        _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=args.show_ssh_command)
+        _open_shell(
+            args.master,
+            shell,
+            args.ssh_opts,
+            retain_keys_and_print=args.show_ssh_command,
+            print_only=False,
+        )
 
 
 @authentication_required
 def open_shell(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-    _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=args.show_ssh_command)
+    _open_shell(
+        args.master,
+        shell,
+        args.ssh_opts,
+        retain_keys_and_print=args.show_ssh_command,
+        print_only=False,
+    )
 
 
 @authentication_required
@@ -73,36 +85,47 @@ def show_ssh_command(args: Namespace) -> None:
     _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
 
 
+def _prepare_key(retention_dir: Union[Path, None]) -> IO:
+    if retention_dir:
+        retention_dir = retention_dir
+
+        key_path = retention_dir / "key"
+        keyfile = key_path.open("w")
+        key_path.chmod(0o600)
+
+        return keyfile
+    else:
+        return tempfile.NamedTemporaryFile("w")
+
+
+def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, None]:
+    cert_bundle_path = request.get_master_cert_bundle()
+
+    if retention_dir and isinstance(cert_bundle_path, str):
+        retained_cert_bundle_path = retention_dir / "cert_bundle"
+        shutil.copy2(str(cert_bundle_path), retained_cert_bundle_path)
+        cert_bundle_path = str(retained_cert_bundle_path)
+
+    return cert_bundle_path
+
+
 def _open_shell(
     master: str,
     shell: Dict[str, Any],
     additional_opts: List[str],
-    retain_keys_and_print: bool = False,
-    print_only: bool = False,
+    retain_keys_and_print: bool,
+    print_only: bool,
 ) -> None:
-    cert_bundle_path = request.get_master_cert_bundle()
-
+    cache_dir = None
     if retain_keys_and_print:
         cache_dir = Path(appdirs.user_cache_dir("determined")) / "shell" / shell["id"]
         if not cache_dir.exists():
             cache_dir.mkdir(parents=True)
 
-        key_path = cache_dir / "key"
-        keyfile = (cache_dir / "key").open("w")
-        key_path.chmod(0o600)
-
-        if isinstance(cert_bundle_path, str):
-            retained_cert_bundle_path = cache_dir / "cert_bundle"
-            shutil.copyfile(str(cert_bundle_path), retained_cert_bundle_path)
-            retained_cert_bundle_path.chmod(0o600)
-            cert_bundle_path = retained_cert_bundle_path
-    else:
-        keyfile = tempfile.NamedTemporaryFile("w")
-        key_path = keyfile.name
-
-    with keyfile:
+    with _prepare_key(cache_dir) as keyfile:
         keyfile.write(shell["privateKey"])
         keyfile.flush()
+
         check_len(shell["addresses"], 1, "Cannot find address for shell")
         _, port = shell["addresses"][0]["host_ip"], shell["addresses"][0]["host_port"]
 
@@ -110,8 +133,11 @@ def _open_shell(
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
         python = sys.executable
         proxy_cmd = "{} -m determined.cli.tunnel {} %h".format(python, master)
+
+        cert_bundle_path = _prepare_cert_bundle(cache_dir)
         if cert_bundle_path is not None:
             proxy_cmd += ' --cert-file "{}"'.format(cert_bundle_path)
+
         if request.get_master_cert_name():
             proxy_cmd += ' --cert-name "{}"'.format(request.get_master_cert_name())
 
@@ -127,7 +153,7 @@ def _open_shell(
             "-o",
             "IdentitiesOnly=yes",
             "-i",
-            str(key_path),
+            str(keyfile.name),
             "-p",
             str(port),
             "{}@{}".format(username, shell["id"]),
