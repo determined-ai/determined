@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -186,10 +187,10 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID             int              `db:"id"`
-	State          State            `db:"state"`
-	Config         ExperimentConfig `db:"config"`
-	OriginalConfig string           `db:"original_config"`
+	ID             int                      `db:"id"`
+	State          State                    `db:"state"`
+	Config         expconf.ExperimentConfig `db:"config"`
+	OriginalConfig string                   `db:"original_config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -205,16 +206,16 @@ type Experiment struct {
 
 // ExperimentDescriptor is a minimal description of an experiment.
 type ExperimentDescriptor struct {
-	ID       int              `json:"id"`
-	Archived bool             `json:"archived"`
-	Config   ExperimentConfig `json:"config"`
-	Labels   []string         `json:"labels"`
+	ID       int                      `json:"id"`
+	Archived bool                     `json:"archived"`
+	Config   expconf.ExperimentConfig `json:"config"`
+	Labels   []string                 `json:"labels"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note
 // that the experiment ID will not be set.
 func NewExperiment(
-	config ExperimentConfig,
+	config expconf.ExperimentConfig,
 	originalConfig string,
 	modelDefinitionBytes []byte,
 	parentID *int,
@@ -298,8 +299,11 @@ func NewTrial(
 // Step represents a row from the `steps` table.
 type Step struct {
 	TrialID      int        `db:"trial_id"`
+	TrialRunID   int        `db:"trial_run_id"`
 	ID           int        `db:"id"`
 	TotalBatches int        `db:"total_batches"`
+	TotalRecords int        `db:"total_records"`
+	TotalEpochs  float32    `db:"total_epochs" json:"-"`
 	State        State      `db:"state"`
 	StartTime    time.Time  `db:"start_time"`
 	EndTime      *time.Time `db:"end_time"`
@@ -338,7 +342,10 @@ func (s *Step) IsNew() bool {
 type Validation struct {
 	ID           int        `db:"id" json:"id"`
 	TrialID      int        `db:"trial_id" json:"trial_id"`
-	TotalBatches int        `db:"total_batches" json:"total_batches"`
+	TrialRunID   int        `db:"trial_run_id" json:"-"`
+	TotalBatches int        `db:"total_batches" json:"-"`
+	TotalRecords int        `db:"total_records" json:"-"`
+	TotalEpochs  float32    `db:"total_epochs" json:"-"`
 	State        State      `db:"state" json:"state"`
 	StartTime    time.Time  `db:"start_time" json:"start_time"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
@@ -364,7 +371,10 @@ func (v *Validation) IsNew() bool {
 type Checkpoint struct {
 	ID                int        `db:"id" json:"id"`
 	TrialID           int        `db:"trial_id" json:"trial_id"`
+	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
+	TotalRecords      int        `db:"total_records" json:"-"`
+	TotalEpochs       float32    `db:"total_epochs" json:"-"`
 	State             State      `db:"state" json:"state"`
 	StartTime         time.Time  `db:"start_time" json:"start_time"`
 	EndTime           *time.Time `db:"end_time" json:"end_time"`

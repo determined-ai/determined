@@ -797,6 +797,7 @@ schemas = {
         "image": {
             "type": [
                 "object",
+                "string",
                 "null"
             ],
             "default": {},

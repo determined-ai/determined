@@ -1,9 +1,9 @@
 import abc
 import logging
-from typing import Any, Callable, Dict, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import determined as det
-from determined import horovod
+from determined import constants, horovod, ipc
 
 
 class _TrainContext(metaclass=abc.ABCMeta):
@@ -12,10 +12,16 @@ class _TrainContext(metaclass=abc.ABCMeta):
     These methods should be made available to both Native and Trial APIs.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        self.env = env  # type: det.EnvContext
-        self.hvd_config = hvd_config  # type: horovod.HorovodContext
-        self.distributed = DistributedContext(env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        self.env = env
+        self.hvd_config = hvd_config
+        self.rendezvous_info = rendezvous_info
+        self.distributed = DistributedContext(env, hvd_config, rendezvous_info)
         self._stop_requested = False
 
     @classmethod
@@ -58,7 +64,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
             config=config,
             limit_gpus=1,
         )
-        return cls(env_context, hvd_config)
+        return cls(env_context, hvd_config, rendezvous_info)
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """
@@ -152,8 +158,13 @@ class TrialContext(_TrainContext):
     The context passed to the User's ``Trial.__init__()`` will inherit from this class.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        super().__init__(env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        super().__init__(env, hvd_config, rendezvous_info)
 
 
 class NativeContext(_TrainContext):
@@ -163,8 +174,13 @@ class NativeContext(_TrainContext):
     The context returned by the ``init()`` function will inherit from this class.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        super().__init__(env, hvd_config)
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
+        super().__init__(env, hvd_config, rendezvous_info)
         self._train_fn = None  # type: Optional[Callable[[], None]]
 
     def _set_train_fn(self, train_fn: Callable[[], None]) -> None:
@@ -178,9 +194,49 @@ class DistributedContext:
     effective distributed training.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
         self._env = env
         self._hvd_config = hvd_config
+        self._rendezvous_info = rendezvous_info
+
+        if self._hvd_config.use:
+            self._is_chief = horovod.hvd.rank() == 0
+        else:
+            self._is_chief = True
+
+        if self._hvd_config.use:
+            # Initialize zmq comms.
+            srv_pub_port = (
+                constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._env.det_trial_unique_port_offset
+            )
+            srv_pull_port = (
+                constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._env.det_trial_unique_port_offset
+            )
+
+            if self._is_chief:
+                logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+                self._chief_zmq = ipc.ZMQBroadcastServer(
+                    num_connections=self._env.experiment_config.slots_per_trial() - 1,
+                    pub_port=srv_pub_port,
+                    pull_port=srv_pull_port,
+                )
+
+            else:
+                chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+                logging.debug(
+                    f"Non-Chief {horovod.hvd.rank()} setting up comm to "
+                    f"{chief_ip_address} w/ ports "
+                    f"{srv_pub_port}/{srv_pull_port}."
+                )
+                self._worker_zmq = ipc.ZMQBroadcastClient(
+                    srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
+                    srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
+                )
 
     def get_rank(self) -> int:
         """
@@ -219,3 +275,40 @@ class DistributedContext:
             return 1
 
         return cast(int, self.get_size() // horovod.hvd.local_size())
+
+    def _zmq_gather(self, stuff: Any) -> Optional[List]:
+        """
+        Gather stuff to the chief.  The chief returns a list of all stuff, and workers return None.
+        """
+        if not self._hvd_config.use:
+            return [stuff]
+        logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
+        if self._is_chief:
+            worker_stuff, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            self._chief_zmq.broadcast(None)
+            out = [stuff, *worker_stuff]  # type: Optional[List]
+        else:
+            self._worker_zmq.send(stuff)
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self._worker_zmq.recv()
+            out = None
+        logging.debug(f"Worker {self.get_rank()} finished zmq gather.")
+        return out
+
+    def _zmq_allgather(self, stuff: Any) -> List:
+        """
+        Gather stuff to the chief and broadcast all of it back to the workers.
+        """
+        if not self._hvd_config.use:
+            return [stuff]
+        logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
+        if self._is_chief:
+            worker_stuff, _ = self._chief_zmq.gather_with_polling(lambda: None)
+            all_stuff = [stuff, *worker_stuff]
+            self._chief_zmq.broadcast(all_stuff)
+        else:
+            self._worker_zmq.send(stuff)
+            all_stuff = self._worker_zmq.recv()
+        logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
+        return all_stuff

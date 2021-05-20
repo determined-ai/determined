@@ -12,6 +12,45 @@
     propagation: rprivate
     read_only: false
 
+- name: environment defaults with k8sV1.Pod present
+  matches:
+    - http://determined.ai/schemas/expconf/v0/environment.json
+  case:
+    environment_variables:
+      - ASDF=asdf
+    # Any non-null pod_spec is fine
+    pod_spec: {}
+    ports:
+      asdf: 1
+    registry_auth:
+      username: samiam
+      password: eggsnham
+    add_capabilities:
+      - CAP_STRING
+    drop_capabilities:
+      - OTHER_CAP_STRING
+  defaulted:
+    environment_variables:
+      cpu:
+        - ASDF=asdf
+      gpu:
+        - ASDF=asdf
+    force_pull_image: false
+    image:
+      cpu: '*'
+      gpu: '*'
+    # go will generate some non-empty struct here, but python will not
+    pod_spec: '*'
+    ports:
+      asdf: 1
+    registry_auth:
+      username: samiam
+      password: eggsnham
+    add_capabilities:
+      - CAP_STRING
+    drop_capabilities:
+      - OTHER_CAP_STRING
+
 - name: single searcher defaults
   matches:
     - http://determined.ai/schemas/expconf/v0/searcher.json

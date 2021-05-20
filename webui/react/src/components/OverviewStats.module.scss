@@ -19,3 +19,10 @@
     & > small { font-size: var(--theme-sizes-font-medium); }
   }
 }
+.clickable {
+  cursor: pointer;
+
+  .info {
+    color: var(--theme-colors-action-normal);
+  }
+}

@@ -1,8 +1,11 @@
 from setuptools import find_packages, setup
 
+packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
+packages += [f"determined._swagger.{pkg}" for pkg in find_packages(where="determined/_swagger")]
+
 setup(
     name="determined",
-    version="0.15.5.dev0",
+    version="0.15.6.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -10,7 +13,7 @@ setup(
     long_description="See https://docs.determined.ai/ for more information.",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
-    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
+    packages=packages,
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
     include_package_data=True,
@@ -25,6 +28,7 @@ setup(
         "pyzmq>=18.1.0",
         "yogadl==0.1.4",
         # Common:
+        "backoff",
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
         "google-cloud-core<1.4.2",
@@ -55,7 +59,14 @@ setup(
         "docker-compose>=1.13.0",
         "tqdm",
         "appdirs",
-        "backoff",
+        # docker-compose has a requirement not properly propagated with semi-old pip installations;
+        # so we expose that requirement here.
+        "websocket-client<1",
+        # Swagger-codegen: python requirements
+        "certifi>=2017.4.17",
+        "python-dateutil>=2.1",
+        "six>=1.10",
+        "urllib3>=1.23",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],

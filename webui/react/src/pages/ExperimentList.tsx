@@ -1,24 +1,23 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import { SorterResult } from 'antd/es/table/interface';
+import { Button, Modal } from 'antd';
+import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import ArchiveSelectFilter from 'components/ArchiveSelectFilter';
+import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
-import MultiSelect from 'components/MultiSelect';
 import Page from 'components/Page';
-import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
-import StateSelectFilter from 'components/StateSelectFilter';
+import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  defaultRowClassName, ExperimentRenderer,
-  getFullPaginationConfig, MINIMUM_PAGE_SIZE,
+  archivedRenderer, defaultRowClassName, experimentNameRenderer, experimentProgressRenderer,
+  ExperimentRenderer, expermentDurationRenderer, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
+  relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
+import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import UserSelectFilter from 'components/UserSelectFilter';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
@@ -30,24 +29,20 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
-import { validateDetApiEnum } from 'services/utils';
+import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ALL_VALUE, ArchiveFilters, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
+import { capitalize } from 'utils/string';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
-
-import css from './ExperimentList.module.scss';
-import { columns as defaultColumns, idRenderer } from './ExperimentList.table';
-
-const { Option } = Select;
 
 enum Action {
   Activate = 'Activate',
@@ -59,7 +54,7 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
-const URL_ALL = '';
+const URL_ALL = 'all';
 
 const STORAGE_PATH = 'experiment-list';
 const STORAGE_FILTERS_KEY = 'filters';
@@ -67,9 +62,9 @@ const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const defaultFilters: ExperimentFilters = {
-  showArchived: 'unarchived',
-  states: [ ALL_VALUE ],
-  username: undefined,
+  archived: undefined,
+  states: undefined,
+  users: undefined,
 };
 
 const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
@@ -78,28 +73,23 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 };
 
 const ExperimentList: React.FC = () => {
-  const { auth } = useStore();
+  const { auth, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
     (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
       ...defaultFilters,
-      username: auth.user?.username,
+      users: [ auth.user?.username ],
     },
   );
-  const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
-  const validatedInitFilters = archiveOptions
-    .includes(initFilters.showArchived) ? initFilters :
-    { ...initFilters, showArchived: defaultFilters.showArchived };
-  storage.set(STORAGE_FILTERS_KEY, validatedInitFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
-  const [ filters, setFilters ] = useState<ExperimentFilters>(validatedInitFilters);
+  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
@@ -116,7 +106,7 @@ const ExperimentList: React.FC = () => {
     const url = parseUrl(window.location.href);
 
     // archived
-    searchParams.append('archived', filters.showArchived);
+    searchParams.append('archived', filters.archived ? filters.archived : URL_ALL);
 
     // labels
     if (filters.labels && filters.labels.length > 0) {
@@ -147,8 +137,12 @@ const ExperimentList: React.FC = () => {
       searchParams.append('state', URL_ALL);
     }
 
-    // username
-    searchParams.append('username', filters.username || URL_ALL);
+    // users
+    if (filters.users && filters.users.length > 0) {
+      filters.users.forEach(user => searchParams.append('user', user));
+    } else {
+      searchParams.append('user', URL_ALL);
+    }
 
     window.history.pushState(
       {},
@@ -167,16 +161,14 @@ const ExperimentList: React.FC = () => {
 
     // archived
     const archived = urlSearchParams.get('archived');
-    const archiveOptions = [ ALL_VALUE, 'unarchived', 'archived' ];
-    if (archived !== null &&
-      ((archiveOptions.includes(archived)))) {
-      filters.showArchived = archived as ArchiveFilters;
+    if (archived != null) {
+      filters.archived = archived === URL_ALL ? undefined : archived as ArchiveFilter;
     }
 
     // labels
-    if (urlSearchParams.get('label') != null) {
-      const labels = urlSearchParams.getAll('label');
-      filters.labels = (labels.includes(URL_ALL) ? [] : labels);
+    const label = urlSearchParams.getAll('label');
+    if (label!= null) {
+      filters.labels = (label.includes(URL_ALL) ? undefined : label);
     }
 
     // limit
@@ -213,15 +205,15 @@ const ExperimentList: React.FC = () => {
     }
 
     // states
-    if (urlSearchParams.get('state') != null) {
-      const states = urlSearchParams.getAll('state');
-      filters.states = (states.includes(URL_ALL) ? [ ALL_VALUE ] : states);
+    const state = urlSearchParams.getAll('state');
+    if (state != null) {
+      filters.states = (state.includes(URL_ALL) ? undefined : state);
     }
 
-    // username
-    const username = urlSearchParams.get('username');
-    if (username != null) {
-      filters.username = (username === URL_ALL ? '' : username);
+    // users
+    const user = urlSearchParams.getAll('user');
+    if (user != null) {
+      filters.users = (user.includes(URL_ALL) ? undefined : user);
     }
 
     setFilters(filters);
@@ -229,12 +221,6 @@ const ExperimentList: React.FC = () => {
     setPagination(pagination);
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
-
-  const hasFiltersApplied = useMemo(() => {
-    return filters.showArchived !== ALL_VALUE ||
-          !filters.states.includes(ALL_VALUE) ||
-          !!filters.username;
-  }, [ filters ]);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -284,23 +270,18 @@ const ExperimentList: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const states = filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-        return encodeExperimentState(state as RunState) as any;
-      });
+      const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
       const response = await getExperiments(
         {
-          archived: filters.showArchived === ALL_VALUE ? undefined :
-            filters.showArchived === 'unarchived' ? false :
-              true,
+          archived: filters.archived ? filters.archived !== 'unarchived' : undefined,
           description: search,
-          labels: filters.labels?.length === 0 ? undefined : filters.labels,
+          labels: filters.labels,
           limit: pagination.limit,
           offset: pagination.offset,
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, sorter.key),
-          states,
-          users: filters.username ? [ filters.username ] : undefined,
+          states: validateDetApiEnumList(Determinedexperimentv1State, states),
+          users: filters.users,
         },
         { signal: canceler.signal },
       );
@@ -336,41 +317,6 @@ const ExperimentList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
-  const columns = useMemo(() => {
-    const nameRenderer = (value: string, record: ExperimentItem) => (
-      <div className={css.nameColumn}>
-        {idRenderer(value, record)}
-        <TagList
-          tags={record.labels || []}
-          onChange={experimentTags.handleTagListChange(record.id)}
-        />
-      </div>
-    );
-
-    const actionRenderer: ExperimentRenderer = (_, record) => (
-      <TaskActionDropdown task={experimentToTask(record)} onComplete={handleActionComplete} />
-    );
-
-    const newColumns = [ ...defaultColumns ].map(column => {
-      column.sortOrder = null;
-      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === V1GetExperimentsRequestSortBy.DESCRIPTION) column.render = nameRenderer;
-      if (column.key === 'action') column.render = actionRenderer;
-      return column;
-    });
-
-    return newColumns;
-  }, [
-    handleActionComplete,
-    experimentTags,
-    sorter,
-  ]);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, []);
-
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setSelectedRowKeys([]);
@@ -378,27 +324,236 @@ const ExperimentList: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: 0 }));
   }, [ setFilters, storage ]);
 
-  const handleArchiveChange =
-  useCallback((value: ArchiveFilters): void => {
-    handleFilterChange({ ...filters, showArchived: value });
-  }, [ filters, handleFilterChange ]);
+  const handleArchiveFilterApply = useCallback((archived: string[]) => {
+    const archivedFilter = archived.length === 1 ? archived[0] as ArchiveFilter : undefined;
+    handleFilterChange({ ...filters, archived: archivedFilter });
+  }, [ handleFilterChange, filters ]);
 
-  const handleStateChange = useCallback((value: SelectValue): void => {
-    if (typeof value !== 'string') return;
-    handleFilterChange({ ...filters, states: [ value ] });
-  }, [ filters, handleFilterChange ]);
+  const handleArchiveFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, archived: undefined });
+  }, [ handleFilterChange, filters ]);
 
-  const handleUserChange = useCallback((value: SelectValue) => {
-    const username = value === ALL_VALUE ? undefined : value as string;
-    handleFilterChange({ ...filters, username });
-  }, [ filters, handleFilterChange ]);
+  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      values={filters.archived ? [ filters.archived ] : undefined}
+      onFilter={handleArchiveFilterApply}
+      onReset={handleArchiveFilterReset}
+    />
+  ), [ filters.archived, handleArchiveFilterApply, handleArchiveFilterReset ]);
 
-  const handleLabelsChange = useCallback((newValue: SelectValue) => {
-    handleFilterChange({
-      ...filters,
-      labels: (newValue as Array<string>).map(label => label.toString()),
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    setSearch(newSearch);
+    setPagination(prev => ({ ...prev, offset: 0 }));
+  }, []);
+
+  const handleNameSearchReset = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={search}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, search ]);
+
+  const handleLabelFilterApply = useCallback((labels: string[]) => {
+    handleFilterChange({ ...filters, labels: labels.length !== 0 ? labels : undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const handleLabelFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, labels: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const labelFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={filters.labels}
+      onFilter={handleLabelFilterApply}
+      onReset={handleLabelFilterReset}
+    />
+  ), [ filters.labels, handleLabelFilterApply, handleLabelFilterReset ]);
+
+  const handleStateFilterApply = useCallback((states: string[]) => {
+    handleFilterChange({ ...filters, states: states.length !== 0 ? states : undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const handleStateFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, states: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      values={filters.states}
+      onFilter={handleStateFilterApply}
+      onReset={handleStateFilterReset} />
+  ), [ filters.states, handleStateFilterApply, handleStateFilterReset ]);
+
+  const handleUserFilterApply = useCallback((users: string[]) => {
+    handleFilterChange({ ...filters, users: users.length !== 0 ? users : undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const handleUserFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, users: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={filters.users}
+      onFilter={handleUserFilterApply}
+      onReset={handleUserFilterReset} />
+  ), [ filters.users, handleUserFilterApply, handleUserFilterReset ]);
+
+  const columns = useMemo(() => {
+    const labelsRenderer = (value: string, record: ExperimentItem) => (
+      <TagList
+        compact
+        tags={record.labels}
+        onChange={experimentTags.handleTagListChange(record.id)}
+      />
+    );
+
+    const actionRenderer: ExperimentRenderer = (_, record) => (
+      <TaskActionDropdown task={experimentToTask(record)} onComplete={handleActionComplete} />
+    );
+
+    const tableColumns: ColumnsType<ExperimentItem> = [
+      {
+        dataIndex: 'id',
+        key: V1GetExperimentsRequestSortBy.ID,
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'ID',
+      },
+      {
+        dataIndex: 'name',
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
+        key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+        onHeaderCell: () => search ? { className: tableCss.headerFilterOn } : {},
+        render: experimentNameRenderer,
+        sorter: true,
+        title: 'Name',
+        width: 240,
+      },
+      {
+        dataIndex: 'labels',
+        filterDropdown: labelFilterDropdown,
+        filters: labels.map(label => ({ text: label, value: label })),
+        key: 'labels',
+        onHeaderCell: () => filters.labels ? { className: tableCss.headerFilterOn } : {},
+        render: labelsRenderer,
+        title: 'Labels',
+        width: 120,
+      },
+      {
+        key: V1GetExperimentsRequestSortBy.STARTTIME,
+        render: (_: number, record: ExperimentItem): React.ReactNode =>
+          relativeTimeRenderer(new Date(record.startTime)),
+        sorter: true,
+        title: 'Start Time',
+      },
+      {
+        key: 'duration',
+        render: expermentDurationRenderer,
+        title: 'Duration',
+      },
+      {
+        dataIndex: 'numTrials',
+        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        sorter: true,
+        title: 'Trials',
+      },
+      {
+        filterDropdown: stateFilterDropdown,
+        filters: Object.values(RunState)
+          .filter(value => value !== RunState.Unspecified)
+          .map((value) => ({
+            text: <Badge state={value} type={BadgeType.State} />,
+            value,
+          })),
+        key: V1GetExperimentsRequestSortBy.STATE,
+        onHeaderCell: () => filters.states ? { className: tableCss.headerFilterOn } : {},
+        render: stateRenderer,
+        sorter: true,
+        title: 'State',
+      },
+      {
+        dataIndex: 'resourcePool',
+        key: 'resourcePool',
+        sorter: true,
+        title: 'Resource Pool',
+      },
+      {
+        key: V1GetExperimentsRequestSortBy.PROGRESS,
+        render: experimentProgressRenderer,
+        sorter: true,
+        title: 'Progress',
+      },
+      {
+        dataIndex: 'archived',
+        filterDropdown: archiveFilterDropdown,
+        filters: [
+          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
+          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
+        ],
+        key: 'archived',
+        onHeaderCell: () => filters.archived ? { className: tableCss.headerFilterOn } : {},
+        render: archivedRenderer,
+        title: 'Archived',
+      },
+      {
+        filterDropdown: userFilterDropdown,
+        filters: users.map(user => ({ text: user.username, value: user.username })),
+        key: V1GetExperimentsRequestSortBy.USER,
+        onHeaderCell: () => filters.users ? { className: tableCss.headerFilterOn } : {},
+        render: userRenderer,
+        sorter: true,
+        title: 'User',
+      },
+      {
+        align: 'right',
+        className: 'fullCell',
+        fixed: 'right',
+        key: 'action',
+        render: actionRenderer,
+        title: '',
+        width: 40,
+      },
+    ];
+
+    return tableColumns.map(column => {
+      column.sortOrder = null;
+      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      return column;
     });
-  }, [ filters, handleFilterChange ]);
+  }, [
+    archiveFilterDropdown,
+    handleActionComplete,
+    experimentTags,
+    filters,
+    labelFilterDropdown,
+    labels,
+    nameFilterSearch,
+    search,
+    sorter,
+    stateFilterDropdown,
+    tableSearchIcon,
+    userFilterDropdown,
+    users,
+  ]);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -498,7 +653,7 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     fetchExperiments();
     setIsLoading(true);
-  }, [ fetchExperiments ]);
+  }, [ fetchExperiments, filters, pagination, search, sorter ]);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -506,67 +661,44 @@ const ExperimentList: React.FC = () => {
 
   return (
     <Page id="experiments" title="Experiments">
-      <div className={css.base}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            className={css.search}
-            placeholder="name"
-            prefix={<Icon name="search" size="small" />}
-            value={search}
-            onChange={handleSearchChange}
-          />
-          <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
-            <ArchiveSelectFilter value={filters.showArchived} onChange={handleArchiveChange} />
-            <MultiSelect label="Labels" value={filters.labels} onChange={handleLabelsChange}>
-              {labels.map((label) => <Option key={label} value={label}>{label}</Option>)}
-            </MultiSelect>
-            <StateSelectFilter
-              showCommandStates={false}
-              value={filters.states}
-              onChange={handleStateChange} />
-            <UserSelectFilter value={filters.username} onChange={handleUserChange} />
-          </ResponsiveFilters>
-        </div>
-        <TableBatch selectedRowCount={selectedRowKeys.length}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+      <TableBatch selectedRowCount={selectedRowKeys.length}>
+        <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
-          </Button>
-          <Button
-            disabled={!hasActivatable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
-          <Button
-            disabled={!hasPausable}
-            onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
-          <Button
-            disabled={!hasArchivable}
-            onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
-          <Button
-            disabled={!hasUnarchivable}
-            onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
-          <Button
-            disabled={!hasCancelable}
-            onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
-          <Button
-            danger
-            disabled={!hasKillable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
-        </TableBatch>
-        <ResponsiveTable<ExperimentItem>
-          columns={columns}
-          dataSource={experiments}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        />
-      </div>
+        </Button>
+        <Button
+          disabled={!hasActivatable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
+        <Button
+          disabled={!hasPausable}
+          onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
+        <Button
+          disabled={!hasArchivable}
+          onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
+        <Button
+          disabled={!hasUnarchivable}
+          onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
+        <Button
+          disabled={!hasCancelable}
+          onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
+        <Button
+          danger
+          disabled={!hasKillable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
+      </TableBatch>
+      <ResponsiveTable<ExperimentItem>
+        columns={columns}
+        dataSource={experiments}
+        loading={isLoading}
+        pagination={getFullPaginationConfig(pagination, total)}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="id"
+        rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+        showSorterTooltip={false}
+        size="small"
+        onChange={handleTableChange}
+      />
     </Page>
   );
 };

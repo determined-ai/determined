@@ -289,6 +289,28 @@ export default class StepImplementation {
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
   }
 
+  @Step('Scroll table to the <direction>')
+  public async scrollTable(direction: string) {
+    const tableSelector = '.ant-table-content';
+    const scrollAmount = 1000;
+    if (direction === 'down') {
+      await t.scrollDown(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'left') {
+      await t.scrollLeft(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'right') {
+      await t.scrollRight(t.$(tableSelector), scrollAmount);
+    } else if (direction === 'up') {
+      await t.scrollUp(t.$(tableSelector), scrollAmount);
+    }
+  }
+
+  @Step('Filter table header <label> with option <option>')
+  public async filterTable(label: string, option: string) {
+    await t.click(t.$('.ant-table-filter-trigger-container', t.near(label)));
+    await t.click(option, t.within(t.$('.ant-table-filter-dropdown')));
+    await t.click(t.button('Ok'), t.within(t.$('.ant-table-filter-dropdown')));
+  }
+
   /* Notebook and TensorBoard Steps */
 
   @Step('Launch notebook')
@@ -323,13 +345,13 @@ export default class StepImplementation {
 
   @Step('<action> experiment row <row>')
   public async modifyExperiment(action: string, row: string) {
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
   }
 
   @Step('Open TensorBoard from experiment row <row>')
   public async openExperimentInTensorBoard(row: string) {
-    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 12 }));
+    await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
   }
 

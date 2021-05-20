@@ -3,7 +3,6 @@ syntax = "proto3";
 package determined.notebook.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/notebookv1";
 
-import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 

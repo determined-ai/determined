@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.15.5.dev0
+    default: 0.15.6.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -1173,12 +1173,17 @@ jobs:
       - image: determinedai/cimg-base:stable
     steps:
       - checkout
+      - attach_workspace:
+          at: .
       - setup-python-venv:
           determined: true
           extras-requires: "torch==1.7.1"
           model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
+      - run:
+          name: Install Java
+          command: sudo apt install default-jdk
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
@@ -1188,6 +1193,7 @@ jobs:
       - run: make -C examples check
       - run: make -C tools check
       - run: make -C schemas check
+      - run: make -C bindings check
 
   test-unit-harness:
     docker:
@@ -1610,7 +1616,10 @@ workflows:
           requires:
             - build-proto
       - lint-docs
-      - lint-python
+      - lint-python:
+          requires:
+            - build-proto
+            - build-bindings
       - lint-go
       - lint-react:
           requires:

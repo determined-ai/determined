@@ -30,29 +30,6 @@ class Checkpoint(object):
 
     The :class:`~determined.experimental.TrialReference` class contains methods
     that return instances of this class.
-
-    Arguments:
-        uuid (string): UUID of the checkpoint.
-        experiment_config (dict): The configuration of the experiment that
-            created the checkpoint.
-        experiment_id (int): The ID of the experiment that created the checkpoint.
-        trial_id (int): The ID of the trial that created the checkpoint.
-        hparams (dict): Hyperparameter values for the trial that created
-            the checkpoint.
-        batch_number (int): Batch number during training when the checkpoint was taken.
-        start_time (string): Timestamp when the checkpoint began being saved to
-            persistent storage.
-        end_time (string): Timestamp when the checkpoint completed being saved to
-            persistent storage.
-        resources (dict): Dictionary of file paths to file sizes (in bytes) of all
-            files in the checkpoint.
-        validation (dict): Dictionary of validation metric names to their values.
-        framework (string, optional): The framework of the trial i.e., tensorflow, torch.
-        format (string, optional): The format of the checkpoint i.e., h5, saved_model, pickle.
-        determined_version (str, optional): The version of Determined the
-            checkpoint was taken with.
-        metadata (dict, optional): User defined metadata associated with the checkpoint.
-        master (string, optional): The address of the Determined master instance.
     """
 
     def __init__(

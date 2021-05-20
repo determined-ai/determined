@@ -210,6 +210,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	location := "on-prem"
 	imageID := ""
 	instanceType := ""
+	slotsPerAgent := -1
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
@@ -218,13 +219,14 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.AWS.Region
 			imageID = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
+			slotsPerAgent = pool.Provider.AWS.InstanceType.Slots()
 		}
 		if pool.Provider.GCP != nil {
 			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
-
+			slotsPerAgent = pool.Provider.GCP.InstanceType.GPUNum
 			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
 				instanceType = pool.Provider.GCP.InstanceType.MachineType
 			} else {
@@ -264,6 +266,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		DefaultCpuPool:               a.config.DefaultCPUResourcePool == poolName,
 		DefaultGpuPool:               a.config.DefaultGPUResourcePool == poolName,
 		Preemptible:                  preemptible,
+		SlotsPerAgent:                int32(slotsPerAgent),
 		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
 		SchedulerType:                schedulerType,
 		Location:                     location,

@@ -17,6 +17,11 @@ MAX_ENCODED_SIZE = (min(MAX_WEBSOCKET_MSG_SIZE, MAX_HTTP_REQUEST_SIZE) // 8) * 6
 # We subtract one megabyte to account for any message envelope size we may have.
 MAX_CONTEXT_SIZE = MAX_ENCODED_SIZE - (1 * 1024 * 1024)
 
+# The maximum size of a workload metrics object is capped at 100MB. Metrics
+# are specified by the model definition and persisted after each workload
+# training step is completed.
+MAX_METRICS_SIZE = 100 * (1 << 20)
+
 # The username and password for the default user.
 DEFAULT_DETERMINED_USER = "determined"
 DEFAULT_DETERMINED_PASSWORD = ""

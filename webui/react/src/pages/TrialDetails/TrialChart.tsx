@@ -119,7 +119,7 @@ const TrialChart: React.FC<Props> = ({
   );
 
   return (
-    <Section bodyBorder maxHeight options={options} title='Metrics'>
+    <Section bodyBorder options={options} title='Metrics'>
       <div className={css.base}>
         <UPlotChart data={chartData} options={chartOptions} />
       </div>

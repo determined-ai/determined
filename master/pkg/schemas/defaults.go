@@ -7,11 +7,13 @@ import (
 	"strings"
 )
 
-// RuntimeDefaultable means there are runtime values for filling in an object, like choosing a
-// random seed based on the wall clock.
-type RuntimeDefaultable interface {
-	// RuntimeDefaults must apply the runtime-defined default values.
-	RuntimeDefaults() interface{}
+// Defaultable means an object can have custom behvaiors for schemas.WithDefaults.  This is useful
+// for implementing "runtime default" behaviors, like experiment seed or description.  It is also
+// useful for working around types we do not own and which schemas.WithDefaults() would puke on.
+type Defaultable interface {
+	// Defaultable should return the same type.  It must not be defined as a method against a
+	// pointer of the type or it will not work.
+	WithDefaults() interface{}
 }
 
 // WithDefaults will recurse through structs, maps, and slices, setting default values for any
@@ -84,6 +86,12 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 		}
 	}
 
+	if obj.Kind() != reflect.Ptr {
+		if defaultable, ok := obj.Interface().(Defaultable); ok {
+			return reflect.ValueOf(defaultable.WithDefaults())
+		}
+	}
+
 	var out reflect.Value
 
 	switch obj.Kind() {
@@ -143,13 +151,6 @@ func withDefaults(obj reflect.Value, defaultBytes []byte, name string) reflect.V
 
 	default:
 		out = cpy(obj)
-	}
-
-	// Any non-pointer, non-interface type may be RuntimeDefaultable.
-	if out.Kind() != reflect.Ptr && out.IsValid() {
-		if defaultable, ok := out.Interface().(RuntimeDefaultable); ok {
-			out = reflect.ValueOf(defaultable.RuntimeDefaults())
-		}
 	}
 
 	// fmt.Printf("withDefaults on %v (%T) returning %T\n", name, obj.Interface(), out.Interface())

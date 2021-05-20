@@ -170,6 +170,34 @@ type ec2Tag struct {
 
 type ec2InstanceType string
 
+func (t ec2InstanceType) name() string {
+	return string(t)
+}
+
+func (t ec2InstanceType) Slots() int {
+	if s, ok := ec2InstanceSlots[t]; ok {
+		return s
+	}
+	return 0
+}
+
+func (t ec2InstanceType) Validate() []error {
+	if _, ok := ec2InstanceSlots[t]; ok {
+		return nil
+	}
+	strs := make([]string, 0, len(ec2InstanceSlots))
+	for t := range ec2InstanceSlots {
+		strs = append(strs, t.name())
+	}
+	return []error{
+		errors.Errorf("ec2 instance type must be valid type: %s", strings.Join(strs, ", ")),
+	}
+}
+
+// This map tracks how many slots are available in each instance type. It also
+// serves as the list of instance types that the provisioner may provision - if
+// the master.yaml is configured with an instance type not on this list, the
+// provisioner will consider it an error.
 var ec2InstanceSlots = map[ec2InstanceType]int{
 	"g4dn.xlarge":   1,
 	"g4dn.2xlarge":  1,
@@ -189,29 +217,82 @@ var ec2InstanceSlots = map[ec2InstanceType]int{
 	"t2.large":      0,
 	"t2.xlarge":     0,
 	"t2.2xlarge":    0,
+	"t3.nano":       0,
+	"t3.micro":      0,
+	"t3.small":      0,
+	"t3.medium":     0,
+	"t3.large":      0,
+	"t3.xlarge":     0,
+	"t3.2xlarge":    0,
+	"c4.large":      0,
+	"c4.xlarge":     0,
+	"c4.2xlarge":    0,
+	"c4.4xlarge":    0,
+	"c4.8xlarge":    0,
+	"c5.large":      0,
+	"c5.xlarge":     0,
+	"c5.2xlarge":    0,
+	"c5.4xlarge":    0,
+	"c5.9xlarge":    0,
+	"c5.12xlarge":   0,
+	"c5.18xlarge":   0,
+	"c5.24xlarge":   0,
+	"c5d.large":     0,
+	"c5d.xlarge":    0,
+	"c5d.2xlarge":   0,
+	"c5d.4xlarge":   0,
+	"c5d.9xlarge":   0,
+	"c5d.12xlarge":  0,
+	"c5d.18xlarge":  0,
+	"c5d.24xlarge":  0,
+	"c5n.large":     0,
+	"c5n.xlarge":    0,
+	"c5n.2xlarge":   0,
+	"c5n.4xlarge":   0,
+	"c5n.9xlarge":   0,
+	"c5n.18xlarge":  0,
+	"m4.large":      0,
+	"m4.xlarge":     0,
+	"m4.2xlarge":    0,
+	"m4.4xlarge":    0,
+	"m4.10xlarge":   0,
+	"m4.16xlarge":   0,
 	"m5.large":      0,
-}
-
-func (t ec2InstanceType) name() string {
-	return string(t)
-}
-
-func (t ec2InstanceType) slots() int {
-	if s, ok := ec2InstanceSlots[t]; ok {
-		return s
-	}
-	return 0
-}
-
-func (t ec2InstanceType) Validate() []error {
-	if _, ok := ec2InstanceSlots[t]; ok {
-		return nil
-	}
-	strs := make([]string, 0, len(ec2InstanceSlots))
-	for t := range ec2InstanceSlots {
-		strs = append(strs, t.name())
-	}
-	return []error{
-		errors.Errorf("ec2 instance type must be valid type: %s", strings.Join(strs, ", ")),
-	}
+	"m5.xlarge":     0,
+	"m5.2xlarge":    0,
+	"m5.4xlarge":    0,
+	"m5.8xlarge":    0,
+	"m5.12xlarge":   0,
+	"m5.16xlarge":   0,
+	"m5.24xlarge":   0,
+	"m5d.large":     0,
+	"m5d.xlarge":    0,
+	"m5d.2xlarge":   0,
+	"m5d.4xlarge":   0,
+	"m5d.8xlarge":   0,
+	"m5d.12xlarge":  0,
+	"m5d.16xlarge":  0,
+	"m5d.24xlarge":  0,
+	"m5dn.large":    0,
+	"m5dn.xlarge":   0,
+	"m5dn.2xlarge":  0,
+	"m5dn.4xlarge":  0,
+	"m5dn.8xlarge":  0,
+	"m5dn.12xlarge": 0,
+	"m5dn.16xlarge": 0,
+	"m5dn.24xlarge": 0,
+	"m5n.large":     0,
+	"m5n.xlarge":    0,
+	"m5n.2xlarge":   0,
+	"m5n.4xlarge":   0,
+	"m5n.8xlarge":   0,
+	"m5n.12xlarge":  0,
+	"m5n.16xlarge":  0,
+	"m5n.24xlarge":  0,
+	"m5zn.large":    0,
+	"m5zn.xlarge":   0,
+	"m5zn.2xlarge":  0,
+	"m5zn.3xlarge":  0,
+	"m5zn.6xlarge":  0,
+	"m5zn.12xlarge": 0,
 }

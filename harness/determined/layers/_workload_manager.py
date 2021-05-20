@@ -141,6 +141,7 @@ class _TrialWorkloadManager(WorkloadManager):
 
             in_response = cast(workload.Metrics, in_response)
             metrics = in_response["metrics"]
+
             metrics = cast(workload.Metrics, metrics)
 
             if in_response.get("invalid_hp", False):
@@ -156,6 +157,7 @@ class _TrialWorkloadManager(WorkloadManager):
                 return
 
             batch_metrics = metrics["batch_metrics"]
+
             # Sanity-check training metrics.
             det.util.validate_batch_metrics(batch_metrics)
             check_len(batch_metrics, wkld.num_batches)

@@ -1,7 +1,7 @@
 from determined.load._load_implementation import (
     RunpyGlobals,
     load_native_implementation,
-    load_trial_implementation,
+    trial_class_from_entrypoint,
 )
 from determined.load._load_trial_controller import (
     load_native_implementation_controller,
