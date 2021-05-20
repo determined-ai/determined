@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +15,7 @@ import {
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { useStore } from 'contexts/Store';
@@ -42,8 +43,6 @@ import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
-
-import css from './ExperimentList.module.scss';
 
 enum Action {
   Activate = 'Activate',
@@ -343,6 +342,26 @@ const ExperimentList: React.FC = () => {
     />
   ), [ filters.archived, handleArchiveFilterApply, handleArchiveFilterReset ]);
 
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    setSearch(newSearch);
+    setPagination(prev => ({ ...prev, offset: 0 }));
+  }, []);
+
+  const handleNameSearchReset = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={search}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, search ]);
+
   const handleLabelFilterApply = useCallback((labels: string[]) => {
     handleFilterChange({ ...filters, labels: labels.length !== 0 ? labels : undefined });
   }, [ handleFilterChange, filters ]);
@@ -420,7 +439,10 @@ const ExperimentList: React.FC = () => {
       },
       {
         dataIndex: 'name',
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+        onHeaderCell: () => search ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',
@@ -524,16 +546,14 @@ const ExperimentList: React.FC = () => {
     filters,
     labelFilterDropdown,
     labels,
+    nameFilterSearch,
+    search,
     sorter,
     stateFilterDropdown,
+    tableSearchIcon,
     userFilterDropdown,
     users,
   ]);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, []);
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
@@ -641,58 +661,44 @@ const ExperimentList: React.FC = () => {
 
   return (
     <Page id="experiments" title="Experiments">
-      <div className={css.base}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            aria-label="Search Filters"
-            autoFocus
-            className={css.search}
-            placeholder="name"
-            prefix={<Icon name="search" size="small" />}
-            value={search}
-            onChange={handleSearchChange}
-          />
-        </div>
-        <TableBatch selectedRowCount={selectedRowKeys.length}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+      <TableBatch selectedRowCount={selectedRowKeys.length}>
+        <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
-          </Button>
-          <Button
-            disabled={!hasActivatable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
-          <Button
-            disabled={!hasPausable}
-            onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
-          <Button
-            disabled={!hasArchivable}
-            onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
-          <Button
-            disabled={!hasUnarchivable}
-            onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
-          <Button
-            disabled={!hasCancelable}
-            onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
-          <Button
-            danger
-            disabled={!hasKillable}
-            type="primary"
-            onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
-        </TableBatch>
-        <ResponsiveTable<ExperimentItem>
-          columns={columns}
-          dataSource={experiments}
-          loading={isLoading}
-          pagination={getFullPaginationConfig(pagination, total)}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
-          showSorterTooltip={false}
-          size="small"
-          onChange={handleTableChange}
-        />
-      </div>
+        </Button>
+        <Button
+          disabled={!hasActivatable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
+        <Button
+          disabled={!hasPausable}
+          onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
+        <Button
+          disabled={!hasArchivable}
+          onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
+        <Button
+          disabled={!hasUnarchivable}
+          onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
+        <Button
+          disabled={!hasCancelable}
+          onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
+        <Button
+          danger
+          disabled={!hasKillable}
+          type="primary"
+          onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
+      </TableBatch>
+      <ResponsiveTable<ExperimentItem>
+        columns={columns}
+        dataSource={experiments}
+        loading={isLoading}
+        pagination={getFullPaginationConfig(pagination, total)}
+        rowClassName={defaultRowClassName({ clickable: false })}
+        rowKey="id"
+        rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+        showSorterTooltip={false}
+        size="small"
+        onChange={handleTableChange}
+      />
     </Page>
   );
 };
