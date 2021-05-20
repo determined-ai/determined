@@ -21,9 +21,9 @@ resource pool handles scheduling and instance provisioning
 independently.
 
 When you configure a cluster, you set which pool is the default for CPU
-tasks and which pool is the default for GPU tasks. CPU-only tasks such as
-Tensorboards will run on the default CPU pool unless you specify that they
-should run in a different pool when launching the task. Tasks which
+tasks and which pool is the default for GPU tasks. CPU-only tasks such
+as Tensorboards will run on the default CPU pool unless you specify that
+they should run in a different pool when launching the task. Tasks which
 require a slot, such as experiments or GPU-notebooks, will use the
 default GPU pool unless otherwise specified. For this reason we
 recommend that you always create a cluster with at least two pools, one
@@ -91,9 +91,9 @@ will need to manually decide to shift an experiment from one pool to
 another.
 
 We do not currently allow a cluster to have resource pools in multiple
-AWS/GCP regions or across multiple cloud providers. If the master
-is running in one AWS/GCP region, all resource pools must also be
-in that AWS/GCP region.
+AWS/GCP regions or across multiple cloud providers. If the master is
+running in one AWS/GCP region, all resource pools must also be in that
+AWS/GCP region.
 
 If you create a task that needs slots and specify a pool that will never
 have slots (i.e. a pool with CPU-only instances), that task can never
