@@ -122,6 +122,10 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`bert_glue_pytorch.tgz
          </examples/bert_glue_pytorch.tgz>`
 
+   -  -  Tensorflow
+      -  UCSD
+      -  :download:`amazon_reviews.gz </examples/amazon_reviews.gz>`
+
    -  -  PyTorch
       -  WikiText-2
       -  :download:`word_language_model.tgz

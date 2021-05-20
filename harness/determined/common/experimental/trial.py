@@ -1,5 +1,6 @@
 from typing import Optional
 
+from determined._swagger.client.api.trials_api import TrialsApi
 from determined.common import api, check
 from determined.common.experimental import checkpoint
 
@@ -8,17 +9,15 @@ class TrialReference:
     """
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
-
-    Arguments:
-        trial_id (int): The trial ID.
-        master (string, optional): The URL of the Determined master. If this
-            class is obtained via :class:`determined.experimental.Determined`, the
-            master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, trial_id: int, master: str):
+    def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):
         self.id = trial_id
         self._master = master
+        self._trials = api_ref
+
+    def kill(self) -> None:
+        self._trials.determined_kill_trial(id=self.id)
 
     def top_checkpoint(
         self,

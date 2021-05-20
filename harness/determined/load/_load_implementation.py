@@ -11,7 +11,7 @@ from determined import horovod
 from determined.common import check
 
 
-def load_trial_implementation(entrypoint_spec: str) -> Type[det.Trial]:
+def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
     """
     Load and initialize a Trial class from an entrypoint specification.
 
@@ -87,9 +87,15 @@ class RunpyGlobals:
 
     _instance = None  # type: Optional[RunpyGlobals]
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        rendezvous_info: det.RendezvousInfo,
+    ) -> None:
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
+        self.rendezvous_info = rendezvous_info  # type: det.RendezvousInfo
         self.context = None  # type: Optional[det.NativeContext]
         self.trial_cls = None  # type: Optional[Type[det.Trial]]
         self.controller_cls = None  # type: Optional[Type[det.TrialController]]
@@ -172,7 +178,9 @@ def overwrite_sys_args(new_args: List[str]) -> Iterator:
 
 
 def load_native_implementation(
-    env: det.EnvContext, hvd_config: horovod.HorovodContext
+    env: det.EnvContext,
+    hvd_config: horovod.HorovodContext,
+    rendezvous_info: det.RendezvousInfo,
 ) -> Tuple[Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController]]:
     # For now, we assume the entrypoint_cmd is a python invocation like
     # "python <command>"
@@ -184,7 +192,7 @@ def load_native_implementation(
     if command[0].endswith(".ipynb"):
         command[0] = convert_notebook_to_python_script(command[0])
 
-    with RunpyGlobals(env, hvd_config) as loader:
+    with RunpyGlobals(env, hvd_config, rendezvous_info) as loader:
         with overwrite_sys_args(command):
             try:
                 runpy.run_path(command[0], run_name="__main__")

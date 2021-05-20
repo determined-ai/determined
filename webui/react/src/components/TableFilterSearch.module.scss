@@ -1,0 +1,20 @@
+.base {
+  display: flex;
+  flex-direction: column;
+
+  .search {
+    padding: var(--theme-sizes-layout-small) 0;
+  }
+  .search :global(.ant-input-prefix) {
+    color: var(--theme-colors-monochrome-8);
+  }
+  .footer {
+    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    display: flex;
+    justify-content: flex-end;
+    padding: var(--theme-sizes-layout-medium);
+  }
+  .footer > *:not(:last-child) {
+    margin-right: var(--theme-sizes-layout-medium);
+  }
+}

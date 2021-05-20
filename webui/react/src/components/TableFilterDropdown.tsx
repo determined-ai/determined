@@ -1,6 +1,6 @@
 import { Button, Input } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
 import usePrevious from 'hooks/usePrevious';
@@ -31,6 +31,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   visible,
   width = 160,
 }: Props) => {
+  const inputRef = useRef<Input>(null);
   const [ search, setSearch ] = useState('');
   const [ selectedMap, setSelectedMap ] = useState<Record<string, boolean>>({});
   const prevVisible = usePrevious(visible, undefined);
@@ -107,6 +108,10 @@ const TableFilterDropdown: React.FC<Props> = ({
         acc[value] = true;
         return acc;
       }, {} as Record<string, boolean>));
+
+      setTimeout(() => {
+        if (inputRef.current) inputRef.current.focus({ cursor: 'all' });
+      }, 0);
     }
   }, [ prevVisible, values, visible ]);
 
@@ -119,6 +124,7 @@ const TableFilterDropdown: React.FC<Props> = ({
             bordered={false}
             placeholder="search filters"
             prefix={<Icon name="search" size="tiny" />}
+            ref={inputRef}
             value={search}
             onChange={handleSearchChange}
           />
