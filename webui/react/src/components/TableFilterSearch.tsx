@@ -1,6 +1,6 @@
 import { Button, Input } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Icon from './Icon';
 import css from './TableFilterSearch.module.scss';
@@ -17,7 +17,9 @@ const TableFilterSearch: React.FC<Props> = ({
   onReset,
   onSearch,
   value,
+  visible,
 }: Props) => {
+  const inputRef = useRef<Input>(null);
   const [ search, setSearch ] = useState(value);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +37,14 @@ const TableFilterSearch: React.FC<Props> = ({
     confirm();
   }, [ confirm, onSearch, search ]);
 
+  useEffect(() => {
+    if (!visible) return;
+
+    setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus({ cursor: 'all' });
+    }, 0);
+  }, [ visible ]);
+
   return (
     <div className={css.base}>
       <div className={css.search}>
@@ -43,6 +53,7 @@ const TableFilterSearch: React.FC<Props> = ({
           bordered={false}
           placeholder="search"
           prefix={<Icon name="search" size="tiny" />}
+          ref={inputRef}
           value={search}
           onChange={handleSearchChange}
         />
