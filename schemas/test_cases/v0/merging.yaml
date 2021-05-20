@@ -89,3 +89,77 @@
     minval: 10
     maxval: 100
     # count is an omitempty field
+
+- name: checkpoint storage merges only allow one union type
+  merge_as: http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
+  case:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: determined-cp
+    propagation: rprivate
+    save_experiment_best: 0
+    save_trial_best: 1
+  merge_src:
+    type: s3
+    bucket: determined-cp
+    save_experiment_best: 10
+    save_trial_best: 10
+    save_trial_latest: 10
+  merged:
+    type: shared_fs
+    host_path: /tmp
+    storage_path: determined-cp
+    propagation: rprivate
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 10
+
+- name: searcher merges only allow one union type
+  merge_as: http://determined.ai/schemas/expconf/v0/searcher.json
+  case:
+    name: single
+    max_length:
+      batches: 1000
+    metric: loss
+    smaller_is_better: true
+  merge_src:
+    name: random
+    max_concurrent_trials: 2
+    max_length:
+      batches: 10000
+    max_trials: 10000
+    metric: loss
+    smaller_is_better: false
+    source_checkpoint_uuid: "asdf"
+  merged:
+    name: single
+    max_length:
+      batches: 1000
+    metric: loss
+    smaller_is_better: true
+    source_trial_id: null
+    source_checkpoint_uuid: "asdf"
+
+- name: data layer merges only allow one union type
+  merge_as: http://determined.ai/schemas/expconf/v0/data-layer.json
+  case:
+    type: s3
+    bucket: asdf
+    bucket_directory_path: /asdf/asdf
+    local_cache_container_path: /asdf/asdf
+    local_cache_host_path: /asdf/asdf
+    endpoint_url: s3://s3.com
+    access_key: s3
+    secret_key: s3s3s3
+  merge_src:
+    type: gcs
+    bucket: zxcv
+  merged:
+    type: s3
+    bucket: asdf
+    bucket_directory_path: /asdf/asdf
+    local_cache_container_path: /asdf/asdf
+    local_cache_host_path: /asdf/asdf
+    endpoint_url: s3://s3.com
+    access_key: s3
+    secret_key: s3s3s3
