@@ -1,5 +1,10 @@
+import time
 from typing import List, Optional
 
+from determined._swagger.client.api.experiments_api import ExperimentsApi
+from determined._swagger.client.models.determinedexperimentv1_state import (
+    Determinedexperimentv1State,
+)
 from determined.common import api
 from determined.common.experimental import checkpoint
 
@@ -8,17 +13,77 @@ class ExperimentReference:
     """
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
-
-    Arguments:
-        experiment_id (int): The ID of this experiment.
-        master (string, optional): The URL of the Determined master. If this
-            class is obtained via :class:`~determined.experimental.Determined`, the
-            master URL is automatically passed into this constructor.
     """
 
-    def __init__(self, experiment_id: int, master: str):
+    def __init__(
+        self,
+        experiment_id: int,
+        master: str,
+        api_ref: ExperimentsApi,
+    ):
         self.id = experiment_id
         self._master = master
+        self._experiments = api_ref
+
+    def activate(self) -> None:
+        self._experiments.determined_activate_experiment(id=self.id)
+
+    def archive(self) -> None:
+        self._experiments.determined_archive_experiment(id=self.id)
+
+    def cancel(self) -> None:
+        self._experiments.determined_cancel_experiment(id=self.id)
+
+    def delete(self) -> None:
+        self._experiments.determined_delete_experiment(id=self.id)
+
+    def get_config(self) -> object:
+        exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
+        return exp_resp.config
+
+    def kill(self) -> None:
+        self._experiments.determined_kill_experiment(id=self.id)
+
+    def pause(self) -> None:
+        self._experiments.determined_pause_experiment(id=self.id)
+
+    def unarchive(self) -> None:
+        self._experiments.determined_unarchive_experiment(id=self.id)
+
+    def wait(self, interval: int = 5) -> None:
+        """
+        Wait for experiment to reach complete or a terminal state.
+
+        Arguments:
+            interval (int, optional): An interval time in seconds before checking
+            next experiement state.
+        """
+        elapsed_time = 0
+        while True:
+            exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
+            if exp_resp.experiment.state in (
+                Determinedexperimentv1State.COMPLETED,
+                Determinedexperimentv1State.CANCELED,
+                Determinedexperimentv1State.DELETED,
+                Determinedexperimentv1State.ERROR,
+            ):
+                break
+            elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
+                raise ValueError(
+                    "Experiment {} is in paused state. Make sure the experiment is active.".format(
+                        self.id
+                    )
+                )
+            else:
+                # ACTIVE, STOPPING_COMPLETED, etc.
+                time.sleep(interval)
+                elapsed_time += interval
+                if elapsed_time % 60 == 0:
+                    print(
+                        "Waiting for Experiment {} to complete. Elapsed {} minutes".format(
+                            self.id, elapsed_time / 60
+                        )
+                    )
 
     def top_checkpoint(
         self,
