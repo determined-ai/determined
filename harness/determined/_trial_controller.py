@@ -1,7 +1,7 @@
 import abc
 import logging
 import pathlib
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import determined as det
 from determined import horovod, profiler, workload
