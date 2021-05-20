@@ -44,7 +44,7 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 // non-root container features will not work properly.
 func injectUserArchive(aug *model.AgentUserGroup) container.RunArchive {
 	passwdBytes := []byte(
-		fmt.Sprintf("%v:x:%v:%v::%v:/bin/sh\n", aug.User, aug.UID, aug.GID, ContainerWorkDir),
+		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, ContainerWorkDir),
 	)
 	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))

@@ -1,4 +1,6 @@
 import getpass
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -6,6 +8,7 @@ from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
 from typing import Any, Dict, List
 
+import appdirs
 from termcolor import colored
 
 from determined.cli import command
@@ -54,20 +57,54 @@ def start_shell(args: Namespace) -> None:
     if ready:
         shell = api.get(args.master, "api/v1/shells/{}".format(resp["id"])).json()["shell"]
         check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-        _open_shell(args.master, shell, args.ssh_opts)
+        _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=args.show_ssh_command)
 
 
 @authentication_required
 def open_shell(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
-    _open_shell(args.master, shell, args.ssh_opts)
+    _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=args.show_ssh_command)
 
 
-def _open_shell(master: str, shell: Dict[str, Any], additional_opts: List[str]) -> None:
-    with tempfile.NamedTemporaryFile("w") as fp:
-        fp.write(shell["privateKey"])
-        fp.flush()
+@authentication_required
+def show_ssh_command(args: Namespace) -> None:
+    shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
+    check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
+    _open_shell(args.master, shell, args.ssh_opts, retain_keys_and_print=True, print_only=True)
+
+
+def _open_shell(
+    master: str,
+    shell: Dict[str, Any],
+    additional_opts: List[str],
+    retain_keys_and_print: bool = False,
+    print_only: bool = False,
+) -> None:
+    cert_bundle_path = request.get_master_cert_bundle()
+
+    if retain_keys_and_print:
+        cache_dir = Path(appdirs.user_cache_dir("determined")) / "shell" / shell["id"]
+        if not cache_dir.exists():
+            cache_dir.mkdir(parents=True)
+
+        key_path = cache_dir / "key"
+        keyfile = (cache_dir / "key").open("w")
+        key_path.chmod(0o600)
+
+        if isinstance(cert_bundle_path, str):
+            retained_cert_bundle_path = cache_dir / "cert_bundle"
+            shutil.copyfile(str(cert_bundle_path), retained_cert_bundle_path)
+            retained_cert_bundle_path.chmod(0o600)
+            cert_bundle_path = retained_cert_bundle_path
+    else:
+        keyfile = tempfile.NamedTemporaryFile("w")
+        key_path = keyfile.name
+
+    with keyfile:
+        keyfile.write(shell["privateKey"])
+        keyfile.flush()
+        os.chmod("/tmp/key", 0o600)
         check_len(shell["addresses"], 1, "Cannot find address for shell")
         _, port = shell["addresses"][0]["host_ip"], shell["addresses"][0]["host_port"]
 
@@ -75,8 +112,8 @@ def _open_shell(master: str, shell: Dict[str, Any], additional_opts: List[str]) 
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
         python = sys.executable
         proxy_cmd = "{} -m determined.cli.tunnel {} %h".format(python, master)
-        if request.get_master_cert_bundle() is not None:
-            proxy_cmd += ' --cert-file "{}"'.format(request.get_master_cert_bundle())
+        if cert_bundle_path is not None:
+            proxy_cmd += ' --cert-file "{}"'.format(cert_bundle_path)
         if request.get_master_cert_name():
             proxy_cmd += ' --cert-name "{}"'.format(request.get_master_cert_name())
 
@@ -92,12 +129,17 @@ def _open_shell(master: str, shell: Dict[str, Any], additional_opts: List[str]) 
             "-o",
             "IdentitiesOnly=yes",
             "-i",
-            str(fp.name),
+            str(key_path),
             "-p",
             str(port),
             "{}@{}".format(username, shell["id"]),
             *additional_opts,
         ]
+
+        if retain_keys_and_print:
+            print(colored(subprocess.list2cmdline(cmd), "yellow"))
+            if print_only:
+                return
 
         subprocess.run(cmd)
 
@@ -132,8 +174,16 @@ args_description = [
                 help="name of template to apply to the shell configuration"),
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID"),
+            Arg("--show-ssh-command", action="store_true",
+                help="show ssh command (e.g. for use in IDE) when starting the shell"),
         ]),
         Cmd("open", open_shell, "open an existing shell", [
+            Arg("shell_id", help="shell ID"),
+            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
+            Arg("--show-ssh-command", action="store_true",
+                help="show ssh command (e.g. for use in IDE) when starting the shell"),
+        ]),
+        Cmd("show_ssh_command", show_ssh_command, "only print the ssh command", [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
