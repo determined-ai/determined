@@ -1,0 +1,17 @@
+description: cifar10_pytorch_const
+hyperparameters:
+  learning_rate: 1e-4
+  learning_rate_decay: 1e-6
+  layer1_dropout: 0.25
+  layer2_dropout: 0.25
+  layer3_dropout: 0.5
+  global_batch_size: 1
+records_per_epoch: 50000
+searcher:
+  name: single
+  metric: validation_error
+  max_length:
+    epochs: 1
+entrypoint: model_def:CIFARTrial
+min_validation_period:
+  epochs: 1
