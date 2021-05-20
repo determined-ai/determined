@@ -511,28 +511,8 @@ export interface TrialLog {
   time: string;
 }
 
-export interface TemplateConfig {
-  data: { url:string }
-  description: string;
-  entrypoint: string;
-  hyperparameters: {
-    dropout1: ExperimentHyperParam;
-    dropout2: ExperimentHyperParam;
-    global_batch_size: number;
-    learning_rate: ExperimentHyperParam;
-    n_filters1: ExperimentHyperParam;
-    n_filters2: ExperimentHyperParam;
-  }
-  searcher: {
-    max_length: { batches: number }
-    max_trials: number;
-    metric: string;
-    name: ExperimentSearcherName;
-    smallerIsBetter: boolean;
-  };
-}
 export interface Template {
-  config?: TemplateConfig;
+  config?: RawJson;
   name: string;
 }
 

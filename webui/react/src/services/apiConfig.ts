@@ -424,7 +424,7 @@ export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardRespo
 
 export const getTemplates: DetApi<GetTemplatesParams,Api.V1GetTemplatesResponse, Template[]> = {
   name: 'getTemplates',
-  postProcess: (response) => (response.templates|| [])
+  postProcess: (response) => (response.templates || [])
     .map(template => decoder.mapV1Template(template)),
   request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(
     params.sortBy,
