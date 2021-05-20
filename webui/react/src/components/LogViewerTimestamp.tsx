@@ -130,8 +130,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
         const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
         return { ...log, formattedTime, hide };
       })
-      .filter((element) => {
-        return !element.hide;
+      .filter((logEntry) => {
+        return !logEntry.hide;
       })
       .sort((logA, logB) => {
         const logATime = logA.time || '';
