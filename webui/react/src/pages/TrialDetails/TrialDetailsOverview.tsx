@@ -1,4 +1,3 @@
-import { Col, Row } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import useStorage from 'hooks/useStorage';
@@ -40,19 +39,13 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
   return (
     <>
-      <Row gutter={[ 16, 16 ]}>
-        <Col lg={10} span={24} xl={8} xxl={6}>
-          <TrialInfoBox experiment={experiment} trial={trial} />
-        </Col>
-        <Col lg={14} span={24} xl={16} xxl={18}>
-          <TrialChart
-            defaultMetricNames={defaultMetrics}
-            metricNames={metricNames}
-            storageKey={storageChartMetricsKey}
-            validationMetric={experiment?.config?.searcher.metric}
-            workloads={trial?.workloads} />
-        </Col>
-      </Row>
+      <TrialInfoBox experiment={experiment} trial={trial} />
+      <TrialChart
+        defaultMetricNames={defaultMetrics}
+        metricNames={metricNames}
+        storageKey={storageChartMetricsKey}
+        validationMetric={experiment?.config?.searcher.metric}
+        workloads={trial?.workloads} />
     </>
   );
 };

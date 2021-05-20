@@ -1,20 +1,17 @@
-import { Button } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
-import HumanReadableFloat from 'components/HumanReadableFloat';
-import InfoBox from 'components/InfoBox';
+import Grid, { GridMode } from 'components/Grid';
+import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import { ShirtSize } from 'themes';
 import {
   CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
-import { formatDatetime } from 'utils/date';
-import { capitalize, humanReadableBytes } from 'utils/string';
-import { shortEnglishHumannizer } from 'utils/time';
+import { humanReadableBytes } from 'utils/string';
+import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { trialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
-
-import css from './TrialInfoBox.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
@@ -23,12 +20,6 @@ interface Props {
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
-
-  const { metric } = experiment.config.searcher || {};
-
-  const bestValidation = useMemo(() => {
-    return (trial.bestValidationMetric?.metrics || {})[metric];
-  }, [ metric, trial.bestValidationMetric?.metrics ]);
 
   const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
     const cp = trial.bestAvailableCheckpoint;
@@ -56,61 +47,39 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
 
-  const workloadStatus: string | undefined =
-    Object.entries(trial.workloads.last()).find(e => !!e[1])?.first();
+  return (
+    <Section>
+      <Grid gap={ShirtSize.medium} minItemWidth={18} mode={GridMode.AutoFill}>
+        <OverviewStats title="Start Time">
+          {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+        </OverviewStats>
+        <OverviewStats title="Training Time">
+          {shortEnglishHumannizer(durations.train)}
+        </OverviewStats>
+        <OverviewStats title="Validation Time">
+          {shortEnglishHumannizer(durations.validation)}
+        </OverviewStats>
+        <OverviewStats title="Checkpointing Time">
+          {shortEnglishHumannizer(durations.checkpoint)}
+        </OverviewStats>
+        <OverviewStats title="Total Checkpoint Size">
+          {totalCheckpointsSize}
+        </OverviewStats>
+        {bestCheckpoint && (
+          <OverviewStats title="Best Checkpoint" onClick={handleShowBestCheckpoint}>
+            Batch {bestCheckpoint.batch}
+          </OverviewStats>
+        )}
+      </Grid>
 
-  const infoRows = [
-    {
-      content: formatDatetime(trial.startTime),
-      label: 'Start Time',
-    },
-    {
-      content: trial.endTime && formatDatetime(trial.endTime),
-      label: 'End Time',
-    },
-    {
-      content: <div className={css.duration}>
-        <div>Training: {shortEnglishHumannizer(durations.train)}</div>
-        <div>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</div>
-        <div>Validating: {shortEnglishHumannizer(durations.validation)}</div>
-      </div>,
-      label: 'Durations',
-    },
-    {
-      content: (trial.state === 'ACTIVE' && workloadStatus !== undefined) &&
-      `${capitalize(workloadStatus)} on batch ${trial.totalBatchesProcessed}`,
-      label: 'Current Workload',
-    },
-    {
-      content: bestValidation &&
-        <>
-          <HumanReadableFloat num={bestValidation} /> {`(${experiment.config.searcher.metric})`}
-        </>,
-      label: 'Best Validation',
-    },
-    {
-      content: bestCheckpoint && (<>
-        <Button onClick={handleShowBestCheckpoint}>
-          Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
-        </Button>
+      {bestCheckpoint && (
         <CheckpointModal
           checkpoint={bestCheckpoint}
           config={experiment.config}
           show={showBestCheckpoint}
           title={`Best Checkpoint for Trial ${trial.id}`}
           onHide={handleHideBestCheckpoint} />
-      </>),
-      label: 'Best Checkpoint',
-    },
-    {
-      content: totalCheckpointsSize,
-      label: 'Total Checkpoint Size',
-    },
-  ];
-
-  return (
-    <Section bodyBorder maxHeight title="Summary">
-      <InfoBox rows={infoRows} />
+      )}
     </Section>
   );
 };
