@@ -58,9 +58,26 @@ class CIFARTrial(PyTorchTrial):
         self.context = context
         self.download_directory = tempfile.mkdtemp()
 
-        # TODO: Load your trained model
+	# TODO: Load your trained model. Below are example approaches.
+
+	### Load a checkpoint from the Determined model registry 
+	# model = Determined().get_model("mymodel")
+	# ckpt_path = self.model.get_version().download()
+	# ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
+	# model.load_state_dict(ckpt['models_state_dict'][0])
+
+	### Load a checkpoint from a previous experiment
+	# from determined.experimental import Determined
+	# checkpoint = Determined().get_experiment(id).top_checkpoint()
+	# model = checkpoint.load()
+
+	### Specify a UUID with `source_trial_id` in the experiment config
+
+	### Load a model that was not trained by Determined
         model, input_size = initialize_resnet18(NUM_CLASSES, True, use_pretrained=True)
         self.model = self.context.wrap_model(model)
+
+        # IGNORE: Dummy optimizer that needs to be specified but is unused
 
         # IGNORE: Dummy optimizer that needs to be specified but is unused
         self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(
