@@ -132,7 +132,15 @@
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
     enabled: false
-    begin_on_batch: null
+    begin_on_batch: 0
+    end_after_batch: null
+
+- name: profiling is valid when only enabled is set
+  matches:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
+  case:
+    enabled: true
+    begin_on_batch: 0
     end_after_batch: null
 
 - name: profiling is valid when full
