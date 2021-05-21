@@ -185,7 +185,7 @@ example of a Dockerfile that installs custom ``conda``-, ``pip``- and
       apt-get install -y unzip python-opencv graphviz
    COPY environment.yml /tmp/environment.yml
    COPY pip_requirements.txt /tmp/pip_requirements.txt
-   RUN conda env update --name base --file /tmp/environment.yaml
+   RUN conda env update --name base --file /tmp/environment.yml
    RUN conda clean --all --force-pkgs-dirs --yes
    RUN eval "$(conda shell.bash hook)" && \
       conda activate base && \
