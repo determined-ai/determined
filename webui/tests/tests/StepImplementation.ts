@@ -316,6 +316,8 @@ export default class StepImplementation {
   @Step('Launch notebook')
   public async launchNotebook() {
     await t.click(t.button('Launch JupyterLab'));
+    await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
+    await t.click(t.$('.ant-select-item-option-content'));
     await t.click(t.text('GPU'));
     await clickAndCloseTab(t.button('Launch'));
   }
@@ -323,6 +325,8 @@ export default class StepImplementation {
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
     await t.click(t.button('Launch JupyterLab'));
+    await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
+    await t.click(t.$('.ant-select-item-option-content'));
     await t.click(t.text('CPU'));
     await clickAndCloseTab(t.button('Launch'));
   }
