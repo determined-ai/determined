@@ -205,9 +205,10 @@ export const ioToExperimentConfig =
       containerStoragePath: io.data_layer.container_storage_path || undefined,
       type: io.data_layer.type,
     } : undefined,
-    description: io.description,
+    description: io.description || undefined,
     hyperparameters: ioToExperimentHyperparameters(io.hyperparameters),
     labels: io.labels || undefined,
+    name: io.name,
     profiling: { enabled: !!io.profiling?.enabled },
     resources: {},
     searcher: {

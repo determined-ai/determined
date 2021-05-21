@@ -119,7 +119,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   const config = {
-    description: experimentTask.name,
+    name: experimentTask.name,
     resources: {},
     searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
   };
@@ -136,8 +136,8 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
         type: 'shared_fs',
       },
       dataLayer: { type: 'shared_fs' },
-      description: experimentTask.name,
       hyperparameters: {},
+      name: experimentTask.name,
       resources: {},
       searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
     },

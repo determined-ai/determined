@@ -158,7 +158,7 @@ const ExperimentDetails: React.FC = () => {
         onSettled={fetchExperimentDetails} />}
       stickyHeader
       subTitle={<Space align="center" size="small">
-        {experiment?.config.description}
+        {experiment?.config.name}
         <Badge state={experiment.state} type={BadgeType.State} />
         {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
