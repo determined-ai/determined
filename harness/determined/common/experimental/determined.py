@@ -66,12 +66,12 @@ class Determined:
         model_dir: str,
     ) -> experiment.ExperimentReference:
         """
-        Get the :class:`~determined.experimental.ExperimentReference` representing the
-        experiment created with the provided config and model direcotry.
+        Create an experiment with config parameters and model direcotry. The function
+        returns :class:`~determined.experimental.ExperimentReference` of the experiment.
 
         Arguments:
-            config(string, pathlib.Path, dictionary): experiment config filename (.yaml),
-                filepath, or a dictionary.
+            config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
+                or a dict.
             model_dir(string): directory containing model definition.
         """
         check.is_instance(
