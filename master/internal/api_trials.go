@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -557,13 +559,13 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var signal <-chan bool
-	if err := a.askAtDefaultSystem(trial, trialWatchPreemption{id: id}, &signal); err != nil {
+	var watch trialWatchPreemptionResp
+	if err := a.askAtDefaultSystem(trial, trialWatchPreemptionReq{id: id}, &watch); err != nil {
 		return err
 	}
 	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
 
-	preempt := <-signal
+	preempt := <-watch.signal
 	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
 	case err != nil:
 		return err
@@ -571,7 +573,7 @@ func (a *apiServer) TrialPreemptionSignal(
 		return nil
 	default:
 		select {
-		case preempt = <-signal:
+		case preempt = <-watch.signal:
 			return resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt})
 		case <-resp.Context().Done():
 			return nil
@@ -712,6 +714,37 @@ func (a *apiServer) ReportTrialCheckpointMetadata(
 		return nil, err
 	}
 	return &apiv1.ReportTrialCheckpointMetadataResponse{}, nil
+}
+
+func (a *apiServer) GetTrialRendezvousInfo(
+	ctx context.Context, req *apiv1.GetTrialRendezvousInfoRequest,
+) (*apiv1.GetTrialRendezvousInfoResponse, error) {
+	trial, err := a.trialActorFromID(int(req.TrialId))
+	if err != nil {
+		return nil, err
+	}
+
+	var watch trialWatchRendezvousInfoResp
+	if err := a.askAtDefaultSystem(trial, trialWatchRendezvousInfoReq{
+		containerID: cproto.ID(req.ContainerId),
+	}, &watch); err != nil {
+		return nil, err
+	}
+	defer a.m.system.TellAt(trial, trialUnwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
+
+	select {
+	case rsp := <-watch.addresses:
+		switch rsp := rsp.(type) {
+		case error:
+			return nil, rsp
+		case []string:
+			return &apiv1.GetTrialRendezvousInfoResponse{Addresses: rsp}, nil
+		default:
+			panic("unexpected response from trial")
+		}
+	case <-ctx.Done():
+		return nil, nil
+	}
 }
 
 func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
