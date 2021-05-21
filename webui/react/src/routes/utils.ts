@@ -115,7 +115,6 @@ export const routeAll = (path: string): void => {
   if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    // FIXME this doesn't seem to always do the job.
     history.push(stripUrl(path), { loginRedirect: clone(window.location) });
   }
 };

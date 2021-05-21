@@ -18,21 +18,18 @@ const locations: TreeNode[] = [
   },
   {
     label: 'experiment <id>',
-    onCustomInput: async (inp: string): Promise<Children> => {
-      let expExists = false;
-      const id = parseIds(inp)[0];
-      try {
-        await getExperimentDetails({ id });
-        expExists = true;
-      } catch {
-      }
+    onCustomInput: (inp: string): Children => {
+      const onAction = async () => {
+        const id = parseIds(inp)[0];
+        try {
+          await getExperimentDetails({ id });
+          visitAction(paths.experimentDetails(id))();
+        } catch {
+          alertAction(`Invalid experiment ID ${id}`);
+        }
+      };
 
-      const onAction = expExists ? visitAction(paths.experimentDetails(id)) :
-        alertAction(`Invalid experiment ID ${id}`);
-
-      // TODO we could generate this `<id>` arg label and the label for the
-      // parent together instead of separately.
-      const label = inp === '' ? '<id>' : expExists ? inp : `${inp} (doesn't exist)`;
+      const label = inp === '' ? '<id>' : inp;
       return [
         { label, onAction, title: inp },
       ];
@@ -40,6 +37,7 @@ const locations: TreeNode[] = [
     title: 'experiment',
   },
   {
+    label: 'trial <id>',
     onCustomInput: (inp: string): Children => {
 
       const onAction = async () => {
@@ -52,8 +50,8 @@ const locations: TreeNode[] = [
         }
       };
 
-      // TODO we could generate this `<id>` arg label and the label for the
-      // parent together instead of separately.
+      // we could generate this `<id>` arg label and the label for the
+      // parent node together instead of separately.
       const label = inp === '' ? '<id>' : inp;
       return [
         { label, onAction, title: inp },

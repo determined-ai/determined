@@ -67,6 +67,9 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
   return matches;
 };
 
+// FIXME when querying async paths in a tree, while the extension is getting queried
+// the previous options are still available and can be executed which means the user
+// could see out of date options.
 export const extension = async(input: string): Promise<Children> => {
   try {
     // query the default tree.
