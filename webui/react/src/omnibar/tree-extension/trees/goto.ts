@@ -1,7 +1,7 @@
-import { visitAction } from 'omnibar/tree-extension/trees/actions';
+import { alertAction, parseIds, visitAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
-import { getExperiments, getExpTrials } from 'services/api';
+import { getExperimentDetails, getTrialDetails } from 'services/api';
 import { getNotebooks, getTensorboards } from 'services/api';
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
@@ -17,39 +17,47 @@ const locations: TreeNode[] = [
     title: 'cluster',
   },
   {
-    options: async (): Promise<Children> => {
-      const { experiments: exps } = await getExperiments(
-        { limit: 1, orderBy: 'ORDER_BY_DESC', sortBy: 'SORT_BY_ID' },
-      );
-      const options = new Array(exps[0].id).fill(0).map((_, idx) => {
-        return {
-          onAction: visitAction(paths.experimentDetails(idx+1)),
-          title: `${idx+1}`, // TODO render more info?
-        };
-      });
-      return options;
+    label: 'experiment <id>',
+    onCustomInput: async (inp: string): Promise<Children> => {
+      let expExists = false;
+      const id = parseIds(inp)[0];
+      try {
+        await getExperimentDetails({ id });
+        expExists = true;
+      } catch {
+      }
+
+      const onAction = expExists ? visitAction(paths.experimentDetails(id)) :
+        alertAction(`Invalid experiment ID ${id}`);
+
+      // TODO we could generate this `<id>` arg label and the label for the
+      // parent together instead of separately.
+      const label = inp === '' ? '<id>' : expExists ? inp : `${inp} (doesn't exist)`;
+      return [
+        { label, onAction, title: inp },
+      ];
     },
     title: 'experiment',
   },
   {
-    options: async (): Promise<Children> => {
-      const { experiments: exps } = await getExperiments(
-        { limit: 1, orderBy: 'ORDER_BY_DESC', sortBy: 'SORT_BY_ID' },
-      );
+    onCustomInput: (inp: string): Children => {
 
-      const { trials } = await getExpTrials(
-        { id: exps[0].id, limit: 1, orderBy: 'ORDER_BY_DESC', sortBy: 'SORT_BY_ID' },
-      );
+      const onAction = async () => {
+        const id = parseIds(inp)[0];
+        try {
+          const trial = await getTrialDetails({ id });
+          visitAction(paths.trialDetails(trial.id, trial.experimentId))();
+        } catch {
+          alertAction(`Invalid trial ID ${id}`);
+        }
+      };
 
-      const lastId = trials[0].id;
-      const options = new Array(lastId).fill(0).map((_, idx) => {
-        return {
-          onAction: visitAction(paths.trialDetails(idx+1)),
-          title: `${idx+1}`,
-        };
-      });
-
-      return options;
+      // TODO we could generate this `<id>` arg label and the label for the
+      // parent together instead of separately.
+      const label = inp === '' ? '<id>' : inp;
+      return [
+        { label, onAction, title: inp },
+      ];
     },
     title: 'trial',
   },

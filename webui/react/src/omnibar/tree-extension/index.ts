@@ -92,9 +92,9 @@ export const onAction = async (
         + item.title;
   if (isLeafNode(item)) {
     await item.onAction(item);
-    if (!item.closeBar && !path.find(n => n.title === 'goto')) {
-      message.info('Action executed.', 1);
-    }
+    // if we opt to auto close the bar for user in some scenarios this
+    // would be the place to check for it.
+    message.info('Action executed.', 1);
   } else {
     // trigger the query.
     inputEl.value = inputEl.value + SEPARATOR;
