@@ -52,11 +52,11 @@ class ExperimentReference:
 
     def wait(self, interval: int = 5) -> None:
         """
-        Wait for experiment to reach complete or a terminal state.
+        Wait for the experiment to reach a complete or terminal state.
 
         Arguments:
             interval (int, optional): An interval time in seconds before checking
-            next experiement state.
+                next experiement state.
         """
         elapsed_time = 0
         while True:
