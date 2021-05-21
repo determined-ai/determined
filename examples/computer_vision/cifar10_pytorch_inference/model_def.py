@@ -5,14 +5,15 @@ Perform inference on pretrained CIFAR10 from https://github.com/huyvnphan/PyTorc
 import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import ssl
 import torch
 import torchvision
 from torch import nn
 from torchvision import transforms
 import torchvision.models as models
+import urllib.request
 
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
-import resnet
 
 # Constants about the data set.
 IMAGE_SIZE = 32
@@ -21,6 +22,27 @@ NUM_CLASSES = 10
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
+
+ssl._create_default_https_context = ssl._create_unverified_context
+response = urllib.request.urlopen('https://www.python.org')
+print(response.read().decode('utf-8'))
+
+def set_parameter_requires_grad(model, feature_extracting):
+    if feature_extracting:
+        for param in model.parameters():
+            param.requires_grad = False
+
+def initialize_resnet18(num_classes, feature_extract, use_pretrained=True):
+    # Initialize these variables which will be set in this if statement. Each of these
+    #   variables is model specific.
+    model_ft = None
+    input_size = 0
+    model_ft = models.resnet18(pretrained=use_pretrained)
+    set_parameter_requires_grad(model_ft, feature_extract)
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, num_classes)
+    input_size = 224
+    return model_ft, input_size
 
 def accuracy_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
     """Return the accuracy rate based on dense predictions and sparse labels."""
@@ -37,7 +59,8 @@ class CIFARTrial(PyTorchTrial):
         self.download_directory = tempfile.mkdtemp()
 
         # TODO: Load your trained model
-        self.model = self.context.wrap_model(resnet.resnet18(pretrained=True))
+        model, input_size = initialize_resnet18(NUM_CLASSES, True, use_pretrained=True)
+        self.model = self.context.wrap_model(model)
 
         # IGNORE: Dummy optimizer that needs to be specified but is unused
         self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(
