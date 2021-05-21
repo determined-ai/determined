@@ -1,4 +1,3 @@
-import { parseUrl } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -80,19 +79,6 @@ export const simulateLogsDownload = (numCharacters: number): number => {
     .map(() => generateLogStringBuffer(Math.pow(2, 20), 128));
   downloadText('simulated-logs.txt', parts);
   return (Date.now() - start);
-};
-
-/*
- * The method of cache busting here is to send a query string as most
- * modern browsers treat different URLs as different files, causing a
- * request of a fresh copy. The previous method of using `location.reload`
- * with a `forceReload` boolean has been deprecated and not reliable.
- */
-export const refreshPage = (): void => {
-  const now = Date.now();
-  const url = parseUrl(window.location.href);
-  url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
-  window.location.href = url.toString();
 };
 
 /*

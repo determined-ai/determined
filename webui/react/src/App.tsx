@@ -14,7 +14,7 @@ import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import appRoutes from 'routes';
-import { correctViewportHeight, refreshPage } from 'utils/browser';
+import { correctViewportHeight } from 'utils/browser';
 
 import css from './App.module.scss';
 import { paths } from './routes/utils';
@@ -36,16 +36,32 @@ const AppView: React.FC = () => {
   useEffect(() => {
     setupAnalytics(info);
 
-    // Check to make sure the WebUI version matches the platform version.
+    /*
+     * Check to make sure the WebUI version matches the platform version.
+     * Using the form approach for cache busting because `window.location.reload`
+     * deprecated the `forceReload` option and using the `window.location.href`
+     * method with different a timestamp query string method have been reported
+     * to not work either.
+     */
     if (info.version !== process.env.VERSION) {
-      const btn = <Button type="primary" onClick={refreshPage}>Update Now</Button>;
+      const formId = 'refresh-form';
+      const handleUpdate = () => {
+        const form = document.getElementById(formId) as HTMLFormElement;
+        if (form) form.submit();
+      };
+      const btn = <Button type="primary" onClick={handleUpdate}>Update Now</Button>;
       const message = 'New WebUI Version';
-      const description = <div>
-        WebUI version <b>v{info.version}</b> is available.
-        Check out what&apos;s new in our <Link external path={paths.docs('/release-notes.html')}>
-          release notes
-        </Link>.
-      </div>;
+      const description = (
+        <form action={process.env.PUBLIC_URL} id={formId} method="POST">
+          <div>
+            WebUI version <b>v{info.version}</b> is available.
+            Check out what&apos;s new in our
+            <Link external path={paths.docs('/release-notes.html')}>
+              release notes
+            </Link>.
+          </div>
+        </form>
+      );
       notification.warn({
         btn,
         description,
