@@ -598,6 +598,18 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Gather a trial's rendezvous info. Blocks until all trial containers connect
+  // to gather their rendezvous information and responds to them all at once.
+  rpc GetTrialRendezvousInfo(GetTrialRendezvousInfoRequest)
+      returns (GetTrialRendezvousInfoResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/rendezvous_info"
+      body: "rendezvous_info"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
