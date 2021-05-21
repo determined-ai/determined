@@ -140,8 +140,6 @@
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
     enabled: true
-    begin_on_batch: 0
-    end_after_batch: null
 
 - name: profiling is valid when full
   matches:
