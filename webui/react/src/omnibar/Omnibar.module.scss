@@ -12,7 +12,7 @@
     position: absolute;
     top: 0;
     width: 100%;
-    z-index: 1011;
+    z-index: 110;
   }
   .bar {
     left: 50%;
@@ -21,7 +21,7 @@
     top: 33.33%;
     transform: translate(-50%, -50%);
     width: calc(max(40vw, 300px));
-    z-index: 1012;
+    z-index: 111;
 
     input {
       border-radius: 3px;
