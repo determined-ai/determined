@@ -25,59 +25,9 @@ type SearcherConfigV0 struct {
 	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 }
 
-// Merge implements schemas.Mergeable.  This Merge enforces that we can't ever merge two union
-// members into one output.
+// Merge implements schemas.Mergeable.
 func (s SearcherConfigV0) Merge(other interface{}) interface{} {
-	tOther := other.(SearcherConfigV0)
-
-	// Merge common members.
-	out := SearcherConfigV0{
-		RawMetric:          schemas.Merge(s.RawMetric, tOther.RawMetric).(*string),
-		RawSmallerIsBetter: schemas.Merge(s.RawSmallerIsBetter, tOther.RawSmallerIsBetter).(*bool),
-		RawSourceTrialID:   schemas.Merge(s.RawSourceTrialID, tOther.RawSourceTrialID).(*int),
-		RawSourceCheckpointUUID: schemas.Merge(
-			s.RawSourceCheckpointUUID, tOther.RawSourceCheckpointUUID,
-		).(*string),
-	}
-
-	// Only merge union members based on s, not based on other... unless s has no member at all.
-	// The only reason it is valid to have no members is due to common fields on union types.
-	useOther := all(
-		s.RawSingleConfig == nil,
-		s.RawRandomConfig == nil,
-		s.RawGridConfig == nil,
-		s.RawAsyncHalvingConfig == nil,
-		s.RawAdaptiveASHAConfig == nil,
-		s.RawPBTConfig == nil,
-	)
-	if useOther || s.RawSingleConfig != nil {
-		out.RawSingleConfig = schemas.Merge(
-			s.RawSingleConfig, tOther.RawSingleConfig,
-		).(*SingleConfigV0)
-	}
-	if useOther || s.RawRandomConfig != nil {
-		out.RawRandomConfig = schemas.Merge(
-			s.RawRandomConfig, tOther.RawRandomConfig,
-		).(*RandomConfigV0)
-	}
-	if useOther || s.RawGridConfig != nil {
-		out.RawGridConfig = schemas.Merge(s.RawGridConfig, tOther.RawGridConfig).(*GridConfigV0)
-	}
-	if useOther || s.RawAsyncHalvingConfig != nil {
-		out.RawAsyncHalvingConfig = schemas.Merge(
-			s.RawAsyncHalvingConfig, tOther.RawAsyncHalvingConfig,
-		).(*AsyncHalvingConfigV0)
-	}
-	if useOther || s.RawAdaptiveASHAConfig != nil {
-		out.RawAdaptiveASHAConfig = schemas.Merge(
-			s.RawAdaptiveASHAConfig, tOther.RawAdaptiveASHAConfig,
-		).(*AdaptiveASHAConfigV0)
-	}
-	if useOther || s.RawPBTConfig != nil {
-		out.RawPBTConfig = schemas.Merge(s.RawPBTConfig, tOther.RawPBTConfig).(*PBTConfigV0)
-	}
-
-	return out
+	return schemas.UnionMerge(s, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.

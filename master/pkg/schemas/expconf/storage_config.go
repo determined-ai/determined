@@ -17,15 +17,6 @@ const (
 	DefaultSharedFSPropagation = "rprivate"
 )
 
-func all(in ...bool) bool {
-	for _, i := range in {
-		if !i {
-			return false
-		}
-	}
-	return true
-}
-
 //go:generate ../gen.sh
 // CheckpointStorageConfigV0 has the common checkpoint config params.
 type CheckpointStorageConfigV0 struct {
@@ -39,48 +30,9 @@ type CheckpointStorageConfigV0 struct {
 	RawSaveTrialLatest    *int `json:"save_trial_latest"`
 }
 
-// Merge implements schemas.Mergeable.  This Merge enforces that we can't ever merge two union
-// members into one output.
+// Merge implements schemas.Mergeable.
 func (c CheckpointStorageConfigV0) Merge(other interface{}) interface{} {
-	tOther := other.(CheckpointStorageConfigV0)
-
-	// Merge common members.
-	out := CheckpointStorageConfigV0{
-		RawSaveExperimentBest: schemas.Merge(
-			c.RawSaveExperimentBest, tOther.RawSaveExperimentBest,
-		).(*int),
-		RawSaveTrialBest:   schemas.Merge(c.RawSaveTrialBest, tOther.RawSaveTrialBest).(*int),
-		RawSaveTrialLatest: schemas.Merge(c.RawSaveTrialLatest, tOther.RawSaveTrialLatest).(*int),
-	}
-
-	// Only merge union members based on c, not based on other... unless c has no member at all.
-	// The only reason it is valid to have no members is due to common fields on union types.
-	useOther := all(
-		c.RawSharedFSConfig == nil,
-		c.RawHDFSConfig == nil,
-		c.RawS3Config == nil,
-		c.RawGCSConfig == nil,
-	)
-	if useOther || c.RawSharedFSConfig != nil {
-		out.RawSharedFSConfig = schemas.Merge(
-			c.RawSharedFSConfig, tOther.RawSharedFSConfig,
-		).(*SharedFSConfigV0)
-	}
-	if useOther || c.RawHDFSConfig != nil {
-		out.RawHDFSConfig = schemas.Merge(
-			c.RawHDFSConfig, tOther.RawHDFSConfig,
-		).(*HDFSConfigV0)
-	}
-	if useOther || c.RawS3Config != nil {
-		out.RawS3Config = schemas.Merge(c.RawS3Config, tOther.RawS3Config).(*S3ConfigV0)
-	}
-	if useOther || c.RawGCSConfig != nil {
-		out.RawGCSConfig = schemas.Merge(
-			c.RawGCSConfig, tOther.RawGCSConfig,
-		).(*GCSConfigV0)
-	}
-
-	return out
+	return schemas.UnionMerge(c, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -119,10 +71,9 @@ type TensorboardStorageConfigV0 struct {
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
 }
 
-// Merge implements schemas.Mergeable.  Avoid merging TensorboardStorageConfigs at all, because it's
-// a totally useless config, but it could still break the union marshaling.
+// Merge implements schemas.Mergeable.
 func (t TensorboardStorageConfigV0) Merge(other interface{}) interface{} {
-	return t
+	return schemas.UnionMerge(t, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.

@@ -17,33 +17,9 @@ type DataLayerConfigV0 struct {
 	RawGCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs" json:"-"`
 }
 
-// Merge implements schemas.Mergeable.  This Merge enforces that we can't ever merge two union
-// members into one output.
+// Merge implements schemas.Mergeable.
 func (d DataLayerConfigV0) Merge(other interface{}) interface{} {
-	tOther := other.(DataLayerConfigV0)
-
-	// There are no common members to merge.
-	out := DataLayerConfigV0{}
-
-	// Only merge union members based on d, not based on other... unless d has no member at all.
-	// The only reason it is valid to have no members is due to common fields on union types.
-	useOther := all(
-		d.RawSharedFSConfig == nil,
-		d.RawS3Config == nil,
-		d.RawGCSConfig == nil,
-	)
-	if useOther || d.RawSharedFSConfig != nil {
-		out.RawSharedFSConfig = schemas.Merge(
-			d.RawSharedFSConfig, tOther.RawSharedFSConfig,
-		).(*SharedFSDataLayerConfigV0)
-	}
-	if useOther || d.RawS3Config != nil {
-		out.RawS3Config = schemas.Merge(d.RawS3Config, tOther.RawS3Config).(*S3DataLayerConfigV0)
-	}
-	if useOther || d.RawGCSConfig != nil {
-		out.RawGCSConfig = schemas.Merge(d.RawGCSConfig, tOther.RawGCSConfig).(*GCSDataLayerConfigV0)
-	}
-	return out
+	return schemas.UnionMerge(d, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
