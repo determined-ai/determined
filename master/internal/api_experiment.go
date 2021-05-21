@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -513,6 +514,13 @@ func (a *apiServer) PatchExperiment(
 	for _, path := range paths {
 		switch {
 		case path == "name":
+			isEmpty, err := regexp.Match(`^ *$`, []byte(req.Experiment.Name))
+			if err != nil {
+				return nil, err
+			}
+			if isEmpty {
+				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
+			}
 			exp.Name = req.Experiment.Name
 		case path == "notes":
 			updateNotes = true
