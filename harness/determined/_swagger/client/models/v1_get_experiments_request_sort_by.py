@@ -35,6 +35,7 @@ class V1GetExperimentsRequestSortBy(object):
     NUM_TRIALS = "SORT_BY_NUM_TRIALS"
     PROGRESS = "SORT_BY_PROGRESS"
     USER = "SORT_BY_USER"
+    NAME = "SORT_BY_NAME"
 
     """
     Attributes:
