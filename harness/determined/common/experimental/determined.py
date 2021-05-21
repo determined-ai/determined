@@ -65,6 +65,15 @@ class Determined:
         config: Union[str, pathlib.Path, Dict],
         model_dir: str,
     ) -> experiment.ExperimentReference:
+        """
+        Get the :class:`~determined.experimental.ExperimentReference` representing the
+        experiment created with the provided config and model direcotry.
+
+        Arguments:
+            config(string, pathlib.Path, dictionary): experiment config filename (.yaml),
+                filepath, or a dictionary.
+            model_dir(string): directory containing model definition.
+        """
         check.is_instance(
             config, (str, pathlib.Path, dict), "config parameter must be dictionary or path"
         )
