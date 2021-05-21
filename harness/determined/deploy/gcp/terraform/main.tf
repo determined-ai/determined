@@ -1,4 +1,13 @@
 // Configure GCP provider
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/google"
+      version = "~> 3.44.0"
+    }
+  }
+}
+
 provider "google" {
   credentials = var.keypath != null ? file(var.keypath) : null
   project = var.project_id
@@ -16,8 +25,8 @@ provider "google-beta" {
 }
 
 locals {
-  unique_id = "${var.cluster_id}"
-  det_version_key = "${var.det_version_key}"
+  unique_id = var.cluster_id
+  det_version_key = var.det_version_key
 }
 
 terraform {
