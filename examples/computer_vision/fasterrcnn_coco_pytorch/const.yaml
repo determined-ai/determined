@@ -1,4 +1,4 @@
-description: fasterrcnn_coco_pytorch_const
+name: fasterrcnn_coco_pytorch_const
 data:
   url: https://determined-ai-public-datasets.s3-us-west-2.amazonaws.com/PennFudanPed/PennFudanPed.zip
 hyperparameters:

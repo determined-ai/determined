@@ -1,4 +1,4 @@
-description: constrained_adaptive_darts_cnn_nas
+name: constrained_adaptive_darts_cnn_nas
 
 data:
   data_download_dir: /data

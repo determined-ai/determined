@@ -1,4 +1,4 @@
-description: dc_gan
+name: dc_gan
 hyperparameters:
   noise_dim: 128
   global_batch_size: 1024

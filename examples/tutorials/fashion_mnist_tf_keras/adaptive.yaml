@@ -1,4 +1,4 @@
-description: fashion_mnist_tf_keras_adaptive_search
+name: fashion_mnist_tf_keras_adaptive_search
 hyperparameters:
   global_batch_size: 32
   dense1:

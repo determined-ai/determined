@@ -1,4 +1,4 @@
-description: boosted_trees_estimator_adaptive_search
+name: boosted_trees_estimator_adaptive_search
 data:
   titanic_dataset:
     train: "https://storage.googleapis.com/tf-datasets/titanic/train.csv"
