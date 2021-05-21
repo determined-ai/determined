@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+import sys
 import typing
 from logging import handlers
 
@@ -167,6 +168,11 @@ def test_to_device() -> None:
 
 
 @pytest.mark.parametrize("dedup_between_calls", [True, False])
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Test relies on feature unimplemented on Mac OS X"
+)
+# Not implemented feature:
+# https://stackoverflow.com/questions/65609529/python-multiprocessing-queue-notimplementederror-macos
 def test_to_device_warnings(dedup_between_calls) -> None:
     queue = multiprocessing.Queue()
 
