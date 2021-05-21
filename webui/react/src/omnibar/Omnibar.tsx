@@ -18,7 +18,11 @@ const Omnibar: React.FC = () => {
   );
 
   const onAction = useCallback((item, query) => {
-    // ideally we could useRef here but can we w/o modifying the omnibar package?
+    /*
+    Ideally we wouldn't need to access the element like this.
+    A potential option is use the value prop in combinatio with encoding the tree path into
+    the options returned by the tree extension.
+    */
     const input: HTMLInputElement|null = document.querySelector('#omnibar input[type="text"]');
     if (!input) return;
     if (isTreeNode(item)) {
