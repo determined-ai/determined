@@ -605,8 +605,8 @@ func (m *Master) Run(ctx context.Context) error {
 	// relative links in web pages hosted under these routes.
 	staticWebDirectoryPaths := map[string]bool{
 		"/docs":          true,
-		webuiBaseRoute:   true,
 		"/docs/rest-api": true,
+		webuiBaseRoute:   true,
 	}
 
 	m.system.MustActorOf(actor.Addr("allocation-aggregator"), &allocationAggregator{db: m.db})
@@ -701,6 +701,9 @@ func (m *Master) Run(ctx context.Context) error {
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.File("/", reactIndex)
+	webuiGroup.POST("/", func(c echo.Context) error {
+		return c.File(reactIndex)
+	})
 	webuiGroup.GET("/*", func(c echo.Context) error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
