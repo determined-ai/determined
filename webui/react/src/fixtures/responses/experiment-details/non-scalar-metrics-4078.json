@@ -29,6 +29,7 @@
     },
     "entrypoint": "model_def:MnistTensorpackInEstimator",
     "description": "Fork of Fork of mnist_tp_to_estimator_const",
+    "name": "Fork of Fork of mnist_tp_to_estimator_const",
     "environment": {
       "image": {
         "cpu": "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02",

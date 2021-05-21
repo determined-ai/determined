@@ -155,7 +155,7 @@ export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: optional(ioCheckpointStorage),
   data_layer: optional(ioDataLayer),
-  description: io.string,
+  description: optional(io.string),
   hyperparameters: ioHyperparameters,
   labels: optional(io.array(io.string)),
   name: io.string,

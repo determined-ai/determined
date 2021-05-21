@@ -27,6 +27,7 @@
   },
   "entrypoint": "model_def:NoOpTrial",
   "description": "noop_adaptive",
+  "name": "noop_adaptive",
   "environment": {
     "image": {
       "cpu": "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02",
