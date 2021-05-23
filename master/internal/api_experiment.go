@@ -1209,3 +1209,20 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 		}
 	}
 }
+
+func (a *apiServer) GetBestSearcherValidationMetric(
+	_ context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
+) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
+	if err := a.checkExperimentExists(int(req.ExperimentId)); err != nil {
+		return nil, err
+	}
+
+	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetBestSearcherValidationMetricResponse{
+		Metric: metric,
+	}, nil
+}
