@@ -125,8 +125,8 @@ const NotebookModal: React.FC<Props> = (
     }
   },[ resourcePools ]);
 
-  const handleTypeUpdate = useCallback((e) => {
-    setResourceType(e as ResourceType);
+  const handleTypeUpdate = useCallback((selectedResourceType) => {
+    setResourceType(selectedResourceType as ResourceType);
   },[]);
 
   return <Modal
@@ -146,13 +146,12 @@ const NotebookModal: React.FC<Props> = (
     {...props}>
     {showFullConfig ?
       <Form form={form}>
-        <div className={css.note}
-        >
+        <div className={css.note}>
           <Link external path="/docs/reference/command-notebook-config.html">
           Read about notebook settings
           </Link>
-        </div><React.Suspense
-          fallback={<div className={css.loading}><Spinner /></div>}>
+        </div>
+        <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
           <Item
             name="config"
             rules={[ { message: 'Invalid YAML', required: true }, () => ({
