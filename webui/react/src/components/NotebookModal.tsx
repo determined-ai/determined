@@ -34,7 +34,7 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ showResourceType, setShowResourceType ] = useState(true);
+  const [ showResourceType, setShowResourceType ] = useState(false);
   const [ resourceType, setResourceType ] = useState<ResourceType | undefined>
   (storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
   const [ form ] = Form.useForm();
@@ -73,9 +73,7 @@ const NotebookModal: React.FC<Props> = (
   }, [ form ]);
 
   useEffect(()=> {
-    if (showFullConfig){
-      fetchConfig();
-    }
+    if (showFullConfig) fetchConfig();
   }, [ showFullConfig, fetchConfig ]);
 
   const storeConfig = useCallback((_, values: NotebookConfig) => {
@@ -214,7 +212,7 @@ const NotebookModal: React.FC<Props> = (
               { id:ResourceType.GPU, label:ResourceType.GPU } ]}
             onChange={handleTypeUpdate} />
         </Item>}
-        { resourceType === 'GPU' ?
+        {resourceType === 'GPU' ?
           <Item
             initialValue={1}
             label="Number of Slots"
