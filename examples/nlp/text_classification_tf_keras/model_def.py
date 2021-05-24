@@ -36,3 +36,8 @@ class MultiTextClassificationTrial(TFKerasTrial):
 
     def build_validation_data_loader(self) -> tf.data.Dataset:
         return self.context.wrap_dataset(self.data_loader.load_testing_data())
+
+    # This is a temporary workaround for Tensorflow bug:
+    # (https://github.com/tensorflow/tensorflow/issues/43834)
+    def keras_callbacks(self):
+        return [tf.keras.callbacks.TensorBoard(histogram_freq=0)]
