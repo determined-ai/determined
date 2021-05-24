@@ -148,7 +148,7 @@ export const mapV1Tensorboard =
   };
 
 export const mapV1Template = (template: Sdk.V1Template): types.Template => {
-  return { config: template.config || {}, name: template.name || '' };
+  return { config: template.config, name: template.name };
 };
 
 const ioToExperimentHyperparameter = (
