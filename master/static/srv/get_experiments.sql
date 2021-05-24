@@ -33,8 +33,8 @@ WITH filtered_exps AS (
                     ELSE e.config->'labels' END
                 ))
             )
-        AND ($5 = '' OR (e.config->>'description') ILIKE $5)
-        AND ($6 = '' OR (e.config->>'name') ILIKE $6)
+        AND ($5 = '' OR (e.config->>'description') ILIKE  ('%%' || $5 || '%%'))
+        AND ($6 = '' OR (e.config->>'name') ILIKE ('%%' || $6 || '%%'))
 ), page_info AS (
     SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $7, $8) AS page_info
 )

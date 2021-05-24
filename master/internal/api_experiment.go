@@ -209,8 +209,8 @@ func (a *apiServer) GetExperiments(
 		archivedExpr,
 		userFilterExpr,
 		labelFilterExpr,
-		fmt.Sprintf("%%%s%%", req.Description),
-		fmt.Sprintf("%%%s%%", req.Name),
+		req.Description,
+		req.Name,
 		req.Offset,
 		req.Limit,
 	)
