@@ -29,7 +29,7 @@ const (
 	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
 )
 
-// Default resources configuration.
+// DefaultResourcesConfig returns the default resources configuration.
 func DefaultResourcesConfig() ResourcesConfig {
 	return ResourcesConfig{
 		Weight:         1,
@@ -37,7 +37,7 @@ func DefaultResourcesConfig() ResourcesConfig {
 	}
 }
 
-// Default environment configuration.
+// DefaultEnvConfig returns the default environment configuration.
 func DefaultEnvConfig() Environment {
 	return Environment{
 		Image: RuntimeItem{
