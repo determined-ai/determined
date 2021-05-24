@@ -2,31 +2,19 @@ import dayjs from 'dayjs';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
-import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { CHART_HEIGHT } from 'pages/TrialDetails/TrialDetailsProfiles';
-import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
 
-import { FiltersInterface } from './SystemMetricFilter';
 import {
-  convertMetricsToUplotData, getUnitForMetricName, MetricType, useFetchMetrics,
+  convertMetricsToUplotData, getUnitForMetricName, MetricsAggregateInterface,
 } from './utils';
 
 export interface Props {
-  filters: FiltersInterface,
-  trial: TrialDetails;
+  systemMetrics: MetricsAggregateInterface;
 }
 
-const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
-  const systemMetrics = useFetchMetrics(
-    trial.id,
-    MetricType.System,
-    filters.name,
-    filters.agentId,
-    filters.gpuUuid,
-  );
-
+const SystemMetricChart: React.FC<Props> = ({ systemMetrics }: Props) => {
   const chartData: AlignedData = useMemo(() => {
     return convertMetricsToUplotData(systemMetrics.dataByUnixTime, systemMetrics.names);
   }, [ systemMetrics.dataByUnixTime, systemMetrics.names ]);
@@ -72,11 +60,7 @@ const SystemMetricChart: React.FC<Props> = ({ filters, trial }: Props) => {
     };
   }, [ systemMetrics.names, xMin ]);
 
-  return (
-    <Spinner spinning={systemMetrics.isLoading}>
-      <UPlotChart data={chartData} options={chartOptions} />
-    </Spinner>
-  );
+  return <UPlotChart data={chartData} options={chartOptions} />;
 };
 
 export default SystemMetricChart;

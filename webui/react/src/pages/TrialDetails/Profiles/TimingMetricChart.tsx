@@ -1,7 +1,7 @@
+import { Alert } from 'antd';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
-import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { CHART_HEIGHT } from 'pages/TrialDetails/TrialDetailsProfiles';
 import { TrialDetails } from 'types';
@@ -48,11 +48,17 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
     };
   }, [ timingMetrics.names ]);
 
-  return (
-    <Spinner spinning={timingMetrics.isLoading}>
-      <UPlotChart data={chartData} options={chartOptions} />
-    </Spinner>
-  );
+  if (timingMetrics.isEmpty) {
+    return (
+      <Alert
+        description='Timing metrics may not be available for your framework.'
+        message='No data found.'
+        type='warning'
+      />
+    );
+  }
+
+  return <UPlotChart data={chartData} options={chartOptions} />;
 };
 
 export default TimingMetricChart;
