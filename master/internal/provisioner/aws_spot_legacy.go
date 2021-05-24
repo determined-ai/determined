@@ -18,9 +18,8 @@ import (
 // orphaned instances after a version upgrade, we identify instances with the old
 // format and clean them up. Because the spot API is eventually consistent, we
 // repeat the cleanup after 5 minutes. This function can be removed once all users
-// are on versions newer than 0.15.5
+// are on versions newer than 0.15.5.
 func (c *awsCluster) cleanupLegacySpotInstances(ctx *actor.Context) {
-
 	cleanup := func(ctx *actor.Context) {
 		ctx.Log().
 			WithField("codepath", "spotLegacy").
@@ -79,7 +78,11 @@ func (c *awsCluster) cleanupLegacySpotInstances(ctx *actor.Context) {
 		if canceledButInstanceRunningSpotReqs.numReqs() > 0 {
 			ctx.Log().
 				WithField("codepath", "spotLegacy").
-				Infof("Terminating %d spot instances where requests are canceled but instance is running", canceledButInstanceRunningSpotReqs.numReqs())
+				Infof(
+					"Terminating %d spot instances where requests are "+
+						"canceled but instance is running",
+					canceledButInstanceRunningSpotReqs.numReqs(),
+				)
 
 			ctx.Log().
 				WithField("codepath", "spotLegacy").
@@ -106,7 +109,6 @@ func (c *awsCluster) cleanupLegacySpotInstances(ctx *actor.Context) {
 		time.Sleep(5 * time.Minute)
 		cleanup(ctx)
 	}()
-
 }
 
 func isLegacy(request *ec2.SpotInstanceRequest) bool {
@@ -163,7 +165,6 @@ func (c *awsCluster) legacyListCanceledButInstanceRunningSpotRequests(
 func (c *awsCluster) legacyListActiveSpotInstanceRequests(
 	ctx *actor.Context,
 ) (reqs *setOfSpotRequests, err error) {
-
 	input := &ec2.DescribeSpotInstanceRequestsInput{
 		Filters: []*ec2.Filter{
 			{
