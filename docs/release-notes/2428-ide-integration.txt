@@ -2,5 +2,5 @@
 
 **Improvements**
 
--  Add support and documentation for using Determined shell as a
-   remote host inside VS Code or PyCharm IDEs.
+-  Add support and documentation for using Determined shell as a remote
+   host inside VS Code or PyCharm IDEs.
