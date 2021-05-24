@@ -11,6 +11,7 @@ import Spinner from './Spinner';
 export interface BreadCrumbRoute {
   breadcrumbName: string;
   path: string;
+  breadcrumbTooltip?: string;
 }
 
 export interface Props extends CommonProps {

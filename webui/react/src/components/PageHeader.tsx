@@ -17,6 +17,8 @@ export interface Props extends CommonProps {
   title?: string;
 }
 
+export type BreadcrumbRoute = Route
+
 const tooLongExperimentDescription = 40;
 
 const isExperimentIdWithDescCrumb = (breadcrumbName: string) => {
