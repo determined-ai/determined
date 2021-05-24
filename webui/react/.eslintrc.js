@@ -104,6 +104,7 @@ module.exports = {
       caseSensitive: false,
       natural: true,
     } ],
+    'space-in-parens': [ 'error', 'never' ],
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
