@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
@@ -14,6 +15,11 @@ type DataLayerConfigV0 struct {
 	RawSharedFSConfig *SharedFSDataLayerConfigV0 `union:"type,shared_fs" json:"-"`
 	RawS3Config       *S3DataLayerConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig      *GCSDataLayerConfigV0      `union:"type,gcs" json:"-"`
+}
+
+// Merge implements schemas.Mergeable.
+func (d DataLayerConfigV0) Merge(other interface{}) interface{} {
+	return schemas.UnionMerge(d, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.

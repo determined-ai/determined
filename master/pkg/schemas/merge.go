@@ -72,7 +72,7 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 		}
 		out := reflect.New(obj.Elem().Type())
 		out.Elem().Set(merge(obj.Elem(), src.Elem(), name))
-		return out
+		return out.Convert(obj.Type())
 	}
 
 	// Next handle interfaces.
@@ -106,7 +106,7 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 			x := merge(obj.Field(i), src.Field(i), fieldName)
 			out.Field(i).Set(x)
 		}
-		return out
+		return out.Convert(obj.Type())
 
 	case reflect.Map:
 		// Handle unallocated maps on either input.
@@ -164,4 +164,62 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 		// Simple kinds just get copied.
 		return cpy(obj)
 	}
+}
+
+// UnionMerge implments the typical Merge logic for union types. The key is to merge all the common
+// fields unconditionally, but to only merge the src's union member into the obj's union member if
+// they are the same member, or if obj has no member.
+func UnionMerge(obj interface{}, src interface{}) interface{} {
+	name := fmt.Sprintf("%T", obj)
+
+	vObj := reflect.ValueOf(obj)
+	vSrc := reflect.ValueOf(src)
+
+	// obj must have the same type as src.
+	assertTypeMatch(vObj, vSrc)
+
+	if vObj.Kind() != reflect.Struct {
+		panic("UnionMerge must only be called on struct types")
+	}
+
+	return unionMerge(vObj, vSrc, name).Interface()
+}
+
+// unionMerge is the reflect layer beneath UnionMerge.
+func unionMerge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
+	out := reflect.New(obj.Type()).Elem()
+
+	mergeField := func(i int) {
+		structField := obj.Type().Field(i)
+		fieldName := fmt.Sprintf("%v.%v", name, structField.Name)
+		x := merge(obj.Field(i), src.Field(i), fieldName)
+		out.Field(i).Set(x)
+	}
+
+	// Iterate through all the fields of the struct once, identifying union members and merging
+	// the non-union members.
+	objHasMember := -1
+	srcHasMember := -1
+	for i := 0; i < src.NumField(); i++ {
+		if _, ok := obj.Type().Field(i).Tag.Lookup("union"); ok {
+			// Union member, remember it for later.
+			if !obj.Field(i).IsZero() {
+				objHasMember = i
+			}
+			if !src.Field(i).IsZero() {
+				srcHasMember = i
+			}
+			continue
+		}
+		// Non-union member, merge it normally.
+		mergeField(i)
+	}
+	if objHasMember > -1 {
+		// When obj has a union member, we can only merge that union member.
+		mergeField(objHasMember)
+	} else if srcHasMember > -1 {
+		// Otherwise we merge whatever the src has defined.
+		mergeField(srcHasMember)
+	}
+	return out.Convert(obj.Type())
 }
