@@ -70,7 +70,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
         enableSearchFilter={false}
         label='Metric Name'
         showSearch={false}
-        style={{ width: 150 }}
+        style={{ width: 220 }}
         value={value.name}
         onChange={handleChangeName}
       >
@@ -83,7 +83,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
         enableSearchFilter={false}
         label='Agent Name'
         showSearch={false}
-        style={{ width: 150 }}
+        style={{ width: 220 }}
         value={value.agentId}
         onChange={handleChangeAgentId}
       >
@@ -99,7 +99,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
           label='GPU'
           placeholder='All'
           showSearch={false}
-          style={{ width: 150 }}
+          style={{ width: 220 }}
           value={value.gpuUuid}
           onChange={handleChangeGpuUuid}
         >
