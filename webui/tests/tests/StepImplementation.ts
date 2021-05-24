@@ -317,8 +317,7 @@ export default class StepImplementation {
   public async launchNotebook() {
     await t.click(t.button('Launch JupyterLab'));
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
-    await t.click(t.$('.ant-select-item-option-content'));
-    await t.click(t.text('GPU'));
+    await t.click(t.$("[title='gpu-pool']"));
     await clickAndCloseTab(t.button('Launch'));
   }
 
@@ -326,8 +325,7 @@ export default class StepImplementation {
   public async launchCpuNotebook() {
     await t.click(t.button('Launch JupyterLab'));
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
-    await t.click(t.$('.ant-select-item-option-content'));
-    await t.click(t.text('CPU'));
+    await t.click(t.$("[title='cpu-pool']"));
     await clickAndCloseTab(t.button('Launch'));
   }
 
