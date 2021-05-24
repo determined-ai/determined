@@ -84,7 +84,7 @@ const ExperimentDetails: React.FC = () => {
   const showForkModal = useCallback((): void => {
     if (experiment?.configRaw) {
       const rawConfig: RawJson = clone(experiment.configRaw);
-      rawConfig.name = `Fork of ${rawConfig.name}`;
+      rawConfig.description = `Fork of ${rawConfig.description}`;
       upgradeConfig(rawConfig);
       setForkModalConfig(rawConfig);
     }
