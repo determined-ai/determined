@@ -289,3 +289,5 @@ export const getBatchNumber = (
     return data.totalBatches;
   }
 };
+
+export type Eventually<T> = T | Promise<T>;
