@@ -145,6 +145,7 @@ const NotebookModal: React.FC<Props> = (
     </>}
     title="Launch JupyterLab"
     visible={visible}
+    width={540}
     {...props}>
     {showFullConfig ?
       <Form form={form}>
@@ -156,6 +157,7 @@ const NotebookModal: React.FC<Props> = (
         <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
           <Item
             name="config"
+            noStyle
             rules={[ { message: 'Invalid YAML', required: true }, () => ({
               validator(_, value) {
                 try {
@@ -167,7 +169,7 @@ const NotebookModal: React.FC<Props> = (
               },
             }) ]}>
             <MonacoEditor
-              height={400}
+              height={430}
               language="yaml"
               options={{
                 minimap: { enabled: false },
