@@ -313,19 +313,24 @@ export default class StepImplementation {
 
   /* Notebook and TensorBoard Steps */
 
+  //Notebook tests are the same, they both just choose the first resource pool
   @Step('Launch notebook')
   public async launchNotebook() {
     await t.click(t.button('Launch JupyterLab'));
+    // Wait for the modal to animate in
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
-    await t.click(t.$('.ant-select-item', t.near('gpu')));
+    await t.click(t.$('.ant-select-item-option-content'));
     await clickAndCloseTab(t.button('Launch'));
   }
 
   @Step('Launch cpu-only notebook')
   public async launchCpuNotebook() {
     await t.click(t.button('Launch JupyterLab'));
+    // Wait for the modal to animate in
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
-    await t.click(t.$('.ant-select-item', t.near('cpu')));
+    await t.click(t.$('.ant-select-item-option-content'));
     await clickAndCloseTab(t.button('Launch'));
   }
 
