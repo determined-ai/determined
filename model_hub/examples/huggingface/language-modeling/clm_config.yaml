@@ -1,4 +1,4 @@
-description: huggingface_clm_trial
+name: huggingface_clm_trial
 hyperparameters:
   pretrained_model_name_or_path: gpt2
   model_mode: causal-lm
