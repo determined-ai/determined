@@ -49,7 +49,7 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
     {
       includeScore: false,
       keys: [ 'title', 'aliases', 'label' ],
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
       shouldSort: true,
       threshold: 0.4,
     },
