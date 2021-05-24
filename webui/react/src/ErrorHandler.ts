@@ -78,7 +78,7 @@ const handleError = (e: DaError): DaError => {
 
   if (e.type === ErrorType.Auth) {
     if (!window.location.pathname.endsWith('login')) {
-      history.push(paths.logout(), { loginRedirect: clone(window.location ) });
+      history.push(paths.logout(), { loginRedirect: clone(window.location) });
     }
     return e;
   }

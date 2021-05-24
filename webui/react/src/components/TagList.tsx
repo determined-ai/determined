@@ -56,7 +56,7 @@ const EditableTagList: React.FC<Props> = ({
     editInputRef.current?.select();
   }, [ state.editInputIndex ]);
 
-  const stopPropagation = useCallback( (e: React.MouseEvent) => e.stopPropagation(), []);
+  const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
