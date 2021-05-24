@@ -1,6 +1,6 @@
 description: cifar10_pytorch_inference_const
 hyperparameters:
-  global_batch_size: 1
+  global_batch_size: 8
 records_per_epoch: 50000
 searcher:
   name: single

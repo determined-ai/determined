@@ -5,6 +5,8 @@ Perform inference on pretrained CIFAR10 from https://github.com/huyvnphan/PyTorc
 import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import numpy as np
+import os
 import ssl
 import torch
 import torchvision
@@ -13,7 +15,7 @@ from torchvision import transforms
 import torchvision.models as models
 import urllib.request
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, MetricReducer
 
 # Constants about the data set.
 IMAGE_SIZE = 32
@@ -31,6 +33,32 @@ def set_parameter_requires_grad(model, feature_extracting):
     if feature_extracting:
         for param in model.parameters():
             param.requires_grad = False
+
+class PredictionsReducer(MetricReducer):
+    def __init__(self, output_file):
+        self.num_classes = 10
+        self.reset()
+        self.output_file = output_file
+
+    def reset(self):
+        # reset() will be called before each training and validation workload.
+        self.predictions = []
+
+    def update(self, predictions):
+        # We are responsible for calling update() as part of our train_batch() and evaluate_batch()
+        # methods, which means we can specify any arguments we wish.
+        self.predictions += predictions.tolist()
+
+    def per_slot_reduce(self):
+        return self.predictions
+
+    def cross_slot_reduce(self, per_slot_metrics):
+
+        # TODO: Log or save outputs to persistent store
+        predictions = [p for slot_predictions in per_slot_metrics for p in slot_predictions]
+        np.save(self.output_file, predictions)
+
+        return {}
 
 def initialize_resnet18(num_classes, feature_extract, use_pretrained=True):
     # Initialize these variables which will be set in this if statement. Each of these
@@ -83,6 +111,10 @@ class CIFARTrial(PyTorchTrial):
         self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(
             self.model.parameters()))
 
+        # TODO: Create custom reducer to save inference output
+        output_file = os.path.join(self.download_directory, "predictions.npy")
+        self.predictions = self.context.wrap_reducer(PredictionsReducer(output_file))
+
     def train_batch(
         # IGNORE: No-op train_batch that does not train or generate metrics
         self, batch: TorchData, epoch_idx: int, batch_idx: int
@@ -100,14 +132,8 @@ class CIFARTrial(PyTorchTrial):
         data, labels = batch
         output = self.model(data)
 
-        # TODO: Optionally log or save outputs to persistent store
-        print(output)
-        print(labels)
-        '''
-        with open("/path/to/output.txt", "w+") as f:
-            f.write(output)
-            f.write("\n")
-        '''
+        # Log predictions to our custom reducer for aggregation
+        self.predictions.update(output.argmax(dim=1))
 
         # TODO: Optionally log metrics to Determined
         accuracy = accuracy_rate(output, labels)
