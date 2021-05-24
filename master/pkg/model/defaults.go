@@ -29,6 +29,24 @@ const (
 	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
 )
 
+// Default resources configuration.
+func DefaultResourcesConfig() ResourcesConfig {
+	return ResourcesConfig{
+		Weight:         1,
+		NativeParallel: false,
+	}
+}
+
+// Default environment configuration.
+func DefaultEnvConfig() Environment {
+	return Environment{
+		Image: RuntimeItem{
+			CPU: defaultCPUImage,
+			GPU: defaultGPUImage,
+		},
+	}
+}
+
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
 	conf := schemas.WithDefaults(expconf.ExperimentConfig{}).(expconf.ExperimentConfig)
@@ -72,10 +90,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 				SmallerIsBetter: true,
 			},
 		},
-		Resources: ResourcesConfig{
-			Weight:         1,
-			NativeParallel: false,
-		},
+		Resources: DefaultResourcesConfig(),
 		Optimizations: OptimizationsConfig{
 			AggregationFrequency:       1,
 			AverageAggregatedGradients: true,
@@ -88,12 +103,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		},
 		RecordsPerEpoch: 0,
 		SchedulingUnit:  100,
-		Environment: Environment{
-			Image: RuntimeItem{
-				CPU: defaultCPUImage,
-				GPU: defaultGPUImage,
-			},
-		},
+		Environment:     DefaultEnvConfig(),
 		Reproducibility: ReproducibilityConfig{
 			ExperimentSeed: uint32(time.Now().Unix()),
 		},
