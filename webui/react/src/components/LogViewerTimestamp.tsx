@@ -121,9 +121,12 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
     const newLogs = addedLogs
       .map(log => {
+        // If the line is probably a TQDM line, hide it
+        const hide = log.message.includes('\r');
         const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
-        return { ...log, formattedTime };
+        return { ...log, formattedTime, hide };
       })
+      .filter(logEntry => !logEntry.hide)
       .sort((logA, logB) => {
         const logATime = logA.time || '';
         const logBTime = logB.time || '';
