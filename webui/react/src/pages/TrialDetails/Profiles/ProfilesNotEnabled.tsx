@@ -18,8 +18,8 @@ const ProfilesNotEnabled: React.FC = () => {
   return (
     <Alert
       description={description}
-      message='Profiling was not enabled for this trial.'
-      type='warning'
+      message="Profiling was not enabled for this trial."
+      type="warning"
     />
   );
 };

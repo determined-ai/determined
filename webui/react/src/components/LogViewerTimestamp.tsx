@@ -461,7 +461,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
             itemData={logs}
             itemSize={getItemHeight}
             ref={listRef}
-            width='100%'
+            width="100%"
             onItemsRendered={onItemsRendered}
           >
             {LogViewerRow}
