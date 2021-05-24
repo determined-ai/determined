@@ -60,6 +60,17 @@ module.exports = {
     } ],
     'indent': 'off',
     'jsx-quotes': [ 'error', 'prefer-double' ],
+    'key-spacing': [ 'error', {
+      multiLine: {
+        afterColon: true,
+        beforeColon: false,
+        mode: 'strict',
+      },
+      singleLine: {
+        afterColon: true,
+        beforeColon: false,
+      },
+    } ],
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
     'no-empty': [ 'error', { allowEmptyCatch: true } ],
