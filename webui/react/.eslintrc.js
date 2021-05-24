@@ -45,6 +45,7 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
+    'arrow-spacing': [ 'error', { after: true, before: true } ],
     'block-spacing': [ 'error', 'always' ],
     'brace-style': [ 'error', '1tbs', { allowSingleLine: true } ],
     'comma-dangle': [ 'error', 'always-multiline' ],
