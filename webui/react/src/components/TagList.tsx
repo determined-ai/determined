@@ -10,6 +10,7 @@ import css from './TagList.module.scss';
 
 interface Props {
   compact?: boolean;
+  ghost?: boolean;
   onChange?: (tags: string[]) => void;
   tags: string[];
 }
@@ -17,11 +18,9 @@ interface Props {
 const TAG_MAX_LENGTH = 20;
 const COMPACT_MAX_THRESHOLD = 1;
 
-const EditableTagList: React.FC<Props> = ({
-  compact,
-  tags,
-  onChange,
-}: Props) => {
+const EditableTagList: React.FC<Props> = (
+  { compact, ghost, tags, onChange }: Props,
+) => {
   const initialState = {
     editInputIndex: -1,
     editInputValue: '',
@@ -102,8 +101,11 @@ const EditableTagList: React.FC<Props> = ({
 
   const { editInputIndex, editInputValue, inputVisible, inputValue, inputWidth } = state;
 
+  const classes = [ css.base ];
+  if (ghost) classes.push(css.ghost);
+
   return (
-    <div className={css.base} onClick={stopPropagation}>
+    <div className={classes.join(' ')} onClick={stopPropagation}>
       {tags
         .sort((a, b) => alphanumericSorter(a, b))
         .map((tag, index) => {

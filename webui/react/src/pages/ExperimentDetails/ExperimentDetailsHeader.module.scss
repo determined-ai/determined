@@ -1,0 +1,16 @@
+.experimentName {
+  margin-top: var(--theme-sizes-layout-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media only screen and (min-width: $breakpoint-tablet) {
+  .experimentName {
+    margin-right: var(--theme-sizes-layout-medium);
+    margin-top: 0;
+  }
+}
+
+.experimentDescription {
+  margin-bottom: var(--theme-sizes-layout-medium);
+}
