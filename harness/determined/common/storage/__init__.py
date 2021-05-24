@@ -23,7 +23,7 @@ __all__ = [
 
 
 _STORAGE_MANAGERS = {
-    "blob": AzureStorageManager,
+    "azure": AzureStorageManager,
     "gcs": GCSStorageManager,
     "s3": S3StorageManager,
     "shared_fs": SharedFSStorageManager,
@@ -64,7 +64,7 @@ def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManag
             config["storage_path"] = config.get("tensorboard_path", None)
         else:
             config["storage_path"] = config.get("checkpoint_path", None)
-    elif identifier == "blob":
+    elif identifier == "azure":
         if not ("connection_string" in config or "account_url" in config):
             raise ValueError(
                 "At least one of [connection_string, account_url] must be specified for Azure Blob Storage, but none were."
