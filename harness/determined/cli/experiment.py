@@ -236,6 +236,7 @@ def describe(args: Namespace) -> None:
             render.format_time(doc.get("start_time")),
             render.format_time(doc.get("end_time")),
             doc["config"].get("name"),
+            doc["config"].get("description"),
             doc["archived"],
             doc["config"]["resources"].get("resource_pool"),
             ", ".join(sorted(doc["config"].get("labels") or [])),
@@ -529,13 +530,13 @@ def pause(args: Namespace) -> None:
 
 @authentication_required
 def set_description(args: Namespace) -> None:
-    patch_experiment(args, "change description of", {"description": args.description})
+    api.patch_experiment_v1(args.master, args.experiment_id, {"description": args.description})
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
 
 
 @authentication_required
 def set_name(args: Namespace) -> None:
-    patch_experiment(args, "change name of", {"name": args.name})
+    api.patch_experiment_v1(args.master, args.experiment_id, {"name": args.name})
     print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
 
 
