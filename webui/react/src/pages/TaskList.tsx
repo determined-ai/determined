@@ -310,7 +310,7 @@ const TaskList: React.FC = () => {
       </div>
       <Modal
         footer={null}
-        style={{ minWidth: '60rem' }}
+        style={{ minWidth: '600px' }}
         title={`
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}

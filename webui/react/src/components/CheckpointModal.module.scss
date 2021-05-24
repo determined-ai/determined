@@ -45,13 +45,13 @@
       repeating-linear-gradient(
         to right,
         var(--theme-colors-monochrome-12) 0,
-        var(--theme-colors-monochrome-12) 0.2rem,
-        transparent 0.3rem,
-        transparent 0.7rem
+        var(--theme-colors-monochrome-12) 2px,
+        transparent 3px,
+        transparent 7px
       );
     flex-grow: 1;
-    height: 0.2rem;
-    margin: 0.5rem 0;
+    height: 2px;
+    margin: 5px 0;
   }
   .resourceSize {
     flex-shrink: 0;

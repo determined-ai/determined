@@ -9,7 +9,7 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    max-width: 22rem;
+    max-width: 220px;
 
     & > * { margin-bottom: var(--theme-sizes-layout-enormous); }
     & > *:last-child { margin-bottom: 0; }
