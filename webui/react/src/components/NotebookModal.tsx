@@ -81,11 +81,14 @@ const NotebookModal: React.FC<Props> = (
     storage.set(STORAGE_KEY,values);
   }, [ storage ]);
 
-  const handleSecondary = useCallback(() => {
+  const handleSecondary = useCallback(async () => {
     if (showFullConfig) {
-      setShowFullConfig(show => !show);
+      setShowFullConfig(false);
     } else {
-      form.validateFields().then(() => setShowFullConfig(show => !show)).catch();
+      try {
+        await form.validateFields();
+        setShowFullConfig(true);
+      } catch (e) {}
     }
   },[ form, showFullConfig ]);
 
@@ -132,10 +135,11 @@ const NotebookModal: React.FC<Props> = (
       <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
       <Button
         type="primary"
-        onClick={() => {
-          form.validateFields().then(values => {
+        onClick={async () => {
+          try {
+            const values = await form.validateFields();
             handleCreateEnvironment(values);
-          }).catch();
+          } catch (e) {}
         }
         }>Launch</Button>
     </>}
