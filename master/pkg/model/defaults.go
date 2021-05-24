@@ -30,21 +30,42 @@ const (
 )
 
 // DefaultResourcesConfig returns the default resources configuration.
-func DefaultResourcesConfig() ResourcesConfig {
-	return ResourcesConfig{
+func DefaultResourcesConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ResourcesConfig {
+	config := ResourcesConfig{
 		Weight:         1,
 		NativeParallel: false,
 	}
+	if taskContainerDefaults == nil {
+		return config
+	}
+
+	config.Devices = taskContainerDefaults.Devices
+	return config
 }
 
 // DefaultEnvConfig returns the default environment configuration.
-func DefaultEnvConfig() Environment {
-	return Environment{
+func DefaultEnvConfig(taskContainerDefaults *TaskContainerDefaultsConfig) Environment {
+	config := Environment{
 		Image: RuntimeItem{
 			CPU: defaultCPUImage,
 			GPU: defaultGPUImage,
 		},
 	}
+
+	if taskContainerDefaults == nil {
+		return config
+	}
+
+	config.RegistryAuth = taskContainerDefaults.RegistryAuth
+	config.ForcePullImage = taskContainerDefaults.ForcePullImage
+
+	if taskContainerDefaults.Image != nil {
+		config.Image = *taskContainerDefaults.Image
+	}
+
+	config.AddCapabilities = taskContainerDefaults.AddCapabilities
+	config.DropCapabilities = taskContainerDefaults.DropCapabilities
+	return config
 }
 
 // DefaultExperimentConfig returns a new default experiment config.
@@ -90,7 +111,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 				SmallerIsBetter: true,
 			},
 		},
-		Resources: DefaultResourcesConfig(),
+		Resources: DefaultResourcesConfig(taskContainerDefaults),
 		Optimizations: OptimizationsConfig{
 			AggregationFrequency:       1,
 			AverageAggregatedGradients: true,
@@ -103,7 +124,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		},
 		RecordsPerEpoch: 0,
 		SchedulingUnit:  100,
-		Environment:     DefaultEnvConfig(),
+		Environment:     DefaultEnvConfig(taskContainerDefaults),
 		Reproducibility: ReproducibilityConfig{
 			ExperimentSeed: uint32(time.Now().Unix()),
 		},
@@ -112,23 +133,6 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 			Enabled: false,
 		},
 	}
-
-	if taskContainerDefaults == nil {
-		return defaultConfig
-	}
-
-	defaultConfig.Environment.RegistryAuth = taskContainerDefaults.RegistryAuth
-	defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
-
-	if taskContainerDefaults.Image != nil {
-		defaultConfig.Environment.Image = *taskContainerDefaults.Image
-	}
-
-	defaultConfig.Resources.Devices = taskContainerDefaults.Devices
-	defaultConfig.Environment.AddCapabilities = taskContainerDefaults.AddCapabilities
-	defaultConfig.Environment.DropCapabilities = taskContainerDefaults.DropCapabilities
-
-	defaultConfig.BindMounts = taskContainerDefaults.BindMounts
 
 	return defaultConfig
 }
