@@ -43,7 +43,7 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
 };
 
 const rpAttrs = [
-  [ 'location', 'Location' ] ,
+  [ 'location', 'Location' ],
   [ 'instanceType', 'Instance Type' ],
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
