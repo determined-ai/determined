@@ -175,7 +175,7 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
 export const defaultRowClassName = (options?: {
   clickable?: boolean,
   highlighted?: boolean,
-}): string=> {
+}): string => {
   const classes = [];
   if (options?.clickable) classes.push('clickable');
   if (options?.highlighted) classes.push('highlighted');
