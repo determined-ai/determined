@@ -59,6 +59,7 @@ module.exports = {
       'newlines-between': 'always',
     } ],
     'indent': 'off',
+    'jsx-quotes': [ 'error', 'prefer-double' ],
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
     'no-empty': [ 'error', { allowEmptyCatch: true } ],
