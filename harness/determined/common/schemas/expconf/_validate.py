@@ -36,6 +36,7 @@ def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) 
     }
     if complete:
         ext["eventuallyRequired"] = extensions.eventuallyRequired
+        ext["eventually"] = extensions.eventually
 
     cls = jsonschema.validators.extend(validator, ext)
     _validators[url] = cls(schema=schema, resolver=resolver)
