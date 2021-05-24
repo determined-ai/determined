@@ -109,18 +109,19 @@ const NotebookModal: React.FC<Props> = (
     [ showFullConfig, form, onLaunch, resourceType ],
   );
 
-  const handleResourcePoolUpdate = useCallback((e: string) => {
-    const pool = resourcePools.find(pool => pool.name === e);
-    if (pool){
-      if (pool.cpuContainerCapacityPerAgent > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0) {
-        setShowResourceType(true);
-      } else if (pool.cpuContainerCapacityPerAgent > 0) {
-        setResourceType(ResourceType.CPU);
-        setShowResourceType(false);
-      } else if (pool.slotsPerAgent && pool.slotsPerAgent > 0) {
-        setResourceType(ResourceType.GPU);
-        setShowResourceType(false);
-      }
+  const handleResourcePoolUpdate = useCallback((selectedPoolName: string) => {
+    const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
+    if (!selectedPool) return;
+    const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
+    const hasGPUCapacity = selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0;
+    if (hasCPUCapacity && hasGPUCapacity) {
+      setShowResourceType(true);
+    } else if (hasCPUCapacity) {
+      setResourceType(ResourceType.CPU);
+      setShowResourceType(false);
+    } else if (hasGPUCapacity) {
+      setResourceType(ResourceType.GPU);
+      setShowResourceType(false);
     }
   },[ resourcePools ]);
 
