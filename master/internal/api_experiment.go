@@ -113,24 +113,21 @@ func (a *apiServer) DeleteExperiment(
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	storage := exp.Config.CheckpointStorage()
-	storage.SetSaveExperimentBest(0)
-	storage.SetSaveTrialBest(0)
-	storage.SetSaveTrialLatest(0)
-	exp.Config.SetCheckpointStorage(storage)
-
 	// TODO(now): This is bad.
 	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
 		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
 	}
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		agentUserGroup: agentUserGroup,
-		taskSpec:       a.m.taskSpec,
-		rm:             a.m.rm,
-		db:             a.m.db,
-		experiment:     exp,
-		gcTensorboards: true,
+		agentUserGroup:     agentUserGroup,
+		taskSpec:           a.m.taskSpec,
+		rm:                 a.m.rm,
+		db:                 a.m.db,
+		experiment:         exp,
+		gcTensorboards:     true,
+		keepExperimentBest: 0,
+		keepTrialBest:      0,
+		keepTrialLatest:    0,
 	}).AwaitTermination(); gcErr != nil {
 		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
