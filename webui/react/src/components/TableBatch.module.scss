@@ -44,7 +44,7 @@
     left: 24px;
     position: absolute;
     transform: translateX(-50%);
-    width: 3rem;
+    width: 30px;
   }
   .actions {
     align-items: center;
@@ -68,7 +68,7 @@
   @media only screen and (max-width: $breakpoint-mobile) {
     .container {
       flex-direction: column;
-      height: 7.8rem;
+      height: 78px;
       justify-content: flex-start;
       padding: 0;
     }
@@ -81,7 +81,7 @@
       padding-bottom: var(--theme-sizes-layout-medium);
     }
     &.show {
-      height: 7.8rem;
+      height: 78px;
     }
   }
 }

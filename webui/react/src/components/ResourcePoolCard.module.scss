@@ -1,5 +1,5 @@
 $padding: var(--theme-sizes-layout-large);
-$icon-side: 5rem;
+$icon-side: 50px;
 $line-height: 22px;
 
 .base {
@@ -24,7 +24,7 @@ $line-height: 22px;
     color: white;
     display: flex;
     flex-direction: row;
-    min-height: 8rem;
+    min-height: 80px;
     padding: $padding;
 
     .icon {

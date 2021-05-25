@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
   return (
     <Page docTitle="Overview" id="dashboard">
       <Section title="Overview">
-        <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.medium} minItemWidth={120} mode={GridMode.AutoFill}>
           <OverviewStats title="Cluster Allocation">
             {overview[ResourceType.ALL].allocation}<small>%</small>
           </OverviewStats>

@@ -192,7 +192,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       */
     let totalContentHeight = 0;
     const messageSizes: Record<string, MessageSize> = {};
-    measure.current.style.width = messageWidth;
+    measure.current.style.width = `${messageWidth}px`;
     logs.forEach((log: ViewerLog) => {
       const lineCount = log.message
         .split('\n')
