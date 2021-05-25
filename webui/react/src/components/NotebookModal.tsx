@@ -45,7 +45,7 @@ const NotebookModal: React.FC<Props> = (
     try {
       setTemplates(await getTaskTemplates({}));
     } catch {}
-  },[]);
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
@@ -53,7 +53,7 @@ const NotebookModal: React.FC<Props> = (
 
   const fetchResourcePools = useCallback(async () => {
     try {
-      setResourcePools( await getResourcePools({}));
+      setResourcePools(await getResourcePools({}));
     } catch {}
   }, []);
 
@@ -74,13 +74,13 @@ const NotebookModal: React.FC<Props> = (
     } catch {}
   }, [ form ]);
 
-  useEffect(()=> {
+  useEffect(() => {
     if (showFullConfig) fetchConfig();
   }, [ showFullConfig, fetchConfig ]);
 
   const storeConfig = useCallback((_, values: NotebookConfig) => {
     delete values.name;
-    storage.set(STORAGE_KEY,values);
+    storage.set(STORAGE_KEY, values);
   }, [ storage ]);
 
   const handleSecondary = useCallback(async () => {
@@ -92,10 +92,10 @@ const NotebookModal: React.FC<Props> = (
         setShowFullConfig(true);
       } catch (e) {}
     }
-  },[ form, showFullConfig ]);
+  }, [ form, showFullConfig ]);
 
   const handleCreateEnvironment = useCallback(
-    (values) =>{
+    (values) => {
       if (showFullConfig) {
         launchNotebook(yaml.load(form.getFieldValue('config')) as RawJson);
       } else {
@@ -127,11 +127,11 @@ const NotebookModal: React.FC<Props> = (
       setResourceType(ResourceType.GPU);
       setShowResourceType(false);
     }
-  },[ resourcePools ]);
+  }, [ resourcePools ]);
 
   const handleTypeUpdate = useCallback((selectedResourceType) => {
     setResourceType(selectedResourceType as ResourceType);
-  },[]);
+  }, []);
 
   return <Modal
     footer={<>
@@ -185,11 +185,11 @@ const NotebookModal: React.FC<Props> = (
       <Form
         form={form}
         initialValues={storage.getWithDefault(STORAGE_KEY, {
-          slots:1,
+          slots: 1,
           template: DEFAULT_KEY,
           type: undefined,
         })}
-        labelCol={{ span:8 }}
+        labelCol={{ span: 8 }}
         onValuesChange={storeConfig}>
         <Item label="Notebook Template" name="template">
           <Select>
@@ -217,8 +217,8 @@ const NotebookModal: React.FC<Props> = (
           name="type"
           rules={[ { message: 'Select a resource type', required: true } ]}>
           <RadioGroup
-            options={[ { id:ResourceType.CPU, label:ResourceType.CPU },
-              { id:ResourceType.GPU, label:ResourceType.GPU } ]}
+            options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
+              { id: ResourceType.GPU, label: ResourceType.GPU } ]}
             onChange={handleTypeUpdate} />
         </Item>}
         {resourceType === 'GPU' ?
