@@ -22,6 +22,8 @@ const { Item } = Form;
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 
+const DEFAULT_KEY = '';
+
 interface Props extends ModalProps {
   onLaunch?: () => void;
   visible?: boolean;
@@ -64,7 +66,7 @@ const NotebookModal: React.FC<Props> = (
       const values: NotebookConfig = form.getFieldsValue(true);
       const config = await previewNotebook(
         values.type === ResourceType.CPU ? 0 : values.slots,
-        values.template === 'default'? undefined : values.template,
+        values.template === DEFAULT_KEY? undefined : values.template,
         values.name,
         values.pool,
       );
@@ -100,7 +102,7 @@ const NotebookModal: React.FC<Props> = (
         launchNotebook(
           undefined,
           resourceType === ResourceType.CPU ? 0 : values.slots,
-          values.template === '' ? undefined : values.template,
+          values.template === DEFAULT_KEY ? undefined : values.template,
           values.name,
           values.pool,
         );
@@ -183,14 +185,14 @@ const NotebookModal: React.FC<Props> = (
         form={form}
         initialValues={storage.getWithDefault(STORAGE_KEY, {
           slots:1,
-          template: '',
+          template: DEFAULT_KEY,
           type: undefined,
         })}
         labelCol={{ span:8 }}
         onValuesChange={storeConfig}>
         <Item label="Notebook Template" name="template">
           <Select>
-            <Option key="" value="">Default Task Template</Option>
+            <Option key={DEFAULT_KEY} value={DEFAULT_KEY}>Default Task Template</Option>
             {templates.map(temp =>
               <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
           </Select>
