@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
@@ -27,6 +28,11 @@ type CheckpointStorageConfigV0 struct {
 	RawSaveExperimentBest *int `json:"save_experiment_best"`
 	RawSaveTrialBest      *int `json:"save_trial_best"`
 	RawSaveTrialLatest    *int `json:"save_trial_latest"`
+}
+
+// Merge implements schemas.Mergeable.
+func (c CheckpointStorageConfigV0) Merge(other interface{}) interface{} {
+	return schemas.UnionMerge(c, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -63,6 +69,11 @@ type TensorboardStorageConfigV0 struct {
 	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
+}
+
+// Merge implements schemas.Mergeable.
+func (t TensorboardStorageConfigV0) Merge(other interface{}) interface{} {
+	return schemas.UnionMerge(t, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.

@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
@@ -22,6 +23,11 @@ type SearcherConfigV0 struct {
 	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
 	RawSourceTrialID        *int    `json:"source_trial_id"`
 	RawSourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+}
+
+// Merge implements schemas.Mergeable.
+func (s SearcherConfigV0) Merge(other interface{}) interface{} {
+	return schemas.UnionMerge(s, other)
 }
 
 // MarshalJSON implements the json.Marshaler interface.

@@ -158,11 +158,11 @@ html {
   .ant-table-thead > tr > th {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
-    border-width: var(--theme-sizes-border-width) 0;
+    border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
     white-space: nowrap;
   }
   .ant-table-thead > tr > th:first-child {
-    border-width: var(--theme-sizes-border-width) 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
+    border-left-width: var(--theme-sizes-border-width);
   }
   .ant-table-thead > tr > th:last-child {
     border-width: var(--theme-sizes-border-width) var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;

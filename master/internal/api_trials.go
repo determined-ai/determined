@@ -486,7 +486,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		api.BatchRequest{Follow: true},
 		fetch,
 		onBatch,
-		nil,
+		a.isTrialTerminalFunc(int(req.TrialId), 10),
 		TrialAvailableSeriesBatchWaitTime,
 	).Run(resp.Context())
 }
