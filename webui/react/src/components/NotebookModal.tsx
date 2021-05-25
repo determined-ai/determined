@@ -116,7 +116,8 @@ const NotebookModal: React.FC<Props> = (
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) return;
     const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
-    const hasGPUCapacity = selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0;
+    const hasGPUCapacity = selectedPool.slotsAvailable > 0
+      || (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     if (hasCPUCapacity && hasGPUCapacity) {
       setShowResourceType(true);
     } else if (hasCPUCapacity) {
