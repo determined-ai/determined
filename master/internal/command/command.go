@@ -53,12 +53,9 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 	expConf := model.DefaultExperimentConfig(taskContainerDefaults)
 	return model.CommandConfig{
 		Resources: model.ResourcesConfig{
-			Slots:  1,
-			Weight: 1,
-			// SlotsPerTrial is not used by commands. They prefer Slots instead.
-			// It is only defined here to pass check.Validate.
-			SlotsPerTrial: 1,
-			Devices:       expConf.Resources.Devices,
+			Slots:   1,
+			Weight:  1,
+			Devices: expConf.Resources.Devices,
 		},
 		Environment: expConf.Environment,
 	}

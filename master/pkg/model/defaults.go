@@ -75,7 +75,6 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 			},
 		},
 		Resources: ResourcesConfig{
-			SlotsPerTrial:  1,
 			Weight:         1,
 			NativeParallel: false,
 		},

@@ -12,7 +12,7 @@ type CommandConfig struct {
 	Environment     Environment      `json:"environment"`
 	Resources       ResourcesConfig  `json:"resources"`
 	Entrypoint      []string         `json:"entrypoint"`
-	TensorBoardArgs []string         `json:"tensorboard_args"`
+	TensorBoardArgs []string         `json:"tensorboard_args,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.
