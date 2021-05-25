@@ -166,8 +166,8 @@ There are several limitations to the coscheduling plugin to be aware of:
    submitted, the high priority job will not be scheduled until one of
    the low priority jobs finishes.
 
-#. Determined is able to automatically set pod labels, but only for GPU
-   experiments. Determined does not currently set labels for CPU
+#. Determined's capability to automatically set pod labels is restricted
+   to GPU experiments. Determined does not currently set labels for CPU
    experiments or user commands.
 
 #. When scheduling experiments that utilize the entire cluster, the
