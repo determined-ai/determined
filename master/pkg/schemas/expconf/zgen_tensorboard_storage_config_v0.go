@@ -21,6 +21,9 @@ func (t TensorboardStorageConfigV0) GetUnionMember() interface{} {
 	if t.RawGCSConfig != nil {
 		return *t.RawGCSConfig
 	}
+	if t.RawAzureConfig != nil {
+		return *t.RawAzureConfig
+	}
 	panic("no union member defined")
 }
 

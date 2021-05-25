@@ -739,7 +739,34 @@ class GCSConfigV0(schemas.SchemaBase):
         pass
 
 
-CheckpointStorageConfigV0_Type = Union[SharedFSConfigV0, HDFSConfigV0, S3ConfigV0, GCSConfigV0]
+@CheckpointStorageConfigV0.member("azure")
+class AzureConfigV0(schemas.SchemaBase):
+    _id = "http://determined.ai/schemas/expconf/v0/azure.json"
+    container: str
+    connection_string: Optional[str] = None
+    account_url: Optional[str] = None
+    credential: Optional[str] = None
+    save_experiment_best: Optional[int] = None
+    save_trial_best: Optional[int] = None
+    save_trial_latest: Optional[int] = None
+
+    @schemas.auto_init
+    def __init__(
+        self,
+        container: str,
+        connection_string: Optional[str] = None,
+        account_url: Optional[str] = None,
+        credential: Optional[str] = None,
+        save_experiment_best: Optional[int] = None,
+        save_trial_best: Optional[int] = None,
+        save_trial_latest: Optional[int] = None,
+    ) -> None:
+        pass
+
+
+CheckpointStorageConfigV0_Type = Union[
+    SharedFSConfigV0, HDFSConfigV0, S3ConfigV0, GCSConfigV0, AzureConfigV0
+]
 CheckpointStorageConfigV0.finalize(CheckpointStorageConfigV0_Type)
 
 

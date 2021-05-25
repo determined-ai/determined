@@ -23,6 +23,7 @@ type CheckpointStorageConfigV0 struct {
 	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
+	RawAzureConfig    *AzureConfigV0    `union:"type,azure" json:"-"`
 
 	RawSaveExperimentBest *int `json:"save_experiment_best"`
 	RawSaveTrialBest      *int `json:"save_trial_best"`
@@ -63,6 +64,7 @@ type TensorboardStorageConfigV0 struct {
 	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
+	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -122,4 +124,13 @@ type S3ConfigV0 struct {
 // GCSConfigV0 configures storing checkpoints on GCS.
 type GCSConfigV0 struct {
 	RawBucket *string `json:"bucket"`
+}
+
+//go:generate ../gen.sh
+// AzureConfigV0 configures storing checkpoints on Azure.
+type AzureConfigV0 struct {
+	RawContainer        *string `json:"container"`
+	RawConnectionString *string `json:"connection_string"`
+	RawAccountURL       *string `json:"account_url"`
+	RawCredential       *string `json:"credential"`
 }

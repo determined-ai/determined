@@ -7,6 +7,95 @@ import (
 )
 
 var (
+	textAzureConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/azure.json",
+    "title": "AzureConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [
+        "container"
+    ],
+    "eventually": {
+        "checks": {
+            "Exactly one of connection_string or account_url must be set": {
+                "oneOf": [
+                    {
+                        "eventuallyRequired": [
+                            "connection_string"
+                        ]
+                    },
+                    {
+                        "eventuallyRequired": [
+                            "account_url"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "properties": {
+        "type": {
+            "const": "azure"
+        },
+        "container": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "connection_string": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "account_url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "credential": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
+    }
+}
+`)
 	textBindMountV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/bind-mount.json",
@@ -315,6 +404,10 @@ var (
                     {
                         "unionKey": "const:type=gcs",
                         "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                    },
+                    {
+                        "unionKey": "const:type=azure",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/azure.json"
                     }
                 ]
             }
@@ -326,9 +419,13 @@ var (
     ],
     "properties": {
         "access_key": true,
+        "account_url": true,
         "bucket": true,
         "checkpoint_path": true,
+        "connection_string": true,
+        "container": true,
         "container_path": true,
+        "credential": true,
         "endpoint_url": true,
         "hdfs_path": true,
         "hdfs_url": true,
@@ -2924,6 +3021,8 @@ var (
     }
 }
 `)
+	schemaAzureConfigV0 interface{}
+
 	schemaBindMountV0 interface{}
 
 	schemaBindMountsConfigV0 interface{}
@@ -3036,6 +3135,17 @@ var (
 
 	cachedSchemaBytesMap map[string][]byte
 )
+
+func ParsedAzureConfigV0() interface{} {
+	if schemaAzureConfigV0 != nil {
+		return schemaAzureConfigV0
+	}
+	err := json.Unmarshal(textAzureConfigV0, &schemaAzureConfigV0)
+	if err != nil {
+		panic("invalid embedded json for AzureConfigV0")
+	}
+	return schemaAzureConfigV0
+}
 
 func ParsedBindMountV0() interface{} {
 	if schemaBindMountV0 != nil {
@@ -3637,6 +3747,8 @@ func schemaBytesMap() map[string][]byte {
 	}
 	var url string
 	cachedSchemaBytesMap = map[string][]byte{}
+	url = "http://determined.ai/schemas/expconf/v0/azure.json"
+	cachedSchemaBytesMap[url] = textAzureConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/bind-mount.json"
 	cachedSchemaBytesMap[url] = textBindMountV0
 	url = "http://determined.ai/schemas/expconf/v0/bind-mounts.json"

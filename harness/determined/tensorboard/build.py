@@ -3,7 +3,7 @@ import pathlib
 from typing import Any, Dict, Optional
 
 from determined.common.storage.shared import _full_storage_path
-from determined.tensorboard import base, gcs, hdfs, s3, shared
+from determined.tensorboard import azure, base, gcs, hdfs, s3, shared
 
 
 def get_sync_path(cluster_id: str, experiment_id: str, trial_id: str) -> pathlib.Path:
@@ -89,6 +89,20 @@ def build(
             checkpoint_config.get("access_key", None),
             checkpoint_config.get("secret_key", None),
             checkpoint_config.get("endpoint_url", None),
+            base_path,
+            sync_path,
+        )
+
+    elif type_name == "azure":
+        if not checkpoint_config.get("connection_string") and checkpoint_config.get("access_url"):
+            raise ValueError(
+                "At least one of [connection_string, account_url] must be specified for Azure Tensorboard Manager, but none were."
+            )
+        return azure.AzureTensorboardManager(
+            checkpoint_config["container"],
+            checkpoint_config.get("connection_string", None),
+            checkpoint_config.get("access_url", None),
+            checkpoint_config.get("credential", None),
             base_path,
             sync_path,
         )

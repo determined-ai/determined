@@ -231,6 +231,21 @@ func (t *tensorboardManager) newTensorBoard(
 
 			logBasePath = "s3://" + c.Bucket()
 
+		case expconf.AzureConfig:
+			if connection_string := c.ConnectionString(); connection_string != nil {
+				uniqEnvVars["AZURE_CONNECTION_STRING"] = *connection_string
+			}
+			if account_url := c.AccountURL(); account_url != nil {
+				uniqEnvVars["AZURE_ACCOUNT_URL"] = *account_url
+			}
+			if credential := c.Credential(); credential != nil {
+				uniqEnvVars["AZURE_CREDENTIAL"] = *credential
+			}
+
+			uniqEnvVars["AZURE_CONTAINER"] = c.Container()
+
+			logBasePath = "azure://" + c.Container()
+
 		case expconf.GCSConfig:
 			logBasePath = "gs://" + c.Bucket()
 

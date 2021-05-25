@@ -28,6 +28,7 @@ type CheckpointStorageConfig struct {
 	HDFSConfig     *HDFSConfig     `union:"type,hdfs" json:"-"`
 	S3Config       *S3Config       `union:"type,s3" json:"-"`
 	GCSConfig      *GCSConfig      `union:"type,gcs" json:"-"`
+	AzureConfig    *AzureConfig    `union:"type,azure" json:"-"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -59,6 +60,7 @@ type TensorboardStorageConfig struct {
 	HDFSConfig     *HDFSConfig     `union:"type,hdfs" json:"-"`
 	S3Config       *S3Config       `union:"type,s3" json:"-"`
 	GCSConfig      *GCSConfig      `union:"type,gcs" json:"-"`
+	AzureConfig    *AzureConfig    `union:"type,azure" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -152,3 +154,13 @@ type GCSConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (GCSConfig) Validate() []error { return nil }
+
+// AzureConfig configures storing checkpoints on Azure.
+type AzureConfig struct {
+	Container        string  `json:"container"`
+	ConnectionString *string `json:"connection_string,omitempty"`
+	AccountURL       *string `json:"account_url,omitempty"`
+	Credential       *string `json:"credential,omitempty"`
+}
+
+func (AzureConfig) Validate() []error { return nil }

@@ -10,25 +10,34 @@
     "eventuallyRequired": [
         "container"
     ],
-    "checks": {
-        "Exactly one of connection_string or account_url must be set": {
-            "oneOf": [
-                {
-                    "eventuallyRequired": [
-                        "connection_string"
-                    ]
-                },
-                {
-                    "eventuallyRequired": [
-                        "account_url"
-                    ]
-                }
-            ]
+    "eventually": {
+        "checks": {
+            "Exactly one of connection_string or account_url must be set": {
+                "oneOf": [
+                    {
+                        "eventuallyRequired": [
+                            "connection_string"
+                        ]
+                    },
+                    {
+                        "eventuallyRequired": [
+                            "account_url"
+                        ]
+                    }
+                ]
+            }
         }
     },
     "properties": {
         "type": {
             "const": "azure"
+        },
+        "container": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
         },
         "connection_string": {
             "type": [

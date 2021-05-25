@@ -4,6 +4,7 @@ package expconf
 
 type AdaptiveASHAConfig = AdaptiveASHAConfigV0
 type AsyncHalvingConfig = AsyncHalvingConfigV0
+type AzureConfig = AzureConfigV0
 type BindMount = BindMountV0
 type BindMountsConfig = BindMountsConfigV0
 type CategoricalHyperparameter = CategoricalHyperparameterV0
