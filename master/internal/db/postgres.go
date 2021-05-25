@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -699,6 +700,55 @@ FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
 	}
+
+	return &experiment, nil
+}
+
+// ExperimentByIDWithUnparsableFieldsDummied looks up an experiment by ID in a
+// database, returning an error if none exists. If the configuration cannot be parsed,
+// sections with backwards imcompatible changes pre-expconf are dummied out. This MUST
+// only be called where those fields are not relied on (e.g. checkpoint GC).
+func (db *PgDB) ExperimentByIDWithUnparsableFieldsDummied(id int) (*model.Experiment, error) {
+	var experiment model.Experiment
+	if err := db.query(`
+SELECT id, state, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id
+FROM experiments
+WHERE id = $1`, &experiment, id); err != nil {
+		return nil, errors.Wrap(err, "querying experiment")
+	}
+
+	bytes, err := db.ExperimentConfigRaw(id)
+	if err != nil {
+		return nil, errors.Wrap(err, "querying raw config")
+	}
+
+	conf, err := expconf.ParseAnyExperimentConfigYAML(bytes)
+	// Attempt to dummy out the searcher config and re-parse.
+	if err != nil {
+		jsonConf := map[string]interface{}{}
+		if err := json.Unmarshal(bytes, &conf); err != nil {
+			return nil, errors.Wrap(err, "unmarshalling old conf to map")
+		}
+
+		s := expconf.SingleConfig{}
+		s.SetMaxLength(expconf.Length{
+			Unit: expconf.Batches,
+			Units: 1,
+		})
+		jsonConf["searcher"] = s
+
+		bytes, err = json.Marshal(jsonConf)
+		if err != nil {
+			return nil, errors.Wrap(err, "marshalling old conf to bytes")
+		}
+
+		conf, err = expconf.ParseAnyExperimentConfigJSON(bytes)
+		if err != nil {
+			return nil, errors.Wrap(err, "parsing old conf with dummied searcher")
+		}
+	}
+	experiment.Config = conf
 
 	return &experiment, nil
 }

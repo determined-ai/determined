@@ -86,7 +86,7 @@ func (a *apiServer) DeleteExperiment(
 	_ context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
 	expID := int(req.ExperimentId)
-	exp, err := a.m.db.ExperimentByID(expID)
+	exp, err := a.m.db.ExperimentByIDWithUnparsableFieldsDummied(expID)
 	switch {
 	case errors.Cause(err) == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found")
@@ -119,6 +119,7 @@ func (a *apiServer) DeleteExperiment(
 	storage.SetSaveTrialLatest(0)
 	exp.Config.SetCheckpointStorage(storage)
 
+	// TODO(now): This is bad.
 	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
 		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
 	}
