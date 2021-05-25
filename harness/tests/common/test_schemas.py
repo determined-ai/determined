@@ -92,7 +92,7 @@ class Case:
             if not errors:
                 continue
             raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
-    
+
     def run_completeness(self) -> None:
         if not self.complete_as:
             return
