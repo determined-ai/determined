@@ -34,6 +34,7 @@ func eventuallyValidate(
 	return ctx.Validate(eventually, instance)
 }
 
+// EventuallyExtension instantiates the eventually extension.
 func EventuallyExtension() jsonschema.Extension {
 	meta, err := jsonschema.CompileString("eventuallyExtension.json", `{
 		"properties" : {
