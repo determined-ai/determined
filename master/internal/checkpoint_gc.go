@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -19,6 +18,10 @@ type checkpointGCTask struct {
 	db             *db.PgDB
 	experiment     *model.Experiment
 	gcTensorboards bool
+
+	keepExperimentBest int
+	keepTrialBest      int
+	keepTrialLatest    int
 
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
@@ -48,13 +51,11 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
-		config := t.experiment.Config.CheckpointStorage()
-
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(
 			t.experiment.ID,
-			ptrs.IntPtr(config.SaveExperimentBest()),
-			ptrs.IntPtr(config.SaveTrialBest()),
-			ptrs.IntPtr(config.SaveTrialLatest()),
+			t.keepExperimentBest,
+			t.keepTrialBest,
+			t.keepTrialLatest,
 			true,
 		)
 		if err != nil {

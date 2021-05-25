@@ -173,10 +173,10 @@ func (m *Master) getExperimentSummaryMetrics(c echo.Context) (interface{}, error
 
 func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, error) {
 	args := struct {
-		ExperimentID   int  `path:"experiment_id"`
-		ExperimentBest *int `query:"save_experiment_best"`
-		TrialBest      *int `query:"save_trial_best"`
-		TrialLatest    *int `query:"save_trial_latest"`
+		ExperimentID   int `path:"experiment_id"`
+		ExperimentBest int `query:"save_experiment_best"`
+		TrialBest      int `query:"save_trial_best"`
+		TrialLatest    int `query:"save_trial_latest"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err

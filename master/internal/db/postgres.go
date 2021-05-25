@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
 	"github.com/golang-migrate/migrate"
 	postgresM "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file" // Load migrations from files.
@@ -706,7 +708,7 @@ WHERE id = $1`, &experiment, id); err != nil {
 
 // ExperimentByIDWithUnparsableFieldsDummied looks up an experiment by ID in a
 // database, returning an error if none exists. If the configuration cannot be parsed,
-// sections with backwards imcompatible changes pre-expconf are dummied out. This MUST
+// sections with backwards incompatible changes pre-expconf are dummied out. This MUST
 // only be called where those fields are not relied on (e.g. checkpoint GC).
 func (db *PgDB) ExperimentByIDWithUnparsableFieldsDummied(id int) (*model.Experiment, error) {
 	var experiment model.Experiment
@@ -727,20 +729,23 @@ WHERE id = $1`, &experiment, id); err != nil {
 	// Attempt to dummy out the searcher config and re-parse.
 	if err != nil {
 		jsonConf := map[string]interface{}{}
-		if err := json.Unmarshal(bytes, &conf); err != nil {
-			return nil, errors.Wrap(err, "unmarshalling old conf to map")
+		if err = json.Unmarshal(bytes, &conf); err != nil {
+			return nil, errors.Wrap(err, "unmarshaling old conf to map")
 		}
 
-		s := expconf.SingleConfig{}
-		s.SetMaxLength(expconf.Length{
-			Unit: expconf.Batches,
-			Units: 1,
+		jsonConf["searcher"] = schemas.WithDefaults(expconf.SearcherConfig{
+			RawMetric: ptrs.StringPtr("bogus"),
+			RawSingleConfig: &expconf.SingleConfig{
+				RawMaxLength: &expconf.Length{
+					Unit:  expconf.Batches,
+					Units: 1,
+				},
+			},
 		})
-		jsonConf["searcher"] = s
 
 		bytes, err = json.Marshal(jsonConf)
 		if err != nil {
-			return nil, errors.Wrap(err, "marshalling old conf to bytes")
+			return nil, errors.Wrap(err, "marshaling old conf to bytes")
 		}
 
 		conf, err = expconf.ParseAnyExperimentConfigJSON(bytes)
@@ -1075,7 +1080,7 @@ WHERE id = $1`, id)
 // checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
-	experimentBest, trialBest, trialLatest *int,
+	experimentBest, trialBest, trialLatest int,
 	delete bool,
 ) ([]byte, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
@@ -1088,13 +1093,7 @@ WITH const AS (
                 WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
                 THEN 1
                 ELSE -1
-            END) AS sign,
-           coalesce($2, (config->'checkpoint_storage'->>'save_experiment_best')::int)
-               AS experiment_best,
-           coalesce($3, (config->'checkpoint_storage'->>'save_trial_best')::int)
-               AS trial_best,
-           coalesce($4, (config->'checkpoint_storage'->>'save_trial_latest')::int)
-               AS trial_latest
+            END) AS sign
     FROM experiments WHERE id = $1
 ), selected_checkpoints AS (
     SELECT *
@@ -1148,13 +1147,10 @@ WITH const AS (
             WHERE c.state = 'COMPLETED' AND c.trial_id = t.id AND t.experiment_id = $1
         ) _, const
     ) c, const
-    WHERE (const.experiment_best IS NOT NULL
-               OR const.trial_best IS NOT NULL
-               OR const.trial_latest IS NOT NULL)
-          AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
-          AND c.trial_order_rank > const.trial_latest
-          AND ((c.experiment_rank > const.experiment_best
-                AND c.trial_rank > const.trial_best)
+    WHERE (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
+          AND c.trial_order_rank > $4
+          AND ((c.experiment_rank > $2
+                AND c.trial_rank > $3)
                OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
                    IS NULL))
 )`

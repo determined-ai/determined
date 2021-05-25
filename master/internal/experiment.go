@@ -322,11 +322,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("experiment state changed to %s", e.State)
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			agentUserGroup: e.agentUserGroup,
-			taskSpec:       e.taskSpec,
-			rm:             e.rm,
-			db:             e.db,
-			experiment:     e.Experiment,
+			agentUserGroup:     e.agentUserGroup,
+			taskSpec:           e.taskSpec,
+			rm:                 e.rm,
+			db:                 e.db,
+			experiment:         e.Experiment,
+			keepExperimentBest: e.Config.CheckpointStorage().SaveExperimentBest(),
+			keepTrialBest:      e.Config.CheckpointStorage().SaveTrialBest(),
+			keepTrialLatest:    e.Config.CheckpointStorage().SaveTrialLatest(),
 		})
 
 		if e.State == model.CompletedState {
