@@ -30,15 +30,10 @@ class ExperimentConfig(dict):
         return bool(self.get("profiling", {}).get("enabled", False))
 
     def profiling_interval(self) -> Tuple[int, Optional[int]]:
-        end_after_batch = self.get("profiling", {}).get("end_after_batch", None)
-        if end_after_batch is not None:
-            end_after_batch = int(end_after_batch)
+        if not self.profiling_enabled():
+            return 0, 0
 
-        begin_on_batch = self.get("profiling", {}).get("begin_on_batch", 0)
-        if begin_on_batch is None:
-            begin_on_batch = 0
-
-        return int(begin_on_batch), end_after_batch
+        return self["profiling"]["begin_on_batch"], self["profiling"].get("end_after_batch", None)
 
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])

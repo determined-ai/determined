@@ -21,7 +21,7 @@ from tensorflow.python.keras.saving.hdf5_format import (
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, profiler, util, workload
+from determined import horovod, keras, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -242,7 +242,6 @@ class TFKerasTrialController(det.LoopTrialController):
     @staticmethod
     def from_trial(
         trial_inst: det.Trial,
-        prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: workload.Stream,
@@ -283,24 +282,20 @@ class TFKerasTrialController(det.LoopTrialController):
         tf_keras_callbacks = trial.keras_callbacks()
 
         return TFKerasTrialController(
-            model=context.model,
-            session=session,
-            train_config=keras.TFKerasTrainConfig(
-                training_data, validation_data, tf_keras_callbacks
-            ),
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
+            context.model,
+            session,
+            keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
+            context,
+            env,
+            workloads,
+            load_path,
+            rendezvous_info,
+            hvd_config,
         )
 
     @staticmethod
     def from_native(
         context: det.NativeContext,
-        prof: profiler.ProfilerAgent,
         env: det.EnvContext,
         workloads: workload.Stream,
         load_path: Optional[pathlib.Path],
@@ -335,16 +330,15 @@ class TFKerasTrialController(det.LoopTrialController):
         )
 
         return TFKerasTrialController(
-            model=context.model,
-            session=session,
-            train_config=train_config,
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
+            context.model,
+            session,
+            train_config,
+            context,
+            env,
+            workloads,
+            load_path,
+            rendezvous_info,
+            hvd_config,
         )
 
     def __init__(
@@ -352,23 +346,10 @@ class TFKerasTrialController(det.LoopTrialController):
         model: tf.keras.models.Model,
         session: tf.compat.v1.ConfigProto,
         train_config: keras.TFKerasTrainConfig,
-        context: Any,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: det.RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
-        )
+        super().__init__(*args, **kwargs)
 
         self.model = model
         self.session = session
@@ -681,12 +662,13 @@ class TFKerasTrialController(det.LoopTrialController):
                 self.multiplexer_load_state = pickle.load(f)
 
     def run(self) -> None:
-        try:
-            self._launch_fit()
-        except det.errors.WorkerFinishedGracefully:
-            pass
-        finally:
-            self._stop_enqueuers()
+        with self.prof:
+            try:
+                self._launch_fit()
+            except det.errors.WorkerFinishedGracefully:
+                pass
+            finally:
+                self._stop_enqueuers()
 
     def _launch_fit(self) -> None:
         training_data = self.training_data

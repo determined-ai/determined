@@ -717,6 +717,7 @@ class _DeterminedProfiler(Callback):
     def load_state(self, state: Any) -> None:
         self.current_batch = state["current_batch"]
 
-    def on_train_batch_begin(self, batch: int, logs: Optional[Dict] = None) -> None:
+    def on_train_batch_begin(self, batch: int, _: Optional[Dict] = None) -> None:
+        # Brad: why not just this?
+        # self.prof.update_batch_idx(batch)
         self.current_batch += 1
-        self.prof.update_batch_idx(self.current_batch)

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, profiler, pytorch, util, workload
+from determined import horovod, pytorch, util, workload
 from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
@@ -21,26 +21,8 @@ except ImportError:
 
 
 class PyTorchTrialController(det.LoopTrialController):
-    def __init__(
-        self,
-        trial_inst: det.Trial,
-        context: Any,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: det.RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
-    ) -> None:
-        super().__init__(
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
-        )
+    def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
@@ -100,26 +82,8 @@ class PyTorchTrialController(det.LoopTrialController):
         # torch.backends.cudnn.benchmark = False
 
     @staticmethod
-    def from_trial(
-        trial_inst: "det.Trial",
-        prof: profiler.ProfilerAgent,
-        context: det.TrialContext,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: det.RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-    ) -> det.TrialController:
-        return PyTorchTrialController(
-            trial_inst=trial_inst,
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
-        )
+    def from_trial(*args: Any, **kwargs: Any) -> det.TrialController:
+        return PyTorchTrialController(*args, **kwargs)
 
     @staticmethod
     def from_native(*args: Any, **kwargs: Any) -> det.TrialController:
@@ -176,61 +140,64 @@ class PyTorchTrialController(det.LoopTrialController):
             )
 
     def run(self) -> None:
-        for w, args, response_func in self.workloads:
-            if w.kind == workload.Workload.Kind.RUN_STEP:
-                try:
-                    response_func(
-                        util.wrap_metrics(
-                            self._train_for_step(
-                                w.step_id,
-                                w.num_batches,
-                                w.total_batches_processed,
-                            ),
-                            self.context.get_stop_requested(),
-                            invalid_hp=False,
+        with self.prof:
+            for w, args, response_func in self.workloads:
+                if w.kind == workload.Workload.Kind.RUN_STEP:
+                    try:
+                        response_func(
+                            util.wrap_metrics(
+                                self._train_for_step(
+                                    w.step_id,
+                                    w.num_batches,
+                                    w.total_batches_processed,
+                                ),
+                                self.context.get_stop_requested(),
+                                invalid_hp=False,
+                            )
                         )
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial train step: {}".format(e)
-                    )
-                    response_func(
-                        util.wrap_metrics(
-                            {},
-                            self.context.get_stop_requested(),
-                            invalid_hp=True,
+                    except det.InvalidHP as e:
+                        logging.info(
+                            "Invalid hyperparameter exception in trial train step: {}".format(e)
                         )
-                    )
-            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                try:
-                    response_func(
-                        util.wrap_metrics(
-                            self._compute_validation_metrics(),
-                            self.context.get_stop_requested(),
-                            invalid_hp=False,
+                        response_func(
+                            util.wrap_metrics(
+                                {},
+                                self.context.get_stop_requested(),
+                                invalid_hp=True,
+                            )
                         )
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
-                    )
-                    response_func(
-                        util.wrap_metrics(
-                            {},
-                            self.context.get_stop_requested(),
-                            invalid_hp=True,
+                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    try:
+                        response_func(
+                            util.wrap_metrics(
+                                self._compute_validation_metrics(),
+                                self.context.get_stop_requested(),
+                                invalid_hp=False,
+                            )
                         )
-                    )
-            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                check.eq(len(args), 1)
-                check.is_instance(args[0], pathlib.Path)
-                path = cast(pathlib.Path, args[0])
-                response_func(self._save(path))
-            elif w.kind == workload.Workload.Kind.TERMINATE:
-                response_func({} if self.is_chief else workload.Skipped())
-                break
-            else:
-                raise AssertionError("Unexpected workload: {}".format(w.kind))
+                    except det.InvalidHP as e:
+                        logging.info(
+                            "Invalid hyperparameter exception in trial validation step: {}".format(
+                                e
+                            )
+                        )
+                        response_func(
+                            util.wrap_metrics(
+                                {},
+                                self.context.get_stop_requested(),
+                                invalid_hp=True,
+                            )
+                        )
+                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    check.eq(len(args), 1)
+                    check.is_instance(args[0], pathlib.Path)
+                    path = cast(pathlib.Path, args[0])
+                    response_func(self._save(path))
+                elif w.kind == workload.Workload.Kind.TERMINATE:
+                    response_func({} if self.is_chief else workload.Skipped())
+                    break
+                else:
+                    raise AssertionError("Unexpected workload: {}".format(w.kind))
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)

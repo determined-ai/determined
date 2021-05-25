@@ -1,7 +1,8 @@
 import abc
 import logging
+import os
 import pathlib
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import determined as det
 from determined import horovod, profiler, workload
@@ -51,6 +52,12 @@ class TrialController(metaclass=abc.ABCMeta):
         self.hvd_config = hvd_config
         self.prof = prof
 
+        self.prof = profiler.ProfilerAgent.from_env(
+            env,
+            rendezvous_info.get_rank(),
+            int(os.getenv("HOROVOD_LOCAL_RANK", 0)),
+        )
+
         self._check_if_trial_supports_configurations(env)
 
     @staticmethod
@@ -66,7 +73,6 @@ class TrialController(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def from_trial(
         trial_inst: "det.Trial",
-        prof: profiler.ProfilerAgent,
         context: det.TrialContext,
         env: det.EnvContext,
         workloads: workload.Stream,
@@ -83,7 +89,6 @@ class TrialController(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def from_native(
         context: det.NativeContext,
-        prof: profiler.ProfilerAgent,
         env: det.EnvContext,
         workloads: workload.Stream,
         load_path: Optional[pathlib.Path],
@@ -231,25 +236,8 @@ class CallbackTrialController(TrialController):
 
 
 class LoopTrialController(TrialController):
-    def __init__(
-        self,
-        context: Any,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
-    ) -> None:
-        super().__init__(
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
-        )
+    def __init__(self, *args: List[Any], **kwargs: Dict[str, Any]) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore
 
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()

@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import psutil
 
+import determined as det
 from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
@@ -126,6 +127,20 @@ class ProfilerAgent:
             #       Does this need to be its own thread to flush correctly?
             # if self.timings_is_enabled:
             #     self.timings_batcher = TimingsBatcher()
+
+    @staticmethod
+    def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
+        start_on_batch, end_after_batch = env.experiment_config.profiling_interval()
+        return ProfilerAgent(
+            trial_id=env.det_trial_id,
+            agent_id=env.det_agent_id,
+            master_url=env.master_url,
+            profiling_is_enabled=env.experiment_config.profiling_enabled(),
+            global_rank=global_rank,
+            local_rank=local_rank,
+            start_on_batch=start_on_batch,
+            end_after_batch=end_after_batch,
+        )
 
     # Launch the children threads. This does not mean 'start collecting metrics'
     def start(self) -> None:
@@ -283,23 +298,6 @@ class ProfilerAgent:
         if not self.is_enabled:
             return
         # TODO [DET-5062]: Add new timing to TimingBatcher
-
-
-def create_no_op_profiler() -> ProfilerAgent:
-    """
-    Create a ProfilerAgent that is disabled. Utility function for testing, but also
-    used by test_one_batch in native, so it can't be put in the tests folder.
-    """
-    return ProfilerAgent(
-        trial_id="",
-        agent_id="",
-        master_url="",
-        profiling_is_enabled=False,
-        global_rank=0,
-        local_rank=0,
-        start_on_batch=0,
-        end_after_batch=None,
-    )
 
 
 class PreemptibleTimer(threading.Thread):
