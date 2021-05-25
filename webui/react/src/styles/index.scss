@@ -4,13 +4,6 @@
 @import 'fonts.scss';
 @import 'antd.scss';
 
-/*
-  Most default browser font size is 16px and 62.5% of 16px
-  is 10px. Which also makes 10px equal 10px.
-  This also allows user to use browser magnification and the
-  rem items will scale accordingly.
-*/
-
 html,
 body,
 #root {

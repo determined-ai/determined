@@ -14,9 +14,9 @@ describe('ansiToHtml', () => {
 
 describe('toRem', () => {
   it('should convert number to rem value', () => {
-    expect(toRem(5)).toBe('5px');
+    expect(toRem(5)).toBe('0.5rem');
     expect(toRem(123)).toBe('12.3rem');
-    expect(toRem(0)).toBe('00px');
+    expect(toRem(0)).toBe('0rem');
   });
 
   it('should convert pixel value to rem value', () => {
@@ -26,8 +26,8 @@ describe('toRem', () => {
   });
 
   it('should leave rem values alone', () => {
-    expect(toRem('5px')).toBe('5px');
-    expect(toRem('10 rem')).toBe('100px');
+    expect(toRem('0.5rem')).toBe('0.5rem');
+    expect(toRem('10 rem')).toBe('10rem');
     expect(toRem('123.45 rem')).toBe('123.45rem');
   });
 });
@@ -42,10 +42,10 @@ describe('toPixel', () => {
 
   it('should convert rem value to pixel value', () => {
     expect(toPixel('.5rem')).toBe('5px');
-    expect(toPixel('5px')).toBe('5px');
+    expect(toPixel('0.5rem')).toBe('5px');
     expect(toPixel('5rem')).toBe('50px');
     expect(toPixel('12 rem')).toBe('120px');
-    expect(toPixel('57px')).toBe('507px');
+    expect(toPixel('5.07rem')).toBe('50.7px');
   });
 
   it('should leave px values alone', () => {
