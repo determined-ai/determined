@@ -6,13 +6,14 @@ import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
-import StoreProvider, { useStore } from 'contexts/Store';
+import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
-import useKeyTracker from 'hooks/useKeyTracker';
+import useKeyTracker,{ KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
+import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
@@ -21,8 +22,9 @@ import { paths } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const { info } = useStore();
   const [ canceler ] = useState(new AbortController());
+  const { info, ui } = useStore();
+  const storeDispatch = useStoreDispatch();
 
   const fetchInfo = useFetchInfo(canceler);
 
@@ -61,13 +63,36 @@ const AppView: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (e.code === KeyCode.Space && e.ctrlKey) {
+        if (ui.omnibar.isShowing) {
+          storeDispatch({ type: StoreAction.HideOmnibar });
+        } else {
+          storeDispatch({ type: StoreAction.ShowOmnibar });
+        }
+      } else if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
+        storeDispatch({ type: StoreAction.HideOmnibar });
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [ ui.omnibar.isShowing, storeDispatch ]);
+
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
   return (
     <div className={css.base}>
       <Navigation>
-        <main><Router routes={appRoutes} /></main>
+        <main>
+          <Router routes={appRoutes} />
+          {ui.omnibar.isShowing && <Omnibar />}
+        </main>
       </Navigation>
     </div>
   );
