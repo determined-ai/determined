@@ -100,7 +100,7 @@ const NotebookModal: React.FC<Props> = (
         launchNotebook(
           undefined,
           resourceType === ResourceType.CPU ? 0 : values.slots,
-          values.template === 'default' ? undefined : values.template,
+          values.template === '' ? undefined : values.template,
           values.name,
           values.pool,
         );
@@ -183,14 +183,14 @@ const NotebookModal: React.FC<Props> = (
         form={form}
         initialValues={storage.getWithDefault(STORAGE_KEY, {
           slots:1,
-          template: 'default',
+          template: '',
           type: undefined,
         })}
         labelCol={{ span:8 }}
         onValuesChange={storeConfig}>
         <Item label="Notebook Template" name="template">
           <Select>
-            <Option key="default" value="default">Default Task Template</Option>
+            <Option key="" value="">Default Task Template</Option>
             {templates.map(temp =>
               <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
           </Select>
