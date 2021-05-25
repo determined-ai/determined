@@ -10,13 +10,18 @@ interface Props {
   children?: React.ReactNode;
 }
 
+interface OmnibarState {
+  isShowing: boolean;
+}
+
 interface UI {
   chromeCollapsed: boolean;
+  omnibar: OmnibarState;
   showChrome: boolean;
   showSpinner: boolean;
 }
 
-interface State {
+export interface State {
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
@@ -50,9 +55,13 @@ export enum StoreAction {
 
   // Users
   SetUsers,
+
+  // Omnibar
+  HideOmnibar,
+  ShowOmnibar,
 }
 
-type Action =
+export type Action =
 | { type: StoreAction.Reset }
 | { type: StoreAction.SetAgents; value: Agent[] }
 | { type: StoreAction.ResetAuth }
@@ -67,6 +76,8 @@ type Action =
 | { type: StoreAction.ShowUIChrome }
 | { type: StoreAction.ShowUISpinner }
 | { type: StoreAction.SetUsers; value: DetailedUser[] }
+| { type: StoreAction.HideOmnibar }
+| { type: StoreAction.ShowOmnibar }
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -90,6 +101,7 @@ const initInfo = {
 };
 const initUI = {
   chromeCollapsed: false,
+  omnibar: { isShowing: false },
   showChrome: true,
   showSpinner: false,
 };
@@ -135,7 +147,7 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   return overview;
 };
 
-const reducer = (state: State, action: Action) => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
@@ -184,6 +196,12 @@ const reducer = (state: State, action: Action) => {
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
+    case StoreAction.HideOmnibar:
+      if (!state.ui.omnibar.isShowing) return state;
+      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };
+    case StoreAction.ShowOmnibar:
+      if (state.ui.omnibar.isShowing) return state;
+      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
     default:
       return state;
   }

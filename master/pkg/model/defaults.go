@@ -25,8 +25,8 @@ const (
 
 // Default task environment docker image names.
 const (
-	defaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-baefbf7"
-	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-baefbf7"
+	defaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02"
+	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
 )
 
 // DefaultExperimentConfig returns a new default experiment config.
