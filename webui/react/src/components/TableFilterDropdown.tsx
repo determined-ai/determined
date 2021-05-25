@@ -135,7 +135,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         itemCount={filteredOptions.length}
         itemData={filteredOptions}
         itemSize={ITEM_HEIGHT}
-        width='100%'>
+        width="100%">
         {OptionRow}
       </FixedSizeList>
       <div className={css.footer}>

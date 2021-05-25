@@ -43,7 +43,7 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
 };
 
 const rpAttrs = [
-  [ 'location', 'Location' ] ,
+  [ 'location', 'Location' ],
   [ 'instanceType', 'Instance Type' ],
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
@@ -72,7 +72,7 @@ const ResourcePoolCard: React.FC<Props> = (
   const shortDetails = rpAttrs.reduce((acc, cur) => {
     acc[cur[1]] = (rp as unknown as SafeRawJson)[cur[0]];
     return acc;
-  }, {} as SafeRawJson );
+  }, {} as SafeRawJson);
   shortDetails['Scheduler Type'] =
     V1SchedulerTypeToLabel[shortDetails['Scheduler Type'] as V1SchedulerType];
 

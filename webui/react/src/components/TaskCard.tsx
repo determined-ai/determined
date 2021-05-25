@@ -48,7 +48,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
         </div>
         <div className={css.lower}>
           <div className={css.badges}>
-            <Badge type={BadgeType.Default}>{`${props.id}`.slice(0,4)}</Badge>
+            <Badge type={BadgeType.Default}>{`${props.id}`.slice(0, 4)}</Badge>
             <Badge state={props.state} type={BadgeType.State} />
             {isExperimentTask(props) && hasProgress && !isComplete
                 && <div className={css.percent}>{`${percent(props.progress || 0)}%`}</div>}

@@ -76,7 +76,7 @@ const useRestApi = <In, Out>(
 
     dispatch({ type: ActionType.SetLoading, value: true });
     apiRequest({ ...params, cancelToken: source.token })
-      .then((result) => dispatch({ type: ActionType.SetData, value: result } ))
+      .then((result) => dispatch({ type: ActionType.SetData, value: result }))
       .catch((e) => (!axios.isCancel(e)) && dispatch({ type: ActionType.SetError, value: e }));
 
     return (): void => source.cancel();

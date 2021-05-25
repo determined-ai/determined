@@ -68,7 +68,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
 
       <SelectFilter
         enableSearchFilter={false}
-        label='Metric Name'
+        label="Metric Name"
         showSearch={false}
         style={{ width: 220 }}
         value={value.name}
@@ -81,7 +81,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
 
       <SelectFilter
         enableSearchFilter={false}
-        label='Agent Name'
+        label="Agent Name"
         showSearch={false}
         style={{ width: 220 }}
         value={value.agentId}
@@ -96,8 +96,8 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
         <SelectFilter
           allowClear={true}
           enableSearchFilter={false}
-          label='GPU'
-          placeholder='All'
+          label="GPU"
+          placeholder="All"
           showSearch={false}
           style={{ width: 220 }}
           value={value.gpuUuid}

@@ -64,7 +64,7 @@ const TrialChart: React.FC<Props> = ({
       });
     });
 
-    xValues.sort((a,b) => a-b);
+    xValues.sort((a, b) => a - b);
 
     const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
       return xValues.map(xValue => yValue[xValue] || null);
@@ -119,7 +119,7 @@ const TrialChart: React.FC<Props> = ({
   );
 
   return (
-    <Section bodyBorder options={options} title='Metrics'>
+    <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
         <UPlotChart data={chartData} options={chartOptions} />
       </div>
