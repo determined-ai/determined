@@ -359,7 +359,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 			return nil, err
 		}
 
-		exp, err = t.db.ExperimentByID(expID)
+		exp, err = t.db.ExperimentByIDWithUnparsableFieldsDummied(expID)
 		if err != nil {
 			return nil, err
 		}
