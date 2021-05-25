@@ -43,9 +43,9 @@ class AzureTensorboardManager(base.TensorboardManager):
                 logging.warning(
                     (
                         "The storage client raised the following HttpResponseError:\n{}\nPlease "
-                        + "ignore this warning if this is because the account url provided points to "
-                        + "a container instead of a storage account; otherwise, it may be necessary "
-                        + "to fix your config.yaml."
+                        + "ignore this warning if this is because the account url provided points "
+                        + "to a container instead of a storage account; otherwise, it may be "
+                        + "necessary to fix your config.yaml."
                     ).format(e)
                 )
             else:

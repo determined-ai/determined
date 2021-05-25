@@ -48,9 +48,9 @@ class AzureStorageManager(StorageManager):
                 logging.warning(
                     (
                         "The storage client raised the following HttpResponseError:\n{}\nPlease "
-                        + "ignore this warning if this is because the account url provided points to "
-                        + "a container instead of a storage account; otherwise, it may be necessary "
-                        + "to fix your config.yaml."
+                        + "ignore this warning if this is because the account url provided points "
+                        + "to a container instead of a storage account; otherwise, it may be "
+                        + "necessary to fix your config.yaml."
                     ).format(e)
                 )
             else:
@@ -59,7 +59,9 @@ class AzureStorageManager(StorageManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
-        """post_store_path uploads the checkpoint to Azure Blob Storage and deletes the original files."""
+        """post_store_path uploads the checkpoint to Azure Blob Storage and deletes the original
+        files.
+        """
         try:
             logging.info("Uploading checkpoint {} to Azure Blob Storage.".format(storage_id))
             self.upload(metadata, storage_dir)

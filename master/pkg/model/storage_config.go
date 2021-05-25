@@ -163,4 +163,5 @@ type AzureConfig struct {
 	Credential       *string `json:"credential,omitempty"`
 }
 
+// Validate implements the check.Validatable interface.
 func (AzureConfig) Validate() []error { return nil }

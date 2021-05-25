@@ -39,6 +39,13 @@ schemas = {
         "type": {
             "const": "azure"
         },
+        "container": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "connection_string": {
             "type": [
                 "string",
@@ -427,6 +434,10 @@ schemas = {
                     {
                         "unionKey": "const:type=gcs",
                         "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                    },
+                    {
+                        "unionKey": "const:type=azure",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/azure.json"
                     }
                 ]
             }
@@ -438,9 +449,13 @@ schemas = {
     ],
     "properties": {
         "access_key": true,
+        "account_url": true,
         "bucket": true,
         "checkpoint_path": true,
+        "connection_string": true,
+        "container": true,
         "container_path": true,
+        "credential": true,
         "endpoint_url": true,
         "hdfs_path": true,
         "hdfs_url": true,

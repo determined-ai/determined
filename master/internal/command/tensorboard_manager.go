@@ -232,11 +232,11 @@ func (t *tensorboardManager) newTensorBoard(
 			logBasePath = "s3://" + c.Bucket()
 
 		case expconf.AzureConfig:
-			if connection_string := c.ConnectionString(); connection_string != nil {
-				uniqEnvVars["AZURE_CONNECTION_STRING"] = *connection_string
+			if connectionString := c.ConnectionString(); connectionString != nil {
+				uniqEnvVars["AZURE_CONNECTION_STRING"] = *connectionString
 			}
-			if account_url := c.AccountURL(); account_url != nil {
-				uniqEnvVars["AZURE_ACCOUNT_URL"] = *account_url
+			if accountURL := c.AccountURL(); accountURL != nil {
+				uniqEnvVars["AZURE_ACCOUNT_URL"] = *accountURL
 			}
 			if credential := c.Credential(); credential != nil {
 				uniqEnvVars["AZURE_CREDENTIAL"] = *credential

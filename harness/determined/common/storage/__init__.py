@@ -67,9 +67,10 @@ def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManag
     elif identifier == "azure":
         if not ("connection_string" in config or "account_url" in config):
             raise ValueError(
-                "At least one of [connection_string, account_url] must be specified for Azure Blob Storage, but none were."
+                """At least one of [connection_string, account_url] must be specified for Azure Blob
+                 Storage, but none were."""
             )
-        if not "container" in config:
+        if "container" not in config:
             raise ValueError("Container name must be specified for Azure Blob Storage.")
 
     config.pop("tensorboard_path", None)

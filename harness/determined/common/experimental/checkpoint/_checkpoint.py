@@ -139,8 +139,8 @@ class Checkpoint(object):
                     ),
                 ):
                     raise AssertionError(
-                        "Downloading from Azure, S3 or GCS requires the experiment to be configured with "
-                        "Azure, S3 or GCS checkpointing, {} found instead".format(
+                        "Downloading from Azure, S3 or GCS requires the experiment to be "
+                        "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
                             self.experiment_config["checkpoint_storage"]["type"]
                         )
                     )

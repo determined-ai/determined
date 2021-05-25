@@ -64,7 +64,7 @@ type TensorboardStorageConfigV0 struct {
 	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
-	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json"-"`
+	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.

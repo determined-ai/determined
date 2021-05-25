@@ -96,7 +96,8 @@ def build(
     elif type_name == "azure":
         if not checkpoint_config.get("connection_string") and checkpoint_config.get("access_url"):
             raise ValueError(
-                "At least one of [connection_string, account_url] must be specified for Azure Tensorboard Manager, but none were."
+                """At least one of [connection_string, account_url] must be specified for Azure
+                 Tensorboard Manager, but none were."""
             )
         return azure.AzureTensorboardManager(
             checkpoint_config["container"],
