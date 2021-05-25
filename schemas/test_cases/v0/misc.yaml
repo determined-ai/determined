@@ -133,7 +133,7 @@
   case: {}
 
 - name: profiling is valid when only enabled is set
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
     enabled: true
