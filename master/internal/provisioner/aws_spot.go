@@ -668,7 +668,7 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret := newSetOfSpotRequests()

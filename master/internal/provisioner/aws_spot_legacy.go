@@ -20,95 +20,106 @@ import (
 // repeat the cleanup after 5 minutes. This function can be removed once all users
 // are on versions newer than 0.15.5.
 func (c *awsCluster) cleanupLegacySpotInstances(ctx *actor.Context) {
-	cleanup := func(ctx *actor.Context) {
-		ctx.Log().
-			WithField("codepath", "spotLegacy").
-			Infof("Starting Legacy Spot cleanup operation")
-		// List spot requests with the old format
-		activeSpotReqs, err := c.legacyListActiveSpotInstanceRequests(ctx)
-		if err != nil {
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				WithError(err).
-				Debugf("cannot list active spot requests")
-		} else {
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				Infof("Terminating %d active spot instance requests", activeSpotReqs.numReqs())
-			// Delete spot requests with old format
-			_, err2 := c.terminateSpotInstanceRequests(ctx, activeSpotReqs.idsAsListOfPointers(), false)
-			if err2 != nil {
-				ctx.Log().
-					WithField("codepath", "spotLegacy").
-					WithError(err).
-					Debugf("unable to terminate legacy spot instance requests")
-			}
+	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
 
-			// Delete any instance associated with the active requests
-			instancesToTerminate := newSetOfStrings()
-			for _, req := range activeSpotReqs.iter() {
-				if req.InstanceID != nil {
-					instancesToTerminate.add(*req.InstanceID)
-				}
-			}
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				Infof("Terminating %d active spot instances", instancesToTerminate.length())
-			_, err3 := c.terminateInstances(instancesToTerminate.asListOfPointers())
-			if err3 != nil {
-				ctx.Log().
-					WithField("codepath", "spotLegacy").
-					WithError(err).
-					Debugf("unable to terminate instances associated with legacy spot instance requests")
-			}
-		}
+	// Repeat after 5 minutes to handle the fact that the AWS API is eventually consistent.
+	go func() {
+		loggerSpotLegacy.Infof("starting legacy spot cleanup operation")
+		c.legacyCleanupActiveSpotRequestsAndInstances(ctx)
+		c.legacyCleanupCanceledButInstanceRunningSpot(ctx)
 
-		ctx.Log().
-			WithField("codepath", "spotLegacy").
-			Infof("Listing CanceledButInstanceRunning requests")
-		canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests(ctx)
-		if err != nil {
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				WithError(err).
-				Debugf("unable to list canceled but instance running legacy spot instance requests")
-			return
-		}
-		// Delete any instances associated with canceledButInstanceRunning spot requests
-		if canceledButInstanceRunningSpotReqs.numReqs() > 0 {
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				Infof(
-					"Terminating %d spot instances where requests are "+
-						"canceled but instance is running",
-					canceledButInstanceRunningSpotReqs.numReqs(),
-				)
+		time.Sleep(5 * time.Minute)
 
-			ctx.Log().
-				WithField("codepath", "spotLegacy").
-				Debugf(
-					"terminating EC2 instances associated with canceled spot requests: %s",
-					strings.Join(canceledButInstanceRunningSpotReqs.idsAsList(), ","),
-				)
-			_, err = c.terminateInstances(canceledButInstanceRunningSpotReqs.instanceIds())
-			if err != nil {
-				ctx.Log().
-					WithField("codepath", "spotLegacy").
-					WithError(err).
-					Debugf("cannot terminate EC2 instances associated with canceled spot requests")
-			}
-		}
-		ctx.Log().
-			WithField("codepath", "spotLegacy").
-			Infof("Completed Legacy Spot cleanup")
+		loggerSpotLegacy.Debugf("starting second pass of legacy spot cleanup")
+		c.legacyCleanupActiveSpotRequestsAndInstances(ctx)
+		c.legacyCleanupCanceledButInstanceRunningSpot(ctx)
+		loggerSpotLegacy.Debugf("completed legacy spot cleanup")
+	}()
+}
+
+func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Context) {
+	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
+
+	// List spot requests with the old format
+	activeSpotReqs, err := c.legacyListActiveSpotInstanceRequests(ctx)
+	if err != nil {
+		loggerSpotLegacy.
+			WithError(err).
+			Errorf("cannot list active legacy spot requests")
+		return
+	}
+	if activeSpotReqs.numReqs() == 0 {
+		loggerSpotLegacy.Debugf("no active legacy spot requests to clean up")
+		return
+	}
+	// Delete spot requests with old format
+	loggerSpotLegacy.Infof(
+		"terminating %d active legacy spot requests: %s",
+		activeSpotReqs.numReqs(),
+		strings.Join(activeSpotReqs.idsAsList(), ","))
+
+	_, err = c.terminateSpotInstanceRequests(ctx, activeSpotReqs.idsAsListOfPointers(), false)
+	if err != nil {
+		loggerSpotLegacy.
+			WithError(err).
+			Errorf("unable to terminate active legacy spot requests")
 	}
 
-	// Repeat after 5 minutes
-	go func() {
-		cleanup(ctx)
-		time.Sleep(5 * time.Minute)
-		cleanup(ctx)
-	}()
+	// Delete spot instances associated with the active requests
+	instancesToTerminate := newSetOfStrings()
+	for _, req := range activeSpotReqs.iter() {
+		if req.InstanceID != nil {
+			instancesToTerminate.add(*req.InstanceID)
+		}
+	}
+	if instancesToTerminate.length() == 0 {
+		loggerSpotLegacy.Debugf("no instances associated with active legacy spot requests to terminate")
+		return
+	}
+
+	loggerSpotLegacy.Infof(
+		"terminating %d legacy spot instances associated with active legacy spot requests: %s",
+		instancesToTerminate.length(),
+		strings.Join(instancesToTerminate.asList(), ","))
+
+	_, err = c.terminateInstances(instancesToTerminate.asListOfPointers())
+	if err != nil {
+		loggerSpotLegacy.
+			WithError(err).
+			Errorf("unable to terminate instances associated with active legacy spot requests")
+	}
+}
+
+func (c *awsCluster) legacyCleanupCanceledButInstanceRunningSpot(ctx *actor.Context) {
+	loggerSpotLegacy := ctx.Log().WithField("codepath", "spotLegacy")
+
+	loggerSpotLegacy.Debugf("listing CanceledButInstanceRunning requests")
+	canceledButInstanceRunningSpotReqs, err := c.legacyListCanceledButInstanceRunningSpotRequests(ctx)
+	if err != nil {
+		loggerSpotLegacy.
+			WithError(err).
+			Debugf("unable to list CanceledButInstanceRunning legacy spot requests")
+		return
+	}
+	// Delete any instances associated with canceledButInstanceRunning spot requests
+	if canceledButInstanceRunningSpotReqs.numReqs() == 0 {
+		loggerSpotLegacy.Debugf("no CanceledButInstanceRunning legacy spot requests to clean up")
+		return
+	}
+
+	loggerSpotLegacy.
+		Infof(
+			"terminating %d legacy spot instances where requests are CanceledButInstanceRunning: %s",
+			canceledButInstanceRunningSpotReqs.numReqs(),
+			strings.Join(canceledButInstanceRunningSpotReqs.idsAsList(), ","),
+		)
+
+	_, err = c.terminateInstances(canceledButInstanceRunningSpotReqs.instanceIds())
+	if err != nil {
+		loggerSpotLegacy.
+			WithError(err).
+			Debugf("cannot terminate EC2 instances associated with canceled spot requests")
+	}
 }
 
 func isLegacy(request *ec2.SpotInstanceRequest) bool {
@@ -185,7 +196,7 @@ func (c *awsCluster) legacyListActiveSpotInstanceRequests(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret := newSetOfSpotRequests()
