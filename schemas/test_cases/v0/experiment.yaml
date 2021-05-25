@@ -187,7 +187,7 @@
     perform_initial_validation: false
     profiling:
       enabled: false
-      begin_on_batch: null
+      begin_on_batch: 0
       end_after_batch: null
     records_per_epoch: 0
     reproducibility:

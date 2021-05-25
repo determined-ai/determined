@@ -130,10 +130,13 @@
 - name: profiling is valid when empty
   matches:
     - http://determined.ai/schemas/expconf/v0/profiling.json
+  case: {}
+
+- name: profiling is valid when only enabled is set
+  matches:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
-    enabled: false
-    begin_on_batch: null
-    end_after_batch: null
+    enabled: true
 
 - name: profiling is valid when full
   matches:
