@@ -130,8 +130,7 @@
 - name: profiling is valid when empty
   matches:
     - http://determined.ai/schemas/expconf/v0/profiling.json
-  case:
-#    enabled: false
+  case: {}
 
 - name: profiling is valid when only enabled is set
   matches:
