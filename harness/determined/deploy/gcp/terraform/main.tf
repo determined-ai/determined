@@ -1,7 +1,7 @@
 // Configure GCP provider
 terraform {
   required_providers {
-    aws = {
+    gcp = {
       source  = "hashicorp/google"
       version = "~> 3.44.0"
     }
