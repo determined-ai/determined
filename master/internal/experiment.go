@@ -108,11 +108,8 @@ type (
 func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec) (
 	*experiment, error,
 ) {
-	conf := expModel.Config
+	conf := &expModel.Config
 
-	// Validate the ResourcePool setting.  The reason to do it now and not in postExperiment like
-	// all the other validations is that the resource pool should be revalidated every time the
-	// master restarts.
 	resources := conf.Resources()
 	poolName := resources.ResourcePool()
 	if err := sproto.ValidateRP(master.system, poolName); err != nil {
