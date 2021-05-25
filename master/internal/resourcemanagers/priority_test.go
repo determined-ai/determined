@@ -64,6 +64,32 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 }
 
+func TestPrioritySchedulingMaxZeroSlotContainer(t *testing.T) {
+	lowerPriority := 50
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", slots: 4, maxZeroSlotContainers: 0},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowerPriority},
+		{id: "group2", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "task1", slotsNeeded: 4, group: groups[1]},
+		{id: "task6", slotsNeeded: 0, group: groups[0]},
+	}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+
+	expectedToAllocate := []*mockTask{tasks[0]}
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+}
+
 func TestPrioritySchedulingPreemptionDisabled(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
@@ -159,93 +185,6 @@ func TestPrioritySchedulingPreemptionDisabledWithLabels(t *testing.T) {
 
 	expectedToAllocate := []*mockTask{tasks[0], tasks[1]}
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-}
-
-func TestPrioritySchedulingPreemption(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0],
-			allocatedAgent: agents[0], containerStarted: true},
-		{id: "task2", slotsNeeded: 0, group: groups[0]},
-		{id: "task3", slotsNeeded: 4, group: groups[1]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[1]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	expectedToRelease := []*mockTask{tasks[0]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-}
-
-func TestPrioritySchedulingLowPriorityTasksAreBlockedByHigherPriority(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0]},
-		{id: "task2", slotsNeeded: 8, group: groups[1]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := make([]*mockTask, 0)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-}
-
-func TestPrioritySchedulerPreemptZeroSlotTask(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 1, zeroSlotContainers: 1},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 0, group: groups[0],
-			allocatedAgent: agents[0], containerStarted: true},
-		{id: "task2", slotsNeeded: 0, group: groups[1]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := make([]*mockTask, 0)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	expectedToRelease := []*mockTask{tasks[0]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func TestPrioritySchedulingPreemptionDisabledAddTasks(t *testing.T) {
@@ -431,7 +370,7 @@ func TestPrioritySchedulingPreemptionDisabledTaskFinished(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
-func TestPrioritySchedulingDisabledAllTasksFinished(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabledAllTasksFinished(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -481,321 +420,7 @@ func TestPrioritySchedulingDisabledAllTasksFinished(t *testing.T) {
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 }
 
-func TestPrioritySchedulingPreemptOneTask(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
-		{id: "agent2", slots: 4},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0]},
-		{id: "task2", slotsNeeded: 1, group: groups[0]},
-		{id: "task3", slotsNeeded: 1, group: groups[1]},
-		{id: "task4", slotsNeeded: 1, group: groups[1]},
-		{id: "task5", slotsNeeded: 4, group: groups[1]},
-		{id: "task6", slotsNeeded: 1, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[1], tasks[2], tasks[3], tasks[4], tasks[5]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
-	}
-
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	newTasks := []*mockTask{
-		{id: "task7", slotsNeeded: 1, group: groups[1]},
-	}
-	AddUnallocatedTasks(t, newTasks, system, taskList)
-
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease := []*mockTask{tasks[5]}
-	expectedToAllocate = []*mockTask{}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	ok := RemoveTask(tasks[5].slotsNeeded, toRelease[0], taskList, false)
-	if !ok {
-		t.Errorf("Failed to remove task %s", toRelease[0].Address())
-	}
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease = []*mockTask{}
-	expectedToAllocate = []*mockTask{newTasks[0]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-}
-
-func TestPrioritySchedulingPreemptAllTasks(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
-		{id: "agent2", slots: 4, maxZeroSlotContainers: 100},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[0]},
-		{id: "task2", slotsNeeded: 1, group: groups[0]},
-		{id: "task3", slotsNeeded: 1, group: groups[0]},
-		{id: "task4", slotsNeeded: 1, group: groups[0]},
-		{id: "task5", slotsNeeded: 1, group: groups[0]},
-		{id: "task6", slotsNeeded: 0, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[0], tasks[1], tasks[2], tasks[3], tasks[4], tasks[5]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
-	}
-
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	newTasks := []*mockTask{
-		{id: "task7", slotsNeeded: 4, group: groups[1]},
-		{id: "task8", slotsNeeded: 4, group: groups[1]},
-	}
-	AddUnallocatedTasks(t, newTasks, system, taskList)
-
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease := []*mockTask{tasks[0], tasks[1], tasks[2], tasks[3], tasks[4]}
-	expectedToAllocate = []*mockTask{}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-
-	BatchRemove(t, toRelease, expectedToRelease, taskList, false)
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease = []*mockTask{}
-	expectedToAllocate = []*mockTask{newTasks[0], newTasks[1]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assert.Assert(t, taskList.len() == 8)
-}
-
-func TestPrioritySchedulingPreemptNone(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 1, group: groups[1]},
-		{id: "task2", slotsNeeded: 1, group: groups[1]},
-		{id: "task3", slotsNeeded: 1, group: groups[1]},
-		{id: "task4", slotsNeeded: 1, group: groups[1]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[0], tasks[1], tasks[2], tasks[3]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	for _, agent := range agentMap {
-		assert.Equal(t, agent.numEmptySlots(), 4)
-	}
-
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	newTasks := []*mockTask{
-		{id: "task5", slotsNeeded: 2, group: groups[0]},
-		{id: "task6", slotsNeeded: 2, group: groups[1]},
-	}
-	AddUnallocatedTasks(t, newTasks, system, taskList)
-
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToAllocate = []*mockTask{}
-	expectedToRelease := []*mockTask{}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assert.Assert(t, taskList.len() == 6)
-}
-
-func TestPrioritySchedulingPreemptManyPriorities(t *testing.T) {
-	lowerPriority := 50
-	mediumPriority := 40
-	higherPriority := 30
-	highestPriority := 20
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 100},
-		{id: "agent2", slots: 4, maxZeroSlotContainers: 100},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &mediumPriority},
-		{id: "group3", priority: &higherPriority},
-		{id: "group4", priority: &highestPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[1]},
-		{id: "task2", slotsNeeded: 1, group: groups[0]},
-		{id: "task3", slotsNeeded: 1, group: groups[0]},
-		{id: "task4", slotsNeeded: 1, group: groups[0]},
-		{id: "task5", slotsNeeded: 1, group: groups[0]},
-		{id: "task6", slotsNeeded: 0, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[0], tasks[1], tasks[2], tasks[3], tasks[4], tasks[5]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	newTasks := []*mockTask{
-		{id: "task7", slotsNeeded: 4, group: groups[2]},
-	}
-	AddUnallocatedTasks(t, newTasks, system, taskList)
-
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToAllocate = []*mockTask{}
-	expectedToRelease := []*mockTask{tasks[1], tasks[2], tasks[3], tasks[4]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-
-	BatchRemove(t, toRelease, expectedToRelease, taskList, false)
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease = []*mockTask{}
-	expectedToAllocate = []*mockTask{newTasks[0]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	priorityTasks := []*mockTask{
-		{id: "task8", slotsNeeded: 4, group: groups[3]},
-		{id: "task9", slotsNeeded: 4, group: groups[3]},
-	}
-	AddUnallocatedTasks(t, priorityTasks, system, taskList)
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease = []*mockTask{tasks[0], newTasks[0]}
-	expectedToAllocate = []*mockTask{}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	BatchRemove(t, toRelease, expectedToRelease, taskList, false)
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToRelease = []*mockTask{}
-	expectedToAllocate = []*mockTask{priorityTasks[0], priorityTasks[1]}
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-}
-
-func TestPrioritySchedulingNoZeroSlotTasks(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 0},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 4, group: groups[1]},
-		{id: "task6", slotsNeeded: 0, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[0]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-}
-
-func TestPrioritySchedulingPreemptZeroSlotTaskAfterAssignment(t *testing.T) {
-	lowerPriority := 50
-	higherPriority := 40
-
-	agents := []*mockAgent{
-		{id: "agent1", slots: 4, maxZeroSlotContainers: 1},
-	}
-	groups := []*mockGroup{
-		{id: "group1", priority: &lowerPriority},
-		{id: "group2", priority: &higherPriority},
-	}
-	tasks := []*mockTask{
-		{id: "task1", slotsNeeded: 0, group: groups[0]},
-		{id: "task2", slotsNeeded: 0, group: groups[0]},
-	}
-
-	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
-
-	p := &priorityScheduler{preemptionEnabled: true}
-	toAllocate, _ := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-
-	expectedToAllocate := []*mockTask{tasks[0]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-
-	AllocateTasks(toAllocate, agentMap, taskList)
-
-	newTasks := []*mockTask{
-		{id: "task3", slotsNeeded: 0, group: groups[1]},
-	}
-	AddUnallocatedTasks(t, newTasks, system, taskList)
-
-	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToAllocate = []*mockTask{}
-	expectedToRelease := []*mockTask{tasks[0]}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-
-	RemoveTask(0, toRelease[0], taskList, false)
-
-	toAllocate, toRelease = p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
-	expectedToAllocate = []*mockTask{newTasks[0]}
-	expectedToRelease = []*mockTask{}
-	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
-	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
-}
-
-func TestPrioritySchedulingNoPreemptionZeroSlotTask(t *testing.T) {
+func TestPrioritySchedulingPreemptionDisabledZeroSlotTask(t *testing.T) {
 	lowerPriority := 50
 	higherPriority := 40
 
@@ -831,6 +456,160 @@ func TestPrioritySchedulingNoPreemptionZeroSlotTask(t *testing.T) {
 	expectedTasks := []*mockTask{}
 	assertEqualToAllocate(t, toAllocate, expectedTasks)
 	assertEqualToRelease(t, taskList, toRelease, expectedTasks)
+}
+
+func TestPrioritySchedulingPreemption(t *testing.T) {
+	lowerPriority := 50
+	mediumPriority := 45
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", slots: 4},
+		{id: "agent2", slots: 4},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowerPriority},
+		{id: "group2", priority: &mediumPriority},
+		{id: "group3", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "low-priority task cannot be backfilled because preemption exists",
+			slotsNeeded: 1, group: groups[0]},
+		{id: "medium-priority task should be preempted",
+			slotsNeeded: 4, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+		{id: "high-priority task should not be preempted",
+			slotsNeeded: 4, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+		{id: "high-priority task causes preemption but should not be scheduled",
+			slotsNeeded: 4, group: groups[2]},
+		{id: "high-priority oversized task triggers backfilling",
+			slotsNeeded: 8, group: groups[2]},
+	}
+
+	expectedToAllocate := []*mockTask{}
+	expectedToRelease := []*mockTask{tasks[1]}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
+
+func TestPrioritySchedulingBackfilling(t *testing.T) {
+	lowestPriority := 55
+	lowerPriority := 50
+	mediumPriority := 45
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", slots: 4},
+		{id: "agent2", slots: 4},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowestPriority},
+		{id: "group2", priority: &lowerPriority},
+		{id: "group3", priority: &mediumPriority},
+		{id: "group4", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "low-priority task should be preempted",
+			slotsNeeded: 1, group: groups[0], allocatedAgent: agents[0], containerStarted: true},
+		{id: "lower-priority task causes preemption but should not be scheduled",
+			slotsNeeded: 1, group: groups[1]},
+		{id: "medium-priority task should be backfilled",
+			slotsNeeded: 1, group: groups[2]},
+		{id: "high-priority task should not be preempted",
+			slotsNeeded: 4, group: groups[3], allocatedAgent: agents[1], containerStarted: true},
+		{id: "high-priority task should be scheduled",
+			slotsNeeded: 2, group: groups[3]},
+		{id: "high-priority oversized task triggers backfilling",
+			slotsNeeded: 8, group: groups[3]},
+	}
+
+	expectedToAllocate := []*mockTask{tasks[2], tasks[4]}
+	expectedToRelease := []*mockTask{tasks[0]}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
+
+func TestPrioritySchedulingPreemptionZeroSlotTask(t *testing.T) {
+	lowerPriority := 50
+	mediumPriority := 45
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", maxZeroSlotContainers: 1},
+		{id: "agent2", maxZeroSlotContainers: 1},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowerPriority},
+		{id: "group2", priority: &mediumPriority},
+		{id: "group3", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "low-priority task cannot be scheduled",
+			slotsNeeded: 0, group: groups[0]},
+		{id: "medium-priority task should be preempted",
+			slotsNeeded: 0, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+		{id: "high-priority task should not be preempted",
+			slotsNeeded: 0, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+		{id: "high-priority task causes preemption but should not be scheduled",
+			slotsNeeded: 0, group: groups[2]},
+	}
+
+	expectedToAllocate := []*mockTask{}
+	expectedToRelease := []*mockTask{tasks[1]}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
+}
+
+func TestPrioritySchedulingBackfillingZeroSlotTask(t *testing.T) {
+	lowestPriority := 55
+	lowerPriority := 50
+	mediumPriority := 45
+	higherPriority := 40
+
+	agents := []*mockAgent{
+		{id: "agent1", maxZeroSlotContainers: 4},
+		{id: "agent2", maxZeroSlotContainers: 1},
+	}
+	groups := []*mockGroup{
+		{id: "group1", priority: &lowestPriority},
+		{id: "group2", priority: &lowerPriority},
+		{id: "group3", priority: &mediumPriority},
+		{id: "group4", priority: &higherPriority},
+	}
+	tasks := []*mockTask{
+		{id: "low-priority task should be scheduled",
+			slotsNeeded: 0, group: groups[0]},
+		{id: "medium-priority task should not be preempted",
+			slotsNeeded: 0, group: groups[1], allocatedAgent: agents[0], containerStarted: true},
+		{id: "high-priority task should not be preempted",
+			slotsNeeded: 0, group: groups[2], allocatedAgent: agents[1], containerStarted: true},
+		{id: "high-priority task should be scheduled",
+			slotsNeeded: 0, group: groups[2]},
+	}
+
+	expectedToAllocate := []*mockTask{tasks[0], tasks[3]}
+	expectedToRelease := []*mockTask{}
+
+	system := actor.NewSystem(t.Name())
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
+	p := &priorityScheduler{preemptionEnabled: true}
+	toAllocate, toRelease := p.prioritySchedule(taskList, groupMap, agentMap, BestFit)
+	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
+	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)
 }
 
 func AllocateTasks(
@@ -898,27 +677,4 @@ func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool
 		taskList.RemoveAllocations(toRelease)
 	}
 	return true
-}
-
-func BatchRemove(t *testing.T,
-	toRelease []*actor.Ref,
-	expectedToRelease []*mockTask,
-	taskList *taskList,
-	delete bool,
-) {
-	taskToSlots := map[sproto.TaskID]int{}
-	for _, task := range expectedToRelease {
-		taskToSlots[task.id] = task.slotsNeeded
-	}
-
-	for _, taskToRelease := range toRelease {
-		task, ok := taskList.GetTaskByHandler(taskToRelease)
-		if !ok {
-			t.Errorf("Job %s should exist, but doesn't", taskToRelease.Address())
-		}
-		ok = RemoveTask(taskToSlots[task.ID], taskToRelease, taskList, delete)
-		if !ok {
-			t.Errorf("Failed to remove task %s", task.ID)
-		}
-	}
 }
