@@ -1,5 +1,5 @@
 - name: full valid experiment
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     bind_mounts:
@@ -127,7 +127,7 @@
       tensorboard_path: /zxcv
 
 - name: minimal valid experiment
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:
@@ -213,7 +213,7 @@
       source_trial_id: null
 
 - name: records_per_epoch conditional (valid)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:
@@ -267,7 +267,7 @@
     entrypoint: model_def:MyTrial
 
 - name: check grid conditional (valid)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:
@@ -342,7 +342,7 @@
         batches: 1000
 
 - name: check entrypoint conditional (valid, native in use)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:

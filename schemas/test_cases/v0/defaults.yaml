@@ -1,7 +1,7 @@
 # Lots of test cases focused on checking defaults.
 
 - name: bind_mount defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/bind-mount.json
   case:
     host_path: /asdf
@@ -13,7 +13,7 @@
     read_only: false
 
 - name: environment defaults with k8sV1.Pod present
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/environment.json
   case:
     environment_variables:
@@ -52,7 +52,7 @@
       - OTHER_CAP_STRING
 
 - name: single searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-single.json
   case:
@@ -70,7 +70,7 @@
     source_checkpoint_uuid: null
 
 - name: random searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-random.json
   case:
@@ -92,7 +92,7 @@
     source_checkpoint_uuid: "asdf"
 
 - name: grid searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-grid.json
   case:
@@ -112,7 +112,7 @@
     source_checkpoint_uuid: null
 
 - name: async_halving searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-async-halving.json
   case:
@@ -137,7 +137,7 @@
     stop_once: false
 
 - name: adaptive_asha searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json
   case:
@@ -163,7 +163,7 @@
     stop_once: false
 
 - name: pbt searcher defaults
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-pbt.json
   case:

@@ -17,21 +17,18 @@ func eventuallyCompile(ctx jsonschema.CompilerContext, m JSONObject) (interface{
 	// the completeness validation step.
 	eventually := rawEventually.(JSONObject)
 
-	eventuallySchema, err := ctx.Compile(eventually)
-
+	compiled, err := ctx.Compile(eventually)
 	if err != nil {
 		return nil, err
 	}
-	return map[string]*jsonschema.Schema{
-		"eventually": eventuallySchema,
-	}, nil
+
+	return compiled, nil
 }
 
 func eventuallyValidate(
 	ctx jsonschema.ValidationContext, rawCompiled interface{}, instance JSON,
 ) error {
-	eventually := rawCompiled.(map[string]*jsonschema.Schema)["eventually"]
-	return ctx.Validate(eventually, instance)
+	return ctx.Validate(rawCompiled.(*jsonschema.Schema), instance)
 }
 
 // EventuallyExtension instantiates the eventually extension.

@@ -315,6 +315,27 @@ def eventually(
     `eventuallyRequired`. If the `oneOf` is evaluated during the sanity validation phase, it will
     always fail, if for example, the user is using cluster default values, but if validation
     for this subschema is held off until completeness validation, it will validate correctly.
+
+    Example: eventually require one of connection string and account url to be specified:
+
+    "eventually": {
+        "checks": {
+            "Exactly one of connection_string or account_url must be set": {
+                "oneOf": [
+                    {
+                        "eventuallyRequired": [
+                            "connection_string"
+                        ]
+                    },
+                    {
+                        "eventuallyRequired": [
+                            "account_url"
+                        ]
+                    }
+                ]
+            }
+        }
+    }
     """
     yield from validator.descend(instance, schema=eventually, schema_path="eventually")
 
