@@ -188,7 +188,7 @@ class SchemaBase:
 
         # Validate before parsing.
         if not prevalidated:
-            errors = expconf.validation_errors(d, cls._id)
+            errors = expconf.sanity_validation_errors(d, cls._id)
             if errors:
                 raise TypeError(f"incorrect {cls.__name__}:\n" + "\n".join(errors))
 

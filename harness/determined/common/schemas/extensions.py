@@ -311,10 +311,10 @@ def eventually(
     eventually allows for two-step validation, by only enforcing the specified subschemas
     during the completeness validation phase. This is a requirement specific to Determined.
 
-    One use case is when it is necessary to enforce a `oneOf` on two fields that are `eventuallyRequired`.
-    If the `oneOf` is evaluated during the sanity validation phase, it will always fail, if for example,
-    the user is using cluster default values, but if validation for this subschema is held off until
-    completeness validation, it will validate correctly.
+    One use case is when it is necessary to enforce a `oneOf` on two fields that are
+    `eventuallyRequired`. If the `oneOf` is evaluated during the sanity validation phase, it will
+    always fail, if for example, the user is using cluster default values, but if validation
+    for this subschema is held off until completeness validation, it will validate correctly.
     """
     yield from validator.descend(instance, schema=eventually, schema_path="eventually")
 

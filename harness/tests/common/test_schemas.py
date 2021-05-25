@@ -85,7 +85,7 @@ class Case:
         if not self.matches:
             return
         for url in self.matches:
-            errors = expconf.validation_errors(self.case, url)
+            errors = expconf.sanity_validation_errors(self.case, url)
             if not errors:
                 continue
             raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
@@ -95,7 +95,7 @@ class Case:
             return
         for url, expected in self.errors.items():
             assert isinstance(expected, list), "malformed test case"
-            errors = expconf.validation_errors(self.case, url)
+            errors = expconf.sanity_validation_errors(self.case, url)
             assert errors, f"'{self.name}' matched {url} unexpectedly"
             for exp in expected:
                 for err in errors:
