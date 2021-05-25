@@ -1938,7 +1938,7 @@ schemas = {
                 "integer",
                 "null"
             ],
-            "default": null,
+            "default": 0,
             "minimum": 0
         },
         "end_after_batch": {
@@ -1950,37 +1950,10 @@ schemas = {
             "minimum": 0
         }
     },
-    "conditional": {
-        "$comment": "when enabled=true, assert begin <= end",
-        "when": {
-            "required": [
-                "enabled"
-            ],
-            "properties": {
-                "enabled": {
-                    "const": true
-                }
-            }
-        },
-        "enforce": {
-            "required": [
-                "begin_on_batch",
-                "end_after_batch"
-            ],
-            "propeties": {
-                "begin_on_batch": {
-                    "type": "integer"
-                },
-                "end_after_batch": {
-                    "type": "integer"
-                }
-            },
-            "compareProperties": {
-                "type": "a<=b",
-                "a": "begin_on_batch",
-                "b": "end_after_batch"
-            }
-        }
+    "compareProperties": {
+        "type": "a<=b",
+        "a": "begin_on_batch",
+        "b": "end_after_batch"
     }
 }
 

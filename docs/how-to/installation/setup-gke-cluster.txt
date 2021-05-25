@@ -53,7 +53,6 @@ their local machine.
        --region us-west1 \
        --node-locations us-west1-b\
        --num-nodes=1 \
-       --image-type=UBUNTU \
        --machine-type=n1-standard-16
 
    # Create a node pool. This will not launch any nodes immediately but will
@@ -67,12 +66,11 @@ their local machine.
      --enable-autoscaling \
      --min-nodes=0 \
      --max-nodes=4 \
-     --image-type=UBUNTU \
      --machine-type=n1-standard-32 \
-     --scopes=storage-full
+     --scopes=storage-full,cloud-platform
 
    # Deploy a DaemonSet that enables the GPUs.
-   kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/ubuntu/daemonset-preloaded.yaml
+   kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
 
    # Create a GCS bucket to store checkpoints.
    gsutil mb gs://${GCS_BUCKET_NAME}

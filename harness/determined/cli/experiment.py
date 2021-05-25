@@ -236,7 +236,7 @@ def describe(args: Namespace) -> None:
             doc["config"].get("description"),
             doc["archived"],
             doc["config"]["resources"].get("resource_pool"),
-            ", ".join(sorted(doc["config"].get("labels", []))),
+            ", ".join(sorted(doc["config"].get("labels") or [])),
         ]
         for doc in docs
     ]

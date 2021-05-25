@@ -8,7 +8,7 @@ from determined.common.schemas.expconf import _gen
 _validators = {}  # type: Dict[str, Any]
 
 
-def make_validator(url: Optional[str] = None) -> Any:
+def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) -> Any:
     # Use the experiment config schema by default.
     if url is None:
         url = "http://determined.ai/schemas/expconf/v1/experiment.json"
@@ -32,17 +32,29 @@ def make_validator(url: Optional[str] = None) -> Any:
         "checks": extensions.checks,
         "compareProperties": extensions.compareProperties,
         "conditional": extensions.conditional,
-        # "eventuallyRequired": extensions.eventuallyRequired,
         "optionalRef": extensions.optionalRef,
     }
+    if complete:
+        ext["eventuallyRequired"] = extensions.eventuallyRequired
+        ext["eventually"] = extensions.eventually
+
     cls = jsonschema.validators.extend(validator, ext)
     _validators[url] = cls(schema=schema, resolver=resolver)
 
     return _validators[url]
 
 
-def validation_errors(instance: Any, url: Optional[str] = None) -> List[str]:
+def sanity_validation_errors(instance: Any, url: Optional[str] = None) -> List[str]:
     validator = make_validator(url)
+    return _validate(instance, validator)
+
+
+def completeness_validation_errors(instance: Any, url: Optional[str] = None) -> List[str]:
+    validator = make_validator(url, complete=True)
+    return _validate(instance, validator)
+
+
+def _validate(instance: Any, validator: Any) -> List[str]:
     errors = validator.iter_errors(instance)
     return util.format_validation_errors(errors)
 

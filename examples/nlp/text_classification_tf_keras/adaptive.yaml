@@ -16,6 +16,6 @@ searcher:
   max_trials: 10
 environment:
   image:
-    gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-baefbf7
-    cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-baefbf7
+    gpu: determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-606fd02
+    cpu: determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-606fd02
 entrypoint: model_def:MultiTextClassificationTrial

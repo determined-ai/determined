@@ -7,7 +7,7 @@ import { paths } from 'routes/utils';
 const ProfilesNotEnabled: React.FC = () => {
   const description = (
     <>
-      Learn about &nbsp;
+      Learn about&nbsp;
       <Link
         external
         path={paths.docs('/reference/experiment-config.html#searcher')} // todo: change me
@@ -18,8 +18,8 @@ const ProfilesNotEnabled: React.FC = () => {
   return (
     <Alert
       description={description}
-      message='Profiling was not enabled for this trial.'
-      type='warning'
+      message="Profiling was not enabled for this trial."
+      type="warning"
     />
   );
 };

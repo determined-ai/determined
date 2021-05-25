@@ -345,7 +345,7 @@ export const getTrialDetails: DetApi<
 export const getCommands: DetApi<GetCommandsParams, Api.V1GetCommandsResponse, CommandTask[]> = {
   name: 'getCommands',
   postProcess: (response) => (response.commands || [])
-    .map(command => decoder.mapV1Command(command)) ,
+    .map(command => decoder.mapV1Command(command)),
   request: (params: GetCommandsParams) => detApi.Commands.determinedGetCommands(
     params.sortBy,
     params.orderBy,
@@ -357,7 +357,7 @@ export const getCommands: DetApi<GetCommandsParams, Api.V1GetCommandsResponse, C
 export const getNotebooks: DetApi<GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]> = {
   name: 'getNotebooks',
   postProcess: (response) => (response.notebooks || [])
-    .map(notebook => decoder.mapV1Notebook(notebook)) ,
+    .map(notebook => decoder.mapV1Notebook(notebook)),
   request: (params: GetNotebooksParams) => detApi.Notebooks.determinedGetNotebooks(
     params.sortBy,
     params.orderBy,
@@ -369,7 +369,7 @@ export const getNotebooks: DetApi<GetNotebooksParams, Api.V1GetNotebooksResponse
 export const getShells: DetApi<GetShellsParams, Api.V1GetShellsResponse, CommandTask[]> = {
   name: 'getShells',
   postProcess: (response) => (response.shells || [])
-    .map(shell => decoder.mapV1Shell(shell)) ,
+    .map(shell => decoder.mapV1Shell(shell)),
   request: (params: GetShellsParams) => detApi.Shells.determinedGetShells(
     params.sortBy,
     params.orderBy,
@@ -383,7 +383,7 @@ export const getTensorboards: DetApi<
 > = {
   name: 'getTensorboards',
   postProcess: (response) => (response.tensorboards || [])
-    .map(tensorboard => decoder.mapV1Tensorboard(tensorboard)) ,
+    .map(tensorboard => decoder.mapV1Tensorboard(tensorboard)),
   request: (params: GetTensorboardsParams) => detApi.Tensorboards.determinedGetTensorboards(
     params.sortBy,
     params.orderBy,

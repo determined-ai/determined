@@ -8,7 +8,7 @@ publish:
 
 .PHONY: fmt
 fmt:
-	isort -y
+	isort -y --skip client
 	black .
 
 .PHONY: check

@@ -19,12 +19,15 @@ func (p *ProfilingConfigV0) SetEnabled(val bool) {
 	p.RawEnabled = &val
 }
 
-func (p ProfilingConfigV0) BeginOnBatch() *int {
-	return p.RawBeginOnBatch
+func (p ProfilingConfigV0) BeginOnBatch() int {
+	if p.RawBeginOnBatch == nil {
+		panic("You must call WithDefaults on ProfilingConfigV0 before .BeginOnBatch")
+	}
+	return *p.RawBeginOnBatch
 }
 
-func (p *ProfilingConfigV0) SetBeginOnBatch(val *int) {
-	p.RawBeginOnBatch = val
+func (p *ProfilingConfigV0) SetBeginOnBatch(val int) {
+	p.RawBeginOnBatch = &val
 }
 
 func (p ProfilingConfigV0) EndAfterBatch() *int {

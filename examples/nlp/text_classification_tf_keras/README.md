@@ -12,8 +12,8 @@ It is adapted from Tensorflow's
 
 ###Configuration Files
 * `const.yaml`: Train the model on a single GPU with constant hyperparameter values.
-* `distributed.yaml`: Same as const.yaml, but trains the model with multiple GPUs.
 * `adaptive.yaml`: Perform a hyperparameter search using Determined's state-of-the-art adaptive hyperparameter tuning algorithm.
+* NOTE: this model does not currently support distributed training due to an incompatibility between Horovod and certain Keras preprocessing layers (https://github.com/tensorflow/tensorflow/issues/43834)
 
 ##Data
 This example uses [UCSD's Amazon review datasets](http://deepyeti.ucsd.edu/jianmo/amazon/) but can be easily adapted to 

@@ -158,7 +158,7 @@ const Dashboard: React.FC = () => {
   const loadedTasks = useMemo(() => ([
     ...(experiments || []).map(experimentToTask),
     ...(tasks || []).map(commandToTask),
-  ]), [ experiments, tasks ] );
+  ]), [ experiments, tasks ]);
 
   const sortedTasks = loadedTasks.sort(
     (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,

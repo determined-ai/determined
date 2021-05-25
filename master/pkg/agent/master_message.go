@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"net"
 	"strconv"
 	"time"
 
@@ -61,6 +62,8 @@ type ContainerStarted struct {
 // started information.
 func (c ContainerStarted) Addresses() []container.Address {
 	proxy := c.ProxyAddress
+	proxyIsIPv4 := net.ParseIP(proxy).To4() != nil
+
 	info := c.ContainerInfo
 
 	var addresses []container.Address
@@ -83,31 +86,39 @@ func (c ContainerStarted) Addresses() []container.Address {
 		for _, network := range networks {
 			ipAddresses = append(ipAddresses, network.IPAddress)
 		}
-		// uniqueBindings is used to filter out bindings to 0.0.0.0 and ::
-		// that are coalesced to the same container.Address.
-		uniqueBindings := map[string]bool{}
+
 		for port, bindings := range info.NetworkSettings.Ports {
 			for _, binding := range bindings {
 				for _, ip := range ipAddresses {
 					hostIP := binding.HostIP
-					if hostIP == "" || hostIP == "0.0.0.0" || hostIP == "::" {
+					switch {
+					case hostIP == "0.0.0.0":
+						// Just don't return the ipv4 binding for an ipv6 proxy
+						if !proxyIsIPv4 {
+							continue
+						}
+						hostIP = proxy
+					case hostIP == "::":
+						// And vice versa.
+						if proxyIsIPv4 {
+							continue
+						}
+						hostIP = proxy
+					case hostIP == "":
 						hostIP = proxy
 					}
+
 					hostPort, err := strconv.Atoi(binding.HostPort)
 					if err != nil {
 						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
 					}
 
-					cAddress := container.Address{
+					addresses = append(addresses, container.Address{
 						ContainerIP:   ip,
 						ContainerPort: port.Int(),
 						HostIP:        hostIP,
 						HostPort:      hostPort,
-					}
-					if !uniqueBindings[cAddress.String()] {
-						addresses = append(addresses, cAddress)
-						uniqueBindings[cAddress.String()] = true
-					}
+					})
 				}
 			}
 		}

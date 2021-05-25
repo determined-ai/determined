@@ -329,7 +329,7 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   return {
     endTime: data.endTime as unknown as string,
     resources,
-    startTime:data.startTime as unknown as string,
+    startTime: data.startTime as unknown as string,
     state: decodeCheckpointState(data.state),
     totalBatches: data.totalBatches,
     uuid: data.uuid,
