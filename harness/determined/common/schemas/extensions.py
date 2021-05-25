@@ -300,6 +300,7 @@ def eventuallyRequired(
         if key not in instance:
             yield jsonschema.ValidationError(f"{key} is a required property")
 
+
 def eventually(
     validator: jsonschema.Draft7Validator,
     eventually: Any,
@@ -312,10 +313,11 @@ def eventually(
 
     One use case is when it is necessary to enforce a `oneOf` on two fields that are `eventuallyRequired`.
     If the `oneOf` is evaluated during the sanity validation phase, it will always fail, if for example,
-    the user is using cluster default values, but if validation for this subschema is held off until 
+    the user is using cluster default values, but if validation for this subschema is held off until
     completeness validation, it will validate correctly.
     """
     yield from validator.descend(instance, schema=eventually, schema_path="eventually")
+
 
 def optionalRef(
     validator: jsonschema.Draft7Validator, optionalRef: Dict, instance: Any, schema: Dict

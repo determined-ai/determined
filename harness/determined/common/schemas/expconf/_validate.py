@@ -48,9 +48,11 @@ def sanity_validation_errors(instance: Any, url: Optional[str] = None) -> List[s
     validator = make_validator(url)
     return _validate(instance, validator)
 
+
 def completeness_validation_errors(instance: Any, url: Optional[str] = None) -> List[str]:
     validator = make_validator(url, complete=True)
     return _validate(instance, validator)
+
 
 def _validate(instance: Any, validator: Any) -> List[str]:
     errors = validator.iter_errors(instance)
