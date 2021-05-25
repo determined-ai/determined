@@ -301,6 +301,45 @@ def eventuallyRequired(
             yield jsonschema.ValidationError(f"{key} is a required property")
 
 
+def eventually(
+    validator: jsonschema.Draft7Validator,
+    eventually: Any,
+    instance: List,
+    schema: Dict,
+) -> Iterator[jsonschema.ValidationError]:
+    """
+    eventually allows for two-step validation, by only enforcing the specified subschemas
+    during the completeness validation phase. This is a requirement specific to Determined.
+
+    One use case is when it is necessary to enforce a `oneOf` on two fields that are
+    `eventuallyRequired`. If the `oneOf` is evaluated during the sanity validation phase, it will
+    always fail, if for example, the user is using cluster default values, but if validation
+    for this subschema is held off until completeness validation, it will validate correctly.
+
+    Example: eventually require one of connection string and account url to be specified:
+
+    "eventually": {
+        "checks": {
+            "Exactly one of connection_string or account_url must be set": {
+                "oneOf": [
+                    {
+                        "eventuallyRequired": [
+                            "connection_string"
+                        ]
+                    },
+                    {
+                        "eventuallyRequired": [
+                            "account_url"
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+    """
+    yield from validator.descend(instance, schema=eventually, schema_path="eventually")
+
+
 def optionalRef(
     validator: jsonschema.Draft7Validator, optionalRef: Dict, instance: Any, schema: Dict
 ) -> Iterator[jsonschema.ValidationError]:

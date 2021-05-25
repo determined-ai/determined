@@ -20,14 +20,15 @@ import (
 type JSON = interface{}
 
 type SchemaTestCase struct {
-	Name      string               `json:"name"`
-	Matches   *[]string            `json:"matches"`
-	Errors    *map[string][]string `json:"errors"`
-	Defaulted *JSON                `json:"defaulted"`
-	Case      JSON                 `json:"case"`
-	MergeAs   *string              `json:"merge_as"`
-	MergeSrc  *JSON                `json:"merge_src"`
-	Merged    *JSON                `json:"merged"`
+	Name       string               `json:"name"`
+	SaneAs     *[]string            `json:"sane_as"`
+	CompleteAs *[]string            `json:"complete_as"`
+	Errors     *map[string][]string `json:"errors"`
+	Defaulted  *JSON                `json:"defaulted"`
+	Case       JSON                 `json:"case"`
+	MergeAs    *string              `json:"merge_as"`
+	MergeSrc   *JSON                `json:"merge_src"`
+	Merged     *JSON                `json:"merged"`
 }
 
 func errorIn(expect string, errors []error) bool {
@@ -44,14 +45,32 @@ func errorIn(expect string, errors []error) bool {
 	return false
 }
 
-func (tc SchemaTestCase) CheckMatches(t *testing.T) {
-	if tc.Matches == nil {
+func (tc SchemaTestCase) CheckSaneAs(t *testing.T) {
+	if tc.SaneAs == nil {
 		return
 	}
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
-	for _, url := range *tc.Matches {
+	for _, url := range *tc.SaneAs {
 		schema := schemas.GetSanityValidator(url)
+		err := schema.Validate(bytes.NewReader(byts))
+		if err == nil {
+			continue
+		}
+		// Unexpected errors.
+		rendered := schemas.GetRenderedErrors(err, byts)
+		t.Errorf("errors matching %v:\n%v", url, schemas.JoinErrors(rendered, "\n"))
+	}
+}
+
+func (tc SchemaTestCase) CheckCompleteAs(t *testing.T) {
+	if tc.CompleteAs == nil {
+		return
+	}
+	byts, err := json.Marshal(tc.Case)
+	assert.NilError(t, err)
+	for _, url := range *tc.CompleteAs {
+		schema := schemas.GetCompletenessValidator(url)
 		err := schema.Validate(bytes.NewReader(byts))
 		if err == nil {
 			continue
@@ -179,9 +198,9 @@ func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 
-	// Unmarshal against the first item in "matches".
-	assert.Assert(t, tc.Matches != nil)
-	url := (*tc.Matches)[0]
+	// Unmarshal against the first item in "sane_as".
+	assert.Assert(t, tc.SaneAs != nil)
+	url := (*tc.SaneAs)[0]
 
 	// Get an empty object to marshal into.
 	obj := objectForURL(url)
@@ -264,8 +283,8 @@ func (tc SchemaTestCase) CheckRoundTrip(t *testing.T) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 
-	assert.Assert(t, tc.Matches != nil)
-	url := (*tc.Matches)[0]
+	assert.Assert(t, tc.SaneAs != nil)
+	url := (*tc.SaneAs)[0]
 
 	// Unmarshal into an object once.
 	obj := objectForURL(url)
@@ -309,7 +328,8 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 		tc := testCase
 		testName := fmt.Sprintf("%v::%v", displayPath, tc.Name)
 		t.Run(testName, func(t *testing.T) {
-			tc.CheckMatches(t)
+			tc.CheckSaneAs(t)
+			tc.CheckCompleteAs(t)
 			tc.CheckErrors(t)
 			tc.CheckDefaulted(t)
 			tc.CheckRoundTrip(t)

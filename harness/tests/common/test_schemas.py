@@ -58,7 +58,8 @@ class Case:
         self,
         name: str,
         case: Any,
-        matches: Optional[List[str]] = None,
+        sane_as: Optional[List[str]] = None,
+        complete_as: Optional[List[str]] = None,
         errors: Optional[Dict[str, str]] = None,
         defaulted: Any = None,
         merge_as: Optional[str] = None,
@@ -67,7 +68,8 @@ class Case:
     ) -> None:
         self.name = name
         self.case = case
-        self.matches = matches
+        self.sane_as = sane_as
+        self.complete_as = complete_as
         self.errors = errors
         self.defaulted = defaulted
         self.merge_as = merge_as
@@ -75,17 +77,27 @@ class Case:
         self.merged = merged
 
     def run(self) -> None:
-        self.run_matches()
+        self.run_sanity()
+        self.run_completeness()
         self.run_errors()
         self.run_defaulted()
         self.run_round_trip()
         self.run_merged()
 
-    def run_matches(self) -> None:
-        if not self.matches:
+    def run_sanity(self) -> None:
+        if not self.sane_as:
             return
-        for url in self.matches:
-            errors = expconf.validation_errors(self.case, url)
+        for url in self.sane_as:
+            errors = expconf.sanity_validation_errors(self.case, url)
+            if not errors:
+                continue
+            raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
+
+    def run_completeness(self) -> None:
+        if not self.complete_as:
+            return
+        for url in self.complete_as:
+            errors = expconf.completeness_validation_errors(self.case, url)
             if not errors:
                 continue
             raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
@@ -95,7 +107,7 @@ class Case:
             return
         for url, expected in self.errors.items():
             assert isinstance(expected, list), "malformed test case"
-            errors = expconf.validation_errors(self.case, url)
+            errors = expconf.sanity_validation_errors(self.case, url)
             assert errors, f"'{self.name}' matched {url} unexpectedly"
             for exp in expected:
                 for err in errors:
@@ -111,8 +123,8 @@ class Case:
     def run_defaulted(self) -> None:
         if not self.defaulted:
             return
-        assert self.matches, "need a `matches` entry to run a defaulted test"
-        cls = class_from_url(self.matches[0])
+        assert self.sane_as, "need a `sane_as` entry to run a defaulted test"
+        cls = class_from_url(self.sane_as[0])
 
         obj = cls.from_dict(self.case)
         obj.fill_defaults()
@@ -125,8 +137,8 @@ class Case:
         if not self.defaulted:
             return
 
-        assert self.matches, "need a `matches` entry to run a run_round_trip test"
-        cls = class_from_url(self.matches[0])
+        assert self.sane_as, "need a `sane_as` entry to run a run_round_trip test"
+        cls = class_from_url(self.sane_as[0])
 
         obj0 = cls.from_dict(self.case)
 
@@ -143,7 +155,7 @@ class Case:
             return
         assert (
             self.merge_as and self.merge_src and self.merged
-        ), "matches, merge_src, and merged must all be present in a test case if any are present"
+        ), "sane_as, merge_src, and merged must all be present in a test case if any are present"
 
         # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
         # support the partial checkpoint storage configs.  It probably will never support the
