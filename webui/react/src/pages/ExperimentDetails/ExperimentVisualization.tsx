@@ -271,7 +271,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     `;
     return <Alert
       description={<>
-      Learn about ;
+      Learn about&nbsp;
         <Link
           external
           path={paths.docs('/reference/experiment-config.html#searcher')}

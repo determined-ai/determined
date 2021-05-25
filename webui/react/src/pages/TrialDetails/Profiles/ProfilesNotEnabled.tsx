@@ -7,7 +7,7 @@ import { paths } from 'routes/utils';
 const ProfilesNotEnabled: React.FC = () => {
   const description = (
     <>
-      Learn about ;
+      Learn about&nbsp;
       <Link
         external
         path={paths.docs('/reference/experiment-config.html#searcher')} // todo: change me
