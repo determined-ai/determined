@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"testing"
 
+	"github.com/labstack/echo/v4"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -27,9 +29,7 @@ func TestResourceManagerForwardMessage(t *testing.T) {
 			},
 		},
 	}
-	rpActor, created := system.ActorOf(actor.Addr("resourceManagers"),
-		NewResourceManagers(system, conf, nil))
-	assert.Assert(t, created)
+	rpActor := Setup(system, echo.New(), conf, nil, nil)
 
 	taskSummary := system.Ask(rpActor, sproto.GetTaskSummaries{}).Get()
 	assert.DeepEqual(t, taskSummary, make(map[sproto.TaskID]TaskSummary))
