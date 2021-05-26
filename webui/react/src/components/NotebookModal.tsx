@@ -34,9 +34,6 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  /*const [ resourcePool, setResourcePool ] = useState<string | undefined>(
-    storage.getWithDefault(STORAGE_KEY, { pool: undefined }).pool,
-  );*/
   const [ showResourceType, setShowResourceType ] = useState<boolean>(true);
   const [ resourceType, setResourceType ] = useState<ResourceType | undefined>(
     storage.getWithDefault(STORAGE_KEY, { type: undefined }).type,
@@ -141,7 +138,6 @@ const NotebookModal: React.FC<Props> = (
   useEffect(() => {
     setShowResourceType(handleResourcePoolUpdate(form.getFieldValue('pool')));
   }, [ form, handleResourcePoolUpdate ]);
-  //const showResourceType = ;
 
   const handleTypeUpdate = useCallback((selectedResourceType) => {
     setResourceType(selectedResourceType as ResourceType);
