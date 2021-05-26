@@ -758,6 +758,24 @@ WHERE id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// LegacyExperimentConfigByID parses very old configs, returning a LegacyConfig which
+// exposes a select subset of fields in a type-safe way.
+func (db *PgDB) LegacyExperimentConfigByID(
+	id int,
+) (expconf.LegacyConfig, error) {
+	var byts []byte
+	if err := db.query("SELECT config FROM experiments WHERE id = $1", &byts, id); err != nil {
+		return expconf.LegacyConfig{}, err
+	}
+
+	config, err := expconf.ParseLegacyConfigJSON(byts)
+	if err != nil {
+		return expconf.LegacyConfig{}, errors.Wrap(err, "parsing legacy conf from database")
+	}
+
+	return config, nil
+}
+
 // ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
 // none exists. It loads the experiment without its configuration, for callers that do not need
 // it, or can't handle backwards incompatible changes.
