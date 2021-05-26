@@ -65,10 +65,10 @@ def main(argv: List[str]) -> None:
         help="Set the logging level",
     )
     parser.add_argument(
-        "--experiment-config",
+        "--storage-config",
         type=json_file_arg,
-        default=os.getenv("DET_EXPERIMENT_CONFIG", {}),
-        help="Experiment config (JSON-formatted file)",
+        default=os.getenv("DET_STORAGE_CONFIG", {}),
+        help="Storage config (JSON-formatted file)",
     )
     parser.add_argument(
         "--delete",
@@ -97,7 +97,7 @@ def main(argv: List[str]) -> None:
 
     logging.info("Determined checkpoint GC, version {}".format(det.__version__))
 
-    storage_config = args.experiment_config["checkpoint_storage"]
+    storage_config = args.storage_config
     logging.info("Using checkpoint storage: {}".format(storage_config))
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
