@@ -13,7 +13,12 @@ from torch import nn
 from torchvision import transforms
 import torchvision.models as models
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, MetricReducer
+from determined.pytorch import (
+    DataLoader,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    MetricReducer,
+)
 import resnet
 
 # Constants about the data set.
@@ -28,6 +33,7 @@ def set_parameter_requires_grad(model, feature_extracting):
     if feature_extracting:
         for param in model.parameters():
             param.requires_grad = False
+
 
 class PredictionsReducer(MetricReducer):
     def __init__(self, output_file):
@@ -50,48 +56,54 @@ class PredictionsReducer(MetricReducer):
     def cross_slot_reduce(self, per_slot_metrics):
 
         # TODO: Log or save outputs to persistent store
-        predictions = [p for slot_predictions in per_slot_metrics for p in slot_predictions]
+        predictions = [
+            p for slot_predictions in per_slot_metrics for p in slot_predictions
+        ]
         np.save(self.output_file, predictions)
 
         return {}
 
+
 def accuracy_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
     """Return the accuracy rate based on dense predictions and sparse labels."""
-    assert len(predictions) == len(labels), "Predictions and labels must have the same length."
+    assert len(predictions) == len(
+        labels
+    ), "Predictions and labels must have the same length."
     assert len(labels.shape) == 1, "Labels must be a column vector."
 
     return (  # type: ignore
-        float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
+        float((predictions.argmax(1) == labels.to(torch.long)).sum())
+        / predictions.shape[0]
     )
+
 
 class CIFARTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.download_directory = tempfile.mkdtemp()
 
-	# TODO: Load your trained model. Below are example approaches.
+        # TODO: Load your trained model. Below are example approaches.
 
-	### Load a checkpoint from the Determined model registry 
-	# model = Determined().get_model("mymodel")
-	# ckpt_path = self.model.get_version().download()
-	# ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
-	# model.load_state_dict(ckpt['models_state_dict'][0])
+        ### Load a checkpoint from the Determined model registry
+        # model = Determined().get_model("mymodel")
+        # ckpt_path = self.model.get_version().download()
+        # ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
+        # model.load_state_dict(ckpt['models_state_dict'][0])
 
-	### Load a checkpoint from a previous experiment
-	# from determined.experimental import Determined
-	# checkpoint = Determined().get_experiment(id).top_checkpoint()
-	# model = checkpoint.load()
+        ### Load a checkpoint from a previous experiment
+        # from determined.experimental import Determined
+        # checkpoint = Determined().get_experiment(id).top_checkpoint()
+        # model = checkpoint.load()
 
-	### Specify a UUID with `source_trial_id` in the experiment config
+        ### Specify a UUID with `source_trial_id` in the experiment config
 
-	### Load a model that was not trained by Determined
+        ### Load a model that was not trained by Determined
         self.model = self.context.wrap_model(resnet.resnet18(pretrained=True))
 
         # IGNORE: Dummy optimizer that needs to be specified but is unused
-
-        # IGNORE: Dummy optimizer that needs to be specified but is unused
-        self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(
-            self.model.parameters()))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.RMSprop(self.model.parameters())
+        )
 
         # TODO: Create custom reducer to save inference output
         output_file = os.path.join(self.download_directory, "predictions.npy")
@@ -99,7 +111,10 @@ class CIFARTrial(PyTorchTrial):
 
     def train_batch(
         # IGNORE: No-op train_batch that does not train or generate metrics
-        self, batch: TorchData, epoch_idx: int, batch_idx: int
+        self,
+        batch: TorchData,
+        epoch_idx: int,
+        batch_idx: int,
     ) -> Dict[str, torch.Tensor]:
         return {}
 
@@ -124,7 +139,10 @@ class CIFARTrial(PyTorchTrial):
     def build_training_data_loader(self) -> Any:
         # IGNORE: Dummy training data loader that must be specified but is unused
         transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
         )
         trainset = torchvision.datasets.CIFAR10(
             root=self.download_directory, train=True, download=True, transform=transform
@@ -134,10 +152,18 @@ class CIFARTrial(PyTorchTrial):
     def build_validation_data_loader(self) -> Any:
         # TODO: Add your evaluation dataset here
         transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616))]
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    (0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)
+                ),
+            ]
         )
         valset = torchvision.datasets.CIFAR10(
-            root=self.download_directory, train=False, download=True, transform=transform
+            root=self.download_directory,
+            train=False,
+            download=True,
+            transform=transform,
         )
 
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())
