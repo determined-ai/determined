@@ -22,8 +22,6 @@ const { Item } = Form;
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 
-const DEFAULT_KEY = '';
-
 interface Props extends ModalProps {
   onLaunch?: () => void;
   visible?: boolean;
@@ -36,9 +34,12 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ showResourceType, setShowResourceType ] = useState(false);
-  const [ resourceType, setResourceType ] = useState<ResourceType | undefined>
-  (storage.getWithDefault(STORAGE_KEY, { type: undefined }).type);
+  const [ showResourceType, setShowResourceType ] =useState(
+    storage.getWithDefault(STORAGE_KEY, { type: undefined }).type !== ResourceType.CPU,
+  );
+  const [ resourceType, setResourceType ] = useState<ResourceType | undefined>(
+    storage.getWithDefault(STORAGE_KEY, { type: undefined }).type,
+  );
   const [ form ] = Form.useForm();
 
   const fetchTemplates = useCallback(async () => {
@@ -66,7 +67,7 @@ const NotebookModal: React.FC<Props> = (
       const values: NotebookConfig = form.getFieldsValue(true);
       const config = await previewNotebook(
         values.type === ResourceType.CPU ? 0 : values.slots,
-        values.template === DEFAULT_KEY? undefined : values.template,
+        values.template,
         values.name,
         values.pool,
       );
@@ -102,7 +103,7 @@ const NotebookModal: React.FC<Props> = (
         launchNotebook(
           undefined,
           resourceType === ResourceType.CPU ? 0 : values.slots,
-          values.template === DEFAULT_KEY ? undefined : values.template,
+          values.template,
           values.name,
           values.pool,
         );
@@ -185,15 +186,15 @@ const NotebookModal: React.FC<Props> = (
       <Form
         form={form}
         initialValues={storage.getWithDefault(STORAGE_KEY, {
+          pool: undefined,
           slots: 1,
-          template: DEFAULT_KEY,
+          template: undefined,
           type: undefined,
         })}
         labelCol={{ span: 8 }}
         onValuesChange={storeConfig}>
         <Item label="Notebook Template" name="template">
-          <Select>
-            <Option key={DEFAULT_KEY} value={DEFAULT_KEY}>Default Task Template</Option>
+          <Select allowClear placeholder="No template (optional)">
             {templates.map(temp =>
               <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
           </Select>
@@ -203,10 +204,10 @@ const NotebookModal: React.FC<Props> = (
         </Item>
         <Item
           label="Resource Pool"
-          name="pool"
-          rules={[ { message: 'Select a resource pool', required: true } ]}>
+          name="pool">
           <Select
-            placeholder="Select a resource pool"
+            allowClear
+            placeholder="Pick the best option"
             onChange={handleResourcePoolUpdate}>
             {resourcePools.map(pool =>
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
@@ -214,8 +215,7 @@ const NotebookModal: React.FC<Props> = (
         </Item>
         {showResourceType && <Item
           label="Type"
-          name="type"
-          rules={[ { message: 'Select a resource type', required: true } ]}>
+          name="type">
           <RadioGroup
             options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
               { id: ResourceType.GPU, label: ResourceType.GPU } ]}
@@ -225,8 +225,7 @@ const NotebookModal: React.FC<Props> = (
           <Item
             initialValue={1}
             label="Number of Slots"
-            name="slots"
-            rules={[ { message: 'Please choose a number of slots', required: true } ]}>
+            name="slots">
             <InputNumber min={1} />
           </Item> : null
         }
