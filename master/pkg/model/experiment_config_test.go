@@ -174,7 +174,6 @@ func validGridSearchConfig() ExperimentConfig {
 
 func validResourcesConfig() ExperimentConfig {
 	config := validGridSearchConfig()
-	config.Resources.SlotsPerTrial = 4
 	return config
 }
 
@@ -367,7 +366,7 @@ func TestExperiment(t *testing.T) {
 			SmallerIsBetter: false,
 			SingleConfig:    &SingleConfig{MaxLength: NewLengthInBatches(1000)},
 		},
-		Resources: ResourcesConfig{SlotsPerTrial: 1, Weight: 1},
+		Resources: ResourcesConfig{Weight: 1},
 		Optimizations: OptimizationsConfig{
 			AggregationFrequency:       1,
 			AverageAggregatedGradients: true,

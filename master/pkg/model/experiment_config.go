@@ -216,13 +216,11 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 
 // ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
 type ResourcesConfig struct {
-	// Slots is used by commands while trials use SlotsPerTrial.
 	Slots int `json:"slots,omitempty"`
 
 	MaxSlots       *int    `json:"max_slots,omitempty"`
-	SlotsPerTrial  int     `json:"slots_per_trial"`
 	Weight         float64 `json:"weight"`
-	NativeParallel bool    `json:"native_parallel"`
+	NativeParallel bool    `json:"native_parallel,omitempty"`
 	ShmSize        *int    `json:"shm_size,omitempty"`
 	AgentLabel     string  `json:"agent_label"`
 	ResourcePool   string  `json:"resource_pool"`
@@ -243,8 +241,7 @@ func ParseJustResources(configBytes []byte) ResourcesConfig {
 
 	dummy := DummyConfig{
 		Resources: ResourcesConfig{
-			Slots:         1,
-			SlotsPerTrial: 1,
+			Slots: 1,
 		},
 	}
 
@@ -272,10 +269,8 @@ func ValidatePrioritySetting(priority *int) []error {
 // Validate implements the check.Validatable interface.
 func (r ResourcesConfig) Validate() []error {
 	errs := []error{
-		check.GreaterThan(r.SlotsPerTrial, 0, "slots_per_trial must be > 0"),
+		check.GreaterThanOrEqualTo(r.Slots, 0, "slots must be >= 0"),
 		check.GreaterThan(r.Weight, float64(0), "weight must be > 0"),
-		check.GreaterThanOrEqualTo(
-			r.MaxSlots, r.SlotsPerTrial, "max_slots must be >= slots_per_trial"),
 		check.GreaterThanOrEqualTo(r.ShmSize, 0, "shm_size must be >= 0"),
 	}
 	errs = append(errs, ValidatePrioritySetting(r.Priority)...)

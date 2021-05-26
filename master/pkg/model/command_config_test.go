@@ -21,9 +21,8 @@ func TestConfigValidate(t *testing.T) {
 	}
 	var environment Environment
 	resources := ResourcesConfig{
-		Slots:         1,
-		SlotsPerTrial: 1,
-		Weight:        1,
+		Slots:  1,
+		Weight: 1,
 	}
 
 	tests := []testCase{
