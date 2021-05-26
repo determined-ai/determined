@@ -242,12 +242,12 @@ const stateColorMapping = {
 
 type States = RunState | CommandState | ResourceState | CheckpointState | SlotState
 
-export const getStateColorCssVar = ( state: States | undefined): string => {
+export const getStateColorCssVar = (state: States | undefined): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;
 };
 
-export const getStateColor = ( state: States | undefined): string => {
+export const getStateColor = (state: States | undefined): string => {
   const cssVar = getStateColorCssVar(state);
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };

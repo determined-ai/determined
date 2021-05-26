@@ -23,7 +23,7 @@ const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest
   const cleanedInput = input.replace(repeatedSeparator, SEPARATOR);
   const sections = cleanedInput.split(SEPARATOR);
   const query = sections[sections.length-1];
-  const address = sections.slice(0,sections.length-1);
+  const address = sections.slice(0, sections.length-1);
   const path = await traverseTree(address, root);
   return {
     path,
@@ -49,7 +49,7 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
     {
       includeScore: false,
       keys: [ 'title', 'aliases', 'label' ],
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
       shouldSort: true,
       threshold: 0.4,
     },

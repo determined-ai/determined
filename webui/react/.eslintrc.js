@@ -45,9 +45,11 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
+    'arrow-spacing': [ 'error', { after: true, before: true } ],
     'block-spacing': [ 'error', 'always' ],
     'brace-style': [ 'error', '1tbs', { allowSingleLine: true } ],
     'comma-dangle': [ 'error', 'always-multiline' ],
+    'comma-spacing': [ 'error', { after: true, before: false } ],
     'eol-last': [ 'error', 'always' ],
     'eqeqeq': [ 'error', 'smart' ],
     'function-paren-newline': [ 'error', 'multiline-arguments' ],
@@ -57,6 +59,18 @@ module.exports = {
       'newlines-between': 'always',
     } ],
     'indent': 'off',
+    'jsx-quotes': [ 'error', 'prefer-double' ],
+    'key-spacing': [ 'error', {
+      multiLine: {
+        afterColon: true,
+        beforeColon: false,
+        mode: 'strict',
+      },
+      singleLine: {
+        afterColon: true,
+        beforeColon: false,
+      },
+    } ],
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
     'no-empty': [ 'error', { allowEmptyCatch: true } ],
@@ -102,6 +116,7 @@ module.exports = {
       caseSensitive: false,
       natural: true,
     } ],
+    'space-in-parens': [ 'error', 'never' ],
   },
   settings: {
     'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint

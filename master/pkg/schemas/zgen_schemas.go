@@ -1703,7 +1703,7 @@ var (
                 "integer",
                 "null"
             ],
-            "default": null,
+            "default": 0,
             "minimum": 0
         },
         "end_after_batch": {
@@ -1715,37 +1715,10 @@ var (
             "minimum": 0
         }
     },
-    "conditional": {
-        "$comment": "when enabled=true, assert begin <= end",
-        "when": {
-            "required": [
-                "enabled"
-            ],
-            "properties": {
-                "enabled": {
-                    "const": true
-                }
-            }
-        },
-        "enforce": {
-            "required": [
-                "begin_on_batch",
-                "end_after_batch"
-            ],
-            "propeties": {
-                "begin_on_batch": {
-                    "type": "integer"
-                },
-                "end_after_batch": {
-                    "type": "integer"
-                }
-            },
-            "compareProperties": {
-                "type": "a<=b",
-                "a": "begin_on_batch",
-                "b": "end_after_batch"
-            }
-        }
+    "compareProperties": {
+        "type": "a<=b",
+        "a": "begin_on_batch",
+        "b": "end_after_batch"
     }
 }
 `)
@@ -2069,6 +2042,206 @@ var (
                 "null"
             ],
             "default": false
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
+	textAdaptiveSimpleConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
+    "title": "AdaptiveSimpleConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "max_trials",
+        "max_length",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "adaptive_simple"
+        },
+        "max_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1,
+            "maximum": 2000
+        },
+        "mode": {
+            "enum": [
+                null,
+                "aggressive",
+                "standard",
+                "conservative"
+            ],
+            "default": "standard"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "max_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 5
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
+	textAdaptiveConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
+    "title": "AdaptiveConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "budget",
+        "max_length",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "adaptive"
+        },
+        "budget": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
+        },
+        "bracket_rungs": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "integer"
+            }
+        },
+        "mode": {
+            "enum": [
+                null,
+                "aggressive",
+                "standard",
+                "conservative"
+            ],
+            "default": "standard"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "max_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 5
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "train_stragglers": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
         },
         "metric": {
             "type": [
@@ -2533,6 +2706,96 @@ var (
     }
 }
 `)
+	textSyncHalvingConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json",
+    "title": "SyncHalvingConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "num_rungs",
+        "max_length",
+        "budget",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "sync_halving"
+        },
+        "budget": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "num_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "train_stragglers": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+`)
 	textSearcherConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher.json",
@@ -2571,6 +2834,21 @@ var (
                     {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive_simple",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=sync_halving",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
                     }
                 ]
             }
@@ -2624,7 +2902,9 @@ var (
                 "null"
             ],
             "default": null
-        }
+        },
+        "budget": true,
+        "train_stragglers": true
     }
 }
 `)
@@ -3004,6 +3284,10 @@ var (
 
 	schemaAdaptiveASHAConfigV0 interface{}
 
+	schemaAdaptiveSimpleConfigV0 interface{}
+
+	schemaAdaptiveConfigV0 interface{}
+
 	schemaAsyncHalvingConfigV0 interface{}
 
 	schemaGridConfigV0 interface{}
@@ -3013,6 +3297,8 @@ var (
 	schemaRandomConfigV0 interface{}
 
 	schemaSingleConfigV0 interface{}
+
+	schemaSyncHalvingConfigV0 interface{}
 
 	schemaSearcherConfigV0 interface{}
 
@@ -3477,6 +3763,28 @@ func ParsedAdaptiveASHAConfigV0() interface{} {
 	return schemaAdaptiveASHAConfigV0
 }
 
+func ParsedAdaptiveSimpleConfigV0() interface{} {
+	if schemaAdaptiveSimpleConfigV0 != nil {
+		return schemaAdaptiveSimpleConfigV0
+	}
+	err := json.Unmarshal(textAdaptiveSimpleConfigV0, &schemaAdaptiveSimpleConfigV0)
+	if err != nil {
+		panic("invalid embedded json for AdaptiveSimpleConfigV0")
+	}
+	return schemaAdaptiveSimpleConfigV0
+}
+
+func ParsedAdaptiveConfigV0() interface{} {
+	if schemaAdaptiveConfigV0 != nil {
+		return schemaAdaptiveConfigV0
+	}
+	err := json.Unmarshal(textAdaptiveConfigV0, &schemaAdaptiveConfigV0)
+	if err != nil {
+		panic("invalid embedded json for AdaptiveConfigV0")
+	}
+	return schemaAdaptiveConfigV0
+}
+
 func ParsedAsyncHalvingConfigV0() interface{} {
 	if schemaAsyncHalvingConfigV0 != nil {
 		return schemaAsyncHalvingConfigV0
@@ -3530,6 +3838,17 @@ func ParsedSingleConfigV0() interface{} {
 		panic("invalid embedded json for SingleConfigV0")
 	}
 	return schemaSingleConfigV0
+}
+
+func ParsedSyncHalvingConfigV0() interface{} {
+	if schemaSyncHalvingConfigV0 != nil {
+		return schemaSyncHalvingConfigV0
+	}
+	err := json.Unmarshal(textSyncHalvingConfigV0, &schemaSyncHalvingConfigV0)
+	if err != nil {
+		panic("invalid embedded json for SyncHalvingConfigV0")
+	}
+	return schemaSyncHalvingConfigV0
 }
 
 func ParsedSearcherConfigV0() interface{} {
@@ -3717,6 +4036,10 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textS3ConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
 	cachedSchemaBytesMap[url] = textAdaptiveASHAConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+	cachedSchemaBytesMap[url] = textAdaptiveSimpleConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+	cachedSchemaBytesMap[url] = textAdaptiveConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
 	cachedSchemaBytesMap[url] = textAsyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
@@ -3727,6 +4050,8 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textRandomConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher-single.json"
 	cachedSchemaBytesMap[url] = textSingleConfigV0
+	url = "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
+	cachedSchemaBytesMap[url] = textSyncHalvingConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/searcher.json"
 	cachedSchemaBytesMap[url] = textSearcherConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/security.json"

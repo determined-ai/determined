@@ -21,6 +21,7 @@ export type MetricsAggregateInterface = {
   dataByBatch: Record<number, Record<string, number>>,
   // group information by {[time]: {[name]: value, ..}, ..}
   dataByUnixTime: Record<number, Record<string, number>>,
+  isEmpty: boolean,
   // set to false when the 1st event is received
   isLoading: boolean,
   // names to ease building the chart later
@@ -111,6 +112,7 @@ export const useFetchMetrics = (
   const [ data, setData ] = useState<MetricsAggregateInterface>({
     dataByBatch: {},
     dataByUnixTime: {},
+    isEmpty: true,
     isLoading: true,
     names: [],
   });
@@ -120,6 +122,9 @@ export const useFetchMetrics = (
       setData({
         dataByBatch: { ...fnData.dataByBatch },
         dataByUnixTime: { ...fnData.dataByUnixTime },
+        isEmpty: Object.keys(fnData.dataByBatch).length === 0
+          && Object.keys(fnData.dataByUnixTime).length === 0
+          && Object.keys(fnData.names).length === 0,
         isLoading: false,
         names: fnData.names,
       });
@@ -128,6 +133,7 @@ export const useFetchMetrics = (
     const internalData: MetricsAggregateInterface = {
       dataByBatch: {},
       dataByUnixTime: {},
+      isEmpty: true,
       isLoading: true,
       names: [],
     };

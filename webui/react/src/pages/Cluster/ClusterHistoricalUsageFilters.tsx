@@ -93,7 +93,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
-          label='From'
+          label="From"
           style={{ width: 130 }}
           value={value.afterDate}
           onChange={handleAfterDateSelect}
@@ -101,7 +101,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
-          label='To'
+          label="To"
           style={{ width: 130 }}
           value={value.beforeDate}
           onChange={handleBeforeDateSelect}
@@ -115,8 +115,8 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isAfterDateDisabled}
-          label='From'
-          picker='month'
+          label="From"
+          picker="month"
           style={{ width: 130 }}
           value={value.afterDate}
           onChange={handleAfterDateSelect}
@@ -124,8 +124,8 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         <DatePickerFilter
           allowClear={false}
           disabledDate={isBeforeDateDisabled}
-          label='To'
-          picker='month'
+          label="To"
+          picker="month"
           style={{ width: 130 }}
           value={value.beforeDate}
           onChange={handleBeforeDateSelect}

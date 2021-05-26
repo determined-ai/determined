@@ -9,7 +9,7 @@ const dev: TreeNode[] = [
   {
     options: [
       {
-        onAction: () => alertAction(`address: ${serverAddress()}`)() ,
+        onAction: () => alertAction(`address: ${serverAddress()}`)(),
         title: 'show',
       },
       {

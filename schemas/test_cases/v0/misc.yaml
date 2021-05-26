@@ -19,7 +19,7 @@
               10
 
 - name: check counts for grid (valid)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json
   case:
     global_batch_size:
@@ -83,7 +83,7 @@
       vals: [1, 2, 3, 4]
 
 - name: local_cache data layer checks (valid, present)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/data-layer-s3.json
   case:
     type: s3
@@ -93,7 +93,7 @@
     local_cache_host_path: /asdf/asdf
 
 - name: local_cache data layer checks (valid, empty)
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/data-layer-s3.json
   case:
     type: s3
@@ -121,22 +121,25 @@
     local_cache_container_path: /asdf/asdf
 
 - name: allow useless slots config in resources
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/resources.json
   case:
     slots: 1
     slots_per_trial: 1
 
 - name: profiling is valid when empty
-  matches:
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/profiling.json
+  case: {}
+
+- name: profiling is valid when only enabled is set
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
-    enabled: false
-    begin_on_batch: null
-    end_after_batch: null
+    enabled: true
 
 - name: profiling is valid when full
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
     enabled: true
@@ -144,7 +147,7 @@
     end_after_batch: 100
 
 - name: profiling is valid when begin == end
-  matches:
+  sane_as:
     - http://determined.ai/schemas/expconf/v0/profiling.json
   case:
     enabled: true

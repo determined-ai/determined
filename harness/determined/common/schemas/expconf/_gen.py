@@ -1837,7 +1837,7 @@ schemas = {
                 "integer",
                 "null"
             ],
-            "default": null,
+            "default": 0,
             "minimum": 0
         },
         "end_after_batch": {
@@ -1849,37 +1849,10 @@ schemas = {
             "minimum": 0
         }
     },
-    "conditional": {
-        "$comment": "when enabled=true, assert begin <= end",
-        "when": {
-            "required": [
-                "enabled"
-            ],
-            "properties": {
-                "enabled": {
-                    "const": true
-                }
-            }
-        },
-        "enforce": {
-            "required": [
-                "begin_on_batch",
-                "end_after_batch"
-            ],
-            "propeties": {
-                "begin_on_batch": {
-                    "type": "integer"
-                },
-                "end_after_batch": {
-                    "type": "integer"
-                }
-            },
-            "compareProperties": {
-                "type": "a<=b",
-                "a": "begin_on_batch",
-                "b": "end_after_batch"
-            }
-        }
+    "compareProperties": {
+        "type": "a<=b",
+        "a": "begin_on_batch",
+        "b": "end_after_batch"
     }
 }
 
@@ -2223,6 +2196,214 @@ schemas = {
                 "null"
             ],
             "default": false
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json",
+    "title": "AdaptiveSimpleConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "max_trials",
+        "max_length",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "adaptive_simple"
+        },
+        "max_trials": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1,
+            "maximum": 2000
+        },
+        "mode": {
+            "enum": [
+                null,
+                "aggressive",
+                "standard",
+                "conservative"
+            ],
+            "default": "standard"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "max_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 5
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json",
+    "title": "AdaptiveConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "budget",
+        "max_length",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "adaptive"
+        },
+        "budget": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/length.json"
+        },
+        "bracket_rungs": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "integer"
+            }
+        },
+        "mode": {
+            "enum": [
+                null,
+                "aggressive",
+                "standard",
+                "conservative"
+            ],
+            "default": "standard"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "max_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 5
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "train_stragglers": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
         },
         "metric": {
             "type": [
@@ -2709,6 +2890,100 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json",
+    "title": "SyncHalvingConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "num_rungs",
+        "max_length",
+        "budget",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "sync_halving"
+        },
+        "budget": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "num_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 1
+        },
+        "max_length": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/check-positive-length.json"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "train_stragglers": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/searcher.json": json.loads(
         r"""
 {
@@ -2749,6 +3024,21 @@ schemas = {
                     {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive_simple",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=sync_halving",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
                     }
                 ]
             }
@@ -2802,7 +3092,9 @@ schemas = {
                 "null"
             ],
             "default": null
-        }
+        },
+        "budget": true,
+        "train_stragglers": true
     }
 }
 

@@ -51,5 +51,5 @@ output "SSH-to-Master" {
 }
 
 output "Web-UI" {
-  value = "${module.compute.web_ui}"
+  value = module.compute.web_ui
 }

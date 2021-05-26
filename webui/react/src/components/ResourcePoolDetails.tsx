@@ -36,7 +36,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
 
   return (
     <Modal
-      cancelButtonProps={{ style: { display:'none' } }}
+      cancelButtonProps={{ style: { display: 'none' } }}
       cancelText=""
       mask
       style={{ minWidth: '60rem' }}

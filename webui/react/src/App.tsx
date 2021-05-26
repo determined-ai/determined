@@ -8,7 +8,7 @@ import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
-import useKeyTracker,{ KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePolling from 'hooks/usePolling';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';

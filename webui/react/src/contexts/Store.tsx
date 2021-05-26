@@ -85,7 +85,7 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-const initResourceTally = { allocation:0, available: 0, total: 0 };
+const initResourceTally = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.GPU]: clone(initResourceTally),

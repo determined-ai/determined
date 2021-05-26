@@ -29,7 +29,7 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 	return schemas.WithDefaults(expconf.ResourcesConfig{
 		RawSlots:          ptrs.IntPtr(r.Slots),
 		RawMaxSlots:       r.MaxSlots,
-		RawSlotsPerTrial:  ptrs.IntPtr(r.SlotsPerTrial),
+		RawSlotsPerTrial:  ptrs.IntPtr(1),
 		RawWeight:         ptrs.Float64Ptr(r.Weight),
 		RawNativeParallel: ptrs.BoolPtr(r.NativeParallel),
 		RawShmSize:        r.ShmSize,

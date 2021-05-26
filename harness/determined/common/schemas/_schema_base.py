@@ -188,7 +188,7 @@ class SchemaBase:
 
         # Validate before parsing.
         if not prevalidated:
-            errors = expconf.validation_errors(d, cls._id)
+            errors = expconf.sanity_validation_errors(d, cls._id)
             if errors:
                 raise TypeError(f"incorrect {cls.__name__}:\n" + "\n".join(errors))
 
@@ -272,22 +272,20 @@ class SchemaBase:
     def merge(self, src: T) -> None:
         if type(src) is not type(self):
             raise AssertionError("merge must be called with matching types")
-        src.assert_valid()
+        src.assert_sane()
         for name, src_value in vars(src).items():
             obj_value = vars(self).get(name)
             merged_value = _merge(obj_value, src_value)
             if merged_value is not None:
                 setattr(self, name, merged_value)
 
-    # TODO: enable sanity vs completion validation
-    def assert_valid(self) -> None:
-        errors = expconf.validation_errors(self.to_dict(), self._id)
+    def assert_sane(self) -> None:
+        errors = expconf.sanity_validation_errors(self.to_dict(), self._id)
         if errors:
             raise AssertionError(f"incorrect {type(self).__name__}:\n" + "\n".join(errors))
 
-    # TODO: enable sanity vs completion validation
     def assert_complete(self) -> None:
-        errors = expconf.validation_errors(self.to_dict(), self._id)
+        errors = expconf.completeness_validation_errors(self.to_dict(), self._id)
         if errors:
             raise TypeError(f"incorrect {type(self).__name__}:\n" + "\n".join(errors))
 

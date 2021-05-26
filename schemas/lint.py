@@ -63,6 +63,7 @@ SUPPORTED_KEYWORDS_BY_TYPE = {
         "unionKey",
         "disallowProperties",
         "eventuallyRequired",
+        "eventually",
         "checks",
         "compareProperties",
         "allOf",
