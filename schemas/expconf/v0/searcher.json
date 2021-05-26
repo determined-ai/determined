@@ -36,6 +36,21 @@
                     {
                         "unionKey": "const:name=async_halving",
                         "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=adaptive_simple",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json"
+                    },
+                    {
+                        "$comment": "this is an EOL searcher, not to be used in new experiments",
+                        "unionKey": "const:name=sync_halving",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json"
                     }
                 ]
             }
@@ -89,6 +104,8 @@
                 "null"
             ],
             "default": null
-        }
+        },
+        "budget": true,
+        "train_stragglers": true
     }
 }

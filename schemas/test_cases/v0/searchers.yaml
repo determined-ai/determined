@@ -97,3 +97,142 @@
     smaller_is_better: true
     source_checkpoint_uuid: null
     source_trial_id: 15
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: sync_halving searcher defaults
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
+  case:
+    name: sync_halving
+    max_length:
+      batches: 1000
+    num_rungs: 5
+    budget:
+      epochs: 1
+    metric: loss
+    smaller_is_better: true
+  defaulted:
+    name: sync_halving
+    max_length:
+      batches: 1000
+    num_rungs: 5
+    budget:
+      epochs: 1
+    metric: loss
+    smaller_is_better: true
+    divisor: 4
+    train_stragglers: true
+    source_trial_id: null
+    source_checkpoint_uuid: null
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: adaptive searcher defaults
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
+  case:
+    name: adaptive
+    max_length:
+      batches: 1000
+    budget:
+      batches: 10000
+    metric: loss
+  defaulted:
+    name: adaptive
+    max_length:
+      batches: 1000
+    budget:
+      batches: 10000
+    bracket_rungs: []
+    divisor: 4
+    train_stragglers: true
+    max_rungs: 5
+    mode: standard
+    metric: loss
+    smaller_is_better: true
+    source_trial_id: null
+    source_checkpoint_uuid: null
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: adaptive_simple searcher defaults
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
+  case:
+    name: adaptive_simple
+    max_length:
+      batches: 1000
+    max_trials: 100
+    max_rungs: 5
+    metric: loss
+  defaulted:
+    name: adaptive_simple
+    max_length:
+      batches: 1000
+    max_trials: 100
+    max_rungs: 5
+    divisor: 4
+    mode: standard
+    metric: loss
+    smaller_is_better: true
+    source_trial_id: null
+    source_checkpoint_uuid: null
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: sync_halving searcher (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
+  case:
+    name: sync_halving
+    max_length:
+      batches: 1000
+    num_rungs: 5
+    budget:
+      epochs: 1
+    divisor: 1.5
+    train_stragglers: true
+    metric: loss
+    smaller_is_better: true
+    source_checkpoint_uuid: null
+    source_trial_id: 15
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: adaptive searcher (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
+  case:
+    name: adaptive
+    max_length:
+      batches: 1000
+    budget:
+      batches: 10000
+    bracket_rungs: [1, 2, 3, 4, 5]
+    divisor: 1.5
+    train_stragglers: true
+    max_rungs: 5
+    mode: standard
+    metric: loss
+    smaller_is_better: true
+    source_checkpoint_uuid: null
+    source_trial_id: 15
+
+# This tests an EOL searcher, not to be used in new experiments.
+- name: adaptive_simple searcher (valid)
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/searcher.json
+    - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
+  case:
+    name: adaptive_simple
+    max_length:
+      batches: 1000
+    max_trials: 100
+    max_rungs: 5
+    mode: standard
+    divisor: 1.5
+    metric: loss
+    smaller_is_better: true
+    source_checkpoint_uuid: null
+    source_trial_id: 15

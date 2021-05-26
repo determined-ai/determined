@@ -292,6 +292,11 @@ func (a *apiServer) PreviewHPSearch(
 		)
 	}
 
+	// Disallow EOL searchers.
+	if err = sc.AssertCurrent(); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
 	sm := searcher.NewSearchMethod(sc)
 	s := searcher.NewSearcher(req.Seed, sm, hc)
 	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, sc.Metric())
@@ -882,6 +887,13 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
 	case expconf.PBTConfig:
 		return nil, errors.New("population-based training not supported for trial sampling")
+	// EOL searcher configs:
+	case expconf.AdaptiveConfig:
+		ranking = ByTrainingLength
+	case expconf.AdaptiveSimpleConfig:
+		ranking = ByTrainingLength
+	case expconf.SyncHalvingConfig:
+		ranking = ByTrainingLength
 	default:
 		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
 	}

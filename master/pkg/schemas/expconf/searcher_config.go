@@ -19,6 +19,11 @@ type SearcherConfigV0 struct {
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
 	RawPBTConfig          *PBTConfigV0          `union:"name,pbt" json:"-"`
 
+	// These searchers are allowed only to help parse old experiment configs.
+	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
+	RawAdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive" json:"-"`
+	RawAdaptiveSimpleConfig *AdaptiveSimpleConfigV0 `union:"name,adaptive_simple" json:"-"`
+
 	RawMetric               *string `json:"metric"`
 	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
 	RawSourceTrialID        *int    `json:"source_trial_id"`
@@ -59,6 +64,14 @@ func (s SearcherConfigV0) Unit() Unit {
 		return s.RawAdaptiveASHAConfig.Unit()
 	case s.RawPBTConfig != nil:
 		return s.RawPBTConfig.Unit()
+
+	case s.RawSyncHalvingConfig != nil:
+		panic("cannot get unit of EOL searcher class")
+	case s.RawAdaptiveConfig != nil:
+		panic("cannot get unit of EOL searcher class")
+	case s.RawAdaptiveSimpleConfig != nil:
+		panic("cannot get unit of EOL searcher class")
+
 	default:
 		panic("no searcher type specified")
 	}
@@ -179,4 +192,55 @@ type PBTConfigV0 struct {
 // Unit implements the model.InUnits interface.
 func (p PBTConfigV0) Unit() Unit {
 	return p.RawLengthPerRound.Unit
+}
+
+//go:generate ../gen.sh
+// SyncHalvingConfigV0 is a legacy config.
+type SyncHalvingConfigV0 struct {
+	RawNumRungs        *int      `json:"num_rungs"`
+	RawMaxLength       *LengthV0 `json:"max_length"`
+	RawBudget          *LengthV0 `json:"budget"`
+	RawDivisor         *float64  `json:"divisor"`
+	RawTrainStragglers *bool     `json:"train_stragglers"`
+}
+
+//go:generate ../gen.sh
+// AdaptiveConfigV0 is a legacy config.
+type AdaptiveConfigV0 struct {
+	RawMaxLength       *LengthV0     `json:"max_length"`
+	RawBudget          *LengthV0     `json:"budget"`
+	RawBracketRungs    []int         `json:"bracket_rungs"`
+	RawDivisor         *float64      `json:"divisor"`
+	RawTrainStragglers *bool         `json:"train_stragglers"`
+	RawMode            *AdaptiveMode `json:"mode"`
+	RawMaxRungs        *int          `json:"max_rungs"`
+}
+
+//go:generate ../gen.sh
+// AdaptiveSimpleConfigV0 is a legacy config.
+type AdaptiveSimpleConfigV0 struct {
+	RawMaxLength *LengthV0     `json:"max_length"`
+	RawMaxTrials *int          `json:"max_trials"`
+	RawDivisor   *float64      `json:"divisor"`
+	RawMode      *AdaptiveMode `json:"mode"`
+	RawMaxRungs  *int          `json:"max_rungs"`
+}
+
+// AssertCurrent distinguishes configs which are only parsable from those that are runnable.
+func (s SearcherConfig) AssertCurrent() error {
+	switch {
+	case s.RawSyncHalvingConfig != nil:
+		return errors.New(
+			"the 'sync_halving' searcher has been removed and is not valid for new experients",
+		)
+	case s.RawAdaptiveConfig != nil:
+		return errors.New(
+			"the 'adaptive' searcher has been removed and is not valid for new experients",
+		)
+	case s.RawAdaptiveSimpleConfig != nil:
+		return errors.New(
+			"the 'adaptive_simple' searcher has been removed and is not valid for new experients",
+		)
+	}
+	return nil
 }
