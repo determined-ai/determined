@@ -155,16 +155,26 @@ The coscheduling plugin is in beta and is therefore not enabled by
 default. To enable it, edit ``values.yaml`` in the Determined Helm chart
 to set the ``defaultScheduler`` field to ``coscheduler``.
 
-Importantly, the coscheduling plugin does not work with Kubernetes'
-cluster autoscaling feature: static node pools must be used to achieve
-gang scheduling. Also, while the plugin allocates resources to jobs
-based on their priority, it does not support preemption. For example, if
-the cluster is full of low priority jobs and a new high priority job is
-submitted, the high priority job will not be scheduled until one of the
-low priority jobs finishes. Lastly, Determined's capability to
-automatically set pod labels is restricted to GPU experiments;
-Determined does not currently set labels for CPU experiments or user
-commands.
+There are several limitations to the coscheduling plugin to be aware of:
+
+#. The coscheduling plugin does not work with Kubernetes' cluster
+   autoscaling feature. Static node pools must be used to achieve gang
+   scheduling
+
+#. The plugin does not support preemption. For example, if the cluster
+   is full of low priority jobs and a new high priority job is
+   submitted, the high priority job will not be scheduled until one of
+   the low priority jobs finishes.
+
+#. Determined's capability to automatically set pod labels is restricted
+   to GPU experiments. Determined does not currently set labels for CPU
+   experiments or user commands.
+
+#. When scheduling experiments that utilize the entire cluster, the
+   plugin may take several minutes to schedule the next job. Because the
+   coscheduler only approves of jobs when all of its pods are available,
+   it may repeatedly reject partially-ready jobs, causing them to wait
+   further.
 
 To enable gang scheduling with commands or CPU experiments, enable the
 coscheduler in ``values.yaml`` and modify the experiment config to
