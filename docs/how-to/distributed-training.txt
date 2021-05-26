@@ -1,3 +1,5 @@
+.. _cifar10_pytorch_inference: https://github.com/determined-ai/determined/blob/master/examples/computer_vision/cifar10_pytorch_inference/
+
 .. _multi-gpu-training:
 
 ######################
@@ -165,6 +167,7 @@ these steps:
 
 Once the new PyTorchTrial object is created, use the experiment
 configuration to distribute inference in the same way as training.
+cifar10_pytorch_inference_ is an example of distributed batch inference.
 
 ************
  Next Steps
