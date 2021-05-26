@@ -35,7 +35,6 @@ type protoCommandParams struct {
 	Files        []*utilv1.File
 	Data         []byte
 	MustZeroSlot bool
-	Preview      bool
 }
 
 func (a *apiServer) makeFullCommandSpec(

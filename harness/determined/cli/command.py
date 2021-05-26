@@ -253,6 +253,7 @@ def launch_command(
     template: str,
     context_path: Optional[Path] = None,
     data: Optional[Dict[str, Any]] = None,
+    preview: Optional[bool] = False,
 ) -> Any:
     user_files = []  # type: List[Dict[str, Any]]
     if context_path:
@@ -270,6 +271,9 @@ def launch_command(
         message_bytes = json.dumps(data).encode("utf-8")
         base64_bytes = base64.b64encode(message_bytes)
         body["data"] = base64_bytes
+
+    if preview:
+        body["preview"] = preview
 
     return api.post(
         master,
