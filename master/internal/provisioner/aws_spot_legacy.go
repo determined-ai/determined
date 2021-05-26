@@ -73,9 +73,9 @@ func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Cont
 	}
 
 	var instanceListToLog strings.Builder
-	for _, instanceId := range instancesToTerminate {
+	for _, instanceID := range instancesToTerminate {
 		instanceListToLog.WriteString(", ")
-		instanceListToLog.WriteString(*instanceId)
+		instanceListToLog.WriteString(*instanceID)
 	}
 	loggerSpotLegacy.Infof(
 		"terminating %d legacy spot instances associated with active legacy spot requests: %s",
