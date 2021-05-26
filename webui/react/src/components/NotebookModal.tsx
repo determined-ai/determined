@@ -110,7 +110,7 @@ const NotebookModal: React.FC<Props> = (
     [ showFullConfig, form, onLaunch, resourceType ],
   );
 
-  const handleResourcePoolUpdate = useCallback((selectedPoolName: string) => {
+  const handleResourcePoolUpdate = (selectedPoolName: string) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
       return true;
@@ -127,7 +127,7 @@ const NotebookModal: React.FC<Props> = (
       setResourceType(ResourceType.GPU);
       return false;
     }
-  }, [ resourcePools ]);
+  };
 
   const showResourceType = handleResourcePoolUpdate(form.getFieldValue('pool'));
 
