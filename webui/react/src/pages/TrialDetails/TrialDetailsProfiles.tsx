@@ -29,8 +29,8 @@ const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => 
     return (
       <Alert
         description={description}
-        message='Profiling was not enabled for this trial.'
-        type='warning'
+        message="Profiling was not enabled for this trial."
+        type="warning"
       />
     );
   }

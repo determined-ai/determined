@@ -28,8 +28,8 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
 
       {systemMetrics.isEmpty && (
         <Alert
-          message='No data available.'
-          type='warning'
+          message="No data available."
+          type="warning"
         />
       )}
 
@@ -43,9 +43,7 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
           <SystemMetricChart systemMetrics={systemMetrics} />
         </Section>
 
-        <Section bodyBorder title="Timing Metrics">
-          <TimingMetricChart trial={trial} />
-        </Section>
+        <TimingMetricChart trial={trial} />
 
       </div>
 
