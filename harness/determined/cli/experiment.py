@@ -112,7 +112,23 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
 
 def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
-    experiment_config = yaml.safe_load(config_file.read())
+    try:
+        experiment_config = yaml.safe_load(config_file.read())
+    except yaml.constructor.DuplicateKeyError as e:
+        err_msg = (
+            "found"
+            + str(e)
+            .split("found")[1]
+            .split("To")[0]
+            .replace('"<unicode string>"', str(config_file.name))
+            .rstrip()
+        )
+        print(
+            f"Error: failed while loading experiment config file {config_file.name}."
+            f"\nDuplicate Key Error: {err_msg}"
+        )
+        sys.exit(1)
+
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
         print("Error: invalid experiment config file {}".format(config_file.name))
