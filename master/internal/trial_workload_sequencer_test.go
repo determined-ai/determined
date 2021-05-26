@@ -49,8 +49,6 @@ func TestTrialWorkloadSequencer(t *testing.T) {
 	expConfig, err := defaultExperimentConfig()
 	assert.NilError(t, err)
 
-	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
-
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
 		model.GlobalBatchSize: 64,
@@ -149,7 +147,7 @@ func TestTrialWorkloadSequencer(t *testing.T) {
 		PriorBatchesProcessed: schedulingUnit * 5,
 	}
 
-	s := newTrialWorkloadSequencer(experiment, create, nil)
+	s := newTrialWorkloadSequencer(1, expConfig, create, nil)
 
 	// Check that upToDate() returns true as soon as sequencer is created.
 	assert.Assert(t, s.UpToDate())
@@ -308,14 +306,13 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	expConfig, err := defaultExperimentConfig()
 	assert.NilError(t, err)
 	expConfig.SetMinCheckpointPeriod(expconf.NewLengthInBatches(100))
-	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	s := newTrialWorkloadSequencer(experiment, create, nil)
+	s := newTrialWorkloadSequencer(1, expConfig, create, nil)
 	s.SetTrialID(1)
 
 	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Batches, 500))
@@ -345,14 +342,13 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 	expConfig, err := defaultExperimentConfig()
 	assert.NilError(t, err)
-	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
 	create := searcher.NewCreate(rand, map[string]interface{}{
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	s := newTrialWorkloadSequencer(experiment, create, nil)
+	s := newTrialWorkloadSequencer(1, expConfig, create, nil)
 	s.SetTrialID(1)
 
 	train := searcher.NewValidateAfter(create.RequestID, expconf.NewLength(expconf.Records, 24))
