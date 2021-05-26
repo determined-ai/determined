@@ -18,7 +18,7 @@ services:
     restart: ${DET_RESTART_POLICY:-unless-stopped}
     depends_on:
       - determined-db
-    image: determinedai/determined-master:${DET_VERSION}
+    image: ${IMAGE_REPO_PREFIX:-determinedai}/determined-master:${DET_VERSION}
     ports:
       - "${INTEGRATIONS_HOST_PORT:-8080}:8080"
     environment:

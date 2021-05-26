@@ -30,6 +30,7 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.GPU_ENV_IMAGE,
         constants.cloudformation.LOG_GROUP_PREFIX,
         constants.cloudformation.RETAIN_LOG_GROUP,
+        constants.cloudformation.IMAGE_REPO_PREFIX,
     ]
 
     def deploy(self) -> None:

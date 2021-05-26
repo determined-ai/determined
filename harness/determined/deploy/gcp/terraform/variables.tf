@@ -151,6 +151,11 @@ variable "environment_image" {
   type = string
 }
 
+variable "image_repo_prefix" {
+  type = string
+  default = "determinedai"
+}
+
 variable "det_version" {
   type = string
 }

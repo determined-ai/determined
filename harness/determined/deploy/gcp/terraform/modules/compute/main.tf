@@ -63,7 +63,7 @@ resource "google_compute_instance" "master_instance" {
         max_cpu_containers_per_agent: ${var.max_cpu_containers_per_agent}
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
-          agent_docker_image: determinedai/determined-agent:${var.det_version}
+          agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
           master_url: ${var.scheme}://internal-ip:${var.port}
           agent_docker_network: ${var.agent_docker_network}
           max_idle_agent_period: ${var.max_idle_agent_period}
@@ -95,7 +95,7 @@ resource "google_compute_instance" "master_instance" {
         max_cpu_containers_per_agent: 0
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
-          agent_docker_image: determinedai/determined-agent:${var.det_version}
+          agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
           master_url: ${var.scheme}://internal-ip:${var.port}
           agent_docker_network: ${var.agent_docker_network}
           max_idle_agent_period: ${var.max_idle_agent_period}
@@ -170,7 +170,7 @@ resource "google_compute_instance" "master_instance" {
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
         -v /usr/local/determined/etc/db_ssl_root_cert.pem:/etc/determined/etc/db_ssl_root_cert.pem \
-        determinedai/determined-master:${var.det_version}
+        ${var.image_repo_prefix}/determined-master:${var.det_version}
 
   EOT
 
@@ -227,7 +227,7 @@ resource "google_compute_instance" "agent_instance" {
         -v /var/run/docker.sock:/var/run/docker.sock \
         -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
         -e DET_RESOURCE_POOL=gpu-pool \
-        determinedai/determined-agent:${var.det_version}  run --master-port=${var.port}
+        ${var.image_repo_prefix}/determined-agent:${var.det_version}  run --master-port=${var.port}
 
   EOT
 

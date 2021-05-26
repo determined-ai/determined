@@ -170,6 +170,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.GPU_ENV_IMAGE: args.gpu_env_image,
         constants.cloudformation.LOG_GROUP_PREFIX: args.log_group_prefix,
         constants.cloudformation.RETAIN_LOG_GROUP: args.retain_log_group,
+        constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
