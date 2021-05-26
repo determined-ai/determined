@@ -27,17 +27,109 @@ interface Props extends ModalProps {
   visible?: boolean;
 }
 
+const resourcePools = [ {
+  agentDockerImage: '',
+  agentDockerNetwork: '',
+  agentDockerRuntime: '',
+  agentFluentImage: '',
+  containerStartupScript: '',
+  cpuContainerCapacity: 100,
+  cpuContainerCapacityPerAgent: 100,
+  cpuContainersRunning: 0,
+  defaultCpuPool: true,
+  defaultGpuPool: true,
+  description: '',
+  details: {
+    aws: null,
+    gcp: null,
+    priorityScheduler: null,
+  },
+  imageId: '',
+  instanceType: '',
+  location: 'on-prem',
+  masterCertName: '',
+  masterUrl: '',
+  maxAgents: 0,
+  maxAgentStartingPeriod: 0,
+  maxIdleAgentPeriod: 0,
+  minAgents: 0,
+  name: 'both',
+  numAgents: 1,
+  preemptible: false,
+  schedulerFittingPolicy: 'FITTING_POLICY_BEST',
+  schedulerType: 'SCHEDULER_TYPE_FAIR_SHARE',
+  slotsAvailable: 1,
+  slotsPerAgent: -1,
+  slotsUsed: 0,
+  startupScript: '',
+  type: 'RESOURCE_POOL_TYPE_STATIC',
+}, {
+  agentDockerImage: '',
+  agentDockerNetwork: '',
+  agentDockerRuntime: '',
+  agentFluentImage: '',
+  containerStartupScript: '',
+  cpuContainerCapacity: 100,
+  cpuContainerCapacityPerAgent: 100,
+  cpuContainersRunning: 0,
+  defaultCpuPool: true,
+  defaultGpuPool: true,
+  description: '',
+  details: {
+    aws: null,
+    gcp: null,
+    priorityScheduler: null,
+  },
+  imageId: '',
+  instanceType: '',
+  location: 'on-prem',
+  masterCertName: '',
+  masterUrl: '',
+  maxAgents: 0,
+  maxAgentStartingPeriod: 0,
+  maxIdleAgentPeriod: 0,
+  minAgents: 0,
+  name: 'cpu',
+  numAgents: 1,
+  preemptible: false,
+  schedulerFittingPolicy: 'FITTING_POLICY_BEST',
+  schedulerType: 'SCHEDULER_TYPE_FAIR_SHARE',
+  slotsAvailable: -1,
+  slotsPerAgent: -1,
+  slotsUsed: 0,
+  startupScript: '',
+  type: 'RESOURCE_POOL_TYPE_STATIC',
+} ];
+
 const NotebookModal: React.FC<Props> = (
   { visible = false, onLaunch, ...props }: Props,
 ) => {
   const storage = useStorage(STORAGE_PATH);
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
-  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  //const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ dummy, setDummy ] = useState(false);
+
   const [ resourceType, setResourceType ] = useState<ResourceType | undefined>(
     storage.getWithDefault(STORAGE_KEY, { type: undefined }).type,
   );
   const [ form ] = Form.useForm();
+
+  const calculateResourceInfo = (selectedPoolName: string) => {
+    const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
+    if (!selectedPool) {
+      return { hasCPU: false, hasGPU: false, showResourceType: true };
+    }
+    const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
+    const hasGPUCapacity = selectedPool.slotsAvailable > 0 || selectedPool.slotsPerAgent > 0;
+    return {
+      hasCPU: hasCPUCapacity,
+      hasGPU: hasGPUCapacity,
+      showResourceType: hasCPUCapacity && hasGPUCapacity,
+    };
+  };
+
+  const { showResourceType, hasCPU, hasGPU } = calculateResourceInfo(form.getFieldValue('pool'));
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -48,7 +140,7 @@ const NotebookModal: React.FC<Props> = (
   useEffect(() => {
     fetchTemplates();
   }, [ fetchTemplates ]);
-
+  /*
   const fetchResourcePools = useCallback(async () => {
     try {
       setResourcePools(await getResourcePools({}));
@@ -58,19 +150,20 @@ const NotebookModal: React.FC<Props> = (
   useEffect(() => {
     fetchResourcePools();
   }, [ fetchResourcePools ]);
+  */
 
   const fetchConfig = useCallback(async () => {
     try {
       const values: NotebookConfig = form.getFieldsValue(true);
       const config = await previewNotebook(
-        values.type === ResourceType.CPU ? 0 : values.slots,
+        (hasCPU && !hasGPU) ? 0 : values.slots,
         values.template,
         values.name,
         values.pool,
       );
       form.setFieldsValue({ config: yaml.dump(config) });
     } catch {}
-  }, [ form ]);
+  }, [ form, hasCPU, hasGPU ]);
 
   useEffect(() => {
     if (showFullConfig) fetchConfig();
@@ -97,9 +190,10 @@ const NotebookModal: React.FC<Props> = (
       if (showFullConfig) {
         launchNotebook(yaml.load(form.getFieldValue('config')) as RawJson);
       } else {
+
         launchNotebook(
           undefined,
-          resourceType === ResourceType.CPU ? 0 : values.slots,
+          (hasCPU && !hasGPU) ? 0 : values.slots,
           values.template,
           values.name,
           values.pool,
@@ -107,29 +201,8 @@ const NotebookModal: React.FC<Props> = (
       }
       if (onLaunch) onLaunch();
     },
-    [ showFullConfig, form, onLaunch, resourceType ],
+    [ showFullConfig, form, onLaunch, hasCPU, hasGPU ],
   );
-
-  const handleResourcePoolUpdate = (selectedPoolName: string) => {
-    const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
-    if (!selectedPool) {
-      return true;
-    }
-    const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
-    const hasGPUCapacity = selectedPool.slotsAvailable > 0
-      || (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
-    if (hasCPUCapacity && hasGPUCapacity) {
-      return true;
-    } else if (hasCPUCapacity) {
-      setResourceType(ResourceType.CPU);
-      return false;
-    } else if (hasGPUCapacity) {
-      setResourceType(ResourceType.GPU);
-      return false;
-    }
-  };
-
-  const showResourceType = handleResourcePoolUpdate(form.getFieldValue('pool'));
 
   const handleTypeUpdate = useCallback((selectedResourceType) => {
     setResourceType(selectedResourceType as ResourceType);
@@ -208,7 +281,8 @@ const NotebookModal: React.FC<Props> = (
           name="pool">
           <Select
             allowClear
-            placeholder="Pick the best option">
+            placeholder="Pick the best option"
+            onChange={() => setDummy(d => !d)}>
             {resourcePools.map(pool =>
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
           </Select>
