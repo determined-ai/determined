@@ -66,23 +66,23 @@ func (c *awsCluster) legacyCleanupActiveSpotRequestsAndInstances(ctx *actor.Cont
 	}
 
 	// Delete spot instances associated with the active requests
-	instancesToTerminate := newSetOfStrings()
-	for _, req := range activeSpotReqs.iter() {
-		if req.InstanceID != nil {
-			instancesToTerminate.add(*req.InstanceID)
-		}
-	}
-	if instancesToTerminate.length() == 0 {
+	instancesToTerminate := activeSpotReqs.instanceIds()
+	if len(instancesToTerminate) == 0 {
 		loggerSpotLegacy.Debugf("no instances associated with active legacy spot requests to terminate")
 		return
 	}
 
+	var instanceListToLog strings.Builder
+	for _, instanceId := range instancesToTerminate {
+		instanceListToLog.WriteString(", ")
+		instanceListToLog.WriteString(*instanceId)
+	}
 	loggerSpotLegacy.Infof(
 		"terminating %d legacy spot instances associated with active legacy spot requests: %s",
-		instancesToTerminate.length(),
-		strings.Join(instancesToTerminate.asList(), ","))
+		len(instancesToTerminate),
+		instanceListToLog.String())
 
-	_, err = c.terminateInstances(instancesToTerminate.asListOfPointers())
+	_, err = c.terminateInstances(instancesToTerminate)
 	if err != nil {
 		loggerSpotLegacy.
 			WithError(err).
@@ -124,7 +124,7 @@ func (c *awsCluster) legacyCleanupCanceledButInstanceRunningSpot(ctx *actor.Cont
 
 func isLegacy(request *ec2.SpotInstanceRequest) bool {
 	for _, tag := range request.Tags {
-		if *tag.Key == "determined-resource-pool" {
+		if tag.Key != nil && *tag.Key == "determined-resource-pool" {
 			return false
 		}
 	}
