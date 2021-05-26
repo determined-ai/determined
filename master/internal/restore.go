@@ -11,6 +11,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
@@ -128,7 +130,8 @@ func (e *experiment) restoreTrial(
 		}
 	}
 
-	t := newTrial(e, op, ckpt)
+	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	t := newTrial(e, config, op, ckpt)
 	if trialID != nil {
 		t.processID(*trialID)
 	}
@@ -137,7 +140,7 @@ func (e *experiment) restoreTrial(
 		if err := t.Restore(snapshot); err != nil {
 			l.WithError(err).Warn("failed to restore trial, restarting fresh")
 			// Just new up the trial again in case restore half-worked.
-			t = newTrial(e, op, ckpt)
+			t = newTrial(e, config, op, ckpt)
 			if trialID != nil {
 				t.processID(*trialID)
 			}

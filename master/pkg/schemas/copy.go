@@ -13,6 +13,11 @@ type Copyable interface {
 	Copy() interface{}
 }
 
+// Copy is a reflect-based deep copy.  It's only generally safe to use on schema objects.
+func Copy(src interface{}) interface{} {
+	return cpy(reflect.ValueOf(src)).Interface()
+}
+
 // cpy is for deep copying, but it will only work on "nice" objects, which should include our
 // schema objects.  Useful to other reflect code.
 func cpy(v reflect.Value) reflect.Value {

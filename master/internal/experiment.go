@@ -17,6 +17,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/workload"
@@ -471,7 +473,8 @@ func (e *experiment) processOperations(
 				ctx.Log().Error(err)
 				return
 			}
-			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
+			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+			ctx.ActorOf(op.RequestID, newTrial(e, config, op, checkpoint))
 		case searcher.ValidateAfter:
 			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 			e.TrialCurrentOperation[op.GetRequestID()] = op

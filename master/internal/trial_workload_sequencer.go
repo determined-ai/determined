@@ -47,8 +47,8 @@ type (
 
 		ops []searcher.ValidateAfter
 
-		experiment *model.Experiment
-		create     searcher.Create
+		expID  int
+		create searcher.Create
 
 		checkpointPolicy    string
 		minValidationPeriod expconf.Length
@@ -66,25 +66,28 @@ func (s trialWorkloadSequencerState) deepCopy() *trialWorkloadSequencerState {
 }
 
 func newTrialWorkloadSequencer(
-	exp *model.Experiment, create searcher.Create, firstCheckpoint *model.Checkpoint,
+	expID int,
+	config expconf.ExperimentConfig,
+	create searcher.Create,
+	firstCheckpoint *model.Checkpoint,
 ) *trialWorkloadSequencer {
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState: trialWorkloadSequencerState{
-			NeedInitialValidation: exp.Config.PerformInitialValidation(),
+			NeedInitialValidation: config.PerformInitialValidation(),
 			LatestCheckpoint:      firstCheckpoint,
 			LatestSnapshot: &trialWorkloadSequencerState{
-				NeedInitialValidation: exp.Config.PerformInitialValidation(),
+				NeedInitialValidation: config.PerformInitialValidation(),
 				LatestCheckpoint:      firstCheckpoint,
 			},
 		},
-		checkpointPolicy:    exp.Config.CheckpointPolicy(),
-		minValidationPeriod: exp.Config.MinValidationPeriod(),
-		minCheckpointPeriod: exp.Config.MinCheckpointPeriod(),
+		checkpointPolicy:    config.CheckpointPolicy(),
+		minValidationPeriod: config.MinValidationPeriod(),
+		minCheckpointPeriod: config.MinCheckpointPeriod(),
 		unitContext: model.NewUnitContext(
-			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), exp.Config.RecordsPerEpoch()),
-		schedulingUnit: exp.Config.SchedulingUnit(),
+			config.Unit(), create.Hparams.GlobalBatchSize(), config.RecordsPerEpoch()),
+		schedulingUnit: config.SchedulingUnit(),
 		create:         create,
-		experiment:     exp,
+		expID:          expID,
 	}
 }
 
@@ -294,7 +297,7 @@ func (s trialWorkloadSequencer) PrecloseCheckpointWorkload() *workload.Workload 
 func (s trialWorkloadSequencer) TerminateWorkload() *workload.Workload {
 	return &workload.Workload{
 		Kind:         workload.Terminate,
-		ExperimentID: s.experiment.ID,
+		ExperimentID: s.expID,
 		TrialID:      s.trialID,
 		StepID:       s.CurStepID,
 	}
@@ -327,7 +330,7 @@ func (s *trialWorkloadSequencer) UpToDate() bool {
 func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
 	return workload.Workload{
 		Kind:                  workload.RunStep,
-		ExperimentID:          s.experiment.ID,
+		ExperimentID:          s.expID,
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID + 1,
 		NumBatches:            numBatches,
@@ -338,7 +341,7 @@ func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
 func (s trialWorkloadSequencer) validate() workload.Workload {
 	return workload.Workload{
 		Kind:                  workload.ComputeValidationMetrics,
-		ExperimentID:          s.experiment.ID,
+		ExperimentID:          s.expID,
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID,
 		PriorBatchesProcessed: s.TotalBatchesProcessed,
@@ -348,7 +351,7 @@ func (s trialWorkloadSequencer) validate() workload.Workload {
 func (s trialWorkloadSequencer) checkpoint() workload.Workload {
 	return workload.Workload{
 		Kind:                  workload.CheckpointModel,
-		ExperimentID:          s.experiment.ID,
+		ExperimentID:          s.expID,
 		TrialID:               s.trialID,
 		StepID:                s.CurStepID,
 		PriorBatchesProcessed: s.TotalBatchesProcessed,

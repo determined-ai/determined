@@ -12,6 +12,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -209,6 +211,7 @@ type (
 		db              *db.PgDB
 		experimentState model.State
 		experiment      *model.Experiment
+		config          expconf.ExperimentConfig
 		modelDefinition archive.Archive
 
 		warmStartCheckpointID *int
@@ -246,6 +249,7 @@ type (
 // It must only error when a snapshot is passed.
 func newTrial(
 	exp *experiment,
+	config expconf.ExperimentConfig,
 	create searcher.Create,
 	firstCheckpoint *model.Checkpoint,
 ) *trial {
@@ -260,10 +264,11 @@ func newTrial(
 		db:                    exp.db,
 		experimentState:       exp.State,
 		experiment:            exp.Experiment,
+		config:                config,
 		modelDefinition:       exp.modelDefinition,
 		warmStartCheckpointID: warmStartCheckpointID,
 
-		sequencer: newTrialWorkloadSequencer(exp.Experiment, create, firstCheckpoint),
+		sequencer: newTrialWorkloadSequencer(exp.Experiment.ID, config, create, firstCheckpoint),
 
 		create: create,
 
@@ -335,7 +340,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				then manual intervention may be needed to correct resource allocation accounting`)
 		}
 
-		if t.Restarts > t.experiment.Config.MaxRestarts() {
+		if t.Restarts > t.config.MaxRestarts() {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
 			}
@@ -363,9 +368,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.trialClosing() {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState {
-			slotsNeeded := t.experiment.Config.Resources().SlotsPerTrial()
-			label := t.experiment.Config.Resources().AgentLabel()
-			resourcePool := t.experiment.Config.Resources().ResourcePool()
+			slotsNeeded := t.config.Resources().SlotsPerTrial()
+			label := t.config.Resources().AgentLabel()
+			resourcePool := t.config.Resources().ResourcePool()
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
@@ -586,7 +591,7 @@ func (t *trial) processAllocated(
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
-		if t.experiment.Config.PerformInitialValidation() {
+		if t.config.PerformInitialValidation() {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
@@ -666,7 +671,7 @@ func (t *trial) processAllocated(
 		taskSpec.AgentUserGroup = t.agentUserGroup
 		taskSpec.TaskToken = taskToken
 		taskSpec.SetInner(&tasks.StartTrial{
-			ExperimentConfig:    t.experiment.Config,
+			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
 			ModelDefinition:     t.modelDefinition,
 			HParams:             t.create.Hparams,
 			TrialSeed:           t.create.TrialSeed,
@@ -729,7 +734,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case op != nil:
-		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher().Metric())
+		m, err := msg.ValidationMetrics.Metric(t.config.Searcher().Metric())
 		if err != nil {
 			return err
 		}
@@ -1083,7 +1088,7 @@ func (t *trial) reset() error {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts() ||
+	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.config.MaxRestarts() ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
@@ -1178,9 +1183,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.Restarts, t.experiment.Config.MaxRestarts(), status)
+		t.Restarts, t.config.MaxRestarts(), status)
 	t.Restarts++
-	if t.Restarts <= t.experiment.Config.MaxRestarts() {
+	if t.Restarts <= t.config.MaxRestarts() {
 		ctx.Log().Infof("resetting trial %d", t.id)
 		if err := t.reset(); err != nil {
 			ctx.Log().Warn("failed to reset trial", err)
