@@ -65,6 +65,15 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.RawPBTConfig != nil {
 		return *s.RawPBTConfig
 	}
+	if s.RawSyncHalvingConfig != nil {
+		return *s.RawSyncHalvingConfig
+	}
+	if s.RawAdaptiveConfig != nil {
+		return *s.RawAdaptiveConfig
+	}
+	if s.RawAdaptiveSimpleConfig != nil {
+		return *s.RawAdaptiveSimpleConfig
+	}
 	panic("no union member defined")
 }
 

@@ -61,6 +61,10 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return errors.Errorf(
 			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
 		)
+	} else if err := expModel.Config.Searcher().AssertCurrent(); err != nil {
+		return errors.Errorf(
+			"cannot restore experiment %d with legacy searcher", expModel.ID,
+		)
 	}
 
 	// Get the TaskSpec for this experiment.
