@@ -34,7 +34,6 @@ const NotebookModal: React.FC<Props> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ showResourceType, setShowResourceType ] = useState<boolean>(true);
   const [ resourceType, setResourceType ] = useState<ResourceType | undefined>(
     storage.getWithDefault(STORAGE_KEY, { type: undefined }).type,
   );
@@ -114,30 +113,23 @@ const NotebookModal: React.FC<Props> = (
   const handleResourcePoolUpdate = useCallback((selectedPoolName: string) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
-      setShowResourceType(true);
       return true;
     }
     const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
     const hasGPUCapacity = selectedPool.slotsAvailable > 0
       || (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     if (hasCPUCapacity && hasGPUCapacity) {
-      setShowResourceType(true);
       return true;
     } else if (hasCPUCapacity) {
       setResourceType(ResourceType.CPU);
-      setShowResourceType(false);
       return false;
     } else if (hasGPUCapacity) {
       setResourceType(ResourceType.GPU);
-      setShowResourceType(false);
       return false;
     }
-    return true;
   }, [ resourcePools ]);
 
-  useEffect(() => {
-    setShowResourceType(handleResourcePoolUpdate(form.getFieldValue('pool')));
-  }, [ form, handleResourcePoolUpdate ]);
+  const showResourceType = handleResourcePoolUpdate(form.getFieldValue('pool'));
 
   const handleTypeUpdate = useCallback((selectedResourceType) => {
     setResourceType(selectedResourceType as ResourceType);
