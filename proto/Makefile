@@ -53,7 +53,7 @@ $(swagger_out): $(source_files) build/swagger
 gen-buf-image:
 	# disallow untracked or dirty files.
 	test -z "$(shell git status --porcelain)"
-	buf image build -o $(buf_image)
+	buf build -o $(buf_image)
 
 .PHONY: check
 check: check-fmt
