@@ -119,9 +119,15 @@ commands:
     steps:
       - run: helm repo add determined https://helm.ngc.nvidia.com/isv-ngc-partner/determined --username=$NGC_API_USERNAME --password=$NGC_API_KEY
 
+  reinstall-go:
+    steps:
+      - run: sudo rm -rf /usr/local/go # Remove system go.
+      - run: curl https://dl.google.com/go/go1.16.1.linux-amd64.tar.gz -o /tmp/go.linux-amd64.tar.gz
+      - run: sudo tar -C /usr/local -xzf /tmp/go.linux-amd64.tar.gz
+
   install-protoc:
     steps:
-      - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.12.1/protoc-3.12.1-linux-x86_64.zip
+      - run: curl -o /tmp/protoc.zip -L https://github.com/protocolbuffers/protobuf/releases/download/v3.17.1/protoc-3.17.1-linux-x86_64.zip
       - run: unzip /tmp/protoc.zip -d $HOME/.local
 
   setup-go-intg-deps:
@@ -1144,6 +1150,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup-go-intg-deps
       - run: make -C master test-intg
 
@@ -1155,6 +1162,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - reinstall-go
       - setup-go-intg-deps
       - run: make -C agent test-intg
 
