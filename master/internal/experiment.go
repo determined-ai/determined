@@ -324,6 +324,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			rm:                 e.rm,
 			db:                 e.db,
 			experiment:         e.Experiment,
+			legacyConfig:       e.Config.AsLegacy(),
 			keepExperimentBest: e.Config.CheckpointStorage().SaveExperimentBest(),
 			keepTrialBest:      e.Config.CheckpointStorage().SaveTrialBest(),
 			keepTrialLatest:    e.Config.CheckpointStorage().SaveTrialLatest(),

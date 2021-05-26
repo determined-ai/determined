@@ -10,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -17,6 +18,7 @@ type checkpointGCTask struct {
 	rm             *actor.Ref
 	db             *db.PgDB
 	experiment     *model.Experiment
+	legacyConfig   expconf.LegacyConfig
 	gcTensorboards bool
 
 	keepExperimentBest int
@@ -70,7 +72,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			taskSpec.TaskToken = taskToken
 			taskSpec.SetInner(&tasks.GCCheckpoints{
 				ExperimentID:       t.experiment.ID,
-				ExperimentConfig:   t.experiment.Config,
+				LegacyConfig:       t.legacyConfig,
 				ToDelete:           checkpoints,
 				DeleteTensorboards: t.gcTensorboards,
 			})

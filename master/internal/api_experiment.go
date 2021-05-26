@@ -86,7 +86,9 @@ func (a *apiServer) DeleteExperiment(
 	_ context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
 	expID := int(req.ExperimentId)
-	exp, err := a.m.db.ExperimentByIDWithUnparsableFieldsDummied(expID)
+
+	// Avoid loading the experiment config for what may be a very old experiment.
+	exp, err := a.m.db.ExperimentWithoutConfigByID(expID)
 	switch {
 	case errors.Cause(err) == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found")
@@ -96,6 +98,11 @@ func (a *apiServer) DeleteExperiment(
 
 	if !model.TerminalStates[exp.State] {
 		return nil, fmt.Errorf("cannot delete experiment in %s state", exp.State)
+	}
+
+	conf, err := a.m.db.LegacyExperimentConfigByID(expID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
 	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(expID); {
@@ -113,10 +120,6 @@ func (a *apiServer) DeleteExperiment(
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	// TODO(now): This is bad.
-	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
-		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
-	}
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
 		agentUserGroup:     agentUserGroup,
@@ -124,6 +127,7 @@ func (a *apiServer) DeleteExperiment(
 		rm:                 a.m.rm,
 		db:                 a.m.db,
 		experiment:         exp,
+		legacyConfig:       conf,
 		gcTensorboards:     true,
 		keepExperimentBest: 0,
 		keepTrialBest:      0,

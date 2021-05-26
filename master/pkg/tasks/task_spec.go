@@ -196,7 +196,7 @@ func (s StartCommand) ResourcesConfig() expconf.ResourcesConfig {
 // GCCheckpoints is a description of a task for running checkpoint GC.
 type GCCheckpoints struct {
 	ExperimentID       int
-	ExperimentConfig   expconf.ExperimentConfig
+	LegacyConfig       expconf.LegacyConfig
 	ToDelete           json.RawMessage
 	DeleteTensorboards bool
 }
@@ -207,8 +207,8 @@ func (g GCCheckpoints) Archives(u *model.AgentUserGroup) []container.RunArchive 
 		wrapArchive(
 			archive.Archive{
 				u.OwnedArchiveItem(
-					"experiment_config.json",
-					[]byte(jsonify(g.ExperimentConfig)),
+					"storage_config.json",
+					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
 					0600,
 					tar.TypeReg,
 				),
@@ -239,8 +239,8 @@ func (g GCCheckpoints) Entrypoint() []string {
 		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
-		"--experiment-config",
-		"experiment_config.json",
+		"--storage-config",
+		"storage_config.json",
 		"--delete",
 		"checkpoints_to_delete.json",
 	}
@@ -253,8 +253,9 @@ func (g GCCheckpoints) Entrypoint() []string {
 // Environment implements InnerSpec.
 func (g GCCheckpoints) Environment(t TaskSpec) expconf.EnvironmentConfig {
 	// Keep only the EnvironmentVariables provided by the experiment's config.
+	envvars := g.LegacyConfig.EnvironmentVariables()
 	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: g.ExperimentConfig.Environment().RawEnvironmentVariables,
+		RawEnvironmentVariables: &envvars,
 	}
 
 	// Fill the rest of the environment with default values.
@@ -275,8 +276,8 @@ func (g GCCheckpoints) LoggingFields() map[string]string { return nil }
 
 // Mounts implements InnerSpec.
 func (g GCCheckpoints) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(g.ExperimentConfig.BindMounts())
-	if fs := g.ExperimentConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
+	mounts := ToDockerMounts(g.LegacyConfig.BindMounts())
+	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: fs.HostPath(),
@@ -300,7 +301,8 @@ func (g GCCheckpoints) UseHostMode() bool { return false }
 
 // ResourcesConfig implements InnerSpec.
 func (g GCCheckpoints) ResourcesConfig() expconf.ResourcesConfig {
-	return g.ExperimentConfig.Resources()
+	// The GCCheckpoints resources config is effictively unused, so we return an empty one.
+	return expconf.ResourcesConfig{}
 }
 
 // StartTrial is a description of a task for running a trial container.
