@@ -403,6 +403,11 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
+	// Disallow EOL searchers.
+	if err = config.Searcher().AssertCurrent(); err != nil {
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
 	var modelBytes []byte
 	if params.ParentID != nil {
 		var dbErr error
