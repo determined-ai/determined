@@ -14,7 +14,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/golangci/golangci-lint v1.28.3
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/goreleaser/goreleaser v0.140.0
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2
@@ -22,10 +22,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v2.19.9+incompatible
 	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20210421221651-33663a62ff08
-	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
+	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
+	golang.org/x/tools v0.1.0
 	gotest.tools v2.2.0+incompatible
 )
 

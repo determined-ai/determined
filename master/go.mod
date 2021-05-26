@@ -9,7 +9,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/aws/aws-sdk-go v1.34.32
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/bufbuild/buf v0.16.0
+	github.com/bufbuild/buf v0.42.1
 	github.com/containerd/containerd v1.3.2 // indirect
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -24,7 +24,7 @@ require (
 	github.com/golang/protobuf v1.5.0
 	github.com/golangci/golangci-lint v1.28.3
 	github.com/google/go-cmp v0.5.5
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
 	github.com/goreleaser/goreleaser v0.140.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
@@ -48,19 +48,18 @@ require (
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
-	golang.org/x/net v0.0.0-20210421230115-4e50805a0758
-	golang.org/x/sys v0.0.0-20210421221651-33663a62ff08 // indirect
-	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
+	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
+	golang.org/x/tools v0.1.0
 	google.golang.org/api v0.26.0
-	google.golang.org/grpc v1.29.1
+	google.golang.org/grpc v1.37.0-dev.0.20210309003715-fce74a94bdff
+	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
