@@ -104,6 +104,7 @@ func Initialize(
 		currentNodes:             make(map[string]*k8sV1.Node),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
+	s.Ask(podsActor, actor.Ping{}).Get()
 
 	// We re-use the agents endpoint for the default resource manager.
 	e.Any("/agents", api.Route(s, podsActor))
@@ -127,7 +128,6 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startNodeInformer(ctx)
 		p.startEventListener(ctx)
 		p.startPreemptionListener(ctx)
-		ctx.Tell(p.cluster, sproto.SetPods{Pods: ctx.Self()})
 
 	case sproto.StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
