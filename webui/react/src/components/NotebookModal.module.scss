@@ -12,15 +12,17 @@
   align-items: center;
   display: flex;
   gap: 10px;
+  justify-content: space-between;
+  width: 100%;
 }
 .line p {
   margin: 0;
+  min-width: 100px;
 }
 .line > :not(p) {
-  min-width: 50vw;
+  flex-grow: 1;
 }
 .form {
-  align-items: flex-end;
   display: flex;
   flex-direction: column;
   gap: 10px;
