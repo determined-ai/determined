@@ -22,11 +22,28 @@ const { Item } = Form;
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 
-interface Props extends ModalProps {
+interface NotebookModalProps extends ModalProps {
   onLaunch?: () => void;
   visible?: boolean;
 }
 
+interface FormProps {
+  fields: NotebookConfig;
+  onChange: (fields: NotebookConfig) => void;
+}
+
+interface FullConfigProps {
+  config: RawJson;
+  onChange: (config: RawJson) => void;
+}
+
+interface ResourceInfo {
+  hasCPU: boolean;
+  hasGPU: boolean;
+  showResourceType: boolean;
+}
+
+/*
 const resourcePools = [ {
   agentDockerImage: '',
   agentDockerNetwork: '',
@@ -100,36 +117,152 @@ const resourcePools = [ {
   startupScript: '',
   type: 'RESOURCE_POOL_TYPE_STATIC',
 } ];
+*/
 
-const NotebookModal: React.FC<Props> = (
-  { visible = false, onLaunch, ...props }: Props,
+const NotebookModal: React.FC<NotebookModalProps> = (
+  { visible = false, onLaunch, ...props }: NotebookModalProps,
 ) => {
-  const storage = useStorage(STORAGE_PATH);
+
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ templates, setTemplates ] = useState<Template[]>([]);
-  //const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
-  const [ dummy, setDummy ] = useState(false);
+  const { fields, setFields } = useNotebookForm();
+  const [ config, setConfig ] = useState<RawJson>({});
 
-  const [ resourceType, setResourceType ] = useState<ResourceType | undefined>(
-    storage.getWithDefault(STORAGE_KEY, { type: undefined }).type,
+  const fetchConfig = useCallback(async () => {
+    try {
+      const config = await previewNotebook(
+        fields.slots,
+        fields.template,
+        fields.name,
+        fields.pool,
+      );
+      setConfig({ config: yaml.dump(config) });
+
+    } catch {}
+  }, [ fields ]);
+
+  useEffect(() => {
+    if (showFullConfig) fetchConfig();
+  }, [ showFullConfig, fetchConfig ]);
+
+  const handleSecondary = useCallback(() => {
+    setShowFullConfig(show => !show);
+  }, [ ]);
+
+  const handleCreateEnvironment = useCallback(
+    () => {
+      if (showFullConfig) {
+        launchNotebook(config);
+      } else {
+        launchNotebook(
+          undefined,
+          fields.slots,
+          fields.template,
+          fields.name,
+          fields.pool,
+        );
+      }
+      if (onLaunch) onLaunch();
+    },
+    [ showFullConfig, onLaunch, fields, config ],
   );
-  const [ form ] = Form.useForm();
 
-  const calculateResourceInfo = (selectedPoolName: string) => {
+  return <Modal
+    footer={<>
+      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
+      <Button
+        type="primary"
+        onClick={handleCreateEnvironment}>Launch</Button>
+    </>}
+    title="Launch JupyterLab"
+    visible={visible}
+    width={540}
+    {...props}>
+    {showFullConfig ?
+      <NotebookFullConfig config={config} onChange={(newConfig) => setConfig(newConfig)} /> :
+      <NotebookForm fields={fields} onChange={(newFields) => setFields(newFields)} />
+    }
+  </Modal>;
+};
+
+const NotebookFullConfig:React.FC<FullConfigProps> = (
+  { config, onChange }:FullConfigProps,
+) => {
+  const [ fields, setFields ] = useState([ { name: 'config', value: '' } ]);
+
+  useEffect(() => {
+    setFields([ { name: 'config', value: yaml.dump(config) } ]);
+  }, [ config ]);
+
+  const extractConfig = useCallback((fieldData) => {
+    onChange(JSON.parse(fieldData[0].value));
+  }, [ onChange ]);
+
+  return <Form
+    fields={fields}
+    onFieldsChange={(_, allFields) => {
+      extractConfig(allFields);
+    }}>
+    <div className={css.note}>
+      <Link external path="/docs/reference/command-notebook-config.html">
+    Read about notebook settings
+      </Link>
+    </div>
+    <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+      <Item
+        name="config"
+        noStyle
+        rules={[ { message: 'Invalid YAML', required: true }, () => ({
+          validator(_, value) {
+            try {
+              yaml.load(value);
+              return Promise.resolve();
+            } catch(err) {
+              return Promise.reject(new Error('Invalid YAML'));
+            }
+          },
+        }) ]}>
+        <MonacoEditor
+          height={430}
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }} />
+      </Item>
+    </React.Suspense>
+  </Form>;
+};
+
+const NotebookForm:React.FC<FormProps> = (
+  { onChange, fields }: FormProps,
+) => {
+  const [ templates, setTemplates ] = useState<Template[]>([]);
+  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
+    { hasCPU: false, hasGPU: true, showResourceType: true },
+  );
+
+  const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
       return { hasCPU: false, hasGPU: false, showResourceType: true };
     }
     const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
-    const hasGPUCapacity = selectedPool.slotsAvailable > 0 || selectedPool.slotsPerAgent > 0;
+    const hasGPUCapacity = selectedPool.slotsAvailable > 0
+      || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     return {
       hasCPU: hasCPUCapacity,
       hasGPU: hasGPUCapacity,
       showResourceType: hasCPUCapacity && hasGPUCapacity,
     };
-  };
+  }, [ resourcePools ]);
 
-  const { showResourceType, hasCPU, hasGPU } = calculateResourceInfo(form.getFieldValue('pool'));
+  useEffect(() => {
+    setResourceInfo(calculateResourceInfo(
+      fields.pool,
+    ));
+  }, [ fields, calculateResourceInfo ]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -140,7 +273,7 @@ const NotebookModal: React.FC<Props> = (
   useEffect(() => {
     fetchTemplates();
   }, [ fetchTemplates ]);
-  /*
+
   const fetchResourcePools = useCallback(async () => {
     try {
       setResourcePools(await getResourcePools({}));
@@ -150,162 +283,45 @@ const NotebookModal: React.FC<Props> = (
   useEffect(() => {
     fetchResourcePools();
   }, [ fetchResourcePools ]);
-  */
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      const values: NotebookConfig = form.getFieldsValue(true);
-      const config = await previewNotebook(
-        (hasCPU && !hasGPU) ? 0 : values.slots,
-        values.template,
-        values.name,
-        values.pool,
-      );
-      form.setFieldsValue({ config: yaml.dump(config) });
-    } catch {}
-  }, [ form, hasCPU, hasGPU ]);
+  return (<>
+    <Select allowClear placeholder="No template (optional)">
+      {templates.map(temp =>
+        <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+    </Select>
+    <Input placeholder="Name" />
+    <Select
+      allowClear
+      placeholder="Pick the best option">
+      {resourcePools.map(pool =>
+        <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+    </Select>
+    {resourceInfo.showResourceType &&
+      <RadioGroup
+        options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
+          { id: ResourceType.GPU, label: ResourceType.GPU } ]} />}
+    {fields.type === ResourceType.GPU &&
+      <InputNumber defaultValue={1} min={1} />
+    }
+  </>);
+};
 
-  useEffect(() => {
-    if (showFullConfig) fetchConfig();
-  }, [ showFullConfig, fetchConfig ]);
+function useNotebookForm() {
+  const storage = useStorage(STORAGE_PATH);
+  const [ fields, setFields ] = useState<NotebookConfig>(
+    storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
+  );
 
-  const storeConfig = useCallback((_, values: NotebookConfig) => {
+  const storeConfig = useCallback((values: NotebookConfig) => {
     delete values.name;
     storage.set(STORAGE_KEY, values);
   }, [ storage ]);
 
-  const handleSecondary = useCallback(async () => {
-    if (showFullConfig) {
-      setShowFullConfig(false);
-    } else {
-      try {
-        await form.validateFields();
-        setShowFullConfig(true);
-      } catch (e) {}
-    }
-  }, [ form, showFullConfig ]);
+  useEffect(() => {
+    storeConfig(fields);
+  }, [ fields, storeConfig ]);
 
-  const handleCreateEnvironment = useCallback(
-    (values) => {
-      if (showFullConfig) {
-        launchNotebook(yaml.load(form.getFieldValue('config')) as RawJson);
-      } else {
-
-        launchNotebook(
-          undefined,
-          (hasCPU && !hasGPU) ? 0 : values.slots,
-          values.template,
-          values.name,
-          values.pool,
-        );
-      }
-      if (onLaunch) onLaunch();
-    },
-    [ showFullConfig, form, onLaunch, hasCPU, hasGPU ],
-  );
-
-  const handleTypeUpdate = useCallback((selectedResourceType) => {
-    setResourceType(selectedResourceType as ResourceType);
-  }, []);
-
-  return <Modal
-    footer={<>
-      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
-      <Button
-        type="primary"
-        onClick={async () => {
-          try {
-            const values = await form.validateFields();
-            handleCreateEnvironment(values);
-          } catch (e) {}
-        }
-        }>Launch</Button>
-    </>}
-    title="Launch JupyterLab"
-    visible={visible}
-    width={540}
-    {...props}>
-    {showFullConfig ?
-      <Form form={form}>
-        <div className={css.note}>
-          <Link external path="/docs/reference/command-notebook-config.html">
-          Read about notebook settings
-          </Link>
-        </div>
-        <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
-          <Item
-            name="config"
-            noStyle
-            rules={[ { message: 'Invalid YAML', required: true }, () => ({
-              validator(_, value) {
-                try {
-                  yaml.load(value);
-                  return Promise.resolve();
-                } catch(err) {
-                  return Promise.reject(new Error('Invalid YAML'));
-                }
-              },
-            }) ]}>
-            <MonacoEditor
-              height={430}
-              language="yaml"
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                selectOnLineNumbers: true,
-              }} />
-          </Item>
-        </React.Suspense>
-      </Form> :
-      <Form
-        form={form}
-        initialValues={storage.getWithDefault(STORAGE_KEY, {
-          pool: undefined,
-          slots: 1,
-          template: undefined,
-          type: undefined,
-        })}
-        labelCol={{ span: 8 }}
-        onValuesChange={storeConfig}>
-        <Item label="Notebook Template" name="template">
-          <Select allowClear placeholder="No template (optional)">
-            {templates.map(temp =>
-              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
-          </Select>
-        </Item>
-        <Item label="Name" name="name">
-          <Input placeholder="Name" />
-        </Item>
-        <Item
-          label="Resource Pool"
-          name="pool">
-          <Select
-            allowClear
-            placeholder="Pick the best option"
-            onChange={() => setDummy(d => !d)}>
-            {resourcePools.map(pool =>
-              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
-          </Select>
-        </Item>
-        {showResourceType && <Item
-          label="Type"
-          name="type">
-          <RadioGroup
-            options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
-              { id: ResourceType.GPU, label: ResourceType.GPU } ]}
-            onChange={handleTypeUpdate} />
-        </Item>}
-        {resourceType === 'GPU' ?
-          <Item
-            initialValue={1}
-            label="Number of Slots"
-            name="slots">
-            <InputNumber min={1} />
-          </Item> : null
-        }
-      </Form>
-    }
-  </Modal>;
-};
+  return { fields, setFields };
+}
 
 export default NotebookModal;
