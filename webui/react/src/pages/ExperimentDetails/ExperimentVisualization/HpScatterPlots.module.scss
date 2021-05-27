@@ -2,10 +2,10 @@
   height: 100%;
   
   .container {
-    min-height: 20rem;
+    min-height: 200px;
     position: relative;
   }
   .container > [class*=Message_base] {
-    height: 40rem;
+    height: 400px;
   }
 }

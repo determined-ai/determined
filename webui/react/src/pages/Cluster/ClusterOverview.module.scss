@@ -1,11 +1,11 @@
 .base {
   .descriptionColumn {
-    max-width: calc(max(50vw, 30rem));
+    max-width: calc(max(50vw, 300px));
     word-break: break-word;
     word-wrap: break-word;
   }
   .chartColumn {
-    min-width: 15rem;
+    min-width: 150px;
   }
   :global(label.ant-radio-button-wrapper) {
     font-size: inherit;

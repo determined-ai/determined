@@ -157,7 +157,7 @@ const ClusterOverview: React.FC = () => {
   return (
     <>
       <Section hideTitle title="Overview Stats">
-        <Grid gap={ShirtSize.medium} minItemWidth={15} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
           <OverviewStats title="Connected Agents">
             {agents ? agents.length : '?'}
           </OverviewStats>
@@ -188,7 +188,7 @@ const ClusterOverview: React.FC = () => {
         title={`${resourcePools.length} Resource Pools`}
       >
         {selectedView === GridListView.Grid &&
-        <Grid gap={ShirtSize.medium} minItemWidth={30} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => {
             return <ResourcePoolCard
               gpuContainerStates={

@@ -14,14 +14,14 @@
   li {
     display: block;
     height: 100%;
-    margin-left: 0.1rem;
+    margin-left: 1px;
   }
   li:first-child {
     margin-left: 0;
   }
   .bar {
     background-color: var(--theme-colors-monochrome-12);
-    border-radius: 0.3rem;
+    border-radius: 3px;
     box-shadow: var(--theme-colors-monochrome-6);
     flex-grow: 1;
     margin: 0;

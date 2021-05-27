@@ -10,7 +10,7 @@
   overflow: visible;
 
   header {
-    height: 14rem;
+    height: 140px;
     position: relative;
   }
   main {
@@ -33,39 +33,39 @@
     flex-direction: column;
   }
   .logo {
-    height: 6.494rem;
-    left: 6rem;
+    height: 64.94px;
+    left: 60px;
     position: absolute;
-    top: 2.4rem;
-    width: 12.8rem;
+    top: 24px;
+    width: 128px;
   }
   .logoIcon {
     background-image: url('~assets/logo-icon.svg');
     background-repeat: no-repeat;
     background-size: contain;
-    height: 4rem;
-    left: 3.2rem;
+    height: 40px;
+    left: 32px;
     position: absolute;
     top: 0;
-    width: 5.2rem;
+    width: 52px;
   }
   .logoLabel {
     background-image: url('~assets/logo-on-dark-label.svg');
     background-repeat: no-repeat;
-    height: 1.3rem;
+    height: 13px;
     left: 0;
     opacity: 1;
     position: absolute;
-    top: 5.2rem;
-    width: 12rem;
+    top: 52px;
+    width: 120px;
   }
   .version {
     color: var(--theme-colors-base-12);
     font-size: var(--theme-sizes-font-tiny);
     font-style: italic;
-    height: 1.7rem;
+    height: 17px;
     position: absolute;
-    top: 10.4rem;
+    top: 104px;
     width: 100%;
   }
   .versionLabel {
@@ -77,8 +77,8 @@
   .launchBlock {
     align-items: center;
     display: flex;
-    height: 3.2rem;
-    width: 19rem;
+    height: 32px;
+    width: 190px;
 
     .launchButton {
       background-color: transparent;
@@ -114,7 +114,7 @@
     color: var(--theme-colors-monochrome-17);
     cursor: pointer;
     display: block;
-    height: 4.8rem;
+    height: 48px;
     position: relative;
     width: var(--theme-sizes-navigation-maxWidth);
 
@@ -126,7 +126,7 @@
     .label {
       font-size: var(--theme-sizes-font-small);
       height: var(--theme-sizes-layout-enormous);
-      left: 5.6rem;
+      left: 56px;
       line-height: var(--theme-sizes-layout-enormous);
       overflow: hidden;
       position: absolute;
@@ -185,27 +185,27 @@
 .collapsedExitDone {
   flex-basis: var(--theme-sizes-navigation-maxWidth);
 
-  header { height: 14rem; }
+  header { height: 140px; }
   section.launch {
     padding: 0 0 var(--theme-sizes-layout-big) 0;
     width: var(--theme-sizes-navigation-maxWidth);
   }
   .logo {
-    height: 6.494rem;
-    left: 6rem;
-    top: 2.4rem;
-    width: 12.8rem;
+    height: 64.94px;
+    left: 60px;
+    top: 24px;
+    width: 128px;
   }
   .logoIcon {
-    height: 4rem;
-    left: 3.2rem;
-    width: 5.2rem;
+    height: 40px;
+    left: 32px;
+    width: 52px;
   }
   .logoLabel {
     opacity: 1;
-    width: 12rem;
+    width: 120px;
   }
-  .version { top: 10.4rem; }
+  .version { top: 104px; }
   .navItem {
     width: var(--theme-sizes-navigation-maxWidth);
 
@@ -216,7 +216,7 @@
     }
   }
   .navItem.hasStatus {
-    height: 4.8rem;
+    height: 48px;
 
     .status { bottom: var(--theme-sizes-layout-big); }
   }
@@ -231,7 +231,7 @@
   transition: flex-basis var(--theme-animationCurve);
 
   header {
-    height: 7.2rem;
+    height: 72px;
     transition: height var(--theme-animationCurve);
   }
   section.launch {
@@ -240,24 +240,24 @@
     width: var(--theme-sizes-navigation-minWidth);
   }
   .logo {
-    height: 2.4rem;
-    left: 1.2rem;
-    top: 1.6rem;
+    height: 24px;
+    left: 12px;
+    top: 16px;
     transition:
       height var(--theme-animationCurve),
       left var(--theme-animationCurve),
       top var(--theme-animationCurve),
       width var(--theme-animationCurve);
-    width: 3.2rem;
+    width: 32px;
   }
   .logoIcon {
-    height: 2.4rem;
+    height: 24px;
     left: 0;
     transition:
       height var(--theme-animationCurve),
       left var(--theme-animationCurve),
       width var(--theme-animationCurve);
-    width: 3.2rem;
+    width: 32px;
   }
   .logoLabel {
     opacity: 0;
@@ -267,12 +267,12 @@
     width: 0;
   }
   .version {
-    top: 4.4rem;
+    top: 44px;
     transition: top var(--theme-animationCurve),
   }
   .launchBlock {
     transition: width var(--theme-animationCurve);
-    width: 3.2rem;
+    width: 32px;
 
     .launchButton {
       opacity: 0;
@@ -306,7 +306,7 @@
     }
   }
   .navItem.hasStatus {
-    height: 7.2rem;
+    height: 72px;
 
     .status { bottom: var(--theme-sizes-layout-large); }
   }
@@ -324,29 +324,29 @@
 .collapsedEnterDone {
   flex-basis: var(--theme-sizes-navigation-minWidth);
 
-  header { height: 7.2rem; }
+  header { height: 72px; }
   section.launch {
     padding: var(--theme-sizes-layout-medium) 0;
     width: var(--theme-sizes-navigation-minWidth);
   }
   .logo {
-    height: 2.4rem;
-    left: 1.2rem;
-    top: 1.6rem;
-    width: 3.2rem;
+    height: 24px;
+    left: 12px;
+    top: 16px;
+    width: 32px;
   }
   .logoIcon {
-    height: 2.4rem;
+    height: 24px;
     left: 0;
-    width: 3.2rem;
+    width: 32px;
   }
   .logoLabel {
     opacity: 0;
     width: 0;
   }
-  .version { top: 4.4rem; }
+  .version { top: 44px; }
   .launchBlock {
-    width: 3.2rem;
+    width: 32px;
 
     .launchButton {
       opacity: 0;
@@ -365,7 +365,7 @@
     }
   }
   .navItem.hasStatus {
-    height: 7.2rem;
+    height: 72px;
 
     .status { bottom: var(--theme-sizes-layout-large); }
   }
@@ -390,7 +390,7 @@
   transition: flex-basis var(--theme-animationCurve);
 
   header {
-    height: 14rem;
+    height: 140px;
     transition: height var(--theme-animationCurve);
   }
   section.launch {
@@ -399,39 +399,39 @@
     width: var(--theme-sizes-navigation-maxWidth);
   }
   .logo {
-    height: 6.494rem;
-    left: 6rem;
-    top: 2.4rem;
+    height: 64.94px;
+    left: 60px;
+    top: 24px;
     transition:
       height var(--theme-animationCurve),
       left var(--theme-animationCurve),
       top var(--theme-animationCurve),
       width var(--theme-animationCurve);
-    width: 12.8rem;
+    width: 128px;
   }
   .logoIcon {
-    height: 4rem;
-    left: 3.2rem;
+    height: 40px;
+    left: 32px;
     transition:
       height var(--theme-animationCurve),
       left var(--theme-animationCurve),
       width var(--theme-animationCurve);
-    width: 5.2rem;
+    width: 52px;
   }
   .logoLabel {
     opacity: 1;
     transition:
       opacity var(--theme-animationCurve),
       width var(--theme-animationCurve);
-    width: 12rem;
+    width: 120px;
   }
   .version {
-    top: 10.4rem;
+    top: 104px;
     transition: top var(--theme-animationCurve),
   }
   .launchBlock {
     transition: width var(--theme-animationCurve);
-    width: 19rem;
+    width: 190px;
 
     .launchButton {
       opacity: 1;
@@ -465,7 +465,7 @@
     }
   }
   .navItem.hasStatus {
-    height: 4.8rem;
+    height: 48px;
 
     .status { bottom: var(--theme-sizes-layout-big); }
   }
