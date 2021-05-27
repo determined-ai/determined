@@ -5,6 +5,7 @@ from typing import Any, List
 
 from termcolor import colored
 
+from determined import util
 from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.declarative_argparse import Arg, Cmd
@@ -42,7 +43,7 @@ def describe_template(args: Namespace) -> None:
 @authentication_required
 def set_template(args: Namespace) -> None:
     with args.template_file:
-        body = yaml.safe_load(args.template_file)
+        body = util.safe_load_yaml_with_exceptions(args.template_file)
         api.put(args.master, path="templates/" + args.template_name, body=body)
         print(colored("Set template {}".format(args.template_name), "green"))
 

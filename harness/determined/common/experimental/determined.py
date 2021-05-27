@@ -1,6 +1,7 @@
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
+from determined import util
 from determined._swagger.client.api.experiments_api import ExperimentsApi
 from determined._swagger.client.api.internal_api import InternalApi
 from determined._swagger.client.api.trials_api import TrialsApi
@@ -79,10 +80,10 @@ class Determined:
         )
         if isinstance(config, str):
             with open(config) as f:
-                experiment_config = yaml.safe_load(f)
+                experiment_config = util.safe_load_yaml_with_exceptions(f)
         elif isinstance(config, pathlib.Path):
             with config.open() as f:
-                experiment_config = yaml.safe_load(f)
+                experiment_config = util.safe_load_yaml_with_exceptions(f)
         elif isinstance(config, Dict):
             experiment_config = config
 

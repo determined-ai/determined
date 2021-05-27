@@ -7,6 +7,7 @@ from typing import IO, Any, Dict, Iterable, List, Optional, Tuple
 
 from termcolor import colored
 
+from determined import util
 from determined.cli import render
 from determined.common import api, context, yaml
 from determined.common.api.authentication import authentication_required
@@ -200,7 +201,7 @@ def parse_config(
     config = {}  # type: Dict[str, Any]
     if config_file:
         with config_file:
-            config = yaml.safe_load(config_file)
+            config = util.safe_load_yaml_with_exceptions(config_file)
 
     for config_arg in overrides:
         if "=" not in config_arg:

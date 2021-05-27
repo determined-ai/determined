@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import tabulate
 
 import determined.common
+from determined import util
 from determined.cli import checkpoint, render
 from determined.common import api, constants, context, yaml
 from determined.common.api.authentication import authentication_required
@@ -112,20 +113,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
 
 def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
-    try:
-        experiment_config = yaml.safe_load(config_file.read())
-    except (
-        yaml.error.MarkedYAMLWarning,
-        yaml.error.MarkedYAMLError,
-        yaml.error.MarkedYAMLFutureWarning,
-    ) as e:
-        location = str(e.problem_mark).replace('"<unicode string>"', str(config_file.name))
-        err_msg = (
-            f"Error: invalid experiment config file {config_file.name}.\n"
-            f"{e.__class__.__name__}: {e.problem}\n{location}"
-        )
-        print(err_msg)
-        sys.exit(1)
+    experiment_config = util.safe_load_yaml_with_exceptions(config_file)
 
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):

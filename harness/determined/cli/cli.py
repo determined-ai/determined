@@ -16,6 +16,7 @@ from termcolor import colored
 import determined
 import determined.cli
 import determined.common.api.authentication as auth
+from determined import util
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.master import args_description as master_args_description
@@ -87,7 +88,7 @@ def list_tasks(args: Namespace) -> None:
 
 @authentication_required
 def preview_search(args: Namespace) -> None:
-    experiment_config = yaml.safe_load(args.config_file.read())
+    experiment_config = util.safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
 
     if "searcher" not in experiment_config:

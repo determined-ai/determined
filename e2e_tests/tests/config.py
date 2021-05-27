@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-from determined.common import yaml
+from determined import util
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"
@@ -69,7 +69,7 @@ def model_hub_examples_path(path: str) -> str:
 
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
-        config = yaml.safe_load(f)
+        config = util.safe_load_yaml_with_exceptions(f)
     return config
 
 
