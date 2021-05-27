@@ -96,17 +96,8 @@ class Case:
     def run_completeness(self) -> None:
         if not self.complete_as:
             return
-        cls = class_from_url(self.complete_as[0])
-
-        obj = cls.from_dict(self.case)
-        obj.fill_defaults()
-        if self.merge_src:
-            src = cls.from_dict(self.merge_src)
-
-            obj = schemas.SchemaBase.merge(obj, src)
-        completed_case = obj.to_dict(explicit_nones=True)
         for url in self.complete_as:
-            errors = expconf.completeness_validation_errors(completed_case, url)
+            errors = expconf.completeness_validation_errors(self.case, url)
             if not errors:
                 continue
             raise ValueError(
