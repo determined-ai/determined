@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -17,6 +17,7 @@ import {
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -146,9 +147,24 @@ const TaskList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchAll(), [ fetchAll ]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    setSearch(newSearch);
   }, []);
+
+  const handleNameSearchReset = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={search}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, search ]);
 
   const updateFilters = useCallback((filters: TaskFilters<CommandType>): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
@@ -270,7 +286,10 @@ const TaskList: React.FC = () => {
         title: 'Type',
       },
       {
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
         key: 'name',
+        onHeaderCell: () => search !== '' ? { className: tableCss.headerFilterOn } : {},
         render: nameNSourceRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
         title: 'Name',
@@ -333,8 +352,11 @@ const TaskList: React.FC = () => {
     filters,
     handleActionComplete,
     handleSourceShow,
+    nameFilterSearch,
     stateFilterDropdown,
+    search,
     sorter,
+    tableSearchIcon,
     typeFilterDropdown,
     userFilterDropdown,
     users,
@@ -407,14 +429,6 @@ const TaskList: React.FC = () => {
   return (
     <Page id="tasks" title="Tasks">
       <div className={css.base}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            className={css.search}
-            placeholder="ID or name"
-            prefix={<Icon name="search" size="small" />}
-            onChange={handleSearchChange} />
-        </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button
             danger
