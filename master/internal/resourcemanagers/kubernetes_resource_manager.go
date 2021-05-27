@@ -2,13 +2,15 @@ package resourcemanagers
 
 import (
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
@@ -29,10 +31,17 @@ type kubernetesResourceManager struct {
 	agent *agentState
 
 	reschedule bool
+
+	echoRef         *echo.Echo
+	masterTLSConfig model.TLSClientConfig
+	loggingConfig   model.LoggingConfig
 }
 
 func newKubernetesResourceManager(
 	config *KubernetesResourceManagerConfig,
+	echoRef *echo.Echo,
+	masterTLSConfig model.TLSClientConfig,
+	loggingConfig model.LoggingConfig,
 ) actor.Actor {
 	return &kubernetesResourceManager{
 		config: config,
@@ -40,6 +49,10 @@ func newKubernetesResourceManager(
 		reqList:           newTaskList(),
 		groups:            make(map[*actor.Ref]*group),
 		slotsUsedPerGroup: make(map[*group]int),
+
+		echoRef:         echoRef,
+		masterTLSConfig: masterTLSConfig,
+		loggingConfig:   loggingConfig,
 	}
 }
 
@@ -55,10 +68,19 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
-	case sproto.SetPods:
-		check.Panic(check.True(k.agent == nil, "should only set pods once"))
+		podsActor := kubernetes.Initialize(
+			ctx.Self().System(),
+			k.echoRef,
+			ctx.Self(),
+			k.config.Namespace,
+			k.config.MasterServiceName,
+			k.masterTLSConfig,
+			k.loggingConfig,
+			k.config.LeaveKubernetesResources,
+			k.config.DefaultScheduler,
+		)
 		k.agent = &agentState{
-			handler:            msg.Pods,
+			handler:            podsActor,
 			devices:            make(map[device.Device]*cproto.ID),
 			zeroSlotContainers: make(map[cproto.ID]bool),
 		}
