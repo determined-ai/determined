@@ -177,7 +177,7 @@ export interface NotebookConfig {
   pool?: string;
   slots?: number;
   template?: string;
-  type?: 'CPU' | 'GPU'
+  type?: ResourceType.CPU | ResourceType.GPU
 }
 
 export enum CheckpointStorageType {
