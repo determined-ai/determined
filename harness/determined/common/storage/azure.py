@@ -10,6 +10,8 @@ from azure.storage.blob import BlobServiceClient
 from determined.common import util
 from determined.common.storage.base import StorageManager, StorageMetadata
 
+from .azure_client import AzureStorageClient
+
 
 class AzureStorageManager(StorageManager):
     """
@@ -28,34 +30,7 @@ class AzureStorageManager(StorageManager):
         temp_dir: Optional[str] = None,
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-        if connection_string:
-            self.client = BlobServiceClient.from_connection_string(connection_string)
-        elif account_url:
-            self.client = BlobServiceClient(account_url, credential)
-
-        logging.info("Trying to create Azure Blob Storage Container: {}.".format(container))
-        try:
-            self.client.create_container(container.split("/")[0])
-            logging.info("Successfully created container {}.".format(container))
-        except ResourceExistsError:
-            logging.info(
-                "Container {} already exists, and will be used to store checkpoints.".format(
-                    container
-                )
-            )
-        except HttpResponseError as e:
-            if e.reason == "The requested URI does not represent any resource on the server.":
-                logging.warning(
-                    (
-                        "The storage client raised the following HttpResponseError:\n{}\nPlease "
-                        "ignore this warning if this is because the account url provided points "
-                        "to a container instead of a storage account; otherwise, it may be "
-                        "necessary to fix your config.yaml."
-                    ).format(e)
-                )
-            else:
-                logging.error("Failed while trying to create container {}.".format(container))
-                raise e
+        self.client = AzureStorageClient(container, connection_string, account_url, credential)
         self.container = container if not container.endswith("/") else container[:-1]
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
@@ -96,8 +71,7 @@ class AzureStorageManager(StorageManager):
                 logging.debug(
                     "Uploading blob {} to container {}.".format(blob_name, container_name)
                 )
-                with open(abs_path, "rb") as f:
-                    self.client.get_blob_client(container_name, blob_name).upload_blob(f.read())
+                self.client.put(container_name, blob_name, abs_path)
 
     @util.preserve_random_state
     def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
@@ -118,14 +92,14 @@ class AzureStorageManager(StorageManager):
             logging.debug(
                 "Downloading blob {} from container {}.".format(blob_name, container_name)
             )
-            with open(abs_path, "wb") as f:
-                stream = self.client.get_blob_client(container_name, blob_name).download_blob()
-                stream.readinto(f)
+            self.client.get(container_name, blob_name, abs_path)
 
     @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
         logging.info("Deleting checkpoint {} from Azure Blob Storage".format(metadata.storage_id))
-        for rel_path in metadata.resources.keys():
-            if not rel_path.endswith("/"):
-                rel_path = "{}/{}".format(metadata.storage_id, rel_path)
-                self.client.get_blob_client(self.container, rel_path).delete_blob()
+        files = [
+            "{}/{}".format(metadata.storage_id, rel_path)
+            for rel_path in metadata.resources.keys()
+            if not rel_path.endswith("/")
+        ]
+        self.client.delete_files(self.container, files)
