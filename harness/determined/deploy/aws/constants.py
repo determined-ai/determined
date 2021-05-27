@@ -60,6 +60,7 @@ class cloudformation:
     GPU_ENV_IMAGE = "GpuEnvImage"
     LOG_GROUP_PREFIX = "LogGroupPrefix"
     RETAIN_LOG_GROUP = "RetainLogGroup"
+    IMAGE_REPO_PREFIX = "ImageRepoPrefix"
 
 
 class misc:

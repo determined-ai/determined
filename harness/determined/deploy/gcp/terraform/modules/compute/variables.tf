@@ -10,6 +10,9 @@ variable "project_id" {
 variable "environment_image" {
 }
 
+variable "image_repo_prefix" {
+}
+
 variable "det_version" {
 }
 
