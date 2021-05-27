@@ -388,16 +388,6 @@ class EstimatorTrialController(det.LoopTrialController):
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
             hvd.init()
 
-            # This is option is available for when TF ignores `gpu_options.visible_device_list`.
-            # TODO (DET-3762): Remove this once it's no longer necessary.
-            if env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
-                logging.info(
-                    "Setting `CUDA_VISIBLE_DEVICES` environment variables "
-                    "and disabling NCCL_P2P_DISABLE"
-                )
-                os.environ["CUDA_VISIBLE_DEVICES"] = str(hvd.local_rank())
-                os.environ["NCCL_P2P_DISABLE"] = "1"
-
         # Initialize random seeds.
         # Set identical random seeds on all training processes.
         # When using horovod, each worker will receive a unique
@@ -653,11 +643,16 @@ class EstimatorTrialController(det.LoopTrialController):
         if not hvd_config.use:
             return session_config
 
-        # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
-        # so there is no need to set visible devices for TF.
-        # TODO (DET-3762): Remove this once it's no longer necessary.
-        if not env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
-            session_config.gpu_options.visible_device_list = str(horovod.hvd.local_rank())
+        if version.parse(tf.__version__) >= version.parse("2.5.0"):
+            gpus = tf.config.experimental.list_physical_devices("GPU")
+
+            if len(gpus) > 0:
+                local_rank = hvd.local_rank() if hvd_config.use else 0
+                gpu = gpus[local_rank]
+                tf.config.experimental.set_visible_devices(gpu, "GPU")
+                tf.config.experimental.set_memory_growth(gpu, True)
+
+        session_config.gpu_options.visible_device_list = str(horovod.hvd.local_rank())
 
         return session_config
 
