@@ -1,6 +1,8 @@
 - name: root minimal (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/test-root.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/test-root.json
   case:
     val_x: 1
   defaulted:
@@ -15,6 +17,8 @@
 - name: root full (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/test-root.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/test-root.json
   case:
     val_x: 1
     sub_obj:
@@ -48,6 +52,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/test-union.json
     - http://determined.ai/schemas/expconf/v0/test-union-a.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/test-union.json
   case:
     type: a
     val_a: 1
@@ -60,6 +66,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/test-union.json
     - http://determined.ai/schemas/expconf/v0/test-union-b.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/test-union.json
   case:
     type: b
     val_b: 2

@@ -62,6 +62,7 @@ class Case:
         complete_as: Optional[List[str]] = None,
         errors: Optional[Dict[str, str]] = None,
         defaulted: Any = None,
+        default_as: Optional[str] = None,
         merge_as: Optional[str] = None,
         merge_src: Any = None,
         merged: Any = None,
@@ -72,6 +73,7 @@ class Case:
         self.complete_as = complete_as
         self.errors = errors
         self.defaulted = defaulted
+        self.default_as = default_as
         self.merge_as = merge_as
         self.merge_src = merge_src
         self.merged = merged
@@ -127,8 +129,8 @@ class Case:
     def run_defaulted(self) -> None:
         if not self.defaulted:
             return
-        assert self.sane_as, "need a `sane_as` entry to run a defaulted test"
-        cls = class_from_url(self.sane_as[0])
+        assert self.default_as, "need a `default_as` entry to run a defaulted test"
+        cls = class_from_url(self.default_as)
 
         obj = cls.from_dict(self.case)
         obj.fill_defaults()
@@ -141,8 +143,8 @@ class Case:
         if not self.defaulted:
             return
 
-        assert self.sane_as, "need a `sane_as` entry to run a run_round_trip test"
-        cls = class_from_url(self.sane_as[0])
+        assert self.default_as, "need a `default_as` entry to run a run_round_trip test"
+        cls = class_from_url(self.default_as)
 
         obj0 = cls.from_dict(self.case)
 
@@ -155,8 +157,11 @@ class Case:
         assert obj2 == obj1, "round trip failed with defaults"
 
     def run_merged(self) -> None:
-        if not self.merge_as or not self.merge_src or not self.merged:
+        if not self.merge_as and not self.merge_src and not self.merged:
              return
+        assert (
+             self.merge_as and self.merge_src and self.merged
+        ), "merge_as, merge_src, and merged must all be present in a test case if any are present"
 
         # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
         # support the partial checkpoint storage configs.  It probably will never support the

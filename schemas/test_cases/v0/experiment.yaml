@@ -129,6 +129,8 @@
 - name: minimal valid experiment
   sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:
       global_batch_size: 32

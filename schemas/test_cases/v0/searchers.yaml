@@ -103,6 +103,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-sync-halving.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: sync_halving
     max_length:
@@ -131,6 +133,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: adaptive
     max_length:
@@ -159,6 +163,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive-simple.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: adaptive_simple
     max_length:
