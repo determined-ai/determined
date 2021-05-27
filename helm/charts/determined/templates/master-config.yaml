@@ -97,8 +97,8 @@ data:
       {{- if not (eq .Values.imageRegistry "determinedai") }}
     task_container_defaults:
       image:
-         cpu: {{ .Values.imageRegistry }}/determinedai_environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-         gpu: {{ .Values.imageRegistry }}/determinedai_environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
+         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
+         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
       {{- end }}
     {{ end }}
 
