@@ -115,16 +115,16 @@ class Case:
         if not self.sanity_errors:
             return
         self.run_errors(self.sanity_errors)
-    
+
     def run_completeness_errors(self) -> None:
         if not self.completeness_errors:
             return
-        self.run_errors(self.completeness_errors, test_type='completeness')
+        self.run_errors(self.completeness_errors, test_type="completeness")
 
-    def run_errors(self, error_cases, test_type='sanity') -> None:
+    def run_errors(self, error_cases: Any, test_type: Optional[str] = "sanity") -> None:
         for url, expected in error_cases.items():
             assert isinstance(expected, list), "malformed test case"
-            if test_type == 'sanity':
+            if test_type == "sanity":
                 errors = expconf.sanity_validation_errors(self.case, url)
             else:
                 errors = expconf.completeness_validation_errors(self.case, url)
@@ -172,9 +172,9 @@ class Case:
 
     def run_merged(self) -> None:
         if not self.merge_as and not self.merge_src and not self.merged:
-             return
+            return
         assert (
-             self.merge_as and self.merge_src and self.merged
+            self.merge_as and self.merge_src and self.merged
         ), "merge_as, merge_src, and merged must all be present in a test case if any are present"
 
         # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
