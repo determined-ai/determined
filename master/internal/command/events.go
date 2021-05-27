@@ -190,7 +190,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			break
 		}
 
-		ws, ok := msg.Accept(ctx, nil, false)
+		ws, ok := msg.Accept(ctx, nil, false, false)
 		if !ok {
 			break
 		}

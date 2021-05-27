@@ -53,10 +53,11 @@ type Ref struct {
 	// lLock locks on interactions with close listeners. When adding close listeners, if the actor
 	// is already shut down, the error is returned. Otherwise, a new listener is created and will be
 	// notified at the end of the actor shutdown process.
-	lLock     sync.Mutex
-	err       error
-	listeners []chan error
-	shutdown  bool
+	lLock          sync.Mutex
+	err            error
+	listeners      []chan error
+	shutdown       bool
+	suppressErrors bool
 
 	tracing struct {
 		tracer opentracing.Tracer
@@ -64,7 +65,7 @@ type Ref struct {
 	}
 }
 
-func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
+func newRef(system *System, parent *Ref, address Address, actor Actor, opts ...ActorOptionFn) *Ref {
 	typeName := reflect.TypeOf(actor).String()
 	if strings.Contains(typeName, ".") {
 		typeName = strings.Split(typeName, ".")[1]
@@ -82,6 +83,10 @@ func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
 		children:     make(map[Address]*Ref),
 		deadChildren: make(map[Address]bool),
 		inbox:        newInbox(),
+	}
+
+	for _, opt := range opts {
+		opt(ref)
 	}
 
 	if traceEnabled {
@@ -157,12 +162,12 @@ func (r *Ref) sendInternalMessage(message Message) error {
 	return nil
 }
 
-func (r *Ref) createChild(address Address, actor Actor) (*Ref, bool) {
+func (r *Ref) createChild(address Address, actor Actor, opts ...ActorOptionFn) (*Ref, bool) {
 	if existingRef, ok := r.children[address]; ok {
 		return existingRef, false
 	}
 
-	ref := newRef(r.system, r, address, actor)
+	ref := newRef(r.system, r, address, actor, opts...)
 	r.children[address] = ref
 
 	r.system.refsLock.Lock()
@@ -298,7 +303,7 @@ func (r *Ref) close() {
 	r.lLock.Lock()
 	defer r.lLock.Unlock()
 
-	if r.err != nil {
+	if r.err != nil && !r.suppressErrors {
 		r.log.WithError(r.err).Error("error while actor was running")
 	}
 	// Recover from an actor panic and set the error flag.

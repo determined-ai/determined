@@ -60,7 +60,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Respond(a.summarize(ctx))
 	case ws.WebSocketConnected:
 		check.Panic(check.True(a.socket == nil, "websocket already connected"))
-		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
+		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true, true)
 		check.Panic(check.True(ok, "failed to accept websocket connection"))
 		a.socket = socket
 		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")

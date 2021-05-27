@@ -58,11 +58,23 @@ func (c *Context) AskAll(message Message, actors ...*Ref) Responses {
 	return askAll(c.inner, message, nil, c.recipient, actors)
 }
 
+type ActorOptionFn func(ref *Ref)
+
+func SuppressFinalErrorsOption(ref *Ref) {
+	ref.suppressErrors = true
+}
+
 // ActorOf adds the actor to the system as a child of the context's recipient. If an actor with that
 // ID already exists, that actor's reference is returned instead. The second argument is true if the
 // actor reference was created and false otherwise.
-func (c *Context) ActorOf(id interface{}, actor Actor) (*Ref, bool) {
-	return c.recipient.createChild(c.recipient.address.Child(id), actor)
+//
+// ActorOf  turns off error logging when the actor fails, but still
+// propagates errors to parents to handle as usual. This is nice when
+// failures may be expected and semantically different from a close
+// (so that swallowing the error would result in logical changes)
+// but result in confusing logs for end users.
+func (c *Context) ActorOf(id interface{}, actor Actor, opts ...ActorOptionFn) (*Ref, bool) {
+	return c.recipient.createChild(c.recipient.address.Child(id), actor, opts...)
 }
 
 // ActorOfFromFactory behaves the same as ActorOf but will only create the actor instance if it's

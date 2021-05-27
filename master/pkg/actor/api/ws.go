@@ -41,13 +41,20 @@ func (w WebSocketConnected) Accept(
 	ctx *actor.Context,
 	msgType interface{},
 	usePing bool,
+	suppressDisconnects bool,
 ) (*actor.Ref, bool) {
 	conn, err := upgrader.Upgrade(w.Ctx.Response(), w.Ctx.Request(), nil)
 	if err != nil {
 		ctx.Respond(errors.Wrap(err, "websocket connection error"))
 		return nil, false
 	}
-	a, _ := ctx.ActorOf("websocket-"+uuid.New().String(), WrapSocket(conn, msgType, usePing))
+
+	var opts []actor.ActorOptionFn
+	if suppressDisconnects {
+		opts = append(opts, actor.SuppressFinalErrorsOption)
+	}
+
+	a, _ := ctx.ActorOf("websocket-"+uuid.New().String(), WrapSocket(conn, msgType, usePing), opts...)
 	ctx.Respond(a)
 	return a, true
 }
