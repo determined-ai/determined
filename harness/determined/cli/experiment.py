@@ -119,12 +119,11 @@ def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
         yaml.error.MarkedYAMLError,
         yaml.error.MarkedYAMLFutureWarning,
     ) as e:
-        err_msg = f"Error: invalid experiment config file {config_file.name}.\n"
-        if hasattr(e, "problem") and hasattr(e, "problem_mark"):
-            location = str(e.problem_mark).replace('"<unicode string>"', str(config_file.name))
-            err_msg += f"{e.__class__.__name__}: {e.problem}\n{location}"
-        else:
-            err_msg += str(e)
+        location = str(e.problem_mark).replace('"<unicode string>"', str(config_file.name))
+        err_msg = (
+            f"Error: invalid experiment config file {config_file.name}.\n"
+            f"{e.__class__.__name__}: {e.problem}\n{location}"
+        )
         print(err_msg)
         sys.exit(1)
 
