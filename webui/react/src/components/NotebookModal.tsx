@@ -22,6 +22,38 @@ const { Item } = Form;
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 
+type DispatchFunction =
+  (Dispatch<{
+    key: keyof NotebookConfig,
+    value: string | number | undefined
+  }>)
+
+function reducer(
+  state: NotebookConfig,
+  action: {key: keyof NotebookConfig, value: string | number | undefined},
+): NotebookConfig {
+  return { ...state, [action.key]: action.value };
+}
+
+const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
+  const storage = useStorage(STORAGE_PATH);
+  const [ state, dispatch ] = useReducer(
+    reducer,
+    storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
+  );
+
+  const storeConfig = useCallback((values: NotebookConfig) => {
+    delete values.name;
+    storage.set(STORAGE_KEY, values);
+  }, [ storage ]);
+
+  useEffect(() => {
+    storeConfig(state);
+  }, [ state, storeConfig ]);
+
+  return [ state, dispatch ];
+};
+
 interface NotebookModalProps extends ModalProps {
   onLaunch?: () => void;
   visible?: boolean;
@@ -292,16 +324,19 @@ const NotebookForm:React.FC<FormProps> = (
     <Select
       allowClear
       placeholder="No template (optional)"
+      value={fields.template}
       onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
       {templates.map(temp =>
         <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
     </Select>
     <Input
       placeholder="Name"
+      value={fields.name}
       onChange={(value) => onChange({ key: 'name', value: value.target.value })} />
     <Select
       allowClear
       placeholder="Pick the best option"
+      value={fields.pool}
       onChange={(value) => onChange({ key: 'pool', value: value?.toString() })}>
       {resourcePools.map(pool =>
         <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
@@ -310,6 +345,7 @@ const NotebookForm:React.FC<FormProps> = (
       <RadioGroup
         options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
           { id: ResourceType.GPU, label: ResourceType.GPU } ]}
+        value={fields.type}
         onChange={(value) => {
           onChange({ key: 'type', value: value });
           onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
@@ -318,41 +354,10 @@ const NotebookForm:React.FC<FormProps> = (
       <InputNumber
         defaultValue={1}
         min={1}
+        value={fields.slots}
         onChange={(value) => onChange({ key: 'slots', value: value })} />
     }
   </>);
-};
-
-type DispatchFunction =
-  (Dispatch<{
-    key: keyof NotebookConfig,
-    value: string | number | undefined
-  }>)
-
-function reducer(
-  state: NotebookConfig,
-  action: {key: keyof NotebookConfig, value: string | number | undefined},
-): NotebookConfig {
-  return Object.assign(state, { [action.key]: action.value });
-}
-
-const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
-  const storage = useStorage(STORAGE_PATH);
-  const [ state, dispatch ] = useReducer(
-    reducer,
-    storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
-  );
-
-  const storeConfig = useCallback((values: NotebookConfig) => {
-    delete values.name;
-    storage.set(STORAGE_KEY, values);
-  }, [ storage ]);
-
-  useEffect(() => {
-    storeConfig(state);
-  }, [ state, storeConfig ]);
-
-  return [ state, dispatch ];
 };
 
 export default NotebookModal;
