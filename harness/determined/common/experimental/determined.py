@@ -8,7 +8,7 @@ from determined._swagger.client.api_client import ApiClient
 from determined._swagger.client.configuration import Configuration
 from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined._swagger.client.models.v1_file import V1File
-from determined.common import api, check, context, yaml, util
+from determined.common import api, check, context, util, yaml
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 

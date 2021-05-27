@@ -1,8 +1,8 @@
 import functools
 import io
 import os
-import sys
 import random
+import sys
 from typing import IO, Any, Callable, Iterator, Sequence, TypeVar, Union, overload
 
 from determined.common import yaml
@@ -63,6 +63,7 @@ def preserve_random_state(fn: Callable) -> Callable:
 
     return wrapped
 
+
 def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
     """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
     the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
@@ -107,4 +108,3 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
         print(err_msg)
         sys.exit(1)
     return config
-

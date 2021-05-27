@@ -14,9 +14,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import tabulate
 
 import determined.common
-from determined import util
 from determined.cli import checkpoint, render
-from determined.common import api, constants, context, yaml, util
+from determined.common import api, constants, context, util, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined

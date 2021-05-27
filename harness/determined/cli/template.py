@@ -5,7 +5,7 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined.common import api, yaml, util
+from determined.common import api, util, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.declarative_argparse import Arg, Cmd
 

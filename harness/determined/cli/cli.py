@@ -36,7 +36,12 @@ from determined.common import api, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_not_none
 from determined.common.declarative_argparse import Arg, Cmd, add_args
-from determined.common.util import chunks, debug_mode, get_default_master_address, safe_load_yaml_with_exceptions
+from determined.common.util import (
+    chunks,
+    debug_mode,
+    get_default_master_address,
+    safe_load_yaml_with_exceptions,
+)
 from determined.deploy.cli import DEPLOY_CMD_NAME
 from determined.deploy.cli import args_description as deploy_args_description
 
