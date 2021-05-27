@@ -625,6 +625,7 @@ func (t *trial) processAllocated(
 	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
 		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
+	t.RunID++
 
 	ctx.Log().Infof("starting trial container: %v", w)
 
@@ -1138,8 +1139,6 @@ func (t *trial) terminated(ctx *actor.Context) {
 	if err := t.db.CompleteTrialRun(t.id, t.RunID); err != nil {
 		ctx.Log().WithError(err).Error("failed to mark trial run completed")
 	}
-
-	t.RunID++
 
 	if t.task != nil {
 		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
