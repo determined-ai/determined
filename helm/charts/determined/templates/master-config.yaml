@@ -80,11 +80,9 @@ data:
          cpu: {{ .Values.taskContainerDefaults.cpuImage | quote }}
          gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
       {{- else if .Values.imageRegistry }}
-      {{- if not (eq .Values.imageRegistry "determinedai") }}
       image:
          cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
          gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
-      {{- end }}
       {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
@@ -94,12 +92,10 @@ data:
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
       {{- end }}
     {{ else if .Values.imageRegistry }}
-      {{- if not (eq .Values.imageRegistry "determinedai") }}
     task_container_defaults:
       image:
          cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
          gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
-      {{- end }}
     {{ end }}
 
     {{- if .Values.telemetry }}
