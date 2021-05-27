@@ -110,65 +110,18 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
     return (remote_url, commit_hash, committer, commit_date)
 
-
-def _format_yaml_error(e: Exception, file: str) -> str:
-    """Formats a ruamel.yaml Exception so that the user does not see a traceback of our internal
-    APIs.
-
-
-    ---------------------------------------------------------------------------------------------
-    DuplicateKeyError Example:
-    Input:
-        Traceback (most recent call last):
-        ...
-        ruamel.yaml.constructor.DuplicateKeyError: while constructing a mapping
-        in "<unicode string>", line 1, column 1:
-            description: constrained_adaptiv ...
-            ^ (line: 1)
-        found duplicate key "checkpoint_storage" with value "{}" (original value: "{}")
-        in "<unicode string>", line 7, column 1:
-            checkpoint_storage:
-            ^ (line: 7)
-
-        To suppress this check see:
-            http://yaml.readthedocs.io/en/latest/api.html#duplicate-keys
-
-        Duplicate keys will become an error in future releases, and are errors
-        by default when using the new API.
-
-        Failed to create experiment
-    Output:
-        Error: failed while loading experiment config file constrained_adaptive.yaml.
-        Duplicate Key Error: found duplicate key "learning_rate" with value "0.022"
-        (original value: "0.025")
-        in examples/hp_search_benchmarks/darts_cifar10_pytorch/constrained_adaptive.yaml,
-        line 23, column 3:
-            learning_rate: 0.022
-            ^ (line: 23)
-    ---------------------------------------------------------------------------------------------
-    """
-    if isinstance(e, yaml.constructor.DuplicateKeyError):
-        err_msg = (
-            "found"
-            + str(e)
-            .split("found")[1]  # Isolate part of error msg that says where the duplicate key is
-            .split("To")[0]  # Remove pointer to ruamel.yaml docstrings
-            .replace('"<unicode string>"', file)  # Substitute name of file
-            .rstrip()  # Remove trailing newline
-        )
-        return (
-            f"Error: failed while loading experiment config file {file}."
-            f"\nDuplicate Key Error: {err_msg}"
-        )
-    else:
-        raise (e)
-
-
 def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
     try:
         experiment_config = yaml.safe_load(config_file.read())
     except Exception as e:
-        err_msg = _format_yaml_error(e, str(config_file.name))
+        err_msg = (
+            f"Error: invalid experiment config file {config_file.name}.\n"
+        )
+        if hasattr(e, 'problem') and hasattr(e, 'problem_mark'):
+            location = str(e.problem_mark).replace('"<unicode string>"', str(config_file.name))
+            err_msg += (f"{e.__class__.__name__}: {e.problem}\n{location}")
+        else:
+            err_msg += str(e)
         print(err_msg)
         sys.exit(1)
 
