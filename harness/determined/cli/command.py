@@ -7,9 +7,8 @@ from typing import IO, Any, Dict, Iterable, List, Optional, Tuple
 
 from termcolor import colored
 
-from determined import util
 from determined.cli import render
-from determined.common import api, context, yaml
+from determined.common import api, context, yaml, util
 from determined.common.api.authentication import authentication_required
 
 CONFIG_DESC = """

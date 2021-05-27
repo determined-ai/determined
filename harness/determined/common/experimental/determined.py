@@ -1,7 +1,6 @@
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
-from determined import util
 from determined._swagger.client.api.experiments_api import ExperimentsApi
 from determined._swagger.client.api.internal_api import InternalApi
 from determined._swagger.client.api.trials_api import TrialsApi
@@ -9,7 +8,7 @@ from determined._swagger.client.api_client import ApiClient
 from determined._swagger.client.configuration import Configuration
 from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined._swagger.client.models.v1_file import V1File
-from determined.common import api, check, context, yaml
+from determined.common import api, check, context, yaml, util
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 

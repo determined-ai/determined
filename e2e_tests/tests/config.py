@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-from determined import util
+from determined.common import util
 
 MASTER_SCHEME = "http"
 MASTER_IP = "localhost"

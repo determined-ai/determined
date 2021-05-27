@@ -1,7 +1,11 @@
 import functools
+import io
 import os
+import sys
 import random
-from typing import Any, Callable, Iterator, Sequence, TypeVar, Union, overload
+from typing import IO, Any, Callable, Iterator, Sequence, TypeVar, Union, overload
+
+from determined.common import yaml
 
 T = TypeVar("T")
 
@@ -58,3 +62,49 @@ def preserve_random_state(fn: Callable) -> Callable:
             random.setstate(state)
 
     return wrapped
+
+def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
+    """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
+    the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
+    of our internal APIs.
+
+    ---------------------------------------------------------------------------------------------
+    DuplicateKeyError Example:
+    Input:
+        Traceback (most recent call last):
+        ...
+        ruamel.yaml.constructor.DuplicateKeyError: while constructing a mapping
+        in "<unicode string>", line 1, column 1:
+            description: constrained_adaptiv ...
+            ^ (line: 1)
+        found duplicate key "checkpoint_storage" with value "{}" (original value: "{}")
+        in "<unicode string>", line 7, column 1:
+            checkpoint_storage:
+            ^ (line: 7)
+        To suppress this check see:
+            http://yaml.readthedocs.io/en/latest/api.html#duplicate-keys
+        Duplicate keys will become an error in future releases, and are errors
+        by default when using the new API.
+        Failed to create experiment
+    Output:
+        Error: invalid experiment config file constrained_adaptive.yaml.
+        DuplicateKeyError: found duplicate key "learning_rate" with value "0.022"
+        (original value: "0.025")
+        in "constrained_adaptive.yaml", line 23, column 3
+    ---------------------------------------------------------------------------------------------
+    """
+    try:
+        config = yaml.safe_load(yaml_file)
+    except (
+        yaml.error.MarkedYAMLWarning,
+        yaml.error.MarkedYAMLError,
+        yaml.error.MarkedYAMLFutureWarning,
+    ) as e:
+        err_msg = (
+            f"Error: invalid experiment config file {yaml_file.name}.\n"
+            f"{e.__class__.__name__}: {e.problem}\n{e.problem_mark}"
+        )
+        print(err_msg)
+        sys.exit(1)
+    return config
+

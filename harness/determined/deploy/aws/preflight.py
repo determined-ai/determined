@@ -8,7 +8,7 @@ import yaml
 from botocore.exceptions import ClientError
 from termcolor import colored
 
-from determined import util
+from determined.common import util
 from determined.deploy.errors import PreflightFailure
 
 from . import constants

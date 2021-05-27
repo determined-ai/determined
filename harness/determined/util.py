@@ -2,23 +2,21 @@ import collections
 import datetime
 import enum
 import inspect
-import io
 import os
 import pathlib
 import random
 import shutil
-import sys
 import time
 import uuid
 import warnings
-from typing import IO, Any, Callable, Dict, List, Optional, Set, TypeVar, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
 import numpy as np
 import simplejson
 
 import determined as det
 from determined import constants
-from determined.common import check, util, yaml
+from determined.common import check, util
 
 
 @util.preserve_random_state
@@ -227,49 +225,3 @@ def deprecated(msg: str) -> Callable[[T], T]:
         return cast(T, wrapper)
 
     return make_wrapper
-
-
-def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
-    """Attempts to use ruamel.yaml.safe_load on the specified file. If successful, returns
-    the output. If not, formats a ruamel.yaml Exception so that the user does not see a traceback
-    of our internal APIs.
-
-    ---------------------------------------------------------------------------------------------
-    DuplicateKeyError Example:
-    Input:
-        Traceback (most recent call last):
-        ...
-        ruamel.yaml.constructor.DuplicateKeyError: while constructing a mapping
-        in "<unicode string>", line 1, column 1:
-            description: constrained_adaptiv ...
-            ^ (line: 1)
-        found duplicate key "checkpoint_storage" with value "{}" (original value: "{}")
-        in "<unicode string>", line 7, column 1:
-            checkpoint_storage:
-            ^ (line: 7)
-        To suppress this check see:
-            http://yaml.readthedocs.io/en/latest/api.html#duplicate-keys
-        Duplicate keys will become an error in future releases, and are errors
-        by default when using the new API.
-        Failed to create experiment
-    Output:
-        Error: invalid experiment config file constrained_adaptive.yaml.
-        DuplicateKeyError: found duplicate key "learning_rate" with value "0.022"
-        (original value: "0.025")
-        in "constrained_adaptive.yaml", line 23, column 3
-    ---------------------------------------------------------------------------------------------
-    """
-    try:
-        config = yaml.safe_load(yaml_file)
-    except (
-        yaml.error.MarkedYAMLWarning,
-        yaml.error.MarkedYAMLError,
-        yaml.error.MarkedYAMLFutureWarning,
-    ) as e:
-        err_msg = (
-            f"Error: invalid experiment config file {yaml_file.name}.\n"
-            f"{e.__class__.__name__}: {e.problem}\n{e.problem_mark}"
-        )
-        print(err_msg)
-        sys.exit(1)
-    return config
