@@ -4,9 +4,10 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"sort"
 	"time"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/google/uuid"
 
