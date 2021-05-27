@@ -509,7 +509,8 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	paths := req.UpdateMask.GetPaths()
-	updateNotes := false
+	shouldUpdateNotes := false
+	shouldUpdateConfig := false
 	for _, path := range paths {
 		switch {
 		case path == "name":
@@ -518,7 +519,7 @@ func (a *apiServer) PatchExperiment(
 			}
 			exp.Name = req.Experiment.Name
 		case path == "notes":
-			updateNotes = true
+			shouldUpdateNotes = true
 			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
@@ -530,40 +531,45 @@ func (a *apiServer) PatchExperiment(
 				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
 		}
 	}
+	shouldUpdateConfig = (shouldUpdateNotes && len(paths) > 1) ||
+		(!shouldUpdateNotes && len(paths) > 0)
 
-	type experimentPatch struct {
-		Labels      []string `json:"labels"`
-		Description string   `json:"description"`
-		Name        string   `json:"name"`
-	}
-	patches := experimentPatch{
-		Labels:      exp.Labels,
-		Description: exp.Description,
-		Name:        exp.Name,
-	}
-	marshalledPatches, err := json.Marshal(patches)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal experiment patches")
-	}
-
-	if updateNotes {
-		_, err = a.m.db.RawQuery(
-			"patch_experiment_with_notes",
+	if shouldUpdateNotes {
+		_, err := a.m.db.RawQuery(
+			"patch_experiment_notes",
 			req.Experiment.Id,
-			marshalledPatches,
 			req.Experiment.Notes,
 		)
-	} else {
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update experiment")
+		}
+	}
+
+	if shouldUpdateConfig {
+		type experimentPatch struct {
+			Labels      []string `json:"labels"`
+			Description string   `json:"description"`
+			Name        string   `json:"name"`
+		}
+		patches := experimentPatch{
+			Labels:      exp.Labels,
+			Description: exp.Description,
+			Name:        exp.Name,
+		}
+		marshalledPatches, err := json.Marshal(patches)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
+		}
 		_, err = a.m.db.RawQuery(
-			"patch_experiment",
+			"patch_experiment_config",
 			req.Experiment.Id,
 			marshalledPatches,
 		)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update experiment")
+		}
 	}
 
-	if err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
-	}
 	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
 }
 
