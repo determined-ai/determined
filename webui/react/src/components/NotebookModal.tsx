@@ -75,82 +75,6 @@ interface ResourceInfo {
   showResourceType: boolean;
 }
 
-/*
-const resourcePools = [ {
-  agentDockerImage: '',
-  agentDockerNetwork: '',
-  agentDockerRuntime: '',
-  agentFluentImage: '',
-  containerStartupScript: '',
-  cpuContainerCapacity: 100,
-  cpuContainerCapacityPerAgent: 100,
-  cpuContainersRunning: 0,
-  defaultCpuPool: true,
-  defaultGpuPool: true,
-  description: '',
-  details: {
-    aws: null,
-    gcp: null,
-    priorityScheduler: null,
-  },
-  imageId: '',
-  instanceType: '',
-  location: 'on-prem',
-  masterCertName: '',
-  masterUrl: '',
-  maxAgents: 0,
-  maxAgentStartingPeriod: 0,
-  maxIdleAgentPeriod: 0,
-  minAgents: 0,
-  name: 'both',
-  numAgents: 1,
-  preemptible: false,
-  schedulerFittingPolicy: 'FITTING_POLICY_BEST',
-  schedulerType: 'SCHEDULER_TYPE_FAIR_SHARE',
-  slotsAvailable: 1,
-  slotsPerAgent: -1,
-  slotsUsed: 0,
-  startupScript: '',
-  type: 'RESOURCE_POOL_TYPE_STATIC',
-}, {
-  agentDockerImage: '',
-  agentDockerNetwork: '',
-  agentDockerRuntime: '',
-  agentFluentImage: '',
-  containerStartupScript: '',
-  cpuContainerCapacity: 100,
-  cpuContainerCapacityPerAgent: 100,
-  cpuContainersRunning: 0,
-  defaultCpuPool: true,
-  defaultGpuPool: true,
-  description: '',
-  details: {
-    aws: null,
-    gcp: null,
-    priorityScheduler: null,
-  },
-  imageId: '',
-  instanceType: '',
-  location: 'on-prem',
-  masterCertName: '',
-  masterUrl: '',
-  maxAgents: 0,
-  maxAgentStartingPeriod: 0,
-  maxIdleAgentPeriod: 0,
-  minAgents: 0,
-  name: 'cpu',
-  numAgents: 1,
-  preemptible: false,
-  schedulerFittingPolicy: 'FITTING_POLICY_BEST',
-  schedulerType: 'SCHEDULER_TYPE_FAIR_SHARE',
-  slotsAvailable: -1,
-  slotsPerAgent: -1,
-  slotsUsed: 0,
-  startupScript: '',
-  type: 'RESOURCE_POOL_TYPE_STATIC',
-} ];
-*/
-
 const NotebookModal: React.FC<NotebookModalProps> = (
   { visible = false, onLaunch, ...props }: NotebookModalProps,
 ) => {
@@ -315,10 +239,6 @@ const NotebookForm:React.FC<FormProps> = (
   useEffect(() => {
     fetchResourcePools();
   }, [ fetchResourcePools ]);
-
-  useEffect(() => {
-    console.log(fields);
-  }, [ fields ]);
 
   return (<>
     <Select
