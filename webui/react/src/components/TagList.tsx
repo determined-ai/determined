@@ -3,7 +3,6 @@ import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'components/Link';
-import { toRem } from 'utils/dom';
 import { alphanumericSorter } from 'utils/sort';
 import { toHtmlId, truncate } from 'utils/string';
 
@@ -123,7 +122,7 @@ const EditableTagList: React.FC<Props> = ({
                 key={tag}
                 ref={editInputRef}
                 size="small"
-                style={{ width: toRem(inputWidth) }}
+                style={{ width: inputWidth }}
                 value={editInputValue}
                 width={inputWidth}
                 onBlur={handleEditInputConfirm}
@@ -166,7 +165,7 @@ const EditableTagList: React.FC<Props> = ({
           className={css.tagInput}
           ref={inputRef}
           size="small"
-          style={{ width: toRem(inputWidth) }}
+          style={{ width: inputWidth }}
           type="text"
           value={inputValue}
           onBlur={handleInputConfirm}

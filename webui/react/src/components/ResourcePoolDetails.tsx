@@ -39,7 +39,7 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: rp, ...props }: Pr
       cancelButtonProps={{ style: { display: 'none' } }}
       cancelText=""
       mask
-      style={{ minWidth: '60rem' }}
+      style={{ minWidth: '600px' }}
       title={title}
       visible={props.visible}
       onCancel={props.finally}

@@ -76,13 +76,10 @@ const ExperimentList: React.FC = () => {
   const { auth, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initFilters = storage.getWithDefault(
-    STORAGE_FILTERS_KEY,
-    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
-      ...defaultFilters,
-      users: [ auth.user?.username ],
-    },
-  );
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, {
+    ...defaultFilters,
+    users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
+  });
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
@@ -157,7 +154,14 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     if (isUrlParsed) return;
 
-    const urlSearchParams = parseUrl(window.location.href).searchParams;
+    // If search params are not set, we default to user preferences
+    const url = parseUrl(window.location.href);
+    if (url.search === '') {
+      setIsUrlParsed(true);
+      return;
+    }
+
+    const urlSearchParams = url.searchParams;
 
     // archived
     const archived = urlSearchParams.get('archived');
@@ -197,10 +201,7 @@ const ExperimentList: React.FC = () => {
 
     // sortKey
     const sortKey = urlSearchParams.get('sortKey');
-    if (
-      sortKey != null
-      && Object.values(V1GetExperimentsRequestSortBy).includes(sortKey)
-    ) {
+    if (sortKey != null && Object.values(V1GetExperimentsRequestSortBy).includes(sortKey)) {
       sorter.key = sortKey as unknown as V1GetExperimentsRequestSortBy;
     }
 

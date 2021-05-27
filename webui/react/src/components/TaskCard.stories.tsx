@@ -27,7 +27,7 @@ export const InAGrid = (): React.ReactNode => {
       return <TaskCard key={idx} {...task} />;
     });
   return (
-    <Grid gap={ShirtSize.large} minItemWidth={20}>{tasks}</Grid>
+    <Grid gap={ShirtSize.large} minItemWidth={200}>{tasks}</Grid>
   );
 };
 InAGrid.parameters = { layout: 'padded' };

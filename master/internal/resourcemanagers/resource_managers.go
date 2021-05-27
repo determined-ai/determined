@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"crypto/tls"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -19,31 +18,6 @@ type schedulerTick struct{}
 // Currently support only one resource manager at a time.
 type ResourceManagers struct {
 	ref *actor.Ref
-}
-
-// NewResourceManagers creates an instance of ResourceManagers.
-func NewResourceManagers(
-	system *actor.System, config *ResourceConfig, cert *tls.Certificate,
-) *ResourceManagers {
-	var ref *actor.Ref
-	switch {
-	case config.ResourceManager.AgentRM != nil:
-		ref, _ = system.ActorOf(
-			actor.Addr("agentRM"),
-			newAgentResourceManager(config, cert),
-		)
-
-	case config.ResourceManager.KubernetesRM != nil:
-		ref, _ = system.ActorOf(
-			actor.Addr("kubernetesRM"),
-			newKubernetesResourceManager(config.ResourceManager.KubernetesRM),
-		)
-
-	default:
-		panic("no expected resource manager config is defined")
-	}
-
-	return &ResourceManagers{ref: ref}
 }
 
 // Receive implements the actor.Actor interface.

@@ -104,6 +104,7 @@ def master_up(
     master_config_path: Optional[Path],
     storage_host_path: Path,
     master_name: str,
+    image_repo_prefix: Optional[str],
     version: Optional[str],
     db_password: str,
     delete_db: bool,
@@ -112,6 +113,8 @@ def master_up(
 ) -> None:
     command = ["up", "-d"]
     extra_files = []
+    if image_repo_prefix is None:
+        image_repo_prefix = "determinedai"
     if version is None:
         version = determined.__version__
     if autorestart:
@@ -123,6 +126,7 @@ def master_up(
         "INTEGRATIONS_HOST_PORT": str(port),
         "DET_MASTER_CONFIG": str(master_config_path),
         "DET_DB_PASSWORD": db_password,
+        "IMAGE_REPO_PREFIX": image_repo_prefix,
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
     }
@@ -160,6 +164,7 @@ def cluster_up(
     master_config_path: Optional[Path],
     storage_host_path: Path,
     cluster_name: str,
+    image_repo_prefix: Optional[str],
     version: Optional[str],
     db_password: str,
     delete_db: bool,
@@ -172,6 +177,7 @@ def cluster_up(
         master_config_path=master_config_path,
         storage_host_path=storage_host_path,
         master_name=cluster_name,
+        image_repo_prefix=image_repo_prefix,
         version=version,
         db_password=db_password,
         delete_db=delete_db,
@@ -187,6 +193,7 @@ def cluster_up(
             agent_name=agent_name,
             agent_label=None,
             agent_resource_pool=None,
+            image_repo_prefix=image_repo_prefix,
             version=version,
             labels=labels,
             gpu=gpu,
@@ -210,12 +217,15 @@ def agent_up(
     agent_name: str,
     agent_label: Optional[str],
     agent_resource_pool: Optional[str],
+    image_repo_prefix: Optional[str],
     version: Optional[str],
     gpu: bool,
     autorestart: bool,
     cluster_name: str,
     labels: Optional[Dict] = None,
 ) -> None:
+    if image_repo_prefix is None:
+        image_repo_prefix = "determinedai"
     if version is None:
         version = determined.__version__
 
@@ -223,7 +233,7 @@ def agent_up(
 
     if master_host == "localhost":
         master_host = get_proxy_addr()
-    image = "determinedai/determined-agent:{}".format(version)
+    image = f"{image_repo_prefix}/determined-agent:{version}"
     environment = {
         "DET_MASTER_HOST": master_host,
         "DET_MASTER_PORT": master_port,

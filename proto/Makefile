@@ -57,8 +57,8 @@ gen-buf-image:
 
 .PHONY: check
 check: check-fmt
-	buf check lint
-	buf check breaking --against-input $(buf_image)
+	buf lint
+	buf breaking --against $(buf_image)
 
 .PHONY: check-fmt
 check-fmt:

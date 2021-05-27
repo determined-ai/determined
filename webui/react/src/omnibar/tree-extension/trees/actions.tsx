@@ -38,7 +38,7 @@ export const displayHelp = (): void => {
         </ul>
       </>
     ),
-    style: { minWidth: '70rem' },
+    style: { minWidth: '700px' },
     title: 'Help',
   });
 };

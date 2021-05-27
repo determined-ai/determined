@@ -313,39 +313,57 @@ class TestPyTorchTrial:
 
     def test_callbacks(self, tmp_path: pathlib.Path) -> None:
         checkpoint_dir = tmp_path.joinpath("checkpoint")
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks, hparams=self.hparams, workloads=[]
-        )
-        controller._train_for_step(1, 1, 0)
-        assert controller.trial.counter.__dict__ == {
-            "validation_steps_started": 0,
-            "validation_steps_ended": 0,
-            "checkpoints_ended": 0,
-        }
 
-        controller._compute_validation_metrics()
-        assert controller.trial.counter.__dict__ == {
-            "validation_steps_started": 1,
-            "validation_steps_ended": 1,
-            "checkpoints_ended": 0,
-        }
+        controller = None  # type: ignore
 
-        controller._save(checkpoint_dir)
-        assert controller.trial.counter.__dict__ == {
-            "validation_steps_started": 1,
-            "validation_steps_ended": 1,
-            "checkpoints_ended": 1,
-        }
+        def make_workloads1() -> workload.Stream:
+            nonlocal controller
 
-        del controller
+            yield workload.train_workload(1, 1, 0), [], workload.ignore_workload_response
+            assert controller is not None, "controller was never set!"
+            assert controller.trial.counter.__dict__ == {
+                "validation_steps_started": 0,
+                "validation_steps_ended": 0,
+                "checkpoints_ended": 0,
+            }
+
+            yield workload.validation_workload(), [], workload.ignore_workload_response
+            assert controller.trial.counter.__dict__ == {
+                "validation_steps_started": 1,
+                "validation_steps_ended": 1,
+                "checkpoints_ended": 0,
+            }
+
+            yield workload.checkpoint_workload(), [
+                checkpoint_dir
+            ], workload.ignore_workload_response
+            assert controller.trial.counter.__dict__ == {
+                "validation_steps_started": 1,
+                "validation_steps_ended": 1,
+                "checkpoints_ended": 1,
+            }
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialCallbacks,
             hparams=self.hparams,
-            workloads=[],
+            workloads=make_workloads1(),
+        )
+        controller.run()
+
+        # Verify the checkpoint loading callback works.
+
+        def make_workloads2() -> workload.Stream:
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrialCallbacks,
+            hparams=self.hparams,
+            workloads=make_workloads2(),
             load_path=checkpoint_dir,
         )
-        controller._load()
+        controller.run()
         assert controller.trial.counter.__dict__ == {
             "validation_steps_started": 1,
             "validation_steps_ended": 1,

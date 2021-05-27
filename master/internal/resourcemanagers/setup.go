@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/agent"
-	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -105,13 +104,8 @@ func setupKubernetesResourceManager(
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
 		actor.Addr("kubernetesRM"),
-		newKubernetesResourceManager(config),
+		newKubernetesResourceManager(config, echo, masterTLSConfig, loggingConfig),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
-
-	kubernetes.Initialize(
-		system, echo, ref, config.Namespace, config.MasterServiceName, masterTLSConfig, loggingConfig,
-		config.LeaveKubernetesResources, config.DefaultScheduler,
-	)
 	return ref
 }

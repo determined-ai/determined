@@ -1,0 +1,7 @@
+:orphan:
+
+**Bug Fixes**
+
+-  PyTorchTrial: Properly close the iterator for a DataLoader that uses
+   multiprocessing before exiting. Previously, such dataloaders could
+   cause hangs if exceptions were hit at certain times.

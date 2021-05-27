@@ -133,7 +133,7 @@ const CreateExperimentModal: React.FC<Props> = ({
           <Button disabled={!!configError} type="primary" onClick={handleOk}>{type}</Button>
         </>
       )}
-      style={{ minWidth: '60rem' }}
+      style={{ minWidth: '600px' }}
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
@@ -160,7 +160,7 @@ const CreateExperimentModal: React.FC<Props> = ({
         <Button onClick={handleShowEditor}>Edit Full Config</Button>
         <Button type="primary" onClick={handleOk}>{type}</Button>
       </>}
-      style={{ minWidth: '60rem' }}
+      style={{ minWidth: '600px' }}
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>

@@ -1,6 +1,6 @@
 $padding: var(--theme-sizes-layout-large);
-$icon-side: 5rem;
-$line-height: 2.2rem;
+$icon-side: 50px;
+$line-height: 22px;
 
 .base {
   background-color: var(--theme-colors-monochrome-17);
@@ -24,7 +24,7 @@ $line-height: 2.2rem;
     color: white;
     display: flex;
     flex-direction: row;
-    min-height: 8rem;
+    min-height: 80px;
     padding: $padding;
 
     .icon {
@@ -45,12 +45,12 @@ $line-height: 2.2rem;
       margin: auto 0;
 
       .name {
-        margin-bottom: 0.5rem;
+        margin-bottom: 5px;
       }
     }
     .tags *[class*='Badge'] {
-      margin-bottom: 0.5rem;
-      margin-right: 1rem;
+      margin-bottom: 5px;
+      margin-right: 10px;
     }
     .tags *[class*='Badge']:last-child {
       margin-right: 0;
@@ -117,7 +117,7 @@ $line-height: 2.2rem;
   hr {
     background: #c4c4c4;
     border: none;
-    height: 0.2rem;
+    height: 2px;
     margin: 0;
   }
   section {
