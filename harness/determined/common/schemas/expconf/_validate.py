@@ -14,7 +14,9 @@ def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) 
         url = "http://determined.ai/schemas/expconf/v1/experiment.json"
 
     global _validators
-    if url in _validators:
+    # Need a new validator to be made for completeness validation. If we
+    # used the cached sanity validator, we wouldn't check `eventuallyRequire`, etc.
+    if url in _validators and not complete:
         return _validators[url]
 
     schema = _gen.schemas[url]
