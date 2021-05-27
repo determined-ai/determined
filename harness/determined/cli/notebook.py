@@ -4,7 +4,7 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined.cli import command
+from determined.cli import command, render
 from determined.common import api
 from determined.common.api.authentication import authentication_required
 from determined.common.check import check_eq
@@ -30,16 +30,23 @@ def start_notebook(args: Namespace) -> None:
         config,
         args.template,
         context_path=args.context,
-    )["notebook"]
+        preview=args.preview,
+    )
 
-    if args.detach:
-        print(resp["id"])
+    if args.preview:
+        print(render.format_object_as_yaml(resp["config"]))
         return
 
-    with api.ws(args.master, "notebooks/{}/events".format(resp["id"])) as ws:
+    obj = resp["notebook"]
+
+    if args.detach:
+        print(obj["id"])
+        return
+
+    with api.ws(args.master, "notebooks/{}/events".format(obj["id"])) as ws:
         for msg in ws:
             if msg["service_ready_event"] and not args.no_browser:
-                url = api.open(args.master, resp["serviceAddress"])
+                url = api.open(args.master, obj["serviceAddress"])
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
             render_event_stream(msg)
 
@@ -78,6 +85,8 @@ args_description = [
                 help="don't open the notebook in a browser after startup"),
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID"),
+            Arg("--preview", action="store_true",
+                help="preview the notebook configuration"),
         ]),
         Cmd("open", open_notebook, "open an existing notebook", [
             Arg("notebook_id", help="notebook ID")

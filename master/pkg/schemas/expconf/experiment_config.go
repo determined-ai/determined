@@ -81,6 +81,17 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	return nil
 }
 
+// AsLegacy converts a current ExperimentConfig to a (limited capacity) LegacyConfig.
+func (e ExperimentConfig) AsLegacy() LegacyConfig {
+	return LegacyConfig{
+		checkpointStorage: schemas.Copy(e.CheckpointStorage()).(CheckpointStorageConfig),
+		bindMounts:        schemas.Copy(e.BindMounts()).(BindMountsConfig),
+		envvars: schemas.Copy(
+			e.Environment().EnvironmentVariables(),
+		).(EnvironmentVariablesMap),
+	}
+}
+
 // Description is a container struct for handling runtime defaults. It has to be a container so that
 // it can be responsible for allocating the nil pointer if one is not provided.  It would be nice if
 // you could use `type Description *string` but go won't let you create methods on such a type.

@@ -171,6 +171,7 @@ func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
 func (c *awsCluster) prestart(ctx *actor.Context) {
 	if c.SpotEnabled {
 		c.attemptToApproximateClockSkew(ctx)
+		c.cleanupLegacySpotInstances(ctx)
 	}
 }
 

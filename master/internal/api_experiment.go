@@ -86,7 +86,9 @@ func (a *apiServer) DeleteExperiment(
 	_ context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
 	expID := int(req.ExperimentId)
-	exp, err := a.m.db.ExperimentByID(expID)
+
+	// Avoid loading the experiment config for what may be a very old experiment.
+	exp, err := a.m.db.ExperimentWithoutConfigByID(expID)
 	switch {
 	case errors.Cause(err) == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found")
@@ -96,6 +98,11 @@ func (a *apiServer) DeleteExperiment(
 
 	if !model.TerminalStates[exp.State] {
 		return nil, fmt.Errorf("cannot delete experiment in %s state", exp.State)
+	}
+
+	conf, err := a.m.db.LegacyExperimentConfigByID(expID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
 	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(expID); {
@@ -113,23 +120,18 @@ func (a *apiServer) DeleteExperiment(
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	storage := exp.Config.CheckpointStorage()
-	storage.SetSaveExperimentBest(0)
-	storage.SetSaveTrialBest(0)
-	storage.SetSaveTrialLatest(0)
-	exp.Config.SetCheckpointStorage(storage)
-
-	if sErr := a.m.db.SaveExperimentConfig(exp); sErr != nil {
-		return nil, errors.Wrapf(sErr, "failed to patch experiment checkpoint storage")
-	}
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		agentUserGroup: agentUserGroup,
-		taskSpec:       a.m.taskSpec,
-		rm:             a.m.rm,
-		db:             a.m.db,
-		experiment:     exp,
-		gcTensorboards: true,
+		agentUserGroup:     agentUserGroup,
+		taskSpec:           a.m.taskSpec,
+		rm:                 a.m.rm,
+		db:                 a.m.db,
+		experiment:         exp,
+		legacyConfig:       conf,
+		gcTensorboards:     true,
+		keepExperimentBest: 0,
+		keepTrialBest:      0,
+		keepTrialLatest:    0,
 	}).AwaitTermination(); gcErr != nil {
 		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
@@ -288,6 +290,11 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, status.Errorf(
 			codes.InvalidArgument, "invalid hyperparameters configuration: %s", err,
 		)
+	}
+
+	// Disallow EOL searchers.
+	if err = sc.AssertCurrent(); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	sm := searcher.NewSearchMethod(sc)
@@ -880,6 +887,13 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		return nil, errors.New("single-trial experiments are not supported for trial sampling")
 	case expconf.PBTConfig:
 		return nil, errors.New("population-based training not supported for trial sampling")
+	// EOL searcher configs:
+	case expconf.AdaptiveConfig:
+		ranking = ByTrainingLength
+	case expconf.AdaptiveSimpleConfig:
+		ranking = ByTrainingLength
+	case expconf.SyncHalvingConfig:
+		ranking = ByTrainingLength
 	default:
 		return nil, errors.New("unable to detect a searcher algorithm for trial sampling")
 	}

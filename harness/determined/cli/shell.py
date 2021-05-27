@@ -207,7 +207,7 @@ args_description = [
             Arg("--show-ssh-command", action="store_true",
                 help="show ssh command (e.g. for use in IDE) when starting the shell"),
         ]),
-        Cmd("show_ssh_command", show_ssh_command, "only print the ssh command", [
+        Cmd("show_ssh_command", show_ssh_command, "print the ssh command", [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),

@@ -173,10 +173,10 @@ func (m *Master) getExperimentSummaryMetrics(c echo.Context) (interface{}, error
 
 func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, error) {
 	args := struct {
-		ExperimentID   int  `path:"experiment_id"`
-		ExperimentBest *int `query:"save_experiment_best"`
-		TrialBest      *int `query:"save_trial_best"`
-		TrialLatest    *int `query:"save_trial_latest"`
+		ExperimentID   int `path:"experiment_id"`
+		ExperimentBest int `query:"save_experiment_best"`
+		TrialBest      int `query:"save_trial_best"`
+		TrialLatest    int `query:"save_trial_latest"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
@@ -337,11 +337,15 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.CheckpointStorage != nil {
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
-				agentUserGroup: agentUserGroup,
-				taskSpec:       m.taskSpec,
-				rm:             m.rm,
-				db:             m.db,
-				experiment:     dbExp,
+				agentUserGroup:     agentUserGroup,
+				taskSpec:           m.taskSpec,
+				rm:                 m.rm,
+				db:                 m.db,
+				experiment:         dbExp,
+				legacyConfig:       dbExp.Config.AsLegacy(),
+				keepExperimentBest: dbExp.Config.CheckpointStorage().SaveExperimentBest(),
+				keepTrialBest:      dbExp.Config.CheckpointStorage().SaveTrialBest(),
+				keepTrialLatest:    dbExp.Config.CheckpointStorage().SaveTrialLatest(),
 			})
 	}
 
@@ -400,6 +404,11 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
+		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	// Disallow EOL searchers.
+	if err = config.Searcher().AssertCurrent(); err != nil {
 		return nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
