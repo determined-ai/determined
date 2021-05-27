@@ -438,9 +438,8 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		if err := t.sendNextWorkload(ctx); err != nil {
 			return err
 		}
-
-	case actor.ChildFailed:
-		ctx.Log().Info("found child actor failed, terminating forcibly")
+	case actor.ChildFailed, actor.ChildStopped:
+		ctx.Log().Infof("found %T failed, terminating forcibly", msg)
 		t.terminate(ctx, true)
 
 	case killTrial:
@@ -465,8 +464,6 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			ctx.Log().Info("forcibly terminating unresponsive trial after timeout expired")
 			t.terminate(ctx, true)
 		}
-
-	case actor.ChildStopped:
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
