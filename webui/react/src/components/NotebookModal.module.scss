@@ -9,8 +9,8 @@
   padding: var(--theme-sizes-layout-mega);
 }
 .line {
-  display: flex;
   align-items: center;
+  display: flex;
   gap: 10px;
 }
 .line p {
@@ -20,8 +20,8 @@
   min-width: 50vw;
 }
 .form {
+  align-items: flex-end;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  align-items:flex-end;
 }
