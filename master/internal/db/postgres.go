@@ -58,6 +58,7 @@ const (
 
 // Migrate runs the migrations from the specified directory URL.
 func (db *PgDB) Migrate(migrationURL string) error {
+	log.Infof("running DB migrations from %s; this might take a while...", migrationURL)
 	driver, err := postgresM.WithInstance(db.sql.DB, &postgresM.Config{})
 	if err != nil {
 		return errors.Wrap(err, "error constructing Postgres migration driver")
@@ -80,7 +81,7 @@ func (db *PgDB) Migrate(migrationURL string) error {
 	if err = m.Up(); err != migrate.ErrNoChange {
 		return errors.Wrap(err, "error applying migrations")
 	}
-
+	log.Info("DB migrations completed")
 	return nil
 }
 
