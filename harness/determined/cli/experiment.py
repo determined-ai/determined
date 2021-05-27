@@ -110,16 +110,19 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
     return (remote_url, commit_hash, committer, commit_date)
 
+
 def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
     try:
         experiment_config = yaml.safe_load(config_file.read())
-    except Exception as e:
-        err_msg = (
-            f"Error: invalid experiment config file {config_file.name}.\n"
-        )
-        if hasattr(e, 'problem') and hasattr(e, 'problem_mark'):
+    except (
+        yaml.error.MarkedYAMLWarning,
+        yaml.error.MarkedYAMLError,
+        yaml.error.MarkedYAMLFutureWarning,
+    ) as e:
+        err_msg = f"Error: invalid experiment config file {config_file.name}.\n"
+        if hasattr(e, "problem") and hasattr(e, "problem_mark"):
             location = str(e.problem_mark).replace('"<unicode string>"', str(config_file.name))
-            err_msg += (f"{e.__class__.__name__}: {e.problem}\n{location}")
+            err_msg += f"{e.__class__.__name__}: {e.problem}\n{location}"
         else:
             err_msg += str(e)
         print(err_msg)
