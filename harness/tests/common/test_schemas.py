@@ -96,11 +96,24 @@ class Case:
     def run_completeness(self) -> None:
         if not self.complete_as:
             return
+        cls = class_from_url(self.complete_as[0])
+
+        obj = cls.from_dict(self.case)
+        obj.fill_defaults()
+        if self.merge_src:
+            src = cls.from_dict(self.merge_src)
+
+            obj = schemas.SchemaBase.merge(obj, src)
+        completed_case = obj.to_dict(explicit_nones=True)
         for url in self.complete_as:
-            errors = expconf.completeness_validation_errors(self.case, url)
+            errors = expconf.completeness_validation_errors(completed_case, url)
             if not errors:
                 continue
-            raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
+            raise ValueError(
+                ("'{}' failed completeness validation against {}:\n - " "\n - ")
+                .format(self.name, url)
+                .join(errors)
+            )
 
     def run_errors(self) -> None:
         if not self.errors:
@@ -151,11 +164,8 @@ class Case:
         assert obj2 == obj1, "round trip failed with defaults"
 
     def run_merged(self) -> None:
-        if not self.merge_as and not self.merge_src and not self.merged:
-            return
-        assert (
-            self.merge_as and self.merge_src and self.merged
-        ), "sane_as, merge_src, and merged must all be present in a test case if any are present"
+        if not self.merge_as or not self.merge_src or not self.merged:
+             return
 
         # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
         # support the partial checkpoint storage configs.  It probably will never support the
@@ -168,7 +178,7 @@ class Case:
         obj = cls.from_dict(self.case)
         src = cls.from_dict(self.merge_src)
 
-        merged = schemas.merge(obj, src)
+        merged = schemas.SchemaBase.merge(obj, src)
         assert merged == self.merged, f"failed while testing {self.name}"
 
 
