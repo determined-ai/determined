@@ -53,7 +53,7 @@ class TrialController(metaclass=abc.ABCMeta):
         self.prof = profiler.ProfilerAgent.from_env(
             env,
             rendezvous_info.get_rank(),
-            int(os.getenv("HOROVOD_LOCAL_RANK", 0)),
+            context.distributed.get_rank(),
         )
 
         self._check_if_trial_supports_configurations(env)

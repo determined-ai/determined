@@ -702,8 +702,6 @@ class EstimatorTrialController(det.LoopTrialController):
         return config
 
     def run(self) -> None:
-        # would've done a decator for all these runs instead but then i need to pop
-        # self out of the *args and use its prof and it feels weird.
         with self.prof:
             try:
                 tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
