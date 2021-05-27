@@ -378,6 +378,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
 			}
 
+			// TODO(brad): When we support tracking runs for more than trials, this logic should
+			// likely be generalized by moving it rather than duplicating it for all task types.
+			t.RunID++
+			if err := t.db.AddTrialRun(t.id, t.RunID); err != nil {
+				return errors.Wrap(err, "failed to save trial run")
+			}
+
 			t.task = &sproto.AllocateRequest{
 				ID:             sproto.NewTaskID(),
 				Name:           name,
@@ -619,13 +626,6 @@ func (t *trial) processAllocated(
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
-
-	// TODO(brad): When we support tracking runs for more than trials, this logic should
-	// likely be generalized by moving it rather than duplicating it for all task types.
-	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
-		ctx.Log().WithError(err).Error("failed to save trial run")
-	}
-	t.RunID++
 
 	ctx.Log().Infof("starting trial container: %v", w)
 
