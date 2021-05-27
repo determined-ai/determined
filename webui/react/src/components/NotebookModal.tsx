@@ -190,6 +190,17 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
   </Form>;
 };
 
+interface LabelledLineProps {
+  content: JSX.Element;
+  label: string;
+}
+
+const LabelledLine: React.FC<LabelledLineProps> = (
+  { label, content }: LabelledLineProps,
+) => {
+  return <div className={css.line}><p>{label}</p>{content}</div>;
+};
+
 const NotebookForm:React.FC<FormProps> = (
   { onChange, fields }: FormProps,
 ) => {
@@ -240,44 +251,59 @@ const NotebookForm:React.FC<FormProps> = (
     fetchResourcePools();
   }, [ fetchResourcePools ]);
 
-  return (<>
-    <Select
-      allowClear
-      placeholder="No template (optional)"
-      value={fields.template}
-      onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
-      {templates.map(temp =>
-        <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
-    </Select>
-    <Input
-      placeholder="Name"
-      value={fields.name}
-      onChange={(value) => onChange({ key: 'name', value: value.target.value })} />
-    <Select
-      allowClear
-      placeholder="Pick the best option"
-      value={fields.pool}
-      onChange={(value) => onChange({ key: 'pool', value: value?.toString() })}>
-      {resourcePools.map(pool =>
-        <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
-    </Select>
+  return (<div className={css.form}>
+    <LabelledLine
+      content = {
+        <Select
+          allowClear
+          placeholder="No template (optional)"
+          value={fields.template}
+          onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
+          {templates.map(temp =>
+            <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+        </Select>}
+      label="Template" />
+    <LabelledLine
+      content = {
+        <Input
+          placeholder="Name"
+          value={fields.name}
+          onChange={(value) => onChange({ key: 'name', value: value.target.value })} />}
+      label="Name" />
+    <LabelledLine
+      content = {
+        <Select
+          allowClear
+          placeholder="Pick the best option"
+          value={fields.pool}
+          onChange={(value) => onChange({ key: 'pool', value: value?.toString() })}>
+          {resourcePools.map(pool =>
+            <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+        </Select>}
+      label="Resource Pool" />
     {resourceInfo.showResourceType &&
-      <RadioGroup
-        options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
-          { id: ResourceType.GPU, label: ResourceType.GPU } ]}
-        value={fields.type}
-        onChange={(value) => {
-          onChange({ key: 'type', value: value });
-          onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
-        }} />}
+    <LabelledLine
+      content = {
+        <RadioGroup
+          options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
+            { id: ResourceType.GPU, label: ResourceType.GPU } ]}
+          value={fields.type}
+          onChange={(value) => {
+            onChange({ key: 'type', value: value });
+            onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
+          }} />}
+      label="Type" />}
     {fields.type === ResourceType.GPU &&
-      <InputNumber
-        defaultValue={1}
-        min={1}
-        value={fields.slots}
-        onChange={(value) => onChange({ key: 'slots', value: value })} />
+    <LabelledLine
+      content = {
+        <InputNumber
+          defaultValue={1}
+          min={1}
+          value={fields.slots}
+          onChange={(value) => onChange({ key: 'slots', value: value })} />}
+      label="Slots" />
     }
-  </>);
+  </div>);
 };
 
 export default NotebookModal;

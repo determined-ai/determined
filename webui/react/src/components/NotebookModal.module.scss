@@ -8,3 +8,20 @@
 .loading {
   padding: var(--theme-sizes-layout-mega);
 }
+.line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.line p {
+  margin: 0;
+}
+.line > :not(p) {
+  min-width: 50vw;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items:flex-end;
+}
