@@ -60,7 +60,8 @@ class Case:
         case: Any,
         sane_as: Optional[List[str]] = None,
         complete_as: Optional[List[str]] = None,
-        errors: Optional[Dict[str, str]] = None,
+        sanity_errors: Optional[Dict[str, str]] = None,
+        completeness_errors: Optional[Dict[str, str]] = None,
         defaulted: Any = None,
         default_as: Optional[str] = None,
         merge_as: Optional[str] = None,
@@ -71,7 +72,8 @@ class Case:
         self.case = case
         self.sane_as = sane_as
         self.complete_as = complete_as
-        self.errors = errors
+        self.sanity_errors = sanity_errors
+        self.completeness_errors = completeness_errors
         self.defaulted = defaulted
         self.default_as = default_as
         self.merge_as = merge_as
@@ -81,7 +83,8 @@ class Case:
     def run(self) -> None:
         self.run_sanity()
         self.run_completeness()
-        self.run_errors()
+        self.run_sanity_errors()
+        self.run_completeness_errors()
         self.run_defaulted()
         self.run_round_trip()
         self.run_merged()
@@ -108,20 +111,31 @@ class Case:
                 .join(errors)
             )
 
-    def run_errors(self) -> None:
-        if not self.errors:
+    def run_sanity_errors(self) -> None:
+        if not self.sanity_errors:
             return
-        for url, expected in self.errors.items():
+        self.run_errors(self.sanity_errors)
+    
+    def run_completeness_errors(self) -> None:
+        if not self.completeness_errors:
+            return
+        self.run_errors(self.completeness_errors, test_type='completeness')
+
+    def run_errors(self, error_cases, test_type='sanity') -> None:
+        for url, expected in error_cases.items():
             assert isinstance(expected, list), "malformed test case"
-            errors = expconf.sanity_validation_errors(self.case, url)
-            assert errors, f"'{self.name}' matched {url} unexpectedly"
+            if test_type == 'sanity':
+                errors = expconf.sanity_validation_errors(self.case, url)
+            else:
+                errors = expconf.completeness_validation_errors(self.case, url)
+            assert errors, f"'{self.name}' {test_type} validated against {url} unexpectedly"
             for exp in expected:
                 for err in errors:
                     if re.search(exp, err):
                         break
                 else:
-                    msg = f"while testing '{self.name}', expected to match the pattern\n"
-                    msg += f"    {exp}\n"
+                    msg = f"while testing '{self.name}' for {test_type}, expected to match the"
+                    msg += f" pattern\n    {exp}\n"
                     msg += "but it was not found in any of\n    "
                     msg += "\n    ".join(errors)
                     raise ValueError(msg)
