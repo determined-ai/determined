@@ -2,7 +2,7 @@ import { Button, InputNumber, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Dispatch, useCallback, useEffect, useReducer, useState } from 'react';
 
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
@@ -29,7 +29,7 @@ interface NotebookModalProps extends ModalProps {
 
 interface FormProps {
   fields: NotebookConfig;
-  onChange: (fields: NotebookConfig) => void;
+  onChange: DispatchFunction;
 }
 
 interface FullConfigProps {
@@ -124,7 +124,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 ) => {
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const { fields, setFields } = useNotebookForm();
+  const [ fields, dispatch ] = useNotebookForm();
   const [ config, setConfig ] = useState<RawJson>({});
 
   const fetchConfig = useCallback(async () => {
@@ -179,7 +179,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
     {...props}>
     {showFullConfig ?
       <NotebookFullConfig config={config} onChange={(newConfig) => setConfig(newConfig)} /> :
-      <NotebookForm fields={fields} onChange={(newFields) => setFields(newFields)} />
+      <NotebookForm fields={fields} onChange={dispatch} />
     }
   </Modal>;
 };
@@ -187,10 +187,10 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 const NotebookFullConfig:React.FC<FullConfigProps> = (
   { config, onChange }:FullConfigProps,
 ) => {
-  const [ fields, setFields ] = useState([ { name: 'config', value: '' } ]);
+  const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
 
   useEffect(() => {
-    setFields([ { name: 'config', value: yaml.dump(config) } ]);
+    setField([ { name: 'config', value: yaml.dump(config) } ]);
   }, [ config ]);
 
   const extractConfig = useCallback((fieldData) => {
@@ -198,7 +198,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
   }, [ onChange ]);
 
   return <Form
-    fields={fields}
+    fields={field}
     onFieldsChange={(_, allFields) => {
       extractConfig(allFields);
     }}>
@@ -284,31 +284,62 @@ const NotebookForm:React.FC<FormProps> = (
     fetchResourcePools();
   }, [ fetchResourcePools ]);
 
+  useEffect(() => {
+    console.log(fields);
+  }, [ fields ]);
+
   return (<>
-    <Select allowClear placeholder="No template (optional)">
+    <Select
+      allowClear
+      placeholder="No template (optional)"
+      onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
       {templates.map(temp =>
         <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
     </Select>
-    <Input placeholder="Name" />
+    <Input
+      placeholder="Name"
+      onChange={(value) => onChange({ key: 'name', value: value.target.value })} />
     <Select
       allowClear
-      placeholder="Pick the best option">
+      placeholder="Pick the best option"
+      onChange={(value) => onChange({ key: 'pool', value: value?.toString() })}>
       {resourcePools.map(pool =>
         <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
     </Select>
     {resourceInfo.showResourceType &&
       <RadioGroup
         options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
-          { id: ResourceType.GPU, label: ResourceType.GPU } ]} />}
+          { id: ResourceType.GPU, label: ResourceType.GPU } ]}
+        onChange={(value) => {
+          onChange({ key: 'type', value: value });
+          onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
+        }} />}
     {fields.type === ResourceType.GPU &&
-      <InputNumber defaultValue={1} min={1} />
+      <InputNumber
+        defaultValue={1}
+        min={1}
+        onChange={(value) => onChange({ key: 'slots', value: value })} />
     }
   </>);
 };
 
-function useNotebookForm() {
+type DispatchFunction =
+  (Dispatch<{
+    key: keyof NotebookConfig,
+    value: string | number | undefined
+  }>)
+
+function reducer(
+  state: NotebookConfig,
+  action: {key: keyof NotebookConfig, value: string | number | undefined},
+): NotebookConfig {
+  return Object.assign(state, { [action.key]: action.value });
+}
+
+const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   const storage = useStorage(STORAGE_PATH);
-  const [ fields, setFields ] = useState<NotebookConfig>(
+  const [ state, dispatch ] = useReducer(
+    reducer,
     storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
   );
 
@@ -318,10 +349,10 @@ function useNotebookForm() {
   }, [ storage ]);
 
   useEffect(() => {
-    storeConfig(fields);
-  }, [ fields, storeConfig ]);
+    storeConfig(state);
+  }, [ state, storeConfig ]);
 
-  return { fields, setFields };
-}
+  return [ state, dispatch ];
+};
 
 export default NotebookModal;
