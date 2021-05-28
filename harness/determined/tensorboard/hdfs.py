@@ -37,7 +37,6 @@ class HDFSTensorboardManager(base.TensorboardManager):
             logging.debug(f"Uploading {path} to {self.hdfs_path}")
 
             self.client.upload(file_name, str(path))
-            self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
         self.client.delete(self.sync_path, recursive=True)
