@@ -17,7 +17,7 @@ interface Props {
 }
 
 const defaultProps = {
-  minItemWidth: 24,
+  minItemWidth: 240,
   mode: GridMode.AutoFit,
 };
 
@@ -27,7 +27,7 @@ const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const itemWidth = props.minItemWidth || defaultProps.minItemWidth;
   const style = {
     gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap})` : '',
-    gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}rem, 1fr))`,
+    gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}px, 1fr))`,
   };
 
   if (props.border) classes.push(css.border);

@@ -4,27 +4,20 @@
 @import 'fonts.scss';
 @import 'antd.scss';
 
-/*
-  Most default browser font size is 16px and 62.5% of 16px
-  is 10px. Which also makes 1rem equal 10px.
-  This also allows user to use browser magnification and the
-  rem items will scale accordingly.
-*/
-
 html,
 body,
 #root {
   font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
-  font-size: 62.5%;
+  font-size: 16px;
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
 }
-h1 { font-size: 3.2rem; }
-h2 { font-size: 2.8rem; }
-h3 { font-size: 2.4rem; }
-h4 { font-size: 2.2rem; }
-h5 { font-size: 2rem; }
-h6 { font-size: 1.8rem; }
+h1 { font-size: 32px; }
+h2 { font-size: 28px; }
+h3 { font-size: 24px; }
+h4 { font-size: 22px; }
+h5 { font-size: 20px; }
+h6 { font-size: 18px; }
 #clipboard {
   opacity: 0;
   user-select: none;

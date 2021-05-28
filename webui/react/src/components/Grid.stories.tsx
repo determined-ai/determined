@@ -13,8 +13,8 @@ export default {
 const GridElement: React.FC = () => {
   const style = {
     backgroundColor: '#666',
-    border: 'px black solid',
-    height: '5rem',
+    border: '1px black solid',
+    height: '50px',
   };
   return <div style={style} />;
 };
@@ -27,9 +27,9 @@ export const Default = (): React.ReactNode => <Grid gap={ShirtSize.big}>{GridEle
 export const NoGap = (): React.ReactNode => <Grid>{GridElements}</Grid>;
 
 export const SmallCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.big} minItemWidth={10}>{GridElements}</Grid>
+  <Grid gap={ShirtSize.big} minItemWidth={100}>{GridElements}</Grid>
 );
 
 export const BigCells = (): React.ReactNode => (
-  <Grid gap={ShirtSize.big} minItemWidth={30}>{GridElements}</Grid>
+  <Grid gap={ShirtSize.big} minItemWidth={300}>{GridElements}</Grid>
 );

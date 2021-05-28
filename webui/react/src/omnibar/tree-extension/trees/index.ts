@@ -164,11 +164,11 @@ const root: NonLeafNode = {
         {
           options: [
             {
-              onAction: () => launchNotebook(0),
+              onAction: () => launchNotebook(undefined, 0),
               title: 'zeroSlot',
             },
             {
-              onAction: () => launchNotebook(1),
+              onAction: () => launchNotebook(undefined, 1),
               title: 'oneSlot',
             },
           ],

@@ -8,14 +8,14 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
   ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTensorboardsParams, GetTrialsParams,
-  HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
-  PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
+  GetTrialsParams, HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse,
+  LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
-  ExperimentPagination, Log, ResourcePool, Telemetry, TrialDetails, TrialPagination,
-  ValidationHistory,
+  ExperimentPagination, Log, RawJson, ResourcePool, Telemetry, Template, TrialDetails,
+  TrialPagination, ValidationHistory,
 } from 'types';
 
 import { noOp } from './utils';
@@ -36,6 +36,7 @@ export const detApi = {
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   StreamingUnimplemented: Api.UnimplementedApiFetchParamCreator(ApiConfig),
+  Templates: new Api.TemplatesApi(ApiConfig),
   Tensorboards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
 };
@@ -64,6 +65,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingUnimplemented = Api.UnimplementedApiFetchParamCreator(config);
   detApi.Tensorboards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
+  detApi.Templates = new Api.TemplatesApi(config);
 };
 
 /* Helpers */
@@ -420,11 +422,33 @@ export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardRespo
     .determinedKillTensorboard(params.commandId),
 };
 
+export const getTemplates: DetApi<GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]> = {
+  name: 'getTemplates',
+  postProcess: (response) => (response.templates || [])
+    .map(template => decoder.mapV1Template(template)),
+  request: (params: GetTemplatesParams) => detApi.Templates.determinedGetTemplates(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.name,
+  ),
+};
+
 export const launchNotebook: DetApi<
   LaunchNotebookParams, Api.V1LaunchNotebookResponse, CommandTask
 > = {
   name: 'launchNotebook',
   postProcess: (response) => decoder.mapV1Notebook(response.notebook),
+  request: (params: LaunchNotebookParams) => detApi.Notebooks
+    .determinedLaunchNotebook(params),
+};
+
+export const previewNotebook: DetApi<
+  LaunchNotebookParams, Api.V1LaunchNotebookResponse, RawJson
+> = {
+  name: 'previewNotebook',
+  postProcess: (response) => response.config,
   request: (params: LaunchNotebookParams) => detApi.Notebooks
     .determinedLaunchNotebook(params),
 };

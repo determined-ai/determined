@@ -17,7 +17,7 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard, toPixel, toRem } from 'utils/dom';
+import { ansiToHtml, copyToClipboard } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
@@ -70,10 +70,8 @@ const formatClipboardHeader = (log: TrialLog): string => {
 
 const useGetListMeasure = (container: RefObject<HTMLDivElement>): ListMeasure => {
   const containerPaddingInPixel = useMemo(() => {
-    return toPixel(
-      getComputedStyle(document.documentElement)
-        .getPropertyValue('--theme-sizes-layout-medium'),
-    );
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue('--theme-sizes-layout-medium');
   }, []);
   const scroll = useScroll(container);
 
@@ -433,7 +431,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     return (
       <div className={css.line} style={style}>
         <LogViewerLevel logLevel={log.level} />
-        <div className={css.time} style={{ width: toRem(dateTimeWidth) }}>
+        <div className={css.time} style={{ width: dateTimeWidth }}>
           {log.formattedTime}
         </div>
         <div

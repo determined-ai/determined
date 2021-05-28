@@ -1,14 +1,14 @@
-$tooltip-offset: 0.5rem;
+$tooltip-offset: 5px;
 
 .base {
   height: 100%;
   
   .container {
-    min-height: 20rem;
+    min-height: 200px;
     position: relative;
   }
   .chart {
-    height: 50rem;
+    height: 500px;
   }
   .tooltip {
     display: none;
@@ -39,4 +39,4 @@ $tooltip-offset: 0.5rem;
     }
   }
 }
-.waiting { height: 30rem; }
+.waiting { height: 300px; }

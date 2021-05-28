@@ -48,17 +48,6 @@ class PyTorchTrialController(det.LoopTrialController):
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         self._set_data_loaders()
 
-        # We don't want the training_iterator shuffling values after we load state
-        self.training_iterator = iter(self.training_loader)
-
-        # If a load path is provided load weights and restore the data location.
-        self._load()
-
-        if self.hvd_config.use:
-            hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
-            for optimizer in self.context.optimizers:
-                hvd.broadcast_optimizer_state(optimizer, root_rank=0)
-
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         # Initialize the correct horovod.
@@ -140,64 +129,85 @@ class PyTorchTrialController(det.LoopTrialController):
             )
 
     def run(self) -> None:
-        with self.prof:
-            for w, args, response_func in self.workloads:
-                if w.kind == workload.Workload.Kind.RUN_STEP:
-                    try:
-                        response_func(
-                            util.wrap_metrics(
-                                self._train_for_step(
-                                    w.step_id,
-                                    w.num_batches,
-                                    w.total_batches_processed,
-                                ),
-                                self.context.get_stop_requested(),
-                                invalid_hp=False,
-                            )
+        # We create the training_iterator here rather than in __init__ because we have to be careful
+        # to trigger its shutdown explicitly, to avoid hangs in when the user is using
+        # multiprocessing-based parallelism for their dataloader.
+        #
+        # We create it before loading state because we don't want the training_iterator shuffling
+        # values after we load state.
+        self.training_iterator = iter(self.training_loader)
+        try:
+            self._load()
+
+            if self.hvd_config.use:
+                hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
+                for optimizer in self.context.optimizers:
+                    hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+
+            with self.prof:
+                self._run()
+
+        finally:
+            # Explicitly trigger the training iterator's shutdown (which happens in __del__).
+            # See the rather long note in pytorch/torch/utils/data/dataloader.py.
+            del self.training_iterator
+
+    def _run(self) -> None:
+        for w, args, response_func in self.workloads:
+            if w.kind == workload.Workload.Kind.RUN_STEP:
+                try:
+                    response_func(
+                        util.wrap_metrics(
+                            self._train_for_step(
+                                w.step_id,
+                                w.num_batches,
+                                w.total_batches_processed,
+                            ),
+                            self.context.get_stop_requested(),
+                            invalid_hp=False,
                         )
-                    except det.InvalidHP as e:
-                        logging.info(
-                            "Invalid hyperparameter exception in trial train step: {}".format(e)
+                    )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial train step: {}".format(e)
+                    )
+                    response_func(
+                        util.wrap_metrics(
+                            {},
+                            self.context.get_stop_requested(),
+                            invalid_hp=True,
                         )
-                        response_func(
-                            util.wrap_metrics(
-                                {},
-                                self.context.get_stop_requested(),
-                                invalid_hp=True,
-                            )
+                    )
+            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                try:
+                    response_func(
+                        util.wrap_metrics(
+                            self._compute_validation_metrics(),
+                            self.context.get_stop_requested(),
+                            invalid_hp=False,
                         )
-                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                    try:
-                        response_func(
-                            util.wrap_metrics(
-                                self._compute_validation_metrics(),
-                                self.context.get_stop_requested(),
-                                invalid_hp=False,
-                            )
+                    )
+                except det.InvalidHP as e:
+                    logging.info(
+                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
+                    )
+                    response_func(
+                        util.wrap_metrics(
+                            {},
+                            self.context.get_stop_requested(),
+                            invalid_hp=True,
                         )
-                    except det.InvalidHP as e:
-                        logging.info(
-                            "Invalid hyperparameter exception in trial validation step: {}".format(
-                                e
-                            )
-                        )
-                        response_func(
-                            util.wrap_metrics(
-                                {},
-                                self.context.get_stop_requested(),
-                                invalid_hp=True,
-                            )
-                        )
-                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                    check.eq(len(args), 1)
-                    check.is_instance(args[0], pathlib.Path)
-                    path = cast(pathlib.Path, args[0])
-                    response_func(self._save(path))
-                elif w.kind == workload.Workload.Kind.TERMINATE:
-                    response_func({} if self.is_chief else workload.Skipped())
-                    break
-                else:
-                    raise AssertionError("Unexpected workload: {}".format(w.kind))
+                    )
+            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                check.eq(len(args), 1)
+                check.is_instance(args[0], pathlib.Path)
+                path = cast(pathlib.Path, args[0])
+                response_func(self._save(path))
+            elif w.kind == workload.Workload.Kind.TERMINATE:
+                response_func({} if self.is_chief else workload.Skipped())
+                break
+            else:
+                raise AssertionError("Unexpected workload: {}".format(w.kind))
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)

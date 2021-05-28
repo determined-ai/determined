@@ -50,7 +50,7 @@
   .line > .level {
     color: var(--theme-colors-monochrome-10);
     flex-shrink: 0;
-    padding: 0.1rem;
+    padding: 1px;
   }
   .line > .level > .levelLabel { font-size: 0; }
   .line > .critical { color: var(--theme-colors-states-failed); }
