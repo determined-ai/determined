@@ -114,14 +114,14 @@ class Case:
     def run_sanity_errors(self) -> None:
         if not self.sanity_errors:
             return
-        self.run_errors(self.sanity_errors)
+        self._run_errors(self.sanity_errors, test_type="sanity")
 
     def run_completeness_errors(self) -> None:
         if not self.completeness_errors:
             return
-        self.run_errors(self.completeness_errors, test_type="completeness")
+        self._run_errors(self.completeness_errors, test_type="completeness")
 
-    def run_errors(self, error_cases: Any, test_type: Optional[str] = "sanity") -> None:
+    def _run_errors(self, error_cases: Any, test_type: str) -> None:
         for url, expected in error_cases.items():
             assert isinstance(expected, list), "malformed test case"
             if test_type == "sanity":
@@ -141,9 +141,11 @@ class Case:
                     raise ValueError(msg)
 
     def run_defaulted(self) -> None:
-        if not self.defaulted:
+        if not self.defaulted and not self.default_as:
             return
-        assert self.default_as, "need a `default_as` entry to run a defaulted test"
+        assert (
+            self.defaulted and self.default_as
+        ), "`default_as` and `defaulted` must both be present to run a defaulted test"
         cls = class_from_url(self.default_as)
 
         obj = cls.from_dict(self.case)
