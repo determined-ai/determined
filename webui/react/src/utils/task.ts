@@ -17,21 +17,13 @@ export const launchNotebook = async (
   pool?:string,
 ): Promise<void> => {
   try {
-    let notebook;
-    if (config) {
-      notebook = await apiLaunchNotebook({
-        config,
-        templateName: templateName === '' ? undefined : templateName,
-      });
-    } else {
-      notebook = await apiLaunchNotebook({
-        config: {
-          description: name === '' ? undefined : name,
-          resources: { resource_pool: pool === '' ? undefined : pool, slots },
-        },
-        templateName: templateName === '' ? undefined : templateName,
-      });
-    }
+    const notebook = await apiLaunchNotebook({
+      config: config || {
+        description: name === '' ? undefined : name,
+        resources: { resource_pool: pool === '' ? undefined : pool, slots },
+      },
+      templateName: templateName === '' ? undefined : templateName,
+    });
     openCommand(notebook);
   } catch (e) {
     handleError({
