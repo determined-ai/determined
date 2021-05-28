@@ -91,7 +91,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
         fields.name,
         fields.pool,
       );
-      setConfig({ config: yaml.dump(config) });
+      setConfig({ config: config });
 
     } catch {}
   }, [ fields ]);
@@ -149,15 +149,18 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
     setField([ { name: 'config', value: yaml.dump(config) } ]);
   }, [ config ]);
 
-  const extractConfig = useCallback((fieldData) => {
-    onChange(JSON.parse(fieldData[0].value));
+  const handleConfigChange = useCallback((_, allFields) => {
+    if (!Array.isArray(allFields) || allFields.length === 0) return;
+    try {
+      const configString = allFields[0].value;
+      const config = yaml.load(configString) as RawJson;
+      onChange(config);
+    } catch (e) {}
   }, [ onChange ]);
 
   return <Form
     fields={field}
-    onFieldsChange={(_, allFields) => {
-      extractConfig(allFields);
-    }}>
+    onFieldsChange={handleConfigChange}>
     <div className={css.note}>
       <Link external path="/docs/reference/command-notebook-config.html">
     Read about notebook settings
@@ -166,14 +169,13 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
     <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
       <Item
         name="config"
-        noStyle
         rules={[ { message: 'Invalid YAML', required: true }, () => ({
           validator(_, value) {
             try {
               yaml.load(value);
               return Promise.resolve();
             } catch(err) {
-              return Promise.reject(new Error('Invalid YAML'));
+              return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}`));
             }
           },
         }) ]}>
