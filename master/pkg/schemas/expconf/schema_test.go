@@ -88,17 +88,17 @@ func (tc SchemaTestCase) CheckSanityErrors(t *testing.T) {
 	if tc.SanityErrors == nil {
 		return
 	}
-	checkErrors(tc, t, tc.SanityErrors, "sanity")
+	tc.checkErrors(t, tc.SanityErrors, "sanity")
 }
 
 func (tc SchemaTestCase) CheckCompletenessErrors(t *testing.T) {
 	if tc.CompletenessErrors == nil {
 		return
 	}
-	checkErrors(tc, t, tc.CompletenessErrors, "completeness")
+	tc.checkErrors(t, tc.CompletenessErrors, "completeness")
 }
 
-func checkErrors(tc SchemaTestCase, t *testing.T, errors *map[string][]string, testType string) {
+func (tc SchemaTestCase) checkErrors(t *testing.T, errors *map[string][]string, testType string) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 	for url, expectedErrors := range *errors {
