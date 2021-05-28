@@ -5,7 +5,7 @@ import jsonschema
 from determined.common.schemas import extensions, util
 from determined.common.schemas.expconf import _gen
 
-_validators = {'sanity':{}, 'completeness':{}}  # type: Dict[str, Any]
+_validators = {"sanity": {}, "completeness": {}}  # type: Dict[str, Any]
 
 
 def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) -> Any:
@@ -14,7 +14,7 @@ def make_validator(url: Optional[str] = None, complete: Optional[bool] = False) 
         url = "http://determined.ai/schemas/expconf/v1/experiment.json"
 
     global _validators
-    key = 'completeness' if complete else 'sanity'
+    key = "completeness" if complete else "sanity"
     if url in _validators[key]:
         return _validators[key][url]
 
