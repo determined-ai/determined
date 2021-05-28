@@ -1,9 +1,9 @@
+import contextlib
 import datetime
 import logging
 import queue
 import threading
 import time
-from contextlib import contextmanager
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
@@ -223,7 +223,7 @@ class ProfilerAgent:
             self._end_collection()
             self.shutdown_timer.send_shutdown_signal()
 
-    @contextmanager
+    @contextlib.contextmanager
     def record_timing(self, metric_name: str) -> Iterator[None]:
         if not self.is_enabled or not self.timings_is_enabled or not self.is_active:
             yield
@@ -551,13 +551,6 @@ class TimingsBatcherThread(threading.Thread):
                     if batch_start_time is None:
                         batch_start_time = time.time()
                     self.current_batch.add_timing(message)
-                elif isinstance(message, StartMessage):
-                    # This should never happen
-                    logging.fatal(
-                        "ProfilerAgent.TimingsBatcherThread received more than "
-                        "one StartMessage from the inbound_queue. This should "
-                        "never happen - there must be a bug in the code."
-                    )
                 else:
                     logging.fatal(
                         f"ProfilerAgent.TimingsBatcherThread received a message "
