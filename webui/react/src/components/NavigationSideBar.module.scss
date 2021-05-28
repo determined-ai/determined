@@ -83,9 +83,9 @@
     .launchButton {
       background-color: transparent;
       border-color: var(--theme-colors-monochrome-9);
-      border-radius: var(--theme-sizes-border-radius) 0 0 var(--theme-sizes-border-radius);
+      border-radius: var(--theme-sizes-border-radius);
       border-style: solid;
-      border-width: var(--theme-sizes-border-width) 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
+      border-width: var(--theme-sizes-border-width);
       color: var(--theme-colors-monochrome-17);
       flex-grow: 1;
       flex-shrink: 1;

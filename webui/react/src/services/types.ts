@@ -74,6 +74,11 @@ interface PaginationParams {
   orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 }
 
+export interface GetTemplatesParams extends PaginationParams {
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
+}
+
 export interface GetExperimentsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
@@ -112,7 +117,15 @@ export interface LaunchTensorboardParams {
 }
 
 export interface LaunchNotebookParams {
-  config?: { resources?: { slots?: number } };
+  config?: {
+    description?: string;
+    resources?: {
+      resource_pool?: string;
+      slots?: number;
+    }
+  };
+  preview?: boolean;
+  templateName?: string;
 }
 
 export interface LogsParams {

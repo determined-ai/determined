@@ -4,12 +4,12 @@ import { useLocation } from 'react-router-dom';
 import { useStore } from 'contexts/Store';
 import { handlePath, paths } from 'routes/utils';
 import { ResourceType } from 'types';
-import { launchNotebook } from 'utils/task';
 
 import ActionSheet from './ActionSheet';
 import Icon from './Icon';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationTabbar.module.scss';
+import NotebookModal from './NotebookModal';
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -38,6 +38,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 const NavigationTabbar: React.FC = () => {
   const { auth, cluster: overview, ui } = useStore();
   const [ isShowingOverflow, setIsShowingOverflow ] = useState(false);
+  const [ showNotebookModal, setShowNotebookModal ] = useState(false);
 
   const cluster = overview[ResourceType.ALL].allocation === 0 ?
     undefined : `${overview[ResourceType.ALL].allocation}%`;
@@ -45,8 +46,8 @@ const NavigationTabbar: React.FC = () => {
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleActionSheetCancel = useCallback(() => setIsShowingOverflow(false), []);
-  const handleLaunchNotebook = useCallback((cpuOnly = false) => {
-    launchNotebook(cpuOnly ? 0 : 1);
+  const handleLaunchNotebook = useCallback(() => {
+    setShowNotebookModal(true);
     setIsShowingOverflow(false);
   }, []);
 
@@ -70,13 +71,8 @@ const NavigationTabbar: React.FC = () => {
         actions={[
           {
             icon: 'notebook',
-            label: 'Launch Notebook',
+            label: 'Launch JupyterLab',
             onClick: () => handleLaunchNotebook(),
-          },
-          {
-            icon: 'notebook',
-            label: 'Launch CPU-only Notebook',
-            onClick: () => handleLaunchNotebook(true),
           },
           {
             icon: 'logs',
@@ -100,6 +96,9 @@ const NavigationTabbar: React.FC = () => {
         ]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel} />
+      <NotebookModal
+        visible={showNotebookModal}
+        onCancel={() => setShowNotebookModal(false)} />
     </nav>
   );
 };
