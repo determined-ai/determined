@@ -719,3 +719,4 @@ class _DeterminedProfiler(Callback):
 
     def on_train_batch_begin(self, batch: int, _: Optional[Dict] = None) -> None:
         self.current_batch += 1
+        self.prof.update_batch_idx(self.current_batch)
