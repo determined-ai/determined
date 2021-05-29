@@ -27,6 +27,7 @@ const SystemMetricChart: React.FC<Props> = ({ systemMetrics }: Props) => {
     return {
       axes: [
         {
+          label: 'Time',
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
             const rangeMs = scaleMax - scaleMin;
             const msPerSec = plotDim / rangeMs;
