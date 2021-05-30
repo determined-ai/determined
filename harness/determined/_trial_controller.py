@@ -4,7 +4,7 @@ import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
-from determined import horovod, workload
+from determined import horovod, profiler, workload
 from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 from determined.common.types import StepID
@@ -48,6 +48,12 @@ class TrialController(metaclass=abc.ABCMeta):
         self.load_path = load_path
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
+
+        self.prof = profiler.ProfilerAgent.from_env(
+            env,
+            rendezvous_info.get_rank(),
+            context.distributed.get_rank(),
+        )
 
         self._check_if_trial_supports_configurations(env)
 

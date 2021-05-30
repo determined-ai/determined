@@ -73,6 +73,8 @@ class DeterminedControlHook(estimator.RunHook):
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
 
+        self.prof = estimator_trial_controller.prof
+
     def begin(self) -> None:
         # For performance reasons, we collect per batch metrics
         # only for certain types of summaries. Other summary types,
@@ -97,6 +99,13 @@ class DeterminedControlHook(estimator.RunHook):
     def before_run(
         self, run_context: tf.estimator.SessionRunContext
     ) -> tf.estimator.SessionRunArgs:
+        # On resuming from checkpoint, _current_global_step is None for one batch
+        if self._current_global_step is None:
+            self.prof.update_batch_idx(
+                self.estimator_trial_controller.env.initial_workload.total_batches_processed
+            )
+        else:
+            self.prof.update_batch_idx(self._current_global_step)
         return tf.estimator.SessionRunArgs(
             {"summary": self._summary_op, "global_step": self._global_step_tensor}
         )
@@ -694,21 +703,22 @@ class EstimatorTrialController(det.LoopTrialController):
         return config
 
     def run(self) -> None:
-        try:
-            tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
-        except det.errors.WorkerFinishedGracefully:
-            pass
-        else:
-            raise AssertionError(
-                "Training loop exited unexpectedly but without throwing any errors. This is "
-                "possibly due to either setting train_spec.max_steps to a non-None value or due to "
-                "a user callback causing the training loop to exit, which is not supported at this "
-                "time."
-            )
-        finally:
-            for callback in self.train_hooks:
-                if isinstance(callback, estimator.RunHook):
-                    callback.on_trial_close()
+        with self.prof:
+            try:
+                tf.estimator.train_and_evaluate(self.estimator, self.train_spec, self.eval_spec)
+            except det.errors.WorkerFinishedGracefully:
+                pass
+            else:
+                raise AssertionError(
+                    "Training loop exited unexpectedly but without throwing any errors. This is "
+                    "possibly due to either setting train_spec.max_steps to a non-None value or "
+                    "due to a user callback causing the training loop to exit, which is not "
+                    "supported at this time."
+                )
+            finally:
+                for callback in self.train_hooks:
+                    if isinstance(callback, estimator.RunHook):
+                        callback.on_trial_close()
 
         if self.exit_response_func:
             self.exit_response_func({} if self.is_chief else workload.Skipped())

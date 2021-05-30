@@ -502,6 +502,8 @@ class TFKerasTrialController(det.LoopTrialController):
             # Our implementation of verbose=True.
             callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
 
+        callbacks = callbacks + [keras.callbacks._DeterminedProfiler(self.prof)]
+
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
         # each batch on each worker in order to trigger on_epoch_end callbacks correctly.
@@ -660,12 +662,13 @@ class TFKerasTrialController(det.LoopTrialController):
                 self.multiplexer_load_state = pickle.load(f)
 
     def run(self) -> None:
-        try:
-            self._launch_fit()
-        except det.errors.WorkerFinishedGracefully:
-            pass
-        finally:
-            self._stop_enqueuers()
+        with self.prof:
+            try:
+                self._launch_fit()
+            except det.errors.WorkerFinishedGracefully:
+                pass
+            finally:
+                self._stop_enqueuers()
 
     def _launch_fit(self) -> None:
         training_data = self.training_data
