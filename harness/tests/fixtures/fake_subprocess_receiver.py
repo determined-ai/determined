@@ -34,11 +34,11 @@ def main() -> None:
 
         # Compare the workloads received against the expected stream of workloads.
         expected = fake_workload_gen()
-        for i, (wkld, _, resp_fn) in enumerate(iter(subrec)):
-            assert wkld == next(expected)
+        actual = iter(subrec)
+        for i, wkld in enumerate(expected):
+            actual_wkld, _, resp_fn = next(actual)
+            assert wkld == actual_wkld
             resp_fn({"count": i})
-
-        assert i == NUM_FAKE_WORKLOADS
 
 
 if __name__ == "__main__":
