@@ -227,18 +227,23 @@ const NotebookForm:React.FC<FormProps> = (
     const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
     const hasGPUCapacity = selectedPool.slotsAvailable > 0
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
+    if (hasCPUCapacity && !hasGPUCapacity) {
+      onChange({ key: 'type', value: ResourceType.CPU });
+    } else if (!hasCPUCapacity && hasGPUCapacity) {
+      onChange({ key: 'type', value: ResourceType.GPU });
+    }
     return {
       hasCPU: hasCPUCapacity,
       hasGPU: hasGPUCapacity,
       showResourceType: hasCPUCapacity && hasGPUCapacity,
     };
-  }, [ resourcePools ]);
+  }, [ resourcePools, onChange ]);
 
   useEffect(() => {
     setResourceInfo(calculateResourceInfo(
       fields.pool,
     ));
-  }, [ fields, calculateResourceInfo ]);
+  }, [ fields.pool, calculateResourceInfo ]);
 
   const fetchTemplates = useCallback(async () => {
     try {
