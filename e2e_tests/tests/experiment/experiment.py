@@ -20,30 +20,6 @@ from tests import cluster
 from tests import config as conf
 
 
-def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:
-    target_env = os.environ.copy()
-    target_env["DET_MASTER"] = conf.make_master_url()
-
-    with subprocess.Popen(
-        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=context_dir, env=target_env
-    ) as p:
-        assert p.stdout is not None
-        for line in p.stdout:
-            m = re.search(r"Created experiment (\d+)\n", line.decode())
-            if m is not None:
-                return int(m.group(1))
-
-    return None
-
-
-def create_native_experiment(context_dir: str, command: List[str]) -> int:
-    experiment_id = maybe_create_native_experiment(context_dir, command)
-    if experiment_id is None:
-        pytest.fail(f"Failed to create experiment in {context_dir}: {command}")
-
-    return experiment_id
-
-
 def maybe_create_experiment(
     config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
 ) -> subprocess.CompletedProcess:

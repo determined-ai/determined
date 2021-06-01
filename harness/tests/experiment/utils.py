@@ -1,8 +1,6 @@
 import distutils.util
-import json
 import os
 import pathlib
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
@@ -238,7 +236,7 @@ def make_trial_controller(
     if env is None:
         env = make_default_env_context(hparams=hparams)
 
-    return load.load_controller_from_trial(
+    return load.load_trial(
         trial_class,
         env=env,
         workloads=workloads,
@@ -266,46 +264,8 @@ def make_trial_controller_from_trial_implementation(
     rendezvous_info = make_default_rendezvous_info()
     hvd_config = make_default_hvd_config()
 
-    # TODO(ryan): remove all global APIs that read from environment variables
-    os.environ["DET_HPARAMS"] = json.dumps(hparams)
-
-    return load.load_controller_from_trial(
+    return load.load_trial(
         trial_class=trial_class,
-        env=env,
-        workloads=workloads,
-        load_path=load_path,
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-    )
-
-
-def make_trial_controller_from_native_implementation(
-    command: List[str],
-    hparams: Dict,
-    workloads: workload.Stream,
-    scheduling_unit: int,
-    load_path: Optional[pathlib.Path] = None,
-    trial_seed: int = 0,
-    exp_config: Optional[Dict] = None,
-) -> det.TrialController:
-    # TODO(shiyuan): change the way to determine whether the code runs inside trial container.
-    if not exp_config:
-        exp_config = make_default_exp_config(hparams, scheduling_unit)
-    exp_config["internal"] = {"native": {"command": command}}
-
-    env = make_default_env_context(
-        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
-    )
-
-    rendezvous_info = make_default_rendezvous_info()
-
-    hvd_config = make_default_hvd_config()
-
-    # TODO(ryan): remove all global APIs that read from environment variables.
-    os.environ["DET_EXPERIMENT_CONFIG"] = json.dumps(exp_config)
-    os.environ["DET_HPARAMS"] = json.dumps(hparams)
-
-    return load.load_native_implementation_controller(
         env=env,
         workloads=workloads,
         load_path=load_path,
@@ -449,18 +409,6 @@ def checkpointing_and_restoring_test(
 
 def list_all_files(directory: str) -> List[str]:
     return [f for _, _, files in os.walk(directory) for f in files]
-
-
-def run_local_test_mode(implementation: str) -> None:
-    subprocess.check_call(
-        args=["python", implementation, "--local", "--test"],
-        cwd=fixtures_path(""),
-        env={
-            "PYTHONUNBUFFERED": "1",
-            "PYTHONPATH": f"$PYTHONPATH:{repo_path('harness')}",
-            **os.environ,
-        },
-    )
 
 
 def create_trial_instance(trial_def: Type[det.Trial]) -> None:

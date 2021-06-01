@@ -12,7 +12,7 @@ def load_model(
 ) -> Union[PyTorchTrial, torch.nn.Module]:
     checkpoint = torch.load(str(ckpt_dir.joinpath("state_dict.pth")), **kwargs)  # type: ignore
 
-    trial_cls, trial_context = experimental._load_trial_on_local(
+    trial_cls, trial_context = experimental._load_trial_for_checkpoint_export(
         ckpt_dir.joinpath("code"),
         managed_training=False,
         config=metadata["experiment_config"],
