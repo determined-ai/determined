@@ -107,6 +107,8 @@ func (s *Searcher) TrialExitedEarly(
 	switch exitedReason {
 	case workload.InvalidHP:
 		delete(s.TrialProgress, requestID)
+	case workload.InitInvalidHP:
+		delete(s.TrialProgress, requestID)
 	case workload.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).

@@ -695,7 +695,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	})
 
 	if msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled ||
-		*msg.ExitedReason == workload.InvalidHP {
+		*msg.ExitedReason == workload.InvalidHP || *msg.ExitedReason == workload.InitInvalidHP {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}

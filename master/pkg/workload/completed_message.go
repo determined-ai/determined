@@ -84,6 +84,8 @@ const (
 	UserCanceled ExitedReason = "USER_CANCELED"
 	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
 	InvalidHP ExitedReason = "INVALID_HP"
+	// InitInvalidHP signals the searcher that the user raised an InvalidHP exception in the trial __init__().
+    InitInvalidHP ExitedReason = "INIT_INVALID_HP"
 )
 
 // ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
@@ -93,6 +95,8 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 		return Errored
 	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
 		return InvalidHP
+	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
+		return InitInvalidHP
 	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
 		return UserCanceled
 	default:

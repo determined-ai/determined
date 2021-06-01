@@ -84,7 +84,7 @@ func (s *randomSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	if exitedReason == workload.InvalidHP {
+	if exitedReason == workload.InvalidHP || exitedReason = workload.InitInvalidHP {
 		var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)

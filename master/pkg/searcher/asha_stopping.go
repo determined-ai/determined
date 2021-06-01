@@ -218,7 +218,7 @@ func (s *asyncHalvingStoppingSearch) progress(map[model.RequestID]model.PartialU
 func (s *asyncHalvingStoppingSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
-	if exitedReason == workload.InvalidHP {
+	if exitedReason == workload.InvalidHP || exitedReason = workload.InitInvalidHP {
 		var ops []Operation
 		s.EarlyExitTrials[requestID] = true
 		ops = append(ops, NewClose(requestID))
