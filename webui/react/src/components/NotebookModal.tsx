@@ -42,6 +42,12 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
     storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
   );
 
+  useEffect(() => {
+    if (state.type === ResourceType.GPU && (state.slots === undefined || state.slots < 1)) {
+      state.slots = 1;
+    }
+  }, [ state ]);
+
   const storeConfig = useCallback((values: NotebookConfig) => {
     delete values.name;
     storage.set(STORAGE_KEY, values);
