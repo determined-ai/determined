@@ -25,6 +25,7 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
     return {
       axes: [
         {
+          label: 'Batch',
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
             const range = scaleMax - scaleMin + 1;
             const factor = findFactorOfNumber(range).reverse()

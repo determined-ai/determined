@@ -68,6 +68,7 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
     return {
       axes: [
         {
+          label: timeSeries.label,
           space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
             const rangeSecs = scaleMax - scaleMin;
             const rangeDays = rangeSecs / (24 * 60 * 60);
