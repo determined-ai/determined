@@ -1,9 +1,9 @@
 import contextlib
-import datetime
 import logging
 import queue
 import threading
 import time
+from datetime import datetime, timezone
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
@@ -34,7 +34,7 @@ except Exception as e:
 
 
 class Measurement:
-    def __init__(self, timestamp: datetime.datetime, batch_idx: int, value: float):
+    def __init__(self, timestamp: datetime, batch_idx: int, value: float):
         self.timestamp = timestamp
         self.batch_idx = batch_idx
         self.measurement = value
@@ -291,11 +291,11 @@ class Timing:
     def __init__(self, name: str, current_batch_idx: int) -> None:
         self.name = name
         self.current_batch_idx = current_batch_idx
-        self.start_time = None  # type: Optional[datetime.datetime]
+        self.start_time = None  # type: Optional[float]
         self.dur = None  # type: Optional[float]
 
     def start(self) -> None:
-        self.start_time = datetime.datetime.utcnow()
+        self.start_time = time.time()
 
     def end(self) -> None:
         check.is_not_none(
@@ -303,10 +303,8 @@ class Timing:
             "Timing has no start time and end() was called. You probably didn't "
             "run start() before end().",
         )
-        self.start_time = cast(datetime.datetime, self.start_time)
-        end_time = datetime.datetime.utcnow()
-        dur_timedelta = end_time - self.start_time
-        self.dur = dur_timedelta.total_seconds()
+        self.start_time = cast(float, self.start_time)
+        self.dur = time.time() - self.start_time
 
     def to_measurement(self) -> Measurement:
         check.is_not_none(
@@ -319,10 +317,11 @@ class Timing:
             "Timing has no duration and to_measurement() was called. You probably didn't "
             "run end() before to_measurement().",
         )
-        self.start_time = cast(datetime.datetime, self.start_time)
+        self.start_time = cast(float, self.start_time)
+        start_time_dt = datetime.fromtimestamp(self.start_time, timezone.utc)
         self.dur = cast(float, self.dur)
         return Measurement(
-            timestamp=self.start_time, batch_idx=self.current_batch_idx, value=self.dur
+            timestamp=start_time_dt, batch_idx=self.current_batch_idx, value=self.dur
         )
 
 
@@ -614,7 +613,7 @@ class SysMetricType:
     SIMPLE_CPU_UTIL_METRIC = "cpu_util_simple"
 
 
-def convert_to_timestamp_str(timestamp: datetime.datetime) -> str:
+def convert_to_timestamp_str(timestamp: datetime) -> str:
     return timestamp.isoformat() + "Z"
 
 
@@ -763,14 +762,14 @@ GIGA = 1_000_000_000
 class SimpleCpuUtilCollector:
     def measure(self, batch_idx: int) -> Measurement:
         cpu_util = psutil.cpu_percent()
-        timestamp = datetime.datetime.utcnow()
+        timestamp = datetime.utcnow()
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
 class FreeMemoryCollector:
     def measure(self, batch_idx: int) -> Measurement:
         free_mem_bytes = psutil.virtual_memory().available
-        timestamp = datetime.datetime.utcnow()
+        timestamp = datetime.utcnow()
         return Measurement(timestamp, batch_idx, free_mem_bytes / GIGA)
 
 
@@ -803,7 +802,7 @@ class NetThroughputCollector:
         sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 / GIGA
         recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 / GIGA
 
-        timestamp = datetime.datetime.fromtimestamp(end_time)
+        timestamp = datetime.fromtimestamp(end_time, timezone.utc)
         return Measurement(timestamp, batch_idx, sent_throughput_gigabits_per_second), Measurement(
             timestamp, batch_idx, recv_throughput_gigabits_per_second
         )
@@ -847,7 +846,7 @@ class DiskReadWriteRateCollector:
         read_throughput_count_per_sec = delta_read_count / delta_time
         write_throughput_count_per_sec = delta_write_count / delta_time
 
-        timestamp = datetime.datetime.fromtimestamp(end_time)
+        timestamp = datetime.fromtimestamp(end_time, timezone.utc)
         read_throughput = Measurement(timestamp, batch_idx, read_throughput_bytes_per_sec)
         write_throughput = Measurement(timestamp, batch_idx, write_throughput_bytes_per_sec)
         iops = Measurement(
@@ -863,7 +862,7 @@ class GpuUtilCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.datetime.utcnow()
+        timestamp = datetime.utcnow()
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
@@ -881,7 +880,7 @@ class GpuMemoryCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.datetime.utcnow()
+        timestamp = datetime.utcnow()
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
