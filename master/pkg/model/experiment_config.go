@@ -216,7 +216,7 @@ func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
 
 // ResourcesConfig configures resource usage for an experiment, command, notebook, or tensorboard.
 type ResourcesConfig struct {
-	Slots int `json:"slots,omitempty"`
+	Slots int `json:"slots"`
 
 	MaxSlots       *int    `json:"max_slots,omitempty"`
 	Weight         float64 `json:"weight"`
