@@ -84,8 +84,9 @@ const (
 	UserCanceled ExitedReason = "USER_CANCELED"
 	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
 	InvalidHP ExitedReason = "INVALID_HP"
-	// InitInvalidHP signals the searcher that the user raised an InvalidHP exception in the trial __init__().
-    InitInvalidHP ExitedReason = "INIT_INVALID_HP"
+	// InitInvalidHP signals the searcher that the user raised an InvalidHP exception
+	// in the trial init.
+	InitInvalidHP ExitedReason = "INIT_INVALID_HP"
 )
 
 // ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
