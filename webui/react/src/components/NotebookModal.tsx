@@ -49,8 +49,9 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   }, [ state ]);
 
   const storeConfig = useCallback((values: NotebookConfig) => {
-    delete values.name;
-    storage.set(STORAGE_KEY, values);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { name, ...storedValues } = values;
+    storage.set(STORAGE_KEY, storedValues);
   }, [ storage ]);
 
   useEffect(() => {
@@ -276,7 +277,7 @@ const NotebookForm:React.FC<FormProps> = (
         <Input
           placeholder="Name"
           value={fields.name}
-          onChange={(value) => onChange({ key: 'name', value: value.target.value })} />}
+          onChange={(e) => onChange({ key: 'name', value: e.target.value })} />}
       label="Name" />
     <LabelledLine
       content = {
@@ -284,7 +285,7 @@ const NotebookForm:React.FC<FormProps> = (
           allowClear
           placeholder="Pick the best option"
           value={fields.pool}
-          onChange={(value) => onChange({ key: 'pool', value: value?.toString() })}>
+          onChange={(value) => onChange({ key: 'pool', value: value })}>
           {resourcePools.map(pool =>
             <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
         </Select>}
