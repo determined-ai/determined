@@ -95,10 +95,10 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 		return Errored
 	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
 		return InvalidHP
-	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
-		return InitInvalidHP
 	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
 		return UserCanceled
+	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
+		return InitInvalidHP
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}

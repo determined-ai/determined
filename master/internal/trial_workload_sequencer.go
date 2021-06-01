@@ -161,7 +161,7 @@ func (s *trialWorkloadSequencer) WorkloadFailed(
 	msg workload.CompletedMessage,
 	reason workload.ExitedReason,
 ) (bool, error) {
-	if reason == workload.UserCanceled || reason == workload.InvalidHP || {
+	if reason == workload.UserCanceled || reason == workload.InvalidHP {
 		// UserCanceled and InvalidHP are still considered "completed".
 		if _, err := s.WorkloadCompleted(msg, func() bool {
 			return false
