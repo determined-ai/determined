@@ -437,6 +437,10 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			return err
 		}
 
+	case actor.ChildFailed:
+		ctx.Log().Info("found child actor failed, terminating forcibly")
+		t.terminate(ctx, true)
+
 	case killTrial, *apiv1.KillTrialRequest:
 		ctx.Log().Info("received API request to kill trial")
 		t.Killed = true
@@ -463,7 +467,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			t.terminate(ctx, true)
 		}
 
-	case actor.ChildStopped, actor.ChildFailed:
+	case actor.ChildStopped:
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
