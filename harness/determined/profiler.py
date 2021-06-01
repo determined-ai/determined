@@ -15,7 +15,7 @@ from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
-
+MAX_COLLECTION_SECONDS = 300
 LOG_NAMESPACE = "determined-profiler"
 
 try:
@@ -100,17 +100,20 @@ class ProfilerAgent:
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         if self.is_enabled:
-            # Set up timer thread to stop collecting after 5 minutes
-            self.max_collection_seconds = 300
-            self.shutdown_timer = PreemptibleTimer(
-                self.max_collection_seconds, self._end_collection
-            )
-
-            # Set up the thread responsible for making API calls
+            # Set up sender thread with the number of producers to expect shutdowns from.
             self.send_queue = (
                 queue.Queue()
             )  # type: """queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]"""
-            self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
+
+            # Set up timer thread to stop collecting after 5 minutes
+            self.shutdown_timer = PreemptibleTimer(MAX_COLLECTION_SECONDS, self._end_collection)
+
+            # Set up the thread responsible for making API calls
+            if self.sysmetrics_is_enabled or self.timings_is_enabled:
+                num_producers = int(self.sysmetrics_is_enabled) + int(self.timings_is_enabled)
+                self.sender_thread = ProfilerSenderThread(
+                    self.send_queue, self.master_url, num_producers
+                )
 
             if self.sysmetrics_is_enabled:
                 self.sys_metric_collector_thread = SysMetricCollectorThread(
@@ -281,7 +284,6 @@ class ProfilerAgent:
                 self.timings_batcher_thread.send_shutdown_signal()
                 self.timings_batcher_thread.join()
 
-            self.sender_thread.send_shutdown_signal()
             self.sender_thread.join()
 
             self.has_finished = True
@@ -389,7 +391,6 @@ class SysMetricCollectorThread(threading.Thread):
     MEASUREMENT_INTERVAL = 0.1
 
     def __init__(self, trial_id: str, agent_id: str, send_queue: queue.Queue):
-
         self.current_batch_idx = 0
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
@@ -420,6 +421,7 @@ class SysMetricCollectorThread(threading.Thread):
         # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
         if isinstance(msg, ShutdownMessage):
+            self.send_queue.put(ShutdownMessage())
             return
 
         # Do initial measurement for rate-based collectors
@@ -441,7 +443,8 @@ class SysMetricCollectorThread(threading.Thread):
                 try:
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
-                        # Drop any partial batches if we receive a shutdown
+                        self.send_queue.put(self.current_batch.convert_to_post_format())
+                        self.send_queue.put(ShutdownMessage())
                         return
                 except queue.Empty:
                     pass
@@ -527,6 +530,7 @@ class TimingsBatcherThread(threading.Thread):
             if isinstance(msg, StartMessage):
                 break
             if isinstance(msg, ShutdownMessage):
+                self.send_queue.put(ShutdownMessage())
                 return
             else:
                 # Ignore any Timings that are received before StartMessage
@@ -545,6 +549,8 @@ class TimingsBatcherThread(threading.Thread):
                 message = self.inbound_queue.get(timeout=timeout)
                 if isinstance(message, ShutdownMessage):
                     # Drop any partial batches if we receive a shutdown
+                    self.send_queue.put(self.current_batch.convert_to_post_format())
+                    self.send_queue.put(ShutdownMessage())
                     return
                 elif isinstance(message, Timing):
                     if batch_start_time is None:
@@ -579,21 +585,23 @@ class TimingsBatcherThread(threading.Thread):
 class ProfilerSenderThread(threading.Thread):
     """
     This is a thread that exists solely so that we can make API calls without blocking.
-    It has a Queue through which work is sent to the thread
+    It has a Queue through which work is sent to the thread. It is aware of the number of
+    upstream producers and exits whenever it receives a ShutdownMessage from each producer.
     """
 
-    def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
+    def __init__(self, inbound_queue: queue.Queue, master_url: str, num_producers: int) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
+        self.num_producers = num_producers
+        self.producers_shutdown = 0
         super().__init__(daemon=True)
-
-    def send_shutdown_signal(self) -> None:
-        self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
         while True:
             message = self.inbound_queue.get()
             if isinstance(message, ShutdownMessage):
+                self.producers_shutdown += 1
+            if self.num_producers == self.producers_shutdown:
                 return
             api.post_trial_profiler_metrics_batches(
                 self.master_url,
