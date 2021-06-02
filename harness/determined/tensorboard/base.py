@@ -1,7 +1,8 @@
 import abc
 import logging
 import pathlib
-from typing import Dict, List
+import time
+from typing import List
 
 
 class TensorboardManager(metaclass=abc.ABCMeta):
@@ -22,11 +23,17 @@ class TensorboardManager(metaclass=abc.ABCMeta):
     ) -> None:
         self.base_path = base_path
         self.sync_path = sync_path
-        self._synced_event_sizes: Dict[pathlib.Path, int] = {}
+        self.last_sync = 0.0
 
-    def list_tfevents(self) -> List[pathlib.Path]:
+    def list_tfevents(self, since: float) -> List[pathlib.Path]:
         """
-        list_tfevents returns tfevent file names located in the base_path directory.
+        list_tfevents returns tfevent file names located in the base_path directory that have been
+        modified since a certain time.
+
+        If many tfevent files have been created, the syscall to stat on each of them can be quite
+        expensive, taking on the order of 1ms for every 100 files. Each file gets stat'd every call
+        to this function, which can be a bottleneck late in training or in local training when many
+        tfevent files exist but few or none need to be resynced.
         """
 
         if not self.base_path.exists():
@@ -36,20 +43,12 @@ class TensorboardManager(metaclass=abc.ABCMeta):
             )
             return []
 
-        return [f.resolve() for f in self.base_path.glob("**/*tfevents*")]
+        return [f for f in self.base_path.glob("**/*tfevents*") if f.stat().st_mtime > since]
 
     def to_sync(self) -> List[pathlib.Path]:
-        """
-        to_sync returns tfevent files that have not been exported to the persistent
-        storage backend.
-        """
-
-        sync_paths = []
-        for path in self.list_tfevents():
-            if path not in self._synced_event_sizes:
-                sync_paths.append(path)
-            elif path.stat().st_size > self._synced_event_sizes[path]:
-                sync_paths.append(path)
+        sync_start = time.time()
+        sync_paths = self.list_tfevents(self.last_sync)
+        self.last_sync = sync_start
 
         return sync_paths
 
