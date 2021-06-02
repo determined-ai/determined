@@ -782,6 +782,26 @@ class TimingsBatcher:
 GIGA = 1_000_000_000
 
 
+class ThroughputTracker:
+    def __init__(self, name: str, multiplier: float = 1.0):
+        self.name = name
+        self.multiplier = multiplier
+        self.start_time = time.time()
+        self.start_val = 0.0
+
+    def add(self, new_val: float, batch_idx: int) -> Measurement:
+        """
+        Add a new value and return the throughput since the last measurement. The Measurement from
+        the first call to add() is meaningless since the starting value is arbitrarily set to 0.
+        """
+        now = time.time()
+        timestamp = datetime.fromtimestamp(now, timezone.utc)
+        val_per_sec = (new_val - self.start_val) / (now - self.start_time)
+        self.start_val = new_val
+        self.start_time = now
+        return Measurement(timestamp, batch_idx, val_per_sec * self.multiplier)
+
+
 class SimpleCpuUtilCollector:
     def measure(self, batch_idx: int) -> Measurement:
         cpu_util = psutil.cpu_percent()
@@ -798,84 +818,41 @@ class FreeMemoryCollector:
 
 class NetThroughputCollector:
     def __init__(self) -> None:
-        self.reset()
+        self.sent_throughput = ThroughputTracker("Network Sent (Gbit/s)", multiplier=8 / GIGA)
+        self.recv_throughput = ThroughputTracker("Network Recv (Gbit/s)", multiplier=8 / GIGA)
 
     def reset(self) -> None:
-        self.start_time = time.time()
+        # Discard initial batch that is meaningless
         net = psutil.net_io_counters()
-        self.start_sent = net.bytes_sent
-        self.start_recv = net.bytes_recv
+        self.sent_throughput.add(net.bytes_sent, batch_idx=0)
+        self.recv_throughput.add(net.bytes_recv, batch_idx=0)
 
     def measure(self, batch_idx: int) -> Tuple[Measurement, Measurement]:
         net = psutil.net_io_counters()
-        end_time = time.time()
-
-        delta_sent_bytes = net.bytes_sent - self.start_sent
-        delta_recv_bytes = net.bytes_recv - self.start_recv
-
-        time_delta = end_time - self.start_time
-
-        self.start_time = end_time
-        self.start_sent = net.bytes_sent
-        self.start_recv = net.bytes_recv
-
-        sent_throughput_bytes_per_second = delta_sent_bytes / time_delta
-        recv_throughput_bytes_per_second = delta_recv_bytes / time_delta
-
-        sent_throughput_gigabits_per_second = sent_throughput_bytes_per_second * 8 / GIGA
-        recv_throughput_gigabits_per_second = recv_throughput_bytes_per_second * 8 / GIGA
-
-        timestamp = datetime.fromtimestamp(end_time, timezone.utc)
-        return Measurement(timestamp, batch_idx, sent_throughput_gigabits_per_second), Measurement(
-            timestamp, batch_idx, recv_throughput_gigabits_per_second
-        )
+        sent = self.sent_throughput.add(net.bytes_sent, batch_idx=batch_idx)
+        recv = self.recv_throughput.add(net.bytes_recv, batch_idx=batch_idx)
+        return sent, recv
 
 
 class DiskReadWriteRateCollector:
     def __init__(self) -> None:
-        self.reset()
+        self.read_throughput_tracker = ThroughputTracker("Disk Read (bytes/s)")
+        self.write_throughput_tracker = ThroughputTracker("Disk Write (bytes/s)")
+        self.iops = ThroughputTracker("Disk IOPS")
 
     def reset(self) -> None:
-        self.start_time = time.time()
+        # Discard initial batch that is meaningless
         disk = psutil.disk_io_counters()
-
-        self.start_read_bytes = disk.read_bytes
-        self.start_write_bytes = disk.write_bytes
-
-        self.start_read_count = disk.read_count
-        self.start_write_count = disk.write_count
+        self.read_throughput_tracker.add(disk.read_bytes, batch_idx=0)
+        self.write_throughput_tracker.add(disk.write_bytes, batch_idx=0)
+        self.iops.add(disk.read_count + disk.write_count, batch_idx=0)
 
     def measure(self, batch_idx: int) -> Tuple[Measurement, Measurement, Measurement]:
+        """Return tuple of (Read, Write, IOPS) Measurements"""
         disk = psutil.disk_io_counters()
-        end_time = time.time()
-
-        delta_read_bytes = disk.read_bytes - self.start_read_bytes
-        delta_write_bytes = disk.write_bytes - self.start_write_bytes
-
-        delta_read_count = disk.read_count - self.start_read_count
-        delta_write_count = disk.write_count - self.start_write_count
-
-        delta_time = end_time - self.start_time
-
-        self.start_time = end_time
-        self.start_read_bytes = disk.read_bytes
-        self.start_write_bytes = disk.write_bytes
-        self.start_read_count = disk.read_count
-        self.start_write_count = disk.write_count
-
-        read_throughput_bytes_per_sec = delta_read_bytes / delta_time
-        write_throughput_bytes_per_sec = delta_write_bytes / delta_time
-
-        read_throughput_count_per_sec = delta_read_count / delta_time
-        write_throughput_count_per_sec = delta_write_count / delta_time
-
-        timestamp = datetime.fromtimestamp(end_time, timezone.utc)
-        read_throughput = Measurement(timestamp, batch_idx, read_throughput_bytes_per_sec)
-        write_throughput = Measurement(timestamp, batch_idx, write_throughput_bytes_per_sec)
-        iops = Measurement(
-            timestamp, batch_idx, read_throughput_count_per_sec + write_throughput_count_per_sec
-        )
-
+        read_throughput = self.read_throughput_tracker.add(disk.read_bytes, batch_idx=batch_idx)
+        write_throughput = self.write_throughput_tracker.add(disk.write_bytes, batch_idx=batch_idx)
+        iops = self.iops.add(disk.read_count + disk.write_count, batch_idx=batch_idx)
         return read_throughput, write_throughput, iops
 
 
