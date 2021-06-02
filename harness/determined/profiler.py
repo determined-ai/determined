@@ -3,7 +3,7 @@ import logging
 import queue
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
@@ -614,7 +614,21 @@ class SysMetricType:
 
 
 def convert_to_timestamp_str(timestamp: datetime) -> str:
-    return timestamp.isoformat() + "Z"
+    """
+    Convert a datetime object to the string format expected by the API. All timestamps must be
+    timezone-aware datetime.datetimes in UTC.
+    """
+    # https://docs.python.org/3/library/datetime.html#determining-if-an-object-is-aware-or-naive
+    assert (
+        timestamp.tzinfo is not None and timestamp.tzinfo.utcoffset(timestamp) is not None
+    ), "All datetime objects to be serialized must be timezone aware"
+    utcoffset = cast(timedelta, timestamp.utcoffset())
+    assert utcoffset.total_seconds() == 0, (
+        f"All datetime objects to be serialized must be in UTC, but the utcoffset was "
+        f"{utcoffset.total_seconds()}"
+    )
+
+    return timestamp.isoformat()
 
 
 def to_post_format(
@@ -762,14 +776,14 @@ GIGA = 1_000_000_000
 class SimpleCpuUtilCollector:
     def measure(self, batch_idx: int) -> Measurement:
         cpu_util = psutil.cpu_percent()
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
 class FreeMemoryCollector:
     def measure(self, batch_idx: int) -> Measurement:
         free_mem_bytes = psutil.virtual_memory().available
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         return Measurement(timestamp, batch_idx, free_mem_bytes / GIGA)
 
 
@@ -862,7 +876,7 @@ class GpuUtilCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
@@ -880,7 +894,7 @@ class GpuMemoryCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
