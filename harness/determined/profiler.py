@@ -60,8 +60,8 @@ class ProfilerAgent:
     record_timing() method. The timings will be batched and sent to the master.
 
     Profiling is only active between start_on_batch and end_after_batch. It will also automatically
-    shut down 5 minutes after starting. When profiling is not active, no system metrics are
-    collected and the record_timing function is a no-op.
+    shut down MAX_COLLECTION_SECONDS after starting. When profiling is not active, no system metrics
+    are collected and the record_timing function is a no-op.
 
     If is_enabled=False, every method in this class should be a no-op.
     """
@@ -100,33 +100,34 @@ class ProfilerAgent:
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         if self.is_enabled:
-            # Set up sender thread with the number of producers to expect shutdowns from.
+            # Set up timer thread to stop collecting after MAX_COLLECTION_SECONDS
+            self.shutdown_timer = PreemptibleTimer(MAX_COLLECTION_SECONDS, self._end_collection)
+
             self.send_queue = (
                 queue.Queue()
             )  # type: """queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]"""
 
-            # Set up timer thread to stop collecting after 5 minutes
-            self.shutdown_timer = PreemptibleTimer(MAX_COLLECTION_SECONDS, self._end_collection)
 
-            # Set up the thread responsible for making API calls
-            if self.sysmetrics_is_enabled or self.timings_is_enabled:
-                num_producers = int(self.sysmetrics_is_enabled) + int(self.timings_is_enabled)
-                self.sender_thread = ProfilerSenderThread(
-                    self.send_queue, self.master_url, num_producers
-                )
+            num_producers = 0
 
             if self.sysmetrics_is_enabled:
+                num_producers += 1
                 self.sys_metric_collector_thread = SysMetricCollectorThread(
                     trial_id, agent_id, self.send_queue
                 )
 
             if self.timings_is_enabled:
+                num_producers += 1
                 self.timings_batcher_queue = (
                     queue.Queue()
                 )  # type: """queue.Queue[Union[Timing, StartMessage, ShutdownMessage]]"""
                 self.timings_batcher_thread = TimingsBatcherThread(
                     trial_id, agent_id, self.timings_batcher_queue, self.send_queue
                 )
+
+            self.sender_thread = ProfilerSenderThread(
+                self.send_queue, self.master_url, num_producers
+            )
 
     @staticmethod
     def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
@@ -548,7 +549,6 @@ class TimingsBatcherThread(threading.Thread):
             try:
                 message = self.inbound_queue.get(timeout=timeout)
                 if isinstance(message, ShutdownMessage):
-                    # Drop any partial batches if we receive a shutdown
                     self.send_queue.put(self.current_batch.convert_to_post_format())
                     self.send_queue.put(ShutdownMessage())
                     return
@@ -601,8 +601,8 @@ class ProfilerSenderThread(threading.Thread):
             message = self.inbound_queue.get()
             if isinstance(message, ShutdownMessage):
                 self.producers_shutdown += 1
-            if self.num_producers == self.producers_shutdown:
-                return
+                if self.num_producers == self.producers_shutdown:
+                    return
             api.post_trial_profiler_metrics_batches(
                 self.master_url,
                 message,
