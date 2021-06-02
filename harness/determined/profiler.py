@@ -602,6 +602,8 @@ class ProfilerSenderThread(threading.Thread):
                 self.producers_shutdown += 1
                 if self.num_producers == self.producers_shutdown:
                     return
+                else:
+                    continue
             api.post_trial_profiler_metrics_batches(
                 self.master_url,
                 message,
