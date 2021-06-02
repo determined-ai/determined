@@ -18,19 +18,96 @@ TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
 MAX_COLLECTION_SECONDS = 300
 LOG_NAMESPACE = "determined-profiler"
 
-try:
-    import pynvml
 
-    pynvml.nvmlInit()
-    SHOULD_PROFILE_GPUS = True
-except ModuleNotFoundError:
-    logging.info(f"{LOG_NAMESPACE}: pynvml not found. Not collecting GPU metrics")
-    SHOULD_PROFILE_GPUS = False
-except pynvml.NVMLError_LibraryNotFound:
-    logging.info(f"{LOG_NAMESPACE}: pynvml LibraryNotFound error. Not collecting GPU metrics")
-    SHOULD_PROFILE_GPUS = False
-except Exception as e:
-    raise RuntimeError(f"Could not set up pynvml, but it failed with an unexpected error: {e}")
+class PynvmlWrapperError(Exception):
+    pass
+
+
+class PynvmlWrapper:
+    def __init__(self) -> None:
+        self._pynvml = None  # type: Optional[Any]
+        self._device_count = None  # type: Optional[int]
+        self._index_to_uuid_map = {}  # type: Dict[int, str]
+        try:
+            import pynvml
+
+            pynvml.nvmlInit()
+            try:
+                num_gpus = pynvml.nvmlDeviceGetCount()
+                for i in range(num_gpus):
+                    handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+                    pynvml.nvmlDeviceGetUUID(handle)
+                    pynvml.nvmlDeviceGetMemoryInfo(handle)
+                    pynvml.nvmlDeviceGetUtilizationRates(handle)
+                self._pynvml = pynvml
+            except Exception as e:
+                logging.warning(
+                    f"{LOG_NAMESPACE}: pynvml is functional, but failed to pass functionality "
+                    f"test due to exception. Not collecting GPU metrics. Exception details: {e}"
+                )
+        except ModuleNotFoundError:
+            logging.info(f"{LOG_NAMESPACE}: pynvml not found. Not collecting GPU metrics")
+        except pynvml.NVMLError_LibraryNotFound:
+            logging.info(
+                f"{LOG_NAMESPACE}: pynvml LibraryNotFound error. Not collecting GPU metrics"
+            )
+        except Exception as e:
+            logging.error(
+                f"{LOG_NAMESPACE}: unexpected error while trying to set up pynvml. Not "
+                f"collecting GPU metrics. Please report this error to "
+                f"https://github.com/determined-ai/determined as it should not be "
+                f"encountered by users. Error details: {e}"
+            )
+
+    @property
+    def pynvml_is_available(self) -> bool:
+        return self._pynvml is not None
+
+    def _safety_check(self) -> None:
+        """Before calling any pynvml operations, raise an error if pynvml is not available"""
+        if self._pynvml is None:
+            raise PynvmlWrapperError(
+                "Tried to call a pynvml operation but pynvml is either unavailable or not "
+                "functional. Code should check pynvml_is_working before calling any operations."
+            )
+
+    def nvml_get_device_count(self) -> int:
+        self._safety_check()
+        self._pynvml = cast(Any, self._pynvml)
+
+        if self._device_count is None:
+            self._device_count = self._pynvml.nvmlDeviceGetCount()
+        self._device_count = cast(int, self._device_count)
+        return self._device_count
+
+    def nvml_get_uuid_from_index(self, index: int) -> str:
+        self._safety_check()
+        self._pynvml = cast(Any, self._pynvml)
+
+        if index not in self._index_to_uuid_map.keys():
+            handle = self._pynvml.nvmlDeviceGetHandleByIndex(index)
+            uuid = self._pynvml.nvmlDeviceGetUUID(handle)
+            self._index_to_uuid_map[index] = uuid
+        return self._index_to_uuid_map[index]
+
+    def nvml_get_free_memory_by_index(self, index: int) -> float:
+        self._safety_check()
+        self._pynvml = cast(Any, self._pynvml)
+
+        handle = self._pynvml.nvmlDeviceGetHandleByIndex(index)
+        free_memory = self._pynvml.nvmlDeviceGetMemoryInfo(handle).free  # type: float
+        return free_memory
+
+    def nvml_get_gpu_utilization_by_index(self, index: int) -> float:
+        self._safety_check()
+        self._pynvml = cast(Any, self._pynvml)
+
+        handle = self._pynvml.nvmlDeviceGetHandleByIndex(index)
+        gpu_util = self._pynvml.nvmlDeviceGetUtilizationRates(handle).gpu  # type: float
+        return gpu_util
+
+
+pynvml_wrapper = PynvmlWrapper()
 
 
 class Measurement:
@@ -459,10 +536,8 @@ class SysMetricCollectorThread(threading.Thread):
         net_throughput_collector = NetThroughputCollector()
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
-
-        if SHOULD_PROFILE_GPUS:
-            gpu_util_collector = GpuUtilCollector()
-            gpu_memory_collection = GpuMemoryCollector()
+        gpu_util_collector = GpuUtilCollector()
+        gpu_memory_collection = GpuMemoryCollector()
 
         # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
@@ -522,18 +597,17 @@ class SysMetricCollectorThread(threading.Thread):
             )
             self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops)
 
-            if SHOULD_PROFILE_GPUS:
-                gpu_util = gpu_util_collector.measure(self.current_batch_idx)
-                for gpu_uuid in gpu_util.keys():
-                    self.current_batch.add_gpu_measurement(
-                        SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util[gpu_uuid]
-                    )
+            gpu_util = gpu_util_collector.measure(self.current_batch_idx)
+            for gpu_uuid in gpu_util.keys():
+                self.current_batch.add_gpu_measurement(
+                    SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util[gpu_uuid]
+                )
 
-                gpu_memory = gpu_memory_collection.measure(self.current_batch_idx)
-                for gpu_uuid in gpu_memory.keys():
-                    self.current_batch.add_gpu_measurement(
-                        SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_memory[gpu_uuid]
-                    )
+            gpu_memory = gpu_memory_collection.measure(self.current_batch_idx)
+            for gpu_uuid in gpu_memory.keys():
+                self.current_batch.add_gpu_measurement(
+                    SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_memory[gpu_uuid]
+                )
 
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
@@ -910,36 +984,48 @@ class DiskReadWriteRateCollector:
 
 
 class GpuUtilCollector:
-    def __init__(self) -> None:
-        self.num_gpus = pynvml.nvmlDeviceGetCount()
-
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
+        """
+        Collect GPU utilization for each GPU. Returns empty dict if unable
+        to measure GPU utilization
+        """
+        if not pynvml_wrapper.pynvml_is_available:
+            return {}
+
         measurements = {}
         timestamp = datetime.now(timezone.utc)
-        for i in range(self.num_gpus):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
-            try:
-                util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, util.gpu)
-            except pynvml.NVMLError as e:
-                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU utilization for GPU {i}: {e}")
-        return measurements
+        try:
+            num_gpus = pynvml_wrapper.nvml_get_device_count()
+            for i in range(num_gpus):
+                gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
+                util = pynvml_wrapper.nvml_get_gpu_utilization_by_index(i)
+                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, util)
+            return measurements
+
+        except Exception as e:
+            logging.warning(f"{LOG_NAMESPACE}: error while measuring GPU utilization: {e}")
+            return {}
 
 
 class GpuMemoryCollector:
-    def __init__(self) -> None:
-        self.num_gpus = pynvml.nvmlDeviceGetCount()
-
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
+        """
+        Collect GPU memory for each GPU. Returns empty dict if unable to
+        measure GPU memory
+        """
+        if not pynvml_wrapper.pynvml_is_available:
+            return {}
+
         measurements = {}
         timestamp = datetime.now(timezone.utc)
-        for i in range(self.num_gpus):
-            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-            gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
-            try:
-                info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, info.free / GIGA)
-            except pynvml.NVMLError as e:
-                logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
-        return measurements
+        try:
+            num_gpus = pynvml_wrapper.nvml_get_device_count()
+            for i in range(num_gpus):
+                gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
+                free_memory = pynvml_wrapper.nvml_get_free_memory_by_index(i)
+                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, free_memory)
+            return measurements
+
+        except Exception as e:
+            logging.warning(f"{LOG_NAMESPACE}: error while measuring GPU memory: {e}")
+            return {}
