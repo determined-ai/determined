@@ -482,8 +482,6 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		})
 	}
 
-
-
 	return api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
