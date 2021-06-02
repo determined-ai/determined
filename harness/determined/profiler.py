@@ -107,7 +107,6 @@ class ProfilerAgent:
                 queue.Queue()
             )  # type: """queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]"""
 
-
             num_producers = 0
 
             if self.sysmetrics_is_enabled:
