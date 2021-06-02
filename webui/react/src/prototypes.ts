@@ -45,8 +45,6 @@ function partition<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: 
   return q;
 }
 
-// eslint disable is needed due to recursive calls not contributing to "usage"
-/* eslint-disable @typescript-eslint/no-unused-vars */
 function quickSort<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: T) => number) {
   if (low < high) {
     const pivot = partition(arr, low, high, compareFn);
@@ -56,7 +54,6 @@ function quickSort<T>(arr: T[], low: number, high: number, compareFn: (a: T, b: 
   }
   return [];
 }
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /*
  * Native Array.prototype.sort ignores `undefined` values inside the array,
