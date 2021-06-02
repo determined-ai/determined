@@ -385,6 +385,7 @@ class SysMetricCollectorThread(threading.Thread):
     - DiskReadThroughput = Measured in bytes/second
     - DiskWriteThroughput = Measured in bytes/second
     - GpuUtilization = Measured in percent
+    - GpuFreeMemory = Measured in Gigabytes
     """
 
     FLUSH_INTERVAL = 10  # How often to make API calls
@@ -909,7 +910,7 @@ class GpuMemoryCollector:
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
             try:
                 info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, info.free)
+                measurements[gpu_uuid] = Measurement(timestamp, batch_idx, info.free / GIGA)
             except pynvml.NVMLError as e:
                 logging.info(f"{LOG_NAMESPACE}: failed to sample GPU memory for GPU {i}: {e}")
         return measurements
