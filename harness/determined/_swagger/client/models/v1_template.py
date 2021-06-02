@@ -47,10 +47,8 @@ class V1Template(object):
         self._config = None
         self.discriminator = None
 
-        if name is not None:
-            self.name = name
-        if config is not None:
-            self.config = config
+        self.name = name
+        self.config = config
 
     @property
     def name(self):
@@ -72,6 +70,8 @@ class V1Template(object):
         :param name: The name of this V1Template.  # noqa: E501
         :type: str
         """
+        if name is None:
+            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
 
         self._name = name
 
@@ -95,6 +95,8 @@ class V1Template(object):
         :param config: The config of this V1Template.  # noqa: E501
         :type: object
         """
+        if config is None:
+            raise ValueError("Invalid value for `config`, must not be `None`")  # noqa: E501
 
         self._config = config
 

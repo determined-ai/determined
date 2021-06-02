@@ -67,7 +67,7 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
     const canceler = new AbortController();
 
     consumeStream(
-      detApi.StreamingUnimplemented.determinedGetTrialProfilerAvailableSeries(
+      detApi.StreamingProfiler.determinedGetTrialProfilerAvailableSeries(
         trialId,
         { signal: canceler.signal },
       ),
@@ -142,7 +142,7 @@ export const useFetchMetrics = (
     setData(internalData);
 
     consumeStream(
-      detApi.StreamingUnimplemented.determinedGetTrialProfilerMetrics(
+      detApi.StreamingProfiler.determinedGetTrialProfilerMetrics(
         trialId,
         labelsName,
         labelsAgentId,

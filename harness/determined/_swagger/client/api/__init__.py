@@ -11,9 +11,9 @@ from determined._swagger.client.api.experiments_api import ExperimentsApi
 from determined._swagger.client.api.internal_api import InternalApi
 from determined._swagger.client.api.models_api import ModelsApi
 from determined._swagger.client.api.notebooks_api import NotebooksApi
+from determined._swagger.client.api.profiler_api import ProfilerApi
 from determined._swagger.client.api.shells_api import ShellsApi
 from determined._swagger.client.api.templates_api import TemplatesApi
 from determined._swagger.client.api.tensorboards_api import TensorboardsApi
 from determined._swagger.client.api.trials_api import TrialsApi
-from determined._swagger.client.api.unimplemented_api import UnimplementedApi
 from determined._swagger.client.api.users_api import UsersApi

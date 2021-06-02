@@ -450,7 +450,7 @@ service Determined {
       get: "/api/v1/trials/{labels.trial_id}/profiler/metrics"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Unimplemented" ]
+      tags: [ "Profiler" ]
     };
   }
   // Stream the available series in a trial's profiler metrics.
@@ -460,7 +460,7 @@ service Determined {
       get: "/api/v1/trials/{trial_id}/profiler/available_series"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Unimplemented" ]
+      tags: [ "Profiler" ]
     };
   }
   // Persist the given TrialProfilerMetricsBatch. The trial ID is in the labels.
@@ -471,7 +471,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Unimplemented" ]
+      tags: [ "Internal" ]
     };
   }
   // Kill a trial.
