@@ -98,7 +98,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
         fields.name,
         fields.pool,
       );
-      setConfig({ config: config });
+      setConfig(config);
 
     } catch {}
   }, [ fields ]);
