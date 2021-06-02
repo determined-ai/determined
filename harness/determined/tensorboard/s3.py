@@ -45,7 +45,6 @@ class S3TensorboardManager(base.TensorboardManager):
             logging.debug(f"Uploading {path} to {url}")
 
             self.client.upload_file(str(path), self.bucket, key_name)
-            self._synced_event_sizes[path] = path.stat().st_size
 
     def delete(self) -> None:
         self.resource.Bucket(self.bucket).objects.filter(Prefix=str(self.sync_path)).delete()

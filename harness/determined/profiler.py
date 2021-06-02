@@ -3,7 +3,7 @@ import logging
 import queue
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
@@ -15,7 +15,7 @@ from determined.common.api import TrialProfilerMetricsBatch
 
 SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
 TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
-
+MAX_COLLECTION_SECONDS = 300
 LOG_NAMESPACE = "determined-profiler"
 
 try:
@@ -60,8 +60,8 @@ class ProfilerAgent:
     record_timing() method. The timings will be batched and sent to the master.
 
     Profiling is only active between start_on_batch and end_after_batch. It will also automatically
-    shut down 5 minutes after starting. When profiling is not active, no system metrics are
-    collected and the record_timing function is a no-op.
+    shut down MAX_COLLECTION_SECONDS after starting. When profiling is not active, no system metrics
+    are collected and the record_timing function is a no-op.
 
     If is_enabled=False, every method in this class should be a no-op.
     """
@@ -100,30 +100,33 @@ class ProfilerAgent:
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         if self.is_enabled:
-            # Set up timer thread to stop collecting after 5 minutes
-            self.max_collection_seconds = 300
-            self.shutdown_timer = PreemptibleTimer(
-                self.max_collection_seconds, self._end_collection
-            )
+            # Set up timer thread to stop collecting after MAX_COLLECTION_SECONDS
+            self.shutdown_timer = PreemptibleTimer(MAX_COLLECTION_SECONDS, self._end_collection)
 
-            # Set up the thread responsible for making API calls
             self.send_queue = (
                 queue.Queue()
             )  # type: """queue.Queue[Union[List[TrialProfilerMetricsBatch], ShutdownMessage]]"""
-            self.sender_thread = ProfilerSenderThread(self.send_queue, self.master_url)
+
+            num_producers = 0
 
             if self.sysmetrics_is_enabled:
+                num_producers += 1
                 self.sys_metric_collector_thread = SysMetricCollectorThread(
                     trial_id, agent_id, self.send_queue
                 )
 
             if self.timings_is_enabled:
+                num_producers += 1
                 self.timings_batcher_queue = (
                     queue.Queue()
                 )  # type: """queue.Queue[Union[Timing, StartMessage, ShutdownMessage]]"""
                 self.timings_batcher_thread = TimingsBatcherThread(
                     trial_id, agent_id, self.timings_batcher_queue, self.send_queue
                 )
+
+            self.sender_thread = ProfilerSenderThread(
+                self.send_queue, self.master_url, num_producers
+            )
 
     @staticmethod
     def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
@@ -281,7 +284,6 @@ class ProfilerAgent:
                 self.timings_batcher_thread.send_shutdown_signal()
                 self.timings_batcher_thread.join()
 
-            self.sender_thread.send_shutdown_signal()
             self.sender_thread.join()
 
             self.has_finished = True
@@ -389,7 +391,6 @@ class SysMetricCollectorThread(threading.Thread):
     MEASUREMENT_INTERVAL = 0.1
 
     def __init__(self, trial_id: str, agent_id: str, send_queue: queue.Queue):
-
         self.current_batch_idx = 0
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
@@ -420,6 +421,7 @@ class SysMetricCollectorThread(threading.Thread):
         # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
         if isinstance(msg, ShutdownMessage):
+            self.send_queue.put(ShutdownMessage())
             return
 
         # Do initial measurement for rate-based collectors
@@ -441,7 +443,8 @@ class SysMetricCollectorThread(threading.Thread):
                 try:
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
-                        # Drop any partial batches if we receive a shutdown
+                        self.send_queue.put(self.current_batch.convert_to_post_format())
+                        self.send_queue.put(ShutdownMessage())
                         return
                 except queue.Empty:
                     pass
@@ -527,6 +530,7 @@ class TimingsBatcherThread(threading.Thread):
             if isinstance(msg, StartMessage):
                 break
             if isinstance(msg, ShutdownMessage):
+                self.send_queue.put(ShutdownMessage())
                 return
             else:
                 # Ignore any Timings that are received before StartMessage
@@ -544,7 +548,8 @@ class TimingsBatcherThread(threading.Thread):
             try:
                 message = self.inbound_queue.get(timeout=timeout)
                 if isinstance(message, ShutdownMessage):
-                    # Drop any partial batches if we receive a shutdown
+                    self.send_queue.put(self.current_batch.convert_to_post_format())
+                    self.send_queue.put(ShutdownMessage())
                     return
                 elif isinstance(message, Timing):
                     if batch_start_time is None:
@@ -579,22 +584,26 @@ class TimingsBatcherThread(threading.Thread):
 class ProfilerSenderThread(threading.Thread):
     """
     This is a thread that exists solely so that we can make API calls without blocking.
-    It has a Queue through which work is sent to the thread
+    It has a Queue through which work is sent to the thread. It is aware of the number of
+    upstream producers and exits whenever it receives a ShutdownMessage from each producer.
     """
 
-    def __init__(self, inbound_queue: queue.Queue, master_url: str) -> None:
+    def __init__(self, inbound_queue: queue.Queue, master_url: str, num_producers: int) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
+        self.num_producers = num_producers
+        self.producers_shutdown = 0
         super().__init__(daemon=True)
-
-    def send_shutdown_signal(self) -> None:
-        self.inbound_queue.put(ShutdownMessage())
 
     def run(self) -> None:
         while True:
             message = self.inbound_queue.get()
             if isinstance(message, ShutdownMessage):
-                return
+                self.producers_shutdown += 1
+                if self.num_producers == self.producers_shutdown:
+                    return
+                else:
+                    continue
             api.post_trial_profiler_metrics_batches(
                 self.master_url,
                 message,
@@ -614,7 +623,21 @@ class SysMetricType:
 
 
 def convert_to_timestamp_str(timestamp: datetime) -> str:
-    return timestamp.isoformat() + "Z"
+    """
+    Convert a datetime object to the string format expected by the API. All timestamps must be
+    timezone-aware datetime.datetimes in UTC.
+    """
+    # https://docs.python.org/3/library/datetime.html#determining-if-an-object-is-aware-or-naive
+    assert (
+        timestamp.tzinfo is not None and timestamp.tzinfo.utcoffset(timestamp) is not None
+    ), "All datetime objects to be serialized must be timezone aware"
+    utcoffset = cast(timedelta, timestamp.utcoffset())
+    assert utcoffset.total_seconds() == 0, (
+        f"All datetime objects to be serialized must be in UTC, but the utcoffset was "
+        f"{utcoffset.total_seconds()}"
+    )
+
+    return timestamp.isoformat()
 
 
 def to_post_format(
@@ -762,14 +785,14 @@ GIGA = 1_000_000_000
 class SimpleCpuUtilCollector:
     def measure(self, batch_idx: int) -> Measurement:
         cpu_util = psutil.cpu_percent()
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         return Measurement(timestamp, batch_idx, cpu_util)
 
 
 class FreeMemoryCollector:
     def measure(self, batch_idx: int) -> Measurement:
         free_mem_bytes = psutil.virtual_memory().available
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         return Measurement(timestamp, batch_idx, free_mem_bytes / GIGA)
 
 
@@ -862,7 +885,7 @@ class GpuUtilCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)
@@ -880,7 +903,7 @@ class GpuMemoryCollector:
 
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         measurements = {}
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
         for i in range(self.num_gpus):
             handle = pynvml.nvmlDeviceGetHandleByIndex(i)
             gpu_uuid = pynvml.nvmlDeviceGetUUID(handle)

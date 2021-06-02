@@ -138,7 +138,7 @@ def make_default_env_context(
         slot_ids=[],
         debug=False,
         workload_manager_type="TRIAL_WORKLOAD_MANAGER",
-        det_rendezvous_ports="",
+        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
@@ -154,9 +154,7 @@ def make_default_env_context(
 
 
 def make_default_rendezvous_info() -> det.RendezvousInfo:
-    return det.RendezvousInfo(
-        addrs=["127.0.0.1:1750"], addrs2=[f"127.0.0.1:{constants.LOCAL_RENDEZVOUS_PORT}"], rank=0
-    )
+    return det.RendezvousInfo(addrs=[f"127.0.0.1:{constants.LOCAL_RENDEZVOUS_PORT}"], rank=0)
 
 
 def make_default_hvd_config() -> horovod.HorovodContext:

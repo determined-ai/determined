@@ -133,26 +133,8 @@ func (m *trialMessage) UnmarshalJSON(data []byte) error {
 }
 
 type rendezvousInfoMessage struct {
-	// Addrs is deprecated in favor of Containers.
 	Addrs []string `json:"addrs"`
-	// Addrs2 is deprecated in favor of Containers.
-	Addrs2 []string `json:"addrs2"`
-
-	Rank int `json:"rank"`
-
-	// Containers contains rendezvous information for each container.
-	Containers []*rendezvousContainer `json:"containers"`
-}
-
-type rendezvousContainer struct {
-	Addresses []*rendezvousAddress `json:"addresses"`
-}
-
-type rendezvousAddress struct {
-	ContainerPort int    `json:"container_port"`
-	ContainerIP   string `json:"container_ip"`
-	HostPort      int    `json:"host_port"`
-	HostIP        string `json:"host_ip"`
+	Rank  int      `json:"rank"`
 }
 
 type runWorkload struct {
@@ -881,7 +863,6 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
 func (t *trial) pushRendezvous(ctx *actor.Context) error {
-	ctx.Log().Info("pushing rendezvous information")
 	if !t.allReady(ctx) {
 		ctx.Log().Info("found not all containers are connected")
 		return nil
@@ -924,39 +905,23 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		}
 	})
 
-	var rcontainers []*rendezvousContainer
-	var addrs1 []string
-	var addrs2 []string
+	var raddrs []string
 	for _, caddr := range caddrs {
-		var addresses []*rendezvousAddress
-
 		var addrs []cproto.Address
 		for _, addr := range caddr.Addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort &&
 				addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
 			}
-
-			addresses = append(addresses, &rendezvousAddress{
-				ContainerPort: addr.ContainerPort,
-				ContainerIP:   addr.ContainerIP,
-				HostPort:      addr.HostPort,
-				HostIP:        addr.HostIP,
-			})
 		}
 
-		if numAddrs := len(addrs); numAddrs == 2 {
-			addrs1 = append(addrs1, formatAddress(addrs[0]))
-			addrs2 = append(addrs2, formatAddress(addrs[1]))
+		if numAddrs := len(addrs); numAddrs == 1 {
+			raddrs = append(raddrs, formatAddress(addrs[0]))
 		} else {
 			ctx.Log().Errorf(
-				"found %d rendezvous addresses instead of 2 for container %s; dropping rendezvous addresses %v",
+				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
 				numAddrs, caddr.Container.ID, addrs)
 		}
-
-		rcontainers = append(rcontainers, &rendezvousContainer{
-			Addresses: addresses,
-		})
 	}
 
 	for _, caddr := range caddrs {
@@ -965,10 +930,8 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
 			RendezvousInfo: &rendezvousInfoMessage{
-				Addrs:      addrs1,
-				Addrs2:     addrs2,
-				Rank:       caddr.Ordinal,
-				Containers: rcontainers,
+				Addrs: raddrs,
+				Rank:  caddr.Ordinal,
 			},
 		}); err != nil {
 			ctx.Log().WithError(err).Error("cannot write to socket")
