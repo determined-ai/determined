@@ -48,6 +48,18 @@ class ShutdownMessage:
     pass
 
 
+def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
+    """
+    Return True if there are already profiling metrics for the trial.
+    """
+    # TODO: Implement
+    raise NotImplementedError
+
+
+SendBatchFnType = Callable[[str, List[TrialProfilerMetricsBatch]], None]
+CheckDataExistsFnType = Callable[[str, str], bool]
+
+
 class ProfilerAgent:
     """
     Agent that collects metrics and sends them to the master.
@@ -63,7 +75,15 @@ class ProfilerAgent:
     shut down MAX_COLLECTION_SECONDS after starting. When profiling is not active, no system metrics
     are collected and the record_timing function is a no-op.
 
+    Profiling is automatically disabled if profiling metrics already exist in the API. This would
+    indicates that the harness restarted due to job failure or being descheduled. Picking up
+    profiling in that case introduces issues around multiple data points for the same batch_idx,
+    difficult-to-render graphs due to large time gaps, and misleading data due to GPU warmup.
+
     If is_enabled=False, every method in this class should be a no-op.
+
+    send_batch_fn and check_data_exists_fn are the pieces of code that communicate with the
+    master API. They can be replaced with dummy functions to enable testing without a master.
     """
 
     # dev note: We optimize this code by only creating threads if they will be used.
@@ -81,22 +101,33 @@ class ProfilerAgent:
         local_rank: int,
         start_on_batch: int,
         end_after_batch: Optional[int] = None,
+        send_batch_fn: SendBatchFnType = api.post_trial_profiler_metrics_batches,
+        check_data_exists_fn: CheckDataExistsFnType = profiling_metrics_exist,
     ):
         self.current_batch_idx = 0
-        self.agent_id = agent_id
         self.trial_id = trial_id
+        self.agent_id = agent_id
         self.master_url = master_url
+        self.profiling_is_enabled_in_experiment_config = profiling_is_enabled
+        self.global_rank = global_rank
+        self.local_rank = local_rank
         self.start_on_batch = start_on_batch
         self.end_after_batch = end_after_batch
-        self.local_rank = local_rank
-        self.global_rank = global_rank
-
-        self.profiling_is_enabled_in_experiment_config = profiling_is_enabled
+        self.send_batch_fn = send_batch_fn
+        self.check_data_already_exists_fn = check_data_exists_fn
 
         self.has_started = False
         self.has_finished = False
 
         self.shutdown_lock = threading.Lock()
+        self.disabled_due_to_preexisting_metrics = self.check_data_already_exists_fn(
+            self.master_url, self.trial_id
+        )
+        if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
+            logging.warning(
+                f"{LOG_NAMESPACE}: ProfilerAgent is disabled because profiling data for this "
+                f"trial already exists in the DB. No additional profiling data will be generated."
+            )
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         if self.is_enabled:
@@ -125,7 +156,7 @@ class ProfilerAgent:
                 )
 
             self.sender_thread = ProfilerSenderThread(
-                self.send_queue, self.master_url, num_producers
+                self.send_queue, self.master_url, num_producers, self.send_batch_fn
             )
 
     @staticmethod
@@ -182,15 +213,25 @@ class ProfilerAgent:
         """
         if not self.profiling_is_enabled_in_experiment_config:
             return False
+        if self.disabled_due_to_preexisting_metrics:
+            return False
         return self.sysmetrics_is_enabled or self.timings_is_enabled
 
     @property
     def sysmetrics_is_enabled(self) -> bool:
-        return self.profiling_is_enabled_in_experiment_config and self.local_rank == 0
+        if not self.profiling_is_enabled_in_experiment_config:
+            return False
+        if self.disabled_due_to_preexisting_metrics:
+            return False
+        return self.local_rank == 0
 
     @property
     def timings_is_enabled(self) -> bool:
-        return self.profiling_is_enabled_in_experiment_config and self.global_rank == 0
+        if not self.profiling_is_enabled_in_experiment_config:
+            return False
+        if self.disabled_due_to_preexisting_metrics:
+            return False
+        return self.global_rank == 0
 
     @property
     def is_active(self) -> bool:
@@ -589,11 +630,18 @@ class ProfilerSenderThread(threading.Thread):
     upstream producers and exits whenever it receives a ShutdownMessage from each producer.
     """
 
-    def __init__(self, inbound_queue: queue.Queue, master_url: str, num_producers: int) -> None:
+    def __init__(
+        self,
+        inbound_queue: queue.Queue,
+        master_url: str,
+        num_producers: int,
+        send_batch_fn: SendBatchFnType,
+    ) -> None:
         self.master_url = master_url
         self.inbound_queue = inbound_queue
         self.num_producers = num_producers
         self.producers_shutdown = 0
+        self.send_batch_fn = send_batch_fn
         super().__init__(daemon=True)
 
     def run(self) -> None:
@@ -605,7 +653,7 @@ class ProfilerSenderThread(threading.Thread):
                     return
                 else:
                     continue
-            api.post_trial_profiler_metrics_batches(
+            self.send_batch_fn(
                 self.master_url,
                 message,
             )
