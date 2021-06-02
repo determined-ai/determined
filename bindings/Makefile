@@ -25,7 +25,7 @@ build/python.stamp: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l python -o build/python -c config.json
 	rm -rf $(CLIENT_PATH)
-	mkdir -p $(CLIENT_PATH)/api
+	mkdir -p $(CLIENT_PATH)
 	cp -R ./build/python/determined._swagger.client/. $(CLIENT_PATH)/.
 	cp -R ./build/python/determined/_swagger/client/. $(CLIENT_PATH)/.
 	touch build/python.stamp
@@ -33,10 +33,13 @@ build/python.stamp: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 .PHONY: build
 build: build/typescript-fetch build/python.stamp
 
+.PHONY: force-gen
+force-gen:
+	$(MAKE) -C ../proto build
+	rm -f build/python.stamp
+
 .PHONY: check
-check:
-	rm -rf build/python*
-	$(MAKE) build/python.stamp
+check: force-gen build/python.stamp
 	test -z "$(shell git status --porcelain '$(CLIENT_PATH)')"
 
 .PHONY: clean-deps
