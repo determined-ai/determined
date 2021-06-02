@@ -18,3 +18,7 @@ min_validation_period:
   batches: 1
 checkpoint_storage:
   save_trial_best: 3
+environment:
+  image:
+    cpu: "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02"
+    gpu: "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
