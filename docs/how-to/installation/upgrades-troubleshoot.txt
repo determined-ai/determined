@@ -131,3 +131,39 @@ be able to use Determined as long as you use Docker images based on CUDA
 
    docker run --gpus all --rm nvidia/cuda:9.0-runtime nvidia-smi
    docker run --gpus all --rm nvidia/cuda:10.0-runtime nvidia-smi
+
+*****************************
+ Database Migration Failures
+*****************************
+
+.. code::
+
+   Dirty database version A_LONG_NUMBER. Fix and force version.
+
+If you see the above error message, a database migration was likely
+interrupted while running and the database is now in a dirty state.
+
+Make sure you backup the database and temporarily shutdown the master
+before proceeding further.
+
+To fix this error message, locate the up migration with a suffix of
+``.up.sql`` and a migration number matching A_LONG_NUMBER in the error
+message in `here
+<https://github.com/determined-ai/determined/tree/master/master/static/migrations>_`
+and carefully run the SQL within the file manually against the database
+used by Determined. For convenience, all the information needed to
+connect except the password can be found with:
+
+.. code::
+
+   det master config | jq .db
+
+If this proceeds successfully, then mark the migration as successful by
+running the following SQL:
+
+.. code::
+
+   UPDATE schema_migrations SET dirty = false
+
+And restart the master. Otherwise, please seek assistance in the
+community slack.
