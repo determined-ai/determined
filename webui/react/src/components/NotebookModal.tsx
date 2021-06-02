@@ -229,6 +229,7 @@ const NotebookForm:React.FC<FormProps> = (
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     if (hasCPUCapacity && !hasGPUCapacity) {
       onChange({ key: 'type', value: ResourceType.CPU });
+      onChange({ key: 'slots', value: 0 });
     } else if (!hasCPUCapacity && hasGPUCapacity) {
       onChange({ key: 'type', value: ResourceType.GPU });
     }
