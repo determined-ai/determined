@@ -1,11 +1,9 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 import SelectFilter from 'components/SelectFilter';
-import { TrialDetails } from 'types';
-
-import { MetricType, useFetchAvailableSeries } from './utils';
+import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 
 const { Option } = Select;
 
@@ -15,53 +13,22 @@ export interface FiltersInterface {
   name?: string;
 }
 
-export interface Props {
-  onChange: (newValue: FiltersInterface) => void,
-  trial: TrialDetails;
-  value: FiltersInterface;
-}
-
-const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) => {
-  const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
-
-  /*
-   * Set default value value when available series has loaded.
-   */
-  useEffect(() => {
-    if (!systemSeries) return;
-    if (value.agentId && value.name) return;
-
-    const newFilters: FiltersInterface = {
-      agentId: value.agentId,
-      name: value.name,
-    };
-
-    if (!value.name) {
-      if (Object.keys(systemSeries).includes('gpu_util')) newFilters.name = 'gpu_util';
-      else if (Object.keys(systemSeries).includes('cpu_util')) newFilters.name = 'cpu_util';
-      else newFilters.name = Object.keys(systemSeries)[0];
-    }
-
-    if (!value.agentId) {
-      newFilters.agentId = Object.keys(systemSeries[newFilters.name as unknown as string])[0];
-    }
-
-    onChange(newFilters);
-  }, [ onChange, systemSeries, value.agentId, value.name ]);
+const SystemMetricFilter: React.FC = () => {
+  const { filters, setFilters, systemSeries } = useProfilesFilterContext();
 
   const handleChangeAgentId = useCallback((newAgentId: SelectValue) => {
-    onChange({ agentId: newAgentId as unknown as string, name: value.name });
-  }, [ value.name, onChange ]);
+    setFilters({ agentId: newAgentId as unknown as string, name: filters.name });
+  }, [ filters.name, setFilters ]);
   const handleChangeGpuUuid = useCallback((newGpuUuid: SelectValue) => {
-    onChange({
-      agentId: value.agentId,
+    setFilters({
+      agentId: filters.agentId,
       gpuUuid: newGpuUuid as unknown as string,
-      name: value.name,
+      name: filters.name,
     });
-  }, [ value.agentId, value.name, onChange ]);
+  }, [ filters.agentId, filters.name, setFilters ]);
   const handleChangeName = useCallback((newName: SelectValue) => {
-    onChange({ name: newName as unknown as string });
-  }, [ onChange ]);
+    setFilters({ name: newName as unknown as string });
+  }, [ setFilters ]);
 
   return (
     <>
@@ -71,7 +38,7 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
         label="Metric Name"
         showSearch={false}
         style={{ width: 220 }}
-        value={value.name}
+        value={filters.name}
         onChange={handleChangeName}
       >
         {systemSeries && Object.keys(systemSeries).map(name => (
@@ -84,15 +51,16 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
         label="Agent Name"
         showSearch={false}
         style={{ width: 220 }}
-        value={value.agentId}
+        value={filters.agentId}
         onChange={handleChangeAgentId}
       >
-        {value.name && Object.keys(systemSeries[value.name]).map(agentId => (
+        {filters.name && Object.keys(systemSeries[filters.name]).map(agentId => (
           <Option key={agentId} value={agentId}>{agentId}</Option>
         ))}
       </SelectFilter>
 
-      {value.name && value.agentId && systemSeries[value.name][value.agentId].length > 0 && (
+      {filters.name && filters.agentId
+      && systemSeries[filters.name][filters.agentId].length > 0 && (
         <SelectFilter
           allowClear={true}
           enableSearchFilter={false}
@@ -100,10 +68,10 @@ const SystemMetricFilter: React.FC<Props> = ({ onChange, trial, value }: Props) 
           placeholder="All"
           showSearch={false}
           style={{ width: 220 }}
-          value={value.gpuUuid}
+          value={filters.gpuUuid}
           onChange={handleChangeGpuUuid}
         >
-          {systemSeries[value.name][value.agentId].map(gpuUuid => (
+          {systemSeries[filters.name][filters.agentId].map(gpuUuid => (
             <Option key={gpuUuid} value={gpuUuid}>{gpuUuid}</Option>
           ))}
         </SelectFilter>
