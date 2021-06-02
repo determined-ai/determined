@@ -43,7 +43,7 @@ class ProfilerApi(object):
 
         :param async_req bool
         :param int trial_id: The requested trial's id. (required)
-        :param bool follow: Continue streaming labels until the trial stops.
+        :param bool follow: Continue streaming labels until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -65,7 +65,7 @@ class ProfilerApi(object):
 
         :param async_req bool
         :param int trial_id: The requested trial's id. (required)
-        :param bool follow: Continue streaming labels until the trial stops.
+        :param bool follow: Continue streaming labels until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -148,7 +148,7 @@ class ProfilerApi(object):
         :param str labels_agent_id: The agent ID associated with the metric.
         :param str labels_gpu_uuid: The GPU UUID associated with the metric.
         :param str labels_metric_type: The type of the metric.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.
-        :param bool follow: Continue streaming metrics until the trial stops.
+        :param bool follow: Continue streaming metrics until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerMetricsResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -174,7 +174,7 @@ class ProfilerApi(object):
         :param str labels_agent_id: The agent ID associated with the metric.
         :param str labels_gpu_uuid: The GPU UUID associated with the metric.
         :param str labels_metric_type: The type of the metric.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.
-        :param bool follow: Continue streaming metrics until the trial stops.
+        :param bool follow: Continue streaming metrics until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerMetricsResponse
                  If the method is called asynchronously,
                  returns the request thread.
