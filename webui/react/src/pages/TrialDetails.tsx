@@ -24,7 +24,7 @@ import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'typ
 import { clone } from 'utils/data';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
-const maxBreadcrumbDescLength = 40;
+const maxBreadcrumbDescLength = 30;
 
 const { TabPane } = Tabs;
 
@@ -220,18 +220,23 @@ const TrialDetailsComp: React.FC = () => {
     return <Spinner />;
   }
 
-  let desc = `Experiment ${experiment.id}`;
+  let expBreadcrumbName = `Experiment ${experiment.id}`;
   if (experiment.config.description) {
     if (experiment.config.description.length > maxBreadcrumbDescLength) {
-      const truncatedDesc = experiment.config.description.slice(0, maxBreadcrumbDescLength);
-      desc = desc.concat(` (${truncatedDesc}...)`);
+      let truncatedDesc = experiment.config.description.slice(0, maxBreadcrumbDescLength);
+
+      // Don't add ellipsis after underscore, it looks wrong
+      while (truncatedDesc.endsWith('_')){
+        truncatedDesc = truncatedDesc.slice(0, -1);
+      }
+      expBreadcrumbName = expBreadcrumbName.concat(` (${truncatedDesc}…)`);
     } else {
-      desc = desc.concat(` (${experiment.config.description})`);
+      expBreadcrumbName = expBreadcrumbName.concat(` (${experiment.config.description})`);
     }
   }
 
   const expBreadcrumbRoute : BreadCrumbRoute = {
-    breadcrumbName: ` ${desc}`,
+    breadcrumbName: expBreadcrumbName,
     path: paths.experimentDetails(experiment.id),
   };
   if (experiment.config.description.length > maxBreadcrumbDescLength) {

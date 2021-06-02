@@ -10,8 +10,8 @@ import Spinner from './Spinner';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;
-  path: string;
   breadcrumbTooltip?: string;
+  path: string;
 }
 
 export interface Props extends CommonProps {
