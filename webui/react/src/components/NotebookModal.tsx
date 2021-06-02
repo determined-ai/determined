@@ -49,7 +49,6 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   }, [ state ]);
 
   const storeConfig = useCallback((values: NotebookConfig) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { name, ...storedValues } = values;
     storage.set(STORAGE_KEY, storedValues);
   }, [ storage ]);
