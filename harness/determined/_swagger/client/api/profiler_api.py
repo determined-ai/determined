@@ -43,6 +43,7 @@ class ProfilerApi(object):
 
         :param async_req bool
         :param int trial_id: The requested trial's id. (required)
+        :param bool follow: Continue streaming labels until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -64,12 +65,13 @@ class ProfilerApi(object):
 
         :param async_req bool
         :param int trial_id: The requested trial's id. (required)
+        :param bool follow: Continue streaming labels until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerAvailableSeriesResponse
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['trial_id']  # noqa: E501
+        all_params = ['trial_id', 'follow']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -96,6 +98,8 @@ class ProfilerApi(object):
             path_params['trialId'] = params['trial_id']  # noqa: E501
 
         query_params = []
+        if 'follow' in params:
+            query_params.append(('follow', params['follow']))  # noqa: E501
 
         header_params = {}
 
@@ -144,6 +148,7 @@ class ProfilerApi(object):
         :param str labels_agent_id: The agent ID associated with the metric.
         :param str labels_gpu_uuid: The GPU UUID associated with the metric.
         :param str labels_metric_type: The type of the metric.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.
+        :param bool follow: Continue streaming metrics until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerMetricsResponse
                  If the method is called asynchronously,
                  returns the request thread.
@@ -169,12 +174,13 @@ class ProfilerApi(object):
         :param str labels_agent_id: The agent ID associated with the metric.
         :param str labels_gpu_uuid: The GPU UUID associated with the metric.
         :param str labels_metric_type: The type of the metric.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.
+        :param bool follow: Continue streaming metrics until the trial stops. Defaults to False.
         :return: StreamResultOfV1GetTrialProfilerMetricsResponse
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['labels_trial_id', 'labels_name', 'labels_agent_id', 'labels_gpu_uuid', 'labels_metric_type']  # noqa: E501
+        all_params = ['labels_trial_id', 'labels_name', 'labels_agent_id', 'labels_gpu_uuid', 'labels_metric_type', 'follow']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -209,6 +215,8 @@ class ProfilerApi(object):
             query_params.append(('labels.gpuUuid', params['labels_gpu_uuid']))  # noqa: E501
         if 'labels_metric_type' in params:
             query_params.append(('labels.metricType', params['labels_metric_type']))  # noqa: E501
+        if 'follow' in params:
+            query_params.append(('follow', params['follow']))  # noqa: E501
 
         header_params = {}
 

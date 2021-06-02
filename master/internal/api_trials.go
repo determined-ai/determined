@@ -449,7 +449,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	}
 
 	return api.NewBatchStreamProcessor(
-		api.BatchRequest{Follow: true},
+		api.BatchRequest{Follow: req.Follow},
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
@@ -483,7 +483,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	}
 
 	return api.NewBatchStreamProcessor(
-		api.BatchRequest{Follow: true},
+		api.BatchRequest{Follow: req.Follow},
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), 10),

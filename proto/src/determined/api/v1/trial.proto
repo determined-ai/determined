@@ -231,6 +231,8 @@ message GetTrialProfilerMetricsRequest {
   };
   // The labels for the series requested.
   determined.trial.v1.TrialProfilerMetricLabels labels = 1;
+  // Continue streaming metrics until the trial stops. Defaults to False.
+  bool follow = 2;
 }
 // Response to TrialProfilerMetricsResponse
 message GetTrialProfilerMetricsResponse {
@@ -248,6 +250,8 @@ message GetTrialProfilerAvailableSeriesRequest {
   };
   // The requested trial's id.
   int32 trial_id = 1;
+  // Continue streaming labels until the trial stops. Defaults to False.
+  bool follow = 2;
 }
 // Response to TrialProfilerAvailableSeriesRequest.
 message GetTrialProfilerAvailableSeriesResponse {
