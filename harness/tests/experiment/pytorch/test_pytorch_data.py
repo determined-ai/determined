@@ -1,6 +1,5 @@
 import logging
-import multiprocessing
-import sys
+import queue
 import typing
 from logging import handlers
 
@@ -168,23 +167,21 @@ def test_to_device() -> None:
 
 
 @pytest.mark.parametrize("dedup_between_calls", [True, False])
-@pytest.mark.skipif(
-    sys.platform == "darwin", reason="Test relies on feature unimplemented on Mac OS X"
-)
-# Not implemented feature:
-# https://stackoverflow.com/questions/65609529/python-multiprocessing-queue-notimplementederror-macos
 def test_to_device_warnings(dedup_between_calls) -> None:
-    queue = multiprocessing.Queue()
-
-    logger = logging.getLogger()
     # Capture warning logs as elements in a queue.
-    logger.addHandler(handlers.QueueHandler(queue))
+    logger = logging.getLogger()
+    q = queue.Queue()
+    handler = handlers.QueueHandler(q)
+    logger.addHandler(handler)
+    try:
+        warned_types = set() if dedup_between_calls else None
+        to_device(["string_data", "string_data"], "cpu", warned_types)
+        to_device(["string_data", "string_data"], "cpu", warned_types)
 
-    warned_types = set() if dedup_between_calls else None
-    to_device(["string_data", "string_data"], "cpu", warned_types)
-    to_device(["string_data", "string_data"], "cpu", warned_types)
-
-    assert queue.qsize() == 1 if dedup_between_calls else 2
-    while queue.qsize():
-        msg = queue.get().message
-        assert "not able to move data" in msg
+        assert q.qsize() == 1 if dedup_between_calls else 2
+        while q.qsize():
+            msg = q.get().message
+            assert "not able to move data" in msg
+    finally:
+        # Restore logging as it was before.
+        logger.removeHandler(handler)
