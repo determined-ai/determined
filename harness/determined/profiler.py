@@ -486,7 +486,7 @@ class SysMetricCollectorThread(threading.Thread):
                 gpu_memory = gpu_memory_collection.measure(self.current_batch_idx)
                 for gpu_uuid in gpu_memory.keys():
                     self.current_batch.add_gpu_measurement(
-                        SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_util[gpu_uuid]
+                        SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_memory[gpu_uuid]
                     )
 
             # Check if it is time to flush the batch and start a new batch
