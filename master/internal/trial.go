@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	"github.com/google/uuid"
 
 	"github.com/gorilla/websocket"
@@ -30,7 +32,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/union"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
@@ -411,9 +412,6 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case containerConnected, sproto.TaskContainerStateChanged:
 		return t.processContainerMsg(ctx)
 
-	case *websocket.Conn, *apiv1.KillTrialRequest:
-		return t.processAPIMsg(ctx)
-
 	case workload.CompletedMessage:
 		if err := t.processCompletedWorkload(ctx, msg); err != nil {
 			return err
@@ -432,10 +430,13 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		ctx.Log().Info("found child actor failed, terminating forcibly")
 		t.terminate(ctx, true)
 
-	case killTrial:
-		ctx.Log().Info("received killing request")
+	case killTrial, *apiv1.KillTrialRequest:
+		ctx.Log().Info("received API request to kill trial")
 		t.Killed = true
 		t.terminate(ctx, true)
+		if ctx.ExpectingResponse() {
+			ctx.Respond(&apiv1.KillTrialResponse{})
+		}
 
 	case allReadyTimeout:
 		if msg.runID == t.RunID &&
@@ -509,26 +510,6 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 		case cproto.Terminated:
 			t.processContainerTerminated(ctx, msg)
 		}
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func (t *trial) processAPIMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case *websocket.Conn:
-		a := api.WrapSocket(msg, workload.CompletedMessage{}, false)
-		if ref, created := ctx.ActorOf("socket", a); created {
-			ctx.Respond(ref)
-		}
-
-	case *apiv1.KillTrialRequest:
-		ctx.Log().Info("received API request to kill trial")
-		t.Killed = true
-		t.terminate(ctx, true)
-		ctx.Respond(&apiv1.KillTrialResponse{})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
