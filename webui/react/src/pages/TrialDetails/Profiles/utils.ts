@@ -69,6 +69,7 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
     consumeStream(
       detApi.StreamingProfiler.determinedGetTrialProfilerAvailableSeries(
         trialId,
+        true,
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
@@ -148,6 +149,7 @@ export const useFetchMetrics = (
         labelsAgentId,
         labelsGpuUuid,
         labelsMetricType,
+        true,
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerMetricsResponse) => {
