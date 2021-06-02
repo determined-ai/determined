@@ -136,7 +136,7 @@ class DeterminedControlHook(estimator.RunHook):
             "right after creating it.",
         )
         self._session = run_context.session
-        self._current_global_step = run_values.results["global_step"]
+        self._current_global_step = int(run_values.results["global_step"])
 
         self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
