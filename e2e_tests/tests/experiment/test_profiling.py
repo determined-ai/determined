@@ -12,8 +12,6 @@ from determined.common import api
 from tests import config as conf
 from tests import experiment as exp
 
-Result = Optional[Sequence[Any]]
-
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.timeout(600)  # type: ignore
@@ -75,7 +73,7 @@ def test_streaming_observability_metrics_apis(
         pytest.fail(f"failed to collect pytorch timings: {pytorch_timings_result}")
 
 
-def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Result:
+def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Optional[str]:
     def labels_missing(labels: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         # Check some labels against the expected labels. Return the missing labels.
         expected = {
