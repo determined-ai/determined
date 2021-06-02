@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import determined as det
-from determined import constants, workload
+from determined import workload
 from determined.common import check, types
 
 
@@ -24,7 +24,7 @@ class EnvContext:
         slot_ids: List[int],
         debug: bool,
         workload_manager_type: str,
-        det_rendezvous_ports: str,
+        det_rendezvous_port: str,
         det_trial_unique_port_offset: int,
         det_trial_runner_network_interface: str,
         det_trial_id: str,
@@ -52,7 +52,7 @@ class EnvContext:
         self.slot_ids = slot_ids
         self.debug = debug
         self.workload_manager_type = workload_manager_type
-        self.det_rendezvous_ports = det_rendezvous_ports
+        self.det_rendezvous_port = det_rendezvous_port
         self.det_trial_unique_port_offset = det_trial_unique_port_offset
         self.det_trial_runner_network_interface = det_trial_runner_network_interface
         self.det_trial_id = det_trial_id
@@ -70,12 +70,8 @@ class EnvContext:
     def first_step(self) -> types.StepID:
         return self.initial_workload.step_id
 
-    def rendezvous_ports(self) -> Tuple[int, int]:
-        ports = [int(x) for x in self.det_rendezvous_ports.split(",")]
-        if len(ports) != 2:
-            logging.warning("DET_RENDEZVOUS_PORTS not set, falling back on LOCAL_RENDEZVOUS_PORTS")
-            ports = [constants.LOCAL_RENDEZVOUS_PORT, constants.LOCAL_RENDEZVOUS_PORT + 1]
-        return ports[0], ports[1]
+    def rendezvous_port(self) -> int:
+        return int(self.det_rendezvous_port)
 
     def _calculate_batch_sizes(self) -> Tuple[int, int]:
         if "global_batch_size" not in self.hparams.keys():

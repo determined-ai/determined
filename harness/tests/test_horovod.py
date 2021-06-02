@@ -33,7 +33,7 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         slot_ids=[],
         debug=False,
         workload_manager_type="",
-        det_rendezvous_ports="",
+        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=det_trial_runner_network_interface,
         det_trial_id="1",
