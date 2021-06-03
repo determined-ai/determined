@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -167,11 +168,17 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 // multiplicative factor.
 func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 	params := make(hparamSample)
-	ctx.hparams.Each(func(name string, sampler expconf.Hyperparameter) {
+	flatHPs := expconf.FlattenHPs(ctx.hparams)
+	flatHPs.Each(func(name string, sampler expconf.Hyperparameter) {
 		if ctx.rand.UnitInterval() < s.ExploreFunction().ResampleProbability {
 			params[name] = sampleOne(sampler, ctx.rand)
 		} else {
-			val := old[name]
+			nesting := strings.Split(name, ".")
+			hPointer := old
+			for i := 0; i < len(nesting)-1; i++ {
+				hPointer = hPointer[nesting[i]].(map[string]interface{})
+			}
+			val := hPointer[nesting[len(nesting)-1]]
 			decrease := ctx.rand.UnitInterval() < .5
 			var multiplier float64
 			if decrease {
@@ -199,7 +206,7 @@ func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 			params[name] = val
 		}
 	})
-	return params
+	return unflattenSample(params)
 }
 
 func (s *pbtSearch) progress(trialProgress map[model.RequestID]model.PartialUnits) float64 {

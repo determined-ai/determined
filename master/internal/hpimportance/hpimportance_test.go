@@ -26,36 +26,36 @@ func TestComputeHPImportance(t *testing.T) {
 					RawMaxval: 0.8,
 				},
 			},
-			"dropout2": {
+			"dropout2": expconf.Hyperparameter{
 				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
 					RawMinval: 0.2,
 					RawMaxval: 0.8,
 				},
 			},
-			"global_batch_size": {
+			"global_batch_size": expconf.Hyperparameter{
 				RawConstHyperparameter: &expconf.ConstHyperparameter{
 					RawVal: 64,
 				},
 			},
-			"learning_rate": {
+			"learning_rate": expconf.Hyperparameter{
 				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
 					RawMinval: .0001,
 					RawMaxval: 1.0,
 				},
 			},
-			"n_filters1": {
+			"n_filters1": expconf.Hyperparameter{
 				RawIntHyperparameter: &expconf.IntHyperparameter{
 					RawMinval: 8,
 					RawMaxval: 64,
 				},
 			},
-			"n_filters2": {
+			"n_filters2": expconf.Hyperparameter{
 				RawIntHyperparameter: &expconf.IntHyperparameter{
 					RawMinval: 8,
 					RawMaxval: 72,
 				},
 			},
-			"n_filters3": {
+			"n_filters3": expconf.Hyperparameter{
 				RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
 					RawVals: []interface{}{"val1", "val2"},
 				},

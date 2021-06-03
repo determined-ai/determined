@@ -9,14 +9,109 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+func TestNestedHyperparameters(t *testing.T) {
+	spec := expconf.Hyperparameters{
+		"optimizer": expconf.Hyperparameters{
+			"type": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "adam"},
+			},
+			"learning_rate": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.01},
+			},
+			"momentum": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.9},
+			},
+		},
+	}
+	hps := spec["optimizer"].(expconf.Hyperparameters)
+	assert.Equal(
+		t,
+		hps["type"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		"adam",
+	)
+	assert.Equal(
+		t,
+		hps["learning_rate"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		0.01,
+	)
+	assert.Equal(
+		t,
+		hps["momentum"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		0.9,
+	)
+
+	flatSpec := expconf.Hyperparameters{
+		"optimizer.type": expconf.Hyperparameter{
+			RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "adam"},
+		},
+		"optimizer.learning_rate": expconf.Hyperparameter{
+			RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.01},
+		},
+		"optimizer.momentum": expconf.Hyperparameter{
+			RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.9},
+		},
+	}
+	flatHPs := expconf.FlattenHPs(spec)
+	assert.DeepEqual(t, flatHPs, flatSpec)
+
+	nestedHPs := expconf.UnflattenHPs(flatHPs)
+	hps = nestedHPs["optimizer"].(expconf.Hyperparameters)
+	assert.Equal(
+		t,
+		hps["type"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		"adam",
+	)
+	assert.Equal(
+		t,
+		hps["learning_rate"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		0.01,
+	)
+	assert.Equal(
+		t,
+		hps["momentum"].(expconf.Hyperparameter).RawConstHyperparameter.RawVal,
+		0.9,
+	)
+}
+
+func TestNestedSampling(t *testing.T) {
+	spec := expconf.Hyperparameters{
+		"optimizer": expconf.Hyperparameters{
+			"type": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "adam"},
+			},
+			"learning_rate": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.01},
+			},
+			"momentum": expconf.Hyperparameter{
+				RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.9},
+			},
+		},
+	}
+	flatSpec := expconf.FlattenHPs(spec)
+	rand := nprand.New(0)
+	sample := sampleAll(spec, rand)
+	flatSample := sampleAll(flatSpec, rand)
+	nestedSample := unflattenSample(flatSample)
+	assert.DeepEqual(t, sample, nestedSample)
+}
+
 func TestSamplingReproducibility(t *testing.T) {
 	spec := expconf.Hyperparameters{
-		"cat": {RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
-			RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6}}},
-		"const":  {RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "val"}},
-		"double": {RawDoubleHyperparameter: &expconf.DoubleHyperparameter{RawMinval: 0, RawMaxval: 100}},
-		"int":    {RawIntHyperparameter: &expconf.IntHyperparameter{RawMinval: 0, RawMaxval: 100}},
-		"log": {
+		"cat": expconf.Hyperparameter{
+			RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
+				RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6},
+			},
+		},
+		"const": expconf.Hyperparameter{
+			RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "val"},
+		},
+		"double": expconf.Hyperparameter{
+			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{RawMinval: 0, RawMaxval: 100},
+		},
+		"int": expconf.Hyperparameter{
+			RawIntHyperparameter: &expconf.IntHyperparameter{RawMinval: 0, RawMaxval: 100},
+		},
+		"log": expconf.Hyperparameter{
 			RawLogHyperparameter: &expconf.LogHyperparameter{RawBase: 10, RawMinval: -2, RawMaxval: 2},
 		},
 	}

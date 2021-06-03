@@ -222,6 +222,9 @@
   case:
     hyperparameters:
       global_batch_size: 32
+      optimizer:
+          name: adam
+          learning_rate: 1.0
     entrypoint: model_def:MyTrial
     searcher:
       name: single

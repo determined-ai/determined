@@ -3,6 +3,7 @@ package searcher
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -21,12 +22,32 @@ func (h hparamSample) GlobalBatchSize() int {
 	return h[expconf.GlobalBatchSize].(int)
 }
 
+func unflattenSample(h hparamSample) hparamSample {
+	result := make(hparamSample)
+	for key, element := range h {
+		nesting := strings.Split(key, ".")
+		hPointer := result
+		if len(nesting) > 1 {
+			for i := 0; i < len(nesting)-1; i++ {
+				k := nesting[i]
+				if _, ok := hPointer[k]; !ok {
+					hPointer[k] = make(map[string]interface{})
+				}
+				hPointer = hPointer[k].(map[string]interface{})
+			}
+		}
+		hPointer[nesting[len(nesting)-1]] = element
+	}
+	return result
+}
+
 func sampleAll(h expconf.Hyperparameters, rand *nprand.State) hparamSample {
-	results := make(hparamSample)
-	h.Each(func(name string, param expconf.Hyperparameter) {
-		results[name] = sampleOne(param, rand)
+	flatSample := make(hparamSample)
+	flatHPs := expconf.FlattenHPs(h)
+	flatHPs.Each(func(name string, param expconf.Hyperparameter) {
+		flatSample[name] = sampleOne(param, rand)
 	})
-	return results
+	return unflattenSample(flatSample)
 }
 
 func sampleOne(h expconf.Hyperparameter, rand *nprand.State) interface{} {
