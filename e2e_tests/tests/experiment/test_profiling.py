@@ -1,6 +1,5 @@
-import multiprocessing as mp
 import tempfile
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
 
 import pytest
@@ -28,9 +27,6 @@ def test_streaming_observability_metrics_apis(
 ) -> None:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
 
-    # To test observability, we kick off an experiment with profiling.enabled = true,
-    # then we stream the observability metric APIs.
-
     config_path = conf.tutorials_path(f"../{framework_base_experiment}/const.yaml")
     model_def_path = conf.tutorials_path(f"../{framework_base_experiment}")
 
@@ -48,33 +44,14 @@ def test_streaming_observability_metrics_apis(
     trials = exp.experiment_trials(experiment_id)
     trial_id = trials[0]["id"]
 
-    pool = mp.pool.ThreadPool(processes=3)
-    metric_labels_thread = pool.apply_async(
-        request_profiling_metric_labels, (trial_id, framework_timings_enabled)
-    )
-    gpu_util_metrics_thread = pool.apply_async(
-        request_profiling_system_metrics, (trial_id, "gpu_util")
-    )
+    request_profiling_metric_labels(trial_id, framework_timings_enabled)
+    request_profiling_system_metrics(trial_id, "gpu_util")
     if framework_timings_enabled:
-        pytorch_timings_thread = pool.apply_async(
-            request_profiling_pytorch_timing_metrics, (trial_id, "train_batch")
-        )
-
-    metric_labels_results = metric_labels_thread.get()
-    gpu_util_metrics_result = gpu_util_metrics_thread.get()
-    if framework_timings_enabled:
-        pytorch_timings_result = pytorch_timings_thread.get()
-
-    if metric_labels_results is not None:
-        pytest.fail(f"failed to collect metric labels: {metric_labels_results}")
-    if gpu_util_metrics_result is not None:
-        pytest.fail(f"failed to collect gpu metric: {gpu_util_metrics_result}")
-    if framework_timings_enabled and pytorch_timings_result is not None:
-        pytest.fail(f"failed to collect pytorch timings: {pytorch_timings_result}")
+        request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
 
 
-def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Optional[str]:
-    def labels_missing(labels: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> None:
+    def validate_labels(labels: Sequence[Dict[str, Any]]) -> None:
         # Check some labels against the expected labels. Return the missing labels.
         expected = {
             "cpu_util_simple": PROFILER_METRIC_TYPE_SYSTEM,
@@ -100,7 +77,11 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Opti
             metric_type = label["metricType"]
             if expected.get(metric_name, None) == metric_type:
                 del expected[metric_name]
-        return expected
+
+        if len(expected) > 0:
+            pytest.fail(
+                f"expected completed experiment to have all labels but some are missing: {expected}"
+            )
 
     with api.get(
         conf.make_master_url(),
@@ -109,29 +90,23 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Opti
     ) as r:
         for line in r.iter_lines():
             labels = simplejson.loads(line)["result"]["labels"]
-            # Since the result from available-series is logically monotonic,
-            # if we see all the labels we can be sure this is true going forward.
-            missing_labels = labels_missing(labels)
-            if len(missing_labels) > 0:
-                return f"expected completed experiment to have all labels but some are missing: {missing_labels}"
-            return None
-    return None
+            validate_labels(labels)
+            # Just check 1 iter.
+            return
 
 
-def request_profiling_system_metrics(trial_id: int, metric_name: str) -> Optional[str]:
-    def validate_gpu_metric_batch(batch: Dict[str, Any]) -> Optional[str]:
+def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
+    def validate_gpu_metric_batch(batch: Dict[str, Any]) -> None:
         num_values = len(batch["values"])
         num_batch_indexes = len(batch["batches"])
         num_timestamps = len(batch["timestamps"])
         if not (num_values == num_batch_indexes == num_timestamps):
-            return (
+            pytest.fail(
                 f"mismatched lists: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
             )
 
         if num_values == 0:
-            return f"received batch of size 0, something went wrong: {batch}"
-
-        return None
+            pytest.fail(f"received batch of size 0, something went wrong: {batch}")
 
     with api.get(
         conf.make_master_url(),
@@ -143,35 +118,34 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> Optiona
     ) as r:
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
-            err = validate_gpu_metric_batch(batch)
-            if err:
-                return err
-        return None
+            validate_gpu_metric_batch(batch)
 
 
-def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) -> Optional[str]:
-    def validate_timing_batch(batch: Dict[str, Any], batch_idx: int) -> Tuple[int, Optional[str]]:
+def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) -> None:
+    def validate_timing_batch(batch: Dict[str, Any], batch_idx: int) -> int:
         values = batch["values"]
         batches = batch["batches"]
         num_values = len(values)
         num_batch_indexes = len(batches)
         num_timestamps = len(batch["timestamps"])
         if num_values != num_batch_indexes or num_batch_indexes != num_timestamps:
-            return 0, (
+            pytest.fail(
                 f"mismatched slices: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
             )
 
         if not any(values):
-            return 0, f"received bad batch, something went wrong: {batch}"
+            pytest.fail(f"received bad batch, something went wrong: {batch}")
 
         if batches[0] != batch_idx:
-            return 0, f"batch did not start at correct batch, {batches[0]} != {batch_idx}: {batch}"
+            pytest.fail(
+                f"batch did not start at correct batch, {batches[0]} != {batch_idx}: {batch}"
+            )
 
         # Check batches are monotonic with no gaps.
         if not all(x + 1 == y for x, y in zip(batches, batches[1:])):
-            return 0, f"skips in batches sampled: {batch}"
+            pytest.fail(f"skips in batches sampled: {batch}")
 
-        return batches[-1], None
+        return int(batches[-1]) + 1
 
     with api.get(
         conf.make_master_url(),
@@ -184,11 +158,7 @@ def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) ->
         batch_idx = 0
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
-            batch_idx, err = validate_timing_batch(batch, batch_idx)
-            if err:
-                return err
-            batch_idx += 1
-        return None
+            batch_idx = validate_timing_batch(batch, batch_idx)
 
 
 PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
