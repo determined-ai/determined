@@ -1,8 +1,8 @@
 .. _howto-profiling:
 
-###############################
+##############################
  How To Profile An Experiment
-###############################
+##############################
 
 When optimizing the training speed of a model, the first step is to
 understand where and why training is slow. Once the bottlenecks have
