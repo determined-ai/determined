@@ -248,7 +248,7 @@ message GetExperimentValidationHistoryResponse {
 
 // Request to create a new experiment.
 message CreateExperimentRequest {
-  // Experiment context.
+  // Experiment context (deprecated format).
   repeated determined.util.v1.File model_definition = 1;
   // Experiment config (YAML).
   string config = 2;
@@ -256,6 +256,8 @@ message CreateExperimentRequest {
   bool validate_only = 3;
   // Parent experiment id.
   int32 parent_id = 4;
+  // Experiment context.
+  optional bytes model_definition_tgz = 5;
 }
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {

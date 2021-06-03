@@ -12,7 +12,10 @@ import (
 	"path"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg"
+	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
 type (
@@ -226,4 +229,34 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 	}
 
 	return ar, nil
+}
+
+// ProtoFilesToArchive converts an array of utilv1.File objects to an Archive.
+func ProtoFilesToArchive(files []*utilv1.File) Archive {
+	filesArchive := make([]Item, 0)
+	for _, file := range files {
+		item := Item{
+			Content:      file.Content,
+			FileMode:     os.FileMode(file.Mode),
+			GroupID:      int(file.Gid),
+			ModifiedTime: UnixTime{Time: time.Unix(file.Mtime, 0)},
+			Path:         file.Path,
+			Type:         byte(file.Type),
+			UserID:       int(file.Uid),
+		}
+		filesArchive = append(filesArchive, item)
+	}
+	return filesArchive
+}
+
+// FilesOrTgzToArchive is a helper function for transitioning from the old format for specifying
+// files (in the proto-based APIs) to the new one.
+func FilesOrTgzToArchive(files []*utilv1.File, tgz []byte) (Archive, error) {
+	if len(files) > 0 && len(tgz) > 0 {
+		return nil, errors.New("both old-style Files and new-style .tgz files present")
+	}
+	if len(tgz) > 0 {
+		return FromTarGz(tgz)
+	}
+	return ProtoFilesToArchive(files), nil
 }

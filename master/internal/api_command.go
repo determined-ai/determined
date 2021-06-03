@@ -19,12 +19,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
-	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
 var commandsAddr = actor.Addr("commands")
@@ -32,7 +32,7 @@ var commandsAddr = actor.Addr("commands")
 type protoCommandParams struct {
 	TemplateName string
 	Config       *pstruct.Struct
-	Files        []*utilv1.File
+	Files        archive.Archive
 	Data         []byte
 	MustZeroSlot bool
 }
@@ -136,9 +136,7 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", err)
 	}
 
-	if len(req.Files) > 0 {
-		params.UserFiles = filesToArchive(req.Files)
-	}
+	params.UserFiles = req.Files
 
 	if len(req.Data) > 0 {
 		var data map[string]interface{}
@@ -175,10 +173,15 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
+	arx, err := archive.FilesOrTgzToArchive(req.Files, req.FilesTgz)
+	if err != nil {
+		return nil, err
+	}
+
 	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
-		Files:        req.Files,
+		Files:        arx,
 		Data:         req.Data,
 	})
 	if err != nil {

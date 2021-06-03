@@ -2,8 +2,6 @@ package internal
 
 import (
 	"context"
-	"os"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -13,27 +11,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
-	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
-
-func filesToArchive(files []*utilv1.File) archive.Archive {
-	filesArchive := make([]archive.Item, 0)
-	for _, file := range files {
-		item := archive.Item{
-			Content:      file.Content,
-			FileMode:     os.FileMode(file.Mode),
-			GroupID:      int(file.Gid),
-			ModifiedTime: archive.UnixTime{Time: time.Unix(file.Mtime, 0)},
-			Path:         file.Path,
-			Type:         byte(file.Type),
-			UserID:       int(file.Uid),
-		}
-		filesArchive = append(filesArchive, item)
-	}
-	return filesArchive
-}
 
 func (a *apiServer) GetTensorboards(
 	_ context.Context, req *apiv1.GetTensorboardsRequest,
@@ -70,10 +50,15 @@ func (a *apiServer) LaunchTensorboard(
 		trialIds = append(trialIds, int(id))
 	}
 
+	arx, err := archive.FilesOrTgzToArchive(req.Files, req.FilesTgz)
+	if err != nil {
+		return nil, err
+	}
+
 	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
-		Files:        req.Files,
+		Files:        arx,
 		MustZeroSlot: true,
 	})
 	if err != nil {

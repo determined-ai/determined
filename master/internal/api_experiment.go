@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -602,7 +603,8 @@ func (a *apiServer) CreateExperiment(
 ) (*apiv1.CreateExperimentResponse, error) {
 	detParams := CreateExperimentParams{
 		ConfigBytes:  req.Config,
-		ModelDef:     filesToArchive(req.ModelDefinition),
+		ModelDef:     archive.ProtoFilesToArchive(req.ModelDefinition),
+		ModelDefTgz:  req.ModelDefinitionTgz,
 		ValidateOnly: req.ValidateOnly,
 	}
 	if req.ParentId != 0 {

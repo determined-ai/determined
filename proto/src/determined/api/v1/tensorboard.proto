@@ -78,8 +78,10 @@ message LaunchTensorboardRequest {
   google.protobuf.Struct config = 3;
   // Tensorboard template name.
   string template_name = 4;
-  // The files to run with the command.
+  // The files to run with the command( (deprecated).
   repeated determined.util.v1.File files = 5;
+  // The files to run with the command.
+  optional bytes files_tgz = 6;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {

@@ -354,16 +354,19 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 // CreateExperimentParams defines a request to create an experiment.
 type CreateExperimentParams struct {
-	ConfigBytes   string          `json:"experiment_config"`
-	Template      *string         `json:"template"`
-	ModelDef      archive.Archive `json:"model_definition"`
-	ParentID      *int            `json:"parent_id"`
-	Archived      bool            `json:"archived"`
-	GitRemote     *string         `json:"git_remote"`
-	GitCommit     *string         `json:"git_commit"`
-	GitCommitter  *string         `json:"git_committer"`
-	GitCommitDate *time.Time      `json:"git_commit_date"`
-	ValidateOnly  bool            `json:"validate_only"`
+	ConfigBytes   string     `json:"experiment_config"`
+	Template      *string    `json:"template"`
+	ParentID      *int       `json:"parent_id"`
+	Archived      bool       `json:"archived"`
+	GitRemote     *string    `json:"git_remote"`
+	GitCommit     *string    `json:"git_commit"`
+	GitCommitter  *string    `json:"git_committer"`
+	GitCommitDate *time.Time `json:"git_commit_date"`
+	ValidateOnly  bool       `json:"validate_only"`
+
+	// ModelDef has been deprecated in favor of ModelDefTgz
+	ModelDef    archive.Archive `json:"model_definition"`
+	ModelDefTgz []byte          `json:"model_definition_tgz"`
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
@@ -421,12 +424,25 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 				dbErr, "unable to find parent experiment %v", *params.ParentID)
 		}
 	} else {
-		var compressErr error
-		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
-		if compressErr != nil {
-			return nil, false, nil, errors.Wrapf(
-				compressErr, "unable to find compress model definition")
+		// Handle Archive or .tgz model definitions.
+		if len(params.ModelDef) > 0 && len(params.ModelDefTgz) > 0 {
+			return nil, false, nil, errors.New(
+				"cannot provide both model_definition and model_definition_tgz",
+			)
 		}
+		if len(params.ModelDefTgz) > 0 {
+			modelBytes = params.ModelDefTgz
+		} else {
+			modelBytes, err = archive.ToTarGz(params.ModelDef)
+			if err != nil {
+				return nil, false, nil, errors.Wrap(
+					err, "failed to unpack model definition tarball",
+				)
+			}
+		}
+	}
+	if len(modelBytes) == 0 {
+		return nil, false, nil, errors.New("no model definition was provided")
 	}
 
 	dbExp, err := model.NewExperiment(

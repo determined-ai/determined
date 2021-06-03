@@ -73,10 +73,12 @@ message LaunchCommandRequest {
   google.protobuf.Struct config = 1;
   // Template name.
   string template_name = 2;
-  // The files to run with the command.
+  // The files to run with the command (deprecated).
   repeated determined.util.v1.File files = 3;
   // Additional data.
   bytes data = 4;
+  // The files to run with the command.
+  optional bytes files_tgz = 5;
 }
 // Response to LaunchCommandRequest.
 message LaunchCommandResponse {
