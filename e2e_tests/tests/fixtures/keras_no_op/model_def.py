@@ -36,11 +36,11 @@ class TensorFlowRandomMetric(tf.keras.metrics.Metric):
     def result(self):
         def my_func(x):
             if version.parse(tf.__version__) >= version.parse("2.0.0"):
-                return tf.random.get_global_generator().uniform([1]).numpy()[0]
+                return tf.random.get_global_generator().uniform([1], dtype=tf.float64).numpy()[0]
             else:
                 return 0.0
 
-        return tf.compat.v1.py_func(my_func, [tf.ones([1], dtype=tf.float32)], tf.float32)
+        return tf.compat.v1.py_func(my_func, [tf.ones([1], dtype=tf.float64)], tf.float64)
 
 
 class NoopKerasTrial(TFKerasTrial):
