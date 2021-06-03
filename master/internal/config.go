@@ -87,6 +87,10 @@ type Config struct {
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
 
 	*resourcemanagers.ResourceConfig
+
+	// Below here are "hidden" useful debugging configurations.
+	// DebugPrometheus turns on prometheus metrics for the master.
+	DebugPrometheus bool `json:"__debug_prometheus"`
 }
 
 // Printable returns a printable string.
