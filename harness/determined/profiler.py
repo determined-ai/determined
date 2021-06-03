@@ -126,7 +126,7 @@ class ProfilerAgent:
         if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
             logging.warning(
                 f"{LOG_NAMESPACE}: ProfilerAgent is disabled because profiling data for this "
-                f"trial already exists in the DB. No additional profiling data will be generated."
+                f"trial already exists. No additional profiling data is generated after a restart."
             )
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
