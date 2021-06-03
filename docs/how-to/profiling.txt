@@ -1,7 +1,7 @@
 .. _howto-profiling:
 
 #################################
- How To: Profile Your Experiment
+ How To: Profile An Experiment
 #################################
 
 When optimizing the training speed of a model, the first
@@ -13,7 +13,7 @@ To understand the performance profile of a training job, the training code and
 infrastructure needs to be instrumented. There are many different layers
 that can be instrumented, from raw throughput all the way down to GPU kernels.
 
-Determined provides two tools out-of-the-box for instrumenting your training:
+Determined provides two tools out-of-the-box for instrumenting training:
 
 -  :ref:`System Metrics <howto-profiling-system-metrics>`: measurements of hardware usage
 -  :ref:`Timings <howto-profiling-timings>`: durations of actions taken during training, such as dataloading
@@ -32,8 +32,8 @@ the question of whether the dataloader is the main bottleneck in training.
 
 System Metrics are statistics around hardware usage, such as GPU
 utilization and network throughput. These metrics are useful for seeing
-whether your training is using the hardware effectively. When the System
-Metrics reported for an experiment are below what you expect from your
+whether training is using the hardware effectively. When the System
+Metrics reported for an experiment are below what is expected from the
 hardware, that is a sign that the software may be able to be optimized
 to make better use of the hardware resources.
 
@@ -71,8 +71,8 @@ Examples of training events include retrieving data from the dataloader,
 moving data betwee host and device, running the forward/backwards
 pass, and executing callbacks.
 
-These measurements provide a fairly high-level picture of where you might
-want to spend your time further investigating the performance of your code.
+These measurements provide a fairly high level picture of where to
+focus optimization efforts.
 
 .. note::
     Timings are currently only supported for ``PyTorchTrial``.
