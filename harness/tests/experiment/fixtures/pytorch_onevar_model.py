@@ -37,8 +37,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+import yaml
 
-from determined import pytorch
+from determined import experimental, pytorch
 
 
 class OnesDataset(torch.utils.data.Dataset):
@@ -171,3 +172,22 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
     def build_validation_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+
+
+if __name__ == "__main__":
+    conf = yaml.safe_load(
+        """
+    description: test-native-api-local-test-mode
+    hyperparameters:
+      global_batch_size: 32
+    scheduling_unit: 1
+    searcher:
+      name: single
+      metric: val_loss
+      max_length:
+        batches: 1
+      smaller_is_better: true
+    max_restarts: 0
+    """
+    )
+    experimental.create(OneVarTrial, conf, context_dir=".", local=True, test=True)

@@ -1,4 +1,7 @@
+import os
 import pathlib
+import subprocess
+import sys
 import typing
 
 import pytest
@@ -503,3 +506,15 @@ class TestPyTorchTrial:
 
 def test_create_trial_instance() -> None:
     utils.create_trial_instance(pytorch_xor_model.XORTrial)
+
+
+def test_native_api_local_test() -> None:
+    subprocess.check_call(
+        args=[sys.executable, "pytorch_onevar_model.py"],
+        cwd=utils.fixtures_path(""),
+        env={
+            "PYTHONUNBUFFERED": "1",
+            "PYTHONPATH": f"$PYTHONPATH:{utils.repo_path('harness')}",
+            **os.environ,
+        },
+    )
