@@ -1,6 +1,7 @@
 import copy
 import tempfile
 import time
+from typing import Union
 
 import pytest
 
@@ -252,7 +253,7 @@ def test_startup_hook() -> None:
     )
 
 
-def _test_rng_restore(fixture: str, metrics: list) -> None:
+def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None) -> None:
     """
     This test confirms that an experiment can be restarted from a checkpoint
     with the same RNG state. It requires a test fixture that will emit
@@ -262,8 +263,13 @@ def _test_rng_restore(fixture: str, metrics: list) -> None:
     metrics get worse over time, or by configuring the experiment to keep all
     checkpoints).
     """
-    experiment = exp.run_basic_test(
-        conf.fixtures_path(fixture + "/const.yaml"),
+    config_base = conf.load_config(conf.fixtures_path(fixture + "/const.yaml"))
+    config = copy.deepcopy(config_base)
+    if tf2 is not None:
+        config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+
+    experiment = exp.run_basic_test_with_temp_config(
+        config,
         conf.fixtures_path(fixture),
         1,
     )
@@ -275,11 +281,12 @@ def _test_rng_restore(fixture: str, metrics: list) -> None:
     first_step = first_trial["steps"][0]
     first_checkpoint_id = first_step["checkpoint"]["id"]
 
-    config_base = conf.load_config(conf.fixtures_path(fixture + "/const.yaml"))
-    config_obj = copy.deepcopy(config_base)
-    config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
+    config = copy.deepcopy(config_base)
+    if tf2 is not None:
+        config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
-    experiment2 = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path(fixture), 1)
+    experiment2 = exp.run_basic_test_with_temp_config(config, conf.fixtures_path(fixture), 1)
 
     second_trial = exp.experiment_trials(experiment2)[0]
 
@@ -300,10 +307,15 @@ def _test_rng_restore(fixture: str, metrics: list) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.tensorflow1_cpu  # type: ignore
-@pytest.mark.tensorflow2_cpu  # type: ignore
-def test_keras_rng_restore() -> None:
-    _test_rng_restore("keras_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"])
+@pytest.mark.parametrize(  # type: ignore
+    "tf2",
+    [
+        pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
+        pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
+    ],
+)
+def test_keras_rng_restore(tf2: bool) -> None:
+    _test_rng_restore("keras_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"], tf2=tf2)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
