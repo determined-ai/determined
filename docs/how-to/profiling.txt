@@ -1,7 +1,7 @@
 .. _howto-profiling:
 
 ###############################
- How To: Profile An Experiment
+ How To Profile An Experiment
 ###############################
 
 When optimizing the training speed of a model, the first step is to
@@ -44,13 +44,13 @@ to make better use of the hardware resources.
 Specifically, Determined tracks:
 
 -  GPU utilization
--  GPU memory usage
+-  GPU free memory
 -  Network throughput (sent)
 -  Network throughput (received)
 -  Disk IOPS
 -  Disk throughput (read)
 -  Disk throughput (write)
--  Host memory usage
+-  Host available memory
 -  CPU utilization averaged across cores
 
 For distributed training, these metrics are collected for every agent.
