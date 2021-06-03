@@ -113,7 +113,7 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> Opti
             # if we see all the labels we can be sure this is true going forward.
             missing_labels = labels_missing(labels)
             if len(missing_labels) > 0:
-                return f"expected completed experiment to have missing labels: {missing_labels}"
+                return f"expected completed experiment to have all labels but some are missing: {missing_labels}"
             return None
     return None
 
@@ -123,13 +123,13 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> Optiona
         num_values = len(batch["values"])
         num_batch_indexes = len(batch["batches"])
         num_timestamps = len(batch["timestamps"])
-        if num_values != num_batch_indexes or num_batch_indexes != num_timestamps:
+        if not (num_values == num_batch_indexes == num_timestamps):
             return (
-                f"mismatched slices: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
+                f"mismatched lists: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
             )
 
         if num_values == 0:
-            return f"received batch of 0, something went wrong: {batch}"
+            return f"received batch of size 0, something went wrong: {batch}"
 
         return None
 
