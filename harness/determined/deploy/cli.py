@@ -18,6 +18,12 @@ args_subs: List[Union[Arg, Cmd]] = [
         action="store_true",
         help="Do not wait for master to come up after AWS or GCP clusters are deployed",
     ),
+    Arg(
+        "--image-repo-prefix",
+        type=str,
+        default="determinedai",
+        help="Docker image repository to use for determined-master and determined-agent images",
+    ),
     local_args_description,
     aws_args_description,
     gcp_args_description,

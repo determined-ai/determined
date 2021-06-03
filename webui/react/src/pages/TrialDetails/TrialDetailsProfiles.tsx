@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import { Alert } from 'antd';
+import React from 'react';
 
-import Section from 'components/Section';
+import Link from 'components/Link';
+import { paths } from 'routes/utils';
 import { ExperimentBase, TrialDetails } from 'types';
 
-import ProfilesNotEnabled from './Profiles/ProfilesNotEnabled';
-import SystemMetricChart from './Profiles/SystemMetricChart';
-import SystemMetricFilter, { FiltersInterface } from './Profiles/SystemMetricFilter';
-import TimingMetricChart from './Profiles/TimingMetricChart';
+import ProfilesEnabled from './Profiles/ProfilesEnabled';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -16,30 +15,27 @@ export interface Props {
 export const CHART_HEIGHT = 400;
 
 const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => {
-  const [ filters, setFilters ] = useState<FiltersInterface>({});
-  const isProfilingEnabled = experiment.config.profiling?.enabled;
+  if (!experiment.config.profiling?.enabled) {
+    const description = (
+      <>
+        Learn about ;
+        <Link
+          external
+          path={paths.docs('/reference/experiment-config.html#searcher')} // todo: change me
+          popout>how to enable profiling on trials</Link>.
+      </>
+    );
 
-  if (!isProfilingEnabled) {
-    return <ProfilesNotEnabled />;
+    return (
+      <Alert
+        description={description}
+        message="Profiling was not enabled for this trial."
+        type="warning"
+      />
+    );
   }
 
-  return (
-    <>
-
-      <Section
-        bodyBorder
-        filters={<SystemMetricFilter trial={trial} value={filters} onChange={setFilters} />}
-        title="System Metrics"
-      >
-        <SystemMetricChart filters={filters} trial={trial} />
-      </Section>
-
-      <Section bodyBorder title="Timing Metrics">
-        <TimingMetricChart trial={trial} />
-      </Section>
-
-    </>
-  );
+  return <ProfilesEnabled trial={trial} />;
 };
 
 export default TrialDetailsProfiles;

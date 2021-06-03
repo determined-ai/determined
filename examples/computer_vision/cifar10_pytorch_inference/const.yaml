@@ -1,0 +1,12 @@
+description: cifar10_pytorch_inference_const
+hyperparameters:
+  global_batch_size: 8
+records_per_epoch: 50000
+searcher:
+  name: single
+  metric: validation_error
+  max_length:
+    epochs: 1
+entrypoint: model_def:CIFARTrial
+min_validation_period:
+  epochs: 1

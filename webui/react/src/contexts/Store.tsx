@@ -1,7 +1,9 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { Agent, Auth, ClusterOverview, DetailedUser, DeterminedInfo, ResourceType } from 'types';
+import {
+  Agent, Auth, ClusterOverview, DetailedUser, DeterminedInfo, ResourceType,
+} from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';

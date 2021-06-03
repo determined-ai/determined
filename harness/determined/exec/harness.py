@@ -55,7 +55,7 @@ ENVIRONMENT_VARIABLE_KEYS = {
     "DET_INITIAL_WORKLOAD",
     "DET_LATEST_CHECKPOINT",
     "DET_WORKLOAD_MANAGER_TYPE",
-    "DET_RENDEZVOUS_PORTS",
+    "DET_RENDEZVOUS_PORT",
     "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
     "DET_TASK_TOKEN",
 }
@@ -175,7 +175,7 @@ def main() -> None:
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
     slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
     workload_manager_type = os.environ["DET_WORKLOAD_MANAGER_TYPE"]
-    det_rendezvous_ports = os.environ["DET_RENDEZVOUS_PORTS"]
+    det_rendezvous_port = os.environ["DET_RENDEZVOUS_PORT"]
     det_trial_unique_port_offset = int(os.environ["DET_TRIAL_UNIQUE_PORT_OFFSET"])
     det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]
     det_trial_id = os.environ["DET_TRIAL_ID"]
@@ -203,7 +203,7 @@ def main() -> None:
         slot_ids,
         debug,
         workload_manager_type,
-        det_rendezvous_ports,
+        det_rendezvous_port,
         det_trial_unique_port_offset,
         det_trial_runner_network_interface,
         det_trial_id,

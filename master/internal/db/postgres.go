@@ -58,6 +58,7 @@ const (
 
 // Migrate runs the migrations from the specified directory URL.
 func (db *PgDB) Migrate(migrationURL string) error {
+	log.Infof("running DB migrations from %s; this might take a while...", migrationURL)
 	driver, err := postgresM.WithInstance(db.sql.DB, &postgresM.Config{})
 	if err != nil {
 		return errors.Wrap(err, "error constructing Postgres migration driver")
@@ -80,7 +81,7 @@ func (db *PgDB) Migrate(migrationURL string) error {
 	if err = m.Up(); err != migrate.ErrNoChange {
 		return errors.Wrap(err, "error applying migrations")
 	}
-
+	log.Info("DB migrations completed")
 	return nil
 }
 
@@ -703,6 +704,25 @@ WHERE id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// LegacyExperimentConfigByID parses very old configs, returning a LegacyConfig which
+// exposes a select subset of fields in a type-safe way.
+func (db *PgDB) LegacyExperimentConfigByID(
+	id int,
+) (expconf.LegacyConfig, error) {
+	var byts []byte
+	if err := db.sql.QueryRow(
+		"SELECT config FROM experiments WHERE id = $1", id).Scan(&byts); err != nil {
+		return expconf.LegacyConfig{}, err
+	}
+
+	config, err := expconf.ParseLegacyConfigJSON(byts)
+	if err != nil {
+		return expconf.LegacyConfig{}, errors.Wrap(err, "parsing legacy conf from database")
+	}
+
+	return config, nil
+}
+
 // ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
 // none exists. It loads the experiment without its configuration, for callers that do not need
 // it, or can't handle backwards incompatible changes.
@@ -1025,7 +1045,7 @@ WHERE id = $1`, id)
 // checkpoints are also marked as deleted in the database.
 func (db *PgDB) ExperimentCheckpointsToGCRaw(
 	id int,
-	experimentBest, trialBest, trialLatest *int,
+	experimentBest, trialBest, trialLatest int,
 	delete bool,
 ) ([]byte, error) {
 	// The string for the CTEs that we need whether or not we're not deleting the results. The
@@ -1038,13 +1058,7 @@ WITH const AS (
                 WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
                 THEN 1
                 ELSE -1
-            END) AS sign,
-           coalesce($2, (config->'checkpoint_storage'->>'save_experiment_best')::int)
-               AS experiment_best,
-           coalesce($3, (config->'checkpoint_storage'->>'save_trial_best')::int)
-               AS trial_best,
-           coalesce($4, (config->'checkpoint_storage'->>'save_trial_latest')::int)
-               AS trial_latest
+            END) AS sign
     FROM experiments WHERE id = $1
 ), selected_checkpoints AS (
     SELECT *
@@ -1098,13 +1112,10 @@ WITH const AS (
             WHERE c.state = 'COMPLETED' AND c.trial_id = t.id AND t.experiment_id = $1
         ) _, const
     ) c, const
-    WHERE (const.experiment_best IS NOT NULL
-               OR const.trial_best IS NOT NULL
-               OR const.trial_latest IS NOT NULL)
-          AND (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
-          AND c.trial_order_rank > const.trial_latest
-          AND ((c.experiment_rank > const.experiment_best
-                AND c.trial_rank > const.trial_best)
+    WHERE (SELECT COUNT(*) FROM trials t WHERE t.warm_start_checkpoint_id = c.id) = 0
+          AND c.trial_order_rank > $4
+          AND ((c.experiment_rank > $2
+                AND c.trial_rank > $3)
                OR (c.step->'validation'->'metrics'->'validation_metrics'->>const.metric_name
                    IS NULL))
 )`

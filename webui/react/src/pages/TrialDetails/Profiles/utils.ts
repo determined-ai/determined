@@ -21,6 +21,7 @@ export type MetricsAggregateInterface = {
   dataByBatch: Record<number, Record<string, number>>,
   // group information by {[time]: {[name]: value, ..}, ..}
   dataByUnixTime: Record<number, Record<string, number>>,
+  isEmpty: boolean,
   // set to false when the 1st event is received
   isLoading: boolean,
   // names to ease building the chart later
@@ -66,8 +67,9 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
     const canceler = new AbortController();
 
     consumeStream(
-      detApi.StreamingUnimplemented.determinedGetTrialProfilerAvailableSeries(
+      detApi.StreamingProfiler.determinedGetTrialProfilerAvailableSeries(
         trialId,
+        true,
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
@@ -111,6 +113,7 @@ export const useFetchMetrics = (
   const [ data, setData ] = useState<MetricsAggregateInterface>({
     dataByBatch: {},
     dataByUnixTime: {},
+    isEmpty: true,
     isLoading: true,
     names: [],
   });
@@ -120,6 +123,9 @@ export const useFetchMetrics = (
       setData({
         dataByBatch: { ...fnData.dataByBatch },
         dataByUnixTime: { ...fnData.dataByUnixTime },
+        isEmpty: Object.keys(fnData.dataByBatch).length === 0
+          && Object.keys(fnData.dataByUnixTime).length === 0
+          && Object.keys(fnData.names).length === 0,
         isLoading: false,
         names: fnData.names,
       });
@@ -128,6 +134,7 @@ export const useFetchMetrics = (
     const internalData: MetricsAggregateInterface = {
       dataByBatch: {},
       dataByUnixTime: {},
+      isEmpty: true,
       isLoading: true,
       names: [],
     };
@@ -136,12 +143,13 @@ export const useFetchMetrics = (
     setData(internalData);
 
     consumeStream(
-      detApi.StreamingUnimplemented.determinedGetTrialProfilerMetrics(
+      detApi.StreamingProfiler.determinedGetTrialProfilerMetrics(
         trialId,
         labelsName,
         labelsAgentId,
         labelsGpuUuid,
         labelsMetricType,
+        true,
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerMetricsResponse) => {

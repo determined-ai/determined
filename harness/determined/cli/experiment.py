@@ -15,7 +15,7 @@ import tabulate
 
 import determined.common
 from determined.cli import checkpoint, render
-from determined.common import api, constants, context, yaml
+from determined.common import api, constants, context, util, yaml
 from determined.common.api.authentication import authentication_required
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
@@ -112,7 +112,8 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
 
 def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
-    experiment_config = yaml.safe_load(config_file.read())
+    experiment_config = util.safe_load_yaml_with_exceptions(config_file)
+
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
         print("Error: invalid experiment config file {}".format(config_file.name))

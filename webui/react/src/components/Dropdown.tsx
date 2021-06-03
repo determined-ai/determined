@@ -1,7 +1,5 @@
 import React, { PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { toRem } from 'utils/dom';
-
 import css from './Dropdown.module.scss';
 
 export enum Placement {
@@ -48,66 +46,66 @@ const Dropdown: React.FC<Props> = ({
       case Placement.Bottom:
         return {
           left: '50%',
-          top: `calc(100% + ${toRem(offset.y)})`,
+          top: `calc(100% + ${offset.y}px)`,
           transform: 'translateX(-50%)',
         };
       case Placement.BottomLeft:
         return {
-          left: toRem(offset.x),
-          top: `calc(100% + ${toRem(offset.y)})`,
+          left: `${offset.x}px`,
+          top: `calc(100% + ${offset.y}px)`,
         };
       case Placement.BottomRight:
         return {
-          right: toRem(offset.x),
-          top: `calc(100% + ${toRem(offset.y)})`,
+          right: `${offset.x}px`,
+          top: `calc(100% + ${offset.y}px)`,
         };
       case Placement.Left:
         return {
-          right: `calc(100% - ${toRem(offset.x)})`,
+          right: `calc(100% - ${offset.x}px)`,
           top: '50%',
           transform: 'translateY(-50%)',
         };
       case Placement.LeftBottom:
         return {
-          bottom: toRem(offset.y),
-          right: `calc(100% - ${toRem(offset.x)})`,
+          bottom: `${offset.y}px`,
+          right: `calc(100% - ${offset.x}px)`,
         };
       case Placement.LeftTop:
         return {
-          right: `calc(100% - ${toRem(offset.x)})`,
-          top: toRem(offset.y),
+          right: `calc(100% - ${offset.x}px)`,
+          top: `${offset.y}px`,
         };
       case Placement.Right:
         return {
-          left: `calc(100% + ${toRem(offset.x)})`,
+          left: `calc(100% + ${offset.x}px)`,
           top: '50%',
           transform: 'translateY(-50%)',
         };
       case Placement.RightBottom:
         return {
-          bottom: toRem(offset.y),
-          left: `calc(100% + ${toRem(offset.x)})`,
+          bottom: `${offset.y}px`,
+          left: `calc(100% + ${offset.x}px)`,
         };
       case Placement.RightTop:
         return {
-          left: `calc(100% + ${toRem(offset.x)})`,
-          top: toRem(offset.y),
+          left: `calc(100% + ${offset.x}px)`,
+          top: `${offset.y}px`,
         };
       case Placement.Top:
         return {
-          bottom: `calc(100% - ${toRem(offset.y)})`,
+          bottom: `calc(100% - ${offset.y}px)`,
           left: '50%',
           transform: 'translateX(-50%)',
         };
       case Placement.TopLeft:
         return {
-          bottom: `calc(100% - ${toRem(offset.y)})`,
-          left: toRem(offset.x),
+          bottom: `calc(100% - ${offset.y}px)`,
+          left: `${offset.x}px`,
         };
       case Placement.TopRight:
         return {
-          bottom: `calc(100% - ${toRem(offset.y)})`,
-          right: toRem(offset.x),
+          bottom: `calc(100% - ${offset.y}px)`,
+          right: `${offset.x}px`,
         };
       default:
         return undefined;

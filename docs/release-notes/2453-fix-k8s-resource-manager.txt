@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  K8s: Fix one nil pointer dereference issue that might cause the
+   master to crash when using kubernetes.

@@ -310,7 +310,7 @@ const TaskList: React.FC = () => {
       </div>
       <Modal
         footer={null}
-        style={{ minWidth: '60rem' }}
+        style={{ minWidth: '600px' }}
         title={`
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
@@ -318,7 +318,7 @@ const TaskList: React.FC = () => {
         visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
-          <Grid gap={ShirtSize.medium} minItemWidth={12}>
+          <Grid gap={ShirtSize.medium} minItemWidth={120}>
             {sourcesModal?.sources.map(source => <Link
               key={source.id}
               path={source.path}>{source.type} {source.id}</Link>)}

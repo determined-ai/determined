@@ -9,7 +9,7 @@
       config_file: asdf
 
 - name: optionalRef extension (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/security.json:
       - "<config>.kerberos.config_file: "
   case:

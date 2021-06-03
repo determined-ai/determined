@@ -8,15 +8,15 @@
 
 .. _load_dataset: https://huggingface.co/docs/datasets/package_reference/loading_methods.html#datasets.load_dataset
 
-.. _ner_trial.py: https://github.com/determined-ai/determined/tree/master/model-hub/examples/huggingface/token-classification/ner_trial.py
+.. _ner_trial.py: https://github.com/determined-ai/determined/tree/master/model_hub/examples/huggingface/token-classification/ner_trial.py
 
-.. _qa_beam_search_trial.py: https://github.com/determined-ai/determined/tree/master/model-hub/examples/huggingface/question-answering/qa_beam_search_trial.py
+.. _qa_beam_search_trial.py: https://github.com/determined-ai/determined/tree/master/model_hub/examples/huggingface/question-answering/qa_beam_search_trial.py
 
-.. _qa_trial.py: https://github.com/determined-ai/determined/tree/master/model-hub/examples/huggingface/question-answering/qa_trial.py
+.. _qa_trial.py: https://github.com/determined-ai/determined/tree/master/model_hub/examples/huggingface/question-answering/qa_trial.py
 
-.. _question answering example: https://github.com/determined-ai/determined/tree/master/model-hub/examples/huggingface/question-answering
+.. _question answering example: https://github.com/determined-ai/determined/tree/master/model_hub/examples/huggingface/question-answering
 
-.. _squad.yaml: https://github.com/determined-ai/determined/tree/master/model-hub/examples/huggingface/question-answering/squad.yaml
+.. _squad.yaml: https://github.com/determined-ai/determined/tree/master/model_hub/examples/huggingface/question-answering/squad.yaml
 
 .. _transformers trainer: https://huggingface.co/transformers/v4.4.2/main_classes/trainer.html
 

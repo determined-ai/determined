@@ -8,7 +8,7 @@ from determined._swagger.client.api_client import ApiClient
 from determined._swagger.client.configuration import Configuration
 from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined._swagger.client.models.v1_file import V1File
-from determined.common import api, check, context, yaml
+from determined.common import api, check, context, util, yaml
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
@@ -79,10 +79,10 @@ class Determined:
         )
         if isinstance(config, str):
             with open(config) as f:
-                experiment_config = yaml.safe_load(f)
+                experiment_config = util.safe_load_yaml_with_exceptions(f)
         elif isinstance(config, pathlib.Path):
             with config.open() as f:
-                experiment_config = yaml.safe_load(f)
+                experiment_config = util.safe_load_yaml_with_exceptions(f)
         elif isinstance(config, Dict):
             experiment_config = config
 

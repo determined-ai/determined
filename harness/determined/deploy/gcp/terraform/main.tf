@@ -119,6 +119,7 @@ module "compute" {
   region = var.region
   zone = var.zone
   environment_image = var.environment_image
+  image_repo_prefix = var.image_repo_prefix
   det_version = var.det_version
   scheme = var.scheme
   port = var.port

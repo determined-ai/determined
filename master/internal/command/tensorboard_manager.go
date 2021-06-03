@@ -50,8 +50,9 @@ type TensorboardRequest struct {
 }
 
 type tensorboardConfig struct {
-	model.Experiment
-	TrialIDs []int
+	Config       expconf.LegacyConfig
+	ExperimentID int
+	TrialIDs     []int
 }
 
 type tensorboardManager struct {
@@ -268,14 +269,14 @@ func (t *tensorboardManager) newTensorBoard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, params.TaskSpec.ClusterID, exp.ID)
+				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, params.TaskSpec.ClusterID, exp.ID, id)
+				id, logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -283,7 +284,7 @@ func (t *tensorboardManager) newTensorBoard(
 
 	// Get the most recent experiment config as raw json and add it to the container. This
 	// is used to determine if the experiment is backed by S3.
-	mostRecentExpID := exps[len(exps)-1].ID
+	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading raw experiment config: %d", mostRecentExpID)
@@ -356,46 +357,46 @@ func (t *tensorboardManager) newTensorBoard(
 func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	[]*tensorboardConfig, error) {
 	confByID := map[int]*tensorboardConfig{}
-	var exp *model.Experiment
-	var err error
 
-	for _, id := range req.ExperimentIDs {
-		exp, err = t.db.ExperimentByID(id)
+	for _, expID := range req.ExperimentIDs {
+		conf, err := t.db.LegacyExperimentConfigByID(expID)
 		if err != nil {
 			return nil, err
 		}
 
-		confByID[id] = &tensorboardConfig{Experiment: *exp}
+		confByID[expID] = &tensorboardConfig{ExperimentID: expID, Config: conf}
 	}
 
-	for _, id := range req.TrialIDs {
-		expID, err := t.db.ExperimentIDByTrialID(id)
+	for _, trialID := range req.TrialIDs {
+		expID, err := t.db.ExperimentIDByTrialID(trialID)
 		if err != nil {
 			return nil, err
 		}
 
-		exp, err = t.db.ExperimentByID(expID)
+		conf, err := t.db.LegacyExperimentConfigByID(expID)
 		if err != nil {
 			return nil, err
 		}
 
-		if conf, ok := confByID[exp.ID]; ok {
-			conf.TrialIDs = append(conf.TrialIDs, id)
+		if conf, ok := confByID[expID]; ok {
+			conf.TrialIDs = append(conf.TrialIDs, trialID)
 			continue
 		}
 
-		confByID[exp.ID] = &tensorboardConfig{Experiment: *exp, TrialIDs: []int{id}}
+		confByID[expID] = &tensorboardConfig{
+			ExperimentID: expID, Config: conf, TrialIDs: []int{trialID},
+		}
 	}
 
 	var expIDs []int
-	for id := range confByID {
-		expIDs = append(expIDs, id)
+	for expID := range confByID {
+		expIDs = append(expIDs, expID)
 	}
 
 	sort.Ints(expIDs)
 	var configs []*tensorboardConfig
-	for _, id := range expIDs {
-		configs = append(configs, confByID[id])
+	for _, expID := range expIDs {
+		configs = append(configs, confByID[expID])
 	}
 
 	return configs, nil

@@ -1,17 +1,10 @@
 package schemas
 
 import (
-	"reflect"
 	"testing"
 
 	"gotest.tools/assert"
 )
-
-// Copy is the non-reflect version of copy, but mostly the reflect version is called from other
-// reflect code, so it's defined here in test code.
-func Copy(src interface{}) interface{} {
-	return cpy(reflect.ValueOf(src)).Interface()
-}
 
 func TestCopyAllocatedSlice(t *testing.T) {
 	src := []string{}

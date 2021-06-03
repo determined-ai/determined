@@ -1,0 +1,7 @@
+:orphan:
+
+**Deprecated Features**
+
+-  The method :meth:`~determined.experimental.create_trial_instance` is
+   now deprecated. Users should instead use the more flexible
+   `TrialContext.from_config()` that is described in :ref:`model-debug`.

@@ -12,17 +12,12 @@ import (
 // LocalRendezvousPort is the start of the range of ports used for rendezvous by tasks.
 const LocalRendezvousPort = 1734
 
-// LocalRendezvousPortOffset is the difference between the two rendezvous ports. It is chosen to be
-// 16 since this is the maximum number of GPUs expected per agent.
-const LocalRendezvousPortOffset = 16
-
 const (
 	hostMode container.NetworkMode = "host"
 )
 
-func rendezvousPorts(offset int) []int {
-	base := LocalRendezvousPort + offset
-	return []int{base, base + LocalRendezvousPortOffset}
+func rendezvousPort(offset int) int {
+	return LocalRendezvousPort + offset
 }
 
 // trialUniquePortOffset determines a deterministic, unique offset for ports that would otherwise

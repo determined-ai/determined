@@ -13,7 +13,7 @@ import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
+import { ansiToHtml, copyToClipboard } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
@@ -129,11 +129,11 @@ const LogViewer: React.FC<Props> = forwardRef((
   const scrollToTopClasses = [ css.scrollToTop ];
   const enableTailingClasses = [ css.enableTailing ];
 
-  const spacerStyle = { height: toRem(config.totalContentHeight) };
-  const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
-  const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
-  const messageStyle = { width: toRem(config.messageWidth) };
-  const levelStyle = { width: toRem(ICON_WIDTH) };
+  const spacerStyle = { height: config.totalContentHeight };
+  const dateTimeStyle = { width: config.dateTimeWidth };
+  const lineNumberStyle = { width: config.lineNumberWidth };
+  const messageStyle = { width: config.messageWidth };
+  const levelStyle = { width: ICON_WIDTH };
 
   if (props.noWrap) classes.push(css.noWrap);
   if (scroll.scrollTop > SCROLL_TOP_THRESHOLD) scrollToTopClasses.push(css.show);
@@ -192,7 +192,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       */
     let totalContentHeight = 0;
     const messageSizes: Record<string, MessageSize> = {};
-    measure.current.style.width = toRem(messageWidth);
+    measure.current.style.width = `${messageWidth}px`;
     logs.forEach((log: ViewerLog) => {
       const lineCount = log.message
         .split('\n')
@@ -501,8 +501,8 @@ const LogViewer: React.FC<Props> = forwardRef((
                 id={`log-${log.id}`}
                 key={log.id}
                 style={{
-                  height: toRem(config.messageSizes[log.id]?.height),
-                  top: toRem(config.messageSizes[log.id]?.top),
+                  height: config.messageSizes[log.id]?.height,
+                  top: config.messageSizes[log.id]?.top,
                 }}>
                 {!props.disableLineNumber &&
                   <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}

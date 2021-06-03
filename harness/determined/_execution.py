@@ -102,9 +102,6 @@ def _make_local_execution_env(
     )
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
     use_gpu, container_gpus, slot_ids = _get_gpus(limit_gpus)
-    local_rendezvous_ports = (
-        f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
-    )
 
     env = det.EnvContext(
         master_addr="",
@@ -122,7 +119,7 @@ def _make_local_execution_env(
         slot_ids=slot_ids,
         debug=config.debug_enabled(),
         workload_manager_type="",
-        det_rendezvous_ports=local_rendezvous_ports,
+        det_rendezvous_port=str(constants.LOCAL_RENDEZVOUS_PORT),
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="",
@@ -135,10 +132,7 @@ def _make_local_execution_env(
         test_mode=test_mode,
         on_cluster=False,
     )
-    rendezvous_ports = env.rendezvous_ports()
-    rendezvous_info = det.RendezvousInfo(
-        addrs=[f"0.0.0.0:{rendezvous_ports[0]}"], addrs2=[f"0.0.0.0:{rendezvous_ports[1]}"], rank=0
-    )
+    rendezvous_info = det.RendezvousInfo(addrs=[f"0.0.0.0:{env.rendezvous_port()}"], rank=0)
     hvd_config = horovod.HorovodContext.from_configs(
         env.experiment_config, rendezvous_info, env.hparams
     )

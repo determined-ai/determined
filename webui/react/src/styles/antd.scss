@@ -54,8 +54,8 @@ html {
   /* Input */
 
   .ant-input-affix-wrapper { border-radius: var(--theme-sizes-border-radius); }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg { padding: 0.65rem 0.75rem; }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm { padding: 0 0.3rem; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg { padding: 6.5px 7.5px; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm { padding: 0 3px; }
   .ant-input-affix-wrapper:focus,
   .ant-input-affix-wrapper-focused {
     box-shadow: var(--theme-focus-shadow);
@@ -65,12 +65,12 @@ html {
     align-items: center;
     display: flex;
   }
-  .ant-input-affix-wrapper > .ant-input-prefix { margin-right: 0.6rem; }
-  .ant-input-affix-wrapper > .ant-input-suffix { margin-left: 0.6rem; }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg > .ant-input-prefix { margin-right: 0.75rem; }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg > .ant-input-suffix { margin-left: 0.75rem; }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-prefix { margin-right: 0.3rem; }
-  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-suffix { margin-left: 0.3rem; }
+  .ant-input-affix-wrapper > .ant-input-prefix { margin-right: 6px; }
+  .ant-input-affix-wrapper > .ant-input-suffix { margin-left: 6px; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg > .ant-input-prefix { margin-right: 7.5px; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-lg > .ant-input-suffix { margin-left: 7.5px; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-prefix { margin-right: 3px; }
+  .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-suffix { margin-left: 3px; }
   .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-prefix > i,
   .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-suffix > i {
     font-size: var(--theme-sizes-icon-small);
@@ -99,7 +99,7 @@ html {
     transform: rotate(180deg);
   }
   .ant-select.ant-select-open.ant-select-show-search {
-    min-width: 10rem;
+    min-width: 100px;
   }
   .ant-select-item-option-content {
     width: 0;

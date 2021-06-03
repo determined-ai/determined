@@ -28,8 +28,12 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
-	err = schemas.IsComplete(config)
-	if err != nil {
+	if err = schemas.IsComplete(config); err != nil {
+		return nil, errors.Wrap(err, "invalid experiment configuration")
+	}
+
+	// Disallow EOL searchers.
+	if err = config.Searcher().AssertCurrent(); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 

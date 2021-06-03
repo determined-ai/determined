@@ -129,6 +129,8 @@
 - name: minimal valid experiment
   sane_as:
     - http://determined.ai/schemas/expconf/v0/experiment.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/experiment.json
   case:
     hyperparameters:
       global_batch_size: 32
@@ -231,7 +233,7 @@
     records_per_epoch: 10
 
 - name: records_per_epoch conditional (invalid, zero)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/experiment.json:
       - "<config>.searcher.max_length: must specify the top-level records_per_epoch"
       - "<config>.min_validation_period: must specify the top-level records_per_epoch"
@@ -249,7 +251,7 @@
     records_per_epoch: 0
 
 - name: records_per_epoch conditional (invalid, missing)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/experiment.json:
       - "<config>.searcher.max_length: must specify the top-level records_per_epoch"
       - "<config>.min_validation_period: must specify the top-level records_per_epoch"
@@ -305,7 +307,7 @@
     entrypoint: model_def:MyTrial
 
 - name: check grid conditional (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/experiment.json:
       - "<config>.hyperparameters.dict_hparam.log_hparam: grid search is in use but count was not provided"
       - "<config>.hyperparameters.list_hparam\\[2\\]: grid search is in use but count was not provided"
@@ -357,7 +359,7 @@
         command: ["script.py"]
 
 - name: check entrypoint conditional (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/experiment.json:
       - must specify an entrypoint that references the trial class
   case:
@@ -372,7 +374,7 @@
       native: null
 
 - name: entrypoint check (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/experiment.json:
       - "entrypoint must be of the form \"module.submodule:ClassName\""
   case:

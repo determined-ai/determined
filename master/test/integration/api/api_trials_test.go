@@ -182,6 +182,7 @@ func trialProfilerMetricsTests(
 			AgentId:    "brad's agent",
 			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_SYSTEM,
 		},
+		Follow: true,
 	})
 	assert.NilError(t, err, "failed to initiate trial profiler metrics stream")
 
@@ -246,6 +247,7 @@ func trialProfilerMetricsAvailableSeriesTests(
 	ctx, _ := context.WithTimeout(creds, time.Minute)
 	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
 		TrialId: int32(trial.ID),
+		Follow: true,
 	})
 	assert.NilError(t, err, "failed to initiate trial profiler series stream")
 

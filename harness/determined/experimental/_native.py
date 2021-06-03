@@ -2,6 +2,7 @@ import logging
 import pathlib
 import sys
 import tempfile
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import determined as det
@@ -384,6 +385,8 @@ def create_trial_instance(
     hparams: Optional[Dict[str, Any]] = None,
 ) -> det.Trial:
     """
+    Deprecated: please use your TrialContext's .from_config() method instead.
+
     Create a trial instance from a Trial class definition. This can be a useful
     utility for debugging your trial logic in any development environment.
 
@@ -397,6 +400,14 @@ def create_trial_instance(
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
     """
+    warnings.warn(
+        "det.experimental.create_trial_instance() is now deprecated.  Please use\n"
+        "your TrialContext's .from_config() method instead.  Example\n"
+        "\n"
+        "    context = PyTorchTrialContext.from_config()\n"
+        "    my_trial = MyPyTorchTrial(context)\n",
+        FutureWarning,
+    )
     determined.common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )

@@ -40,3 +40,8 @@ type SearcherConfig = SearcherConfigV0
 type SharedFSConfig = SharedFSConfigV0
 type SharedFSDataLayerConfig = SharedFSDataLayerConfigV0
 type SingleConfig = SingleConfigV0
+
+// These are EOL searchers, not to be used in new experiments.
+type AdaptiveConfig = AdaptiveConfigV0
+type AdaptiveSimpleConfig = AdaptiveSimpleConfigV0
+type SyncHalvingConfig = SyncHalvingConfigV0

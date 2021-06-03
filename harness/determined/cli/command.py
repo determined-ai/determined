@@ -8,7 +8,7 @@ from typing import IO, Any, Dict, Iterable, List, Optional, Tuple
 from termcolor import colored
 
 from determined.cli import render
-from determined.common import api, context, yaml
+from determined.common import api, context, util, yaml
 from determined.common.api.authentication import authentication_required
 
 CONFIG_DESC = """
@@ -200,7 +200,7 @@ def parse_config(
     config = {}  # type: Dict[str, Any]
     if config_file:
         with config_file:
-            config = yaml.safe_load(config_file)
+            config = util.safe_load_yaml_with_exceptions(config_file)
 
     for config_arg in overrides:
         if "=" not in config_arg:
@@ -253,6 +253,7 @@ def launch_command(
     template: str,
     context_path: Optional[Path] = None,
     data: Optional[Dict[str, Any]] = None,
+    preview: Optional[bool] = False,
 ) -> Any:
     user_files = []  # type: List[Dict[str, Any]]
     if context_path:
@@ -270,6 +271,9 @@ def launch_command(
         message_bytes = json.dumps(data).encode("utf-8")
         base64_bytes = base64.b64encode(message_bytes)
         body["data"] = base64_bytes
+
+    if preview:
+        body["preview"] = preview
 
     return api.post(
         master,

@@ -7,11 +7,15 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	"github.com/google/uuid"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -28,7 +32,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/union"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
@@ -131,26 +134,8 @@ func (m *trialMessage) UnmarshalJSON(data []byte) error {
 }
 
 type rendezvousInfoMessage struct {
-	// Addrs is deprecated in favor of Containers.
 	Addrs []string `json:"addrs"`
-	// Addrs2 is deprecated in favor of Containers.
-	Addrs2 []string `json:"addrs2"`
-
-	Rank int `json:"rank"`
-
-	// Containers contains rendezvous information for each container.
-	Containers []*rendezvousContainer `json:"containers"`
-}
-
-type rendezvousContainer struct {
-	Addresses []*rendezvousAddress `json:"addresses"`
-}
-
-type rendezvousAddress struct {
-	ContainerPort int    `json:"container_port"`
-	ContainerIP   string `json:"container_ip"`
-	HostPort      int    `json:"host_port"`
-	HostIP        string `json:"host_ip"`
+	Rank  int      `json:"rank"`
 }
 
 type runWorkload struct {
@@ -209,6 +194,7 @@ type (
 		db              *db.PgDB
 		experimentState model.State
 		experiment      *model.Experiment
+		config          expconf.ExperimentConfig
 		modelDefinition archive.Archive
 
 		warmStartCheckpointID *int
@@ -246,6 +232,7 @@ type (
 // It must only error when a snapshot is passed.
 func newTrial(
 	exp *experiment,
+	config expconf.ExperimentConfig,
 	create searcher.Create,
 	firstCheckpoint *model.Checkpoint,
 ) *trial {
@@ -260,10 +247,11 @@ func newTrial(
 		db:                    exp.db,
 		experimentState:       exp.State,
 		experiment:            exp.Experiment,
+		config:                config,
 		modelDefinition:       exp.modelDefinition,
 		warmStartCheckpointID: warmStartCheckpointID,
 
-		sequencer: newTrialWorkloadSequencer(exp.Experiment, create, firstCheckpoint),
+		sequencer: newTrialWorkloadSequencer(exp.Experiment.ID, config, create, firstCheckpoint),
 
 		create: create,
 
@@ -335,7 +323,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				then manual intervention may be needed to correct resource allocation accounting`)
 		}
 
-		if t.Restarts > t.experiment.Config.MaxRestarts() {
+		if t.Restarts > t.config.MaxRestarts() {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
 			}
@@ -363,14 +351,21 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.trialClosing() {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState {
-			slotsNeeded := t.experiment.Config.Resources().SlotsPerTrial()
-			label := t.experiment.Config.Resources().AgentLabel()
-			resourcePool := t.experiment.Config.Resources().ResourcePool()
+			slotsNeeded := t.config.Resources().SlotsPerTrial()
+			label := t.config.Resources().AgentLabel()
+			resourcePool := t.config.Resources().ResourcePool()
 			var name string
 			if t.idSet {
 				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
 			} else {
 				name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
+			}
+
+			// TODO(brad): When we support tracking runs for more than trials, this logic should
+			// likely be generalized by moving it rather than duplicating it for all task types.
+			t.RunID++
+			if err := t.db.AddTrialRun(t.id, t.RunID); err != nil {
+				return errors.Wrap(err, "failed to save trial run")
 			}
 
 			t.task = &sproto.AllocateRequest{
@@ -417,9 +412,6 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case containerConnected, sproto.TaskContainerStateChanged:
 		return t.processContainerMsg(ctx)
 
-	case *websocket.Conn, *apiv1.KillTrialRequest:
-		return t.processAPIMsg(ctx)
-
 	case workload.CompletedMessage:
 		if err := t.processCompletedWorkload(ctx, msg); err != nil {
 			return err
@@ -438,10 +430,13 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		ctx.Log().Info("found child actor failed, terminating forcibly")
 		t.terminate(ctx, true)
 
-	case killTrial:
-		ctx.Log().Info("received killing request")
+	case killTrial, *apiv1.KillTrialRequest:
+		ctx.Log().Info("received API request to kill trial")
 		t.Killed = true
 		t.terminate(ctx, true)
+		if ctx.ExpectingResponse() {
+			ctx.Respond(&apiv1.KillTrialResponse{})
+		}
 
 	case allReadyTimeout:
 		if msg.runID == t.RunID &&
@@ -522,26 +517,6 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *trial) processAPIMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case *websocket.Conn:
-		a := api.WrapSocket(msg, workload.CompletedMessage{}, false)
-		if ref, created := ctx.ActorOf("socket", a); created {
-			ctx.Respond(ref)
-		}
-
-	case *apiv1.KillTrialRequest:
-		ctx.Log().Info("received API request to kill trial")
-		t.Killed = true
-		t.terminate(ctx, true)
-		ctx.Respond(&apiv1.KillTrialResponse{})
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
 func (t *trial) processID(id int) {
 	t.id = id
 	t.idSet = true
@@ -586,7 +561,7 @@ func (t *trial) processAllocated(
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
-		if t.experiment.Config.PerformInitialValidation() {
+		if t.config.PerformInitialValidation() {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
 				t.terminate(ctx, true)
@@ -613,12 +588,6 @@ func (t *trial) processAllocated(
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
-	}
-
-	// TODO(brad): When we support tracking runs for more than trials, this logic should
-	// likely be generalized by moving it rather than duplicating it for all task types.
-	if err = t.db.AddTrialRun(t.id, t.RunID); err != nil {
-		ctx.Log().WithError(err).Error("failed to save trial run")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
@@ -666,7 +635,7 @@ func (t *trial) processAllocated(
 		taskSpec.AgentUserGroup = t.agentUserGroup
 		taskSpec.TaskToken = taskToken
 		taskSpec.SetInner(&tasks.StartTrial{
-			ExperimentConfig:    t.experiment.Config,
+			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
 			ModelDefinition:     t.modelDefinition,
 			HParams:             t.create.Hparams,
 			TrialSeed:           t.create.TrialSeed,
@@ -729,7 +698,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
 	case op != nil:
-		m, err := msg.ValidationMetrics.Metric(t.experiment.Config.Searcher().Metric())
+		m, err := msg.ValidationMetrics.Metric(t.config.Searcher().Metric())
 		if err != nil {
 			return err
 		}
@@ -875,7 +844,6 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
 func (t *trial) pushRendezvous(ctx *actor.Context) error {
-	ctx.Log().Info("pushing rendezvous information")
 	if !t.allReady(ctx) {
 		ctx.Log().Info("found not all containers are connected")
 		return nil
@@ -918,39 +886,23 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		}
 	})
 
-	var rcontainers []*rendezvousContainer
-	var addrs1 []string
-	var addrs2 []string
+	var raddrs []string
 	for _, caddr := range caddrs {
-		var addresses []*rendezvousAddress
-
 		var addrs []cproto.Address
 		for _, addr := range caddr.Addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort &&
 				addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
 			}
-
-			addresses = append(addresses, &rendezvousAddress{
-				ContainerPort: addr.ContainerPort,
-				ContainerIP:   addr.ContainerIP,
-				HostPort:      addr.HostPort,
-				HostIP:        addr.HostIP,
-			})
 		}
 
-		if numAddrs := len(addrs); numAddrs == 2 {
-			addrs1 = append(addrs1, formatAddress(addrs[0]))
-			addrs2 = append(addrs2, formatAddress(addrs[1]))
+		if numAddrs := len(addrs); numAddrs == 1 {
+			raddrs = append(raddrs, formatAddress(addrs[0]))
 		} else {
 			ctx.Log().Errorf(
-				"found %d rendezvous addresses instead of 2 for container %s; dropping rendezvous addresses %v",
+				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
 				numAddrs, caddr.Container.ID, addrs)
 		}
-
-		rcontainers = append(rcontainers, &rendezvousContainer{
-			Addresses: addresses,
-		})
 	}
 
 	for _, caddr := range caddrs {
@@ -959,10 +911,8 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
 			RendezvousInfo: &rendezvousInfoMessage{
-				Addrs:      addrs1,
-				Addrs2:     addrs2,
-				Rank:       caddr.Ordinal,
-				Containers: rcontainers,
+				Addrs: raddrs,
+				Rank:  caddr.Ordinal,
 			},
 		}); err != nil {
 			ctx.Log().WithError(err).Error("cannot write to socket")
@@ -1083,7 +1033,7 @@ func (t *trial) reset() error {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.experiment.Config.MaxRestarts() ||
+	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.config.MaxRestarts() ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
@@ -1134,8 +1084,6 @@ func (t *trial) terminated(ctx *actor.Context) {
 		ctx.Log().WithError(err).Error("failed to mark trial run completed")
 	}
 
-	t.RunID++
-
 	if t.task != nil {
 		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
 			ctx.Log().WithError(err).Error("error delete task session for a trial")
@@ -1178,9 +1126,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.Restarts, t.experiment.Config.MaxRestarts(), status)
+		t.Restarts, t.config.MaxRestarts(), status)
 	t.Restarts++
-	if t.Restarts <= t.experiment.Config.MaxRestarts() {
+	if t.Restarts <= t.config.MaxRestarts() {
 		ctx.Log().Infof("resetting trial %d", t.id)
 		if err := t.reset(); err != nil {
 			ctx.Log().Warn("failed to reset trial", err)

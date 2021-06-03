@@ -172,6 +172,14 @@ export interface Command {
   user: User;
 }
 
+export interface NotebookConfig {
+  name?: string;
+  pool?: string;
+  slots?: number;
+  template?: string;
+  type?: ResourceType.CPU | ResourceType.GPU
+}
+
 export enum CheckpointStorageType {
   AWS = 'aws',
   GCS = 'gcs',
@@ -503,6 +511,11 @@ export interface TrialLog {
   time: string;
 }
 
+export interface Template {
+  config?: RawJson;
+  name: string;
+}
+
 export interface ResourcePool {
   cpuContainerCapacity: number;
   cpuContainerCapacityPerAgent: number;
@@ -522,6 +535,7 @@ export interface ResourcePool {
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
   slotsAvailable: number;
+  slotsPerAgent?: number;
   slotsUsed: number;
   type: V1ResourcePoolType;
 }

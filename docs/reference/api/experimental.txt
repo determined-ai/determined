@@ -5,7 +5,7 @@
 #########################
 
 .. automodule:: determined.experimental
-   :members: create, create_trial_instance
+   :members: create
 
 ****************
  ``Checkpoint``

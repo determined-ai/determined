@@ -108,6 +108,9 @@ type spotState struct {
 // fulfilled an actual EC2 instance will be returned as an Instance. If the request has not
 // been fulfilled, a fake Instance will be returned where the InstanceID is the SpotRequestID
 // and the state is SpotRequestPendingAWS.
+//
+// This function does more than just list spot instances. Because this function is called every
+// provisioner tick, we have it also handle several aspects of the spot provisioner lifecycle.
 func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(ctx, false)
 	if err != nil {
@@ -317,6 +320,10 @@ func (c *awsCluster) setTagsOnInstances(ctx *actor.Context, activeReqs *setOfSpo
 			{
 				Key:   aws.String("Name"),
 				Value: aws.String(c.InstanceName),
+			},
+			{
+				Key:   aws.String("determined-resource-pool"),
+				Value: aws.String(c.resourcePool),
 			},
 			{
 				Key:   aws.String(c.TagKey),
@@ -533,6 +540,10 @@ func (c *awsCluster) createSpotInstanceRequest(
 						Value: aws.String(c.InstanceName),
 					},
 					{
+						Key:   aws.String("determined-resource-pool"),
+						Value: aws.String(c.resourcePool),
+					},
+					{
 						Key:   aws.String("determined-master-address"),
 						Value: aws.String(c.masterURL.String()),
 					},
@@ -592,6 +603,10 @@ func (c *awsCluster) listCanceledButInstanceRunningSpotRequests(
 				},
 			},
 			{
+				Name:   aws.String(fmt.Sprintf("tag:%s", "determined-resource-pool")),
+				Values: []*string{aws.String(c.resourcePool)},
+			},
+			{
 				Name: aws.String("status-code"),
 				Values: []*string{
 					aws.String("request-canceled-and-instance-running"),
@@ -638,6 +653,10 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 				},
 			},
 			{
+				Name:   aws.String(fmt.Sprintf("tag:%s", "determined-resource-pool")),
+				Values: []*string{aws.String(c.resourcePool)},
+			},
+			{
 				Name: aws.String("state"),
 				Values: []*string{
 					aws.String("open"),
@@ -649,7 +668,7 @@ func (c *awsCluster) listActiveSpotInstanceRequests(
 
 	response, err := c.client.DescribeSpotInstanceRequests(input)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	ret := newSetOfSpotRequests()
@@ -693,6 +712,10 @@ func (c *awsCluster) listSpotRequestsByID(
 				Values: []*string{
 					aws.String(c.TagValue),
 				},
+			},
+			{
+				Name:   aws.String(fmt.Sprintf("tag:%s", "determined-resource-pool")),
+				Values: []*string{aws.String(c.resourcePool)},
 			},
 			{
 				Name:   aws.String("spot-instance-request-id"),

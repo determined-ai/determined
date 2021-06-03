@@ -74,6 +74,11 @@ Parameters:
     Description: Ip range for Inbound
     Default: 0.0.0.0/0
 
+  ImageRepoPrefix:
+    Type: String
+    Description: Docker image repository to use for determined-master and determined-agent images
+    Default: determinedai
+
   Version:
     Type: String
     Description: Determined version or commit for master image
@@ -659,7 +664,7 @@ Resources:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
-                  agent_docker_image: determinedai/determined-agent:${Version}
+                  agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
                   instance_type: ${CPUAgentInstanceType}
                   log_group: ${LogGroup}
@@ -687,7 +692,7 @@ Resources:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
-                  agent_docker_image: determinedai/determined-agent:${Version}
+                  agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
                   instance_type: ${CPUAgentInstanceType}
                   log_group: ${LogGroup}
@@ -773,7 +778,7 @@ Resources:
                 -v /usr/local/determined/etc/master.crt:/etc/determined/master.crt \
                 -v /usr/local/determined/etc/master.key:/etc/determined/master.key \
                 -v /usr/local/determined/etc/AmazonRootCA1.pem:/etc/determined/etc/db_ssl_root_cert.pem \
-                determinedai/determined-master:${Version}
+                ${ImageRepoPrefix}/determined-master:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
 

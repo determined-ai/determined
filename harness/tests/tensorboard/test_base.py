@@ -102,7 +102,7 @@ def test_list_directory(tmp_path: pathlib.Path) -> None:
 
     full_event_path = BASE_PATH.joinpath("tensorboard", "events.out.tfevents.example")
 
-    assert set(manager.list_tfevents()) == {full_event_path}
+    assert set(manager.list_tfevents(0)) == {full_event_path}
 
 
 def test_list_nonexistent_directory(tmp_path: pathlib.Path) -> None:
@@ -114,4 +114,4 @@ def test_list_nonexistent_directory(tmp_path: pathlib.Path) -> None:
     manager = tensorboard.SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
 
     assert not pathlib.Path(base_path).exists()
-    assert manager.list_tfevents() == []
+    assert manager.list_tfevents(0) == []

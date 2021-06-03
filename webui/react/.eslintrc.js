@@ -42,7 +42,10 @@ module.exports = {
       interfaces: { order: 'alphabetically' },
       typeLiterals: { order: 'alphabetically' },
     } ],
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { args: 'after-used', ignoreRestSiblings: true },
+    ],
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
     'arrow-spacing': [ 'error', { after: true, before: true } ],

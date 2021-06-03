@@ -8,6 +8,7 @@ import yaml
 from botocore.exceptions import ClientError
 from termcolor import colored
 
+from determined.common import util
 from determined.deploy.errors import PreflightFailure
 
 from . import constants
@@ -103,7 +104,7 @@ def check_quotas(det_config: Dict[str, Any], deployment_object: DeterminedDeploy
 
         mapping_fn = pkg_resources.resource_filename("determined.deploy.aws", "vcpu_mapping.yaml")
         with open(mapping_fn) as fin:
-            mapping_data = yaml.safe_load(fin)
+            mapping_data = util.safe_load_yaml_with_exceptions(fin)
             vcpu_mapping = {d["instanceType"]: d for d in mapping_data}
 
         if gpu_instance_type not in vcpu_mapping:
