@@ -31,6 +31,14 @@
     box-shadow: var(--theme-outline);
   }
 }
+.typeFilter {
+  align-items: center;
+  display: flex;
+
+  & > [class*=Icon_base] {
+    margin-right: var(--theme-sizes-layout-medium);
+  }
+}
 .sourceLinks {
   label {
     font-size: var(--theme-sizes-font-small);

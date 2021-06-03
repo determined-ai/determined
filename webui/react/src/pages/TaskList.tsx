@@ -185,6 +185,7 @@ const TaskList: React.FC = () => {
       {...filterProps}
       multiple
       values={filters.types}
+      width={180}
       onFilter={handleTypeFilterApply}
       onReset={handleTypeFilterReset} />
   ), [ filters.types, handleTypeFilterApply, handleTypeFilterReset ]);
@@ -277,8 +278,15 @@ const TaskList: React.FC = () => {
       },
       {
         filterDropdown: typeFilterDropdown,
-        filters: Object.values(CommandType)
-          .map(value => ({ text: capitalize(value), value })),
+        filters: Object.values(CommandType).map(value => ({
+          text: (
+            <div className={css.typeFilter}>
+              <Icon name={value.toLocaleLowerCase()} />
+              <span>{capitalize(value)}</span>
+            </div>
+          ),
+          value,
+        })),
         key: 'type',
         onHeaderCell: () => filters.types ? { className: tableCss.headerFilterOn } : {},
         render: taskTypeRenderer,
