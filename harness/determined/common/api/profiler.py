@@ -1,7 +1,6 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import backoff
-import requests
 from requests.exceptions import RequestException
 
 from determined.common import api
@@ -49,6 +48,15 @@ def post_trial_profiler_metrics_batches(
     )
 
 
+class TrialProfilerSeriesLabels:
+    def __init__(self, trial_id: int, name: str, agent_id: str, gpu_uuid: str, metric_type: str):
+        self.trial_id = str(trial_id)
+        self.name = name
+        self.agent_id = agent_id
+        self.gpu_uuid = gpu_uuid if gpu_uuid != "" else None  # type: Optional[str]
+        self.metric_type = metric_type
+
+
 @backoff.on_exception(  # type: ignore
     backoff.constant,
     RequestException,
@@ -58,7 +66,7 @@ def post_trial_profiler_metrics_batches(
 def get_trial_profiler_available_series(
     master_url: str,
     trial_id: str,
-) -> None:
+) -> List[TrialProfilerSeriesLabels]:
     """
     Get available profiler series for a trial. This uses the non-streaming version of the API
     """
@@ -66,6 +74,17 @@ def get_trial_profiler_available_series(
     response = api.get(
         host=master_url,
         path=f"/api/v1/trials/{trial_id}/profiler/available_series",
-        params={"follow": follow}
+        params={"follow": follow},
     )
-    print(response)
+    j = response.json()
+    labels = [
+        TrialProfilerSeriesLabels(
+            trial_id=ld["trialId"],
+            name=ld["name"],
+            agent_id=ld["agentId"],
+            gpu_uuid=ld["gpuUuid"],
+            metric_type=ld["metricType"],
+        )
+        for ld in j["result"]["labels"]
+    ]
+    return labels

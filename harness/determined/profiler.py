@@ -52,8 +52,8 @@ def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
     """
     Return True if there are already profiling metrics for the trial.
     """
-    # TODO: Implement
-    raise NotImplementedError
+    series_labels = api.get_trial_profiler_available_series(master_url, trial_id)
+    return len(series_labels) > 0
 
 
 SendBatchFnType = Callable[[str, List[TrialProfilerMetricsBatch]], None]
