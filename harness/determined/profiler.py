@@ -118,6 +118,7 @@ class ProfilerAgent:
 
         self.has_started = False
         self.has_finished = False
+        self.disabled_due_to_preexisting_metrics = False
 
         self.shutdown_lock = threading.Lock()
 
