@@ -19,54 +19,33 @@ from tests.experiment.fixtures import estimator_linear_model, estimator_xor_mode
     params=[
         estimator_xor_model.XORTrial,
         estimator_xor_model.XORTrialDataLayer,
-        [utils.fixtures_path("estimator_xor_model_native.py")],
     ],
 )
 def xor_trial_controller(request):
     """
-    This fixture will provide a function that takes a hyperparameters
-    dictionary as input and returns a trial controller. It is parameterized
-    over different implementations (both native and trial), so that any test
+    This fixture will provide a function that takes a hyperparameters dictionary as input and
+    returns a trial controller. It is parameterized over different implementations, so that any test
     that uses it may test a full set of implementations.
     """
-    if isinstance(request.param, list):
 
-        def _xor_trial_controller(
-            hparams: Dict[str, Any],
-            workloads: workload.Stream,
-            scheduling_unit: int = 1,
-            load_path: Optional[str] = None,
-        ) -> det.TrialController:
-            return utils.make_trial_controller_from_native_implementation(
-                command=request.param,
-                hparams=hparams,
-                workloads=workloads,
-                scheduling_unit=scheduling_unit,
-                load_path=load_path,
-                trial_seed=325,
-            )
+    def _xor_trial_controller(
+        hparams: Dict[str, Any],
+        workloads: workload.Stream,
+        scheduling_unit: int = 1,
+        load_path: Optional[str] = None,
+        exp_config: Optional[Dict] = None,
+    ) -> det.TrialController:
+        return utils.make_trial_controller_from_trial_implementation(
+            trial_class=request.param,
+            hparams=hparams,
+            workloads=workloads,
+            scheduling_unit=scheduling_unit,
+            load_path=load_path,
+            exp_config=exp_config,
+            trial_seed=325,
+        )
 
-        return _xor_trial_controller
-    else:
-
-        def _xor_trial_controller(
-            hparams: Dict[str, Any],
-            workloads: workload.Stream,
-            scheduling_unit: int = 1,
-            load_path: Optional[str] = None,
-            exp_config: Optional[Dict] = None,
-        ) -> det.TrialController:
-            return utils.make_trial_controller_from_trial_implementation(
-                trial_class=request.param,
-                hparams=hparams,
-                workloads=workloads,
-                scheduling_unit=scheduling_unit,
-                load_path=load_path,
-                exp_config=exp_config,
-                trial_seed=325,
-            )
-
-        return _xor_trial_controller
+    return _xor_trial_controller
 
 
 class TestXORTrial:
@@ -346,10 +325,6 @@ class TestLinearTrial:
             trial_seed=0,
         )
         controller.run()
-
-
-def test_local_mode() -> None:
-    utils.run_local_test_mode(utils.fixtures_path("estimator_xor_model_native.py"))
 
 
 def test_create_trial_instance() -> None:

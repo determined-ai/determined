@@ -293,54 +293,6 @@ class TFKerasTrialController(det.LoopTrialController):
             hvd_config,
         )
 
-    @staticmethod
-    def from_native(
-        context: det.NativeContext,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: det.RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-    ) -> det.TrialController:
-        check.is_instance(
-            context,
-            keras.TFKerasNativeContext,
-            "TFKerasTrialController needs a TFKerasSprinkleContext",
-        )
-        context = cast(keras.TFKerasNativeContext, context)
-
-        check.is_not_none(context.model, "Please call wrap_model(...).")
-
-        check.is_not_none(context.compile_args, "Please call model.compile(...).")
-        check.is_not_none(
-            context.train_config, "Please call model.fit(...) or model.fit_generator(...)."
-        )
-
-        # For the Native API, we would break the user's model if we changed the session
-        # right now, so we have to trust the user did not modify what we set previously.
-        #
-        # TODO(ryan): Fix this, probably with a function for configuring the backend session.
-        session = tf.compat.v1.keras.backend.get_session()
-
-        compile_args = cast(inspect.BoundArguments, context.compile_args)
-        train_config = cast(keras.TFKerasTrainConfig, context.train_config)
-
-        TFKerasTrialController.compile_model(
-            context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
-        )
-
-        return TFKerasTrialController(
-            context.model,
-            session,
-            train_config,
-            context,
-            env,
-            workloads,
-            load_path,
-            rendezvous_info,
-            hvd_config,
-        )
-
     def __init__(
         self,
         model: tf.keras.models.Model,

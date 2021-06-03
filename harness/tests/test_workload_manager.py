@@ -66,10 +66,6 @@ class NoopTrialController(det.TrialController):
     def from_trial(*_: Any, **__: Any) -> det.TrialController:
         raise NotImplementedError()
 
-    @staticmethod
-    def from_native(*_: Any, **__: Any) -> det.TrialController:
-        raise NotImplementedError()
-
     def run(self) -> None:
         for w, args, response_func in self.workloads:
             if w.kind == workload.Workload.Kind.RUN_STEP:

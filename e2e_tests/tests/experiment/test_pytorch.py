@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from determined.experimental import Determined
@@ -129,3 +131,11 @@ def test_pytorch_gan_parallel() -> None:
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_pytorch_native_api() -> None:
+    exp_id = exp.create_native_experiment(
+        conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
+    )
+    exp.wait_for_experiment_state(exp_id, "COMPLETED")

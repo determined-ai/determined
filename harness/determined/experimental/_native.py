@@ -3,7 +3,7 @@ import pathlib
 import sys
 import tempfile
 import warnings
-from typing import Any, Dict, List, Optional, Tuple, Type, cast
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import determined as det
 import determined.common
@@ -112,68 +112,7 @@ def _make_test_workloads(
     logging.info("The test experiment passed.")
 
 
-def _stop_loading_implementation() -> None:
-    raise det.errors.StopLoadingImplementation()
-
-
-def _init_cluster_mode(
-    trial_def: Optional[Type[det.Trial]] = None,
-    controller_cls: Optional[Type[det.TrialController]] = None,
-    native_context_cls: Optional[Type[det.NativeContext]] = None,
-    config: Optional[Dict[str, Any]] = None,
-    test: bool = False,
-    context_dir: str = "",
-    command: Optional[List[str]] = None,
-    master_url: Optional[str] = None,
-) -> Any:
-    if controller_cls is not None and native_context_cls is not None:
-        # Case 1: initialize Native implementation.
-        if load.RunpyGlobals.is_initialized():
-            controller_cls.pre_execute_hook(
-                env=load.RunpyGlobals.get_instance().env,
-                hvd_config=load.RunpyGlobals.get_instance().hvd_config,
-            )
-            context = native_context_cls(
-                env=load.RunpyGlobals.get_instance().env,
-                hvd_config=load.RunpyGlobals.get_instance().hvd_config,
-                rendezvous_info=load.RunpyGlobals.get_instance().rendezvous_info,
-            )
-            load.RunpyGlobals.set_runpy_native_result(context, controller_cls)
-            context._set_train_fn(_stop_loading_implementation)
-            return context
-
-        else:
-            _submit_experiment(
-                config=config, context_dir=context_dir, command=command, master_url=master_url
-            )
-            logging.info("Exiting the program after submitting the experiment.")
-            sys.exit(0)
-
-    elif trial_def is not None:
-        # Case 2: initialize Trial implementation.
-        if load.RunpyGlobals.is_initialized():
-            load.RunpyGlobals.set_runpy_trial_result(
-                trial_def, cast(Type[det.TrialController], trial_def.trial_controller_class)
-            )
-            _stop_loading_implementation()
-
-        else:
-            _submit_experiment(
-                config=config,
-                test=test,
-                context_dir=context_dir,
-                command=command,
-                master_url=master_url,
-            )
-
-    else:
-        raise errors.InternalException(
-            "Must provide a trial_def if using Trial API or "
-            "a controller_cls and a native_context_cls if using Native API."
-        )
-
-
-def _load_trial_on_local(
+def _load_trial_for_checkpoint_export(
     context_dir: pathlib.Path,
     managed_training: bool,
     config: Dict[str, Any],
@@ -189,9 +128,7 @@ def _load_trial_on_local(
 
 
 def test_one_batch(
-    controller_cls: Optional[Type[det.TrialController]] = None,
-    native_context_cls: Optional[Type[det.NativeContext]] = None,
-    trial_class: Optional[Type[det.Trial]] = None,
+    trial_class: Type[det.Trial],
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
     # Override the scheduling_unit value to 1.
@@ -208,94 +145,18 @@ def test_one_batch(
     logging.info(f"Using hyperparameters: {env.hparams}.")
     logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
-    if native_context_cls is not None and controller_cls is not None:
-        # Case 1: test one batch for Native implementation.
-        controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
-        context = native_context_cls(
-            env=env,
-            hvd_config=hvd_config,
-            rendezvous_info=rendezvous_info,
-        )
-
-        def train_fn() -> None:
-            controller = cast(Type[det.TrialController], controller_cls).from_native(
-                context=context,
-                env=env,
-                workloads=workloads,
-                load_path=None,
-                rendezvous_info=rendezvous_info,
-                hvd_config=hvd_config,
-            )
-            controller.run()
-            checkpoint_dir.cleanup()
-
-        context._set_train_fn(train_fn)
-        logging.info(
-            "Note: to submit an experiment to the cluster, change local parameter to False"
-        )
-        return context
-
-    elif trial_class is not None:
-        # Case 2: test one batch for Trial implementation.
-        controller = load.load_controller_from_trial(
-            trial_class=trial_class,
-            env=env,
-            workloads=workloads,
-            load_path=None,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-        )
-        controller.run()
-        checkpoint_dir.cleanup()
-        logging.info(
-            "Note: to submit an experiment to the cluster, change local parameter to False"
-        )
-
-    else:
-        raise errors.InternalException(
-            "Must provide a trial_def if using Trial API or "
-            "a controller_cls and a native_context_cls if using Native API."
-        )
-
-
-def init_native(
-    trial_def: Optional[Type[det.Trial]] = None,
-    controller_cls: Optional[Type[det.TrialController]] = None,
-    native_context_cls: Optional[Type[det.NativeContext]] = None,
-    config: Optional[Dict[str, Any]] = None,
-    local: bool = False,
-    test: bool = False,
-    context_dir: str = "",
-    command: Optional[List[str]] = None,
-    master_url: Optional[str] = None,
-) -> Any:
-    determined.common.set_logger(
-        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
+    # Case 2: test one batch for Trial implementation.
+    controller = load.load_trial(
+        trial_class=trial_class,
+        env=env,
+        workloads=workloads,
+        load_path=None,
+        rendezvous_info=rendezvous_info,
+        hvd_config=hvd_config,
     )
-
-    if local:
-        if not test:
-            logging.warning("local training is not supported, testing instead")
-
-        with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
-            return test_one_batch(
-                controller_cls=controller_cls,
-                native_context_cls=native_context_cls,
-                trial_class=trial_def,
-                config=config,
-            )
-
-    else:
-        return _init_cluster_mode(
-            trial_def=trial_def,
-            controller_cls=controller_cls,
-            native_context_cls=native_context_cls,
-            config=config,
-            test=test,
-            context_dir=context_dir,
-            command=command,
-            master_url=master_url,
-        )
+    controller.run()
+    checkpoint_dir.cleanup()
+    logging.info("Note: to submit an experiment to the cluster, change local parameter to False")
 
 
 def create(
@@ -367,15 +228,32 @@ def create(
             "or test=True."
         )
 
-    return init_native(
-        trial_def=trial_def,
-        config=config,
-        local=local,
-        test=test,
-        context_dir=context_dir,
-        command=command,
-        master_url=master_url,
+    determined.common.set_logger(
+        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
+
+    if local:
+        # Local test mode.
+        with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
+            return test_one_batch(
+                trial_class=trial_def,
+                config=config,
+            )
+
+    elif not load.RunpyGlobals.is_initialized():
+        # Cluster mode, but still running locally; submit the experiment.
+        _submit_experiment(
+            config=config,
+            test=test,
+            context_dir=context_dir,
+            command=command,
+            master_url=master_url,
+        )
+
+    else:
+        # Cluster mode, now on the cluster; actually train.
+        load.RunpyGlobals.set_runpy_trial_result(trial_def)
+        raise det.errors.StopLoadingImplementation()
 
 
 def create_trial_instance(
