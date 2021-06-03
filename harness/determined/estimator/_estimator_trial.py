@@ -477,32 +477,6 @@ class EstimatorTrialController(det.LoopTrialController):
             **kwargs,
         )
 
-    @staticmethod
-    def from_native(context: det.NativeContext, *args: Any, **kwargs: Any) -> det.TrialController:
-        check.is_instance(
-            context,
-            estimator.EstimatorNativeContext,
-            "EstimatorTrialController needs an EstimatorSprinkleContext",
-        )
-        context = cast(estimator.EstimatorNativeContext, context)
-
-        check.true(
-            hasattr(context, "estimator")
-            and hasattr(context, "train_spec")
-            and hasattr(context, "eval_spec"),
-            "Please call TFEstimatorExperiment.train_and_evaluate().",
-        )
-
-        return EstimatorTrialController(
-            context.estimator,
-            context.train_spec,
-            context.eval_spec,
-            context.serving_input_receiver_fns,
-            context,
-            *args,
-            **kwargs,
-        )
-
     def _check_and_repeat_train_input_fn(self, f: Callable) -> Callable:
         """
         Modifies functions that returns a `tf.data.Dataset` to repeat. This is done

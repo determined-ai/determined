@@ -64,7 +64,7 @@ def load_keras_model_weights(
     checkpoint_filename: str,
     metadata: Dict[str, Any],
 ) -> tf.keras.Model:
-    trial_cls, trial_context = experimental._load_trial_on_local(
+    trial_cls, trial_context = experimental._load_trial_for_checkpoint_export(
         ckpt_dir.joinpath("code"),
         managed_training=False,
         config=metadata["experiment_config"],

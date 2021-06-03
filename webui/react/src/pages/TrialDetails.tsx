@@ -254,11 +254,9 @@ const TrialDetailsComp: React.FC = () => {
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />
         </TabPane>
-        {tabKey === TabType.Profiles && (
-          <TabPane key={TabType.Profiles} tab="Profiles">
-            <TrialDetailsProfiles experiment={experiment} trial={trial} />
-          </TabPane>
-        )}
+        <TabPane key={TabType.Profiles} tab="Profiles">
+          <TrialDetailsProfiles experiment={experiment} trial={trial} />
+        </TabPane>
         <TabPane key={TabType.Logs} tab="Logs">
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>

@@ -75,10 +75,6 @@ class PyTorchTrialController(det.LoopTrialController):
         return PyTorchTrialController(*args, **kwargs)
 
     @staticmethod
-    def from_native(*args: Any, **kwargs: Any) -> det.TrialController:
-        raise NotImplementedError("PyTorchTrial only supports the Trial API")
-
-    @staticmethod
     def supports_mixed_precision() -> bool:
         return True
 

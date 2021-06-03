@@ -2,22 +2,19 @@ import { Alert } from 'antd';
 import React, { useMemo } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
-import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlotChart';
+import {
+  convertMetricsToUplotData, MetricsAggregateInterface,
+} from 'pages/TrialDetails/Profiles/utils';
 import { CHART_HEIGHT } from 'pages/TrialDetails/TrialDetailsProfiles';
-import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { findFactorOfNumber } from 'utils/number';
 
-import { convertMetricsToUplotData, MetricType, useFetchMetrics } from './utils';
-
 export interface Props {
-  trial: TrialDetails;
+  timingMetrics: MetricsAggregateInterface;
 }
 
-const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
-  const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
-
+const TimingMetricChart: React.FC<Props> = ({ timingMetrics }: Props) => {
   const chartData: AlignedData = useMemo(() => {
     return convertMetricsToUplotData(timingMetrics.dataByBatch, timingMetrics.names);
   }, [ timingMetrics ]);
@@ -52,21 +49,15 @@ const TimingMetricChart: React.FC<Props> = ({ trial }: Props) => {
 
   if (timingMetrics.isEmpty) {
     return (
-      <Section title="Timing Metrics">
-        <Alert
-          description="Timing metrics may not be available for your framework."
-          message="No data found."
-          type="warning"
-        />
-      </Section>
+      <Alert
+        description="Timing metrics may not be available for your framework."
+        message="No data found."
+        type="warning"
+      />
     );
   }
 
-  return (
-    <Section bodyBorder title="Timing Metrics">
-      <UPlotChart data={chartData} options={chartOptions} />
-    </Section>
-  );
+  return <UPlotChart data={chartData} options={chartOptions} />;
 };
 
 export default TimingMetricChart;

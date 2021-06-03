@@ -1,0 +1,7 @@
+:orphan:
+
+**Removed Features**
+
+-  The methods ``det.experimental.keras.init()`` and
+   ``det.experimental.estimator.init()`` have been removed. They were
+   deprecated in 0.13.5.

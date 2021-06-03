@@ -15,14 +15,6 @@
    :member-order: bysource
    :special-members: __init__
 
-.. _estimator-init:
-
-**********************************************
- ``determined.experimental.estimator.init()``
-**********************************************
-
-.. autofunction:: determined.experimental.estimator.init
-
 .. _estimator-context:
 
 *******************************************

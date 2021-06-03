@@ -1,20 +1,26 @@
 import { Alert } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
 import Section from 'components/Section';
+import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
+import SystemMetricChart from 'pages/TrialDetails/Profiles/SystemMetricChart';
+import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
+import TimingMetricChart from 'pages/TrialDetails/Profiles/TimingMetricChart';
+import { MetricType, useFetchMetrics } from 'pages/TrialDetails/Profiles/utils';
 import { TrialDetails } from 'types';
-
-import SystemMetricChart from './SystemMetricChart';
-import SystemMetricFilter, { FiltersInterface } from './SystemMetricFilter';
-import TimingMetricChart from './TimingMetricChart';
-import { MetricType, useFetchMetrics } from './utils';
 
 export interface Props {
   trial: TrialDetails;
 }
 
 const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
-  const [ filters, setFilters ] = useState<FiltersInterface>({});
+  const {
+    filters,
+    hasProfilingData,
+    setHasProfilingData,
+    timingMetrics,
+  } = useProfilesFilterContext();
+
   const systemMetrics = useFetchMetrics(
     trial.id,
     MetricType.System,
@@ -23,29 +29,42 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
     filters.gpuUuid,
   );
 
+  // memoize if trial has profiling data
+  useEffect(() => {
+    if (hasProfilingData || systemMetrics.isEmpty) return;
+    setHasProfilingData(true);
+  }, [ hasProfilingData, setHasProfilingData, systemMetrics.isEmpty ]);
+
+  if (!hasProfilingData) {
+    return <Alert message="No data available." type="warning" />;
+  }
+
   return (
     <>
 
-      {systemMetrics.isEmpty && (
-        <Alert
-          message="No data available."
-          type="warning"
-        />
-      )}
+      <Section
+        bodyBorder
+        filters={<SystemMetricFilter />}
+        loading={systemMetrics.isLoading}
+        title="System Metrics"
+      >
+        <SystemMetricChart systemMetrics={systemMetrics} />
+      </Section>
 
-      <div style={{ display: (systemMetrics.isEmpty ? 'none' : 'block') }}>
-
-        <Section
-          bodyBorder
-          filters={<SystemMetricFilter trial={trial} value={filters} onChange={setFilters} />}
-          title="System Metrics"
-        >
-          <SystemMetricChart systemMetrics={systemMetrics} />
-        </Section>
-
-        <TimingMetricChart trial={trial} />
-
-      </div>
+      <Section
+        bodyBorder={!timingMetrics.isEmpty}
+        loading={timingMetrics.isLoading}
+        title="Timing Metrics"
+      >
+        {timingMetrics.isEmpty
+          ? <Alert
+            description="Timing metrics may not be available for your framework."
+            message="No data found."
+            type="warning"
+          />
+          : <TimingMetricChart timingMetrics={timingMetrics} />
+        }
+      </Section>
 
     </>
   );

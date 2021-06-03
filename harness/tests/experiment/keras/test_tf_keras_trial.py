@@ -31,55 +31,32 @@ def test_executing_eagerly():
         tf_keras_xor_model.XORTrialWithTrainingMetrics,
         tf_keras_xor_model.XORTrialWithCustomObjects,
         tf_keras_xor_model.XORTrialWithDataLayer,
-        [utils.fixtures_path("tf_keras_xor_model_native.py")],
-        [utils.fixtures_path("tf_keras_xor_model_native.py"), "--use-dataset"],
     ],
 )
 def xor_trial_controller(request):
     """
-    This fixture will provide a function that takes a hyperparameters
-    dictionary as input and returns a trial controller. It is parameterized
-    over different implementations (both native and trial), so that any test
+    This fixture will provide a function that takes a hyperparameters dictionary as input and
+    returns a trial controller. It is parameterized over different implementations, so that any test
     that uses it may test a full set of implementations.
     """
-    if isinstance(request.param, list):
 
-        def _xor_trial_controller(
-            hparams: Dict[str, Any],
-            workloads: workload.Stream,
-            scheduling_unit: int = 1,
-            load_path: Optional[str] = None,
-            trial_seed: int = 0,
-        ) -> det.TrialController:
-            return utils.make_trial_controller_from_native_implementation(
-                command=request.param,
-                hparams=hparams,
-                workloads=workloads,
-                scheduling_unit=scheduling_unit,
-                load_path=load_path,
-                trial_seed=trial_seed,
-            )
+    def _xor_trial_controller(
+        hparams: Dict[str, Any],
+        workloads: workload.Stream,
+        scheduling_unit: int = 1,
+        load_path: Optional[str] = None,
+        trial_seed: int = 0,
+    ) -> det.TrialController:
+        return utils.make_trial_controller_from_trial_implementation(
+            request.param,
+            hparams,
+            workloads,
+            scheduling_unit=scheduling_unit,
+            load_path=load_path,
+            trial_seed=trial_seed,
+        )
 
-        return _xor_trial_controller
-    else:
-
-        def _xor_trial_controller(
-            hparams: Dict[str, Any],
-            workloads: workload.Stream,
-            scheduling_unit: int = 1,
-            load_path: Optional[str] = None,
-            trial_seed: int = 0,
-        ) -> det.TrialController:
-            return utils.make_trial_controller_from_trial_implementation(
-                request.param,
-                hparams,
-                workloads,
-                scheduling_unit=scheduling_unit,
-                load_path=load_path,
-                trial_seed=trial_seed,
-            )
-
-        return _xor_trial_controller
+    return _xor_trial_controller
 
 
 class TestKerasTrial:
@@ -163,7 +140,6 @@ class TestKerasTrial:
         hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
         exp_config = utils.make_default_exp_config(hparams, scheduling_unit=100)
         exp_config["records_per_epoch"] = 100
-        # TODO(DET-2436): Add a unit test for native implementation with tf dataset.
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class,
             hparams,
@@ -346,10 +322,6 @@ def test_surface_native_error():
             )
         else:
             assert b"ValueError: Input 0 of layer sequential is incompatible with the layer" in err
-
-
-def test_local_mode() -> None:
-    utils.run_local_test_mode(utils.fixtures_path("tf_keras_xor_model_native.py"))
 
 
 def test_create_trial_instance() -> None:

@@ -14,7 +14,8 @@ export enum MetricType {
 }
 
 // {[metric_type]: {[name]: {[agent]: [gpu, ..], ..}, ..}, ..}
-export type AvailableSeries = Record<string, Record<string, Record<string, string[]>>>;
+export type AvailableSeriesType = Record<string, Record<string, string[]>>;
+export type AvailableSeries = Record<string, AvailableSeriesType>;
 
 export type MetricsAggregateInterface = {
   // group information by {[batch]: {[name]: value, ..}, ..}
@@ -50,14 +51,13 @@ export const convertMetricsToUplotData =
 
 export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'cpu_util_simple') return '%';
-  if (metricName === 'disk_iops') return '';
   if (metricName === 'disk_throughput_read') return 'bytes/second';
   if (metricName === 'disk_throughput_write') return 'bytes/second';
   if (metricName === 'free_memory') return 'Gigabytes';
   if (metricName === 'gpu_util') return '%';
   if (metricName === 'net_throughput_recv') return 'Gigabit/s';
   if (metricName === 'net_throughput_sent') return 'Gigabit/s';
-  return '';
+  return metricName;
 };
 
 export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
@@ -153,14 +153,13 @@ export const useFetchMetrics = (
         { signal: canceler.signal },
       ),
       (event: V1GetTrialProfilerMetricsResponse) => {
-        const labelName: string = event.batch.labels.name;
-
-        if (!internalData.names.includes(labelName)) {
-          internalData.names = [ ...internalData.names, labelName ];
-        }
-
         event.batch.values.forEach((v, index) => {
           const value: number = event.batch.values[index];
+          const labelName: string = event.batch.labels.gpuUuid || event.batch.labels.name;
+
+          if (!internalData.names.includes(labelName)) {
+            internalData.names = [ ...internalData.names, labelName ];
+          }
 
           const batch: number = event.batch.batches[index];
           if (!internalData.dataByBatch[batch]) {

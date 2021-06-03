@@ -82,22 +82,6 @@ class TrialController(metaclass=abc.ABCMeta):
         """
         pass
 
-    @staticmethod
-    @abc.abstractmethod
-    def from_native(
-        context: det.NativeContext,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-    ) -> "TrialController":
-        """
-        Create a TrialController from either a generic Experiment object or a framework-matched
-        Experiment object.
-        """
-        pass
-
     @abc.abstractmethod
     def run(self) -> None:
         """
@@ -128,10 +112,6 @@ class CallbackTrialController(TrialController):
     Frameworks should create framework-specific subclasses and implement :func:`train_for_step`,
     :func:`compute_validation_metrics`, :func:`save`, and :func:`load`.
     """
-
-    @staticmethod
-    def from_native(*args: Any, **kwargs: Any) -> "TrialController":
-        raise NotImplementedError("CallbackTrialControllers do not support the Native API")
 
     def run(self) -> None:
         """
