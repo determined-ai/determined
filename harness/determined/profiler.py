@@ -120,17 +120,20 @@ class ProfilerAgent:
         self.has_finished = False
 
         self.shutdown_lock = threading.Lock()
-        self.disabled_due_to_preexisting_metrics = self.check_data_already_exists_fn(
-            self.master_url, self.trial_id
-        )
-        if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
-            logging.warning(
-                f"{LOG_NAMESPACE}: ProfilerAgent is disabled because profiling data for this "
-                f"trial already exists. No additional profiling data is generated after a restart."
-            )
 
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
+        # or making API calls
         if self.is_enabled:
+            self.disabled_due_to_preexisting_metrics = self.check_data_already_exists_fn(
+                self.master_url, self.trial_id
+            )
+            if self.disabled_due_to_preexisting_metrics and self.global_rank == 0:
+                logging.warning(
+                    f"{LOG_NAMESPACE}: ProfilerAgent is disabled because profiling data for "
+                    f"this trial already exists. No additional profiling data is generated "
+                    f"after a restart."
+                )
+
             # Set up timer thread to stop collecting after MAX_COLLECTION_SECONDS
             self.shutdown_timer = PreemptibleTimer(MAX_COLLECTION_SECONDS, self._end_collection)
 
