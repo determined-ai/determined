@@ -41,7 +41,6 @@ class TrialController(metaclass=abc.ABCMeta):
         load_path: Optional[pathlib.Path],
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
     ) -> None:
         self.context = context
         self.env = env
@@ -49,7 +48,6 @@ class TrialController(metaclass=abc.ABCMeta):
         self.load_path = load_path
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
-        self.prof = prof
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
@@ -215,25 +213,8 @@ class CallbackTrialController(TrialController):
 
 
 class LoopTrialController(TrialController):
-    def __init__(
-        self,
-        context: Any,
-        env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
-        rendezvous_info: RendezvousInfo,
-        hvd_config: horovod.HorovodContext,
-        prof: profiler.ProfilerAgent,
-    ) -> None:
-        super().__init__(
-            context=context,
-            env=env,
-            workloads=workloads,
-            load_path=load_path,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-            prof=prof,
-        )
+    def __init__(self, *args: List[Any], **kwargs: Dict[str, Any]) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore
 
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()

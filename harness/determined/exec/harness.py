@@ -37,7 +37,7 @@ import simplejson
 
 import determined as det
 import determined.common
-from determined import gpu, horovod, layers, load, profiler, workload
+from determined import gpu, horovod, layers, load, workload
 from determined.common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
@@ -138,18 +138,16 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
-                with profiler.ProfilerAgent.from_env(env, global_rank=0, local_rank=0) as prof:
-                    with det._catch_sys_exit():
-                        with det._catch_init_invalid_hp(workloads):
-                            controller = load.prepare_controller(
-                                env,
-                                workloads,
-                                load_path,
-                                socket_mgr.get_rendezvous_info(),
-                                hvd_config,
-                                prof,
-                            )
-                        controller.run()
+                with det._catch_sys_exit():
+                    with det._catch_init_invalid_hp(workloads):
+                        controller = load.prepare_controller(
+                            env,
+                            workloads,
+                            load_path,
+                            socket_mgr.get_rendezvous_info(),
+                            hvd_config,
+                        )
+                    controller.run()
 
 
 def main() -> None:

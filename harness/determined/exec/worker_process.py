@@ -5,7 +5,7 @@ import pathlib
 import sys
 
 import determined as det
-from determined import ipc, layers, load, profiler
+from determined import ipc, layers, load
 
 
 def config_logging(worker_process_env: layers.WorkerProcessContext) -> None:
@@ -43,28 +43,22 @@ def main() -> None:
         subrec = layers.SubprocessReceiver(broadcast_client)
         workloads = iter(subrec)
 
-        global_rank = worker_process_env.rendezvous_info.get_rank()
-        local_rank = int(os.getenv("HOROVOD_LOCAL_RANK", 0))
-        with profiler.ProfilerAgent.from_env(
-            worker_process_env.env, global_rank, local_rank
-        ) as prof:
-            with det._catch_sys_exit():
-                with det._catch_init_invalid_hp(workloads):
-                    controller = load.prepare_controller(
-                        worker_process_env.env,
-                        workloads,
-                        worker_process_env.load_path,
-                        worker_process_env.rendezvous_info,
-                        worker_process_env.hvd_config,
-                        prof,
-                    )
+        with det._catch_sys_exit():
+            with det._catch_init_invalid_hp(workloads):
+                controller = load.prepare_controller(
+                    worker_process_env.env,
+                    workloads,
+                    worker_process_env.load_path,
+                    worker_process_env.rendezvous_info,
+                    worker_process_env.hvd_config,
+                )
 
-                try:
-                    controller.run()
+            try:
+                controller.run()
 
-                except Exception as e:
-                    broadcast_client.send_exception_message()
-                    raise e
+            except Exception as e:
+                broadcast_client.send_exception_message()
+                raise e
 
 
 if __name__ == "__main__":
