@@ -1,0 +1,7 @@
+:orphan:
+
+**Deprecated Features**
+
+-  Removed the ``scheduler`` and ``provisioner`` fields in the master
+   configuration in favor of ``resource_manager`` and
+   ``resource_pools``. See :ref:`resource-pools` for more information.
