@@ -105,7 +105,7 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 	}
 }
 
-// Return error if user cannot be authenticated or lacks authorization
+// Return error if user cannot be authenticated or lacks authorization.
 func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
 	if unauthenticatedMethods[fullMethod] {
 		return nil
