@@ -1,0 +1,8 @@
+:orphan:
+
+**Bug Fixes**
+
+   -  Master Config: Fix a bug for master configs which had explicit S3
+      secrets configured in ``checkpoint_storage``. The behavior was
+      that experiments which did not override the master-provided
+      checkpoint storage would fail.
