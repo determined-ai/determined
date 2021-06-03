@@ -1,5 +1,4 @@
-import { Breadcrumb } from 'antd';
-import { Route } from 'antd/es/breadcrumb/Breadcrumb';
+import { Breadcrumb, Tooltip } from 'antd';
 import React from 'react';
 
 import { CommonProps } from 'types';
@@ -17,12 +16,19 @@ export interface Props extends CommonProps {
   title?: string;
 }
 
-const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
+const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: BreadCrumbRoute[]) => {
+
   const last = routes.indexOf(route) === routes.length - 1;
   return last ? (
     <span>{route.breadcrumbName}</span>
   ) : (
-    <Link path={route.path}>{route.breadcrumbName}</Link>
+    <Link path={route.path}>{
+      route.breadcrumbTooltip
+        ? <Tooltip title={route.breadcrumbTooltip}>
+          <span>{route.breadcrumbName}</span>
+        </Tooltip>
+        : route.breadcrumbName}
+    </Link>
   );
 };
 
