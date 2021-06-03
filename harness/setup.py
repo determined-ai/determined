@@ -43,7 +43,7 @@ setup(
         "requests>=2.22.0",
         # botocore>1.19.0 has stricter urllib3 requirements than boto3, and pip will not reliably
         # resolve it until the --use-feature=2020-resolver behavior in pip 20.3, so we list it here.
-        "urllib3>=1.25.4,<1.26",
+        "urllib3>=1.26.5
         # CLI:
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",
