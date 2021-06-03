@@ -60,8 +60,10 @@ class Case:
         case: Any,
         sane_as: Optional[List[str]] = None,
         complete_as: Optional[List[str]] = None,
-        errors: Optional[Dict[str, str]] = None,
+        sanity_errors: Optional[Dict[str, str]] = None,
+        completeness_errors: Optional[Dict[str, str]] = None,
         defaulted: Any = None,
+        default_as: Optional[str] = None,
         merge_as: Optional[str] = None,
         merge_src: Any = None,
         merged: Any = None,
@@ -70,8 +72,10 @@ class Case:
         self.case = case
         self.sane_as = sane_as
         self.complete_as = complete_as
-        self.errors = errors
+        self.sanity_errors = sanity_errors
+        self.completeness_errors = completeness_errors
         self.defaulted = defaulted
+        self.default_as = default_as
         self.merge_as = merge_as
         self.merge_src = merge_src
         self.merged = merged
@@ -79,7 +83,8 @@ class Case:
     def run(self) -> None:
         self.run_sanity()
         self.run_completeness()
-        self.run_errors()
+        self.run_sanity_errors()
+        self.run_completeness_errors()
         self.run_defaulted()
         self.run_round_trip()
         self.run_merged()
@@ -100,31 +105,48 @@ class Case:
             errors = expconf.completeness_validation_errors(self.case, url)
             if not errors:
                 continue
-            raise ValueError(f"'{self.name}' failed against {url}:\n - " + "\n - ".join(errors))
+            raise ValueError(
+                ("'{}' failed completeness validation against {}:\n - " "\n - ")
+                .format(self.name, url)
+                .join(errors)
+            )
 
-    def run_errors(self) -> None:
-        if not self.errors:
+    def run_sanity_errors(self) -> None:
+        if not self.sanity_errors:
             return
-        for url, expected in self.errors.items():
+        self._run_errors(self.sanity_errors, test_type="sanity")
+
+    def run_completeness_errors(self) -> None:
+        if not self.completeness_errors:
+            return
+        self._run_errors(self.completeness_errors, test_type="completeness")
+
+    def _run_errors(self, error_cases: Any, test_type: str) -> None:
+        for url, expected in error_cases.items():
             assert isinstance(expected, list), "malformed test case"
-            errors = expconf.sanity_validation_errors(self.case, url)
-            assert errors, f"'{self.name}' matched {url} unexpectedly"
+            if test_type == "sanity":
+                errors = expconf.sanity_validation_errors(self.case, url)
+            else:
+                errors = expconf.completeness_validation_errors(self.case, url)
+            assert errors, f"'{self.name}' {test_type} validated against {url} unexpectedly"
             for exp in expected:
                 for err in errors:
                     if re.search(exp, err):
                         break
                 else:
-                    msg = f"while testing '{self.name}', expected to match the pattern\n"
-                    msg += f"    {exp}\n"
+                    msg = f"while testing '{self.name}' for {test_type}, expected to match the"
+                    msg += f" pattern\n    {exp}\n"
                     msg += "but it was not found in any of\n    "
                     msg += "\n    ".join(errors)
                     raise ValueError(msg)
 
     def run_defaulted(self) -> None:
-        if not self.defaulted:
+        if not self.defaulted and not self.default_as:
             return
-        assert self.sane_as, "need a `sane_as` entry to run a defaulted test"
-        cls = class_from_url(self.sane_as[0])
+        assert (
+            self.defaulted and self.default_as
+        ), "`default_as` and `defaulted` must both be present to run a defaulted test"
+        cls = class_from_url(self.default_as)
 
         obj = cls.from_dict(self.case)
         obj.fill_defaults()
@@ -137,8 +159,8 @@ class Case:
         if not self.defaulted:
             return
 
-        assert self.sane_as, "need a `sane_as` entry to run a run_round_trip test"
-        cls = class_from_url(self.sane_as[0])
+        assert self.default_as, "need a `default_as` entry to run a run_round_trip test"
+        cls = class_from_url(self.default_as)
 
         obj0 = cls.from_dict(self.case)
 
@@ -155,7 +177,7 @@ class Case:
             return
         assert (
             self.merge_as and self.merge_src and self.merged
-        ), "sane_as, merge_src, and merged must all be present in a test case if any are present"
+        ), "merge_as, merge_src, and merged must all be present in a test case if any are present"
 
         # Python expconf doesn't yet support custom merge behavior on list objects, nor does it
         # support the partial checkpoint storage configs.  It probably will never support the
@@ -168,7 +190,7 @@ class Case:
         obj = cls.from_dict(self.case)
         src = cls.from_dict(self.merge_src)
 
-        merged = schemas.merge(obj, src)
+        merged = schemas.SchemaBase.merge(obj, src)
         assert merged == self.merged, f"failed while testing {self.name}"
 
 

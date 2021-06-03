@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/santhosh-tekuri/jsonschema/v2"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -20,15 +21,17 @@ import (
 type JSON = interface{}
 
 type SchemaTestCase struct {
-	Name       string               `json:"name"`
-	SaneAs     *[]string            `json:"sane_as"`
-	CompleteAs *[]string            `json:"complete_as"`
-	Errors     *map[string][]string `json:"errors"`
-	Defaulted  *JSON                `json:"defaulted"`
-	Case       JSON                 `json:"case"`
-	MergeAs    *string              `json:"merge_as"`
-	MergeSrc   *JSON                `json:"merge_src"`
-	Merged     *JSON                `json:"merged"`
+	Name               string               `json:"name"`
+	SaneAs             *[]string            `json:"sane_as"`
+	CompleteAs         *[]string            `json:"complete_as"`
+	SanityErrors       *map[string][]string `json:"sanity_errors"`
+	CompletenessErrors *map[string][]string `json:"completeness_errors"`
+	DefaultAs          *string              `json:"default_as"`
+	Defaulted          *JSON                `json:"defaulted"`
+	Case               JSON                 `json:"case"`
+	MergeAs            *string              `json:"merge_as"`
+	MergeSrc           *JSON                `json:"merge_src"`
+	Merged             *JSON                `json:"merged"`
 }
 
 func errorIn(expect string, errors []error) bool {
@@ -81,24 +84,41 @@ func (tc SchemaTestCase) CheckCompleteAs(t *testing.T) {
 	}
 }
 
-func (tc SchemaTestCase) CheckErrors(t *testing.T) {
-	if tc.Errors == nil {
+func (tc SchemaTestCase) CheckSanityErrors(t *testing.T) {
+	if tc.SanityErrors == nil {
 		return
 	}
+	tc.checkErrors(t, tc.SanityErrors, "sanity")
+}
+
+func (tc SchemaTestCase) CheckCompletenessErrors(t *testing.T) {
+	if tc.CompletenessErrors == nil {
+		return
+	}
+	tc.checkErrors(t, tc.CompletenessErrors, "completeness")
+}
+
+func (tc SchemaTestCase) checkErrors(t *testing.T, errors *map[string][]string, testType string) {
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
-	for url, expectedErrors := range *tc.Errors {
-		schema := schemas.GetSanityValidator(url)
+	for url, expectedErrors := range *errors {
+		var schema *jsonschema.Schema
+		if testType == "sanity" {
+			schema = schemas.GetSanityValidator(url)
+		} else {
+			schema = schemas.GetCompletenessValidator(url)
+		}
 		err := schema.Validate(bytes.NewReader(byts))
 		if err == nil {
-			t.Errorf("expected error matching %v but got none", url)
+			t.Errorf("expected error %v validating %v but got none", testType, url)
 			continue
 		}
 		rendered := schemas.GetRenderedErrors(err, byts)
 		for _, expect := range expectedErrors {
 			if !errorIn(expect, rendered) {
 				t.Errorf(
-					"while validating %v\ndid not find a match to the pattern:\n    %q\nin:\n    %v",
+					"while %v validating %v\ndid not find a match to the pattern:\n    %q\nin:\n    %v",
+					testType,
 					url,
 					expect,
 					schemas.JoinErrors(rendered, "\n    "),
@@ -191,19 +211,22 @@ func clearRuntimeDefaults(obj *interface{}, defaulted interface{}) {
 }
 
 func (tc SchemaTestCase) CheckDefaulted(t *testing.T) {
-	if tc.Defaulted == nil {
+	if tc.Defaulted == nil && tc.DefaultAs == nil {
 		return
+	}
+
+	if tc.Defaulted == nil || tc.DefaultAs == nil {
+		assert.NilError(t, errors.New(
+			"if either of default_as, or defaulted are set in a test case, "+
+				"they must both be set",
+		))
 	}
 
 	byts, err := json.Marshal(tc.Case)
 	assert.NilError(t, err)
 
-	// Unmarshal against the first item in "sane_as".
-	assert.Assert(t, tc.SaneAs != nil)
-	url := (*tc.SaneAs)[0]
-
 	// Get an empty object to marshal into.
-	obj := objectForURL(url)
+	obj := objectForURL(*tc.DefaultAs)
 
 	testName := fmt.Sprintf("defaulted %T", obj)
 	t.Run(testName, func(t *testing.T) {
@@ -330,7 +353,8 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 		t.Run(testName, func(t *testing.T) {
 			tc.CheckSaneAs(t)
 			tc.CheckCompleteAs(t)
-			tc.CheckErrors(t)
+			tc.CheckSanityErrors(t)
+			tc.CheckCompletenessErrors(t)
 			tc.CheckDefaulted(t)
 			tc.CheckRoundTrip(t)
 			tc.CheckMerged(t)

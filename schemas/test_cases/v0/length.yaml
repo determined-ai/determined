@@ -6,7 +6,7 @@
     batches: 1
 
 - name: negative Length
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/length.json:
       - "<config>.batches: .*"
     http://determined.ai/schemas/expconf/v0/check-positive-length.json:
@@ -17,20 +17,20 @@
 - name: zero Length
   sane_as:
     - http://determined.ai/schemas/expconf/v0/length.json
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/check-positive-length.json:
       - "<config>.batches: .*"
   case:
     batches: 0
 
 - name: empty length (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/length.json:
       - "a length object must have one attribute named \"batches\", \"records\", or \"epochs\""
   case: {}
 
 - name: double length (invalid)
-  errors:
+  sanity_errors:
     http://determined.ai/schemas/expconf/v0/length.json:
       - "a length object must have one attribute named \"batches\", \"records\", or \"epochs\""
   case:

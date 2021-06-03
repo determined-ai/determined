@@ -3,6 +3,8 @@
 - name: bind_mount defaults
   sane_as:
     - http://determined.ai/schemas/expconf/v0/bind-mount.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/bind-mount.json
   case:
     host_path: /asdf
     container_path: /zxcv
@@ -15,6 +17,8 @@
 - name: environment defaults with k8sV1.Pod present
   sane_as:
     - http://determined.ai/schemas/expconf/v0/environment.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/environment.json
   case:
     environment_variables:
       - ASDF=asdf
@@ -55,6 +59,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-single.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: single
     max_length:
@@ -73,6 +79,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-random.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: random
     max_length:
@@ -95,6 +103,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-grid.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: grid
     max_length:
@@ -115,6 +125,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-async-halving.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: async_halving
     num_rungs: 5
@@ -140,6 +152,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: adaptive_asha
     max_length:
@@ -166,6 +180,8 @@
   sane_as:
     - http://determined.ai/schemas/expconf/v0/searcher.json
     - http://determined.ai/schemas/expconf/v0/searcher-pbt.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: pbt
     population_size: 25
