@@ -49,17 +49,19 @@ func (c *CheckpointStorageConfigV0) UnmarshalJSON(data []byte) error {
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(c)), "failed to parse checkpoint storage")
 }
 
-// Printable modifies the object with secrets hidden.
-func (c *CheckpointStorageConfigV0) Printable() {
+// Printable returns a copy the object with secrets hidden.
+func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
+	out := schemas.Copy(c).(CheckpointStorageConfigV0)
 	hiddenValue := "********"
-	if c.RawS3Config != nil {
-		if c.RawS3Config.RawAccessKey != nil {
-			c.RawS3Config.RawAccessKey = &hiddenValue
+	if out.RawS3Config != nil {
+		if out.RawS3Config.RawAccessKey != nil {
+			out.RawS3Config.RawAccessKey = &hiddenValue
 		}
-		if c.RawS3Config.RawSecretKey != nil {
-			c.RawS3Config.RawSecretKey = &hiddenValue
+		if out.RawS3Config.RawSecretKey != nil {
+			out.RawS3Config.RawSecretKey = &hiddenValue
 		}
 	}
+	return out
 }
 
 //go:generate ../gen.sh

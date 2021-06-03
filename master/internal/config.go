@@ -96,7 +96,7 @@ func (c Config) Printable() ([]byte, error) {
 	c.Telemetry.SegmentMasterKey = hiddenValue
 	c.Telemetry.SegmentWebUIKey = hiddenValue
 
-	c.CheckpointStorage.Printable()
+	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
 	optJSON, err := json.Marshal(c)
 	if err != nil {

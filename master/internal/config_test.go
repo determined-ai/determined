@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 	"time"
@@ -163,5 +164,77 @@ checkpoint_storage:
 	var unmarshaled Config
 	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)
+	assert.DeepEqual(t, unmarshaled, expected)
+}
+
+func TestPrintableConfig(t *testing.T) {
+	s3Key := "my_access_key_secret"
+	// nolint:gosec // These are not potential hardcoded credentials.
+	s3Secret := "my_secret_key_secret"
+	masterSecret := "my_master_secret"
+	webuiSecret := "my_webui_secret"
+
+	raw := fmt.Sprintf(`
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"
+
+checkpoint_storage:
+  type: s3
+  access_key: %v
+  secret_key: %v
+  bucket: my_bucket
+
+telemetry:
+  enabled: true
+  segment_master_key: %v
+  segment_webui_key: %v
+`, s3Key, s3Secret, masterSecret, webuiSecret)
+
+	expected := Config{
+		Logging: model.LoggingConfig{
+			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
+		},
+		DB: db.Config{
+			User:     "config_file_user",
+			Password: "password",
+			Host:     "hostname",
+			Port:     "3000",
+		},
+		CheckpointStorage: expconf.CheckpointStorageConfig{
+			RawS3Config: &expconf.S3Config{
+				RawAccessKey: ptrs.StringPtr(s3Key),
+				RawBucket:    ptrs.StringPtr("my_bucket"),
+				RawSecretKey: ptrs.StringPtr(s3Secret),
+			},
+		},
+		Telemetry: TelemetryConfig{
+			Enabled:          true,
+			SegmentMasterKey: masterSecret,
+			SegmentWebUIKey:  webuiSecret,
+		},
+	}
+
+	unmarshaled := Config{
+		Logging: model.LoggingConfig{
+			DefaultLoggingConfig: &model.DefaultLoggingConfig{},
+		},
+	}
+	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
+	assert.NilError(t, err)
+	assert.DeepEqual(t, unmarshaled, expected)
+
+	printable, err := unmarshaled.Printable()
+	assert.NilError(t, err)
+
+	// No secrets are present.
+	assert.Assert(t, !bytes.Contains(printable, []byte(s3Key)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(s3Secret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(masterSecret)))
+	assert.Assert(t, !bytes.Contains(printable, []byte(webuiSecret)))
+
+	// Ensure that the original was unmodified.
 	assert.DeepEqual(t, unmarshaled, expected)
 }
