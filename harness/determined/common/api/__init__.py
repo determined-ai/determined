@@ -29,4 +29,5 @@ from determined.common.api.request import (
 from determined.common.api.profiler import (
     post_trial_profiler_metrics_batches,
     TrialProfilerMetricsBatch,
+    get_trial_profiler_available_series,
 )

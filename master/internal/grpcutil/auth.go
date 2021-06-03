@@ -40,7 +40,7 @@ var (
 	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
 	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
 	// ErrTokenMissing notifies that the bearer token could not be found.
-	ErrTokenMissing = status.Error(codes.InvalidArgument, "token missing")
+	ErrTokenMissing = status.Error(codes.Unauthenticated, "token missing")
 	// ErrPermissionDenied notifies that the user does not have permission to access the method.
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
@@ -105,13 +105,33 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 	}
 }
 
+// Return error if user cannot be authenticated or lacks authorization.
+func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
+	if unauthenticatedMethods[fullMethod] {
+		return nil
+	}
+	if _, err := GetTaskSession(ctx, db); err == ErrTokenMissing {
+		switch u, _, uErr := GetUser(ctx, db); {
+		case uErr != nil:
+			return uErr
+		case !u.Admin && adminMethods[fullMethod]:
+			return ErrPermissionDenied
+		}
+	} else if err != nil && err != ErrTokenMissing {
+		return err
+	}
+	return nil
+}
+
 func streamAuthInterceptor(db *db.PgDB) grpc.StreamServerInterceptor {
 	return func(
 		srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler,
 	) error {
-		if _, _, err := GetUser(ss.Context(), db); err != nil {
+		err := auth(ss.Context(), db, info.FullMethod)
+		if err != nil {
 			return err
 		}
+
 		return handler(srv, ss)
 	}
 }
@@ -120,17 +140,9 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		if !unauthenticatedMethods[info.FullMethod] {
-			if _, err = GetTaskSession(ctx, db); err == ErrTokenMissing {
-				switch u, _, uErr := GetUser(ctx, db); {
-				case uErr != nil:
-					return nil, uErr
-				case !u.Admin && adminMethods[info.FullMethod]:
-					return nil, ErrPermissionDenied
-				}
-			} else if err != nil && err != ErrTokenMissing {
-				return nil, err
-			}
+		err = auth(ctx, db, info.FullMethod)
+		if err != nil {
+			return nil, err
 		}
 		return handler(ctx, req)
 	}
