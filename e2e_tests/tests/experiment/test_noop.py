@@ -282,6 +282,8 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
     first_checkpoint_id = first_step["checkpoint"]["id"]
 
     config = copy.deepcopy(config_base)
+    if tf2 is not None:
+        config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     config["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
     experiment2 = exp.run_basic_test_with_temp_config(config, conf.fixtures_path(fixture), 1)
