@@ -15,17 +15,18 @@ from determined.common.experimental import checkpoint, experiment, model, sessio
 def _path_to_files(path: pathlib.Path) -> List[V1File]:
     files = []
     for item in context.read_context(path)[0]:
-        content = item["content"].decode("utf-8")
-        file = V1File(
-            path=item["path"],
-            type=item["type"],
-            content=content,
-            mtime=item["mtime"],
-            uid=item["uid"],
-            gid=item["gid"],
-            mode=item["mode"],
-        )
-        files.append(file)
+        if "content" in item:
+            content = item["content"].decode("utf-8")
+            file = V1File(
+                path=item["path"],
+                type=item["type"],
+                content=content,
+                mtime=item["mtime"],
+                uid=item["uid"],
+                gid=item["gid"],
+                mode=item["mode"],
+            )
+            files.append(file)
     return files
 
 
