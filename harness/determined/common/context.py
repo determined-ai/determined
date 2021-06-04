@@ -33,7 +33,7 @@ class ContextItem:
 
     def dict(self) -> Dict[str, Any]:
         d = {"path": self.path, "type": self.type, "uid": self.uid, "gid": self.gid}
-        if self.type == ord(tarfile.REGTYPE):
+        if self.type in (ord(tarfile.REGTYPE), ord(tarfile.DIRTYPE)):
             d["content"] = self.content
         if self.mtime != -1:
             d["mtime"] = self.mtime
