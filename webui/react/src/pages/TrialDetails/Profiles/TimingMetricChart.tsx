@@ -1,5 +1,5 @@
 import { Alert } from 'antd';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlotChart';
@@ -15,6 +15,17 @@ export interface Props {
 }
 
 const TimingMetricChart: React.FC<Props> = ({ timingMetrics }: Props) => {
+  const [ data, setData ] = useState<AlignedData>();
+
+  useEffect(() => {
+    const inData: AlignedData = [ [ 0 ], [ 0 ] ];
+    setInterval(() => {
+      inData[0].push(inData[0].length);
+      inData[1].push(inData[1].length);
+      setData([ ...inData ]);
+    }, 2500);
+  }, []);
+
   const chartData: AlignedData = useMemo(() => {
     return convertMetricsToUplotData(timingMetrics.dataByBatch, timingMetrics.names);
   }, [ timingMetrics ]);
@@ -36,12 +47,12 @@ const TimingMetricChart: React.FC<Props> = ({ timingMetrics }: Props) => {
       scales: { x: { time: false } },
       series: [
         { label: 'Batch' },
-        ...timingMetrics.names.map((name, index) => ({
-          label: name,
+        {
+          label: '000',
           points: { show: false },
-          stroke: glasbeyColor(index),
+          stroke: glasbeyColor(0),
           width: 2,
-        })),
+        },
       ],
       tzDate: ts => uPlot.tzDate(new Date(ts * 1e3), 'Etc/UTC'),
     };
@@ -57,7 +68,7 @@ const TimingMetricChart: React.FC<Props> = ({ timingMetrics }: Props) => {
     );
   }
 
-  return <UPlotChart data={chartData} options={chartOptions} />;
+  return <UPlotChart data={data} options={chartOptions} />;
 };
 
 export default TimingMetricChart;

@@ -47,7 +47,12 @@ const UPlotChart: React.FC<Props> = forwardRef((
     const optionsExtended = uPlot.assign(
       {
         cursor: { drag: { dist: 5, uni: 10, x: true, y: true } },
-        hooks: { ready: [ (chart: uPlot) => setChart(chart) ] },
+        hooks: {
+          ready: [ (chart: uPlot) => setChart(chart) ],
+          setScale: [ (uPlot: uPlot, scaleKey: string) => {
+            console.log('setScale', uPlot.axes, scaleKey);
+          } ],
+        },
         width: chartDivRef.current.offsetWidth,
       },
       options,
@@ -66,6 +71,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
    */
   useEffect(() => {
     if (!chart || !data) return;
+    console.log('dataa', data);
     chart.setData(data);
   }, [ chart, data ]);
 
