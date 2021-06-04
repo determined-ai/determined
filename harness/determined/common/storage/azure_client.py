@@ -1,13 +1,12 @@
 import logging
-import os
 from pathlib import Path
-from time import sleep
 from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
 from azure.storage.blob import BlobServiceClient
 
 from determined.common import util
+
 
 class AzureStorageClient(object):
     """Connects to an Azure Blob Storage service account."""
@@ -23,9 +22,9 @@ class AzureStorageClient(object):
             self.client = BlobServiceClient.from_connection_string(connection_string)
         elif account_url:
             self.client = BlobServiceClient(account_url, credential)
-        
-        for name in logging.root.manager.loggerDict:
-            if 'azure' in name:
+
+        for name in logging.root.manager.loggerDict:  # type: ignore
+            if "azure" in name:
                 logging.getLogger(name).setLevel(logging.ERROR)
 
         logging.info("Trying to create Azure Blob Storage Container: {}.".format(container))
@@ -56,8 +55,6 @@ class AzureStorageClient(object):
     def put(self, container_name: str, blob_name: str, filename: Union[str, Path]) -> None:
         """Upload a file to the specified blob in the specified container."""
         with open(filename, "rb") as file:
-            print(filename, ":", type(file))
-            print("BLOB CLIENT:", self.client.get_blob_client(container_name, blob_name))
             self.client.get_blob_client(container_name, blob_name).upload_blob(file)
 
     @util.preserve_random_state
@@ -74,12 +71,12 @@ class AzureStorageClient(object):
             self.client.get_blob_client(container_name, file).delete_blob()
 
     @util.preserve_random_state
-    def list_files(self, container_name: str, file_prefix: Optional[Union[str, Path]] = None) -> List[str]:
+    def list_files(
+        self, container_name: str, file_prefix: Optional[Union[str, Path]] = None
+    ) -> List[str]:
         """Lists files within the specified container that have the specified file prefix.
-            Lists all files if file_prefix is None.
+        Lists all files if file_prefix is None.
         """
         container = self.client.get_container_client(container_name)
-        files = [
-            blob['name'] for blob in container.list_blobs(name_starts_with=file_prefix)
-        ]
+        files = [blob["name"] for blob in container.list_blobs(name_starts_with=file_prefix)]
         return files

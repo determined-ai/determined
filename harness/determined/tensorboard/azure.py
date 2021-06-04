@@ -27,9 +27,7 @@ class AzureTensorboardManager(base.TensorboardManager):
     def sync(self) -> None:
         for path in self.to_sync():
             whole_path = self.sync_path.joinpath(path.relative_to(self.base_path))
-            self.client.put(
-                "{}/{}".format(self.container, str(whole_path.parent)), path.name, path
-            )
+            self.client.put("{}/{}".format(self.container, str(whole_path.parent)), path.name, path)
 
     def delete(self) -> None:
         files = self.client.list_files(self.container, self.sync_path)

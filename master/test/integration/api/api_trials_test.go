@@ -247,7 +247,7 @@ func trialProfilerMetricsAvailableSeriesTests(
 	ctx, _ := context.WithTimeout(creds, time.Minute)
 	tlCl, err := cl.GetTrialProfilerAvailableSeries(ctx, &apiv1.GetTrialProfilerAvailableSeriesRequest{
 		TrialId: int32(trial.ID),
-		Follow: true,
+		Follow:  true,
 	})
 	assert.NilError(t, err, "failed to initiate trial profiler series stream")
 
