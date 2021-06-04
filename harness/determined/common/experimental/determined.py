@@ -9,6 +9,7 @@ from determined._swagger.client.configuration import Configuration
 from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined._swagger.client.models.v1_file import V1File
 from determined.common import api, check, context, util, yaml
+from determined.common.api import authentication
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
@@ -49,7 +50,7 @@ class Determined:
     ):
         self._session = session.Session(master, user)
 
-        userauth = api.authentication.Authentication.instance()
+        userauth = authentication.must_cli_auth()
 
         configuration = Configuration()
         configuration.host = self._session._master.rstrip("/")

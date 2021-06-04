@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 import determined as det
 import determined.common
-import determined.common.api.authentication as auth
 from determined import constants, errors, load, workload
 from determined.common import api, check, context, util
+from determined.common.api import authentication
 
 
 def _in_ipython() -> bool:
@@ -78,7 +78,10 @@ def _submit_experiment(
     # authentication module will attempt to use the token store to grab the
     # current logged-in user. If there is no logged in user found, it will
     # default to constants.DEFAULT_DETERMINED_USER.
-    auth.initialize_session(master_url, requested_user=None, try_reauth=True)
+    # TODO: refactor this to use the python sdk rather than using the cli_auth singleton.
+    authentication.cli_auth = authentication.Authentication(
+        master_url, requested_user=None, try_reauth=True
+    )
 
     if test:
         return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)

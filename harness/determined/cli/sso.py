@@ -6,6 +6,7 @@ from typing import Any, Callable, List
 from urllib.parse import parse_qs, urlparse
 
 from determined.common import api
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .errors import EnterpriseOnlyError
@@ -23,7 +24,7 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
                 tmp_auth = {"Cookie": "auth={token}".format(token=token)}
                 me = api.get(master_url, "/users/me", headers=tmp_auth, authenticated=False).json()
 
-                token_store = api.Authentication.instance().token_store
+                token_store = authentication.TokenStore()
                 token_store.set_token(me["username"], token)
                 token_store.set_active(me["username"], True)
 

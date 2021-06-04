@@ -6,8 +6,8 @@ from typing import IO, Any, Generator, Optional
 
 import requests
 
-import determined.common.api.authentication as auth
 from determined.common import api
+from determined.common.api import authentication
 from tests import config as conf
 
 
@@ -81,7 +81,7 @@ def interactive_command(*args: str) -> Generator:
 
 
 def get_num_running_commands() -> int:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "api/v1/commands")
     assert r.status_code == requests.codes.ok, r.text
 
@@ -89,7 +89,7 @@ def get_num_running_commands() -> int:
 
 
 def get_command(id: str) -> Any:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "api/v1/commands/" + id)
     assert r.status_code == requests.codes.ok, r.text
     return r.json()["command"]

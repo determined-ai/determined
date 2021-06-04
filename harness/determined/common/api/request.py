@@ -109,11 +109,13 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
 def add_token_to_headers(headers: Dict[str, str]) -> Dict[str, str]:
     # Try to get user token first since it will include the user token that is used
     # for queries in some restful APIs.
-    user_token = authentication.Authentication.instance().get_session_token(must=False)
+    user_token = ""
+    if authentication.cli_auth is not None:
+        user_token = authentication.cli_auth.get_session_token()
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}
 
-    task_token = authentication.Authentication.instance().get_task_token()
+    task_token = authentication.get_task_token()
     if task_token:
         return {**headers, "Grpc-Metadata-x-task-token": "Bearer {}".format(task_token)}
 
@@ -160,7 +162,9 @@ def do_request(
         raise errors.BadRequestException(str(e))
 
     if r.status_code == 403:
-        username = authentication.Authentication.instance().get_session_user()
+        username = ""
+        if authentication.cli_auth is not None:
+            username = authentication.cli_auth.get_session_user()
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
@@ -293,6 +297,6 @@ def ws(host: str, path: str) -> WebSocket:
     Connect to a web socket at the remote API.
     """
     websocket = lomond.WebSocket(maybe_upgrade_ws_scheme(make_url(host, path)))
-    token = authentication.Authentication.instance().get_session_token()
+    token = authentication.must_cli_auth().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
     return WebSocket(websocket)

@@ -12,8 +12,7 @@ from termcolor import colored
 
 from determined.cli import command
 from determined.common import api
-from determined.common.api import request
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication, request
 from determined.common.check import check_eq, check_len
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -27,7 +26,7 @@ from .command import (
 )
 
 
-@authentication_required
+@authentication.required
 def start_shell(args: Namespace) -> None:
     data = {}
     if args.passphrase:
@@ -65,7 +64,7 @@ def start_shell(args: Namespace) -> None:
         )
 
 
-@authentication_required
+@authentication.required
 def open_shell(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
@@ -78,7 +77,7 @@ def open_shell(args: Namespace) -> None:
     )
 
 
-@authentication_required
+@authentication.required
 def show_ssh_command(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
