@@ -26,8 +26,8 @@
 - name: azure no container or connection info invalid
   completeness_errors:
     http://determined.ai/schemas/expconf/v0/azure.json:
-      - "<config>: Exactly one of connection_string or account_url must be set"
       - "<config>: container is a required property"
+      - "<config>: Exactly one of connection_string or account_url must be set"
   case:
     type: azure
 
@@ -52,8 +52,8 @@
 - name: azure no container and both connection_string and account_url invalid
   completeness_errors:
     http://determined.ai/schemas/expconf/v0/azure.json:
-      - "<config>: Exactly one of connection_string or account_url must be set"
       - "<config>: container is a required property"
+      - "<config>: Exactly one of connection_string or account_url must be set"
   case:
     type: azure
     connection_string: connection_string
