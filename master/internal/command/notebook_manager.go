@@ -59,9 +59,6 @@ func generateServiceAddress(taskID string) (string, error) {
 
 type notebookManager struct {
 	db *db.PgDB
-
-	defaultAgentUserGroup model.AgentUserGroup
-	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // NotebookLaunchRequest describes a request to launch a new notebook.
@@ -153,28 +150,33 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 		return nil, errors.Wrap(err, "generating service address")
 	}
 
-	return &command{
-		taskID:    taskID,
-		config:    *config,
-		userFiles: params.UserFiles,
-		additionalFiles: archive.Archive{
-			params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(
+	taskSpec := params.TaskSpec
+	taskSpec.SetInner(&tasks.StartCommand{
+		Config:    *config,
+		UserFiles: params.UserFiles,
+		AdditionalFiles: archive.Archive{
+			taskSpec.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
 				jupyterEntrypoint,
 				etc.MustStaticFile(etc.NotebookEntrypointResource),
 				0700,
 				tar.TypeReg,
 			),
-			params.AgentUserGroup.OwnedArchiveItem(
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
 				notebookDefaultPage,
 				etc.MustStaticFile(etc.NotebookTemplateResource),
 				0644,
 				tar.TypeReg,
 			),
 		},
+	})
+
+	return &command{
+		taskID: taskID,
+		config: *config,
 
 		readinessChecks: map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
@@ -187,8 +189,7 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
+		taskSpec: params.TaskSpec,
 
 		db: n.db,
 	}, nil

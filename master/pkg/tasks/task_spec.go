@@ -1,31 +1,15 @@
 package tasks
 
 import (
-	"archive/tar"
 	"crypto/tls"
-	"encoding/json"
-	"fmt"
-	"path/filepath"
-	"strconv"
 
 	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/workload"
-
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
-
-// MakeTaskSpecFn is a workaround for the delayed initialization that we have around how tasks are
-// run.  The master knows which task spec and task container defaults belong to which pool, but the
-// actual parsing of configs might be delegated to e.g. a CommandManager which does not have access
-// to the same information.  This lets us avoid extra Asks or passing the Master object around.
-type MakeTaskSpecFn func(poolName string, numSlots int) TaskSpec
 
 // InnerSpec defines the interface for a particular kind of task container.
 type InnerSpec interface {
@@ -61,24 +45,42 @@ type InnerSpec interface {
 type inner = InnerSpec
 
 // TaskSpec provides the necessary information for a task to be run.
+// It will be transformed into a pod spec or a container spec.
 type TaskSpec struct {
+	// These fields are set based on the cluster
+	ClusterID   string
+	HarnessPath string
+	MasterCert  *tls.Certificate
+
+	// These fields are set based on the user request.
+	TaskContainerDefaults model.TaskContainerDefaultsConfig
+	AgentUserGroup        *model.AgentUserGroup
+
+	// These fields are set when the task is allocated.
+	TaskID    string
+	TaskToken string
 	inner
 
-	TaskID         string
-	TaskToken      string
-	ContainerID    string
-	Devices        []device.Device
-	AgentUserGroup *model.AgentUserGroup
-
-	ClusterID             string
-	HarnessPath           string
-	TaskContainerDefaults model.TaskContainerDefaultsConfig
-	MasterCert            *tls.Certificate
+	// These fields are set on a per container basis.
+	ContainerID string
+	Devices     []device.Device
 }
 
 // SetInner sets the concrete task represented by this spec.
 func (t *TaskSpec) SetInner(inner InnerSpec) {
 	t.inner = inner
+}
+
+// SetRuntimeInfo sets the runtime information.
+func (t *TaskSpec) SetRuntimeInfo(taskID string, taskToken string) {
+	t.TaskID = taskID
+	t.TaskToken = taskToken
+}
+
+// SetContainerInfo sets the container information.
+func (t *TaskSpec) SetContainerInfo(containerID string, devices []device.Device) {
+	t.ContainerID = containerID
+	t.Devices = devices
 }
 
 func (t *TaskSpec) baseArchives() []container.RunArchive {
@@ -136,322 +138,32 @@ func (t *TaskSpec) EnvVars() map[string]string {
 	return e
 }
 
-// StartCommand is a description of a task for running a command.
-type StartCommand struct {
-	Config          model.CommandConfig
-	UserFiles       archive.Archive
-	AdditionalFiles archive.Archive
+// TaskSpecMaker is used to make task specs.
+type TaskSpecMaker struct {
+	BaseTaskSpec  TaskSpec
+	PoolsDefaults map[string]model.TaskContainerDefaultsConfig
 }
 
-// Archives implements InnerSpec.
-func (s StartCommand) Archives(u *model.AgentUserGroup) []container.RunArchive {
-	return []container.RunArchive{
-		wrapArchive(u.OwnArchive(s.UserFiles), ContainerWorkDir),
-		wrapArchive(s.AdditionalFiles, rootDir),
-	}
-}
+// MakeTaskSpec makes a task spec.
+func (t *TaskSpecMaker) MakeTaskSpec(
+	poolName string, agentUserGroup *model.AgentUserGroup,
+) TaskSpec {
+	// Always fall back to the top-level TaskContainerDefaults
+	taskContainerDefaults := t.BaseTaskSpec.TaskContainerDefaults
 
-// Description implements InnerSpec.
-func (s StartCommand) Description() string { return "cmd" }
-
-// Entrypoint implements InnerSpec.
-func (s StartCommand) Entrypoint() []string { return s.Config.Entrypoint }
-
-// Environment implements InnerSpec.
-func (s StartCommand) Environment(TaskSpec) expconf.EnvironmentConfig {
-	return s.Config.Environment.ToExpconf()
-}
-
-// EnvVars implements InnerSpec.
-func (s StartCommand) EnvVars(TaskSpec) map[string]string { return nil }
-
-// LoggingFields implements InnerSpec.
-func (s StartCommand) LoggingFields() map[string]string { return nil }
-
-// Mounts implements InnerSpec.
-func (s StartCommand) Mounts() []mount.Mount {
-	return ToDockerMounts(s.Config.BindMounts.ToExpconf())
-}
-
-// ShmSize implements InnerSpec.
-func (s StartCommand) ShmSize() int64 {
-	if shm := s.Config.Resources.ShmSize; shm != nil {
-		return int64(*shm)
-	}
-	return 0
-}
-
-// UseFluentLogging implements InnerSpec.
-func (s StartCommand) UseFluentLogging() bool { return false }
-
-// UseHostMode implements InnerSpec.
-func (s StartCommand) UseHostMode() bool { return false }
-
-// ResourcesConfig implements InnerSpec.
-func (s StartCommand) ResourcesConfig() expconf.ResourcesConfig {
-	return s.Config.Resources.ToExpconf()
-}
-
-// GCCheckpoints is a description of a task for running checkpoint GC.
-type GCCheckpoints struct {
-	ExperimentID       int
-	LegacyConfig       expconf.LegacyConfig
-	ToDelete           json.RawMessage
-	DeleteTensorboards bool
-}
-
-// Archives implements InnerSpec.
-func (g GCCheckpoints) Archives(u *model.AgentUserGroup) []container.RunArchive {
-	return []container.RunArchive{
-		wrapArchive(
-			archive.Archive{
-				u.OwnedArchiveItem(
-					"storage_config.json",
-					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
-					0600,
-					tar.TypeReg,
-				),
-				u.OwnedArchiveItem(
-					"checkpoints_to_delete.json",
-					[]byte(jsonify(g.ToDelete)),
-					0600,
-					tar.TypeReg,
-				),
-				u.OwnedArchiveItem(
-					etc.GCCheckpointsEntrypointResource,
-					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
-					0700,
-					tar.TypeReg,
-				),
-			},
-			ContainerWorkDir,
-		),
-	}
-}
-
-// Description implements InnerSpec.
-func (g GCCheckpoints) Description() string { return "gc" }
-
-// Entrypoint implements InnerSpec.
-func (g GCCheckpoints) Entrypoint() []string {
-	e := []string{
-		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
-		"--experiment-id",
-		strconv.Itoa(g.ExperimentID),
-		"--storage-config",
-		"storage_config.json",
-		"--delete",
-		"checkpoints_to_delete.json",
-	}
-	if g.DeleteTensorboards {
-		e = append(e, "--delete-tensorboards")
-	}
-	return e
-}
-
-// Environment implements InnerSpec.
-func (g GCCheckpoints) Environment(t TaskSpec) expconf.EnvironmentConfig {
-	// Keep only the EnvironmentVariables provided by the experiment's config.
-	envvars := g.LegacyConfig.EnvironmentVariables()
-	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: &envvars,
-	}
-
-	// Fill the rest of the environment with default values.
-	defaultConfig := expconf.ExperimentConfig{}
-	t.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
-
-	if defaultConfig.RawEnvironment != nil {
-		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
-	}
-	return schemas.WithDefaults(env).(expconf.EnvironmentConfig)
-}
-
-// EnvVars implements InnerSpec.
-func (g GCCheckpoints) EnvVars(TaskSpec) map[string]string { return nil }
-
-// LoggingFields implements InnerSpec.
-func (g GCCheckpoints) LoggingFields() map[string]string { return nil }
-
-// Mounts implements InnerSpec.
-func (g GCCheckpoints) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(g.LegacyConfig.BindMounts())
-	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
-		mounts = append(mounts, mount.Mount{
-			Type:   mount.TypeBind,
-			Source: fs.HostPath(),
-			Target: model.DefaultSharedFSContainerPath,
-			BindOptions: &mount.BindOptions{
-				Propagation: model.DefaultSharedFSPropagation,
-			},
-		})
-	}
-	return mounts
-}
-
-// ShmSize implements InnerSpec.
-func (g GCCheckpoints) ShmSize() int64 { return 0 }
-
-// UseFluentLogging implements InnerSpec.
-func (g GCCheckpoints) UseFluentLogging() bool { return false }
-
-// UseHostMode implements InnerSpec.
-func (g GCCheckpoints) UseHostMode() bool { return false }
-
-// ResourcesConfig implements InnerSpec.
-func (g GCCheckpoints) ResourcesConfig() expconf.ResourcesConfig {
-	// The GCCheckpoints resources config is effictively unused, so we return an empty one.
-	return expconf.ResourcesConfig{}
-}
-
-// StartTrial is a description of a task for running a trial container.
-type StartTrial struct {
-	ExperimentConfig    expconf.ExperimentConfig
-	ModelDefinition     archive.Archive
-	HParams             map[string]interface{}
-	TrialSeed           uint32
-	LatestCheckpoint    *model.Checkpoint
-	InitialWorkload     workload.Workload
-	WorkloadManagerType model.WorkloadManagerType
-	AdditionalFiles     archive.Archive
-
-	// This is used to hint the resource manager to override defaults and start
-	// the container in host mode iff it has been scheduled across multiple agents.
-	IsMultiAgent bool
-
-	Rank int
-}
-
-// Archives implements InnerSpec.
-func (s StartTrial) Archives(u *model.AgentUserGroup) []container.RunArchive {
-	return []container.RunArchive{
-		wrapArchive(
-			archive.Archive{
-				u.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
-				u.OwnedArchiveItem(modelCopy, nil, 0700, tar.TypeDir),
-			},
-			rootDir,
-		),
-		wrapArchive(s.AdditionalFiles, rootDir),
-		wrapArchive(
-			archive.Archive{
-				u.OwnedArchiveItem(
-					"checkpoint.json",
-					[]byte(jsonify(s.LatestCheckpoint)),
-					0600,
-					tar.TypeReg,
-				),
-			},
-			trainDir,
-		),
-		wrapArchive(u.OwnArchive(s.ModelDefinition), modelCopy),
-		wrapArchive(u.OwnArchive(s.ModelDefinition), ContainerWorkDir),
-	}
-}
-
-// Description implements InnerSpec.
-func (s StartTrial) Description() string {
-	return fmt.Sprintf(
-		"exp-%d-trial-%d-rank-%d",
-		s.InitialWorkload.ExperimentID,
-		s.InitialWorkload.TrialID,
-		s.Rank,
-	)
-}
-
-// Entrypoint implements InnerSpec.
-func (s StartTrial) Entrypoint() []string {
-	return []string{"/run/determined/train/entrypoint.sh"}
-}
-
-// Environment implements InnerSpec.
-func (s StartTrial) Environment(t TaskSpec) expconf.EnvironmentConfig {
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(t.Devices))
-	env.SetPorts(ports)
-	return env
-}
-
-// EnvVars implements InnerSpec.
-func (s StartTrial) EnvVars(t TaskSpec) map[string]string {
-	portOffset := trialUniquePortOffset(t.Devices)
-	portStr := rendezvousPort(portOffset)
-	return map[string]string{
-		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
-		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.InitialWorkload.TrialID),
-		"DET_TRIAL_SEED":               fmt.Sprintf("%d", s.TrialSeed),
-		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
-		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_INITIAL_WORKLOAD":         jsonify(s.InitialWorkload),
-		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
-		"DET_WORKLOAD_MANAGER_TYPE":    string(s.WorkloadManagerType),
-		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
-		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
-	}
-}
-
-// LoggingFields implements InnerSpec.
-func (s StartTrial) LoggingFields() map[string]string {
-	return map[string]string{
-		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),
-	}
-}
-
-// Mounts implements InnerSpec.
-func (s StartTrial) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts())
-	addMount := func(source, target string, bindOpts *mount.BindOptions) {
-		mounts = append(mounts, mount.Mount{
-			Type: mount.TypeBind, Source: source, Target: target, BindOptions: bindOpts,
-		})
-	}
-
-	if c := s.ExperimentConfig.CheckpointStorage().RawSharedFSConfig; c != nil {
-		addMount(
-			c.HostPath(),
-			model.DefaultSharedFSContainerPath,
-			&mount.BindOptions{Propagation: model.DefaultSharedFSPropagation},
-		)
-	}
-
-	if c := s.ExperimentConfig.DataLayer().RawSharedFSConfig; c != nil {
-		if c.HostStoragePath() != nil && c.ContainerStoragePath() != nil {
-			addMount(*c.HostStoragePath(), *c.ContainerStoragePath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawS3Config; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawGCSConfig; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
+	if t.PoolsDefaults != nil && poolName != "" {
+		if d, ok := t.PoolsDefaults[poolName]; ok {
+			taskContainerDefaults = d
 		}
 	}
 
-	return mounts
-}
+	// Not a deep copy, but deep enough not to overwrite the master's TaskContainerDefaults.
+	taskSpec := t.BaseTaskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
 
-// UseFluentLogging implements InnerSpec.
-func (s StartTrial) UseFluentLogging() bool { return true }
-
-// UseHostMode implements InnerSpec.
-func (s StartTrial) UseHostMode() bool { return s.IsMultiAgent }
-
-// ShmSize implements InnerSpec.
-func (s StartTrial) ShmSize() int64 {
-	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
-		return int64(*shm)
+	if agentUserGroup != nil {
+		taskSpec.AgentUserGroup = agentUserGroup
 	}
-	return 0
-}
 
-// ResourcesConfig implements InnerSpec.
-func (s StartTrial) ResourcesConfig() expconf.ResourcesConfig {
-	return s.ExperimentConfig.Resources()
+	return taskSpec
 }

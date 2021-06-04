@@ -38,9 +38,6 @@ const (
 
 type shellManager struct {
 	db *db.PgDB
-
-	defaultAgentUserGroup model.AgentUserGroup
-	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // ShellLaunchRequest describes a request to launch a new shell.
@@ -137,36 +134,39 @@ func (s *shellManager) newShell(
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
-	additionalFiles := archive.Archive{
-		params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			0644,
-			tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellEntrypointScript,
-			etc.MustStaticFile(etc.ShellEntrypointResource),
-			0700,
-			tar.TypeReg,
-		),
-	}
+	taskSpec := params.TaskSpec
+	taskSpec.SetInner(&tasks.StartCommand{
+		Config:    *config,
+		UserFiles: params.UserFiles,
+		AdditionalFiles: archive.Archive{
+			taskSpec.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
+			),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
+			),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
+			),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				shellSSHDConfigFile,
+				etc.MustStaticFile(etc.SSHDConfigResource),
+				0644,
+				tar.TypeReg,
+			),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				shellEntrypointScript,
+				etc.MustStaticFile(etc.ShellEntrypointResource),
+				0700,
+				tar.TypeReg,
+			),
+		},
+	})
 
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
+		taskID: taskID,
+		config: *config,
 		metadata: map[string]interface{}{
 			"privateKey": string(keyPair.PrivateKey),
 			"publicKey":  string(keyPair.PublicKey),
@@ -182,8 +182,7 @@ func (s *shellManager) newShell(
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
+		taskSpec: params.TaskSpec,
 
 		proxyTCP: true,
 

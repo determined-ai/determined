@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -63,13 +62,10 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 type command struct {
 	config model.CommandConfig
 
-	owner          commandOwner
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
+	owner    commandOwner
+	taskSpec *tasks.TaskSpec
 
 	taskID               sproto.TaskID
-	userFiles            archive.Archive
-	additionalFiles      archive.Archive
 	readinessChecks      map[string]readinessCheck
 	readinessMessageSent bool
 	metadata             map[string]interface{}
@@ -277,22 +273,10 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		c.allocation = msg.Allocations[0]
 
 		taskSpec := *c.taskSpec
-		taskSpec.AgentUserGroup = c.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		taskSpec.SetInner(&tasks.StartCommand{
-			Config:          c.config,
-			UserFiles:       c.userFiles,
-			AdditionalFiles: c.additionalFiles,
-		})
+		taskSpec.SetRuntimeInfo(string(msg.ID), taskToken)
 		msg.Allocations[0].Start(ctx, taskSpec)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
-
-		// Evict the context from memory after starting the command as it is no longer needed. We
-		// evict as soon as possible to prevent the master from hitting an OOM.
-		// TODO: Consider not storing the userFiles in memory at all.
-		c.userFiles = nil
-		c.additionalFiles = nil
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -436,7 +420,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		ResourcePool:   c.config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
-		AgentUserGroup: protoutils.ToStruct(c.agentUserGroup),
+		AgentUserGroup: protoutils.ToStruct(c.taskSpec.AgentUserGroup),
 	}
 }
 

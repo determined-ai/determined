@@ -26,9 +26,6 @@ var shellFormEntrypoint = []string{"/bin/sh", "-c"}
 
 type commandManager struct {
 	db *db.PgDB
-
-	defaultAgentUserGroup model.AgentUserGroup
-	makeTaskSpec          tasks.MakeTaskSpecFn
 }
 
 // CommandLaunchRequest describes a request to launch a new command.
@@ -101,16 +98,19 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 	}
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
+	params.TaskSpec.SetInner(&tasks.StartCommand{
+		Config:    *config,
+		UserFiles: params.UserFiles,
+	})
+
 	return &command{
-		taskID:    sproto.NewTaskID(),
-		config:    *params.FullConfig,
-		userFiles: params.UserFiles,
+		taskID: sproto.NewTaskID(),
+		config: *params.FullConfig,
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
+		taskSpec: params.TaskSpec,
 
 		db: c.db,
 	}

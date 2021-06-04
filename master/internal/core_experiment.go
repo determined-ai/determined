@@ -269,10 +269,6 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Errorf("cannot find user and group for experiment %v", dbExp.OwnerID)
 	}
 
-	if agentUserGroup == nil {
-		agentUserGroup = &m.config.Security.DefaultTask
-	}
-
 	if patch.Archived != nil {
 		dbExp.Archived = *patch.Archived
 		if err := m.db.SaveExperimentArchiveStatus(dbExp); err != nil {
@@ -333,10 +329,10 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	if patch.CheckpointStorage != nil {
+		taskSpec := m.taskSpecMaker.MakeTaskSpec("", agentUserGroup)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
-				agentUserGroup:     agentUserGroup,
-				taskSpec:           m.taskSpec,
+				taskSpec:           &taskSpec,
 				rm:                 m.rm,
 				db:                 m.db,
 				experiment:         dbExp,
@@ -364,9 +360,9 @@ type CreateExperimentParams struct {
 	ValidateOnly  bool            `json:"validate_only"`
 }
 
-func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
-	*model.Experiment, bool, *tasks.TaskSpec, error,
-) {
+func (m *Master) parseCreateExperiment(
+	params *CreateExperimentParams, agentUserGroup *model.AgentUserGroup,
+) (*model.Experiment, bool, *tasks.TaskSpec, error) {
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
 	if err != nil {
@@ -389,7 +385,8 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 
 	// Merge the appropriate TaskContainerDefaults into the config.
 	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
-	taskSpec := m.makeTaskSpec(resources.ResourcePool(), resources.SlotsPerTrial())
+	poolName := m.getResourcePool(resources.ResourcePool(), resources.SlotsPerTrial())
+	taskSpec := m.taskSpecMaker.MakeTaskSpec(poolName, agentUserGroup)
 	taskSpec.TaskContainerDefaults.MergeIntoConfig(&config)
 
 	// Merge in the master's checkpoint storage into the config.
@@ -441,12 +438,17 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 
 	user := c.(*context.DetContext).MustGetUser()
 
+	agentUserGroup, err := m.db.AgentUserGroup(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	var params CreateExperimentParams
 	if err = json.Unmarshal(body, &params); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment params")
 	}
 
-	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params)
+	dbExp, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, agentUserGroup)
 	if err != nil {
 		return nil, echo.NewHTTPError(
 			http.StatusBadRequest,

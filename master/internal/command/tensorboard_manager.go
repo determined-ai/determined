@@ -58,10 +58,8 @@ type tensorboardConfig struct {
 type tensorboardManager struct {
 	db *db.PgDB
 
-	defaultAgentUserGroup model.AgentUserGroup
-	timeout               time.Duration
-	proxyRef              *actor.Ref
-	makeTaskSpec          tasks.MakeTaskSpecFn
+	timeout  time.Duration
+	proxyRef *actor.Ref
 }
 
 type tensorboardTick struct{}
@@ -168,14 +166,6 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	var logDirs []string
-
-	additionalFiles := archive.Archive{
-		params.AgentUserGroup.OwnedArchiveItem(
-			tensorboardEntrypointFile,
-			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
-			tar.TypeReg,
-		),
-	}
 
 	uniqMounts := map[expconf.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
@@ -286,8 +276,19 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
-	additionalFiles = append(additionalFiles,
-		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
+	taskSpec := params.TaskSpec
+	taskSpec.SetInner(&tasks.StartCommand{
+		Config:    *config,
+		UserFiles: params.UserFiles,
+		AdditionalFiles: archive.Archive{
+			taskSpec.AgentUserGroup.OwnedArchiveItem(
+				tensorboardEntrypointFile,
+				etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
+				tar.TypeReg,
+			),
+			taskSpec.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg),
+		},
+	})
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
@@ -322,10 +323,8 @@ func (t *tensorboardManager) newTensorBoard(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
+		taskID: taskID,
+		config: *config,
 		metadata: map[string]interface{}{
 			"experiment_ids": req.ExperimentIDs,
 			"trial_ids":      req.TrialIDs,
@@ -340,8 +339,7 @@ func (t *tensorboardManager) newTensorBoard(
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
+		taskSpec: params.TaskSpec,
 
 		db: t.db,
 	}, nil

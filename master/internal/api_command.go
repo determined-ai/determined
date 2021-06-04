@@ -38,10 +38,14 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) makeFullCommandSpec(
-	configBytes []byte, templateName *string, mustBeZeroSlot bool,
+	configBytes []byte,
+	templateName *string,
+	mustBeZeroSlot bool,
+	agentUserGroup *model.AgentUserGroup,
 ) (*model.CommandConfig, *tasks.TaskSpec, error) {
 	resources := model.ParseJustResources(configBytes)
-	taskSpec := a.m.makeTaskSpec(resources.ResourcePool, resources.Slots)
+	resources.ResourcePool = a.m.getResourcePool(resources.ResourcePool, resources.Slots)
+	taskSpec := a.m.taskSpecMaker.MakeTaskSpec(resources.ResourcePool, agentUserGroup)
 	config := command.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if templateName != nil && *templateName != "" {
 		template, err := a.m.db.TemplateByName(*templateName)
@@ -107,7 +111,7 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to get the user: %s", err)
 	}
-	params.AgentUserGroup, err = a.m.db.AgentUserGroup(params.User.ID)
+	agentUserGroup, err := a.m.db.AgentUserGroup(params.User.ID)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -115,9 +119,6 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 			params.User.Username,
 			err,
 		)
-	}
-	if params.AgentUserGroup == nil {
-		params.AgentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
 	// Get the full configuration.
@@ -131,7 +132,7 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 	}
 
 	params.FullConfig, params.TaskSpec, err = a.makeFullCommandSpec(
-		configBytes, &req.TemplateName, req.MustZeroSlot)
+		configBytes, &req.TemplateName, req.MustZeroSlot, agentUserGroup)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", err)
 	}

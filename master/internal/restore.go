@@ -69,11 +69,17 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
-	// Get the TaskSpec for this experiment.
-	taskSpec := m.makeTaskSpec(
+	poolName := m.getResourcePool(
 		expModel.Config.Resources().ResourcePool(),
 		expModel.Config.Resources().SlotsPerTrial(),
 	)
+
+	agentUserGroup, err := m.db.AgentUserGroup(*expModel.OwnerID)
+	if err != nil {
+		return err
+	}
+
+	taskSpec := m.taskSpecMaker.MakeTaskSpec(poolName, agentUserGroup)
 
 	log.WithField("experiment", expModel.ID).Info("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)

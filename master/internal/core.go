@@ -67,8 +67,8 @@ type Master struct {
 	MasterID  string
 	Version   string
 
-	config   *Config
-	taskSpec *tasks.TaskSpec
+	config        *Config
+	taskSpecMaker tasks.TaskSpecMaker
 
 	logs            *logger.LogBuffer
 	system          *actor.System
@@ -97,12 +97,7 @@ func (m *Master) getConfig(echo.Context) (interface{}, error) {
 	return m.config.Printable()
 }
 
-// makeTaskSpec is the master method that we will pass around as a tasks.MakeTaskSpecFn.  It's
-// behavior is deterministic for the lifetime of the master process.
-func (m *Master) makeTaskSpec(poolName string, numSlots int) tasks.TaskSpec {
-	// Always fall back to the top-level TaskContainerDefaults
-	taskContainerDefaults := m.config.TaskContainerDefaults
-
+func (m *Master) getResourcePool(poolName string, numSlots int) string {
 	// Only look for pool settings with Agent resource managers.
 	if m.config.ResourceManager.AgentRM != nil {
 		if poolName == "" {
@@ -112,22 +107,8 @@ func (m *Master) makeTaskSpec(poolName string, numSlots int) tasks.TaskSpec {
 				poolName = m.config.ResourceManager.AgentRM.DefaultGPUResourcePool
 			}
 		}
-		// Iterate through configured pools looking for a TaskContainerDefaults setting.
-		for _, pool := range m.config.ResourcePools {
-			if poolName == pool.PoolName {
-				if pool.TaskContainerDefaults == nil {
-					break
-				}
-				taskContainerDefaults = *pool.TaskContainerDefaults
-			}
-		}
 	}
-
-	// Not a deep copy, but deep enough not to overwrite the master's TaskContainerDefaults.
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
-
-	return taskSpec
+	return poolName
 }
 
 // Info returns this master's information.
@@ -552,11 +533,22 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
 	}
-	m.taskSpec = &tasks.TaskSpec{
-		ClusterID:             m.ClusterID,
-		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
-		TaskContainerDefaults: m.config.TaskContainerDefaults,
-		MasterCert:            cert,
+	poolsDefaults := map[string]model.TaskContainerDefaultsConfig{}
+	for _, p := range m.config.ResourcePools {
+		if p.TaskContainerDefaults == nil {
+			continue
+		}
+		poolsDefaults[p.PoolName] = *p.TaskContainerDefaults
+	}
+	m.taskSpecMaker = tasks.TaskSpecMaker{
+		BaseTaskSpec: tasks.TaskSpec{
+			AgentUserGroup:        &m.config.Security.DefaultTask,
+			ClusterID:             m.ClusterID,
+			HarnessPath:           filepath.Join(m.config.Root, "wheels"),
+			TaskContainerDefaults: m.config.TaskContainerDefaults,
+			MasterCert:            cert,
+		},
+		PoolsDefaults: poolsDefaults,
 	}
 
 	go m.cleanUpExperimentSnapshots()
@@ -815,8 +807,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.db,
 		m.proxy,
 		m.config.TensorBoardTimeout,
-		m.config.Security.DefaultTask,
-		m.makeTaskSpec,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)

@@ -113,17 +113,14 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	switch {
-	case err != nil:
+	if err != nil {
 		return nil, errors.Errorf("cannot find user and group for experiment")
-	case agentUserGroup == nil:
-		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+	taskSpec := a.m.taskSpecMaker.MakeTaskSpec("", agentUserGroup)
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		agentUserGroup:     agentUserGroup,
-		taskSpec:           a.m.taskSpec,
+		taskSpec:           &taskSpec,
 		rm:                 a.m.rm,
 		db:                 a.m.db,
 		experiment:         exp,
@@ -643,7 +640,17 @@ func (a *apiServer) CreateExperiment(
 		detParams.ParentID = &parentID
 	}
 
-	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	agentUserGroup, err := a.m.db.AgentUserGroup(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, agentUserGroup)
 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
@@ -651,11 +658,6 @@ func (a *apiServer) CreateExperiment(
 
 	if validateOnly {
 		return &apiv1.CreateExperimentResponse{}, nil
-	}
-
-	user, _, err := grpcutil.GetUser(ctx, a.m.db)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
 	dbExp.OwnerID = &user.ID

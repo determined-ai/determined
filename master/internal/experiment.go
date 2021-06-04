@@ -94,8 +94,7 @@ type (
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 
-		agentUserGroup *model.AgentUserGroup
-		taskSpec       *tasks.TaskSpec
+		taskSpec *tasks.TaskSpec
 
 		TrialCurrentOperation map[model.RequestID]searcher.ValidateAfter
 
@@ -160,15 +159,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		}
 	}
 
-	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)
-	if err != nil {
-		return nil, err
-	}
-
-	if agentUserGroup == nil {
-		agentUserGroup = &master.config.Security.DefaultTask
-	}
-
 	return &experiment{
 		Experiment:          expModel,
 		modelDefinition:     modelDefinition,
@@ -179,8 +169,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
-		agentUserGroup: agentUserGroup,
-		taskSpec:       taskSpec,
+		taskSpec: taskSpec,
 
 		TrialCurrentOperation: map[model.RequestID]searcher.ValidateAfter{},
 
@@ -321,7 +310,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("experiment state changed to %s", e.State)
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			agentUserGroup:     e.agentUserGroup,
 			taskSpec:           e.taskSpec,
 			rm:                 e.rm,
 			db:                 e.db,

@@ -25,8 +25,7 @@ type checkpointGCTask struct {
 	keepTrialBest      int
 	keepTrialLatest    int
 
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
+	taskSpec *tasks.TaskSpec
 
 	task *sproto.AllocateRequest
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
@@ -52,6 +51,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
+		t.taskSpec.SetRuntimeInfo(string(msg.ID), taskToken)
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(
 			t.experiment.ID,
@@ -63,20 +63,17 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return err
 		}
+		t.taskSpec.SetInner(&tasks.GCCheckpoints{
+			ExperimentID:       t.experiment.ID,
+			LegacyConfig:       t.legacyConfig,
+			ToDelete:           checkpoints,
+			DeleteTensorboards: t.gcTensorboards,
+		})
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
 		for _, a := range msg.Allocations {
-			taskSpec := *t.taskSpec
-			taskSpec.AgentUserGroup = t.agentUserGroup
-			taskSpec.TaskToken = taskToken
-			taskSpec.SetInner(&tasks.GCCheckpoints{
-				ExperimentID:       t.experiment.ID,
-				LegacyConfig:       t.legacyConfig,
-				ToDelete:           checkpoints,
-				DeleteTensorboards: t.gcTensorboards,
-			})
-			a.Start(ctx, taskSpec)
+			a.Start(ctx, *t.taskSpec)
 		}
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.

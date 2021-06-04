@@ -8,10 +8,9 @@ import (
 
 // CommandParams describes parameters for launching a command.
 type CommandParams struct {
-	UserFiles      archive.Archive
-	Data           map[string]interface{}
-	FullConfig     *model.CommandConfig
-	TaskSpec       *tasks.TaskSpec
-	User           *model.User
-	AgentUserGroup *model.AgentUserGroup
+	UserFiles  archive.Archive
+	Data       map[string]interface{}
+	FullConfig *model.CommandConfig
+	TaskSpec   *tasks.TaskSpec
+	User       *model.User
 }

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/docker/docker/api/types"
-
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/docker/docker/api/types/container"
@@ -20,21 +19,30 @@ import (
 
 // TaskContainerDefaultsConfig configures docker defaults for all containers.
 type TaskContainerDefaultsConfig struct {
+	// These can only be configured in task_container_defaults.
 	DtrainNetworkInterface string                `json:"dtrain_network_interface,omitempty"`
 	NCCLPortRange          string                `json:"nccl_port_range,omitempty"`
 	GLOOPortRange          string                `json:"gloo_port_range,omitempty"`
-	ShmSizeBytes           int64                 `json:"shm_size_bytes,omitempty"`
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
-	CPUPodSpec             *k8sV1.Pod            `json:"cpu_pod_spec"`
-	GPUPodSpec             *k8sV1.Pod            `json:"gpu_pod_spec"`
-	Image                  *RuntimeItem          `json:"image,omitempty"`
-	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
-	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
 
-	AddCapabilities  []string      `json:"add_capabilities"`
-	DropCapabilities []string      `json:"drop_capabilities"`
-	Devices          DevicesConfig `json:"devices"`
+	// These will be written into the environment.pod_spec, if it is not specified by the task.
+	CPUPodSpec *k8sV1.Pod `json:"cpu_pod_spec"`
+	GPUPodSpec *k8sV1.Pod `json:"gpu_pod_spec"`
 
+	// These will be merged into the environment config for a task.
+	Image            *RuntimeItem      `json:"image,omitempty"`
+	RegistryAuth     *types.AuthConfig `json:"registry_auth,omitempty"`
+	ForcePullImage   bool              `json:"force_pull_image,omitempty"`
+	AddCapabilities  []string          `json:"add_capabilities"`
+	DropCapabilities []string          `json:"drop_capabilities"`
+
+	// This will be written into the resources.shm_size, if it is not specified by the task.
+	ShmSizeBytes int64 `json:"shm_size_bytes,omitempty"`
+
+	// This will be written into the resources.devices, if it is not specified by the task.
+	Devices DevicesConfig `json:"devices"`
+
+	// This will be appended to the bind_mounts of the task.
 	BindMounts BindMountsConfig `json:"bind_mounts"`
 }
 
