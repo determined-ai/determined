@@ -68,19 +68,21 @@ const goto = async (url: string) => {
  */
 const getElements = async (selector: string, hashSelector?: string): Promise<t.Element[]> => {
   const map: Record<string, boolean> = {};
-  const elements = await t.$(selector).elements();
   const dedupedElements = [];
 
-  for (const element of elements) {
-    const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
-    const hashText = await hashElement.text();
-    const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+  try {
+    const elements = await t.$(selector).elements();
+    for (const element of elements) {
+      const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
+      const hashText = await hashElement.text();
+      const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
 
-    if (!map[hashId]) {
-      map[hashId] = true;
-      dedupedElements.push(element);
+      if (!map[hashId]) {
+        map[hashId] = true;
+        dedupedElements.push(element);
+      }
     }
-  }
+  } catch (e) {}
 
   return dedupedElements;
 };
