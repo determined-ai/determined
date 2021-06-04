@@ -37,11 +37,7 @@ setup(
         "pathspec>=0.6.0",
         "simplejson",
         "termcolor>=1.1.0",
-        # previous releases of boto3 (botocore specifically), urllib3 and requests have had
-        # incompatible interactions that required pinning the versions of these libraries.
-        "boto3>=1.17.87",
-        "requests>=2.22.0",
-        "urllib3>=1.26.5",
+        "boto3",
         # CLI:
         "argcomplete>=1.9.4",
         "gitpython>=3.1.3",
