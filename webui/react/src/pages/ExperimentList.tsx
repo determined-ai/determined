@@ -443,7 +443,7 @@ const ExperimentList: React.FC = () => {
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: V1GetExperimentsRequestSortBy.DESCRIPTION,
-        onHeaderCell: () => search ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => search !== '' ? { className: tableCss.headerFilterOn } : {},
         render: experimentNameRenderer,
         sorter: true,
         title: 'Name',

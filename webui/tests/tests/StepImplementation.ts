@@ -68,19 +68,21 @@ const goto = async (url: string) => {
  */
 const getElements = async (selector: string, hashSelector?: string): Promise<t.Element[]> => {
   const map: Record<string, boolean> = {};
-  const elements = await t.$(selector).elements();
   const dedupedElements = [];
 
-  for (const element of elements) {
-    const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
-    const hashText = await hashElement.text();
-    const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+  try {
+    const elements = await t.$(selector).elements();
+    for (const element of elements) {
+      const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
+      const hashText = await hashElement.text();
+      const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
 
-    if (!map[hashId]) {
-      map[hashId] = true;
-      dedupedElements.push(element);
+      if (!map[hashId]) {
+        map[hashId] = true;
+        dedupedElements.push(element);
+      }
     }
-  }
+  } catch (e) {}
 
   return dedupedElements;
 };
@@ -401,9 +403,12 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const ariaLabel = row.getCell('aria-label');
       const count = row.getCell('count');
-      await t.click(t.$(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.text(ariaLabel, t.within(t.$('.ant-table-filter-dropdown'))));
+      await t.click(t.$('[aria-label="Apply Filter"]'));
       await this.checkTableRowCount(count);
-      await t.click(t.$(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.$('[aria-label="Reset Filter"]'));
     }
   }
 

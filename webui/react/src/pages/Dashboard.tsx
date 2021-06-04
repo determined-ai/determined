@@ -31,14 +31,8 @@ import { activeCommandStates, activeRunStates, commandToTask, experimentToTask }
 const defaultFilters: TaskFilters = {
   limit: 25,
   states: [ ALL_VALUE ],
-  types: {
-    [CommandType.Command]: false,
-    [CommandType.Notebook]: false,
-    [CommandType.Shell]: false,
-    [CommandType.Tensorboard]: false,
-    Experiment: false,
-  },
-  username: undefined,
+  types: undefined,
+  users: undefined,
 };
 
 const STORAGE_PATH = 'dashboard';
@@ -51,13 +45,10 @@ const countActiveCommand = (commands: CommandTask[]): number => {
 const Dashboard: React.FC = () => {
   const { auth, cluster: overview, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
-  const initFilters = storage.getWithDefault(
-    STORAGE_FILTERS_KEY,
-    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
-      ...defaultFilters,
-      username: auth.user?.username,
-    },
-  );
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, {
+    ...defaultFilters,
+    users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
+  });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
@@ -75,7 +66,6 @@ const Dashboard: React.FC = () => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
-      const users = filters.username ? [ filters.username ] : undefined;
       const response = await getExperiments(
         {
           archived: false,
@@ -83,7 +73,7 @@ const Dashboard: React.FC = () => {
           orderBy: 'ORDER_BY_DESC',
           sortBy: 'SORT_BY_START_TIME',
           states: validateDetApiEnumList(Determinedexperimentv1State, states),
-          users,
+          users: filters.users,
         },
         { signal: canceler.signal },
       );

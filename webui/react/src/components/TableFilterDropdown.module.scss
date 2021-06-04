@@ -27,7 +27,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .option > [class*=Icon_base] {
+  .option > [class*=Icon_base]:last-child {
     display: none;
   }
   .option.selected {

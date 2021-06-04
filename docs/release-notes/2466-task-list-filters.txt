@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  WebUI: Migrate the task list table filters over to the native table
+   filters.
