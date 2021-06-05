@@ -1,80 +1,14 @@
-import atexit
-import builtins
-import os
-import tempfile
 import webbrowser
 from types import TracebackType
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Optional
 from urllib import parse
 
-import certifi
 import lomond
 import requests
 import simplejson
 
 import determined.common.requests
-from determined.common.api import authentication, errors
-
-# The path to a file containing an SSL certificate to trust specifically for the master, if any, or
-# False to disable cert verification entirely. If set to a path, it should always be a temporary
-# file that we own and can delete.
-_master_cert_bundle = None  # type: Optional[Union[str, bool]]
-
-# The name we use to verify the master.
-_master_cert_name = None
-
-
-def set_master_cert_bundle(path: Optional[Union[str, bool]]) -> None:
-    global _master_cert_bundle
-
-    if path == "":
-        path = None
-    if path is None or isinstance(path, bool):
-        _master_cert_bundle = path
-        return
-
-    # Don't use NamedTemporaryFile, since it would make the file inaccessible by path on Windows
-    # after this (see https://docs.python.org/3/library/tempfile.html#tempfile.NamedTemporaryFile).
-    fd, combined_path = tempfile.mkstemp(prefix="det-master-cert-")
-    atexit.register(os.unlink, combined_path)
-
-    with builtins.open(fd, "wb") as out:
-        with builtins.open(certifi.where(), "rb") as base_certs:
-            out.write(base_certs.read())
-        out.write(b"\n")
-        with builtins.open(path, "rb") as custom_certs:
-            out.write(custom_certs.read())
-
-    _master_cert_bundle = combined_path
-
-
-def set_master_cert_name(name: Optional[str]) -> None:
-    if name == "":
-        name = None
-    global _master_cert_name
-    _master_cert_name = name
-
-
-# Set the bundle if one is specified by the environment. This is done on import since we can't
-# always count on having an entry point we control (e.g., if someone is importing this code in a
-# notebook).
-f = os.environ.get("DET_MASTER_CERT_FILE")
-if f and f.lower() == "noverify":
-    set_master_cert_bundle(False)
-else:
-    set_master_cert_bundle(f)
-del f
-
-# Set the master servername from the environment.
-set_master_cert_name(os.environ.get("DET_MASTER_CERT_NAME"))
-
-
-def get_master_cert_bundle() -> Optional[Union[str, bool]]:
-    return _master_cert_bundle
-
-
-def get_master_cert_name() -> Optional[str]:
-    return _master_cert_name
+from determined.common.api import authentication, certs, errors
 
 
 def parse_master_address(master_address: str) -> parse.ParseResult:
@@ -106,12 +40,15 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
         return master_address
 
 
-def add_token_to_headers(headers: Dict[str, str]) -> Dict[str, str]:
+def add_token_to_headers(
+    headers: Dict[str, str],
+    auth: Optional[authentication.Authentication],
+) -> Dict[str, str]:
     # Try to get user token first since it will include the user token that is used
     # for queries in some restful APIs.
     user_token = ""
-    if authentication.cli_auth is not None:
-        user_token = authentication.cli_auth.get_session_token()
+    if auth is not None:
+        user_token = auth.get_session_token()
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}
 
@@ -130,8 +67,16 @@ def do_request(
     body: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
     stream: bool = False,
 ) -> requests.Response:
+    # If no explicit Authentication object was provided, use the cli's singleton Authentication.
+    if auth is None:
+        auth = authentication.cli_auth
+    if cert is None:
+        cert = certs.cli_cert
+
     if headers is None:
         h = {}  # type: Dict[str, str]
     else:
@@ -141,7 +86,7 @@ def do_request(
         params = {}
 
     if authenticated:
-        h = add_token_to_headers(h)
+        h = add_token_to_headers(h, auth)
 
     try:
         r = determined.common.requests.request(
@@ -150,9 +95,9 @@ def do_request(
             params=params,
             json=body,
             headers=h,
-            verify=_master_cert_bundle,
+            verify=cert.bundle if cert else None,
             stream=stream,
-            server_hostname=_master_cert_name,
+            server_hostname=cert.name if cert else None,
         )
     except requests.exceptions.SSLError:
         raise
@@ -163,8 +108,8 @@ def do_request(
 
     if r.status_code == 403:
         username = ""
-        if authentication.cli_auth is not None:
-            username = authentication.cli_auth.get_session_user()
+        if auth is not None:
+            username = auth.get_session_user()
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
@@ -180,6 +125,8 @@ def get(
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
     stream: bool = False,
 ) -> requests.Response:
     """
@@ -192,6 +139,8 @@ def get(
         params=params,
         headers=headers,
         authenticated=authenticated,
+        auth=auth,
+        cert=cert,
         stream=stream,
     )
 
@@ -202,12 +151,21 @@ def delete(
     params: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
 ) -> requests.Response:
     """
     Send a DELETE request to the remote API.
     """
     return do_request(
-        "DELETE", host, path, params=params, headers=headers, authenticated=authenticated
+        "DELETE",
+        host,
+        path,
+        params=params,
+        headers=headers,
+        authenticated=authenticated,
+        auth=auth,
+        cert=cert,
     )
 
 
@@ -217,11 +175,22 @@ def post(
     body: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
 ) -> requests.Response:
     """
     Send a POST request to the remote API.
     """
-    return do_request("POST", host, path, body=body, headers=headers, authenticated=authenticated)
+    return do_request(
+        "POST",
+        host,
+        path,
+        body=body,
+        headers=headers,
+        authenticated=authenticated,
+        auth=auth,
+        cert=cert,
+    )
 
 
 def patch(
@@ -230,11 +199,22 @@ def patch(
     body: Dict[str, Any],
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
 ) -> requests.Response:
     """
     Send a PATCH request to the remote API.
     """
-    return do_request("PATCH", host, path, body=body, headers=headers, authenticated=authenticated)
+    return do_request(
+        "PATCH",
+        host,
+        path,
+        body=body,
+        headers=headers,
+        authenticated=authenticated,
+        auth=auth,
+        cert=cert,
+    )
 
 
 def put(
@@ -243,11 +223,22 @@ def put(
     body: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
+    auth: Optional[authentication.Authentication] = None,
+    cert: Optional[certs.Cert] = None,
 ) -> requests.Response:
     """
     Send a PUT request to the remote API.
     """
-    return do_request("PUT", host, path, body=body, headers=headers, authenticated=authenticated)
+    return do_request(
+        "PUT",
+        host,
+        path,
+        body=body,
+        headers=headers,
+        authenticated=authenticated,
+        auth=auth,
+        cert=cert,
+    )
 
 
 def open(host: str, path: str) -> str:

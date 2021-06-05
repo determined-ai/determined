@@ -8,10 +8,10 @@ from determined.common import api
 
 def _wait_for_master(address: str) -> None:
     print("Checking for master at", address)
-    api.request.set_master_cert_bundle(False)
+    cert = api.Request.Cert(noverify=True)
     for _ in range(150):
         try:
-            r = api.get(address, "info", authenticated=False)
+            r = api.get(address, "info", authenticated=False, cert=cert)
             if r.status_code == requests.codes.ok:
                 return
         except api.errors.MasterNotFoundException:
