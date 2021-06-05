@@ -8,8 +8,8 @@ from determined._swagger.client.api_client import ApiClient
 from determined._swagger.client.configuration import Configuration
 from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
 from determined._swagger.client.models.v1_file import V1File
-from determined.common import api, check, context, util, yaml
-from determined.common.api import authentication
+from determined.common import check, context, util, yaml
+from determined.common.api import authentication, certs
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
@@ -47,16 +47,31 @@ class Determined:
         self,
         master: Optional[str] = None,
         user: Optional[str] = None,
+        cert_path: Optional[str] = None,
+        cert_name: Optional[str] = None,
+        noverify: bool = False,
     ):
-        self._session = session.Session(master, user)
+        master = master or util.get_default_master_address()
 
-        userauth = authentication.must_cli_auth()
+        # TODO: This should probably be try_reauth=False, but it appears that would break the case
+        # where the default credentials are in place and could be discovered by checking against
+        # the master.
+        auth = authentication.Authentication(master, user, try_reauth=True)
+
+        cert = certs.default_load(
+            master_url=master,
+            explicit_path=cert_path,
+            explicit_cert_name=cert_name,
+            explicit_noverify=noverify,
+        )
+
+        self._session = session.Session(master, user, auth, cert)
 
         configuration = Configuration()
         configuration.host = self._session._master.rstrip("/")
-        configuration.username = userauth.token_store.get_active_user()
+        configuration.username = auth.get_session_user()
         configuration.api_key_prefix["Authorization"] = "Bearer"
-        configuration.api_key["Authorization"] = userauth.get_session_token()
+        configuration.api_key["Authorization"] = auth.get_session_token()
 
         self._experiments = ExperimentsApi(ApiClient(configuration))
         self._internal = InternalApi(ApiClient(configuration))
@@ -68,7 +83,7 @@ class Determined:
         model_dir: str,
     ) -> experiment.ExperimentReference:
         """
-        Create an experiment with config parameters and model direcotry. The function
+        Create an experiment with config parameters and model directory. The function
         returns :class:`~determined.experimental.ExperimentReference` of the experiment.
 
         Arguments:
@@ -97,7 +112,7 @@ class Determined:
         experiment_response = self._internal.determined_create_experiment(experiment_request)
         return experiment.ExperimentReference(
             experiment_response.experiment.id,
-            self._session._master,
+            self._session,
             self._experiments,
         )
 
@@ -108,7 +123,7 @@ class Determined:
         """
         return experiment.ExperimentReference(
             experiment_id,
-            self._session._master,
+            self._session,
             self._experiments,
         )
 
@@ -117,15 +132,15 @@ class Determined:
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return trial.TrialReference(trial_id, self._session._master, self._trials)
+        return trial.TrialReference(trial_id, self._session, self._trials)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
-        return checkpoint.Checkpoint.from_json(r["checkpoint"], master=self._session._master)
+        r = self._session.get("/api/v1/checkpoints/{}".format(uuid)).json()
+        return checkpoint.Checkpoint.from_json(r["checkpoint"], self._session)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
@@ -138,13 +153,12 @@ class Determined:
             description (string, optional): A description of the model.
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
-        r = api.post(
-            self._session._master,
+        r = self._session.post(
             "/api/v1/models/{}".format(name),
             body={"description": description, "metadata": metadata},
         )
 
-        return model.Model.from_json(r.json().get("model"), self._session._master)
+        return model.Model.from_json(r.json().get("model"), self._session)
 
     def get_model(self, name: str) -> model.Model:
         """
@@ -152,8 +166,8 @@ class Determined:
         with the provided name. If no model with that name is found in the registry,
         an exception is raised.
         """
-        r = api.get(self._session._master, "/api/v1/models/{}".format(name))
-        return model.Model.from_json(r.json().get("model"), self._session._master)
+        r = self._session.get("/api/v1/models/{}".format(name))
+        return model.Model.from_json(r.json().get("model"), self._session)
 
     def get_models(
         self,
@@ -174,8 +188,7 @@ class Determined:
             description: If this parameter is set, models will be filtered to
                 only include models with descriptions matching this parameter.
         """
-        r = api.get(
-            self._session._master,
+        r = self._session.get(
             "/api/v1/models/",
             params={
                 "sort_by": sort_by.value,
@@ -186,4 +199,4 @@ class Determined:
         )
 
         models = r.json().get("models")
-        return [model.Model.from_json(m, self._session._master) for m in models]
+        return [model.Model.from_json(m, self._session) for m in models]

@@ -8,7 +8,7 @@ from determined.common import api
 
 def _wait_for_master(address: str) -> None:
     print("Checking for master at", address)
-    cert = api.Request.Cert(noverify=True)
+    cert = api.request.Cert(noverify=True)
     for _ in range(150):
         try:
             r = api.get(address, "info", authenticated=False, cert=cert)
