@@ -87,6 +87,9 @@ type Config struct {
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
 
 	*resourcemanagers.ResourceConfig
+
+	// Internal contains "hidden" useful debugging configurations.
+	InternalConfig InternalConfig `json:"__internal"`
 }
 
 // Printable returns a printable string.
@@ -96,7 +99,7 @@ func (c Config) Printable() ([]byte, error) {
 	c.Telemetry.SegmentMasterKey = hiddenValue
 	c.Telemetry.SegmentWebUIKey = hiddenValue
 
-	c.CheckpointStorage.Printable()
+	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
 	optJSON, err := json.Marshal(c)
 	if err != nil {
@@ -181,4 +184,9 @@ type TelemetryConfig struct {
 	Enabled          bool   `json:"enabled"`
 	SegmentMasterKey string `json:"segment_master_key"`
 	SegmentWebUIKey  string `json:"segment_webui_key"`
+}
+
+// InternalConfig is the configuration for internal knobs.
+type InternalConfig struct {
+	PrometheusEnabled bool `json:"prometheus_enabled"`
 }

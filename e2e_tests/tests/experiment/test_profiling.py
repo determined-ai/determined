@@ -1,0 +1,174 @@
+import tempfile
+from typing import Any, Dict, Optional, Sequence
+from urllib.parse import urlencode
+
+import pytest
+import simplejson
+import yaml
+
+import determined.common.api.authentication as auth
+from determined.common import api
+from tests import config as conf
+from tests import experiment as exp
+
+
+@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.timeout(600)  # type: ignore
+@pytest.mark.parametrize(  # type: ignore
+    "framework_base_experiment,framework_timings_enabled",
+    [
+        ("tutorials/mnist_pytorch", True),
+        ("tutorials/fashion_mnist_tf_keras", False),
+        ("computer_vision/mnist_estimator", False),
+    ],
+)
+def test_streaming_observability_metrics_apis(
+    framework_base_experiment: str, framework_timings_enabled: bool
+) -> None:
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+
+    config_path = conf.tutorials_path(f"../{framework_base_experiment}/const.yaml")
+    model_def_path = conf.tutorials_path(f"../{framework_base_experiment}")
+
+    config_obj = conf.load_config(config_path)
+    config_obj = conf.set_profiling_enabled(config_obj)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config_obj, f)
+        experiment_id = exp.create_experiment(
+            tf.name,
+            model_def_path,
+        )
+
+    exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+    trials = exp.experiment_trials(experiment_id)
+    trial_id = trials[0]["id"]
+
+    request_profiling_metric_labels(trial_id, framework_timings_enabled)
+    request_profiling_system_metrics(trial_id, "gpu_util")
+    if framework_timings_enabled:
+        request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
+
+
+def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> None:
+    def validate_labels(labels: Sequence[Dict[str, Any]]) -> None:
+        # Check some labels against the expected labels. Return the missing labels.
+        expected = {
+            "cpu_util_simple": PROFILER_METRIC_TYPE_SYSTEM,
+            "dataloader_next": PROFILER_METRIC_TYPE_TIMING,
+            "disk_iops": PROFILER_METRIC_TYPE_SYSTEM,
+            "disk_throughput_read": PROFILER_METRIC_TYPE_SYSTEM,
+            "disk_throughput_write": PROFILER_METRIC_TYPE_SYSTEM,
+            "free_memory": PROFILER_METRIC_TYPE_SYSTEM,
+            "from_device": PROFILER_METRIC_TYPE_TIMING,
+            "net_throughput_recv": PROFILER_METRIC_TYPE_SYSTEM,
+            "net_throughput_sent": PROFILER_METRIC_TYPE_SYSTEM,
+            "reduce_metrics": PROFILER_METRIC_TYPE_TIMING,
+            "step_lr_schedulers": PROFILER_METRIC_TYPE_TIMING,
+            "to_device": PROFILER_METRIC_TYPE_TIMING,
+            "train_batch": PROFILER_METRIC_TYPE_TIMING,
+            "gpu_free_memory": PROFILER_METRIC_TYPE_SYSTEM,
+            "gpu_util": PROFILER_METRIC_TYPE_SYSTEM,
+        }
+        if not timing_enabled:
+            expected = {k: v for k, v in expected.items() if v != PROFILER_METRIC_TYPE_TIMING}
+        for label in labels:
+            metric_name = label["name"]
+            metric_type = label["metricType"]
+            if expected.get(metric_name, None) == metric_type:
+                del expected[metric_name]
+
+        if len(expected) > 0:
+            pytest.fail(
+                f"expected completed experiment to have all labels but some are missing: {expected}"
+            )
+
+    with api.get(
+        conf.make_master_url(),
+        "api/v1/trials/{}/profiler/available_series".format(trial_id),
+        stream=True,
+    ) as r:
+        for line in r.iter_lines():
+            labels = simplejson.loads(line)["result"]["labels"]
+            validate_labels(labels)
+            # Just check 1 iter.
+            return
+
+
+def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
+    def validate_gpu_metric_batch(batch: Dict[str, Any]) -> None:
+        num_values = len(batch["values"])
+        num_batch_indexes = len(batch["batches"])
+        num_timestamps = len(batch["timestamps"])
+        if not (num_values == num_batch_indexes == num_timestamps):
+            pytest.fail(
+                f"mismatched lists: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
+            )
+
+        if num_values == 0:
+            pytest.fail(f"received batch of size 0, something went wrong: {batch}")
+
+    with api.get(
+        conf.make_master_url(),
+        "api/v1/trials/{}/profiler/metrics?{}".format(
+            trial_id,
+            to_query_params(PROFILER_METRIC_TYPE_SYSTEM, metric_name),
+        ),
+        stream=True,
+    ) as r:
+        for line in r.iter_lines():
+            batch = simplejson.loads(line)["result"]["batch"]
+            validate_gpu_metric_batch(batch)
+
+
+def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) -> None:
+    def validate_timing_batch(batch: Dict[str, Any], batch_idx: int) -> int:
+        values = batch["values"]
+        batches = batch["batches"]
+        num_values = len(values)
+        num_batch_indexes = len(batches)
+        num_timestamps = len(batch["timestamps"])
+        if num_values != num_batch_indexes or num_batch_indexes != num_timestamps:
+            pytest.fail(
+                f"mismatched slices: not ({num_values} == {num_batch_indexes} == {num_timestamps})"
+            )
+
+        if not any(values):
+            pytest.fail(f"received bad batch, something went wrong: {batch}")
+
+        if batches[0] != batch_idx:
+            pytest.fail(
+                f"batch did not start at correct batch, {batches[0]} != {batch_idx}: {batch}"
+            )
+
+        # Check batches are monotonic with no gaps.
+        if not all(x + 1 == y for x, y in zip(batches, batches[1:])):
+            pytest.fail(f"skips in batches sampled: {batch}")
+
+        return int(batches[-1]) + 1
+
+    with api.get(
+        conf.make_master_url(),
+        "api/v1/trials/{}/profiler/metrics?{}".format(
+            trial_id,
+            to_query_params(PROFILER_METRIC_TYPE_TIMING, metric_name),
+        ),
+        stream=True,
+    ) as r:
+        batch_idx = 0
+        for line in r.iter_lines():
+            batch = simplejson.loads(line)["result"]["batch"]
+            batch_idx = validate_timing_batch(batch, batch_idx)
+
+
+PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
+PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
+
+
+def to_query_params(metric_type: str, metric_name: Optional[str] = None) -> str:
+    return urlencode(
+        {
+            "labels.name": metric_name,
+            "labels.metricType": metric_type,
+        }
+    )

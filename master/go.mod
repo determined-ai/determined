@@ -5,7 +5,6 @@ go 1.16
 require (
 	cloud.google.com/go v0.58.0
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.0.1 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/aws/aws-sdk-go v1.34.32
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -27,22 +26,24 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/goreleaser/goreleaser v0.140.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
-	github.com/labstack/echo/v4 v4.2.2
+	github.com/labstack/echo-contrib v0.11.0
+	github.com/labstack/echo/v4 v4.3.0
 	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.8.0 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/o1egl/paseto v1.0.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.10.0
 	github.com/ryanbressler/CloudForest v0.0.0-20161201194407-d014dc32840a
 	github.com/santhosh-tekuri/jsonschema/v2 v2.2.0
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
@@ -52,7 +53,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
-	github.com/uber/jaeger-lib v2.4.0+incompatible // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023

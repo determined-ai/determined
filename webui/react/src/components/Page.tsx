@@ -10,6 +10,7 @@ import Spinner from './Spinner';
 
 export interface BreadCrumbRoute {
   breadcrumbName: string;
+  breadcrumbTooltip?: string;
   path: string;
 }
 

@@ -476,9 +476,9 @@ export interface ExperimentFilters {
 
 export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
-  states: string[];
-  types: Record<T, boolean>;
-  username?: string;
+  states?: string[];
+  types?: T[];
+  users?: string[];
 }
 
 export type CommonProps = {

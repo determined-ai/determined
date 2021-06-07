@@ -38,31 +38,26 @@ export const launchNotebook = async (
   }
 };
 
-export const previewNotebook =
-  async (slots?: number, templateName?: string, name?: string, pool?: string): Promise<RawJson> => {
-    try {
-      const config = await apiPreviewNotebook({
-        config: {
-          description: name === '' ? undefined : name,
-          resources: { resource_pool: pool === '' ? undefined : pool, slots },
-        },
-        preview: true,
-        templateName: templateName === '' ? undefined : templateName,
-      });
-      return config;
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Preview Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-      return { error: 'Could not preview notebook' };
-    }
-  };
+export const previewNotebook = async (
+  slots?: number,
+  templateName?: string,
+  name?: string,
+  pool?: string,
+): Promise<RawJson> => {
+  try {
+    const config = await apiPreviewNotebook({
+      config: {
+        description: name === '' ? undefined : name,
+        resources: { resource_pool: pool === '' ? undefined : pool, slots },
+      },
+      preview: true,
+      templateName: templateName === '' ? undefined : templateName,
+    });
+    return config;
+  } catch (e) {
+    throw new Error('Unable to load notebook config.');
+  }
+};
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
@@ -203,33 +198,27 @@ const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = '')
 };
 
 const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
-  if (states[0] === ALL_VALUE) return true;
-
-  const targetStateRun = states[0] as RunState;
-  const targetStateCmd = states[0] as CommandState;
-
-  return [ targetStateRun, targetStateCmd ].includes(task.state);
+  if (!Array.isArray(states) || states.length === 0 || states[0] === ALL_VALUE) return true;
+  return states.includes(task.state);
 };
 
 const matchesUser = <T extends AnyTask | ExperimentItem>(
-  task: T, users: User[], username?: string,
+  task: T, users?: string[],
 ): boolean => {
-  if (!username) return true;
-  const selectedUser = users.find(u => u.username === username);
-  return !!selectedUser && (task.username === username);
+  if (!Array.isArray(users) || users.length === 0 || users[0] === ALL_VALUE) return true;
+  return users.findIndex(user => task.username === user) !== -1;
 };
 
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
   tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
 ): A[] => {
-  const isAllTypes = !Object.values(filters.types).includes(true);
   return tasks
     .filter(task => {
       const isExperiment = isExperimentTask(task);
       const type = isExperiment ? 'Experiment' : (task as CommandTask).type;
-      return (isAllTypes || filters.types[type as T]) &&
-        matchesUser<A>(task, users, filters.username) &&
-        matchesState<A>(task, filters.states) &&
+      return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
+        matchesUser<A>(task, filters.users) &&
+        matchesState<A>(task, filters.states || []) &&
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as ExperimentTask).archived);
     })

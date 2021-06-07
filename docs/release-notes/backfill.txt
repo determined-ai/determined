@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+-  Scheduling: support back-filling in the priority scheduler. If there
+   are no high priority tasks can be scheduled or preempted, low
+   priority tasks will be back-filled on the idle slots. This needs
+   preemption to be enabled.

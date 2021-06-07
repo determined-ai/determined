@@ -9,6 +9,7 @@ import (
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -25,7 +26,7 @@ import (
 const jsonPretty = "application/json+pretty"
 
 // NewGRPCServer creates a Determined gRPC service.
-func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
+func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus bool) *grpc.Server {
 	// In go-grpc, the INFO log level is used primarily for debugging
 	// purposes, so omit INFO messages from the master log.
 	logger := logrus.New()
@@ -37,22 +38,33 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	opts := []grpclogrus.Option{
 		grpclogrus.WithLevels(grpcCodeToLogrusLevel),
 	}
+
+	streamInterceptors := []grpc.StreamServerInterceptor{
+		grpclogrus.StreamServerInterceptor(logEntry, opts...),
+		grpcrecovery.StreamServerInterceptor(),
+		streamAuthInterceptor(db),
+	}
+
+	unaryInterceptors := []grpc.UnaryServerInterceptor{
+		grpclogrus.UnaryServerInterceptor(logEntry, opts...),
+		grpcrecovery.UnaryServerInterceptor(grpcrecovery.WithRecoveryHandler(
+			func(p interface{}) (err error) {
+				logEntry.Error(string(debug.Stack()))
+				return status.Errorf(codes.Internal, "%s", p)
+			},
+		)),
+		unaryAuthInterceptor(db),
+	}
+
+	if enablePrometheus {
+		streamInterceptors = append(streamInterceptors, grpc_prometheus.StreamServerInterceptor)
+		unaryInterceptors = append(unaryInterceptors, grpc_prometheus.UnaryServerInterceptor)
+		grpc_prometheus.EnableHandlingTimeHistogram()
+	}
+
 	grpcS := grpc.NewServer(
-		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(
-			grpclogrus.StreamServerInterceptor(logEntry, opts...),
-			grpcrecovery.StreamServerInterceptor(),
-			streamAuthInterceptor(db),
-		)),
-		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
-			grpclogrus.UnaryServerInterceptor(logEntry, opts...),
-			grpcrecovery.UnaryServerInterceptor(grpcrecovery.WithRecoveryHandler(
-				func(p interface{}) (err error) {
-					logEntry.Error(string(debug.Stack()))
-					return status.Errorf(codes.Internal, "%s", p)
-				},
-			)),
-			unaryAuthInterceptor(db),
-		)),
+		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(streamInterceptors...)),
+		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(unaryInterceptors...)),
 	)
 	proto.RegisterDeterminedServer(grpcS, srv)
 	return grpcS

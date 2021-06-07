@@ -81,6 +81,7 @@ const TableFilterDropdown: React.FC<Props> = ({
   const OptionRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
     const classes = [ css.option ];
     const isSelected = selectedMap[data[index].value];
+    const isJSX = typeof data[index].text !== 'string';
     if (isSelected) classes.push(css.selected);
     return (
       <div
@@ -88,7 +89,7 @@ const TableFilterDropdown: React.FC<Props> = ({
         data-value={data[index].value}
         style={style}
         onClick={handleOptionClick}>
-        <span>{data[index].text}</span>
+        {isJSX ? data[index].text : <span>{data[index].text}</span>}
         <Icon name="checkmark" />
       </div>
     );

@@ -1,20 +1,24 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import { Button, Modal } from 'antd';
+import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
 import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
+import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE, taskNameRenderer,
+  defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE, relativeTimeRenderer,
+  stateRenderer, taskIdRenderer, taskNameRenderer, taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
+import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import TaskFilter from 'components/TaskFilter';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -24,14 +28,16 @@ import { paths } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
-import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { CommandState, CommandTask, CommandType, TaskFilters } from 'types';
 import { isEqual } from 'utils/data';
-import { alphanumericSorter, numericSorter } from 'utils/sort';
+import {
+  alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
+} from 'utils/sort';
+import { capitalize } from 'utils/string';
 import { filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
-import { columns as defaultColumns } from './TaskList.table';
 
 enum TensorBoardSourceType {
   Experiment = 'Experiment',
@@ -52,14 +58,9 @@ interface SourceInfo {
 
 const defaultFilters: TaskFilters<CommandType> = {
   limit: MINIMUM_PAGE_SIZE,
-  states: [ ALL_VALUE ],
-  types: {
-    [CommandType.Command]: false,
-    [CommandType.Notebook]: false,
-    [CommandType.Shell]: false,
-    [CommandType.Tensorboard]: false,
-  },
-  username: undefined,
+  states: undefined,
+  types: undefined,
+  users: undefined,
 };
 
 const defaultSorter: ApiSorter = {
@@ -76,9 +77,9 @@ const TaskList: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
-    (!auth.user || auth.user?.isAdmin) ? defaultFilters : {
+    {
       ...defaultFilters,
-      username: auth.user?.username,
+      users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
     },
   );
   const [ canceler ] = useState(new AbortController());
@@ -146,8 +147,85 @@ const TaskList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchAll(), [ fetchAll ]);
 
-  const columns = useMemo(() => {
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    setSearch(newSearch);
+  }, []);
+
+  const handleNameSearchReset = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={search}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, search ]);
+
+  const updateFilters = useCallback((filters: TaskFilters<CommandType>): void => {
+    storage.set(STORAGE_FILTERS_KEY, filters);
+    setSelectedRowKeys([]);
+    setFilters(filters);
+  }, [ setFilters, storage ]);
+
+  const handleTypeFilterApply = useCallback((types: string[]) => {
+    updateFilters({ ...filters, types: types.length !== 0 ? types as CommandType[] : undefined });
+  }, [ filters, updateFilters ]);
+
+  const handleTypeFilterReset = useCallback(() => {
+    updateFilters({ ...filters, types: undefined });
+  }, [ filters, updateFilters ]);
+
+  const typeFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      values={filters.types}
+      width={180}
+      onFilter={handleTypeFilterApply}
+      onReset={handleTypeFilterReset} />
+  ), [ filters.types, handleTypeFilterApply, handleTypeFilterReset ]);
+
+  const handleStateFilterApply = useCallback((states: string[]) => {
+    updateFilters({ ...filters, states: states.length !== 0 ? states : undefined });
+  }, [ filters, updateFilters ]);
+
+  const handleStateFilterReset = useCallback(() => {
+    updateFilters({ ...filters, states: undefined });
+  }, [ filters, updateFilters ]);
+
+  const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      values={filters.states}
+      onFilter={handleStateFilterApply}
+      onReset={handleStateFilterReset} />
+  ), [ filters.states, handleStateFilterApply, handleStateFilterReset ]);
+
+  const handleUserFilterApply = useCallback((users: string[]) => {
+    updateFilters({ ...filters, users: users.length !== 0 ? users : undefined });
+  }, [ filters, updateFilters ]);
+
+  const handleUserFilterReset = useCallback(() => {
+    updateFilters({ ...filters, users: undefined });
+  }, [ filters, updateFilters ]);
+
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={filters.users}
+      onFilter={handleUserFilterApply}
+      onReset={handleUserFilterReset} />
+  ), [ filters.users, handleUserFilterApply, handleUserFilterReset ]);
+
+  const columns = useMemo(() => {
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
       if (record.type !== CommandType.Tensorboard || !record.misc) {
         return taskNameRenderer(_, record, index);
@@ -190,24 +268,107 @@ const TaskList: React.FC = () => {
       <TaskActionDropdown task={record} onComplete={handleActionComplete} />
     );
 
-    return [ ...defaultColumns ].map(column => {
+    const tableColumns: ColumnType<CommandTask>[] = [
+      {
+        dataIndex: 'id',
+        key: 'id',
+        render: taskIdRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.id, b.id),
+        title: 'Short ID',
+      },
+      {
+        filterDropdown: typeFilterDropdown,
+        filters: Object.values(CommandType).map(value => ({
+          text: (
+            <div className={css.typeFilter}>
+              <Icon name={value.toLocaleLowerCase()} />
+              <span>{capitalize(value)}</span>
+            </div>
+          ),
+          value,
+        })),
+        key: 'type',
+        onHeaderCell: () => filters.types ? { className: tableCss.headerFilterOn } : {},
+        render: taskTypeRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.type, b.type),
+        title: 'Type',
+      },
+      {
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
+        key: 'name',
+        onHeaderCell: () => search !== '' ? { className: tableCss.headerFilterOn } : {},
+        render: nameNSourceRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
+        title: 'Name',
+      },
+      {
+        key: 'startTime',
+        render: (_: number, record: CommandTask): React.ReactNode => {
+          return relativeTimeRenderer(new Date(record.startTime));
+        },
+        sorter: (a: CommandTask, b: CommandTask): number => {
+          return stringTimeSorter(a.startTime, b.startTime);
+        },
+        title: 'Start Time',
+      },
+      {
+        filterDropdown: stateFilterDropdown,
+        filters: Object.values(CommandState)
+          .map((value) => ({
+            text: <Badge state={value} type={BadgeType.State} />,
+            value,
+          })),
+        key: 'state',
+        onHeaderCell: () => filters.states ? { className: tableCss.headerFilterOn } : {},
+        render: stateRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
+        title: 'State',
+      },
+      {
+        dataIndex: 'resourcePool',
+        key: 'resourcePool',
+        sorter: true,
+        title: 'Resource Pool',
+      },
+      {
+        filterDropdown: userFilterDropdown,
+        filters: users.map(user => ({ text: user.username, value: user.username })),
+        key: 'user',
+        onHeaderCell: () => filters.users ? { className: tableCss.headerFilterOn } : {},
+        render: userRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number => {
+          return alphanumericSorter(a.username, b.username);
+        },
+        title: 'User',
+      },
+      {
+        align: 'right',
+        className: 'fullCell',
+        key: 'action',
+        render: actionRenderer,
+        title: '',
+      },
+    ];
+
+    return tableColumns.map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === 'name') column.render = nameNSourceRenderer;
-      if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
-  }, [ handleActionComplete, handleSourceShow, sorter ]);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value || '');
-  }, []);
-
-  const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
-    storage.set(STORAGE_FILTERS_KEY, filters);
-    setSelectedRowKeys([]);
-    setFilters(filters);
-  }, [ setFilters, storage ]);
+  }, [
+    filters,
+    handleActionComplete,
+    handleSourceShow,
+    nameFilterSearch,
+    stateFilterDropdown,
+    search,
+    sorter,
+    tableSearchIcon,
+    typeFilterDropdown,
+    userFilterDropdown,
+    users,
+  ]);
 
   const handleBatchKill = useCallback(async () => {
     try {
@@ -276,19 +437,6 @@ const TaskList: React.FC = () => {
   return (
     <Page id="tasks" title="Tasks">
       <div className={css.base}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            className={css.search}
-            placeholder="ID or name"
-            prefix={<Icon name="search" size="small" />}
-            onChange={handleSearchChange} />
-          <TaskFilter<CommandType>
-            filters={filters}
-            showExperiments={false}
-            showLimit={false}
-            onChange={handleFilterChange} />
-        </div>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button
             danger

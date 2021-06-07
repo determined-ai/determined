@@ -10,7 +10,6 @@ import {
 } from 'gauge-ts';
 /* eslint-enable no-unused-vars */
 
-import * as assert from 'assert';
 import * as expect from 'expect';
 import * as t from 'taiko';
 
@@ -69,19 +68,21 @@ const goto = async (url: string) => {
  */
 const getElements = async (selector: string, hashSelector?: string): Promise<t.Element[]> => {
   const map: Record<string, boolean> = {};
-  const elements = await t.$(selector).elements();
   const dedupedElements = [];
 
-  for (const element of elements) {
-    const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
-    const hashText = await hashElement.text();
-    const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
+  try {
+    const elements = await t.$(selector).elements();
+    for (const element of elements) {
+      const hashElement = hashSelector ? await t.$(hashSelector, t.within(element)) : element;
+      const hashText = await hashElement.text();
+      const hashId = hashText.replace(/\s+/g, ' ').replace(/\r?\n|\r/g, '');
 
-    if (!map[hashId]) {
-      map[hashId] = true;
-      dedupedElements.push(element);
+      if (!map[hashId]) {
+        map[hashId] = true;
+        dedupedElements.push(element);
+      }
     }
-  }
+  } catch (e) {}
 
   return dedupedElements;
 };
@@ -158,13 +159,12 @@ export default class StepImplementation {
 
   @Step('Should not have element <selector> present')
   public async hasNoElement(selector: string) {
-    const exists = await t.$(selector).exists(undefined, 2000);
-    assert.ok(!exists);
+    await t.waitFor(async () => !(await t.$(selector).exists(undefined, 2000)));
   }
 
   @Step('Should have element <selector> present')
   public async hasElement(selector: string) {
-    await t.$(selector).exists();
+    await t.waitFor(async () => await t.$(selector).exists());
   }
 
   @Step('Switch to mobile view')
@@ -190,7 +190,7 @@ export default class StepImplementation {
 
       const path = row.getCell('route');
       const url = await t.currentURL();
-      assert.ok(url.includes(path));
+      await t.waitFor(() => url.includes(path));
 
       if (external) {
         await t.closeTab();
@@ -253,9 +253,11 @@ export default class StepImplementation {
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
-    const rows = await getElements('tr[data-row-key]', '.ant-table-cell:nth-child(2)');
-    const expectedCount = parseInt(count);
-    await assert.strictEqual(rows.length, expectedCount);
+    await t.waitFor(async () => {
+      const rows = await getElements('tr[data-row-key]', '.ant-table-cell:nth-child(2)');
+      const expectedCount = parseInt(count);
+      return rows.length === expectedCount;
+    });
   }
 
   @Step('Sort table by column <column>')
@@ -265,17 +267,21 @@ export default class StepImplementation {
 
   @Step('Toggle all table row selection')
   public async toggleAllTableRowSelection() {
+    await t.waitFor(async () => t.$('th input[type=checkbox]').exists());
     await t.click(t.$('th input[type=checkbox]'));
   }
 
   @Step('Table batch should have following buttons <table>')
   public async checkTableBatchButton(table: Table) {
     for (var row of table.getTableRows()) {
-      const label = row.getCell('table batch buttons');
-      const disabled = row.getCell('disabled') === 'true';
-      const batchButton = await t.button(label, t.within(t.$('[class*=TableBatch_base]')));
-      await batchButton.exists();
-      assert.strictEqual(await batchButton.isDisabled(), disabled);
+      await t.waitFor(async () => {
+        const disabled = row.getCell('disabled') === 'true';
+        const label = row.getCell('table batch buttons');
+        const batchButton = await t.button(label, t.within(t.$('[class*=TableBatch_base]')));
+        const buttonExists = await batchButton.exists();
+        const isDisabled = await batchButton.isDisabled();
+        return buttonExists && isDisabled === disabled;
+      });
     }
   }
 
@@ -343,12 +349,14 @@ export default class StepImplementation {
 
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
-    const expectedCount = parseInt(count);
-    const cards = await getElements(
-      '[class*=TaskCard_base]',
-      '[class*=TaskCard_badges] span:first-of-type',
-    );
-    await assert.strictEqual(cards.length, expectedCount);
+    await t.waitFor(async () => {
+      const expectedCount = parseInt(count);
+      const cards = await getElements(
+        '[class*=TaskCard_base]',
+        '[class*=TaskCard_badges] span:first-of-type',
+      );
+      return cards.length === expectedCount;
+    });
   }
 
   /* Experiment List Page Steps */
@@ -363,11 +371,6 @@ export default class StepImplementation {
   public async openExperimentInTensorBoard(row: string) {
     await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await clickAndCloseTab(t.text('View in TensorBoard', t.within(t.$('.ant-dropdown'))));
-  }
-
-  @Step('Toggle show archived button')
-  public async toggleShowArchived() {
-    await t.click(t.text('Show'));
   }
 
   /* Experiment Detail Page Steps */
@@ -400,9 +403,12 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const ariaLabel = row.getCell('aria-label');
       const count = row.getCell('count');
-      await t.click(t.$(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.text(ariaLabel, t.within(t.$('.ant-table-filter-dropdown'))));
+      await t.click(t.$('[aria-label="Apply Filter"]'));
       await this.checkTableRowCount(count);
-      await t.click(t.$(`[aria-label=${ariaLabel}]`));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.$('[aria-label="Reset Filter"]'));
     }
   }
 
@@ -410,27 +416,32 @@ export default class StepImplementation {
 
   @Step('Should show <count> resource pool cards')
   public async checkResourcePoolCardCount(count: string) {
-    const cards = await getElements('div[class*=ResourcePoolCard_base]');
-    assert.strictEqual(cards.length, parseInt(count));
+    await t.waitFor(async () => {
+      const cards = await getElements('div[class*=ResourcePoolCard_base]');
+      return cards.length === parseInt(count);
+    });
   }
 
   @Step('Should show <count> agents in stats')
   public async checkAgentCountStats(count: string) {
-    const stats = await getElements('div[class*=OverviewStats_base]');
-    assert.strictEqual(stats.length, 3);
-    const numAgents = (await stats[0].text()).replace('Connected Agents', '');
-    assert.strictEqual(parseInt(numAgents), parseInt(count));
+    await t.waitFor(async () => {
+      const stats = await getElements('div[class*=OverviewStats_base]');
+      const numAgents = (await stats[0].text()).replace('Connected Agents', '');
+      return stats.length === 3 && parseInt(numAgents) === parseInt(count);
+    });
   }
 
   @Step('Page should contain <text>')
   public async checkTextExist(value: string) {
-    assert.ok(t.text(value).exists());
+    await t.waitFor(async () => await t.text(value).exists());
   }
 
   /* Logs */
   @Step('Should have some log entries')
   public async checkSomeLogLines() {
-    const logs = await getElements('[class*=LogViewer_line]');
-    assert.ok(logs.length > 0);
+    await t.waitFor(async () => {
+      const logs = await getElements('[class*=LogViewer_line]');
+      return logs.length > 0;
+    });
   }
 }

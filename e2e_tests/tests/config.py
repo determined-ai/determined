@@ -181,3 +181,10 @@ def set_pod_spec(config: Dict[Any, Any], pod_spec: Dict[Any, Any]) -> Dict[Any, 
     config.setdefault("environment", {})
     config["environment"]["pod_spec"] = pod_spec
     return config
+
+
+def set_profiling_enabled(config: Dict[Any, Any]) -> Dict[Any, Any]:
+    config = config.copy()
+    config.setdefault("profiling", {})
+    config["profiling"]["enabled"] = True
+    return config

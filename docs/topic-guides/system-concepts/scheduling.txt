@@ -60,23 +60,24 @@ will be assigned four slots.
 **********
 
 The master allocates cluster resources (*slots*) to active tasks based
-on their *priority*. While tasks of higher priority (lower priority
-number) are pending, no lower priority tasks will be scheduled. For
-instance, if tasks with priorities of five and forty-two are pending,
-the latter will not be scheduled until the former has been. Tasks of
-equal priority are scheduled in the order in which they were created.
+on their *priority*. High-priority tasks are preferred to low-priority
+tasks. Low-priority tasks will be preempted to make space for pending
+high-priority tasks if possible. Tasks of equal priority are scheduled
+in the order in which they were created.
 
 By default, the priority scheduler does not use preemption. If
 preemption is enabled (:ref:`master-configuration`), when a higher
 priority task is pending and cannot be scheduled because no idle
 resources are available, the scheduler will attempt to schedule it by
 preempting lower priority tasks, starting with the task with the lowest
-priority. When a trial is preempted, its state is checkpointed so that
-the progress of the trial is not lost. Enabling preemption ensures that
-cluster resources can be reallocated to high priority tasks more
-promptly; however, preemption can also result in additional overhead due
-to checkpointing low priority tasks, which might be expensive for some
-models.
+priority. If there are no tasks to preempt, lower priority tasks might
+be backfilled on the idle resources. When a trial is preempted, its
+state is checkpointed so that the progress of the trial is not lost.
+Enabling preemption ensures that cluster resources can be reallocated to
+high priority tasks more promptly and backfilled to make the most use of
+the idle resources; however, preemption can also result in additional
+overhead due to checkpointing low priority tasks, which might be
+expensive for some models.
 
 .. note::
 
@@ -112,12 +113,13 @@ enabled:
    are available.
 
 #. User submits a priority 2 distributed training experiment with
-   slots_per_trial 4. It will not be scheduled even though 7 slots are
-   available, because it is behind a higher priority pending task.
+   slots_per_trial 4. One trial will be scheduled to make use of the
+   idle 7 slots.
 
-#. The notebook is killed. The distributed training job that has
-   priority 1 then starts running. Once that experiment is complete,
-   distributed training experiment with priority 2 runs.
+#. The notebook is killed. The priority 2 distributed training
+   experiment is preempted. And then the priority 1 distributed training
+   experiment starts running. Once that experiment is complete,
+   distributed training experiment with priority 2 restarts.
 
 .. _gang-scheduling-on-kubernetes:
 

@@ -58,6 +58,7 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 			Devices: expConf.Resources.Devices,
 		},
 		Environment: expConf.Environment,
+		BindMounts:  expConf.BindMounts,
 	}
 }
 

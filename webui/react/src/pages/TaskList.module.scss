@@ -2,12 +2,6 @@
   display: flex;
   flex-direction: column;
 
-  .header {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--theme-sizes-layout-medium);
-  }
   .search {
     margin-right: var(--theme-sizes-layout-medium);
     max-width: 300px;
@@ -35,6 +29,14 @@
   }
   button:focus {
     box-shadow: var(--theme-outline);
+  }
+}
+.typeFilter {
+  align-items: center;
+  display: flex;
+
+  & > [class*=Icon_base] {
+    margin-right: var(--theme-sizes-layout-medium);
   }
 }
 .sourceLinks {
