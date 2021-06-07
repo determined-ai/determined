@@ -308,6 +308,10 @@ The master supports the following configuration settings:
       daemon. Ignored by resource managers of type ``kubernetes``. See
       :ref:`resources.devices <exp-resources-devices>` for more details.
 
+   -  `bind_mounts`: The default bind mounts to pass to the Docker
+      container. Ignored by resource managers of type ``kubernetes``.
+      See :ref:`resources.devices <exp-bind-mounts>` for more details.
+
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.
 
