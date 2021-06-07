@@ -209,7 +209,7 @@ def default_load(
     else:
         # Otherwise, look in the default location for cert_pem.
         store_path = default_store()
-        old_path = authentication.get_config_path().joinpath("master.cert")
+        old_path = authentication.get_config_path().joinpath("master.crt")
         maybe_shim_old_cert_store(old_path, store_path, master_url)
         cert_pem = get_cert(store_path, master_url)
 
