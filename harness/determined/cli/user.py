@@ -74,11 +74,11 @@ def log_in_user(parsed_args: Namespace) -> None:
     # In order to not send clear-text passwords, we hash the password.
     password = api.salt_and_hash(getpass.getpass(message))
 
-    token_store = authentication.TokenStore()
+    token_store = authentication.TokenStore(parsed_args.master)
 
     token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
-    token_store.set_active(username, True)
+    token_store.set_active(username)
 
 
 @authentication.optional
@@ -98,7 +98,7 @@ def log_out_user(parsed_args: Namespace) -> None:
         if e.status_code != 401:
             raise e
 
-    token_store = authentication.TokenStore()
+    token_store = authentication.TokenStore(parsed_args.master)
     token_store.drop_user(auth.get_session_user())
 
 
@@ -136,10 +136,10 @@ def change_password(parsed_args: Namespace) -> None:
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.
     if parsed_args.target_user is None:
-        token_store = authentication.TokenStore()
+        token_store = authentication.TokenStore(parsed_args.master)
         token = authentication.do_login(parsed_args.master, username, password)
         token_store.set_token(username, token)
-        token_store.set_active(username, True)
+        token_store.set_active(username)
 
 
 @authentication.required
