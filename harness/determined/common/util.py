@@ -5,7 +5,7 @@ import pathlib
 import platform
 import random
 import sys
-from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Union, overload
+from typing import IO, Any, Callable, Iterator, Sequence, TypeVar, Union, overload
 
 from determined.common import yaml
 

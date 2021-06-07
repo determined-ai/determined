@@ -10,7 +10,7 @@ from typing import Dict, Iterator, Optional, Union, cast
 import certifi
 import filelock
 
-from determined.common import util
+from determined.common import api, util
 
 
 class Cert:
@@ -66,10 +66,6 @@ class Cert:
 cli_cert = None  # type: Optional[Cert]
 
 
-class _BrokenCertStore(Exception):
-    pass
-
-
 def _load_cert_store(path: pathlib.Path) -> Dict[str, str]:
     if not path.exists():
         return {}
@@ -81,27 +77,27 @@ def _load_cert_store(path: pathlib.Path) -> Dict[str, str]:
         try:
             store = json.loads(content)
         except json.JSONDecodeError:
-            raise _BrokenCertStore()
+            raise api.errors.CorruptCertificateCacheException()
 
             if not isinstance(store, dict):
-                raise _BrokenCertStore()
+                raise api.errors.CorruptCertificateCacheException()
 
         # Store must be a dictionary.
         if not isinstance(store, dict):
-            raise _BrokenCertStore()
+            raise api.errors.CorruptCertificateCacheException()
 
         # All keys are url's, all values are pem-encoded certs.
         for k, v in store.items():
             if not isinstance(k, str):
-                raise _BrokenCertStore()
+                raise api.errors.CorruptCertificateCacheException()
             if not isinstance(v, str):
-                raise _BrokenCertStore()
+                raise api.errors.CorruptCertificateCacheException()
 
-    except _BrokenCertStore:
+        return cast(Dict[str, str], store)
+
+    except api.errors.CorruptCertificateCacheException:
         path.unlink()
-        return {}
-
-    return cast(Dict[str, str], store)
+        raise
 
 
 @contextlib.contextmanager
