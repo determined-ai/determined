@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
 from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobAnalyticsLogging
 
 from determined.common import util
 
@@ -23,9 +24,7 @@ class AzureStorageClient(object):
         elif account_url:
             self.client = BlobServiceClient(account_url, credential)
 
-        for name in logging.root.manager.loggerDict:  # type: ignore
-            if "azure" in name:
-                logging.getLogger(name).setLevel(logging.ERROR)
+        logging.getLogger("azure").setLevel(logging.ERROR)
 
         logging.info("Trying to create Azure Blob Storage Container: {}.".format(container))
         try:
