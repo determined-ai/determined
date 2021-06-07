@@ -53,6 +53,8 @@ message GetExperimentsRequest {
     SORT_BY_PROGRESS = 9;
     // Return experiments sorted by user.
     SORT_BY_USER = 10;
+    // Returns experiments sorted by name.
+    SORT_BY_NAME = 11;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;
@@ -68,6 +70,8 @@ message GetExperimentsRequest {
   int32 limit = 4;
   // Limit experiments to those that match the description.
   string description = 5;
+  // Limit experiments to those that match the name.
+  string name = 10;
   // Limit experiments to those that match the provided labels.
   repeated string labels = 6;
   // Limit experiments to those that are archived.

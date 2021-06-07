@@ -2,7 +2,7 @@
   {
     "experiment": {
       "id": 259,
-      "description": "Fork of experiment 258 (object_detection_pytorch)",
+      "name": "Fork of experiment 258 (object_detection_pytorch)",
       "labels": [],
       "startTime": "2020-04-13T13:21:03.418835Z",
       "endTime": "2020-04-13T13:21:07.417664Z",
@@ -26,7 +26,7 @@
         "url": "abc"
       },
       "debug": false,
-      "description": "Fork of experiment 258 (object_detection_pytorch)",
+      "name": "Fork of experiment 258 (object_detection_pytorch)",
       "entrypoint": "model_def:ObjectDetectionTrial",
       "environment": {
         "environment_variables": {},
@@ -90,7 +90,7 @@
   {
     "experiment": {
       "id": 207,
-      "description": "cifar10_pytorch_adaptive_search",
+      "name": "cifar10_pytorch_adaptive_search",
       "labels": [],
       "startTime": "2020-10-28T17:58:50.729191Z",
       "endTime": "2020-10-28T18:21:03.316015Z",
@@ -114,7 +114,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "cifar10_pytorch_adaptive_search",
+      "name": "cifar10_pytorch_adaptive_search",
       "entrypoint": "model_def:CIFARTrial",
       "environment": {
         "environment_variables": {},
@@ -214,7 +214,7 @@
   {
     "experiment": {
       "id": 614,
-      "description": "fashion_mnist_tf_keras_const_tf2.2",
+      "name": "fashion_mnist_tf_keras_const_tf2.2",
       "labels": [],
       "startTime": "2020-08-20T04:53:22.797366Z",
       "endTime": "2020-08-20T04:53:35.139788Z",
@@ -238,7 +238,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "fashion_mnist_tf_keras_const_tf2.2",
+      "name": "fashion_mnist_tf_keras_const_tf2.2",
       "entrypoint": "model_def:FashionMNISTTrial",
       "environment": {
         "environment_variables": {},
@@ -305,7 +305,7 @@
   {
     "experiment": {
       "id": 95,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "labels": [],
       "startTime": "2020-09-03T17:22:38.685393Z",
       "endTime": "2020-09-03T17:23:00.509216Z",
@@ -332,7 +332,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "entrypoint": "model_def:MnistTensorpackInEstimator",
       "environment": {
         "environment_variables": {},
@@ -438,7 +438,7 @@
   {
     "experiment": {
       "id": 180,
-      "description": "mnist_tf_core_to_estimator",
+      "name": "mnist_tf_core_to_estimator",
       "labels": [],
       "startTime": "2020-09-30T19:43:05.715899Z",
       "endTime": "2020-09-30T19:43:44.538418Z",
@@ -462,7 +462,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_tf_core_to_estimator",
+      "name": "mnist_tf_core_to_estimator",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -537,7 +537,7 @@
   {
     "experiment": {
       "id": 71,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "labels": [],
       "startTime": "2020-09-03T04:16:14.191613Z",
       "endTime": "2020-09-03T04:16:39.799612Z",
@@ -564,7 +564,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "entrypoint": "model_def:MnistTensorpackInEstimator",
       "environment": {
         "environment_variables": {},
@@ -659,7 +659,7 @@
   {
     "experiment": {
       "id": 222,
-      "description": "Bert_SQuAD_PyTorch",
+      "name": "Bert_SQuAD_PyTorch",
       "labels": [],
       "startTime": "2021-01-06T18:23:35.205596Z",
       "endTime": "2021-01-06T18:49:04.595932Z",
@@ -688,7 +688,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "Bert_SQuAD_PyTorch",
+      "name": "Bert_SQuAD_PyTorch",
       "entrypoint": "model_def:BertSQuADPyTorch",
       "environment": {
         "environment_variables": {},
@@ -808,7 +808,7 @@
   {
     "experiment": {
       "id": 277,
-      "description": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
+      "name": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
       "labels": [],
       "startTime": "2021-01-06T21:07:14.257882Z",
       "endTime": "2021-01-06T21:11:13.633316Z",
@@ -832,7 +832,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
+      "name": "fashion_mnist_tf_keras_distributed_k8s_8_gpus",
       "entrypoint": "model_def:FashionMNISTTrial",
       "environment": {
         "environment_variables": {},
@@ -911,7 +911,7 @@
   {
     "experiment": {
       "id": 101,
-      "description": "gcn",
+      "name": "gcn",
       "labels": [],
       "startTime": "2020-04-01T22:08:02.882684Z",
       "endTime": "2020-04-01T22:12:59.855159Z",
@@ -932,7 +932,7 @@
         "type": "s3"
       },
       "debug": false,
-      "description": "gcn",
+      "name": "gcn",
       "entrypoint": "__init__:GCNTrial",
       "environment": {
         "environment_variables": {},
@@ -984,7 +984,7 @@
   {
     "experiment": {
       "id": 562,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "labels": [
         "asdf"
       ],
@@ -1014,7 +1014,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -1090,7 +1090,7 @@
   {
     "experiment": {
       "id": 51,
-      "description": "mnist_pytorch_const_distributed",
+      "name": "mnist_pytorch_const_distributed",
       "labels": [],
       "startTime": "2020-09-02T21:39:09.204382Z",
       "endTime": "2020-09-02T21:39:59.748294Z",
@@ -1117,7 +1117,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const_distributed",
+      "name": "mnist_pytorch_const_distributed",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -1200,7 +1200,7 @@
   {
     "experiment": {
       "id": 715,
-      "description": "object_detection_const_hp",
+      "name": "object_detection_const_hp",
       "labels": [],
       "startTime": "2020-10-23T00:00:02.630802Z",
       "endTime": "2020-10-23T00:15:43.127647Z",
@@ -1227,7 +1227,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "object_detection_const_hp",
+      "name": "object_detection_const_hp",
       "entrypoint": "model_def:ObjectDetectionModel",
       "environment": {
         "environment_variables": {},
@@ -1302,7 +1302,7 @@
   {
     "experiment": {
       "id": 214,
-      "description": "noop_adaptive_chaos",
+      "name": "noop_adaptive_chaos",
       "labels": [],
       "startTime": "2020-10-28T18:12:49.848303Z",
       "endTime": "2020-10-28T18:26:40.974744Z",
@@ -1327,7 +1327,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "noop_adaptive_chaos",
+      "name": "noop_adaptive_chaos",
       "entrypoint": "model_def:NoOpTrial",
       "environment": {
         "environment_variables": {},
@@ -1416,7 +1416,7 @@
   {
     "experiment": {
       "id": 97,
-      "description": "fashion_mnist_tf_keras_const",
+      "name": "fashion_mnist_tf_keras_const",
       "labels": [],
       "startTime": "2020-09-03T17:36:22.751972Z",
       "endTime": "2020-09-03T17:43:43.645508Z",
@@ -1440,7 +1440,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "fashion_mnist_tf_keras_const",
+      "name": "fashion_mnist_tf_keras_const",
       "entrypoint": "model_def:FashionMNISTTrial",
       "environment": {
         "environment_variables": {},
@@ -1518,7 +1518,7 @@
   {
     "experiment": {
       "id": 714,
-      "description": "CIFAR 10 Adaptive Hyperparameter Search",
+      "name": "CIFAR 10 Adaptive Hyperparameter Search",
       "labels": [],
       "startTime": "2020-10-22T21:31:46.081065Z",
       "endTime": null,
@@ -1545,7 +1545,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "CIFAR 10 Adaptive Hyperparameter Search",
+      "name": "CIFAR 10 Adaptive Hyperparameter Search",
       "entrypoint": "model_def:CIFARTrial",
       "environment": {
         "environment_variables": {},
@@ -1643,7 +1643,7 @@
   {
     "experiment": {
       "id": 714,
-      "description": "CIFAR 10 Grid Hyperparameter Search",
+      "name": "CIFAR 10 Grid Hyperparameter Search",
       "labels": [],
       "startTime": "2020-10-22T21:31:46.081065Z",
       "endTime": null,
@@ -1670,7 +1670,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "CIFAR 10 Grid Hyperparameter Search",
+      "name": "CIFAR 10 Grid Hyperparameter Search",
       "entrypoint": "model_def:CIFARTrial",
       "environment": {
         "environment_variables": {},
@@ -1768,7 +1768,7 @@
   {
     "experiment": {
       "id": 714,
-      "description": "CIFAR 10 Random Hyperparameter Search",
+      "name": "CIFAR 10 Random Hyperparameter Search",
       "labels": [],
       "startTime": "2020-10-22T21:31:46.081065Z",
       "endTime": null,
@@ -1795,7 +1795,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "CIFAR 10 Random Hyperparameter Search",
+      "name": "CIFAR 10 Random Hyperparameter Search",
       "entrypoint": "model_def:CIFARTrial",
       "environment": {
         "environment_variables": {},
@@ -1893,7 +1893,7 @@
   {
     "experiment": {
       "id": 714,
-      "description": "CIFAR 10 PBT Hyperparameter Search",
+      "name": "CIFAR 10 PBT Hyperparameter Search",
       "labels": [],
       "startTime": "2020-10-22T21:31:46.081065Z",
       "endTime": null,
@@ -1920,7 +1920,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "CIFAR 10 PBT Hyperparameter Search",
+      "name": "CIFAR 10 PBT Hyperparameter Search",
       "entrypoint": "model_def:CIFARTrial",
       "environment": {
         "environment_variables": {},
@@ -2018,7 +2018,7 @@
   {
     "experiment": {
       "id": 193,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "labels": [],
       "startTime": "2020-10-14T17:30:44.993250Z",
       "endTime": "2020-10-14T17:30:56.102097Z",
@@ -2045,7 +2045,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -2128,7 +2128,7 @@
   {
     "experiment": {
       "id": 65,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "labels": [],
       "startTime": "2020-09-03T04:03:38.546208Z",
       "endTime": "2020-09-03T04:03:58.453327Z",
@@ -2155,7 +2155,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_tp_to_estimator_const",
+      "name": "mnist_tp_to_estimator_const",
       "entrypoint": "model_def:MnistTensorpackInEstimator",
       "environment": {
         "environment_variables": {},
@@ -2250,7 +2250,7 @@
   {
     "experiment": {
       "id": 830,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "labels": [],
       "startTime": "2020-12-14T21:51:15.060347Z",
       "endTime": "2020-12-14T21:58:14.577578Z",
@@ -2277,7 +2277,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const",
+      "name": "mnist_pytorch_const",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -2361,7 +2361,7 @@
   {
     "experiment": {
       "id": 358,
-      "description": "PEDL DEBUG",
+      "name": "PEDL DEBUG",
       "labels": [],
       "startTime": "2020-04-22T18:36:47.526976Z",
       "endTime": "2020-04-22T18:37:30.858741Z",
@@ -2390,7 +2390,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "PEDL DEBUG",
+      "name": "PEDL DEBUG",
       "entrypoint": "m_model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -2459,7 +2459,7 @@
   {
     "experiment": {
       "id": 367,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "labels": [],
       "startTime": "2020-04-22T21:20:36.026500Z",
       "endTime": "2020-04-22T21:27:02.423813Z",
@@ -2487,7 +2487,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -2593,7 +2593,7 @@
         "container_storage_path": null
       },
       "entrypoint": "model_def:NoOpTrial",
-      "description": "noop_adaptive",
+      "name": "noop_adaptive",
       "environment": {
         "image": {
           "cpu": "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02",
@@ -4211,7 +4211,7 @@
   {
     "experiment": {
       "id": 368,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "labels": [],
       "startTime": "2020-04-22T21:20:36.026500Z",
       "endTime": "2020-04-22T21:27:02.423813Z",
@@ -4239,7 +4239,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -4320,7 +4320,7 @@
   {
     "experiment": {
       "id": 369,
-      "description": "complex_hp_categories",
+      "name": "complex_hp_categories",
       "labels": [],
       "startTime": "2020-04-22T21:20:36.026500Z",
       "endTime": "2020-04-22T21:27:02.423813Z",
@@ -4348,7 +4348,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},
@@ -4429,7 +4429,7 @@
   {
     "experiment": {
       "id": 370,
-      "description": "complex_hp_values",
+      "name": "complex_hp_values",
       "labels": [],
       "startTime": "2020-04-22T21:20:36.026500Z",
       "endTime": "2020-04-22T21:27:02.423813Z",
@@ -4457,7 +4457,7 @@
         "type": "shared_fs"
       },
       "debug": false,
-      "description": "mnist_pytorch_const_kt",
+      "name": "mnist_pytorch_const_kt",
       "entrypoint": "model_def:MNistTrial",
       "environment": {
         "environment_variables": {},

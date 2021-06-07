@@ -1,10 +1,15 @@
 WITH filtered_exps AS (
     SELECT
         e.id AS id,
+        e.config->>'name' AS name,
         e.config->>'description' AS description,
         e.config->'labels' AS labels,
         e.config->'resources'->>'resource_pool' AS resource_pool,
         e.config->'searcher'->'name' as searcher_type,
+        CASE
+            WHEN NULLIF(e.notes, '') IS NULL THEN NULL
+            ELSE 'omitted'
+        END AS notes,
         e.start_time AS start_time,
         e.end_time AS end_time,
         'STATE_' || e.state AS state,
@@ -28,9 +33,10 @@ WITH filtered_exps AS (
                     ELSE e.config->'labels' END
                 ))
             )
-        AND ($5 = '' OR POSITION($5 IN (e.config->>'description')) > 0)
+        AND ($5 = '' OR (e.config->>'description') ILIKE  ('%%' || $5 || '%%'))
+        AND ($6 = '' OR (e.config->>'name') ILIKE ('%%' || $6 || '%%'))
 ), page_info AS (
-    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $6, $7) AS page_info
+    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_exps), $7, $8) AS page_info
 )
 SELECT
    (SELECT coalesce(json_agg(paginated_exps), '[]'::json) FROM (

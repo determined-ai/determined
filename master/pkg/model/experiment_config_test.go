@@ -13,7 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
-const description = "provided"
+const name = "provided"
 
 func intP(x int) *int {
 	return &x
@@ -29,12 +29,12 @@ func zeroizeRandomSeedsBeforeCompare(a *ExperimentConfig, b *ExperimentConfig) {
 func TestLabelsMap(t *testing.T) {
 	actual := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "labels": {"l1": true, "l2": true}
 }`), &actual))
 
 	expected := DefaultExperimentConfig(nil)
-	expected.Description = description
+	expected.Name = name
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
 	}
@@ -45,12 +45,12 @@ func TestLabelsMap(t *testing.T) {
 func TestLabelsList(t *testing.T) {
 	actual := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "labels": ["l1", "l2"]
 }`), &actual))
 
 	expected := DefaultExperimentConfig(nil)
-	expected.Description = description
+	expected.Name = name
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
 	}
@@ -62,12 +62,12 @@ func TestLabelsJoin(t *testing.T) {
 	actual := DefaultExperimentConfig(nil)
 	actual.Labels = map[string]bool{"l3": true}
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "labels": {"l1": true, "l2": true}
 }`), &actual))
 
 	expected := DefaultExperimentConfig(nil)
-	expected.Description = description
+	expected.Name = name
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true, "l3": true,
 	}
@@ -92,32 +92,32 @@ func TestRecordsPerEpochMissing(t *testing.T) {
 	assert.ErrorContains(t, check.Validate(conf), "Must specify records_per_epoch")
 }
 
-func TestDefaultDescription(t *testing.T) {
+func TestDefaultName(t *testing.T) {
 	json1 := []byte(`{
-  "description": "test"
+  "name": "test"
 }`)
 
 	json2 := []byte(`{
-  "description": ""
+  "name": ""
 }`)
 
 	json3 := []byte(`{
 }`)
 
-	// Check that user provided description persists.
+	// Check that user provided name persists.
 	config1 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json1, &config1))
-	assert.DeepEqual(t, config1.Description, "test")
+	assert.DeepEqual(t, config1.Name, "test")
 
 	// Check that user provided null string persists.
 	config2 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json2, &config2))
-	assert.DeepEqual(t, config2.Description, "")
+	assert.DeepEqual(t, config2.Name, "")
 
-	// Check that unprovided description field will get filled.
+	// Check that unprovided name field will get filled.
 	config3 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json3, &config3))
-	assert.Assert(t, strings.HasPrefix(config3.Description, "Experiment"))
+	assert.Assert(t, strings.HasPrefix(config3.Name, "Experiment"))
 }
 
 func validGridSearchConfig() ExperimentConfig {
@@ -222,7 +222,7 @@ func TestResourcesValidation(t *testing.T) {
 
 func TestExperiment(t *testing.T) {
 	json1 := []byte(`{
-  "description": "test",
+  "name": "test",
   "data": {
     "foo": -1.2
   },
@@ -302,9 +302,9 @@ func TestExperiment(t *testing.T) {
 	accessKey := "my key"
 	secretKey := "my secret"
 	config2 := ExperimentConfig{
-		Description: "test",
-		Data:        map[string]interface{}{"foo": -1.2},
-		Labels:      map[string]bool{"l1": true, "l2": true},
+		Name:   "test",
+		Data:   map[string]interface{}{"foo": -1.2},
+		Labels: map[string]bool{"l1": true, "l2": true},
 		CheckpointStorage: CheckpointStorageConfig{
 			SaveExperimentBest: 2,
 			SaveTrialBest:      1,
@@ -425,12 +425,12 @@ func TestMasterConfigImage(t *testing.T) {
 		},
 	}
 	actual := DefaultExperimentConfig(masterDefault)
-	actual.Description = description
+	actual.Name = name
 
 	expected := DefaultExperimentConfig(nil)
 	expected.Environment.Image.CPU = "test/cpu"
 	expected.Environment.Image.GPU = "test/gpu"
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -445,7 +445,7 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 	}
 	actual := DefaultExperimentConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "environment": {"image":  "my-test-image"}
 }`), &actual))
 
@@ -455,7 +455,7 @@ func TestOverrideMasterConfigImage(t *testing.T) {
 	expected.Environment.Image.GPU = myTestImage
 	expected.Environment.Image.GPU = myTestImage
 	expected.Environment.Image.GPU = myTestImage
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -466,11 +466,11 @@ func TestMasterConfigPullPolicy(t *testing.T) {
 		ForcePullImage: true,
 	}
 	actual := DefaultExperimentConfig(masterDefault)
-	actual.Description = description
+	actual.Name = name
 
 	expected := DefaultExperimentConfig(nil)
 	expected.Environment.ForcePullImage = true
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -482,12 +482,12 @@ func TestOverrideMasterConfigPullPolicy(t *testing.T) {
 	}
 	actual := DefaultExperimentConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "environment": {"force_pull_image": false}
 }`), &actual))
 
 	expected := DefaultExperimentConfig(nil)
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -501,14 +501,14 @@ func TestMasterConfigRegistryAuth(t *testing.T) {
 		},
 	}
 	actual := DefaultExperimentConfig(masterDefault)
-	actual.Description = description
+	actual.Name = name
 
 	expected := DefaultExperimentConfig(nil)
 	expected.Environment.RegistryAuth = &types.AuthConfig{
 		Username: "best-user",
 		Password: "secret-password",
 	}
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -522,7 +522,7 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	}
 	actual := DefaultExperimentConfig(masterDefault)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "environment": {"registry_auth": {"username": "worst-user"}}
 }`), &actual))
 
@@ -530,7 +530,7 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 	expected.Environment.RegistryAuth = &types.AuthConfig{
 		Username: "worst-user",
 	}
-	expected.Description = description
+	expected.Name = name
 
 	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
@@ -539,7 +539,7 @@ func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
 func TestExperimentProfiling(t *testing.T) {
 	actual := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
-  "description": "provided",
+  "name": "provided",
   "profiling": {
     "enabled": true,
     "begin_on_batch": 2,
@@ -548,7 +548,7 @@ func TestExperimentProfiling(t *testing.T) {
 }`), &actual))
 
 	expected := DefaultExperimentConfig(nil)
-	expected.Description = description
+	expected.Name = name
 	expected.Profiling.Enabled = true
 	expected.Profiling.BeginOnBatch = 2
 	expected.Profiling.EndAfterBatch = 10

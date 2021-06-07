@@ -1,4 +1,4 @@
-description: huggingface_ner_trial
+name: huggingface_ner_trial
 hyperparameters:
   pretrained_model_name_or_path: bert-base-uncased
   model_mode: token-classification

@@ -1,4 +1,4 @@
-description: huggingface_squad_v2_with_beam_search
+name: huggingface_squad_v2_with_beam_search
 hyperparameters:
   pretrained_model_name_or_path: xlnet-large-cased
   model_mode: question-answering

@@ -181,6 +181,7 @@ export const getExperiments: DetApi<
       params.offset,
       params.limit,
       params.description,
+      params.name,
       params.labels,
       params.archived,
       params.states,

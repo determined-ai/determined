@@ -1,4 +1,4 @@
-description: unets_tf_keras_distributed
+name: unets_tf_keras_distributed
 data:
   BUFFER_SIZE: 1000
   data_file: mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_128_no_top.h5

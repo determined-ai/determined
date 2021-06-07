@@ -51,14 +51,10 @@ type commandOwner struct {
 // does not specify any configuration options.
 func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
 	expConf := model.DefaultExperimentConfig(taskContainerDefaults)
+	expConf.Resources.Slots = 1
 	return model.CommandConfig{
-		Resources: model.ResourcesConfig{
-			Slots:   1,
-			Weight:  1,
-			Devices: expConf.Resources.Devices,
-		},
+		Resources:   expConf.Resources,
 		Environment: expConf.Environment,
-		BindMounts:  expConf.BindMounts,
 	}
 }
 

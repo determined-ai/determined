@@ -280,7 +280,7 @@ model's hyperparameters:
 
 .. code:: yaml
 
-   description: mnist_pytorch_const
+   name: mnist_pytorch_const
    data:
      url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
    hyperparameters:

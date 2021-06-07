@@ -1,4 +1,4 @@
-description: detr_coco_fake_data
+name: detr_coco_fake_data
 hyperparameters:
     lr: 1e-4
     lr_backbone: 1e-5

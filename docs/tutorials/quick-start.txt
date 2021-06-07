@@ -95,7 +95,7 @@ or where the model class is located. For example, below is the
 
 .. code:: yaml
 
-   description: mnist_pytorch_const
+   name: mnist_pytorch_const
    data:
        url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
    hyperparameters:
@@ -256,7 +256,7 @@ Below is the ``distributed.yaml`` file, which is very similar to the
 
 .. code:: yaml
 
-   description: mnist_pytorch
+   name: mnist_pytorch
    hyperparameters:
      learning_rate: 0.001
      dropout: 0.5

@@ -1,4 +1,4 @@
-description: omniglot_protonet 
+name: omniglot_protonet 
 data:
     data_path: ./data
     validation_portion: 0.25

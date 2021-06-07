@@ -1,4 +1,4 @@
-description: detr_coco_finetune
+name: detr_coco_finetune
 hyperparameters:
     lr: 1e-4
     lr_backbone: 0

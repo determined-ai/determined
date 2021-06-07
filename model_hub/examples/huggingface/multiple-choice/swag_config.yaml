@@ -1,4 +1,4 @@
-description: huggingface_swag_trial
+name: huggingface_swag_trial
 hyperparameters:
   pretrained_model_name_or_path: roberta-base
   model_mode: multiple-choice
