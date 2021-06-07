@@ -34,6 +34,8 @@ type TaskContainerDefaultsConfig struct {
 	AddCapabilities  []string      `json:"add_capabilities"`
 	DropCapabilities []string      `json:"drop_capabilities"`
 	Devices          DevicesConfig `json:"devices"`
+
+	BindMounts BindMountsConfig `json:"bind_mounts"`
 }
 
 func validatePortRange(portRange string) []error {
@@ -144,4 +146,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoConfig(config *expconf.Experiment
 		RawRegistryAuth:     c.RegistryAuth,
 	}
 	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env).(*expconf.EnvironmentConfig)
+
+	bindMounts := c.BindMounts.ToExpconf()
+	config.RawBindMounts = schemas.Merge(config.RawBindMounts, bindMounts).(expconf.BindMountsConfig)
 }

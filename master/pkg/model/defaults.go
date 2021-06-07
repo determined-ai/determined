@@ -120,5 +120,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 	defaultConfig.Environment.AddCapabilities = taskContainerDefaults.AddCapabilities
 	defaultConfig.Environment.DropCapabilities = taskContainerDefaults.DropCapabilities
 
+	defaultConfig.BindMounts = taskContainerDefaults.BindMounts
+
 	return defaultConfig
 }

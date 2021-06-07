@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  Master Configuration: support ``bind_mounts`` in
+   ``task_container_defaults`` in the master configuration. The
+   configured directories will be mounted for experiments, notebooks,
+   commands, shells, and TensorBoards.
