@@ -23,10 +23,13 @@ ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 
 @pytest.fixture(scope="session")  # type: ignore
-def auth() -> authentication.Authentication:
-    authentication.cli_auth = None
-    yield authentication.cli_auth
-    authentication.cli_auth = None
+def clean_auth() -> None:
+    """
+    clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
+    authentication, and that any settings we save during tests are cleaned up afterwards.
+    """
+    authentication.TokenStore.delete_token_cache()
+    yield None
     authentication.TokenStore.delete_token_cache()
 
 
@@ -177,7 +180,7 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_logout(auth: authentication.Authentication) -> None:
+def test_logout(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
     # Set Determined passwordto something in order to disable auto-login.
@@ -224,7 +227,7 @@ def test_logout(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_activate_deactivate(auth: authentication.Authentication) -> None:
+def test_activate_deactivate(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
     # Make sure we can log in as the user.
@@ -247,7 +250,7 @@ def test_activate_deactivate(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_change_password(auth: authentication.Authentication) -> None:
+def test_change_password(clean_auth: None) -> None:
     # Create a user without a password.
     creds = create_test_user(ADMIN_CREDENTIALS, False)
 
@@ -264,7 +267,7 @@ def test_change_password(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_experiment_creation_and_listing(auth: authentication.Authentication) -> None:
+def test_experiment_creation_and_listing(clean_auth: None) -> None:
     # Create 2 users.
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -389,7 +392,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_notebook_creation_and_listing(auth: authentication.Authentication) -> None:
+def test_notebook_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -417,7 +420,7 @@ def test_notebook_creation_and_listing(auth: authentication.Authentication) -> N
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_tensorboard_creation_and_listing(auth: authentication.Authentication) -> None:
+def test_tensorboard_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -454,7 +457,7 @@ def test_tensorboard_creation_and_listing(auth: authentication.Authentication) -
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_command_creation_and_listing(auth: authentication.Authentication) -> None:
+def test_command_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -505,7 +508,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_agent_user(auth: authentication.Authentication) -> None:
+def test_link_with_agent_user(clean_auth: None) -> None:
     user = create_linked_user(200, "someuser", 300, "somegroup")
 
     expected_output = "someuser:200:somegroup:300"
@@ -520,7 +523,7 @@ def test_link_with_agent_user(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_large_uid(auth: authentication.Authentication) -> None:
+def test_link_with_large_uid(clean_auth: None) -> None:
     user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
@@ -535,7 +538,7 @@ def test_link_with_large_uid(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_existing_agent_user(auth: authentication.Authentication) -> None:
+def test_link_with_existing_agent_user(clean_auth: None) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     expected_output = "nobody:65534:nogroup:65534"
@@ -577,7 +580,7 @@ def non_tmp_shared_fs_path() -> Generator:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_non_root_experiment(auth: authentication.Authentication, tmp_path: pathlib.Path) -> None:
+def test_non_root_experiment(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     with logged_in_user(user):
@@ -607,7 +610,7 @@ def test_non_root_experiment(auth: authentication.Authentication, tmp_path: path
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_without_agent_user(auth: authentication.Authentication) -> None:
+def test_link_without_agent_user(clean_auth: None) -> None:
     user = create_test_user(ADMIN_CREDENTIALS, False)
 
     expected_output = "root:0:root:0"
@@ -625,7 +628,7 @@ def test_link_without_agent_user(auth: authentication.Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_non_root_shell(auth: authentication.Authentication, tmp_path: pathlib.Path) -> None:
+def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(1234, "someuser", 1234, "somegroup")
 
     expected_output = "someuser:1234:somegroup:1234"
