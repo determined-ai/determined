@@ -134,5 +134,11 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		},
 	}
 
+	if taskContainerDefaults == nil {
+		return defaultConfig
+	}
+
+	defaultConfig.BindMounts = taskContainerDefaults.BindMounts
+
 	return defaultConfig
 }

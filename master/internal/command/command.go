@@ -50,13 +50,11 @@ type commandOwner struct {
 // commands (e.g., commands, notebooks, shells) if a request
 // does not specify any configuration options.
 func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
-	resources := model.DefaultResourcesConfig(taskContainerDefaults)
-	resources.Slots = 1
-	resources.Devices = expConf.Resources.Devices
+	expConf := model.DefaultExperimentConfig(taskContainerDefaults)
+	expConf.Resources.Slots = 1
 	return model.CommandConfig{
-		Resources:   resources,
+		Resources:   expConf.Resources,
 		Environment: expConf.Environment,
-		BindMounts:  expConf.BindMounts,
 	}
 }
 
