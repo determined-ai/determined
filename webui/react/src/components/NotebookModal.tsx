@@ -74,6 +74,7 @@ interface FullConfigProps {
   config?: RawJson;
   configError?: string;
   onChange: (config: RawJson) => void;
+  setButtonDisabled: (buttonDisabled: boolean) => void;
 }
 
 interface ResourceInfo {
@@ -89,6 +90,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ fields, dispatch ] = useNotebookForm();
   const [ config, setConfig ] = useState<RawJson | undefined>();
+  const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -106,11 +108,14 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   useEffect(() => {
     if (showFullConfig) fetchConfig();
-  }, [ showFullConfig, fetchConfig ]);
+  }, [ fetchConfig, showFullConfig ]);
 
   const handleSecondary = useCallback(() => {
+    if (showFullConfig) {
+      setButtonDisabled(false);
+    }
     setShowFullConfig(show => !show);
-  }, []);
+  }, [ showFullConfig ]);
 
   const handleCreateEnvironment = useCallback(() => {
     if (showFullConfig) {
@@ -125,7 +130,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
       );
     }
     if (onLaunch) onLaunch();
-  }, [ showFullConfig, onLaunch, fields, config ]);
+  }, [ config, fields, onLaunch, showFullConfig ]);
 
   const handleConfigChange = useCallback((config: RawJson) => setConfig(config), []);
 
@@ -135,6 +140,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
         <Button
           onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
         <Button
+          disabled={buttonDisabled}
           type="primary"
           onClick={handleCreateEnvironment}>Launch</Button>
       </>}
@@ -143,7 +149,10 @@ const NotebookModal: React.FC<NotebookModalProps> = (
       width={540}
       {...props}>
       {showFullConfig ?
-        <NotebookFullConfig config={config} onChange={handleConfigChange} /> :
+        <NotebookFullConfig
+          config={config}
+          setButtonDisabled={setButtonDisabled}
+          onChange={handleConfigChange} /> :
         <NotebookForm fields={fields} onChange={dispatch} />
       }
     </Modal>
@@ -151,7 +160,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 };
 
 const NotebookFullConfig:React.FC<FullConfigProps> = (
-  { config, onChange }: FullConfigProps,
+  { config, onChange, setButtonDisabled }: FullConfigProps,
 ) => {
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
 
@@ -186,8 +195,10 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
               validator: (rule, value) => {
                 try {
                   yaml.load(value);
+                  setButtonDisabled(false);
                   return Promise.resolve();
                 } catch (err) {
+                  setButtonDisabled(true);
                   return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}.`));
                 }
               },
@@ -248,7 +259,7 @@ const NotebookForm:React.FC<FormProps> = (
       hasGPU: hasGPUCapacity,
       showResourceType: hasCPUCapacity && hasGPUCapacity,
     };
-  }, [ resourcePools, onChange ]);
+  }, [ onChange, resourcePools ]);
 
   useEffect(() => {
     setResourceInfo(calculateResourceInfo(fields.pool));
