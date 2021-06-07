@@ -73,18 +73,12 @@ gcp_env:
 tf1_cpu_hashed:
   new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
   old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-baefbf7
-tf1_cpu_hashed_image:
-  new: environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-  old: environments:py-3.7-pytorch-1.7-tf-1.15-cpu-baefbf7
 tf1_cpu_versioned:
   new: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.14.0
   old: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.13.0
 tf1_gpu_hashed:
   new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
   old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-baefbf7
-tf1_gpu_hashed_image:
-  new: environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
-  old: environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-baefbf7
 tf1_gpu_versioned:
   new: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.14.0
   old: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.13.0
