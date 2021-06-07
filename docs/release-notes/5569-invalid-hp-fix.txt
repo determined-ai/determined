@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fix**
+
+- Fix bug causing Invalid HP exceptions trigerred
+  in the trial __init__() to restart.
