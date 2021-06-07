@@ -41,16 +41,16 @@ type AWSClusterConfig struct {
 }
 
 var defaultAWSImageID = map[string]string{
-	"ap-northeast-1": "ami-049c95d08d332d77c",
-	"ap-northeast-2": "ami-089790ba591a4d1a8",
-	"ap-southeast-1": "ami-0a224f023f7cfb254",
-	"ap-southeast-2": "ami-0e41c14f43a79cf2f",
-	"us-east-2":      "ami-0e20858c98ef47cad",
-	"us-east-1":      "ami-0fd96ac0fde2a2716",
-	"us-west-2":      "ami-05be4f312e3f874ab",
-	"eu-central-1":   "ami-0ee860a1272f089c2",
-	"eu-west-2":      "ami-041c2fe904e2ebd04",
-	"eu-west-1":      "ami-06f423bf3fc7a7d88",
+	"ap-northeast-1": "ami-0c819f496e64da4c8",
+	"ap-northeast-2": "ami-039f641a3a4bffdf6",
+	"ap-southeast-1": "ami-0c830dbfbf8ee217e",
+	"ap-southeast-2": "ami-079a74a5d8f8e774b",
+	"us-east-2":      "ami-0ede23d3c7d598490",
+	"us-east-1":      "ami-0a81c9bdc5a503c17",
+	"us-west-2":      "ami-0af62acf91e65418f",
+	"eu-central-1":   "ami-0fd07f4df8a2e88f4",
+	"eu-west-2":      "ami-0832933cb11595af1",
+	"eu-west-1":      "ami-01d16224bf52784c0",
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
