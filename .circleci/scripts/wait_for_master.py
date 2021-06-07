@@ -4,11 +4,12 @@ import time
 import requests
 
 from determined.common import api
+from determined.common.api import certs
 
 
 def _wait_for_master(address: str) -> None:
     print("Checking for master at", address)
-    cert = api.request.Cert(noverify=True)
+    cert = certs.Cert(noverify=True)
     for _ in range(150):
         try:
             r = api.get(address, "info", authenticated=False, cert=cert)
