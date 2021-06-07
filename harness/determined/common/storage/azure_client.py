@@ -24,8 +24,6 @@ class AzureStorageClient(object):
         elif account_url:
             self.client = BlobServiceClient(account_url, credential)
 
-        logging.getLogger("azure").setLevel(logging.ERROR)
-
         logging.info("Trying to create Azure Blob Storage Container: {}.".format(container))
         try:
             self.client.create_container(container.split("/")[0])
