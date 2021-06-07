@@ -38,31 +38,26 @@ export const launchNotebook = async (
   }
 };
 
-export const previewNotebook =
-  async (slots?: number, templateName?: string, name?: string, pool?: string): Promise<RawJson> => {
-    try {
-      const config = await apiPreviewNotebook({
-        config: {
-          description: name === '' ? undefined : name,
-          resources: { resource_pool: pool === '' ? undefined : pool, slots },
-        },
-        preview: true,
-        templateName: templateName === '' ? undefined : templateName,
-      });
-      return config;
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Preview Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-      return { error: 'Could not preview notebook' };
-    }
-  };
+export const previewNotebook = async (
+  slots?: number,
+  templateName?: string,
+  name?: string,
+  pool?: string,
+): Promise<RawJson> => {
+  try {
+    const config = await apiPreviewNotebook({
+      config: {
+        description: name === '' ? undefined : name,
+        resources: { resource_pool: pool === '' ? undefined : pool, slots },
+      },
+      preview: true,
+      templateName: templateName === '' ? undefined : templateName,
+    });
+    return config;
+  } catch (e) {
+    throw new Error('Unable to load notebook config.');
+  }
+};
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
