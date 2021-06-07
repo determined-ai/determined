@@ -18,7 +18,9 @@ type priorityScheduler struct {
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
-	return &priorityScheduler{preemptionEnabled: config.Priority.Preemption}
+	return &priorityScheduler{
+		preemptionEnabled: config.Priority.Preemption,
+	}
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
@@ -78,6 +80,10 @@ func (p *priorityScheduler) priorityScheduleByLabel(
 	return toAllocate, toRelease
 }
 
+// prioritySchedulerWithFilter defines the logics of each scheduling circle.
+// 1. Schedule pending tasks without preemption.
+// 2. Search if preempting any lower-priority tasks can make space.
+// 3. Back-fill lower-priority pending tasks if there are no tasks to preempt.
 func (p *priorityScheduler) prioritySchedulerWithFilter(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
@@ -97,59 +103,64 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
-	// Once we are unable to start a task of a higher priority, do not start anymore tasks.
-	startTasks := true
+	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
+	// can only be backfilled if they are preemptible.
+	backfilling := false
 
 	for _, priority := range getOrderedPriorities(priorityToPendingTasksMap) {
 		allocationRequests := priorityToPendingTasksMap[priority]
-		log.Debugf("processing priority %d with %d pending tasks",
-			priority, len(allocationRequests))
+		log.Debugf("processing priority %d with %d pending tasks (backfilling: %v)",
+			priority, len(allocationRequests), backfilling)
 
 		successfulAllocations, unSuccessfulAllocations := trySchedulingPendingTasksInPriority(
 			allocationRequests, localAgentsState, fittingMethod)
 
-		// Only add these tasks to the lists of tasks to start if all tasks of higher priority
-		// have been scheduled.
-		if startTasks {
-			for _, allocatedTask := range successfulAllocations {
-				log.Debugf("scheduled task: %s", allocatedTask.Name)
+		// Only start tasks if there are no tasks of higher-priorities to preempt.
+		if len(toRelease) == 0 {
+			if !backfilling {
+				for _, allocatedTask := range successfulAllocations {
+					log.Debugf("scheduled task: %s", allocatedTask.Name)
+					toAllocate = append(toAllocate, allocatedTask)
+				}
+			} else if p.preemptionEnabled {
+				for _, allocatedTask := range successfulAllocations {
+					if allocatedTask.NonPreemptible {
+						continue
+					}
+					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
+					toAllocate = append(toAllocate, allocatedTask)
+				}
 			}
-			toAllocate = append(toAllocate, successfulAllocations...)
 		}
 
-		// All pending tasks in this priority were successfully scheduled.
-		if len(unSuccessfulAllocations) == 0 {
-			continue
-		}
-		startTasks = false
-
-		if !p.preemptionEnabled {
-			log.Debugf(
-				"scheduled only %d tasks in priority level and preemption thus breaking out",
-				len(successfulAllocations))
-			break
+		// Scheduling the tasks of lower priority than the current one is considered to
+		// back-filling.
+		if len(unSuccessfulAllocations) > 0 {
+			backfilling = true
 		}
 
-		for _, prioritizedAllocation := range unSuccessfulAllocations {
-			// Check if we still need to preempt tasks to schedule this task.
-			if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
-				log.Debugf(
-					"Not preempting tasks for task %s as it will be able to launch "+
-						"once already scheduled preemptions complete", prioritizedAllocation.Name)
-				addTaskToAgents(fits)
-				continue
-			}
+		if p.preemptionEnabled {
+			for _, prioritizedAllocation := range unSuccessfulAllocations {
+				// Check if we still need to preempt tasks to schedule this task.
+				if fits := findFits(prioritizedAllocation, localAgentsState, fittingMethod); len(fits) > 0 {
+					log.Debugf(
+						"Not preempting tasks for task %s as it will be able to launch "+
+							"once already scheduled preemptions complete", prioritizedAllocation.Name)
+					addTaskToAgents(fits)
+					continue
+				}
 
-			taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
-				taskList, prioritizedAllocation, priority, fittingMethod, localAgentsState,
-				priorityToScheduledTaskMap, toRelease, filter)
+				taskPlaced, updatedLocalAgentState, preemptedTasks := trySchedulingTaskViaPreemption(
+					taskList, prioritizedAllocation, priority, fittingMethod, localAgentsState,
+					priorityToScheduledTaskMap, toRelease, filter)
 
-			if taskPlaced {
-				localAgentsState = updatedLocalAgentState
-				for preemptedTask := range preemptedTasks {
-					log.Debugf("preempting task %s for task %s",
-						preemptedTask.Address().Local(), prioritizedAllocation.Name)
-					toRelease[preemptedTask] = true
+				if taskPlaced {
+					localAgentsState = updatedLocalAgentState
+					for preemptedTask := range preemptedTasks {
+						log.Debugf("preempting task %s for task %s",
+							preemptedTask.Address().Local(), prioritizedAllocation.Name)
+						toRelease[preemptedTask] = true
+					}
 				}
 			}
 		}
