@@ -10,7 +10,7 @@ from typing import Dict, Iterator, Optional, Union, cast
 import certifi
 import filelock
 
-from determined.common.api import authentication
+from determined.common import util
 
 
 class Cert:
@@ -166,7 +166,7 @@ def maybe_shim_old_cert_store(
 
 
 def default_store() -> pathlib.Path:
-    return authentication.get_config_path().joinpath("certs.json")
+    return util.get_config_path().joinpath("certs.json")
 
 
 def default_load(
@@ -209,7 +209,7 @@ def default_load(
     else:
         # Otherwise, look in the default location for cert_pem.
         store_path = default_store()
-        old_path = authentication.get_config_path().joinpath("master.crt")
+        old_path = util.get_config_path().joinpath("master.crt")
         maybe_shim_old_cert_store(old_path, store_path, master_url)
         cert_pem = get_cert(store_path, master_url)
 

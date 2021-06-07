@@ -2,7 +2,6 @@ import getpass
 import hashlib
 import json
 import os
-import platform
 import typing
 from argparse import Namespace
 from functools import wraps
@@ -10,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, NamedTuple, Optional
 
 from determined.common import api, constants, util
+from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
@@ -42,14 +42,19 @@ class Authentication:
         requested_user: Optional[str] = None,
         password: Optional[str] = None,
         try_reauth: bool = False,
+        cert: Optional[certs.Cert] = None,
     ) -> None:
         self.token_store = TokenStore()
         self.master_address = master_address or util.get_default_master_address()
 
-        self.session = self._init_session(requested_user, password, try_reauth)
+        self.session = self._init_session(requested_user, password, try_reauth, cert)
 
     def _init_session(
-        self, requested_user: Optional[str], password: Optional[str], try_reauth: bool
+        self,
+        requested_user: Optional[str],
+        password: Optional[str],
+        try_reauth: bool,
+        cert: Optional[certs.Cert],
     ) -> Session:
         session_user = (
             requested_user
@@ -58,7 +63,7 @@ class Authentication:
         )
 
         token = self.token_store.get_token(session_user)
-        if token is not None and not _is_token_valid(self.master_address, token):
+        if token is not None and not _is_token_valid(self.master_address, token, cert):
             self.token_store.drop_user(session_user)
             token = None
 
@@ -112,18 +117,34 @@ def do_login(
     master_address: str,
     username: str,
     password: str,
+    cert: Optional[certs.Cert] = None,
 ) -> str:
     r = api.post(
         master_address,
         "login",
         body={"username": username, "password": password},
         authenticated=False,
+        cert=cert,
     )
 
     token = r.json()["token"]
     assert isinstance(token, str), "got invalid token response from server"
 
     return token
+
+
+def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
+    """
+    Find out whether the given token is valid by attempting to use it
+    on the "/users/me" endpoint.
+    """
+    headers = {"Authorization": "Bearer {}".format(token)}
+    try:
+        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+    except (api.errors.UnauthenticatedException, api.errors.APIException):
+        return False
+
+    return r.status_code == 200
 
 
 class TokenStore:
@@ -144,7 +165,7 @@ class TokenStore:
 
     @staticmethod
     def _get_token_cache_path() -> Path:
-        return get_config_path().joinpath("auth.json")
+        return util.get_config_path().joinpath("auth.json")
 
     def get_active_user(self) -> Optional[str]:
         """
@@ -198,7 +219,7 @@ class TokenStore:
 
     @staticmethod
     def _create_det_path_if_necessary() -> None:
-        path = get_config_path()
+        path = util.get_config_path()
         if not path.exists():
             path.mkdir(parents=True, mode=0o700)
 
@@ -239,34 +260,6 @@ class TokenStore:
 
         self._active_user = username if active else None
         self._write_store()
-
-
-def get_config_path() -> Path:
-    system = platform.system()
-    if "Linux" in system and "XDG_CONFIG_HOME" in os.environ:
-        config_path = Path(os.environ["XDG_CONFIG_HOME"])
-    elif "Darwin" in system:
-        config_path = Path.home().joinpath("Library").joinpath("Application Support")
-    elif "Windows" in system and "LOCALAPPDATA" in os.environ:
-        config_path = Path(os.environ["LOCALAPPDATA"])
-    else:
-        config_path = Path.home().joinpath(".config")
-
-    return config_path.joinpath("determined")
-
-
-def _is_token_valid(master_address: str, token: str) -> bool:
-    """
-    Find out whether the given token is valid by attempting to use it
-    on the "/users/me" endpoint.
-    """
-    headers = {"Authorization": "Bearer {}".format(token)}
-    try:
-        r = api.get(master_address, "users/me", headers=headers, authenticated=False)
-    except (api.errors.UnauthenticatedException, api.errors.APIException):
-        return False
-
-    return r.status_code == 200
 
 
 # cli_auth is the process-wide authentication used for api calls originating from the cli.
