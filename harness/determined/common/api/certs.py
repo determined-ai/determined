@@ -147,6 +147,10 @@ def delete_cert(path: pathlib.Path, url: str) -> None:
 def maybe_shim_old_cert_store(
     old_path: pathlib.Path, new_path: pathlib.Path, master_url: str
 ) -> None:
+    """
+    maybe_shim_old_cert_store will detect when an old v0 cert store is present and will shim it to
+    a v1 cert store.
+    """
     if not old_path.exists():
         return None
 
