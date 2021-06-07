@@ -24,6 +24,13 @@ class PynvmlWrapperError(Exception):
 
 
 class PynvmlWrapper:
+    """
+    Class to wrap pynvml. Handle checks around whether the nvidia management
+    library is available, whether the pynvml bindings are installed, and
+    whether actual utilization/memory operations are successful (they may not
+    be in some cases, for example when using MIGs).
+    """
+
     def __init__(self) -> None:
         self._pynvml = None  # type: Optional[Any]
         self._device_count = None  # type: Optional[int]
@@ -104,9 +111,6 @@ class PynvmlWrapper:
         handle = self._pynvml.nvmlDeviceGetHandleByIndex(index)
         gpu_util = self._pynvml.nvmlDeviceGetUtilizationRates(handle).gpu  # type: float
         return gpu_util
-
-
-pynvml_wrapper = PynvmlWrapper()
 
 
 class Measurement:
@@ -201,6 +205,8 @@ class ProfilerAgent:
         # If the ProfilingAgent is disabled, don't waste resources by creating useless threads
         # or making API calls
         if self.is_enabled:
+            self.pynvml_wrapper = PynvmlWrapper()
+
             self.disabled_due_to_preexisting_metrics = self.check_data_already_exists_fn(
                 self.master_url, self.trial_id
             )
@@ -223,7 +229,7 @@ class ProfilerAgent:
             if self.sysmetrics_is_enabled:
                 num_producers += 1
                 self.sys_metric_collector_thread = SysMetricCollectorThread(
-                    trial_id, agent_id, self.send_queue
+                    trial_id, agent_id, self.send_queue, self.pynvml_wrapper
                 )
 
             if self.timings_is_enabled:
@@ -512,11 +518,14 @@ class SysMetricCollectorThread(threading.Thread):
     FLUSH_INTERVAL = 10  # How often to make API calls
     MEASUREMENT_INTERVAL = 0.1
 
-    def __init__(self, trial_id: str, agent_id: str, send_queue: queue.Queue):
+    def __init__(
+        self, trial_id: str, agent_id: str, send_queue: queue.Queue, pynvml_wrapper: PynvmlWrapper
+    ):
         self.current_batch_idx = 0
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
         self.current_batch = SysMetricBatcher(trial_id, agent_id)
+        self.pynvml_wrapper = pynvml_wrapper
 
         super().__init__(daemon=True)
 
@@ -535,8 +544,8 @@ class SysMetricCollectorThread(threading.Thread):
         net_throughput_collector = NetThroughputCollector()
         free_memory_collector = FreeMemoryCollector()
         disk_collector = DiskReadWriteRateCollector()
-        gpu_util_collector = GpuUtilCollector()
-        gpu_memory_collection = GpuMemoryCollector()
+        gpu_util_collector = GpuUtilCollector(self.pynvml_wrapper)
+        gpu_memory_collection = GpuMemoryCollector(self.pynvml_wrapper)
 
         # Do nothing while we wait for a StartMessage
         msg = self.control_queue.get()
@@ -983,21 +992,24 @@ class DiskReadWriteRateCollector:
 
 
 class GpuUtilCollector:
+    def __init__(self, pynvml_wrapper: PynvmlWrapper):
+        self.pynvml_wrapper = pynvml_wrapper
+
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         """
         Collect GPU utilization for each GPU. Returns empty dict if unable
         to measure GPU utilization
         """
-        if not pynvml_wrapper.pynvml_is_available:
+        if not self.pynvml_wrapper.pynvml_is_available:
             return {}
 
         measurements = {}
         timestamp = datetime.now(timezone.utc)
         try:
-            num_gpus = pynvml_wrapper.device_count
+            num_gpus = self.pynvml_wrapper.device_count
             for i in range(num_gpus):
-                gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
-                util = pynvml_wrapper.nvml_get_gpu_utilization_by_index(i)
+                gpu_uuid = self.pynvml_wrapper.nvml_get_uuid_from_index(i)
+                util = self.pynvml_wrapper.nvml_get_gpu_utilization_by_index(i)
                 measurements[gpu_uuid] = Measurement(timestamp, batch_idx, util)
             return measurements
 
@@ -1007,21 +1019,24 @@ class GpuUtilCollector:
 
 
 class GpuMemoryCollector:
+    def __init__(self, pynvml_wrapper: PynvmlWrapper):
+        self.pynvml_wrapper = pynvml_wrapper
+
     def measure(self, batch_idx: int) -> Dict[str, Measurement]:
         """
         Collect GPU memory for each GPU. Returns empty dict if unable to
         measure GPU memory
         """
-        if not pynvml_wrapper.pynvml_is_available:
+        if not self.pynvml_wrapper.pynvml_is_available:
             return {}
 
         measurements = {}
         timestamp = datetime.now(timezone.utc)
         try:
-            num_gpus = pynvml_wrapper.device_count
+            num_gpus = self.pynvml_wrapper.device_count
             for i in range(num_gpus):
-                gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
-                free_memory = pynvml_wrapper.nvml_get_free_memory_by_index(i)
+                gpu_uuid = self.pynvml_wrapper.nvml_get_uuid_from_index(i)
+                free_memory = self.pynvml_wrapper.nvml_get_free_memory_by_index(i)
                 measurements[gpu_uuid] = Measurement(timestamp, batch_idx, free_memory)
             return measurements
 
