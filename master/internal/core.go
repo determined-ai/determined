@@ -411,7 +411,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m}, m.config.DebugPrometheus)
+		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m}, m.config.InternalConfig.PrometheusEnabled)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
@@ -624,7 +624,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
 	gzipConfig := middleware.DefaultGzipConfig
-	if m.config.DebugPrometheus {
+	if m.config.InternalConfig.PrometheusEnabled {
 		gzipConfig.Skipper = func(c echo.Context) bool {
 			return c.Request().URL.Path == "/debug/prom/metrics"
 		}
@@ -798,7 +798,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	if m.config.DebugPrometheus {
+	if m.config.InternalConfig.PrometheusEnabled {
 		p := prometheus.NewPrometheus("echo", nil)
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))

@@ -88,9 +88,8 @@ type Config struct {
 
 	*resourcemanagers.ResourceConfig
 
-	// Below here are "hidden" useful debugging configurations.
-	// DebugPrometheus turns on prometheus metrics for the master.
-	DebugPrometheus bool `json:"__debug_prometheus"`
+	// Internal contains "hidden" useful debugging configurations.
+	InternalConfig InternalConfig `json:"__internal"`
 }
 
 // Printable returns a printable string.
@@ -185,4 +184,9 @@ type TelemetryConfig struct {
 	Enabled          bool   `json:"enabled"`
 	SegmentMasterKey string `json:"segment_master_key"`
 	SegmentWebUIKey  string `json:"segment_webui_key"`
+}
+
+// InternalConfig is the configuration for internal knobs.
+type InternalConfig struct {
+	PrometheusEnabled bool `json:"prometheus_enabled"`
 }
