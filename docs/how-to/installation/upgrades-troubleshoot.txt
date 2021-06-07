@@ -138,12 +138,12 @@ be able to use Determined as long as you use Docker images based on CUDA
 
 .. code::
 
-   Dirty database version A_LONG_NUMBER. Fix and force version.
+   Dirty database version <a long number>. Fix and force version.
 
 If you see the above error message, a database migration was likely
 interrupted while running and the database is now in a dirty state.
 
-Make sure you backup the database and temporarily shutdown the master
+Make sure you back up the database and temporarily shut down the master
 before proceeding further.
 
 To fix this error message, locate the up migration with a suffix of
@@ -163,7 +163,7 @@ running the following SQL:
 
 .. code::
 
-   UPDATE schema_migrations SET dirty = false
+   UPDATE schema_migrations SET dirty = false;
 
 And restart the master. Otherwise, please seek assistance in the
 community slack.
