@@ -181,7 +181,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
         <Item
           name="config"
           rules={[
-            { message: 'Notebook config required!', required: true },
+            { message: 'Notebook config required', required: true },
             {
               validator: (rule, value) => {
                 try {
@@ -203,7 +203,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
             }}
           />
         </Item>
-        {!config && <Alert message="Unable to load notebook config." type="error" />}
+        {!config && <Alert message="Unable to load notebook config" type="error" />}
       </React.Suspense>
     </Form>
   );
