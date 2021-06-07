@@ -11,6 +11,11 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
 }
 
+interface SerieMaxMin {
+  max?: number;
+  min?: number;
+}
+
 interface Props {
   data?: AlignedData;
   options?: Options;
@@ -25,6 +30,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
 ) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
+  const isZoomed = useRef<boolean>(false);
 
   const hasData: boolean = useMemo(() => {
     // no x values
@@ -44,13 +50,35 @@ const UPlotChart: React.FC<Props> = forwardRef((
   useEffect(() => {
     if (!chartDivRef.current || !hasData || !options) return;
 
+    const seriesMaxMin: Record<string, SerieMaxMin> = {};
+
     const optionsExtended = uPlot.assign(
       {
         cursor: { drag: { dist: 5, uni: 10, x: true, y: true } },
         hooks: {
           ready: [ (chart: uPlot) => setChart(chart) ],
           setScale: [ (uPlot: uPlot, scaleKey: string) => {
-            console.log('setScale', uPlot.axes, scaleKey);
+            const scaleSeries = uPlot.series.filter(serie => serie.scale === scaleKey);
+
+            let currentMax = undefined;
+            let currentMin = undefined;
+            let max: number|undefined = seriesMaxMin[scaleKey]?.max;
+            let min: number|undefined = seriesMaxMin[scaleKey]?.min;
+
+            scaleSeries.forEach(serie => {
+              currentMax = serie.max;
+              currentMin = serie.min;
+              if (serie.max != null && (max == null || serie.max > max)) max = serie.max;
+              if (serie.min != null && (min == null || serie.min < min)) min = serie.min;
+            });
+
+            seriesMaxMin[scaleKey] = { max, min };
+            if (currentMax != null
+              && max != null
+              && currentMin != null
+              && min != null) {
+              isZoomed.current = (currentMax < max || currentMin > min);
+            }
           } ],
         },
         width: chartDivRef.current.offsetWidth,
@@ -71,8 +99,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
    */
   useEffect(() => {
     if (!chart || !data) return;
-    console.log('dataa', data);
-    chart.setData(data);
+    chart.setData(data, !isZoomed.current);
   }, [ chart, data ]);
 
   /*
