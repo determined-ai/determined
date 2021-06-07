@@ -24,9 +24,9 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
                 tmp_auth = {"Cookie": "auth={token}".format(token=token)}
                 me = api.get(master_url, "/users/me", headers=tmp_auth, authenticated=False).json()
 
-                token_store = authentication.TokenStore()
+                token_store = authentication.TokenStore(master_url)
                 token_store.set_token(me["username"], token)
-                token_store.set_active(me["username"], True)
+                token_store.set_active(me["username"])
 
                 print("Authenticated as {}.".format(me["username"]))
 
