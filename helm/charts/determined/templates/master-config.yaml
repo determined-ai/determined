@@ -81,8 +81,8 @@ data:
          gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
       {{- else if .Values.imageRegistry }}
       image:
-         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
+         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-254d511
+         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-254d511
       {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
@@ -94,8 +94,8 @@ data:
     {{ else if .Values.imageRegistry }}
     task_container_defaults:
       image:
-         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
+         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-254d511
+         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-254d511
     {{ end }}
 
     {{- if .Values.telemetry }}
