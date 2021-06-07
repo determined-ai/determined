@@ -36,10 +36,12 @@ class PynvmlWrapper:
                 num_gpus = pynvml.nvmlDeviceGetCount()
                 for i in range(num_gpus):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
-                    pynvml.nvmlDeviceGetUUID(handle)
+                    uuid = pynvml.nvmlDeviceGetUUID(handle)
                     pynvml.nvmlDeviceGetMemoryInfo(handle)
                     pynvml.nvmlDeviceGetUtilizationRates(handle)
+                    self._index_to_uuid_map[i] = uuid
                 self._pynvml = pynvml
+                self._device_count = num_gpus
             except Exception as e:
                 logging.warning(
                     f"{LOG_NAMESPACE}: pynvml is functional, but failed to pass functionality "
@@ -63,6 +65,12 @@ class PynvmlWrapper:
     def pynvml_is_available(self) -> bool:
         return self._pynvml is not None
 
+    @property
+    def device_count(self) -> int:
+        self._safety_check()
+        self._device_count = cast(int, self._device_count)
+        return self._device_count
+
     def _safety_check(self) -> None:
         """Before calling any pynvml operations, raise an error if pynvml is not available"""
         if self._pynvml is None:
@@ -71,23 +79,14 @@ class PynvmlWrapper:
                 "functional. Code should check pynvml_is_working before calling any operations."
             )
 
-    def nvml_get_device_count(self) -> int:
-        self._safety_check()
-        self._pynvml = cast(Any, self._pynvml)
-
-        if self._device_count is None:
-            self._device_count = self._pynvml.nvmlDeviceGetCount()
-        self._device_count = cast(int, self._device_count)
-        return self._device_count
-
     def nvml_get_uuid_from_index(self, index: int) -> str:
         self._safety_check()
-        self._pynvml = cast(Any, self._pynvml)
 
         if index not in self._index_to_uuid_map.keys():
-            handle = self._pynvml.nvmlDeviceGetHandleByIndex(index)
-            uuid = self._pynvml.nvmlDeviceGetUUID(handle)
-            self._index_to_uuid_map[index] = uuid
+            raise PynvmlWrapperError(
+                f"Unrecognized index {index}. Current index to UUID mapping is: "
+                f"{self._index_to_uuid_map}"
+            )
         return self._index_to_uuid_map[index]
 
     def nvml_get_free_memory_by_index(self, index: int) -> float:
@@ -995,7 +994,7 @@ class GpuUtilCollector:
         measurements = {}
         timestamp = datetime.now(timezone.utc)
         try:
-            num_gpus = pynvml_wrapper.nvml_get_device_count()
+            num_gpus = pynvml_wrapper.device_count
             for i in range(num_gpus):
                 gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
                 util = pynvml_wrapper.nvml_get_gpu_utilization_by_index(i)
@@ -1019,7 +1018,7 @@ class GpuMemoryCollector:
         measurements = {}
         timestamp = datetime.now(timezone.utc)
         try:
-            num_gpus = pynvml_wrapper.nvml_get_device_count()
+            num_gpus = pynvml_wrapper.device_count
             for i in range(num_gpus):
                 gpu_uuid = pynvml_wrapper.nvml_get_uuid_from_index(i)
                 free_memory = pynvml_wrapper.nvml_get_free_memory_by_index(i)
