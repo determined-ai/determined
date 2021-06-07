@@ -78,7 +78,7 @@ func (db *PgDB) Migrate(migrationURL string) error {
 		log.Infof("found golang-migrate version %v", migrateVersion)
 	}
 
-	if err = m.Up(); err != migrate.ErrNoChange {
+	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
 		return errors.Wrap(err, "error applying migrations")
 	}
 	log.Info("DB migrations completed")
