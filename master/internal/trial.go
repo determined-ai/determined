@@ -164,6 +164,7 @@ type runWorkload struct {
 // trial should be considered to have errored or not.
 type terminatedContainerWithState struct {
 	exitStatus                 sproto.TaskContainerStopped
+	StopNoCheckpoint           bool
 	isLeader                   bool
 	pendingGracefulTermination bool
 	needsCheckpoint            bool
@@ -999,6 +1000,7 @@ func (t *trial) processContainerTerminated(
 		exitStatus:                 *msg.ContainerStopped,
 		isLeader:                   t.containerRanks[msg.Container.ID] == 0,
 		pendingGracefulTermination: t.PendingGracefulTermination,
+		StopNoCheckpoint:           t.sequencer.StopNoCheckpoint,
 		needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
 	}
 
@@ -1066,6 +1068,8 @@ func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg st
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {
 	switch status := state.exitStatus; {
 	case status.Failure != nil && status.Failure.FailureType != aproto.TaskAborted:
+		return status.ContainerStopped
+	case state.StopNoCheckpoint:
 		return status.ContainerStopped
 	case !state.pendingGracefulTermination || state.needsCheckpoint:
 		return aproto.ContainerError(aproto.AgentError, errors.New(
