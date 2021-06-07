@@ -20,12 +20,15 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
@@ -408,7 +411,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m})
+		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m}, m.config.InternalConfig.PrometheusEnabled)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
@@ -620,7 +623,13 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
-	m.echo.Use(middleware.Gzip())
+	gzipConfig := middleware.DefaultGzipConfig
+	if m.config.InternalConfig.PrometheusEnabled {
+		gzipConfig.Skipper = func(c echo.Context) bool {
+			return c.Request().URL.Path == "/debug/prom/metrics"
+		}
+	}
+	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
 		Skipper: func(c echo.Context) bool {
 			return !staticWebDirectoryPaths[c.Path()]
@@ -788,6 +797,12 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
+
+	if m.config.InternalConfig.PrometheusEnabled {
+		p := prometheus.NewPrometheus("echo", nil)
+		p.Use(m.echo)
+		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
+	}
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
