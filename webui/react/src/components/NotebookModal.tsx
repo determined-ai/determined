@@ -1,4 +1,4 @@
-import { Button, InputNumber, Modal } from 'antd';
+import { Alert, Button, InputNumber, Modal } from 'antd';
 import { Form, Input, Select } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
@@ -71,7 +71,8 @@ interface FormProps {
 }
 
 interface FullConfigProps {
-  config: RawJson;
+  config?: RawJson;
+  configError?: string;
   onChange: (config: RawJson) => void;
 }
 
@@ -87,19 +88,20 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ fields, dispatch ] = useNotebookForm();
-  const [ config, setConfig ] = useState<RawJson>({});
+  const [ config, setConfig ] = useState<RawJson | undefined>();
 
   const fetchConfig = useCallback(async () => {
     try {
-      const config = await previewNotebook(
+      const newConfig = await previewNotebook(
         fields.slots,
         fields.template,
         fields.name,
         fields.pool,
       );
-      setConfig(config);
-
-    } catch {}
+      setConfig(newConfig);
+    } catch (e) {
+      setConfig(undefined);
+    }
   }, [ fields ]);
 
   useEffect(() => {
@@ -108,46 +110,48 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   const handleSecondary = useCallback(() => {
     setShowFullConfig(show => !show);
-  }, [ ]);
+  }, []);
 
-  const handleCreateEnvironment = useCallback(
-    () => {
-      if (showFullConfig) {
-        launchNotebook(config);
-      } else {
-        launchNotebook(
-          undefined,
-          fields.slots,
-          fields.template,
-          fields.name,
-          fields.pool,
-        );
-      }
-      if (onLaunch) onLaunch();
-    },
-    [ showFullConfig, onLaunch, fields, config ],
-  );
-
-  return <Modal
-    footer={<>
-      <Button onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
-      <Button
-        type="primary"
-        onClick={handleCreateEnvironment}>Launch</Button>
-    </>}
-    title="Launch JupyterLab"
-    visible={visible}
-    width={540}
-    {...props}>
-    {showFullConfig ?
-      <NotebookFullConfig config={config} onChange={(newConfig) => setConfig(newConfig)} /> :
-      <NotebookForm fields={fields} onChange={dispatch} />
+  const handleCreateEnvironment = useCallback(() => {
+    if (showFullConfig) {
+      launchNotebook(config);
+    } else {
+      launchNotebook(
+        undefined,
+        fields.slots,
+        fields.template,
+        fields.name,
+        fields.pool,
+      );
     }
-  </Modal>;
+    if (onLaunch) onLaunch();
+  }, [ showFullConfig, onLaunch, fields, config ]);
+
+  const handleConfigChange = useCallback((config: RawJson) => setConfig(config), []);
+
+  return (
+    <Modal
+      footer={<>
+        <Button
+          onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
+        <Button
+          type="primary"
+          onClick={handleCreateEnvironment}>Launch</Button>
+      </>}
+      title="Launch JupyterLab"
+      visible={visible}
+      width={540}
+      {...props}>
+      {showFullConfig ?
+        <NotebookFullConfig config={config} onChange={handleConfigChange} /> :
+        <NotebookForm fields={fields} onChange={dispatch} />
+      }
+    </Modal>
+  );
 };
 
 const NotebookFullConfig:React.FC<FullConfigProps> = (
-  { config, onChange }:FullConfigProps,
+  { config, onChange }: FullConfigProps,
 ) => {
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
 
@@ -164,38 +168,45 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
     } catch (e) {}
   }, [ onChange ]);
 
-  return <Form
-    fields={field}
-    onFieldsChange={handleConfigChange}>
-    <div className={css.note}>
-      <Link external path="/docs/reference/command-notebook-config.html">
-    Read about notebook settings
-      </Link>
-    </div>
-    <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
-      <Item
-        name="config"
-        rules={[ { message: 'Invalid YAML', required: true }, () => ({
-          validator(_, value) {
-            try {
-              yaml.load(value);
-              return Promise.resolve();
-            } catch(err) {
-              return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}`));
-            }
-          },
-        }) ]}>
-        <MonacoEditor
-          height={430}
-          language="yaml"
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            selectOnLineNumbers: true,
-          }} />
-      </Item>
-    </React.Suspense>
-  </Form>;
+  return (
+    <Form
+      fields={field}
+      onFieldsChange={handleConfigChange}>
+      <div className={css.note}>
+        <Link external path="/docs/reference/command-notebook-config.html">
+        Read about notebook settings
+        </Link>
+      </div>
+      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+        <Item
+          name="config"
+          rules={[
+            { message: 'Notebook config required!', required: true },
+            {
+              validator: (rule, value) => {
+                try {
+                  yaml.load(value);
+                  return Promise.resolve();
+                } catch (err) {
+                  return Promise.reject(new Error(`Invalid YAML on line ${err.mark.line}.`));
+                }
+              },
+            },
+          ]}>
+          <MonacoEditor
+            height={430}
+            language="yaml"
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              selectOnLineNumbers: true,
+            }}
+          />
+        </Item>
+        {!config && <Alert message="Unable to load notebook config." type="error" />}
+      </React.Suspense>
+    </Form>
+  );
 };
 
 interface LabelledLineProps {
@@ -240,9 +251,7 @@ const NotebookForm:React.FC<FormProps> = (
   }, [ resourcePools, onChange ]);
 
   useEffect(() => {
-    setResourceInfo(calculateResourceInfo(
-      fields.pool,
-    ));
+    setResourceInfo(calculateResourceInfo(fields.pool));
   }, [ fields.pool, calculateResourceInfo ]);
 
   const fetchTemplates = useCallback(async () => {
@@ -265,37 +274,38 @@ const NotebookForm:React.FC<FormProps> = (
     fetchResourcePools();
   }, [ fetchResourcePools ]);
 
-  return (<div className={css.form}>
-    <LabelledLine
-      content = {
-        <Select
-          allowClear
-          placeholder="No template (optional)"
-          value={fields.template}
-          onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
-          {templates.map(temp =>
-            <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
-        </Select>}
-      label="Template" />
-    <LabelledLine
-      content = {
-        <Input
-          placeholder="Name"
-          value={fields.name}
-          onChange={(e) => onChange({ key: 'name', value: e.target.value })} />}
-      label="Name" />
-    <LabelledLine
-      content = {
-        <Select
-          allowClear
-          placeholder="Pick the best option"
-          value={fields.pool}
-          onChange={(value) => onChange({ key: 'pool', value: value })}>
-          {resourcePools.map(pool =>
-            <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
-        </Select>}
-      label="Resource Pool" />
-    {resourceInfo.showResourceType &&
+  return (
+    <div className={css.form}>
+      <LabelledLine
+        content = {
+          <Select
+            allowClear
+            placeholder="No template (optional)"
+            value={fields.template}
+            onChange={(value) => onChange({ key: 'template', value: value?.toString() })}>
+            {templates.map(temp =>
+              <Option key={temp.name} value={temp.name}>{temp.name}</Option>)}
+          </Select>}
+        label="Template" />
+      <LabelledLine
+        content = {
+          <Input
+            placeholder="Name"
+            value={fields.name}
+            onChange={(e) => onChange({ key: 'name', value: e.target.value })} />}
+        label="Name" />
+      <LabelledLine
+        content = {
+          <Select
+            allowClear
+            placeholder="Pick the best option"
+            value={fields.pool}
+            onChange={(value) => onChange({ key: 'pool', value: value })}>
+            {resourcePools.map(pool =>
+              <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
+          </Select>}
+        label="Resource Pool" />
+      {resourceInfo.showResourceType &&
     <LabelledLine
       content = {
         <RadioGroup
@@ -307,7 +317,7 @@ const NotebookForm:React.FC<FormProps> = (
             onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
           }} />}
       label="Type" />}
-    {fields.type === ResourceType.GPU &&
+      {fields.type === ResourceType.GPU &&
     <LabelledLine
       content = {
         <InputNumber
@@ -316,8 +326,9 @@ const NotebookForm:React.FC<FormProps> = (
           value={fields.slots}
           onChange={(value) => onChange({ key: 'slots', value: value })} />}
       label="Slots" />
-    }
-  </div>);
+      }
+    </div>
+  );
 };
 
 export default NotebookModal;
