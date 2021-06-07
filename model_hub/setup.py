@@ -19,8 +19,8 @@ setup(
     install_requires=[
         "attrdict",
         "determined>=0.13.11",  # We require custom reducers for PyTorchTrial.
-        "transformers==4.4.2",
-        "datasets==1.5.0",
+        "transformers==4.6.1",
+        "datasets==1.7.0",
     ],
     zip_safe=False,
 )
