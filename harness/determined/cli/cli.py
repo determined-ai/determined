@@ -268,7 +268,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 ):
                     die("Unable to verify master certificate")
 
-                certs.set_cert(certs.default_store(), parsed_args.master, cert_pem_data)
+                certs.CertStore(certs.default_store()).set_cert(parsed_args.master, cert_pem_data)
                 # Reconfigure the CLI's Cert singleton.
                 certs.cli_cert = certs.Cert(cert_pem=cert_pem_data)
 

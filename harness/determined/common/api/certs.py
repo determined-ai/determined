@@ -66,6 +66,57 @@ class Cert:
 cli_cert = None  # type: Optional[Cert]
 
 
+class CertStore:
+    """
+    CertStore represents a persistent file-based record of certificates, each associated with a
+    particular master url.
+    """
+
+    def __init__(self, path: pathlib.Path) -> None:
+        self.path = path
+
+    @contextlib.contextmanager
+    def _persistent_store(self) -> Iterator[Dict["str", "str"]]:
+        """
+        Yields the appropriate store that can be modified, and the modified result will be written
+        back to file.
+        """
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # Decide on paths for a lock file and a temp files (during writing).
+        temp = pathlib.Path(str(self.path) + ".temp")
+        lock = pathlib.Path(str(self.path) + ".lock")
+
+        with filelock.FileLock(lock):
+            store = _load_cert_store(self.path)
+
+            # No need for try/finally, because we don't update the file after failures.
+            yield store
+
+            with temp.open("w") as f:
+                json.dump(store, f, indent=4, sort_keys=True)
+            temp.rename(self.path)
+
+    def get_cert(self, url: str) -> Optional[str]:
+        """
+        get_cert returns the contents of a cert (if any) that has been associated with the given
+        url.
+        """
+        if not self.path.exists():
+            return None
+        # Technically this doesn't have to be modfiable, but it is unlikely to matter.
+        with self._persistent_store() as store:
+            return store.get(url)
+
+    def set_cert(self, url: str, cert_pem: str) -> None:
+        with self._persistent_store() as store:
+            store[url] = cert_pem
+
+    def delete_cert(self, url: str) -> None:
+        with self._persistent_store() as store:
+            if url in store:
+                del store[url]
+
+
 def _load_cert_store(path: pathlib.Path) -> Dict[str, str]:
     if not path.exists():
         return {}
@@ -98,50 +149,6 @@ def _load_cert_store(path: pathlib.Path) -> Dict[str, str]:
     except api.errors.CorruptCertificateCacheException:
         path.unlink()
         raise
-
-
-@contextlib.contextmanager
-def _modifiable_store(path: pathlib.Path) -> Iterator[Dict["str", "str"]]:
-    """
-    Yields the appropriate store that can be modified, and the modified result will be written
-    back to file.
-
-    The modified store is also saved to the local object.
-    """
-    path = path
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    # Decide on paths for a lock file and a temp files (during writing).
-    temp = pathlib.Path(str(path) + ".temp")
-    lock = pathlib.Path(str(path) + ".lock")
-
-    with filelock.FileLock(lock):
-        store = _load_cert_store(path)
-
-        # No need for try/finally, because we don't update the file after failures.
-        yield store
-
-        with temp.open("w") as f:
-            json.dump(store, f, indent=4, sort_keys=True)
-        temp.rename(path)
-
-
-def get_cert(path: pathlib.Path, url: str) -> Optional[str]:
-    if not path.exists():
-        return None
-    # Technically this doesn't have to be modfiable, but it is unlikely to matter.
-    with _modifiable_store(path) as store:
-        return store.get(url)
-
-
-def set_cert(path: pathlib.Path, url: str, cert_pem: str) -> None:
-    with _modifiable_store(path) as store:
-        store[url] = cert_pem
-
-
-def delete_cert(path: pathlib.Path, url: str) -> None:
-    with _modifiable_store(path) as store:
-        if url in store:
-            del store[url]
 
 
 def maybe_shim_old_cert_store(
@@ -209,9 +216,10 @@ def default_load(
     else:
         # Otherwise, look in the default location for cert_pem.
         store_path = default_store()
+        cert_store = CertStore(path=store_path)
         old_path = util.get_config_path().joinpath("master.crt")
         maybe_shim_old_cert_store(old_path, store_path, master_url)
-        cert_pem = get_cert(store_path, master_url)
+        cert_pem = cert_store.get_cert(master_url)
 
     env_name = os.environ.get("DET_MASTER_CERT_NAME")
     if env_name == "":
