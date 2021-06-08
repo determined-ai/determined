@@ -2,7 +2,6 @@ package command
 
 import (
 	"archive/tar"
-	"bytes"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -34,13 +33,12 @@ const (
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookConfigFile  = "/run/determined/workdir/jupyter-conf.py"
 	notebookDefaultPage = "/run/determined/workdir/Notebook.ipynb"
 )
 
 var (
 	notebookEntrypoint  = []string{jupyterEntrypoint}
-	jupyterReadyPattern = regexp.MustCompile("Jupyter Notebook .*is running at")
+	jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
 )
 
 func generateServiceAddress(taskID string) (string, error) {
@@ -57,30 +55,6 @@ func generateServiceAddress(taskID string) (string, error) {
 		return "", errors.Wrap(err, "executing template")
 	}
 	return buf.String(), nil
-}
-
-func generateNotebookConfig(taskID string) ([]byte, error) {
-	tmpl := `
-c.NotebookApp.base_url       = "/proxy/{{.TaskID}}/"
-c.NotebookApp.allow_origin   = "*"
-c.NotebookApp.trust_xheaders = True
-c.NotebookApp.open_browser   = False
-c.NotebookApp.allow_root     = True
-c.NotebookApp.ip             = "0.0.0.0"
-c.NotebookApp.token          = ""
-	`
-
-	t, err := template.New("").Parse(strings.TrimSpace(tmpl))
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing template")
-	}
-
-	var buf bytes.Buffer
-	err = t.Execute(&buf, map[string]string{"TaskID": taskID})
-	if err != nil {
-		return nil, errors.Wrap(err, "executing template")
-	}
-	return buf.Bytes(), nil
 }
 
 type notebookManager struct {
@@ -179,11 +153,6 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 		return nil, errors.Wrap(err, "generating service address")
 	}
 
-	notebookConfigContent, err := generateNotebookConfig(string(taskID))
-	if err != nil {
-		return nil, errors.Wrap(err, "generating notebook config")
-	}
-
 	return &command{
 		taskID:    taskID,
 		config:    *config,
@@ -198,9 +167,6 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 				etc.MustStaticFile(etc.NotebookEntrypointResource),
 				0700,
 				tar.TypeReg,
-			),
-			params.AgentUserGroup.OwnedArchiveItem(
-				notebookConfigFile, notebookConfigContent, 0644, tar.TypeReg,
 			),
 			params.AgentUserGroup.OwnedArchiveItem(
 				notebookDefaultPage,
