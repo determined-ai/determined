@@ -25,8 +25,8 @@ const (
 
 // Default task environment docker image names.
 const (
-	defaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da845fc"
-	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da845fc"
+	CPUImage = "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-da845fc"
+	GPUImage = "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-da845fc"
 )
 
 // DefaultResourcesConfig returns the default resources configuration.
@@ -47,8 +47,8 @@ func DefaultResourcesConfig(taskContainerDefaults *TaskContainerDefaultsConfig) 
 func DefaultEnvConfig(taskContainerDefaults *TaskContainerDefaultsConfig) Environment {
 	config := Environment{
 		Image: RuntimeItem{
-			CPU: defaultCPUImage,
-			GPU: defaultGPUImage,
+			CPU: CPUImage,
+			GPU: GPUImage,
 		},
 	}
 
