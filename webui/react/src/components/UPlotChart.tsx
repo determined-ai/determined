@@ -50,7 +50,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
   useEffect(() => {
     if (!chartDivRef.current || !hasData || !options) return;
 
-    const seriesMaxMin: Record<string, SerieMaxMin> = {};
+    const scaleMaxMin: Record<string, SerieMaxMin> = {};
 
     const optionsExtended = uPlot.assign(
       {
@@ -58,21 +58,22 @@ const UPlotChart: React.FC<Props> = forwardRef((
         hooks: {
           ready: [ (chart: uPlot) => setChart(chart) ],
           setScale: [ (uPlot: uPlot, scaleKey: string) => {
-            const scaleSeries = uPlot.series.filter(serie => serie.scale === scaleKey);
+            // need to ignore y because uPlot is adding margins to avoid having
+            // series line touching the max top of the chart.
+            if (scaleKey !== 'x') return;
 
-            let currentMax = undefined;
-            let currentMin = undefined;
-            let max: number|undefined = seriesMaxMin[scaleKey]?.max;
-            let min: number|undefined = seriesMaxMin[scaleKey]?.min;
+            const currentMax: number|undefined = uPlot.scales[scaleKey]?.max;
+            const currentMin: number|undefined = uPlot.scales[scaleKey]?.min;
+            const scaleSeries = uPlot.series.filter(serie => serie.scale === scaleKey);
+            let max: number|undefined = scaleMaxMin[scaleKey]?.max;
+            let min: number|undefined = scaleMaxMin[scaleKey]?.min;
 
             scaleSeries.forEach(serie => {
-              currentMax = serie.max;
-              currentMin = serie.min;
               if (serie.max != null && (max == null || serie.max > max)) max = serie.max;
               if (serie.min != null && (min == null || serie.min < min)) min = serie.min;
             });
 
-            seriesMaxMin[scaleKey] = { max, min };
+            scaleMaxMin[scaleKey] = { max, min };
             if (currentMax != null
               && max != null
               && currentMin != null
