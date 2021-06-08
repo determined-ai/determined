@@ -1,0 +1,72 @@
+.. _setup-aks-cluster:
+
+#####################################################
+ Setting up an Azure Kubernetes Service (AKS) Cluster
+#####################################################
+
+Determined can be installed on a cluster that is hosted on a managed
+Kubernetes service such as `AKS
+<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This document describes
+how to set up an AKS cluster with GPU-enabled nodes. The recommended
+setup includes deploying a cluster with a single non-GPU node that will
+host the Determined master and database, and an autoscaling group of GPU
+nodes. After creating a suitable AKS cluster, you can then proceed with
+the standard :ref:`instructions for installing Determined on Kubernetes
+<install-on-kubernetes>`.
+
+Determined requires the Kubernetes cluster to be running version >= 1.15
+and to have GPU-enabled nodes.
+
+***************
+ Prerequisites
+***************
+
+Before setting up an AKS cluster, the user should have `Azure CLI
+<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
+<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on
+their local machine.
+
+************************
+ Setting Up the Cluster
+************************
+
+.. code:: bash
+
+   # Specify the Azure Resource Group you will be using to deploy the cluster.
+   AKS_RESOURCE_GROUP=<resource group name, e.g. "determined-resource-group">
+
+   # Set a unique name for your cluster.
+   AKS_CLUSTER_NAME=<any unique name, e.g. "determined-cluster">
+
+   # Set a unique name for your node pool.
+   AKS_GPU_NODE_POOL_NAME=<any unique name, e.g., "determined-node-pool">
+
+   # Set the GPU VM Size for your node pool. This VM size corresponds to a machine with 4 Tesla K80 GPUs.
+   GPU_VM_SIZE=Standard_NC24
+
+   # Launch the AKS cluster that will contain a single non-GPU node.
+   az aks create --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME} \
+    --node-count 1  --generate-ssh-keys --vm-set-type VirtualMachineScaleSets \
+    --load-balancer-sku standard --node-vm-size Standard_D8_v3
+
+   # Create a node pool. This will not launch any nodes immediately but will
+   # scale up and down as needed. If you change the GPU type or the number of
+   # GPUs per node, you may need to change the machine-type.
+   az aks nodepool add --resource-group ${AKS_RESOURCE_GROUP} --cluster-name ${AKS_CLUSTER_NAME} \
+    --name ${AKS_GPU_NODE_POOL_NAME} --node-count 0 --node-vm-size ${GPU_VM_SIZE} \
+    --enable-cluster-autoscaler --min-count 0 --max-count 4
+
+**********************
+ Enabling GPU Support
+**********************
+To allow the AKS cluster to recognize GPU hardware resources, please refer to the instructions provided
+by Azure on the `Install NVIDIA Device Plugin <https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
+
+With this, the cluster is fully set up, and Determined can be deployed onto it.
+
+************
+ Next Steps
+************
+
+-  :ref:`install-on-kubernetes`
+-  :ref:`k8s-dev-guide`
