@@ -56,7 +56,16 @@ installed on their local machine.
     --name ${AKS_GPU_NODE_POOL_NAME} --node-count 0 --node-vm-size ${GPU_VM_SIZE} \
     --enable-cluster-autoscaler --min-count 0 --max-count 4
 
-   # Store the kubectl credentials locally to be able to monitor cluster status using kubectl.
+*******************************
+ Creating a kubeconfig for AKS
+*******************************
+
+After creating the cluster, ``kubectl`` should be used to deploy apps.
+In order for ``kubectl`` to be used with AKS, users need to create or
+update the cluster kubeconfig. This can be done with the command:
+
+.. code:: bash
+
    az aks get-credentials --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
 
 **********************
