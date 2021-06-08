@@ -1,4 +1,4 @@
-description: darts_rnn_nas
+name: darts_rnn_nas
 
 data:
   data_download_dir: /data

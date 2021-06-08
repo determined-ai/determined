@@ -3,7 +3,7 @@ from argparse import Namespace
 from typing import Any, List
 
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.common.experimental import Checkpoint, Determined, Model, ModelOrderBy, ModelSortBy
 
@@ -65,7 +65,7 @@ def list_models(args: Namespace) -> None:
         render.tabulate_or_csv(headers, values, False)
 
 
-@authentication_required
+@authentication.required
 def list_versions(args: Namespace) -> None:
     if args.json:
         r = api.get(args.master, "models/{}/versions".format(args.name))
@@ -123,7 +123,7 @@ def describe(args: Namespace) -> None:
             render_model_version(checkpoint)
 
 
-@authentication_required
+@authentication.required
 def register_version(args: Namespace) -> None:
     if args.json:
         resp = api.post(

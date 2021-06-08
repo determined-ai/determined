@@ -1,4 +1,4 @@
-description: gaea_search
+name: gaea_search
 
 data:
   download_dir: /data

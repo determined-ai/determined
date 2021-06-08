@@ -39,6 +39,7 @@ EXPECT_JOBS = {
     "build-and-publish-docker-tf1-cpu",
     "build-and-publish-docker-tf1-gpu",
     "build-and-publish-docker-cuda-11",
+    "build-and-publish-docker-tf25-gpu",
 }
 
 EXPECT_ARTIFACTS = {
@@ -46,6 +47,7 @@ EXPECT_ARTIFACTS = {
     "publish-tf2-cpu",
     "publish-tf1-cpu",
     "publish-tf1-gpu",
+    "publish-tf25-gpu",
     "publish-cuda-11",
 }
 

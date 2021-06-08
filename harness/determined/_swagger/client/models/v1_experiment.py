@@ -42,7 +42,9 @@ class V1Experiment(object):
         'progress': 'float',
         'username': 'str',
         'resource_pool': 'str',
-        'searcher_type': 'str'
+        'searcher_type': 'str',
+        'name': 'str',
+        'notes': 'str'
     }
 
     attribute_map = {
@@ -57,10 +59,12 @@ class V1Experiment(object):
         'progress': 'progress',
         'username': 'username',
         'resource_pool': 'resourcePool',
-        'searcher_type': 'searcherType'
+        'searcher_type': 'searcherType',
+        'name': 'name',
+        'notes': 'notes'
     }
 
-    def __init__(self, id=None, description=None, labels=None, start_time=None, end_time=None, state=None, archived=None, num_trials=None, progress=None, username=None, resource_pool=None, searcher_type=None):  # noqa: E501
+    def __init__(self, id=None, description=None, labels=None, start_time=None, end_time=None, state=None, archived=None, num_trials=None, progress=None, username=None, resource_pool=None, searcher_type=None, name=None, notes=None):  # noqa: E501
         """V1Experiment - a model defined in Swagger"""  # noqa: E501
 
         self._id = None
@@ -75,10 +79,13 @@ class V1Experiment(object):
         self._username = None
         self._resource_pool = None
         self._searcher_type = None
+        self._name = None
+        self._notes = None
         self.discriminator = None
 
         self.id = id
-        self.description = description
+        if description is not None:
+            self.description = description
         if labels is not None:
             self.labels = labels
         self.start_time = start_time
@@ -93,6 +100,9 @@ class V1Experiment(object):
         if resource_pool is not None:
             self.resource_pool = resource_pool
         self.searcher_type = searcher_type
+        self.name = name
+        if notes is not None:
+            self.notes = notes
 
     @property
     def id(self):
@@ -139,8 +149,6 @@ class V1Experiment(object):
         :param description: The description of this V1Experiment.  # noqa: E501
         :type: str
         """
-        if description is None:
-            raise ValueError("Invalid value for `description`, must not be `None`")  # noqa: E501
 
         self._description = description
 
@@ -381,6 +389,54 @@ class V1Experiment(object):
             raise ValueError("Invalid value for `searcher_type`, must not be `None`")  # noqa: E501
 
         self._searcher_type = searcher_type
+
+    @property
+    def name(self):
+        """Gets the name of this V1Experiment.  # noqa: E501
+
+        The experiment name.  # noqa: E501
+
+        :return: The name of this V1Experiment.  # noqa: E501
+        :rtype: str
+        """
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        """Sets the name of this V1Experiment.
+
+        The experiment name.  # noqa: E501
+
+        :param name: The name of this V1Experiment.  # noqa: E501
+        :type: str
+        """
+        if name is None:
+            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
+
+        self._name = name
+
+    @property
+    def notes(self):
+        """Gets the notes of this V1Experiment.  # noqa: E501
+
+        The experiment notes.  # noqa: E501
+
+        :return: The notes of this V1Experiment.  # noqa: E501
+        :rtype: str
+        """
+        return self._notes
+
+    @notes.setter
+    def notes(self, notes):
+        """Sets the notes of this V1Experiment.
+
+        The experiment notes.  # noqa: E501
+
+        :param notes: The notes of this V1Experiment.  # noqa: E501
+        :type: str
+        """
+
+        self._notes = notes
 
     def to_dict(self):
         """Returns the model properties as a dict"""

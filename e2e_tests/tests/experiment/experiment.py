@@ -13,9 +13,9 @@ import dateutil.parser
 import pytest
 import requests
 
-import determined.common.api.authentication as auth
 from determined import experimental
 from determined.common import api, yaml
+from determined.common.api import authentication
 from tests import cluster
 from tests import config as conf
 
@@ -91,7 +91,7 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def change_experiment_state(experiment_id: int, new_state: str) -> None:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.patch(
         conf.make_master_url(),
         "experiments/{}".format(experiment_id),
@@ -170,7 +170,7 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
 
 
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "experiments/{}".format(experiment_id))
     assert r.status_code == requests.codes.ok, r.text
     json = r.json()  # type: Dict[str, Any]
@@ -188,7 +188,7 @@ def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
 
 
 def num_experiments() -> int:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "experiments")
     assert r.status_code == requests.codes.ok, r.text
     return len(r.json())
@@ -210,7 +210,7 @@ def is_terminal_state(state: str) -> bool:
 
 
 def trial_metrics(trial_id: int) -> Dict[str, Any]:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
     assert r.status_code == requests.codes.ok, r.text
     json = r.json()  # type: Dict[str, Any]
@@ -240,7 +240,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 
 def trial_logs(trial_id: int) -> List[str]:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id)]
 
 

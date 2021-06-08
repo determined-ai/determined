@@ -78,7 +78,7 @@ Consider the experiment configuration below:
 
 .. code:: yaml
 
-   description: mnist_tf_const
+   name: mnist_tf_const
    checkpoint_storage:
      type: s3
      access_key: my-access-key

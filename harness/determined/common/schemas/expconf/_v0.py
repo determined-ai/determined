@@ -241,9 +241,9 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02"
+            self.cpu = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da845fc"
         if self.gpu is None:
-            self.gpu = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
+            self.gpu = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da845fc"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
@@ -868,6 +868,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
     max_restarts: Optional[int] = None
     min_checkpoint_period: Optional[LengthV0] = None
     min_validation_period: Optional[LengthV0] = None
+    name: Optional[str] = None
     optimizations: Optional[OptimizationsConfigV0] = None
     perform_initial_validation: Optional[bool] = None
     profiling: Optional[ProfilingConfigV0] = None
@@ -897,6 +898,7 @@ class ExperimentConfigV0(schemas.SchemaBase):
         max_restarts: Optional[int] = None,
         min_checkpoint_period: Optional[LengthV0] = None,
         min_validation_period: Optional[LengthV0] = None,
+        name: Optional[str] = None,
         optimizations: Optional[OptimizationsConfigV0] = None,
         perform_initial_validation: Optional[bool] = None,
         profiling: Optional[ProfilingConfigV0] = None,
@@ -910,8 +912,8 @@ class ExperimentConfigV0(schemas.SchemaBase):
         pass
 
     def runtime_defaults(self) -> None:
-        if self.description is None:
-            self.description = "Experiment (really-bad-petname)"
+        if self.name is None:
+            self.name = "Experiment (really-bad-petname)"
 
 
 # Test Structs Below:

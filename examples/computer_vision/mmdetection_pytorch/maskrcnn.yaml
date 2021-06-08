@@ -1,4 +1,4 @@
-description: mmdet_maskrcnn
+name: mmdet_maskrcnn
 data:
   backend: gcs
   train_ann_file: /tmp/instances_train2017.json

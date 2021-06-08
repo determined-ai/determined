@@ -160,6 +160,7 @@ class DeterminedControlHook(estimator.RunHook):
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
                 "invalid_hp": False,
+                "init_invalid_hp": False,
             }
             self.train_response_func(response)
         else:
@@ -294,6 +295,7 @@ class DeterminedControlHook(estimator.RunHook):
                             self._compute_validation_metrics(),
                             self.estimator_trial_controller.context.get_stop_requested(),
                             invalid_hp=False,
+                            init_invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -305,6 +307,7 @@ class DeterminedControlHook(estimator.RunHook):
                             {},
                             self.estimator_trial_controller.context.get_stop_requested(),
                             invalid_hp=True,
+                            init_invalid_hp=False,
                         )
                     )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -764,7 +767,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.14.0``).
+    (e.g. ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.15.0``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

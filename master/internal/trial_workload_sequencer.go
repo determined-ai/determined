@@ -169,6 +169,13 @@ func (s *trialWorkloadSequencer) WorkloadFailed(
 			return false, fmt.Errorf("failed to complete workload with exit reason %v: %w", reason, err)
 		}
 		s.GracefulStop = true
+	} else if reason == workload.InitInvalidHP {
+		if _, err := s.WorkloadCompleted(msg, func() bool {
+			return false
+		}); err != nil {
+			return false, fmt.Errorf("failed to complete workload with exit reason %v: %w", reason, err)
+		}
+		s.GracefulStop = false
 	}
 	s.ExitingEarly = true
 	return s.ExitingEarly && !s.GracefulStop, nil

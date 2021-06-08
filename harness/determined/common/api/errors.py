@@ -57,3 +57,11 @@ class CorruptTokenCacheException(Exception):
             "Attempted to read a corrupted token cache.  The store has been deleted; "
             "please try again.\n"
         )
+
+
+class CorruptCertificateCacheException(Exception):
+    def __init__(self) -> None:
+        super().__init__(
+            "Attempted to read a corrupted certificate cache.  The store has been deleted; "
+            "please try again.\n"
+        )

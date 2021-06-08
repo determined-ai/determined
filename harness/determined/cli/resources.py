@@ -5,7 +5,7 @@ from typing import Any, List
 import requests
 
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 
@@ -15,14 +15,14 @@ def print_response(r: requests.Response) -> None:
         sys.stdout.buffer.write(chunk)
 
 
-@authentication_required
+@authentication.required
 def raw(args: Namespace) -> None:
     params = {"timestamp_after": args.timestamp_after, "timestamp_before": args.timestamp_before}
     path = "api/v1/resources/allocation/raw" if args.json else "resources/allocation/raw"
     print_response(api.get(args.master, path, params=params))
 
 
-@authentication_required
+@authentication.required
 def aggregated(args: Namespace) -> None:
     params = {
         "start_date": args.start_date,

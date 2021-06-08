@@ -5,8 +5,7 @@ from determined._swagger.client.api.experiments_api import ExperimentsApi
 from determined._swagger.client.models.determinedexperimentv1_state import (
     Determinedexperimentv1State,
 )
-from determined.common import api
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, session
 
 
 class ExperimentReference:
@@ -18,11 +17,11 @@ class ExperimentReference:
     def __init__(
         self,
         experiment_id: int,
-        master: str,
+        session: session.Session,
         api_ref: ExperimentsApi,
     ):
         self.id = experiment_id
-        self._master = master
+        self._session = session
         self._experiments = api_ref
 
     def activate(self) -> None:
@@ -140,8 +139,7 @@ class ExperimentReference:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        r = api.get(
-            self._master,
+        r = self._session.get(
             "/api/v1/experiments/{}/checkpoints".format(self.id),
             params={
                 "states": checkpoint.CheckpointState.COMPLETED.value,
@@ -167,7 +165,7 @@ class ExperimentReference:
         checkpoint_refs = []
         for ckpt in checkpoints:
             if ckpt["trialId"] not in t_ids:
-                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
+                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._session))
                 t_ids.add(ckpt["trialId"])
 
         return checkpoint_refs[:limit]

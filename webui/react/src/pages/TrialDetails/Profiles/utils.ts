@@ -42,7 +42,7 @@ export const convertMetricsToUplotData =
           series[nameIndex] = [];
         }
 
-        series[nameIndex].push(timeNameList[name] || null);
+        series[nameIndex].push(name in timeNameList ? timeNameList[name] : null);
       });
     });
 

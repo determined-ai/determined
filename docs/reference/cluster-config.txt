@@ -269,9 +269,9 @@ The master supports the following configuration settings:
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default
       values:
 
-      -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.14.0``
+      -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.15.0``
          for CPU agents
-      -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.14.0``
+      -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.15.0``
          for GPU agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly
@@ -307,6 +307,10 @@ The master supports the following configuration settings:
    -  ``devices``: The default list of devices to pass to the Docker
       daemon. Ignored by resource managers of type ``kubernetes``. See
       :ref:`resources.devices <exp-resources-devices>` for more details.
+
+   -  `bind_mounts`: The default bind mounts to pass to the Docker
+      container. Ignored by resource managers of type ``kubernetes``.
+      See :ref:`resources.devices <exp-bind-mounts>` for more details.
 
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.

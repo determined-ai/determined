@@ -132,7 +132,7 @@ const TrialDetailsComp: React.FC = () => {
       const rawConfig = trialContinueConfig(clone(experiment.configRaw), trial.hparams, trial.id);
       rawConfig.description = [
         `Continuation of trial ${trial.id},`,
-        `experiment ${trial.experimentId} (${rawConfig.description})`,
+        `experiment ${trial.experimentId} (${rawConfig.description || ''})`,
       ].join(' ');
       upgradeConfig(rawConfig);
       setContModalConfig(rawConfig);
@@ -221,9 +221,9 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   let expBreadcrumbName = `Experiment ${experiment.id}`;
-  if (experiment.config.description) {
-    if (experiment.config.description.length > maxBreadcrumbDescLength) {
-      let truncatedDesc = experiment.config.description.slice(0, maxBreadcrumbDescLength);
+  if (experiment.config.name) {
+    if (experiment.config.name.length > maxBreadcrumbDescLength) {
+      let truncatedDesc = experiment.config.name.slice(0, maxBreadcrumbDescLength);
 
       // Don't add ellipsis after underscore, it looks wrong
       while (truncatedDesc.endsWith('_')){
@@ -231,7 +231,7 @@ const TrialDetailsComp: React.FC = () => {
       }
       expBreadcrumbName = expBreadcrumbName.concat(` (${truncatedDesc}…)`);
     } else {
-      expBreadcrumbName = expBreadcrumbName.concat(` (${experiment.config.description})`);
+      expBreadcrumbName = expBreadcrumbName.concat(` (${experiment.config.name})`);
     }
   }
 
@@ -239,8 +239,8 @@ const TrialDetailsComp: React.FC = () => {
     breadcrumbName: expBreadcrumbName,
     path: paths.experimentDetails(experiment.id),
   };
-  if (experiment.config.description.length > maxBreadcrumbDescLength) {
-    expBreadcrumbRoute.breadcrumbTooltip = experiment.config.description;
+  if (experiment.config.name.length > maxBreadcrumbDescLength) {
+    expBreadcrumbRoute.breadcrumbTooltip = experiment.config.name;
   }
 
   return (

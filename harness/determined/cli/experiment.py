@@ -16,7 +16,7 @@ import tabulate
 import determined.common
 from determined.cli import checkpoint, render
 from determined.common import api, constants, context, util, yaml
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -31,19 +31,19 @@ def patch_experiment(args: Namespace, verb: str, patch_doc: Dict[str, Any]) -> N
     api.patch_experiment(args.master, args.experiment_id, patch_doc)
 
 
-@authentication_required
+@authentication.required
 def activate(args: Namespace) -> None:
     api.activate_experiment(args.master, args.experiment_id)
     print("Activated experiment {}".format(args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def archive(args: Namespace) -> None:
     patch_experiment(args, "archive", {"archived": True})
     print("Archived experiment {}".format(args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def cancel(args: Namespace) -> None:
     patch_experiment(args, "cancel", {"state": "STOPPING_CANCELED"})
     print("Canceled experiment {}".format(args.experiment_id))
@@ -121,7 +121,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
     return experiment_config
 
 
-@authentication_required
+@authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file)
     model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
@@ -186,7 +186,7 @@ def create(args: Namespace) -> None:
         submit_experiment(args)
 
 
-@authentication_required
+@authentication.required
 def delete_experiment(args: Namespace) -> None:
     if args.yes or render.yes_or_no(
         "Deleting an experiment will result in the unrecoverable \n"
@@ -201,7 +201,7 @@ def delete_experiment(args: Namespace) -> None:
         print("Aborting experiment deletion.")
 
 
-@authentication_required
+@authentication.required
 def describe(args: Namespace) -> None:
     docs = []
     for experiment_id in args.experiment_ids.split(","):
@@ -222,6 +222,7 @@ def describe(args: Namespace) -> None:
         "Progress",
         "Start Time",
         "End Time",
+        "Name",
         "Description",
         "Archived",
         "Resource Pool",
@@ -234,6 +235,7 @@ def describe(args: Namespace) -> None:
             render.format_percent(doc["progress"]),
             render.format_time(doc.get("start_time")),
             render.format_time(doc.get("end_time")),
+            doc["config"].get("name"),
             doc["config"].get("description"),
             doc["archived"],
             doc["config"]["resources"].get("resource_pool"),
@@ -365,13 +367,13 @@ def describe(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
-@authentication_required
+@authentication.required
 def config(args: Namespace) -> None:
     result = api.get(args.master, "experiments/{}/config".format(args.experiment_id))
     yaml.safe_dump(result.json(), stream=sys.stdout, default_flow_style=False)
 
 
-@authentication_required
+@authentication.required
 def download_model_def(args: Namespace) -> None:
     resp = api.get(args.master, "experiments/{}/model_def".format(args.experiment_id))
     value, params = cgi.parse_header(resp.headers["Content-Disposition"])
@@ -401,13 +403,13 @@ def download(args: Namespace) -> None:
             print()
 
 
-@authentication_required
+@authentication.required
 def kill_experiment(args: Namespace) -> None:
     api.post(args.master, "experiments/{}/kill".format(args.experiment_id))
     print("Killed experiment {}".format(args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def wait(args: Namespace) -> None:
     while True:
         r = api.get(args.master, "experiments/{}".format(args.experiment_id)).json()
@@ -422,13 +424,13 @@ def wait(args: Namespace) -> None:
         time.sleep(args.polling_interval)
 
 
-@authentication_required
+@authentication.required
 def list_experiments(args: Namespace) -> None:
     params = {}
     if args.all:
         params["filter"] = "all"
     else:
-        params["user"] = api.Authentication.instance().get_session_user()
+        params["user"] = authentication.must_cli_auth().get_session_user()
 
     r = api.get(args.master, "experiments", params=params)
 
@@ -436,7 +438,7 @@ def list_experiments(args: Namespace) -> None:
         result = [
             e["id"],
             e["owner"]["username"],
-            e["config"]["description"],
+            e["config"]["name"],
             e["state"],
             render.format_percent(e["progress"]),
             render.format_time(e["start_time"]),
@@ -450,7 +452,7 @@ def list_experiments(args: Namespace) -> None:
     headers = [
         "ID",
         "Owner",
-        "Description",
+        "Name",
         "State",
         "Progress",
         "Start Time",
@@ -499,7 +501,7 @@ def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
     return set()
 
 
-@authentication_required
+@authentication.required
 def list_trials(args: Namespace) -> None:
     r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
     experiment = r.json()
@@ -520,43 +522,49 @@ def list_trials(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@authentication_required
+@authentication.required
 def pause(args: Namespace) -> None:
     patch_experiment(args, "pause", {"state": "PAUSED"})
     print("Paused experiment {}".format(args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def set_description(args: Namespace) -> None:
-    patch_experiment(args, "change description of", {"description": args.description})
+    api.patch_experiment_v1(args.master, args.experiment_id, {"description": args.description})
     print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
 
 
-@authentication_required
+@authentication.required
+def set_name(args: Namespace) -> None:
+    api.patch_experiment_v1(args.master, args.experiment_id, {"name": args.name})
+    print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
+
+
+@authentication.required
 def add_label(args: Namespace) -> None:
     patch_experiment(args, "add label to", {"labels": {args.label: True}})
     print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def remove_label(args: Namespace) -> None:
     patch_experiment(args, "remove label from", {"labels": {args.label: None}})
     print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
 
 
-@authentication_required
+@authentication.required
 def set_max_slots(args: Namespace) -> None:
     patch_experiment(args, "change `max_slots` of", {"resources": {"max_slots": args.max_slots}})
     print("Set `max_slots` of experiment {} to {}".format(args.experiment_id, args.max_slots))
 
 
-@authentication_required
+@authentication.required
 def set_weight(args: Namespace) -> None:
     patch_experiment(args, "change `weight` of", {"resources": {"weight": args.weight}})
     print("Set `weight` of experiment {} to {}".format(args.experiment_id, args.weight))
 
 
-@authentication_required
+@authentication.required
 def set_gc_policy(args: Namespace) -> None:
     policy = {
         "save_experiment_best": args.save_experiment_best,
@@ -618,7 +626,7 @@ def set_gc_policy(args: Namespace) -> None:
         print("Aborting operations.")
 
 
-@authentication_required
+@authentication.required
 def unarchive(args: Namespace) -> None:
     patch_experiment(args, "archive", {"archived": False})
     print("Unarchived experiment {}".format(args.experiment_id))
@@ -893,6 +901,15 @@ args_description = Cmd(
                     [
                         experiment_id_arg("experiment ID to modify"),
                         Arg("description", help="experiment description"),
+                    ],
+                ),
+                Cmd(
+                    "name",
+                    set_name,
+                    "set experiment name",
+                    [
+                        experiment_id_arg("experiment ID to modify"),
+                        Arg("name", help="experiment name"),
                     ],
                 ),
                 Cmd(

@@ -1,4 +1,4 @@
-description: word_language_modeling_distributed 
+name: word_language_modeling_distributed 
 hyperparameters:
     global_batch_size: 50
     eval_batch_size: 10

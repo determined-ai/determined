@@ -205,9 +205,10 @@ export const ioToExperimentConfig =
       containerStoragePath: io.data_layer.container_storage_path || undefined,
       type: io.data_layer.type,
     } : undefined,
-    description: io.description,
+    description: io.description || undefined,
     hyperparameters: ioToExperimentHyperparameters(io.hyperparameters),
     labels: io.labels || undefined,
+    name: io.name,
     profiling: { enabled: !!io.profiling?.enabled },
     resources: {},
     searcher: {
@@ -288,7 +289,8 @@ const mapV1Experiment = (
     endTime: data.endTime as unknown as string,
     id: data.id,
     labels: data.labels || [],
-    name: data.description,
+    // capture description for use in the UI.
+    name: data.name,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',
