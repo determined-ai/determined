@@ -86,7 +86,7 @@ class Authentication:
                 getpass.getpass("Password for user '{}': ".format(session_user))
             )
 
-        token = do_login(self.master_address, session_user, password)
+        token = do_login(self.master_address, session_user, password, cert)
         self.token_store.set_token(session_user, token)
 
         return Session(session_user, token)
