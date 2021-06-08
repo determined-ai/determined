@@ -24,9 +24,8 @@ type (
 		NeedInitialValidation  bool `json:"need_initial_validation"`
 		NeedPostValidationCkpt bool `json:"need_post_validation_ckpt"`
 
-		ExitingEarly     bool `json:"exiting_early"`
-		GracefulStop     bool `json:"graceful_stop"`
-		StopNoCheckpoint bool `json:"stop_no_checkpoint"`
+		ExitingEarly bool `json:"exiting_early"`
+		GracefulStop bool `json:"graceful_stop"`
 
 		CurOpIdx  int `json:"cur_op_idx"`
 		CurStepID int `json:"cur_step_id"`
@@ -170,7 +169,6 @@ func (s *trialWorkloadSequencer) WorkloadFailed(
 			return false, fmt.Errorf("failed to complete workload with exit reason %v: %w", reason, err)
 		}
 		s.GracefulStop = true
-		s.StopNoCheckpoint = false
 	}
 	if reason == workload.InitInvalidHP {
 		if _, err := s.WorkloadCompleted(msg, func() bool {
@@ -178,11 +176,10 @@ func (s *trialWorkloadSequencer) WorkloadFailed(
 		}); err != nil {
 			return false, fmt.Errorf("failed to complete workload with exit reason %v: %w", reason, err)
 		}
-		s.GracefulStop = true
-		s.StopNoCheckpoint = true
+		s.GracefulStop = false
 	}
 	s.ExitingEarly = true
-	return s.ExitingEarly && (!s.GracefulStop || s.StopNoCheckpoint), nil
+	return s.ExitingEarly && !s.GracefulStop, nil
 }
 
 // runStepCompleted updates the internal state of the sequencer to account for a completed
@@ -300,9 +297,6 @@ func (s trialWorkloadSequencer) PrecloseCheckpointWorkload() *workload.Workload 
 	if !s.trialIDValid {
 		return nil
 	}
-	if s.StopNoCheckpoint {
-		return nil
-	}
 	checkpoint := s.checkpoint()
 	return &checkpoint
 }
@@ -394,7 +388,7 @@ func (s *trialWorkloadSequencer) minCheckpointNeeded() bool {
 }
 
 func (s *trialWorkloadSequencer) postGracefulStopCheckpointNeeded() bool {
-	return !s.StopNoCheckpoint && s.GracefulStop && s.BatchesSinceLastCkpt != 0
+	return s.GracefulStop && s.BatchesSinceLastCkpt != 0
 }
 
 func (s *trialWorkloadSequencer) postValidationCheckpointNeeded() bool {

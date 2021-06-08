@@ -164,7 +164,6 @@ type runWorkload struct {
 // trial should be considered to have errored or not.
 type terminatedContainerWithState struct {
 	exitStatus                 sproto.TaskContainerStopped
-	StopNoCheckpoint           bool
 	isLeader                   bool
 	pendingGracefulTermination bool
 	needsCheckpoint            bool
@@ -187,6 +186,7 @@ type (
 
 		// The following fields tracks the reasons for termination.
 		PendingGracefulTermination bool `json:"pending_graceful_termination"`
+		TerminateNoCheckpoint      bool `json:"terminate_no_checkpoint"`
 		TerminationSent            bool `json:"termination_sent"`
 		CancelUnready              bool `json:"cancel_unready"`
 		Killed                     bool `json:"killed"`
@@ -706,6 +706,10 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 		reason := *msg.ExitedReason
 		ctx.Log().Infof("exiting trial early from %v with reason %v", msg.Workload, reason)
 
+		if reason == workload.InitInvalidHP {
+			t.TerminateNoCheckpoint = true
+		}
+
 		immediateExit, err := t.sequencer.WorkloadFailed(msg, reason)
 		if err != nil {
 			return fmt.Errorf("failed to report workload failed: %w", err)
@@ -1000,7 +1004,6 @@ func (t *trial) processContainerTerminated(
 		exitStatus:                 *msg.ContainerStopped,
 		isLeader:                   t.containerRanks[msg.Container.ID] == 0,
 		pendingGracefulTermination: t.PendingGracefulTermination,
-		StopNoCheckpoint:           t.sequencer.StopNoCheckpoint,
 		needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
 	}
 
@@ -1068,8 +1071,6 @@ func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg st
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {
 	switch status := state.exitStatus; {
 	case status.Failure != nil && status.Failure.FailureType != aproto.TaskAborted:
-		return status.ContainerStopped
-	case state.StopNoCheckpoint:
 		return status.ContainerStopped
 	case !state.pendingGracefulTermination || state.needsCheckpoint:
 		return aproto.ContainerError(aproto.AgentError, errors.New(
@@ -1175,6 +1176,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 			"ignoring trial runner failure since it was canceled or paused " +
 				"before all containers are connected",
 		)
+		return
+	case t.TerminateNoCheckpoint:
+		ctx.Log().Info("Invalid hyperparameter in trial __init__()")
 		return
 	case t.Killed:
 		ctx.Log().WithField("failure", status.Failure).Info(
