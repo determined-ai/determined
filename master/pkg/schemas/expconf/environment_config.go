@@ -64,8 +64,8 @@ type EnvironmentImageMapV0 struct {
 
 // WithDefaults implements the Defaultable interface.
 func (e EnvironmentImageMapV0) WithDefaults() interface{} {
-	cpu := DefaultCPUImage
-	gpu := DefaultGPUImage
+	cpu := CPUImage
+	gpu := GPUImage
 	if e.RawCPU != nil {
 		cpu = *e.RawCPU
 	}
