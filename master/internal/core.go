@@ -629,7 +629,6 @@ func (m *Master) Run(ctx context.Context) error {
 			return c.Request().URL.Path == "/debug/prom/metrics"
 		}
 	}
-	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
 		Skipper: func(c echo.Context) bool {
 			return !staticWebDirectoryPaths[c.Path()]
