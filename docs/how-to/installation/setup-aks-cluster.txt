@@ -1,18 +1,18 @@
 .. _setup-aks-cluster:
 
-#####################################################
+######################################################
  Setting up an Azure Kubernetes Service (AKS) Cluster
-#####################################################
+######################################################
 
 Determined can be installed on a cluster that is hosted on a managed
 Kubernetes service such as `AKS
-<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This document describes
-how to set up an AKS cluster with GPU-enabled nodes. The recommended
-setup includes deploying a cluster with a single non-GPU node that will
-host the Determined master and database, and an autoscaling group of GPU
-nodes. After creating a suitable AKS cluster, you can then proceed with
-the standard :ref:`instructions for installing Determined on Kubernetes
-<install-on-kubernetes>`.
+<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This
+document describes how to set up an AKS cluster with GPU-enabled nodes.
+The recommended setup includes deploying a cluster with a single non-GPU
+node that will host the Determined master and database, and an
+autoscaling group of GPU nodes. After creating a suitable AKS cluster,
+you can then proceed with the standard :ref:`instructions for installing
+Determined on Kubernetes <install-on-kubernetes>`.
 
 Determined requires the Kubernetes cluster to be running version >= 1.15
 and to have GPU-enabled nodes.
@@ -22,9 +22,9 @@ and to have GPU-enabled nodes.
 ***************
 
 Before setting up an AKS cluster, the user should have `Azure CLI
-<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
-<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on
-their local machine.
+<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and
+`kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_
+installed on their local machine.
 
 ************************
  Setting Up the Cluster
@@ -56,13 +56,21 @@ their local machine.
     --name ${AKS_GPU_NODE_POOL_NAME} --node-count 0 --node-vm-size ${GPU_VM_SIZE} \
     --enable-cluster-autoscaler --min-count 0 --max-count 4
 
+   # Store the kubectl credentials locally to be able to monitor cluster status using kubectl.
+   az aks get-credentials --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
+
 **********************
  Enabling GPU Support
 **********************
-To allow the AKS cluster to recognize GPU hardware resources, please refer to the instructions provided
-by Azure on the `Install NVIDIA Device Plugin <https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
 
-With this, the cluster is fully set up, and Determined can be deployed onto it.
+To allow the AKS cluster to recognize GPU hardware resources, please
+refer to the instructions provided by Azure on the `Install NVIDIA
+Device Plugin
+<https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_
+tutorial.
+
+With this, the cluster is fully set up, and Determined can be deployed
+onto it.
 
 ************
  Next Steps
