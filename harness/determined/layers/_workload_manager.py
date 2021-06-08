@@ -156,6 +156,18 @@ class _TrialWorkloadManager(WorkloadManager):
                 respond(out_response)
                 return
 
+            if in_response.get("init_invalid_hp", False):
+                out_response = {
+                    "type": "WORKLOAD_COMPLETED",
+                    "workload": wkld,
+                    "start_time": start_time,
+                    "end_time": _current_timestamp(),
+                    "metrics": metrics,
+                }
+                out_response["exited_reason"] = "INIT_INVALID_HP"
+                respond(out_response)
+                return
+
             batch_metrics = metrics["batch_metrics"]
 
             # Sanity-check training metrics.
@@ -211,6 +223,18 @@ class _TrialWorkloadManager(WorkloadManager):
                     "metrics": metrics,
                 }
                 out_response["exited_reason"] = "INVALID_HP"
+                respond(out_response)
+                return
+
+            if in_response.get("init_invalid_hp", False):
+                out_response = {
+                    "type": "WORKLOAD_COMPLETED",
+                    "workload": wkld,
+                    "start_time": start_time,
+                    "end_time": _current_timestamp(),
+                    "metrics": metrics,
+                }
+                out_response["exited_reason"] = "INIT_INVALID_HP"
                 respond(out_response)
                 return
 

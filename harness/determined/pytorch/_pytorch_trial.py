@@ -161,6 +161,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             ),
                             self.context.get_stop_requested(),
                             invalid_hp=False,
+                            init_invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -172,6 +173,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             {},
                             self.context.get_stop_requested(),
                             invalid_hp=True,
+                            init_invalid_hp=False,
                         )
                     )
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
@@ -181,6 +183,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             self._compute_validation_metrics(),
                             self.context.get_stop_requested(),
                             invalid_hp=False,
+                            init_invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -192,6 +195,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             {},
                             self.context.get_stop_requested(),
                             invalid_hp=True,
+                            init_invalid_hp=False,
                         )
                     )
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:

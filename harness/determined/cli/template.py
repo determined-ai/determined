@@ -6,7 +6,7 @@ from typing import Any, List
 from termcolor import colored
 
 from determined.common import api, util, yaml
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
@@ -20,7 +20,7 @@ def _parse_config(field: Any) -> Any:
     return yaml.safe_dump(yaml.safe_load(base64.b64decode(field)), default_flow_style=False)
 
 
-@authentication_required
+@authentication.required
 def list_template(args: Namespace) -> None:
     templates = [
         render.unmarshal(TemplateAll, t, {"config": _parse_config})
@@ -32,14 +32,14 @@ def list_template(args: Namespace) -> None:
         render.render_objects(TemplateClean, templates)
 
 
-@authentication_required
+@authentication.required
 def describe_template(args: Namespace) -> None:
     resp = api.get(args.master, path="templates/{}".format(args.template_name)).json()
     template = render.unmarshal(TemplateAll, resp, {"config": _parse_config})
     print(template.config)
 
 
-@authentication_required
+@authentication.required
 def set_template(args: Namespace) -> None:
     with args.template_file:
         body = util.safe_load_yaml_with_exceptions(args.template_file)
@@ -47,7 +47,7 @@ def set_template(args: Namespace) -> None:
         print(colored("Set template {}".format(args.template_name), "green"))
 
 
-@authentication_required
+@authentication.required
 def remove_templates(args: Namespace) -> None:
     api.delete(args.master, path="templates/" + args.template_name)
     print(colored("Removed template {}".format(args.template_name), "green"))

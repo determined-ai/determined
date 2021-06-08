@@ -55,6 +55,8 @@ data:
       {{- end }}
       {{- end }}
 
+    {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da845fc")._1}}
+    {{- $gpuImage := (split "/" "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da845fc")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}
@@ -81,8 +83,8 @@ data:
          gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
       {{- else if .Values.imageRegistry }}
       image:
-         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
+         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
       {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
         {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
@@ -94,8 +96,8 @@ data:
     {{ else if .Values.imageRegistry }}
     task_container_defaults:
       image:
-         cpu: {{ .Values.imageRegistry }}/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02
-         gpu: {{ .Values.imageRegistry }}/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02
+         cpu: {{ .Values.imageRegistry }}/{{ $cpuImage }}
+         gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
     {{ end }}
 
     {{- if .Values.telemetry }}

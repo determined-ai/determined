@@ -39,6 +39,7 @@ import determined as det
 import determined.common
 from determined import gpu, horovod, layers, load, workload
 from determined.common import constants, storage
+from determined.common.api import certs
 
 ENVIRONMENT_VARIABLE_KEYS = {
     "DET_MASTER_ADDR",
@@ -169,6 +170,11 @@ def main() -> None:
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
     initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
 
+    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    certs.cli_cert = certs.default_load(
+        master_url="http{'s' if use_tls else ''}://{master_addr}:{master_port}"
+    )
+
     with open(os.environ["DET_LATEST_CHECKPOINT"], "r") as f:
         latest_checkpoint = json.load(f)
 
@@ -233,7 +239,7 @@ def main() -> None:
     try:
         build_and_run_training_pipeline(env)
     except det.InvalidHP:
-        logging.info("InvalidHP detected, gracefully exiting trial")
+        logging.info("InvalidHP detected, trial is exiting")
         pass
 
 

@@ -55,6 +55,7 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 	return model.CommandConfig{
 		Resources:   expConf.Resources,
 		Environment: expConf.Environment,
+		BindMounts:  expConf.BindMounts,
 	}
 }
 

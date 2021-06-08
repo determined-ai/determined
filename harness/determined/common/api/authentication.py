@@ -2,31 +2,24 @@ import getpass
 import hashlib
 import json
 import os
-import platform
 import typing
 from argparse import Namespace
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, NamedTuple, Optional, cast
+from typing import Any, Callable, Dict, NamedTuple, Optional
 
-from determined.common import api, constants
-from determined.common.api import authentication as auth
+from determined.common import api, constants, util
+from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
+_cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
 
 
-def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        auth.initialize_session(namespace.master, v.get("user"), try_reauth=True)
-        return func(namespace)
-
-    return f
+def get_task_token() -> str:
+    return _cur_task_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -43,17 +36,58 @@ class Session:
 
 
 class Authentication:
-    _instance = None
-
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        master_address: Optional[str] = None,
+        requested_user: Optional[str] = None,
+        password: Optional[str] = None,
+        try_reauth: bool = False,
+        cert: Optional[certs.Cert] = None,
+    ) -> None:
         self.token_store = TokenStore()
-        self.session = None  # type: Optional[Session]
+        self.master_address = master_address or util.get_default_master_address()
 
-    @classmethod
-    def instance(cls) -> "Authentication":
-        if cls._instance is None:
-            cls._instance = Authentication()
-        return cls._instance
+        self.session = self._init_session(requested_user, password, try_reauth, cert)
+
+    def _init_session(
+        self,
+        requested_user: Optional[str],
+        password: Optional[str],
+        try_reauth: bool,
+        cert: Optional[certs.Cert],
+    ) -> Session:
+        session_user = (
+            requested_user
+            or self.token_store.get_active_user()
+            or constants.DEFAULT_DETERMINED_USER
+        )
+
+        token = self.token_store.get_token(session_user)
+        if token is not None and not _is_token_valid(self.master_address, token, cert):
+            self.token_store.drop_user(session_user)
+            token = None
+
+        if token is not None:
+            return Session(session_user, token)
+
+        if token is None and not try_reauth:
+            raise api.errors.UnauthenticatedException(username=session_user)
+
+        password = None
+        if session_user == constants.DEFAULT_DETERMINED_USER:
+            password = constants.DEFAULT_DETERMINED_PASSWORD
+        elif session_user is None:
+            session_user = input("Username: ")
+
+        if password is None:
+            password = api.salt_and_hash(
+                getpass.getpass("Password for user '{}': ".format(session_user))
+            )
+
+        token = do_login(self.master_address, session_user, password)
+        self.token_store.set_token(session_user, token)
+
+        return Session(session_user, token)
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
@@ -63,8 +97,6 @@ class Authentication:
         Returns the session user for the current session. If there is no active
         session, then an UnauthenticatedException will be raised.
         """
-        if self.session is None:
-            raise api.errors.UnauthenticatedException(username="")
         return self.session.username
 
     def get_session_token(self, must: bool = True) -> str:
@@ -80,11 +112,39 @@ class Authentication:
                 return ""
         return self.session.token
 
-    def reset_session(self) -> None:
-        self.session = None
 
-    def get_task_token(self) -> str:
-        return cur_task_token
+def do_login(
+    master_address: str,
+    username: str,
+    password: str,
+    cert: Optional[certs.Cert] = None,
+) -> str:
+    r = api.post(
+        master_address,
+        "login",
+        body={"username": username, "password": password},
+        authenticated=False,
+        cert=cert,
+    )
+
+    token = r.json()["token"]
+    assert isinstance(token, str), "got invalid token response from server"
+
+    return token
+
+
+def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
+    """
+    Find out whether the given token is valid by attempting to use it
+    on the "/users/me" endpoint.
+    """
+    headers = {"Authorization": "Bearer {}".format(token)}
+    try:
+        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+    except (api.errors.UnauthenticatedException, api.errors.APIException):
+        return False
+
+    return r.status_code == 200
 
 
 class TokenStore:
@@ -105,7 +165,7 @@ class TokenStore:
 
     @staticmethod
     def _get_token_cache_path() -> Path:
-        return get_config_path().joinpath("auth.json")
+        return util.get_config_path().joinpath("auth.json")
 
     def get_active_user(self) -> Optional[str]:
         """
@@ -159,7 +219,7 @@ class TokenStore:
 
     @staticmethod
     def _create_det_path_if_necessary() -> None:
-        path = get_config_path()
+        path = util.get_config_path()
         if not path.exists():
             path.mkdir(parents=True, mode=0o700)
 
@@ -202,88 +262,45 @@ class TokenStore:
         self._write_store()
 
 
-def get_config_path() -> Path:
-    system = platform.system()
-    if "Linux" in system and "XDG_CONFIG_HOME" in os.environ:
-        config_path = Path(os.environ["XDG_CONFIG_HOME"])
-    elif "Darwin" in system:
-        config_path = Path.home().joinpath("Library").joinpath("Application Support")
-    elif "Windows" in system and "LOCALAPPDATA" in os.environ:
-        config_path = Path(os.environ["LOCALAPPDATA"])
-    else:
-        config_path = Path.home().joinpath(".config")
-
-    return config_path.joinpath("determined")
+# cli_auth is the process-wide authentication used for api calls originating from the cli.
+cli_auth = None  # type: Optional[Authentication]
 
 
-def initialize_session(
-    master_address: str, requested_user: Optional[str] = None, try_reauth: bool = False
-) -> None:
-    auth = Authentication.instance()
-
-    session_user = (
-        requested_user or auth.token_store.get_active_user() or constants.DEFAULT_DETERMINED_USER
-    )
-
-    token = auth.token_store.get_token(session_user)
-    if token is not None and not _is_token_valid(master_address, token):
-        auth.token_store.drop_user(session_user)
-        token = None
-
-    if token is not None:
-        auth.session = api.Session(session_user, token)
-        return
-
-    if token is None and not try_reauth:
-        raise api.errors.UnauthenticatedException(username=session_user)
-
-    password = None
-    if session_user == constants.DEFAULT_DETERMINED_USER:
-        password = constants.DEFAULT_DETERMINED_PASSWORD
-    elif session_user is None:
-        session_user = input("Username: ")
-
-    if password is None:
-        password = api.salt_and_hash(
-            getpass.getpass("Password for user '{}': ".format(session_user))
-        )
-
-    token = do_login(master_address, auth, session_user, password)
-
-    auth.token_store.set_token(session_user, token)
-
-    # If the user wasn't set with the '-u' option and the session_user
-    # is the default user, tag them as being the active user.
-    if requested_user is None and session_user == constants.DEFAULT_DETERMINED_USER:
-        auth.token_store.set_active(session_user, True)
-
-    auth.session = api.Session(session_user, token)
-
-
-def _is_token_valid(master_address: str, token: str) -> bool:
+def required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
     """
-    Find out whether the given token is valid by attempting to use it
-    on the "/users/me" endpoint.
+    A decorator for cli functions.
     """
-    headers = {"Authorization": "Bearer {}".format(token)}
-    try:
-        r = api.get(master_address, "users/me", headers=headers, authenticated=False)
-    except (api.errors.UnauthenticatedException, api.errors.APIException):
-        return False
 
-    return r.status_code == 200
+    @wraps(func)
+    def f(namespace: Namespace) -> Any:
+        global cli_auth
+        v = vars(namespace)
+        cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=True)
+        return func(namespace)
+
+    return f
 
 
-def do_login(master_address: str, auth: Authentication, username: str, password: str) -> str:
-    r = api.post(
-        master_address,
-        "login",
-        body={"username": username, "password": password},
-        authenticated=False,
-    )
+def optional(func: Callable[[Namespace], Any]) -> Callable[[Namespace], Any]:
+    """
+    A decorator for cli functions.
+    """
 
-    token = cast(str, r.json()["token"])
+    @wraps(func)
+    def f(namespace: Namespace) -> Any:
+        global cli_auth
+        v = vars(namespace)
+        try:
+            cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=False)
+        except api.errors.UnauthenticatedException:
+            pass
 
-    auth.token_store.set_token(username, token)
+        return func(namespace)
 
-    return token
+    return f
+
+
+def must_cli_auth() -> Authentication:
+    if not cli_auth:
+        raise api.errors.UnauthenticatedException(username="")
+    return cli_auth
