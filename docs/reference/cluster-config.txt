@@ -269,9 +269,9 @@ The master supports the following configuration settings:
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default
       values:
 
-      -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.15.0``
+      -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.16.0``
          for CPU agents
-      -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.15.0``
+      -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0``
          for GPU agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly
