@@ -221,11 +221,6 @@ def main() -> None:
         f"New trial runner in (container {container_id}) on agent {agent_id}: {env.__dict__}."
     )
 
-
-    if env.experiment_config['checkpoint_storage']['type'] == 'azure':
-        from azure.storage.blob import BlobServiceClient
-        logging.getLogger("azure").setLevel(logging.ERROR)
-
     try:
         storage.validate_config(
             env.experiment_config["checkpoint_storage"],

@@ -4,9 +4,11 @@ from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
 from azure.storage.blob import BlobServiceClient
-from azure.storage.blob import BlobAnalyticsLogging
 
 from determined.common import util
+
+# Prevents Azure's HTTP logs from appearing in our trial logs.
+logging.getLogger("azure").setLevel(logging.ERROR)
 
 
 class AzureStorageClient(object):
