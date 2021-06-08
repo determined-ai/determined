@@ -239,7 +239,7 @@ def main() -> None:
     try:
         build_and_run_training_pipeline(env)
     except det.InvalidHP:
-        logging.info("InvalidHP detected, gracefully exiting trial")
+        logging.info("InvalidHP detected, trial is exiting")
         pass
 
 

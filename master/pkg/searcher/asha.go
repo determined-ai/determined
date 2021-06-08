@@ -285,7 +285,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	if exitedReason == workload.InvalidHP {
+	if exitedReason == workload.InvalidHP || exitedReason == workload.InitInvalidHP {
 		var ops []Operation
 		s.EarlyExitTrials[requestID] = true
 		ops = append(ops, NewClose(requestID))
