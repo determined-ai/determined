@@ -187,6 +187,16 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
+// @Summary Get an aggregated view of resource allocation during the given time period (CSV).
+// @Tags Cluster
+// @ID get-raw-resource-allocation-csv
+// @Accept  json
+// @Produce  text/csv
+// @Param   start query string true "Start time to get allocations for"
+// @Param   end query string true "End time to get allocations for"
+// @Success 200 {} string "experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
+// nolint:godot
+// @Router /allocation/raw [get]
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -305,6 +315,16 @@ func (m *Master) fetchAggregatedResourceAllocation(
 	}
 }
 
+// @Summary Get a detailed view of resource allocation during the given time period (CSV).
+// @Tags Cluster
+// @ID get-aggregated-resource-allocation-csv
+// @Produce  text/csv
+// @Param   start_date query string true "Start time to get allocations for"
+// @Param   end_date query string true "End time to get allocations for"
+// @Param   period query string true "Period to aggregate over"
+// @Success 200 {} string "aggregation_type,aggregation_key,date,seconds"
+// nolint:godot
+// @Router /allocation/aggregated [get]
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start  string `query:"start_date"`
