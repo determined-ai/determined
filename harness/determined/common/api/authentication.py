@@ -243,11 +243,9 @@ class TokenStore:
             if not self.path.exists():
                 return {"version": 1}
 
-            with self.path.open() as f:
-                content = f.read()
-
             try:
-                store = json.loads(content)
+                with self.path.open() as f:
+                    store = json.load(f)
             except json.JSONDecodeError:
                 raise api.errors.CorruptTokenCacheException()
 
