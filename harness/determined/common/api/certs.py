@@ -75,11 +75,43 @@ class CertStore:
     def __init__(self, path: pathlib.Path) -> None:
         self.path = path
 
+    def _load_store_file(self) -> Dict[str, str]:
+        if not self.path.exists():
+            return {}
+
+        try:
+            with self.path.open() as f:
+                content = f.read()
+
+            try:
+                store = json.loads(content)
+            except json.JSONDecodeError:
+                raise api.errors.CorruptCertificateCacheException()
+
+                if not isinstance(store, dict):
+                    raise api.errors.CorruptCertificateCacheException()
+
+            # Store must be a dictionary.
+            if not isinstance(store, dict):
+                raise api.errors.CorruptCertificateCacheException()
+
+            # All keys are url's, all values are pem-encoded certs.
+            for k, v in store.items():
+                if not isinstance(k, str):
+                    raise api.errors.CorruptCertificateCacheException()
+                if not isinstance(v, str):
+                    raise api.errors.CorruptCertificateCacheException()
+
+            return cast(Dict[str, str], store)
+
+        except api.errors.CorruptCertificateCacheException:
+            self.path.unlink()
+            raise
+
     @contextlib.contextmanager
     def _persistent_store(self) -> Iterator[Dict["str", "str"]]:
         """
-        Yields the appropriate store that can be modified, and the modified result will be written
-        back to file.
+        Yields a store that can be modified, and the modified result will be written back to file.
         """
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing).
@@ -87,7 +119,7 @@ class CertStore:
         lock = pathlib.Path(str(self.path) + ".lock")
 
         with filelock.FileLock(lock):
-            store = _load_cert_store(self.path)
+            store = self._load_store_file()
 
             # No need for try/finally, because we don't update the file after failures.
             yield store
@@ -115,40 +147,6 @@ class CertStore:
         with self._persistent_store() as store:
             if url in store:
                 del store[url]
-
-
-def _load_cert_store(path: pathlib.Path) -> Dict[str, str]:
-    if not path.exists():
-        return {}
-    try:
-
-        with path.open() as f:
-            content = f.read()
-
-        try:
-            store = json.loads(content)
-        except json.JSONDecodeError:
-            raise api.errors.CorruptCertificateCacheException()
-
-            if not isinstance(store, dict):
-                raise api.errors.CorruptCertificateCacheException()
-
-        # Store must be a dictionary.
-        if not isinstance(store, dict):
-            raise api.errors.CorruptCertificateCacheException()
-
-        # All keys are url's, all values are pem-encoded certs.
-        for k, v in store.items():
-            if not isinstance(k, str):
-                raise api.errors.CorruptCertificateCacheException()
-            if not isinstance(v, str):
-                raise api.errors.CorruptCertificateCacheException()
-
-        return cast(Dict[str, str], store)
-
-    except api.errors.CorruptCertificateCacheException:
-        path.unlink()
-        raise
 
 
 def maybe_shim_old_cert_store(
