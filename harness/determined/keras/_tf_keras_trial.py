@@ -454,7 +454,12 @@ class TFKerasTrialController(det.LoopTrialController):
             # Our implementation of verbose=True.
             callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
 
-        callbacks = callbacks + [keras.callbacks._DeterminedProfiler(self.prof)]
+        profiler = keras.callbacks._DeterminedProfiler(
+            self.prof,
+            self.context.get_global_batch_size(),
+        )
+
+        callbacks = callbacks + [profiler]
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in

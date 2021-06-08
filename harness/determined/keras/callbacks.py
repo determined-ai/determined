@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import time
 from typing import Any, Dict, List, Optional
 
 import tensorflow as tf
@@ -709,17 +710,28 @@ class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
 class _DeterminedProfiler(Callback):
     """Hooks Keras into the profiler agent lifecycle"""
 
-    def __init__(self, prof: profiler.ProfilerAgent) -> None:
+    def __init__(self, prof: profiler.ProfilerAgent, batch_size: int) -> None:
         super().__init__()
-        self.current_batch = 0
+        self.total_batch = 0
         self.prof = prof
+        self.batch_start = None  # type: Optional[float]
+        self.batch_size = batch_size
 
     def get_state(self) -> Dict:
-        return {"current_batch": self.current_batch}
+        return {"total_batch": self.total_batch}
 
     def load_state(self, state: Any) -> None:
-        self.current_batch = state["current_batch"]
+        self.total_batch = state["total_batch"]
 
     def on_train_batch_begin(self, batch: int, _: Optional[Dict] = None) -> None:
-        self.current_batch += 1
-        self.prof.update_batch_idx(self.current_batch)
+        self.total_batch += 1
+        self.batch_start = time.time()
+        self.prof.update_batch_idx(self.total_batch)
+
+    def on_train_batch_end(self, _: int, logs: Optional[Dict] = None) -> None:
+        if not logs or not self.batch_start:
+            return
+
+        samples = logs.get("size", self.batch_size)
+        samples_per_second = samples / (time.time() - self.batch_start)
+        self.prof.record_metric("samples_per_second", samples_per_second)

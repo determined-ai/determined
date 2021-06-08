@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from enum import Enum
 from types import TracebackType
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type, Union, cast
 
@@ -13,8 +14,6 @@ import determined as det
 from determined.common import api, check
 from determined.common.api import TrialProfilerMetricsBatch
 
-SYSTEM_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_SYSTEM"
-TIMING_METRIC_TYPE_ENUM = "PROFILER_METRIC_TYPE_TIMING"
 MAX_COLLECTION_SECONDS = 300
 LOG_NAMESPACE = "determined-profiler"
 
@@ -113,11 +112,85 @@ class PynvmlWrapper:
         return gpu_util
 
 
+class MetricType(Enum):
+    SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
+    TIMING = "PROFILER_METRIC_TYPE_TIMING"
+    MISC = "PROFILER_METRIC_TYPE_MISC"
+
+
+class SysMetricName:
+    GPU_UTIL_METRIC = "gpu_util"
+    GPU_FREE_MEMORY_METRIC = "gpu_free_memory"
+    NET_THRU_SENT_METRIC = "net_throughput_sent"
+    NET_THRU_RECV_METRIC = "net_throughput_recv"
+    DISK_IOPS_METRIC = "disk_iops"
+    DISK_THRU_READ_METRIC = "disk_throughput_read"
+    DISK_THRU_WRITE_METRIC = "disk_throughput_write"
+    FREE_MEM_METRIC = "free_memory"
+    SIMPLE_CPU_UTIL_METRIC = "cpu_util_simple"
+
+
 class Measurement:
     def __init__(self, timestamp: datetime, batch_idx: int, value: float):
         self.timestamp = timestamp
         self.batch_idx = batch_idx
         self.measurement = value
+
+
+class NamedMeasurement(Measurement):
+    def __init__(
+        self,
+        metric_type: "MetricType",
+        metric_name: str,
+        timestamp: datetime,
+        batch_idx: int,
+        value: float,
+    ):
+        super().__init__(timestamp, batch_idx, value)
+        self.metric_type = metric_type
+        self.metric_name = metric_name
+
+
+class Timing:
+    def __init__(self, name: str, current_batch_idx: int) -> None:
+        self.name = name
+        self.current_batch_idx = current_batch_idx
+        self.start_time = None  # type: Optional[float]
+        self.dur = None  # type: Optional[float]
+
+    def start(self) -> None:
+        self.start_time = time.time()
+
+    def end(self) -> None:
+        check.is_not_none(
+            self.start_time,
+            "Timing has no start time and end() was called. You probably didn't "
+            "run start() before end().",
+        )
+        self.start_time = cast(float, self.start_time)
+        self.dur = time.time() - self.start_time
+
+    def to_measurement(self) -> NamedMeasurement:
+        check.is_not_none(
+            self.start_time,
+            "Timing has no start time and to_measurement() was called. You probably didn't "
+            "run start() before to_measurement().",
+        )
+        check.is_not_none(
+            self.dur,
+            "Timing has no duration and to_measurement() was called. You probably didn't "
+            "run end() before to_measurement().",
+        )
+        self.start_time = cast(float, self.start_time)
+        start_time_dt = datetime.fromtimestamp(self.start_time, timezone.utc)
+        self.dur = cast(float, self.dur)
+        return NamedMeasurement(
+            metric_type=MetricType.TIMING,
+            metric_name=self.name,
+            timestamp=start_time_dt,
+            batch_idx=self.current_batch_idx,
+            value=self.dur,
+        )
 
 
 class StartMessage:
@@ -234,11 +307,11 @@ class ProfilerAgent:
 
             if self.timings_is_enabled:
                 num_producers += 1
-                self.timings_batcher_queue = (
+                self.metrics_batcher_queue = (
                     queue.Queue()
-                )  # type: """queue.Queue[Union[Timing, StartMessage, ShutdownMessage]]"""
-                self.timings_batcher_thread = TimingsBatcherThread(
-                    trial_id, agent_id, self.timings_batcher_queue, self.send_queue
+                )  # type: """queue.Queue[Union[NamedMeasurement, StartMessage, ShutdownMessage]]"""
+                self.metrics_batcher_thread = MetricsBatcherThread(
+                    trial_id, agent_id, self.metrics_batcher_queue, self.send_queue
                 )
 
             self.sender_thread = ProfilerSenderThread(
@@ -271,7 +344,7 @@ class ProfilerAgent:
             self.sys_metric_collector_thread.start()
 
         if self.timings_is_enabled:
-            self.timings_batcher_thread.start()
+            self.metrics_batcher_thread.start()
 
     def end(self) -> None:
         if not self.is_enabled:
@@ -353,6 +426,20 @@ class ProfilerAgent:
             self._end_collection()
             self.shutdown_timer.send_shutdown_signal()
 
+    def record_metric(self, metric_name: str, value: float) -> None:
+        if not self.is_enabled:
+            return
+
+        self.metrics_batcher_queue.put(
+            NamedMeasurement(
+                MetricType.MISC,
+                metric_name,
+                datetime.now(timezone.utc),
+                self.current_batch_idx,
+                value,
+            )
+        )
+
     @contextlib.contextmanager
     def record_timing(self, metric_name: str) -> Iterator[None]:
         if not self.is_enabled or not self.timings_is_enabled or not self.is_active:
@@ -363,7 +450,7 @@ class ProfilerAgent:
         timing.start()
         yield
         timing.end()
-        self.timings_batcher_queue.put(timing)
+        self.metrics_batcher_queue.put(timing.to_measurement())
 
     def cleanup_timer(self) -> None:
         if not self.is_enabled:
@@ -380,7 +467,7 @@ class ProfilerAgent:
             self.sys_metric_collector_thread.activate()
 
         if self.timings_is_enabled:
-            self.timings_batcher_thread.activate()
+            self.metrics_batcher_thread.activate()
 
         self.shutdown_timer.activate()
         self.has_started = True
@@ -408,50 +495,12 @@ class ProfilerAgent:
                 self.sys_metric_collector_thread.join()
 
             if self.timings_is_enabled:
-                self.timings_batcher_thread.send_shutdown_signal()
-                self.timings_batcher_thread.join()
+                self.metrics_batcher_thread.send_shutdown_signal()
+                self.metrics_batcher_thread.join()
 
             self.sender_thread.join()
 
             self.has_finished = True
-
-
-class Timing:
-    def __init__(self, name: str, current_batch_idx: int) -> None:
-        self.name = name
-        self.current_batch_idx = current_batch_idx
-        self.start_time = None  # type: Optional[float]
-        self.dur = None  # type: Optional[float]
-
-    def start(self) -> None:
-        self.start_time = time.time()
-
-    def end(self) -> None:
-        check.is_not_none(
-            self.start_time,
-            "Timing has no start time and end() was called. You probably didn't "
-            "run start() before end().",
-        )
-        self.start_time = cast(float, self.start_time)
-        self.dur = time.time() - self.start_time
-
-    def to_measurement(self) -> Measurement:
-        check.is_not_none(
-            self.start_time,
-            "Timing has no start time and to_measurement() was called. You probably didn't "
-            "run start() before to_measurement().",
-        )
-        check.is_not_none(
-            self.dur,
-            "Timing has no duration and to_measurement() was called. You probably didn't "
-            "run end() before to_measurement().",
-        )
-        self.start_time = cast(float, self.start_time)
-        start_time_dt = datetime.fromtimestamp(self.start_time, timezone.utc)
-        self.dur = cast(float, self.dur)
-        return Measurement(
-            timestamp=start_time_dt, batch_idx=self.current_batch_idx, value=self.dur
-        )
 
 
 class PreemptibleTimer(threading.Thread):
@@ -524,7 +573,7 @@ class SysMetricCollectorThread(threading.Thread):
         self.current_batch_idx = 0
         self.send_queue = send_queue
         self.control_queue: "queue.Queue[Union['StartMessage', 'ShutdownMessage']]" = queue.Queue()
-        self.current_batch = SysMetricBatcher(trial_id, agent_id)
+        self.current_batch = MetricBatch(trial_id, agent_id)
         self.pynvml_wrapper = pynvml_wrapper
 
         super().__init__(daemon=True)
@@ -572,7 +621,7 @@ class SysMetricCollectorThread(threading.Thread):
                 try:
                     msg = self.control_queue.get(timeout=sleep_time)
                     if isinstance(msg, ShutdownMessage):
-                        self.send_queue.put(self.current_batch.convert_to_post_format())
+                        self.send_queue.put(self.current_batch.consume())
                         self.send_queue.put(ShutdownMessage())
                         return
                 except queue.Empty:
@@ -581,50 +630,55 @@ class SysMetricCollectorThread(threading.Thread):
             next_collection += self.MEASUREMENT_INTERVAL
 
             cpu_util = cpu_util_collector.measure(self.current_batch_idx)
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.SIMPLE_CPU_UTIL_METRIC, cpu_util
+            self.current_batch.append(
+                MetricType.SYSTEM, SysMetricName.SIMPLE_CPU_UTIL_METRIC, cpu_util
             )
 
             net_thru_sent, net_thru_recv = net_throughput_collector.measure(self.current_batch_idx)
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.NET_THRU_SENT_METRIC, net_thru_sent
+            self.current_batch.append(
+                MetricType.SYSTEM, SysMetricName.NET_THRU_SENT_METRIC, net_thru_sent
             )
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.NET_THRU_RECV_METRIC, net_thru_recv
+            self.current_batch.append(
+                MetricType.SYSTEM, SysMetricName.NET_THRU_RECV_METRIC, net_thru_recv
             )
 
             free_memory = free_memory_collector.measure(self.current_batch_idx)
-            self.current_batch.add_nongpu_measurement(SysMetricType.FREE_MEM_METRIC, free_memory)
+            self.current_batch.append(MetricType.SYSTEM, SysMetricName.FREE_MEM_METRIC, free_memory)
 
             disk_read_thru, disk_write_thru, iops = disk_collector.measure(self.current_batch_idx)
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.DISK_THRU_READ_METRIC, disk_read_thru
+            self.current_batch.append(
+                MetricType.SYSTEM, SysMetricName.DISK_THRU_READ_METRIC, disk_read_thru
             )
-            self.current_batch.add_nongpu_measurement(
-                SysMetricType.DISK_THRU_WRITE_METRIC, disk_write_thru
+            self.current_batch.append(
+                MetricType.SYSTEM, SysMetricName.DISK_THRU_WRITE_METRIC, disk_write_thru
             )
-            self.current_batch.add_nongpu_measurement(SysMetricType.DISK_IOPS_METRIC, iops)
+            self.current_batch.append(MetricType.SYSTEM, SysMetricName.DISK_IOPS_METRIC, iops)
 
             gpu_util = gpu_util_collector.measure(self.current_batch_idx)
-            for gpu_uuid in gpu_util.keys():
-                self.current_batch.add_gpu_measurement(
-                    SysMetricType.GPU_UTIL_METRIC, gpu_uuid, gpu_util[gpu_uuid]
+            for gpu_uuid, util_for_gpu in gpu_util.items():
+                self.current_batch.append(
+                    MetricType.SYSTEM,
+                    SysMetricName.GPU_UTIL_METRIC,
+                    util_for_gpu,
+                    gpu_uuid,
                 )
 
             gpu_memory = gpu_memory_collection.measure(self.current_batch_idx)
-            for gpu_uuid in gpu_memory.keys():
-                self.current_batch.add_gpu_measurement(
-                    SysMetricType.GPU_FREE_MEMORY_METRIC, gpu_uuid, gpu_memory[gpu_uuid]
+            for gpu_uuid, mem_for_gpu in gpu_memory.items():
+                self.current_batch.append(
+                    MetricType.SYSTEM,
+                    SysMetricName.GPU_FREE_MEMORY_METRIC,
+                    mem_for_gpu,
+                    gpu_uuid,
                 )
 
             # Check if it is time to flush the batch and start a new batch
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
-                self.send_queue.put(self.current_batch.convert_to_post_format())
-                self.current_batch.clear()
+                self.send_queue.put(self.current_batch.consume())
                 batch_start_time = time.time()
 
 
-class TimingsBatcherThread(threading.Thread):
+class MetricsBatcherThread(threading.Thread):
     """
     This is a thread that exists solely so that we can batch Timings and ship them to the
     SenderThread every FLUSH_INTERVAL seconds.
@@ -641,7 +695,7 @@ class TimingsBatcherThread(threading.Thread):
     ) -> None:
         self.inbound_queue = inbound_queue
         self.send_queue = send_queue
-        self.current_batch = TimingsBatcher(trial_id, agent_id)
+        self.metrics_batch = MetricBatch(trial_id, agent_id)
         super().__init__(daemon=True)
 
     def activate(self) -> None:
@@ -676,16 +730,16 @@ class TimingsBatcherThread(threading.Thread):
             try:
                 message = self.inbound_queue.get(timeout=timeout)
                 if isinstance(message, ShutdownMessage):
-                    self.send_queue.put(self.current_batch.convert_to_post_format())
+                    self.send_queue.put(self.metrics_batch.consume())
                     self.send_queue.put(ShutdownMessage())
                     return
-                elif isinstance(message, Timing):
+                elif isinstance(message, NamedMeasurement):
                     if batch_start_time is None:
                         batch_start_time = time.time()
-                    self.current_batch.add_timing(message)
+                    self.metrics_batch.append(message.metric_type, message.metric_name, message)
                 else:
                     logging.fatal(
-                        f"ProfilerAgent.TimingsBatcherThread received a message "
+                        f"ProfilerAgent.MetricsBatcherThread received a message "
                         f"of unexpected type '{type(message)}' from the "
                         f"inbound_queue. This should never happen - there must "
                         f"be a bug in the code."
@@ -704,9 +758,85 @@ class TimingsBatcherThread(threading.Thread):
             )
             batch_start_time = cast(float, batch_start_time)
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
-                self.send_queue.put(self.current_batch.convert_to_post_format())
-                self.current_batch.clear()
+                self.send_queue.put(self.metrics_batch.consume())
                 batch_start_time = time.time()
+
+
+class MetricBatch:
+    def __init__(self, trial_id: str, agent_id: str) -> None:
+        self.trial_id = trial_id
+        self.agent_id = agent_id
+        self.batch = {}  # type: Dict[Tuple[MetricType, str, str], List[Measurement]]
+
+    def append(
+        self,
+        metric_type: MetricType,
+        metric_name: str,
+        measurement: Measurement,
+        gpu_uuid: str = "",
+    ) -> None:
+        if (metric_type, metric_name, gpu_uuid) not in self.batch.keys():
+            self.batch[(metric_type, metric_name, gpu_uuid)] = []
+        self.batch[(metric_type, metric_name, gpu_uuid)].append(measurement)
+
+    def consume(self) -> List[TrialProfilerMetricsBatch]:
+        trial_profiler_metrics_batches = []
+
+        for (metric_type, metric_name, gpu_uuid), measurements in self.batch.items():
+            if len(measurements) > 0:
+                labels = MetricBatch.make_labels(
+                    metric_name, self.trial_id, self.agent_id, metric_type.value, gpu_uuid
+                )
+                batch = MetricBatch.to_post_format(measurements, labels)
+                trial_profiler_metrics_batches.append(batch)
+
+        self.clear()
+        return trial_profiler_metrics_batches
+
+    def clear(self) -> None:
+        for key in self.batch.keys():
+            self.batch[key] = []
+
+    @staticmethod
+    def to_post_format(
+        measurements: List[Measurement], labels: Dict[str, Any]
+    ) -> TrialProfilerMetricsBatch:
+        values, batches, timestamps = [], [], []
+        for m in measurements:
+            values.append(m.measurement)
+            batches.append(m.batch_idx)
+            timestamps.append(MetricBatch.convert_to_timestamp_str(m.timestamp))
+        return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
+
+    @staticmethod
+    def make_labels(
+        name: str, trial_id: str, agent_id: str, metric_type: str, gpu_uuid_label: str
+    ) -> Dict[str, Any]:
+        return {
+            "trialId": trial_id,
+            "name": name,
+            "agentId": agent_id,
+            "gpuUuid": gpu_uuid_label,
+            "metricType": metric_type,
+        }
+
+    @staticmethod
+    def convert_to_timestamp_str(timestamp: datetime) -> str:
+        """
+        Convert a datetime object to the string format expected by the API. All timestamps must be
+        timezone-aware datetime.datetimes in UTC.
+        """
+        # https://docs.python.org/3/library/datetime.html#determining-if-an-object-is-aware-or-naive
+        assert (
+            timestamp.tzinfo is not None and timestamp.tzinfo.utcoffset(timestamp) is not None
+        ), "All datetime objects to be serialized must be timezone aware"
+        utcoffset = cast(timedelta, timestamp.utcoffset())
+        assert utcoffset.total_seconds() == 0, (
+            f"All datetime objects to be serialized must be in UTC, but the utcoffset was "
+            f"{utcoffset.total_seconds()}"
+        )
+
+        return timestamp.isoformat()
 
 
 class ProfilerSenderThread(threading.Thread):
@@ -743,175 +873,6 @@ class ProfilerSenderThread(threading.Thread):
                 self.master_url,
                 message,
             )
-
-
-class SysMetricType:
-    GPU_UTIL_METRIC = "gpu_util"
-    GPU_FREE_MEMORY_METRIC = "gpu_free_memory"
-    NET_THRU_SENT_METRIC = "net_throughput_sent"
-    NET_THRU_RECV_METRIC = "net_throughput_recv"
-    DISK_IOPS_METRIC = "disk_iops"
-    DISK_THRU_READ_METRIC = "disk_throughput_read"
-    DISK_THRU_WRITE_METRIC = "disk_throughput_write"
-    FREE_MEM_METRIC = "free_memory"
-    SIMPLE_CPU_UTIL_METRIC = "cpu_util_simple"
-
-
-def convert_to_timestamp_str(timestamp: datetime) -> str:
-    """
-    Convert a datetime object to the string format expected by the API. All timestamps must be
-    timezone-aware datetime.datetimes in UTC.
-    """
-    # https://docs.python.org/3/library/datetime.html#determining-if-an-object-is-aware-or-naive
-    assert (
-        timestamp.tzinfo is not None and timestamp.tzinfo.utcoffset(timestamp) is not None
-    ), "All datetime objects to be serialized must be timezone aware"
-    utcoffset = cast(timedelta, timestamp.utcoffset())
-    assert utcoffset.total_seconds() == 0, (
-        f"All datetime objects to be serialized must be in UTC, but the utcoffset was "
-        f"{utcoffset.total_seconds()}"
-    )
-
-    return timestamp.isoformat()
-
-
-def to_post_format(
-    measurements: List[Measurement], labels: Dict[str, Any]
-) -> TrialProfilerMetricsBatch:
-    values, batches, timestamps = [], [], []
-    for m in measurements:
-        values.append(m.measurement)
-        batches.append(m.batch_idx)
-        timestamps.append(convert_to_timestamp_str(m.timestamp))
-    return TrialProfilerMetricsBatch(values, batches, timestamps, labels)
-
-
-def make_labels(
-    name: str, trial_id: str, agent_id: str, metric_type: str, gpu_uuid_label: str = ""
-) -> Dict[str, Any]:
-    return {
-        "trialId": trial_id,
-        "name": name,
-        "agentId": agent_id,
-        "gpuUuid": gpu_uuid_label,
-        "metricType": metric_type,
-    }
-
-
-class SysMetricBatcher:
-    """
-    Data structure to collect batches of SysMetrics and then convert them to the format expected by
-    the API
-    """
-
-    def __init__(self, trial_id: str, agent_id: str) -> None:
-        self.trial_id = trial_id
-        self.agent_id = agent_id
-        self.clear()
-
-    def clear(self) -> None:
-        self.batch = {
-            SysMetricType.GPU_UTIL_METRIC: {},
-            SysMetricType.GPU_FREE_MEMORY_METRIC: {},
-            SysMetricType.NET_THRU_SENT_METRIC: [],
-            SysMetricType.NET_THRU_RECV_METRIC: [],
-            SysMetricType.DISK_IOPS_METRIC: [],
-            SysMetricType.DISK_THRU_READ_METRIC: [],
-            SysMetricType.DISK_THRU_WRITE_METRIC: [],
-            SysMetricType.FREE_MEM_METRIC: [],
-            SysMetricType.SIMPLE_CPU_UTIL_METRIC: [],
-        }  # type: Dict[str, Any]
-
-    def add_nongpu_measurement(self, metric_type: str, measurement: Measurement) -> None:
-        assert (
-            metric_type in self.batch.keys()
-        ), f"Tried to add unknown type of non-GPU metric: {metric_type}"
-        self.batch[metric_type].append(measurement)
-
-    def add_gpu_measurement(
-        self, metric_type: str, gpu_uuid: str, measurement: Measurement
-    ) -> None:
-        assert (
-            metric_type in self.batch.keys()
-        ), f"Tried to add unknown type of GPU metric: {metric_type}"
-        if gpu_uuid not in self.batch[metric_type].keys():
-            self.batch[metric_type][gpu_uuid] = []
-        self.batch[metric_type][gpu_uuid].append(measurement)
-
-    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
-
-        trial_profiler_metrics_batches = []
-        for metric_name in self.batch.keys():
-            if (
-                metric_name
-                not in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
-                and len(self.batch[metric_name]) > 0
-            ):
-                trial_profiler_metrics_batches.append(
-                    to_post_format(
-                        self.batch[metric_name],
-                        make_labels(
-                            metric_name, self.trial_id, self.agent_id, SYSTEM_METRIC_TYPE_ENUM
-                        ),
-                    )
-                )
-
-            # GPU Metrics need to be batched by GPU UUID
-            if (
-                metric_name in [SysMetricType.GPU_UTIL_METRIC, SysMetricType.GPU_FREE_MEMORY_METRIC]
-                and len(self.batch[metric_name].keys()) > 0
-            ):
-                for gpu_uuid in self.batch[metric_name].keys():
-                    if len(self.batch[metric_name][gpu_uuid]) > 0:
-                        trial_profiler_metrics_batches.append(
-                            to_post_format(
-                                self.batch[metric_name][gpu_uuid],
-                                make_labels(
-                                    metric_name,
-                                    self.trial_id,
-                                    self.agent_id,
-                                    SYSTEM_METRIC_TYPE_ENUM,
-                                    gpu_uuid_label=gpu_uuid,
-                                ),
-                            )
-                        )
-
-        return trial_profiler_metrics_batches
-
-
-class TimingsBatcher:
-    """
-    Data structure to collect batches of Timings and then convert them to the format expected by
-    the API
-    """
-
-    def __init__(self, trial_id: str, agent_id: str) -> None:
-        self.trial_id = trial_id
-        self.agent_id = agent_id
-        self.clear()
-
-    def clear(self) -> None:
-        self.batch = {}  # type: Dict[str, List[Timing]]
-
-    def add_timing(self, timing: Timing) -> None:
-        if timing.name not in self.batch.keys():
-            self.batch[timing.name] = []
-        self.batch[timing.name].append(timing)
-
-    def convert_to_post_format(self) -> List[TrialProfilerMetricsBatch]:
-        trial_profiler_metrics_batches = []
-        for metric_name in self.batch.keys():
-            if len(self.batch[metric_name]) > 0:
-                trial_profiler_metrics_batches.append(
-                    to_post_format(
-                        [timing.to_measurement() for timing in self.batch[metric_name]],
-                        make_labels(
-                            metric_name, self.trial_id, self.agent_id, TIMING_METRIC_TYPE_ENUM
-                        ),
-                    )
-                )
-
-        return trial_profiler_metrics_batches
 
 
 GIGA = 1_000_000_000
