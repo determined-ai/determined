@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 
 from azure.core.exceptions import HttpResponseError, ResourceExistsError
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, StorageErrorCode
 
 from determined.common import util
 
@@ -37,7 +37,7 @@ class AzureStorageClient(object):
                 )
             )
         except HttpResponseError as e:
-            if e.reason == "The requested URI does not represent any resource on the server.":
+            if e.error_code == StorageErrorCode.invalid_uri:  # type: ignore
                 logging.warning(
                     (
                         "The storage client raised the following HttpResponseError:\n{}\nPlease "
