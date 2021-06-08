@@ -108,17 +108,11 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}
-	flatHPs := expconf.FlattenHPs(params)
-	flatHPs.Each(func(name string, param expconf.Hyperparameter) {
+	params.Each(func(name string, param expconf.Hyperparameter) {
 		names = append(names, name)
 		values = append(values, grid(param))
 	})
-	flatSamples := cartesianProduct(names, values)
-	var samples []hparamSample
-	for _, sample := range flatSamples {
-		samples = append(samples, unflattenSample(sample))
-	}
-	return samples
+	return cartesianProduct(names, values)
 }
 
 func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample {

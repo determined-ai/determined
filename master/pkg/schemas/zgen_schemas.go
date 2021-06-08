@@ -1610,14 +1610,7 @@ var (
         }
     },
     "additionalProperties": {
-        "anyOf": [
-            {
-                "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
-            },
-            {
-                "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameters.json"
-            }
-        ]
+        "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
     }
 }
 `)

@@ -212,13 +212,6 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 				RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6},
 			},
 		},
-		"nested": expconf.Hyperparameters{
-			"hp1": expconf.Hyperparameter{
-				RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
-					RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6},
-				},
-			},
-		},
 		"const": expconf.Hyperparameter{
 			RawConstHyperparameter: &expconf.ConstHyperparameter{
 				RawVal: "val",
@@ -240,16 +233,13 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 			},
 		},
 	}
-	flatSpec := expconf.FlattenHPs(spec)
-	flatSample := hparamSample{
-		"cat":        3,
-		"const":      "val",
-		"nested.hp1": 0,
-		"double":     50.,
-		"int":        50,
-		"log":        .001,
+	sample := hparamSample{
+		"cat":    3,
+		"const":  "val",
+		"double": 50.,
+		"int":    50,
+		"log":    .001,
 	}
-	sample := unflattenSample(flatSample)
 
 	ctx := context{rand: nprand.New(seed), hparams: spec}
 
@@ -267,10 +257,9 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 		// Create a hyperparameter sample where none of the values are actually valid, then resample it.
 		invalidSample := make(hparamSample)
-		flatSpec.Each(func(name string, _ expconf.Hyperparameter) {
+		spec.Each(func(name string, _ expconf.Hyperparameter) {
 			invalidSample[name] = nil
 		})
-		invalidSample = unflattenSample(invalidSample)
 		pbt := newPBTSearch(nullConfig(), true).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 
