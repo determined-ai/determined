@@ -12,8 +12,7 @@ from termcolor import colored
 
 from determined.cli import command
 from determined.common import api
-from determined.common.api import request
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication, certs
 from determined.common.check import check_eq, check_len
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -27,7 +26,7 @@ from .command import (
 )
 
 
-@authentication_required
+@authentication.required
 def start_shell(args: Namespace) -> None:
     data = {}
     if args.passphrase:
@@ -65,7 +64,7 @@ def start_shell(args: Namespace) -> None:
         )
 
 
-@authentication_required
+@authentication.required
 def open_shell(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
@@ -78,7 +77,7 @@ def open_shell(args: Namespace) -> None:
     )
 
 
-@authentication_required
+@authentication.required
 def show_ssh_command(args: Namespace) -> None:
     shell = api.get(args.master, "api/v1/shells/{}".format(args.shell_id)).json()["shell"]
     check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
@@ -99,14 +98,13 @@ def _prepare_key(retention_dir: Union[Path, None]) -> IO:
 
 
 def _prepare_cert_bundle(retention_dir: Union[Path, None]) -> Union[str, bool, None]:
-    cert_bundle_path = request.get_master_cert_bundle()
-
-    if retention_dir and isinstance(cert_bundle_path, str):
+    cert = certs.cli_cert
+    assert cert is not None, "cli_cert was not configured"
+    if retention_dir and isinstance(cert.bundle, str):
         retained_cert_bundle_path = retention_dir / "cert_bundle"
-        shutil.copy2(str(cert_bundle_path), retained_cert_bundle_path)
-        cert_bundle_path = str(retained_cert_bundle_path)
-
-    return cert_bundle_path
+        shutil.copy2(str(cert.bundle), retained_cert_bundle_path)
+        return str(retained_cert_bundle_path)
+    return cert.bundle
 
 
 def _open_shell(
@@ -138,8 +136,10 @@ def _open_shell(
         if cert_bundle_path is not None:
             proxy_cmd += ' --cert-file "{}"'.format(cert_bundle_path)
 
-        if request.get_master_cert_name():
-            proxy_cmd += ' --cert-name "{}"'.format(request.get_master_cert_name())
+        cert = certs.cli_cert
+        assert cert is not None, "cli_cert was not configured"
+        if cert.name:
+            proxy_cmd += ' --cert-name "{}"'.format(cert.name)
 
         username = shell["agentUserGroup"]["user"] or "root"
 

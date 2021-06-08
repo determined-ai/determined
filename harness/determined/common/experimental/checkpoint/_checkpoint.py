@@ -4,7 +4,8 @@ import pathlib
 import shutil
 from typing import Any, Dict, List, Optional, cast
 
-from determined.common import api, constants, storage
+from determined.common import constants, storage
+from determined.common.experimental import session
 from determined.common.storage import shared
 
 
@@ -34,6 +35,7 @@ class Checkpoint(object):
 
     def __init__(
         self,
+        session: session.Session,
         uuid: str,
         experiment_config: Dict[str, Any],
         experiment_id: int,
@@ -50,8 +52,8 @@ class Checkpoint(object):
         format: Optional[str] = None,
         model_version: Optional[int] = None,
         model_name: Optional[str] = None,
-        master: Optional[str] = None,
     ):
+        self._session = session
         self.uuid = uuid
         self.experiment_config = experiment_config
         self.experiment_id = experiment_id
@@ -68,7 +70,6 @@ class Checkpoint(object):
         self.model_version = model_version
         self.model_name = model_name
         self.metadata = metadata
-        self._master = master
 
     def _find_shared_fs_path(self) -> pathlib.Path:
         """Attempt to find the path of the checkpoint if being configured to shared fs.
@@ -197,12 +198,10 @@ class Checkpoint(object):
         for key, val in metadata.items():
             self.metadata[key] = val
 
-        if self._master:
-            api.post(
-                self._master,
-                "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-                body={"checkpoint": {"metadata": self.metadata}},
-            )
+        self._session.post(
+            "/api/v1/checkpoints/{}/metadata".format(self.uuid),
+            body={"checkpoint": {"metadata": self.metadata}},
+        )
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -217,12 +216,10 @@ class Checkpoint(object):
             if key in self.metadata:
                 del self.metadata[key]
 
-        if self._master:
-            api.post(
-                self._master,
-                "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-                body={"checkpoint": {"metadata": self.metadata}},
-            )
+        self._session.post(
+            "/api/v1/checkpoints/{}/metadata".format(self.uuid),
+            body={"checkpoint": {"metadata": self.metadata}},
+        )
 
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
@@ -295,13 +292,14 @@ class Checkpoint(object):
         return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
     @staticmethod
-    def from_json(data: Dict[str, Any], master: Optional[str] = None) -> "Checkpoint":
+    def from_json(data: Dict[str, Any], session: session.Session) -> "Checkpoint":
         validation = {
             "metrics": data.get("metrics", {}),
             "state": data.get("validation_state", None),
         }
 
         return Checkpoint(
+            session,
             data["uuid"],
             data.get("experiment_config", data.get("experimentConfig")),
             data.get("experiment_id", data.get("experimentId")),
@@ -318,5 +316,4 @@ class Checkpoint(object):
             determined_version=data.get("determined_version", data.get("determinedVersion")),
             model_version=data.get("model_version"),
             model_name=data.get("model_name"),
-            master=master,
         )

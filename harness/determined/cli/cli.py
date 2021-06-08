@@ -1,5 +1,4 @@
 import hashlib
-import os
 import socket
 import ssl
 import sys
@@ -15,7 +14,6 @@ from termcolor import colored
 
 import determined
 import determined.cli
-import determined.common.api.authentication as auth
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
 from determined.cli.master import args_description as master_args_description
@@ -33,7 +31,7 @@ from determined.cli.user import args_description as user_args_description
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
 from determined.common import api, yaml
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication, certs
 from determined.common.check import check_not_none
 from determined.common.declarative_argparse import Arg, Cmd, add_args
 from determined.common.util import (
@@ -48,7 +46,7 @@ from determined.deploy.cli import args_description as deploy_args_description
 from .errors import EnterpriseOnlyError
 
 
-@authentication_required
+@authentication.required
 def list_tasks(args: Namespace) -> None:
     r = api.get(args.master, "tasks")
 
@@ -90,7 +88,7 @@ def list_tasks(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@authentication_required
+@authentication.required
 def preview_search(args: Namespace) -> None:
     experiment_config = safe_load_yaml_with_exceptions(args.config_file)
     args.config_file.close()
@@ -224,9 +222,8 @@ def main(args: List[str] = sys.argv[1:]) -> None:
             parser.print_usage()
             parser.exit(2, "{}: no subcommand specified\n".format(parser.prog))
 
-        cert_fn = str(auth.get_config_path().joinpath("master.crt"))
-        if os.path.exists(cert_fn):
-            api.request.set_master_cert_bundle(cert_fn)
+        # Configure the CLI's Cert singleton.
+        certs.cli_cert = certs.default_load(parsed_args.master)
 
         try:
             # For `det deploy`, skip interaction with master.
@@ -271,9 +268,9 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 ):
                     die("Unable to verify master certificate")
 
-                with open(cert_fn, "w") as out:
-                    out.write(cert_pem_data)
-                api.request.set_master_cert_bundle(cert_fn)
+                certs.CertStore(certs.default_store()).set_cert(parsed_args.master, cert_pem_data)
+                # Reconfigure the CLI's Cert singleton.
+                certs.cli_cert = certs.Cert(cert_pem=cert_pem_data)
 
                 check_version(parsed_args)
 

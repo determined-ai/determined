@@ -5,14 +5,14 @@ from typing import Any, List
 
 from determined.cli import render
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
 from .checkpoint import format_checkpoint, format_validation, render_checkpoint
 
 
-@authentication_required
+@authentication.required
 def describe_trial(args: Namespace) -> None:
     if args.metrics:
         r = api.get(args.master, "trials/{}/metrics".format(args.trial_id))
@@ -98,13 +98,13 @@ def download(args: Namespace) -> None:
         render_checkpoint(checkpoint, path)
 
 
-@authentication_required
+@authentication.required
 def kill_trial(args: Namespace) -> None:
     api.post(args.master, "trials/{}/kill".format(args.trial_id))
     print("Killed trial {}".format(args.trial_id))
 
 
-@authentication_required
+@authentication.required
 def trial_logs(args: Namespace) -> None:
     api.experiment.print_trial_logs(
         args.master,

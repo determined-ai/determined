@@ -7,14 +7,14 @@ from termcolor import colored
 
 from determined.cli import command
 from determined.common import api, constants, context
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .command import CONTEXT_DESC, parse_config, render_event_stream
 
 
-@authentication_required
+@authentication.required
 def start_tensorboard(args: Namespace) -> None:
     if args.trial_ids is None and args.experiment_ids is None:
         print("Either experiment_ids or trial_ids must be specified.")
@@ -57,7 +57,7 @@ def start_tensorboard(args: Namespace) -> None:
             render_event_stream(msg)
 
 
-@authentication_required
+@authentication.required
 def open_tensorboard(args: Namespace) -> None:
     resp = api.get(args.master, "api/v1/tensorboards/{}".format(args.tensorboard_id)).json()[
         "tensorboard"

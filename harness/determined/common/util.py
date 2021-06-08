@@ -1,6 +1,8 @@
 import functools
 import io
 import os
+import pathlib
+import platform
 import random
 import sys
 from typing import IO, Any, Callable, Iterator, Sequence, TypeVar, Union, overload
@@ -108,3 +110,17 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
         print(err_msg)
         sys.exit(1)
     return config
+
+
+def get_config_path() -> pathlib.Path:
+    system = platform.system()
+    if "Linux" in system and "XDG_CONFIG_HOME" in os.environ:
+        config_path = pathlib.Path(os.environ["XDG_CONFIG_HOME"])
+    elif "Darwin" in system:
+        config_path = pathlib.Path.home().joinpath("Library").joinpath("Application Support")
+    elif "Windows" in system and "LOCALAPPDATA" in os.environ:
+        config_path = pathlib.Path(os.environ["LOCALAPPDATA"])
+    else:
+        config_path = pathlib.Path.home().joinpath(".config")
+
+    return config_path.joinpath("determined")
