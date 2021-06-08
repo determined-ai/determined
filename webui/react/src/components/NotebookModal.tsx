@@ -210,6 +210,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
               selectOnLineNumbers: true,
+              wordWrap: 'on',
+              wrappingIndent: 'indent',
             }}
           />
         </Item>
