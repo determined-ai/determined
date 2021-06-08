@@ -30,6 +30,7 @@ def list_agents(args: argparse.Namespace) -> None:
                 ("num_containers", agent["num_containers"]),
                 ("resource_pool", agent["resource_pool"]),
                 ("label", agent["label"]),
+                ("addresses", ", ".join(agent["addresses"])),
             ]
         )
         for agent_id, agent in sorted(agents.items())

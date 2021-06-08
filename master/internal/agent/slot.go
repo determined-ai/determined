@@ -4,6 +4,9 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -33,25 +36,15 @@ func (s slotEnabled) Enabled() bool {
 	return s.agentEnabled && s.userEnabled
 }
 
-// SlotSummary summarizes the state of a slot.
-type SlotSummary struct {
-	ID        string               `json:"id"`
-	Device    device.Device        `json:"device"`
-	Enabled   bool                 `json:"enabled"`
-	Container *container.Container `json:"container"`
+type patchSlot struct {
+	Enabled bool `json:"enabled"`
 }
-
-type (
-	patchSlot struct {
-		Enabled bool `json:"enabled"`
-	}
-)
 
 func (s *slot) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		s.patch(ctx)
-	case SlotSummary:
+	case model.SlotSummary:
 		ctx.Respond(s.summarize(ctx))
 	case patchSlot:
 		s.enabled.userEnabled = msg.Enabled
@@ -67,15 +60,15 @@ func (s *slot) Receive(ctx *actor.Context) error {
 			s.container = nil
 		}
 	case *proto.GetSlotRequest:
-		ctx.Respond(&proto.GetSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
+		ctx.Respond(&proto.GetSlotResponse{Slot: s.summarize(ctx).ToProto()})
 	case *proto.EnableSlotRequest:
 		s.enabled.userEnabled = true
 		s.patch(ctx)
-		ctx.Respond(&proto.EnableSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
+		ctx.Respond(&proto.EnableSlotResponse{Slot: s.summarize(ctx).ToProto()})
 	case *proto.DisableSlotRequest:
 		s.enabled.userEnabled = false
 		s.patch(ctx)
-		ctx.Respond(&proto.DisableSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
+		ctx.Respond(&proto.DisableSlotResponse{Slot: s.summarize(ctx).ToProto()})
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
 	case actor.PostStop:
@@ -127,8 +120,8 @@ func (s *slot) deviceID(ctx *actor.Context) sproto.DeviceID {
 	return sproto.DeviceID{Agent: ctx.Self().Parent().Parent(), Device: s.device}
 }
 
-func (s *slot) summarize(ctx *actor.Context) SlotSummary {
-	return SlotSummary{
+func (s *slot) summarize(ctx *actor.Context) model.SlotSummary {
+	return model.SlotSummary{
 		ID:        ctx.Self().Address().Local(),
 		Device:    s.device,
 		Enabled:   s.enabled.Enabled(),

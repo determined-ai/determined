@@ -4,6 +4,9 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -28,8 +31,6 @@ type agents struct {
 	opts *aproto.MasterSetAgentOptions
 }
 
-type agentsSummary map[string]AgentSummary
-
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case api.WebSocketConnected:
@@ -42,7 +43,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
 		for _, a := range a.summarize(ctx) {
-			response.Agents = append(response.Agents, ToProtoAgent(a))
+			response.Agents = append(response.Agents, a.ToProto())
 		}
 		ctx.Respond(response)
 	case echo.Context:
@@ -87,11 +88,11 @@ func (a *agents) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
-func (a *agents) summarize(ctx *actor.Context) agentsSummary {
-	results := ctx.AskAll(AgentSummary{}, ctx.Children()...).GetAll()
-	summary := make(map[string]AgentSummary, len(results))
+func (a *agents) summarize(ctx *actor.Context) model.AgentsSummary {
+	results := ctx.AskAll(model.AgentSummary{}, ctx.Children()...).GetAll()
+	summary := make(map[string]model.AgentSummary, len(results))
 	for ref, result := range results {
-		summary[ref.Address().String()] = result.(AgentSummary)
+		summary[ref.Address().String()] = result.(model.AgentSummary)
 	}
 	return summary
 }

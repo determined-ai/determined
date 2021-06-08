@@ -22,6 +22,8 @@ message Agent {
   string label = 5;
   // The name of the resource pool the agent is in
   string resource_pool = 6;
+  // The addresses of the agent.
+  repeated string addresses = 7;
 }
 
 // Slot wraps a single device on the agent.
