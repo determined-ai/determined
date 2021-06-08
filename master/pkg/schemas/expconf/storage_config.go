@@ -147,3 +147,8 @@ type AzureConfigV0 struct {
 	RawAccountURL       *string `json:"account_url"`
 	RawCredential       *string `json:"credential"`
 }
+
+// Merge implements schemas.Mergeable.
+func (a AzureConfigV0) Merge(other interface{}) interface{} {
+	return schemas.UnionMerge(a, other)
+}
