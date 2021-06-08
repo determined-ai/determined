@@ -1016,8 +1016,9 @@ details.
  Profiling
 ***********
 
-The ``profiling`` section specifies configuartion options related to
-profiling experiments. See :ref:`how-to-profiling` for more details.
+The ``profiling`` section specifies configuration options related to
+profiling experiments. See :ref:`how-to-profiling` for a more detailed
+walkthrough.
 
 **Optional Fields**
 
