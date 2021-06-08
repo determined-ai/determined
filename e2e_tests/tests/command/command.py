@@ -7,7 +7,7 @@ from typing import IO, Any, Generator, Optional
 import requests
 
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, certs
 from tests import config as conf
 
 
@@ -81,6 +81,8 @@ def interactive_command(*args: str) -> Generator:
 
 
 def get_num_running_commands() -> int:
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "api/v1/commands")
     assert r.status_code == requests.codes.ok, r.text
@@ -89,6 +91,7 @@ def get_num_running_commands() -> int:
 
 
 def get_command(id: str) -> Any:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "api/v1/commands/" + id)
     assert r.status_code == requests.codes.ok, r.text

@@ -15,7 +15,7 @@ import requests
 
 from determined import experimental
 from determined.common import api, yaml
-from determined.common.api import authentication
+from determined.common.api import authentication, certs
 from tests import cluster
 from tests import config as conf
 
@@ -91,6 +91,8 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def change_experiment_state(experiment_id: int, new_state: str) -> None:
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.patch(
         conf.make_master_url(),
@@ -170,6 +172,7 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
 
 
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "experiments/{}".format(experiment_id))
     assert r.status_code == requests.codes.ok, r.text
@@ -188,6 +191,7 @@ def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
 
 
 def num_experiments() -> int:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "experiments")
     assert r.status_code == requests.codes.ok, r.text
@@ -210,6 +214,7 @@ def is_terminal_state(state: str) -> bool:
 
 
 def trial_metrics(trial_id: int) -> Dict[str, Any]:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
     assert r.status_code == requests.codes.ok, r.text
@@ -240,6 +245,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 
 def trial_logs(trial_id: int) -> List[str]:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id)]
 
