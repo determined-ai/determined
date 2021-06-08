@@ -113,7 +113,10 @@ class _PolyLogs:
             if supports_tf_logs:
                 return self.tf_logs
             if self.np_logs is None:
-                self.np_logs = tf_utils.to_numpy_or_python_type(self.tf_logs)
+                try:
+                    self.np_logs = tf_utils.to_numpy_or_python_type(self.tf_logs)
+                except AttributeError:  # New method as of TF 2.5.
+                    self.np_logs = tf_utils.sync_to_numpy_or_python_type(self.tf_logs)
             return self.np_logs
 
 
