@@ -43,10 +43,10 @@ cluster without writing a model, see :ref:`commands-and-shells`.
 .. code::
 
    # For CPU computations
-   docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.14.0
+   docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.15.0
 
    # For GPU computations
-   docker pull determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.14.0
+   docker pull determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.15.0
 
 .. _quick-start-first-job:
 
@@ -95,7 +95,7 @@ or where the model class is located. For example, below is the
 
 .. code:: yaml
 
-   description: mnist_pytorch_const
+   name: mnist_pytorch_const
    data:
        url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
    hyperparameters:
@@ -256,7 +256,7 @@ Below is the ``distributed.yaml`` file, which is very similar to the
 
 .. code:: yaml
 
-   description: mnist_pytorch
+   name: mnist_pytorch
    hyperparameters:
      learning_rate: 0.001
      dropout: 0.5

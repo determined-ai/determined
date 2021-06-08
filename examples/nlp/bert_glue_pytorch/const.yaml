@@ -1,4 +1,4 @@
-description: bert_glue_pytorch_const
+name: bert_glue_pytorch_const
 hyperparameters:
   global_batch_size: 24
   learning_rate: 2e-5

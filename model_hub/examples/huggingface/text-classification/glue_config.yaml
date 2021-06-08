@@ -9,7 +9,7 @@
 # | qnli | accuracy             |
 # | rte  | accuracy             |
 # | wnli | accuracy             |
-description: huggingface_glue_trial
+name: huggingface_glue_trial
 hyperparameters:
   pretrained_model_name_or_path: bert-base-cased
   model_mode: sequence-classification

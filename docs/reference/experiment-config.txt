@@ -32,9 +32,13 @@ an experiment is created with the Determined CLI. For example:
 
 **Optional Fields**
 
+``name``
+   A short human-readable name for the experiment.
+
 ``description``
    A human-readable description of the experiment. This does not need to
-   be unique.
+   be unique but should be limited to less than 255 characters for the
+   best experience.
 
 ``labels``
    A list of label names (strings). Assigning labels to experiments
@@ -892,9 +896,9 @@ more information on customizing the trial environment, refer to
    GPU vs. CPU agents by specifying a dict with two keys, ``cpu`` and
    ``gpu``. Default values:
 
-   -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.14.0``
+   -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.15.0``
       for agents with GPUs.
-   -  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.14.0``
+   -  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.15.0``
       for agents with only CPUs.
 
 ``force_pull_image``

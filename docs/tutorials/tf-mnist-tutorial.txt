@@ -217,7 +217,7 @@ hyperparameters:
 
 .. code:: yaml
 
-   description: fashion_mnist_keras_const
+   name: fashion_mnist_keras_const
    hyperparameters:
        global_batch_size: 32
        dense1: 128

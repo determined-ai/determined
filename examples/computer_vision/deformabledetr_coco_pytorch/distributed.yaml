@@ -1,4 +1,4 @@
-description: deformabledetr_coco_distributed
+name: deformabledetr_coco_distributed
 hyperparameters:
     # These settings match those used in this experiment from the original repo:
     #   https://github.com/fundamentalvision/Deformable-DETR/blob/main/configs/r50_deformable_detr.sh

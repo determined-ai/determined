@@ -1,4 +1,4 @@
-description: boosted_trees_estimator_adaptive_search
+name: boosted_trees_estimator_adaptive_search
 data:
   titanic_dataset:
     train: "https://storage.googleapis.com/tf-datasets/titanic/train.csv"
@@ -42,4 +42,4 @@ searcher:
 entrypoint: model_def:BoostedTreesTrial
 scheduling_unit: 1
 environment:
-  image: "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.14.0"
+  image: "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.15.0"

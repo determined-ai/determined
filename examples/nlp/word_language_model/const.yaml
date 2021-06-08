@@ -1,4 +1,4 @@
-description: word_language_modeling_const
+name: word_language_modeling_const
 hyperparameters:
     global_batch_size: 20
     eval_batch_size: 10

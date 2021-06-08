@@ -1,4 +1,5 @@
 import argparse
+import sys
 from typing import Any, Dict, List
 
 import requests
@@ -45,7 +46,8 @@ def check_version(parsed_args: argparse.Namespace) -> None:
                     parsed_args.master
                 ),
                 "yellow",
-            )
+            ),
+            file=sys.stderr,
         )
     elif version.Version(client_version) < version.Version(master_version):
         print(
@@ -53,7 +55,8 @@ def check_version(parsed_args: argparse.Namespace) -> None:
                 "CLI version {} is less than master version {}. "
                 "Consider upgrading the CLI.".format(client_version, master_version),
                 "yellow",
-            )
+            ),
+            file=sys.stderr,
         )
     elif version.Version(client_version) > version.Version(master_version):
         print(
@@ -61,7 +64,8 @@ def check_version(parsed_args: argparse.Namespace) -> None:
                 "Master version {} is less than CLI version {}. "
                 "Consider upgrading the master.".format(master_version, client_version),
                 "yellow",
-            )
+            ),
+            file=sys.stderr,
         )
 
 

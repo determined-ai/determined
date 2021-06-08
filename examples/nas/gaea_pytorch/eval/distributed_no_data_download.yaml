@@ -1,7 +1,7 @@
 # NOTE: this config uses randomly generated data on single GPU.
 # Please use distributed.yaml if you want to run on the
 # the actual imagenet data.
-description: gaea_eval_distributed_no_gcp 
+name: gaea_eval_distributed_no_gcp 
 
 data:
   # Change bucket_name to GCP bucket with imagenet dataset

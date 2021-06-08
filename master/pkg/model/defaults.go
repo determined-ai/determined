@@ -1,10 +1,10 @@
 package model
 
 import (
-	"fmt"
 	"time"
 
-	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Configuration constants for task name generator.
@@ -25,18 +25,55 @@ const (
 
 // Default task environment docker image names.
 const (
-	defaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-606fd02"
-	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-606fd02"
+	defaultCPUImage = "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da845fc"
+	defaultGPUImage = "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da845fc"
 )
+
+// DefaultResourcesConfig returns the default resources configuration.
+func DefaultResourcesConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ResourcesConfig {
+	config := ResourcesConfig{
+		Weight:         1,
+		NativeParallel: false,
+	}
+	if taskContainerDefaults == nil {
+		return config
+	}
+
+	config.Devices = taskContainerDefaults.Devices
+	return config
+}
+
+// DefaultEnvConfig returns the default environment configuration.
+func DefaultEnvConfig(taskContainerDefaults *TaskContainerDefaultsConfig) Environment {
+	config := Environment{
+		Image: RuntimeItem{
+			CPU: defaultCPUImage,
+			GPU: defaultGPUImage,
+		},
+	}
+
+	if taskContainerDefaults == nil {
+		return config
+	}
+
+	config.RegistryAuth = taskContainerDefaults.RegistryAuth
+	config.ForcePullImage = taskContainerDefaults.ForcePullImage
+
+	if taskContainerDefaults.Image != nil {
+		config.Image = *taskContainerDefaults.Image
+	}
+
+	config.AddCapabilities = taskContainerDefaults.AddCapabilities
+	config.DropCapabilities = taskContainerDefaults.DropCapabilities
+	return config
+}
 
 // DefaultExperimentConfig returns a new default experiment config.
 func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
-	defaultDescription := fmt.Sprintf(
-		"Experiment (%s)",
-		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
+	conf := schemas.WithDefaults(expconf.ExperimentConfig{}).(expconf.ExperimentConfig)
 
 	defaultConfig := ExperimentConfig{
-		Description: defaultDescription,
+		Name: conf.RawName.String(),
 		CheckpointStorage: CheckpointStorageConfig{
 			SaveExperimentBest: 0,
 			SaveTrialBest:      1,
@@ -74,10 +111,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 				SmallerIsBetter: true,
 			},
 		},
-		Resources: ResourcesConfig{
-			Weight:         1,
-			NativeParallel: false,
-		},
+		Resources: DefaultResourcesConfig(taskContainerDefaults),
 		Optimizations: OptimizationsConfig{
 			AggregationFrequency:       1,
 			AverageAggregatedGradients: true,
@@ -90,12 +124,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		},
 		RecordsPerEpoch: 0,
 		SchedulingUnit:  100,
-		Environment: Environment{
-			Image: RuntimeItem{
-				CPU: defaultCPUImage,
-				GPU: defaultGPUImage,
-			},
-		},
+		Environment:     DefaultEnvConfig(taskContainerDefaults),
 		Reproducibility: ReproducibilityConfig{
 			ExperimentSeed: uint32(time.Now().Unix()),
 		},
@@ -108,17 +137,6 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 	if taskContainerDefaults == nil {
 		return defaultConfig
 	}
-
-	defaultConfig.Environment.RegistryAuth = taskContainerDefaults.RegistryAuth
-	defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
-
-	if taskContainerDefaults.Image != nil {
-		defaultConfig.Environment.Image = *taskContainerDefaults.Image
-	}
-
-	defaultConfig.Resources.Devices = taskContainerDefaults.Devices
-	defaultConfig.Environment.AddCapabilities = taskContainerDefaults.AddCapabilities
-	defaultConfig.Environment.DropCapabilities = taskContainerDefaults.DropCapabilities
 
 	defaultConfig.BindMounts = taskContainerDefaults.BindMounts
 

@@ -174,6 +174,7 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED: "id",
 		apiv1.GetExperimentsRequest_SORT_BY_ID:          "id",
 		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION: "description",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:        "name",
 		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:  "start_time",
 		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:    "end_time",
 		apiv1.GetExperimentsRequest_SORT_BY_STATE:       "state",
@@ -209,6 +210,7 @@ func (a *apiServer) GetExperiments(
 		userFilterExpr,
 		labelFilterExpr,
 		req.Description,
+		req.Name,
 		req.Offset,
 		req.Limit,
 	)
@@ -507,36 +509,67 @@ func (a *apiServer) PatchExperiment(
 	}
 
 	paths := req.UpdateMask.GetPaths()
+	shouldUpdateNotes := false
+	shouldUpdateConfig := false
 	for _, path := range paths {
 		switch {
-		case path == "description":
-			exp.Description = req.Experiment.Description
+		case path == "name":
+			if len(strings.TrimSpace(req.Experiment.Name)) == 0 {
+				return nil, status.Errorf(codes.InvalidArgument, "`name` is required.")
+			}
+			exp.Name = req.Experiment.Name
+		case path == "notes":
+			shouldUpdateNotes = true
+			exp.Notes = req.Experiment.Notes
 		case path == "labels":
 			exp.Labels = req.Experiment.Labels
+		case path == "description":
+			exp.Description = req.Experiment.Description
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
-				"only description and labels fields are mutable. cannot update %s", path)
+				"only 'name', 'notes', 'description', and 'labels' fields are mutable. cannot update %s", path)
+		}
+	}
+	shouldUpdateConfig = (shouldUpdateNotes && len(paths) > 1) ||
+		(!shouldUpdateNotes && len(paths) > 0)
+
+	if shouldUpdateNotes {
+		_, err := a.m.db.RawQuery(
+			"patch_experiment_notes",
+			req.Experiment.Id,
+			req.Experiment.Notes,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update experiment")
 		}
 	}
 
-	type experimentPatch struct {
-		Labels      []string `json:"labels"`
-		Description string   `json:"description"`
-	}
-	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
-	marshalledPatches, err := json.Marshal(patches)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to marshal experiment patches")
+	if shouldUpdateConfig {
+		type experimentPatch struct {
+			Labels      []string `json:"labels"`
+			Description string   `json:"description"`
+			Name        string   `json:"name"`
+		}
+		patches := experimentPatch{
+			Labels:      exp.Labels,
+			Description: exp.Description,
+			Name:        exp.Name,
+		}
+		marshalledPatches, err := json.Marshal(patches)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
+		}
+		_, err = a.m.db.RawQuery(
+			"patch_experiment_config",
+			req.Experiment.Id,
+			marshalledPatches,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to update experiment")
+		}
 	}
 
-	if _, err := a.m.db.RawQuery(
-		"patch_experiment",
-		req.Experiment.Id,
-		marshalledPatches,
-	); err != nil {
-		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
-	}
 	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
 }
 

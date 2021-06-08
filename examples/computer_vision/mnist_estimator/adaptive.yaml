@@ -1,4 +1,4 @@
-description: mnist_estimator_adaptive_search
+name: mnist_estimator_adaptive_search
 hyperparameters:
   global_batch_size: 64
   learning_rate:

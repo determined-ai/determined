@@ -8,6 +8,7 @@ from determined.common.api.experiment import (
     generate_random_hparam_values,
     make_test_experiment_config,
     patch_experiment,
+    patch_experiment_v1,
     follow_experiment_logs,
     follow_test_experiment_logs,
     trial_logs,

@@ -8,7 +8,7 @@ import (
 )
 
 // Defaultable means an object can have custom behvaiors for schemas.WithDefaults.  This is useful
-// for implementing "runtime default" behaviors, like experiment seed or description.  It is also
+// for implementing "runtime default" behaviors, like experiment seed or name.  It is also
 // useful for working around types we do not own and which schemas.WithDefaults() would puke on.
 type Defaultable interface {
 	// Defaultable should return the same type.  It must not be defined as a method against a
@@ -21,7 +21,7 @@ type Defaultable interface {
 // values out of json-schema automatically.
 //
 // There are some forms of defaults which must be filled at runtimes, such as giving a default
-// description to experiments with no description.  This can be accomplished by implementing
+// name to experiments with no name.  This can be accomplished by implementing
 // the RuntimeDefaultable interface for that object.  See ExperimentConfig for an example.
 //
 // Example usage:

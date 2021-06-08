@@ -1,4 +1,4 @@
-description: huggingface_mlm_trial
+name: huggingface_mlm_trial
 hyperparameters:
   pretrained_model_name_or_path: roberta-base
   model_mode: masked-lm

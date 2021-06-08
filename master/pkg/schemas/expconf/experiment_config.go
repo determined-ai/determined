@@ -22,7 +22,7 @@ type ExperimentConfigV0 struct {
 	RawDataLayer                *DataLayerConfigV0          `json:"data_layer"`
 	RawData                     map[string]interface{}      `json:"data"`
 	RawDebug                    *bool                       `json:"debug"`
-	RawDescription              Description                 `json:"description"`
+	RawDescription              *string                     `json:"description"`
 	RawEntrypoint               *string                     `json:"entrypoint"`
 	RawEnvironment              *EnvironmentConfigV0        `json:"environment"`
 	RawHyperparameters          HyperparametersV0           `json:"hyperparameters"`
@@ -31,6 +31,7 @@ type ExperimentConfigV0 struct {
 	RawMaxRestarts              *int                        `json:"max_restarts"`
 	RawMinCheckpointPeriod      *LengthV0                   `json:"min_checkpoint_period"`
 	RawMinValidationPeriod      *LengthV0                   `json:"min_validation_period"`
+	RawName                     Name                        `json:"name"`
 	RawOptimizations            *OptimizationsConfigV0      `json:"optimizations"`
 	RawPerformInitialValidation *bool                       `json:"perform_initial_validation"`
 	RawProfiling                *ProfilingConfigV0          `json:"profiling"`
@@ -92,15 +93,15 @@ func (e ExperimentConfig) AsLegacy() LegacyConfig {
 	}
 }
 
-// Description is a container struct for handling runtime defaults. It has to be a container so that
+// Name is a container struct for handling runtime defaults. It has to be a container so that
 // it can be responsible for allocating the nil pointer if one is not provided.  It would be nice if
-// you could use `type Description *string` but go won't let you create methods on such a type.
-type Description struct {
+// you could use `type Name *string` but go won't let you create methods on such a type.
+type Name struct {
 	RawString *string
 }
 
 // WithDefaults implements the Defaultable interface.
-func (d Description) WithDefaults() interface{} {
+func (d Name) WithDefaults() interface{} {
 	var s string
 	if d.RawString != nil {
 		s = *d.RawString
@@ -110,29 +111,29 @@ func (d Description) WithDefaults() interface{} {
 			petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep),
 		)
 	}
-	return Description{&s}
+	return Name{&s}
 }
 
 // String is part of the Getter/Setter API.
-func (d Description) String() string {
+func (d Name) String() string {
 	if d.RawString == nil {
-		panic("You must call WithDefaults on Description before .String")
+		panic("You must call WithDefaults on Name before .String")
 	}
 	return *d.RawString
 }
 
 // SetString is part of the Getter/Setter API.
-func (d *Description) SetString(s string) {
+func (d *Name) SetString(s string) {
 	d.RawString = &s
 }
 
-// MarshalJSON marshals makes the Description container transparent to marshaling.
-func (d Description) MarshalJSON() ([]byte, error) {
+// MarshalJSON marshals makes the Name container transparent to marshaling.
+func (d Name) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.RawString)
 }
 
-// UnmarshalJSON marshals makes the Description container transparent to unmarshaling.
-func (d *Description) UnmarshalJSON(bytes []byte) error {
+// UnmarshalJSON marshals makes the Name container transparent to unmarshaling.
+func (d *Name) UnmarshalJSON(bytes []byte) error {
 	return json.Unmarshal(bytes, &d.RawString)
 }
 
