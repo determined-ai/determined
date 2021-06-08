@@ -1,34 +1,29 @@
 import pathlib
 from typing import Any, Dict, List, Optional, Union
 
-from determined._swagger.client.api.experiments_api import ExperimentsApi
-from determined._swagger.client.api.internal_api import InternalApi
-from determined._swagger.client.api.trials_api import TrialsApi
-from determined._swagger.client.api_client import ApiClient
-from determined._swagger.client.configuration import Configuration
-from determined._swagger.client.models.v1_create_experiment_request import V1CreateExperimentRequest
-from determined._swagger.client.models.v1_file import V1File
 from determined.common import check, context, util, yaml
 from determined.common.api import authentication, certs
 from determined.common.experimental import checkpoint, experiment, model, session, trial
 
 
-def _path_to_files(path: pathlib.Path) -> List[V1File]:
-    files = []
-    for item in context.read_context(path)[0]:
-        if "content" in item:
-            content = item["content"].decode("utf-8")
-            file = V1File(
-                path=item["path"],
-                type=item["type"],
-                content=content,
-                mtime=item["mtime"],
-                uid=item["uid"],
-                gid=item["gid"],
-                mode=item["mode"],
+class _CreateExperimentResponse:
+    def __init__(self, raw: Any):
+        if not isinstance(raw, dict):
+            raise ValueError(f"CreateExperimentResponse must be a dict; got {raw}")
+
+        if "experiment" not in raw:
+            raise ValueError(f"CreateExperimentResponse must have an experiment field; got {raw}")
+        exp = raw["experiment"]
+        if not isinstance(exp, dict):
+            raise ValueError(f'CreateExperimentResponse["experiment"] must be a dict; got {exp}')
+        if "id" not in exp:
+            raise ValueError(f'CreateExperimentResponse["experiment"] must have an id; got {exp}')
+        id = exp["id"]
+        if not isinstance(id, int):
+            raise ValueError(
+                f'CreateExperimentResponse["experiment"]["id"] must be a int; got {id}'
             )
-            files.append(file)
-    return files
+        self.id = id
 
 
 class Determined:
@@ -67,20 +62,10 @@ class Determined:
 
         self._session = session.Session(master, user, auth, cert)
 
-        configuration = Configuration()
-        configuration.host = self._session._master.rstrip("/")
-        configuration.username = auth.get_session_user()
-        configuration.api_key_prefix["Authorization"] = "Bearer"
-        configuration.api_key["Authorization"] = auth.get_session_token()
-
-        self._experiments = ExperimentsApi(ApiClient(configuration))
-        self._internal = InternalApi(ApiClient(configuration))
-        self._trials = TrialsApi(ApiClient(configuration))
-
     def create_experiment(
         self,
         config: Union[str, pathlib.Path, Dict],
-        model_dir: str,
+        model_dir: Union[str, pathlib.Path],
     ) -> experiment.ExperimentReference:
         """
         Create an experiment with config parameters and model directory. The function
@@ -103,18 +88,24 @@ class Determined:
         elif isinstance(config, Dict):
             experiment_config = config
 
-        model_context = _path_to_files(pathlib.Path(model_dir))
+        if isinstance(model_dir, str):
+            model_dir = pathlib.Path(model_dir)
 
-        experiment_request = V1CreateExperimentRequest(
-            model_definition=model_context,
-            config=yaml.safe_dump(experiment_config),
+        model_context, _ = context.read_context(model_dir)
+
+        resp = self._session.post(
+            "/api/v1/experiments",
+            body={
+                "config": yaml.safe_dump(experiment_config),
+                "model_definition": model_context,
+            },
         )
-        experiment_response = self._internal.determined_create_experiment(experiment_request)
-        return experiment.ExperimentReference(
-            experiment_response.experiment.id,
-            self._session,
-            self._experiments,
-        )
+
+        exp_id = _CreateExperimentResponse(resp.json()).id
+        exp = experiment.ExperimentReference(exp_id, self._session)
+        exp.activate()
+
+        return exp
 
     def get_experiment(self, experiment_id: int) -> experiment.ExperimentReference:
         """
@@ -124,7 +115,6 @@ class Determined:
         return experiment.ExperimentReference(
             experiment_id,
             self._session,
-            self._experiments,
         )
 
     def get_trial(self, trial_id: int) -> trial.TrialReference:
@@ -132,7 +122,7 @@ class Determined:
         Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
-        return trial.TrialReference(trial_id, self._session, self._trials)
+        return trial.TrialReference(trial_id, self._session)
 
     def get_checkpoint(self, uuid: str) -> checkpoint.Checkpoint:
         """

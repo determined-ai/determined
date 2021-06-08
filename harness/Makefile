@@ -8,12 +8,12 @@ publish:
 
 .PHONY: fmt
 fmt:
-	isort -y --skip client
+	isort -y
 	black .
 
 .PHONY: check
 check: gen
-	isort --check-only --skip client
+	isort --check-only
 	black . --check
 	flake8
 	mypy .
