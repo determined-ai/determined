@@ -1,4 +1,4 @@
-.. _howto-profiling:
+.. _how-to-profiling:
 
 ##############################
  How To Profile An Experiment
