@@ -113,6 +113,9 @@ def safe_load_yaml_with_exceptions(yaml_file: Union[io.FileIO, IO[Any]]) -> Any:
 
 
 def get_config_path() -> pathlib.Path:
+    if os.environ.get("DET_DEBUG_CONFIG_PATH"):
+        return pathlib.Path(os.environ["DET_DEBUG_CONFIG_PATH"])
+
     system = platform.system()
     if "Linux" in system and "XDG_CONFIG_HOME" in os.environ:
         config_path = pathlib.Path(os.environ["XDG_CONFIG_HOME"])
