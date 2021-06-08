@@ -1,4 +1,4 @@
-description: bert_glue_pytorch_distributed 
+name: bert_glue_pytorch_distributed 
 hyperparameters:
   global_batch_size: 192 # per gpu batch size of 24
   learning_rate: 2e-5

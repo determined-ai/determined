@@ -14,6 +14,12 @@ from determined.common import api, constants, context, yaml
 from determined.common.api import request as req
 
 
+def patch_experiment_v1(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
+    path = "/api/v1/experiments/{}".format(exp_id)
+    headers = {"Content-Type": "application/merge-patch+json"}
+    req.patch(master_url, path, body=patch_doc, headers=headers)
+
+
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
     path = "experiments/{}".format(exp_id)
     headers = {"Content-Type": "application/merge-patch+json"}

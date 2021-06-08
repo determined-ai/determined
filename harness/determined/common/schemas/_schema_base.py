@@ -261,7 +261,7 @@ class SchemaBase:
         runtime_defaults is called at the end of SchemaBase.fill_defaults(), where values which are
         filled out at runtime can be populated dynamically.
 
-        Only a few classes define this, like the ExperimentConfig (the description) and
+        Only a few classes define this, like the ExperimentConfig (the name) and
         ReproducibilityConfig (the experiment seed).
         """
         pass

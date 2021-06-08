@@ -215,7 +215,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
             if always_print_traceback or debug_mode():
                 import traceback
 
-                traceback.print_exc()
+                traceback.print_exc(file=sys.stderr)
 
             parser.exit(1, colored(message + "\n", "red"))
 
@@ -292,4 +292,11 @@ def main(args: List[str] = sys.argv[1:]) -> None:
         except Exception:
             die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
-        parser.exit(3, colored("Interrupting...\n", "red"))
+        # die() may not be defined yet.
+        if debug_mode():
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+
+        print(colored("Interrupting...\n", "red"), file=sys.stderr)
+        exit(3)

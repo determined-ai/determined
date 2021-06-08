@@ -1,4 +1,4 @@
-description: huggingface_plm_trial
+name: huggingface_plm_trial
 hyperparameters:
   pretrained_model_name_or_path: xlnet-base-cased
   model_mode: causal-lm

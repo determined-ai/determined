@@ -1,4 +1,4 @@
-description: huggingface_xnli_trial
+name: huggingface_xnli_trial
 hyperparameters:
   pretrained_model_name_or_path: bert-base-multilingual-cased
   model_mode: sequence-classification

@@ -1,4 +1,4 @@
-description: dc_gan
+name: dc_gan
 hyperparameters:
   noise_dim: 128
   global_batch_size: 1024
@@ -17,5 +17,5 @@ resources:
 environment:
   # This model only works with Tensorflow 2.2+.
   image:
-     cpu: "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-606fd02"
-     gpu: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-606fd02"
+     cpu: "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-da845fc"
+     gpu: "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-da845fc"

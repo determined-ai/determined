@@ -1,4 +1,4 @@
-description: deformabledetr_coco_adaptive
+name: deformabledetr_coco_adaptive
 hyperparameters:
     lr: 
         type: double

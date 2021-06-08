@@ -78,7 +78,7 @@ func (db *PgDB) Migrate(migrationURL string) error {
 		log.Infof("found golang-migrate version %v", migrateVersion)
 	}
 
-	if err = m.Up(); err != migrate.ErrNoChange {
+	if err = m.Up(); err != nil && err != migrate.ErrNoChange {
 		return errors.Wrap(err, "error applying migrations")
 	}
 	log.Info("DB migrations completed")
@@ -679,9 +679,10 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	err := db.namedGet(&experiment.ID, `
 INSERT INTO experiments
 (state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config)
+ git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
 VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config)
+        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
+        :notes)
 RETURNING id`, experiment)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting experiment %v", *experiment)

@@ -241,9 +241,10 @@ export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
   dataLayer?: DataLayer;
-  description: string;
+  description?: string;
   hyperparameters: ExperimentHyperParams;
   labels?: string[];
+  name: string;
   profiling?: {
     enabled: boolean;
   };

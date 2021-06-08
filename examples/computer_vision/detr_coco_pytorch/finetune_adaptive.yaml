@@ -1,4 +1,4 @@
-description: detr_coco_finetune_adaptive
+name: detr_coco_finetune_adaptive
 hyperparameters:
     # We will tune learning rate and gradient clipping.
     lr: 

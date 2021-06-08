@@ -1,4 +1,4 @@
-description: detr_coco_distributed
+name: detr_coco_distributed
 hyperparameters:
     # These settings match that for the 150 epoch run provided in the original repo:
     #   https://github.com/facebookresearch/detr

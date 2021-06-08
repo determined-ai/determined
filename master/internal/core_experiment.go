@@ -205,14 +205,14 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 
 	// Make a Regex to remove everything but a whitelist of characters.
 	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
-	cleanDescription := reg.ReplaceAllString(expConfig.Description().String(), "")
+	cleanName := reg.ReplaceAllString(expConfig.Name().String(), "")
 
-	// Truncate description to a smaller size to both accommodate file name and path size
+	// Truncate name to a smaller size to both accommodate file name and path size
 	// limits on different platforms as well as get users more accustom to picking shorter
-	// descriptions as we move toward "description as mnemonic for an experiment".
-	maxDescriptionLength := 50
-	if len(cleanDescription) > maxDescriptionLength {
-		cleanDescription = cleanDescription[0:maxDescriptionLength]
+	// names as we move toward "name as mnemonic for an experiment".
+	maxNameLength := 50
+	if len(cleanName) > maxNameLength {
+		cleanName = cleanName[0:maxNameLength]
 	}
 
 	c.Response().Header().Set(
@@ -220,7 +220,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		fmt.Sprintf(
 			`attachment; filename="exp%d_%s_model_def.tar.gz"`,
 			args.ExperimentID,
-			cleanDescription))
+			cleanName))
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
 }
 
@@ -290,9 +290,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		dbExp.Config.SetResources(resources)
 	}
 	if patch.Description != nil {
-		description := dbExp.Config.Description()
-		description.SetString(*patch.Description)
-		dbExp.Config.SetDescription(description)
+		dbExp.Config.SetDescription(patch.Description)
 	}
 	labels := dbExp.Config.Labels()
 	for label, keep := range patch.Labels {
