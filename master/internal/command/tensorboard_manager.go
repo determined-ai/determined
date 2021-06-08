@@ -319,6 +319,8 @@ func (t *tensorboardManager) newTensorBoard(
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
+	config.Environment.Image = model.RuntimeItem{CPU: expConfig.Environment().Image().CPU(),
+		GPU: expConfig.Environment().Image().GPU()}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
