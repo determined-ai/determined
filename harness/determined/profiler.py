@@ -151,7 +151,7 @@ class ProfilerAgent:
     them to the master. You can also collect Timings through the ProfilerAgent with the
     record_timing() method. The timings will be batched and sent to the master.
 
-    Profiling is only active between start_on_batch and end_after_batch. It will also automatically
+    Profiling is only active between begin_on_batch and end_after_batch. It will also automatically
     shut down MAX_COLLECTION_SECONDS after starting. When profiling is not active, no system metrics
     are collected and the record_timing function is a no-op.
 
@@ -179,7 +179,7 @@ class ProfilerAgent:
         profiling_is_enabled: bool,
         global_rank: int,
         local_rank: int,
-        start_on_batch: int,
+        begin_on_batch: int,
         end_after_batch: Optional[int] = None,
         send_batch_fn: SendBatchFnType = api.post_trial_profiler_metrics_batches,
         check_data_exists_fn: CheckDataExistsFnType = profiling_metrics_exist,
@@ -191,7 +191,7 @@ class ProfilerAgent:
         self.profiling_is_enabled_in_experiment_config = profiling_is_enabled
         self.global_rank = global_rank
         self.local_rank = local_rank
-        self.start_on_batch = start_on_batch
+        self.begin_on_batch = begin_on_batch
         self.end_after_batch = end_after_batch
         self.send_batch_fn = send_batch_fn
         self.check_data_already_exists_fn = check_data_exists_fn
@@ -247,7 +247,7 @@ class ProfilerAgent:
 
     @staticmethod
     def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
-        start_on_batch, end_after_batch = env.experiment_config.profiling_interval()
+        begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
         return ProfilerAgent(
             trial_id=env.det_trial_id,
             agent_id=env.det_agent_id,
@@ -255,7 +255,7 @@ class ProfilerAgent:
             profiling_is_enabled=env.experiment_config.profiling_enabled(),
             global_rank=global_rank,
             local_rank=local_rank,
-            start_on_batch=start_on_batch,
+            begin_on_batch=begin_on_batch,
             end_after_batch=end_after_batch,
         )
 
@@ -341,7 +341,7 @@ class ProfilerAgent:
             self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
         # Check if we should start collecting metrics
-        if not self.has_started and self.current_batch_idx >= self.start_on_batch:
+        if not self.has_started and self.current_batch_idx >= self.begin_on_batch:
             self._begin_collection()
 
         # Check if we should stop collecting metrics due to batch idx being exceeded
