@@ -177,7 +177,7 @@ func (t *tensorboardManager) newTensorBoard(
 		),
 	}
 
-	uniqMounts := map[model.BindMount]bool{}
+	uniqMounts := map[string]model.BindMount{}
 	uniqEnvVars := map[string]string{}
 
 	taskID := sproto.NewTaskID()
@@ -200,7 +200,7 @@ func (t *tensorboardManager) newTensorBoard(
 				RawHostPath:      c.HostPath(),
 				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
 			}).(expconf.BindMount)
-			uniqMounts[model.ToModelBindMount(sharedFSMount)] = true
+			uniqMounts[sharedFSMount.RawContainerPath] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
 
 		case expconf.S3Config:
@@ -241,7 +241,7 @@ func (t *tensorboardManager) newTensorBoard(
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
 			for _, mount := range exp.Config.BindMounts() {
-				uniqMounts[model.ToModelBindMount(mount)] = true
+				uniqMounts[mount.RawContainerPath] = model.ToModelBindMount(mount)
 			}
 
 		default:
@@ -318,9 +318,9 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
 		GPU: expConf.Environment().Image().GPU()}
 
-	bindMounts := []model.BindMount{}
+	var bindMounts []model.BindMount
 
-	for uniqMount := range uniqMounts {
+	for _, uniqMount := range uniqMounts {
 		bindMounts = append(bindMounts, uniqMount)
 	}
 
