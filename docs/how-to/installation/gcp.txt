@@ -190,8 +190,8 @@ Optional Arguments:
       -  0
 
    -  -  ``--max-aux-containers-per-agent``
-      -  The maximum number of containers running for agents in the auxiliary
-         resource pool.
+      -  The maximum number of containers running for agents in the
+         auxiliary resource pool.
       -  100
 
    -  -  ``--max-idle-agent-period``
