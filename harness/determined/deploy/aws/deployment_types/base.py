@@ -7,8 +7,8 @@ from termcolor import colored
 import determined
 import determined.deploy
 from determined.common.api import certs
+from determined.deploy import healthcheck
 from determined.deploy.aws import aws, constants
-from determined.deploy.healthcheck import wait_for_master_url
 
 
 class DeterminedDeployment(metaclass=abc.ABCMeta):
@@ -48,7 +48,7 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         if self.parameters[constants.cloudformation.MASTER_TLS_CERT]:
             cert = certs.Cert(noverify=True)
         master_url = self._get_master_url()
-        return wait_for_master_url(master_url, timeout=timeout, cert=cert)
+        return healthcheck.wait_for_master_url(master_url, timeout=timeout, cert=cert)
 
     def consolidate_parameters(self) -> List[Dict[str, Any]]:
         return [

@@ -28,9 +28,9 @@ def clean_auth() -> None:
     clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
     authentication, and that any settings we save during tests are cleaned up afterwards.
     """
-    authentication.TokenStore.delete_token_cache()
+    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
     yield None
-    authentication.TokenStore.delete_token_cache()
+    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
 
 
 @contextlib.contextmanager

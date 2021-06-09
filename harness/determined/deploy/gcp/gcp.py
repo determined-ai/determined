@@ -10,7 +10,7 @@ import googleapiclient.discovery
 from google.auth.exceptions import DefaultCredentialsError
 from termcolor import colored
 
-from determined.deploy.healthcheck import wait_for_master_url
+from determined.deploy import healthcheck
 
 from .preflight import check_quota
 
@@ -318,4 +318,4 @@ def set_gcp_credentials_env(tf_vars: Dict) -> None:
 
 def wait_for_master(configs: Dict, env: Dict, timeout: int = 300) -> None:
     master_url = terraform_output(configs, env, "Web-UI")
-    wait_for_master_url(master_url, timeout)
+    healthcheck.wait_for_master_url(master_url, timeout)

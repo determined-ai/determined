@@ -55,8 +55,8 @@ data:
       {{- end }}
       {{- end }}
 
-    {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-da845fc")._1}}
-    {{- $gpuImage := (split "/" "determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-da845fc")._1 -}}
+    {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-3a452bc")._1}}
+    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-3a452bc")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}

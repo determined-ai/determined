@@ -80,16 +80,11 @@ class CertStore:
             return {}
 
         try:
-            with self.path.open() as f:
-                content = f.read()
-
             try:
-                store = json.loads(content)
+                with self.path.open() as f:
+                    store = json.load(f)
             except json.JSONDecodeError:
                 raise api.errors.CorruptCertificateCacheException()
-
-                if not isinstance(store, dict):
-                    raise api.errors.CorruptCertificateCacheException()
 
             # Store must be a dictionary.
             if not isinstance(store, dict):

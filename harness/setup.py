@@ -29,6 +29,7 @@ setup(
         "yogadl==0.1.4",
         # Common:
         "backoff",
+        "filelock",
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
         "google-cloud-core<1.4.2",

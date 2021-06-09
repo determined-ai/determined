@@ -1,0 +1,12 @@
+:orphan:
+
+**New Features**
+
+-  Trials: Add new support for profiling model code. For PyTorch, you
+   can collect timings and system metrics. For all frameworks collecting
+   system metrics, such as GPU util or memory, is supported. To quickly
+   try it, just set `profiling.enabled = true` in your Experiment
+   Configuration. For a longer introduction to the features, checkout
+   the new :ref:`guide <how-to-profiling>` on how to profile models in
+   Determined or view details on available configurations in the
+   :ref:`reference <experiment-configuration_profiling>`
