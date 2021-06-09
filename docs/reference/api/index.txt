@@ -12,3 +12,4 @@
    trial_context
    lightning_adapter
    experimental
+   client
