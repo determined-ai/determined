@@ -14,6 +14,9 @@ This guide discusses:
 #. Storing additional user-defined metadata in a checkpoint.
 #. Using the Determined CLI to download checkpoints to disk.
 
+For specific on the checkpoint API, see
+:meth:`~determined.experimental.client`.
+
 **********************
  Querying Checkpoints
 **********************
@@ -44,7 +47,6 @@ checkpoint that has the best validation metric.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = client.get_experiment(id).top_checkpoint()
 
 Checkpoints can be sorted by any metric using the ``sort_by`` keyword
@@ -56,7 +58,6 @@ order with respect to the specified metric.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = (
        client.get_experiment(id).top_checkpoint(sort_by="accuracy", smaller_is_better=False)
    )
@@ -73,7 +74,6 @@ of a specified experiment.
 
    from determined.experimental import client
 
-   client.login()
    checkpoints = client.get_experiment(id).top_n_checkpoints(5)
 
 This method also accepts ``sort_by`` and ``smaller_is_better``
@@ -104,7 +104,6 @@ selecting checkpoints.
 
    from determined.experimental import client
 
-   client.login()
    trial = client.get_trial(id)
 
    best_checkpoint = trial.top_checkpoint()
@@ -138,7 +137,6 @@ download location.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint_path = checkpoint.download()
 
@@ -153,7 +151,6 @@ snippet.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = client.get_experiment(id).top_checkpoint()
    model = checkpoint.load()
 
@@ -183,7 +180,6 @@ labels, information related to deployment, etc.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.add_metadata({"environment": "production"})
 
@@ -199,7 +195,6 @@ overwritten.
 
    from determined.experimental import client
 
-   client.login()
    checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.add_metadata({"metrics": {"loss": 0.12}})
    checkpoint.add_metadata({"metrics": {"acc": 0.92}})
@@ -375,9 +370,9 @@ The checkpoint can then be loaded in Python with this code:
 
 .. code:: python
 
-   from determined.experimental.client import Checkpoint
+   from determined.experimental import client
 
-   model = Checkpoint.load_from_path("local_checkpoint")
+   model = client.Checkpoint.load_from_path("local_checkpoint")
 
 ************
  Next Steps
