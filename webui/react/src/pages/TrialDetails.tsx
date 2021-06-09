@@ -137,10 +137,9 @@ const TrialDetailsComp: React.FC = () => {
   const showContModal = useCallback(() => {
     if (experiment?.configRaw && trial) {
       const rawConfig = trialContinueConfig(clone(experiment.configRaw), trial.hparams, trial.id);
-      rawConfig.description = [
-        `Continuation of trial ${trial.id},`,
-        `experiment ${trial.experimentId} (${rawConfig.description || ''})`,
-      ].join(' ');
+      let newDescription = `Continuation of trial ${trial.id}, experiment ${trial.experimentId}`;
+      if (rawConfig.description) newDescription += ` (${rawConfig.description})`;
+      rawConfig.description = newDescription;
       upgradeConfig(rawConfig);
       setContModalConfig(rawConfig);
     }
