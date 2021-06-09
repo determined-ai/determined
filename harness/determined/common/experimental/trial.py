@@ -6,6 +6,11 @@ from determined.common.experimental import checkpoint, session
 
 class TrialReference:
     """
+    .. note::
+
+         The preferred path for Trial Reference APIs is
+         ``determined.experimental.client.get_trial()``.
+
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
     """

@@ -45,6 +45,12 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
+    .. note::
+
+         The preferred path for Model APIs is
+         ``determined.experimental.client.create_model()``
+         and ``determined.experimental.client.get_model()``.
+
     Class representing a model in the model registry. It contains methods for model
     versions and metadata.
 

@@ -44,8 +44,9 @@ def login(
     If you do need to call ``login()``, it must be called before any calling any other functions
     from this module, otherwise it will fail.
 
-    If you have reason to connect to multiple masters, you should use explicit ``Determined()``
-    objects instead.  Each explicit ``Determined()`` object accepts the same parameters as
+    If you have reason to connect to multiple masters, you should use explicit
+    :class:`~determined.experimental.Determined` objects instead.  Each explicit
+    :class:`~determined.experimental.Determined` object accepts the same parameters as
     ``login()``, and offers the same functions as what are offered in this module.
 
     .. note::
@@ -58,11 +59,12 @@ def login(
 
     Arguments:
         master (string, optional): The URL of the Determined master.
-        user (string, optional): The username of the Determined user.
-        password (string, optional): The password associated with the Determined user.
-        cert_path (string, optional):
-        cert_name (string, optional):
-        noverify (boolean, optional):
+            If this argument is not specified, the environment variables
+            DET_MASTER and DET_MASTER_ADDR will be checked for the master URL in that order.
+        user (string, optional): The Determined username used for
+            authentication. (default: ``determined``)
+        password (string, optional): The password associated with the Determined
+            user.
     """
     global _determined
 
@@ -138,7 +140,8 @@ def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
     """
-    Add a model to the model registry.
+    Add a :class:`~determined.experimental.Model` to the model registry. This function
+    returns a :class:`~determined.experimental.Model`.
 
     Arguments:
         name (string): The name of the model. This name must be unique.

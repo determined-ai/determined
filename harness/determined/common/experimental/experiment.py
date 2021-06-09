@@ -51,6 +51,12 @@ class _GetExperimentResponse:
 
 class ExperimentReference:
     """
+    .. note::
+
+        The preferred path for Experiment Reference APIs is
+        ``determined.experimental.client.create_experiment()``
+        and ``determined.experimental.client.get_experiment()``.
+
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
     """
