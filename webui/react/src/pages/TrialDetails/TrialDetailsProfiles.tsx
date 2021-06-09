@@ -1,11 +1,8 @@
-import { Alert } from 'antd';
 import React from 'react';
 
-import Link from 'components/Link';
 import ProfilesEnabled from 'pages/TrialDetails/Profiles/ProfilesEnabled';
 import ProfilesFiltersProvider from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import ProfilesNotEnabled from 'pages/TrialDetails/Profiles/ProfilesNotEnabled';
-import { paths } from 'routes/utils';
 import { ExperimentBase, TrialDetails } from 'types';
 
 export interface Props {
