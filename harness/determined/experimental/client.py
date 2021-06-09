@@ -28,6 +28,7 @@ def _require_singleton(fn: Callable) -> Callable:
 def login(
     master: Optional[str] = None,
     user: Optional[str] = None,
+    password: Optional[str] = None,
     cert_path: Optional[str] = None,
     cert_name: Optional[str] = None,
     noverify: bool = False,
@@ -56,7 +57,7 @@ def login(
             "client.Determined() objects, which each expose the same functions as this module."
         )
 
-    _determined = Determined(master, user, cert_path, cert_name, noverify)
+    _determined = Determined(master, user, password, cert_path, cert_name, noverify)
 
 
 @_require_singleton
