@@ -23,7 +23,7 @@ TENSORBOARD_VERSION_MAJOR=$( echo "$TENSORBOARD_VERSION" | sed " s/[.].*//")
 cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 if [ "$TENSORBOARD_VERSION_MAJOR" == 2 ]; then
-  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard --bind_all "$@"
+  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard --bind_all --logdir_spec "$@"
 else
-  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$@"
+  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard --logdir "$@"
 fi
