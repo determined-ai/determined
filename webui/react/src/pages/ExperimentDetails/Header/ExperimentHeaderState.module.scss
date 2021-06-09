@@ -1,0 +1,30 @@
+.base {
+  align-items: center;
+  border-radius: 100px;
+  display: inline-flex;
+  font-size: var(--theme-sizes-font-micro);
+  font-weight: 600;
+  margin-right: var(--theme-sizes-layout-medium);
+  padding: var(--theme-sizes-layout-tiny);
+  text-transform: uppercase;
+}
+.playButton i {
+  padding-left: 3px;
+}
+.stopButton {
+  border-color: transparent !important;
+}
+.pauseButton:hover,
+.playButton:hover,
+.stopButton:hover {
+  color: inherit !important;
+  opacity: 0.75;
+}
+.pauseButton:hover,
+.playButton:hover {
+  border-color: inherit !important;
+}
+.state {
+  display: inline-block;
+  margin: 0 var(--theme-sizes-layout-tiny);
+}

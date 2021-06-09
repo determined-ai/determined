@@ -384,6 +384,7 @@ export interface TrialDetails extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  description?: string;
   endTime?: string;
   id: number;
   labels: string[];
@@ -400,8 +401,10 @@ export interface ExperimentBase {
   archived: boolean;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
+  description?: string;
   endTime?: string;
   id: number;
+  name: string;
   progress?: number;
   resourcePool: string;
   startTime: string;
