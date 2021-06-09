@@ -1,8 +1,5 @@
 from setuptools import find_packages, setup
 
-packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
-packages += [f"determined._swagger.{pkg}" for pkg in find_packages(where="determined/_swagger")]
-
 setup(
     name="determined",
     version="0.15.6.dev0",
@@ -13,7 +10,7 @@ setup(
     long_description="See https://docs.determined.ai/ for more information.",
     license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
-    packages=packages,
+    packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.6",
     package_data={"determined": ["py.typed"]},
     include_package_data=True,
@@ -29,6 +26,7 @@ setup(
         "yogadl==0.1.4",
         # Common:
         "backoff",
+        "certifi",
         "filelock",
         "google-cloud-storage>=1.20.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
@@ -57,11 +55,6 @@ setup(
         # docker-compose has a requirement not properly propagated with semi-old pip installations;
         # so we expose that requirement here.
         "websocket-client<1",
-        # Swagger-codegen: python requirements
-        "certifi>=2017.4.17",
-        "python-dateutil>=2.1",
-        "six>=1.10",
-        "urllib3>=1.23",
     ],
     extras_require={
         "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],
