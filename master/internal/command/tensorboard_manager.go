@@ -2,7 +2,6 @@ package command
 
 import (
 	"archive/tar"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -271,8 +270,7 @@ func (t *tensorboardManager) newTensorBoard(
 	// Get the most recent experiment config as raw json and add it to the container. This
 	// is used to determine if the experiment is backed by S3.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
-	expConfig, err := t.db.ExperimentConfig(mostRecentExpID)
-	// confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
+	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading experiment config: %d", mostRecentExpID)
 	}
@@ -282,15 +280,14 @@ func (t *tensorboardManager) newTensorBoard(
 			"unable to marshal experiment configuration")
 	}
 
-	expConfigBytes, err := json.Marshal(expConfig)
-
+	expConf, err := expconf.ParseAnyExperimentConfigYAML(confBytes)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError,
-			"unable to marshal experiment configuration")
+		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
 	}
+	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
 	additionalFiles = append(additionalFiles,
-		params.AgentUserGroup.OwnedArchiveItem(expConfPath, expConfigBytes, 0700, tar.TypeReg))
+		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
 
 	// Multiple experiments may have different s3 credentials. We sort the
@@ -319,8 +316,8 @@ func (t *tensorboardManager) newTensorBoard(
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
-	config.Environment.Image = model.RuntimeItem{CPU: expConfig.Environment().Image().CPU(),
-		GPU: expConfig.Environment().Image().GPU()}
+	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
+		GPU: expConf.Environment().Image().GPU()}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
