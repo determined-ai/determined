@@ -24,6 +24,9 @@ class CheckpointState(enum.Enum):
 
 class Checkpoint(object):
     """
+    A Checkpoint object is usually obtained from
+    ``determined.experimental.client.get_checkpoint()``.
+
     A ``Checkpoint`` represents a trained model.
 
     This class provides helper functionality for downloading checkpoints to

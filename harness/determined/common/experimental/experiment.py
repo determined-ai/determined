@@ -51,6 +51,10 @@ class _GetExperimentResponse:
 
 class ExperimentReference:
     """
+    An ExperimentReference object is usually obtained from
+    ``determined.experimental.client.create_experiment()``
+    or ``determined.experimental.client.get_experiment()``.
+
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
     """

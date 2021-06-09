@@ -45,6 +45,10 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
+    A Model object is usually obtained from
+    ``determined.experimental.client.create_model()``
+    or ``determined.experimental.client.get_model()``.
+
     Class representing a model in the model registry. It contains methods for model
     versions and metadata.
 
