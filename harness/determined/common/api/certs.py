@@ -183,23 +183,44 @@ def default_load(
     Having all of the default loading logic in one function makes it easy to invoke the same logic
     in both the cli and the python sdk.
     """
-    # Any explicit args causes us to ignore environment variables and defaults.
-    if explicit_path or explicit_cert_name or explicit_noverify:
-        if explicit_path:
-            with open(explicit_path, "r") as f:
-                cert_pem = f.read()  # type: Optional[str]
-        else:
-            cert_pem = None
-        return Cert(cert_pem=cert_pem, noverify=explicit_noverify, name=explicit_cert_name)
 
-    # Let any environment variable for CERT_FILE override the default store.
+    # Explicit noverify is the easiest case to handle.
+    if explicit_noverify:
+        return Cert(noverify=True)
+
+    # Next handle the environment-based noverify case.
     env_path = os.environ.get("DET_MASTER_CERT_FILE")
-    noverify = False
-    cert_pem = None
-    if env_path:
-        if env_path.lower() == "noverify":
-            noverify = True
-        elif os.path.exists(env_path):
+    if env_path and env_path.lower() == "noverify":
+        # We will ignore other explicit args, but we won't do it silently, because that would be a
+        # security issue.
+        if explicit_path:
+            logging.warning(
+                f"ignoring explicitly configured certificate path {explicit_path} due to "
+                f"DET_MASTER_CERT_FILE={env_path} environment variable."
+            )
+        if explicit_cert_name:
+            logging.warning(
+                f"ignoring explicitly configured certificate name {explicit_cert_name} due to "
+                f"DET_MASTER_CERT_FILE={env_path} environment variable."
+            )
+        return Cert(noverify=True)
+
+    cert_name = None  # type: Optional[str]
+    if explicit_cert_name:
+        # Certificate name from explicit args.
+        cert_name = explicit_cert_name
+    else:
+        # Certificate name from environment (or None)
+        cert_name = os.environ.get("DET_MASTER_CERT_NAME")
+
+    cert_pem = None  # type: Optional[str]
+    if explicit_path:
+        # Certificate contents from explicit args.
+        with open(explicit_path, "r") as f:
+            cert_pem = f.read()
+    elif env_path:
+        # Certificate contents from environment.
+        if os.path.exists(env_path):
             with open(env_path, "r") as f:
                 cert_pem = f.read()
         else:
@@ -207,15 +228,11 @@ def default_load(
                 f"DET_MASTER_CERT_FILE={env_path} path not found; continuing without cert"
             )
     else:
-        # Otherwise, look in the default location for cert_pem.
+        # Certificate contents from default certificate store.
         store_path = default_store()
         cert_store = CertStore(path=store_path)
         old_path = util.get_config_path().joinpath("master.crt")
         maybe_shim_old_cert_store(old_path, store_path, master_url)
         cert_pem = cert_store.get_cert(master_url)
 
-    env_name = os.environ.get("DET_MASTER_CERT_NAME")
-    if env_name == "":
-        env_name = None
-
-    return Cert(cert_pem=cert_pem, noverify=noverify, name=env_name)
+    return Cert(cert_pem=cert_pem, name=cert_name)
