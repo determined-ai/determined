@@ -6,6 +6,7 @@ import sys
 
 import determined as det
 from determined import ipc, layers, load
+from determined.common.api import certs
 
 
 def config_logging(worker_process_env: layers.WorkerProcessContext) -> None:
@@ -30,6 +31,13 @@ def main() -> None:
 
     # API code expects credential to be available as an environment variable
     os.environ["DET_TASK_TOKEN"] = worker_process_env.env.det_task_token
+
+    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    master_url = (
+        f"http{'s' if worker_process_env.env.use_tls else ''}://"
+        f"{worker_process_env.env.master_addr}:{worker_process_env.env.master_port}"
+    )
+    certs.cli_cert = certs.default_load(master_url=master_url)
 
     if worker_process_env.env.experiment_config.debug_enabled():
         faulthandler.dump_traceback_later(30, repeat=True)

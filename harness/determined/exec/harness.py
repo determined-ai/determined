@@ -172,7 +172,7 @@ def main() -> None:
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(
-        master_url="http{'s' if use_tls else ''}://{master_addr}:{master_port}"
+        master_url=f"http{'s' if use_tls else ''}://{master_addr}:{master_port}"
     )
 
     with open(os.environ["DET_LATEST_CHECKPOINT"], "r") as f:
