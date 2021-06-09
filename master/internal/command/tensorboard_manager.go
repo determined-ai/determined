@@ -402,16 +402,6 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	return configs, nil
 }
 
-func getMounts(m map[expconf.BindMount]bool) []model.BindMount {
-	var bindMounts []model.BindMount
-
-	for mount := range m {
-		bindMounts = append(bindMounts, model.ToModelBindMount(mount))
-	}
-
-	return bindMounts
-}
-
 func getEnvVars(m map[string]string) []string {
 	var envVars []string
 
