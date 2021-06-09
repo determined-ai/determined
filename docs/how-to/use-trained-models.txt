@@ -14,8 +14,8 @@ This guide discusses:
 #. Storing additional user-defined metadata in a checkpoint.
 #. Using the Determined CLI to download checkpoints to disk.
 
-The Checkpoint Export API is a subset of the features found in
-:meth:`~determined.experimental.client`.
+The Checkpoint Export API is a subset of the features found in the
+:mod:`~determined.experimental.client` module.
 
 **********************
  Querying Checkpoints
