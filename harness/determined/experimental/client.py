@@ -47,6 +47,14 @@ def login(
     If you have reason to connect to multiple masters, you should use explicit Determined() objects
     instead.  Each explicit Determined() object accepts the same parameters as login(), and offers
     the same functions as what are offered in this module.
+
+    .. note::
+
+       Try to avoid having your password in your python code.  If you are running on your local
+       machine, you should always be able to use ``det user login`` on the CLI, and login()
+       will not need either a user or a password.  If you have ran ``det user login`` with multiple
+       users (and you have not ran ``det user logout``), then you should be able to run
+       ``login(user=...)`` for any of those users without putting your password in your code.
     """
     global _determined
 
