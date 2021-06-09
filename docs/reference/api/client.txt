@@ -1,8 +1,11 @@
 .. _client:
 
-####################
- determined.client
-####################
+################################
+ determined.experimental.client
+################################
+
+..
+   automodule: determined.experimental.client
 
 ***********
  ``Login``
@@ -17,6 +20,7 @@
 ***********************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: create_experiment
    :member-order: bysource
 
@@ -25,6 +29,7 @@
 ********************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: get_experiment
    :member-order: bysource
 
@@ -33,6 +38,7 @@
 ***************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: get_trial
    :member-order: bysource
 
@@ -41,14 +47,16 @@
 ********************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: get_checkpoint
    :member-order: bysource
 
-********************
+******************
  ``Create Model``
-********************
+******************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: create_model
    :member-order: bysource
 
@@ -57,6 +65,7 @@
 ***************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: get_model
    :member-order: bysource
 
@@ -65,5 +74,6 @@
 ****************
 
 .. automodule:: determined.experimental.client
+   :noindex:
    :members: get_models
    :member-order: bysource
