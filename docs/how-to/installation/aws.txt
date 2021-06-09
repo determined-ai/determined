@@ -158,8 +158,8 @@ Spinning up the Cluster
 
    -  -  ``--aux-agent-instance-type``
 
-      -  AWS instance type to use for the agents in the auxiliary resource
-         pool. Must be one of the following instance types:
+      -  AWS instance type to use for the agents in the auxiliary
+         resource pool. Must be one of the following instance types:
          ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
          ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
          ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
@@ -172,14 +172,15 @@ Spinning up the Cluster
    -  -  ``--compute-agent-instance-type``
 
       -  AWS instance type to use for the agents in the compute resource
-         pool. For GPU-based training, must be one of the following instance types:
-         ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
-         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
-         ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
-         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
-         ``p3dn.24xlarge``.
-         For CPU-based training or testing, any general purpose instance type may be used
-         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants)
+         pool. For GPU-based training, must be one of the following
+         instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
+         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
+         ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
+         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
+         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For
+         CPU-based training or testing, any general purpose instance
+         type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``,
+         ``m5`` and variants)
 
       -  p2.8xlarge
 
@@ -197,8 +198,8 @@ Spinning up the Cluster
       -  postgres
 
    -  -  ``--max-aux-containers-per-agent``
-      -  The maximum number of containers to launch on each
-         agent in the default auxiliary :ref:`resource pool <resource-pools>`.
+      -  The maximum number of containers to launch on each agent in the
+         default auxiliary :ref:`resource pool <resource-pools>`.
       -  100
 
    -  -  ``--max-idle-agent-period``

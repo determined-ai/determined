@@ -71,7 +71,7 @@ func newGCPCluster(
 		}
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
-	agentForceGPUs := config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlots
+	agentForceGPUs := config.GCP.InstanceType.Slots() > 0 || !config.GCP.CPUSlots
 
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
