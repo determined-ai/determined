@@ -375,6 +375,6 @@ The checkpoint can then be loaded in Python with this code:
  Next Steps
 ************
 
--  :ref:`experimental`: The reference documentation for this API.
+-  :ref:`client`: The reference documentation for this API.
 -  :ref:`exporting-checkpoints`
 -  :ref:`organizing-models`

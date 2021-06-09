@@ -77,3 +77,66 @@
    :noindex:
    :members: get_models
    :member-order: bysource
+
+****************
+ ``Checkpoint``
+****************
+
+.. autoclass:: determined.experimental.Checkpoint
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+****************
+ ``Determined``
+****************
+
+.. autoclass:: determined.experimental.Determined
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+*************************
+ ``ExperimentReference``
+*************************
+
+.. autoclass:: determined.experimental.ExperimentReference
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+***********
+ ``Model``
+***********
+
+.. autoclass:: determined.experimental.Model
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+******************
+ ``ModelOrderBy``
+******************
+
+.. autoclass:: determined.experimental.ModelOrderBy
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+*****************
+ ``ModelSortBy``
+*****************
+
+.. autoclass:: determined.experimental.ModelSortBy
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+********************
+ ``TrialReference``
+********************
+
+.. autoclass:: determined.experimental.TrialReference
+   :members:
+   :inherited-members:
+   :member-order: bysource
