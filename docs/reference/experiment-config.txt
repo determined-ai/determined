@@ -1035,7 +1035,7 @@ walkthrough.
       Defines whether profiles should be collected or not. Defaults to
       false.
 
-   ``start_on_batch``
+   ``begin_on_batch``
       Specifies the batch on which profiling should begin.
 
    ``end_after_batch``
