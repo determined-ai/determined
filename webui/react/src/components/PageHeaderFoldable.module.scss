@@ -33,9 +33,36 @@
     margin-left: var(--theme-sizes-layout-medium);
   }
 }
-.optionsMainButton {
-  display: none;
+.optionsDropdown {
+  border-color: transparent !important;
+  color: var(--theme-colors-monochrome-17);
+  opacity: 0.9;
 
+  &:focus,
+  &:hover {
+    color: var(--theme-colors-monochrome-17) !important;
+    opacity: 1;
+  }
+}
+.optionsMainButton {
+  color: var(--theme-colors-monochrome-0) !important;
+  display: none;
+  opacity: 0.9;
+
+  &:focus,
+  &:hover {
+    border-color: var(--theme-colors-monochrome-17) !important;
+    color: var(--theme-colors-monochrome-0) !important;
+    opacity: 1;
+  }
+  &:global(.ant-btn-background-ghost) {
+    color: var(--theme-colors-monochrome-17) !important;
+
+    &:focus,
+    &:hover {
+      color: var(--theme-colors-monochrome-17) !important;
+    }
+  }
   i {
     margin-right: var(--theme-sizes-layout-small);
   }
