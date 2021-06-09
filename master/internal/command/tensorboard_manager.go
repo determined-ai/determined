@@ -289,7 +289,6 @@ func (t *tensorboardManager) newTensorBoard(
 	additionalFiles = append(additionalFiles,
 		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
-
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
 	// environment variables by key name. This gives the behavior of selecting
