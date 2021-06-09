@@ -4,75 +4,12 @@
  determined.experimental.client
 ################################
 
-***********
- ``Login``
-***********
+************
+ ``Client``
+************
 
 .. automodule:: determined.experimental.client
-   :members: login
-   :member-order: bysource
-
-***********************
- ``Create Experiment``
-***********************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: create_experiment
-   :member-order: bysource
-
-********************
- ``Get Experiment``
-********************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: get_experiment
-   :member-order: bysource
-
-***************
- ``Get Trial``
-***************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: get_trial
-   :member-order: bysource
-
-********************
- ``Get Checkpoint``
-********************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: get_checkpoint
-   :member-order: bysource
-
-******************
- ``Create Model``
-******************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: create_model
-   :member-order: bysource
-
-***************
- ``Get Model``
-***************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: get_model
-   :member-order: bysource
-
-****************
- ``Get Models``
-****************
-
-.. automodule:: determined.experimental.client
-   :noindex:
-   :members: get_models
+   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models
    :member-order: bysource
 
 ****************

@@ -45,7 +45,7 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    A Model object is usually used in conjunction with
+    A Model object is usually obtained from
     ``determined.experimental.client.create_model()``
     or ``determined.experimental.client.get_model()``.
 

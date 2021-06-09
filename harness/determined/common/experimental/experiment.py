@@ -51,7 +51,7 @@ class _GetExperimentResponse:
 
 class ExperimentReference:
     """
-    An ExperimentReference object is usually used in conjunction with
+    An ExperimentReference object is usually obtained from
     ``determined.experimental.client.create_experiment()``
     or ``determined.experimental.client.get_experiment()``.
 
