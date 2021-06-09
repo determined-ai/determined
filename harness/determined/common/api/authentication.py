@@ -75,16 +75,16 @@ class Authentication:
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
 
-        password = None
-        if session_user == constants.DEFAULT_DETERMINED_USER:
+        if password is None and session_user == constants.DEFAULT_DETERMINED_USER:
             password = constants.DEFAULT_DETERMINED_PASSWORD
         elif session_user is None:
             session_user = input("Username: ")
 
         if password is None:
-            password = api.salt_and_hash(
-                getpass.getpass("Password for user '{}': ".format(session_user))
-            )
+            password = getpass.getpass("Password for user '{}': ".format(session_user))
+
+        if password:
+            password = api.salt_and_hash(password)
 
         token = do_login(self.master_address, session_user, password, cert)
         self.token_store.set_token(session_user, token)
