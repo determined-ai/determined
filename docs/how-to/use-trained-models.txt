@@ -42,9 +42,10 @@ checkpoint that has the best validation metric.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoint = get_experiment(id).top_checkpoint()
+   client.login()
+   checkpoint = client.get_experiment(id).top_checkpoint()
 
 Checkpoints can be sorted by any metric using the ``sort_by`` keyword
 argument, which defines which metric to use, and ``smaller_is_better``,
@@ -53,10 +54,11 @@ order with respect to the specified metric.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
+   client.login()
    checkpoint = (
-       get_experiment(id).top_checkpoint(sort_by="accuracy", smaller_is_better=False)
+       client.get_experiment(id).top_checkpoint(sort_by="accuracy", smaller_is_better=False)
    )
 
 You may also query multiple checkpoints at the same time using the
@@ -69,9 +71,10 @@ of a specified experiment.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoints = get_experiment(id).top_n_checkpoints(5)
+   client.login()
+   checkpoints = client.get_experiment(id).top_n_checkpoints(5)
 
 This method also accepts ``sort_by`` and ``smaller_is_better``
 arguments.
@@ -99,9 +102,10 @@ selecting checkpoints.
 
 .. code:: python
 
-   from determined.experimental.client import get_trial, get_checkpoint
+   from determined.experimental import client
 
-   trial = get_trial(id)
+   client.login()
+   trial = client.get_trial(id)
 
    best_checkpoint = trial.top_checkpoint()
 
@@ -111,7 +115,7 @@ selecting checkpoints.
 
    most_recent_checkpoint = trial.select_checkpoint(latest=True)
 
-   specific_checkpoint = get_checkpoint(uuid="uuid-for-checkpoint")
+   specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
 ****************************
  Using the Checkpoint Class
@@ -132,9 +136,10 @@ download location.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoint = get_experiment(id).top_checkpoint()
+   client.login()
+   checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint_path = checkpoint.download()
 
    specific_path = checkpoint.download(path="specific-checkpoint-path")
@@ -146,9 +151,10 @@ snippet.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoint = Determined().get_experiment(id).top_checkpoint()
+   client.login()
+   checkpoint = client.get_experiment(id).top_checkpoint()
    model = checkpoint.load()
 
 TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5``
@@ -175,9 +181,10 @@ labels, information related to deployment, etc.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoint = get_experiment(id).top_checkpoint()
+   client.login()
+   checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.add_metadata({"environment": "production"})
 
    # Metadata will be stored in Determined and accessible on the checkpoint object.
@@ -190,9 +197,10 @@ overwritten.
 
 .. code:: python
 
-   from determined.experimental.client import get_experiment
+   from determined.experimental import client
 
-   checkpoint = Determined().get_experiment(id).top_checkpoint()
+   client.login()
+   checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.add_metadata({"metrics": {"loss": 0.12}})
    checkpoint.add_metadata({"metrics": {"acc": 0.92}})
 
@@ -205,9 +213,9 @@ beneath the keys passed will be deleted.
 
 .. code:: python
 
-   from determined.experimental import get_experiment
+   from determined.experimental import client
 
-   checkpoint = get_experiment(id).top_checkpoint()
+   checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.remove_metadata(["metrics"])
 
 **********************************

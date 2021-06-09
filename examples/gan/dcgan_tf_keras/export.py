@@ -6,7 +6,7 @@ import argparse
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from determined.experimental.client import get_experiment
+from determined.experimental import client
 
 
 def generate_and_plot_images(generator: tf.keras.Sequential, noise_dim: int) -> None:
@@ -24,8 +24,8 @@ def generate_and_plot_images(generator: tf.keras.Sequential, noise_dim: int) -> 
     plt.show()
 
 
-def export_model(experiment_id: int, master_url: str) -> tf.keras.Model:
-    checkpoint = get_experiment(experiment_id).top_checkpoint()
+def export_model(experiment_id: int) -> tf.keras.Model:
+    checkpoint = client.get_experiment(experiment_id).top_checkpoint()
     model = checkpoint.load()
     return model
 
@@ -46,7 +46,8 @@ def main():
     )
     args = parser.parse_args()
 
-    model = export_model(args.experiment_id, args.master_url)
+    client.login(args.master_url)
+    model = export_model(args.experiment_id)
     generate_and_plot_images(model.generator, args.noise_dim)
 
 

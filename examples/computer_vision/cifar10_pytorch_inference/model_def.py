@@ -85,15 +85,17 @@ class CIFARTrial(PyTorchTrial):
         # TODO: Load your trained model. Below are example approaches.
 
         ### Load a checkpoint from the Determined model registry
-        # from determined.experimental.client import get_model
-        # self.model = get_model("mymodel")
+        # from determined.experimental import client
+        # client.login()
+        # self.model = client.get_model("mymodel")
         # ckpt_path = self.model.get_version().download()
         # ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
         # model.load_state_dict(ckpt['models_state_dict'][0])
 
         ### Load a checkpoint from a previous experiment
-        # from determined.experimental.client import get_experiment
-        # checkpoint = get_experiment(id).top_checkpoint()
+        # from determined.experimental import client
+        # client.login()
+        # checkpoint = client.get_experiment(id).top_checkpoint()
         # model = checkpoint.load()
 
         ### Load a model that was not trained by Determined
