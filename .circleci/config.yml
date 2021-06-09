@@ -473,10 +473,11 @@ commands:
       region:
         type: string
     steps:
-      - helm/delete-helm-release:
-          helm-version: v3.2.4
-          release-name: ci
-      # Use a run instead of `gke/delete-cluster` because circle CI orbs do not support `when`.
+      # Use a run instead of `gke/helm` orbs because circle CI orbs do not support `when`.
+      - run:
+          name: Delete Helm release
+          when: always
+          command: helm delete ci
       - run:
           name: Terminate GKE Cluster
           when: always
