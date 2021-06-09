@@ -79,6 +79,36 @@ func TestGrid(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
+func TestNestedGrid(t *testing.T) {
+	iParam1 := &expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.IntPtr(3)}
+	iParam2 := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.IntPtr(3)}
+	hparams := expconf.Hyperparameters{
+		"1": expconf.Hyperparameter{RawIntHyperparameter: iParam1},
+		"2": expconf.Hyperparameter{
+			RawNestedHyperparameter: &map[string]expconf.Hyperparameter{
+				"3": {RawIntHyperparameter: iParam2},
+			},
+		},
+	}
+	actual := newHyperparameterGrid(hparams)
+	flatSamples := []hparamSample{
+		{"1": 0, "2": map[string]interface{}{"3": 0}},
+		{"1": 0, "2": map[string]interface{}{"3": 5}},
+		{"1": 0, "2": map[string]interface{}{"3": 10}},
+		{"1": 10, "2": map[string]interface{}{"3": 0}},
+		{"1": 10, "2": map[string]interface{}{"3": 5}},
+		{"1": 10, "2": map[string]interface{}{"3": 10}},
+		{"1": 20, "2": map[string]interface{}{"3": 0}},
+		{"1": 20, "2": map[string]interface{}{"3": 5}},
+		{"1": 20, "2": map[string]interface{}{"3": 10}},
+	}
+	var expected []hparamSample
+	for _, sample := range flatSamples {
+		expected = append(expected, unflattenSample(sample))
+	}
+	assert.DeepEqual(t, actual, expected)
+}
+
 func TestGridIntCount(t *testing.T) {
 	hparams := expconf.Hyperparameters{
 		"1": expconf.Hyperparameter{

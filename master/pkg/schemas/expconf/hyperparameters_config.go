@@ -14,6 +14,31 @@ const GlobalBatchSize = "global_batch_size"
 // HyperparametersV0 is a versioned hyperparameters config.
 type HyperparametersV0 map[string]HyperparameterV0
 
+// FlattenHPs returns a flat dictionary with keys representing nested structure.
+// For example, {"optimizer": {"learning_rate": 0.01}} will be flattened to
+// {"optimizer.learning_rate": 0.01}.
+func FlattenHPs(h HyperparametersV0) HyperparametersV0 {
+	flatHPs := make(HyperparametersV0)
+	for key, val := range h {
+		if val.RawNestedHyperparameter != nil {
+			flattenNestedHP(val, key+".", &flatHPs)
+		} else {
+			flatHPs[key] = val
+		}
+	}
+	return flatHPs
+}
+
+func flattenNestedHP(h HyperparameterV0, prefix string, target *HyperparametersV0) {
+	for key, val := range *h.RawNestedHyperparameter {
+		if val.RawNestedHyperparameter != nil {
+			flattenNestedHP(val, prefix+key+".", target)
+		} else {
+			(*target)[prefix+key] = val
+		}
+	}
+}
+
 //go:generate ../gen.sh
 // HyperparameterV0 is a sum type for hyperparameters.
 type HyperparameterV0 struct {
@@ -22,6 +47,7 @@ type HyperparameterV0 struct {
 	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
 	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
+	RawNestedHyperparameter      *map[string]HyperparameterV0 `union:"type,object" json:"-"`
 }
 
 // Merge prevents recursive merging of hyperparameters.
@@ -37,14 +63,62 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if _, ok := parsed.(map[string]interface{}); ok {
+		parsedMap := parsed.(map[string]interface{})
+		hpType, hasType := parsedMap["type"]
+		if (hasType && hpType.(string) == "object") || !hasType {
+			nestedHPs := make(map[string]HyperparameterV0)
+			if hasType {
+				delete(parsedMap, "type")
+			}
+			for key := range parsedMap {
+				bytes, _ := json.Marshal(parsedMap[key])
+				var hp HyperparameterV0
+				err := json.Unmarshal(bytes, &hp)
+				if err != nil {
+					return err
+				}
+				nestedHPs[key] = hp
+			}
+			h.RawNestedHyperparameter = &nestedHPs
+			return nil
+		}
 		return union.Unmarshal(data, h)
 	}
 	h.RawConstHyperparameter = &ConstHyperparameterV0{RawVal: parsed}
 	return nil
 }
 
+func hpsToMap(hps HyperparameterV0) (map[string]interface{}, error) {
+	output := make(map[string]interface{})
+	var err error
+	for key, hp := range *hps.RawNestedHyperparameter {
+		if hp.RawNestedHyperparameter != nil {
+			output[key], err = hpsToMap(hp)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			hpBytes, _ := hp.MarshalJSON()
+			var unionHP map[string]interface{}
+			err = json.Unmarshal(hpBytes, &unionHP)
+			if err != nil {
+				return nil, err
+			}
+			output[key] = unionHP
+		}
+	}
+	return output, nil
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (h HyperparameterV0) MarshalJSON() ([]byte, error) {
+	if h.RawNestedHyperparameter != nil {
+		hps, err := hpsToMap(h)
+		if err != nil {
+			return []byte("null"), err
+		}
+		return json.Marshal(hps)
+	}
 	return union.MarshalEx(h, true)
 }
 

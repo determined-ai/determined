@@ -212,6 +212,15 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 				RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6},
 			},
 		},
+		"nested": expconf.Hyperparameter{
+			RawNestedHyperparameter: &map[string]expconf.Hyperparameter{
+				"hp1": {
+					RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
+						RawVals: []interface{}{0, 1, 2, 3, 4, 5, 6},
+					},
+				},
+			},
+		},
 		"const": expconf.Hyperparameter{
 			RawConstHyperparameter: &expconf.ConstHyperparameter{
 				RawVal: "val",
@@ -234,7 +243,10 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		},
 	}
 	sample := hparamSample{
-		"cat":    3,
+		"cat": 3,
+		"nested": map[string]int{
+			"hp1": 0,
+		},
 		"const":  "val",
 		"double": 50.,
 		"int":    50,
@@ -284,6 +296,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		// Check that only the numerical hyperparameters have changed.
 		assert.Equal(t, sample["cat"], newSample["cat"])
 		assert.Equal(t, sample["const"], newSample["const"])
+		assert.DeepEqual(t, sample["nested"], newSample["nested"])
 		assert.Assert(t, sample["double"] != newSample["double"])
 		assert.Assert(t, sample["int"] != newSample["int"])
 		assert.Assert(t, sample["log"] != newSample["log"])

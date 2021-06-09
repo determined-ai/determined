@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -105,14 +106,54 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 	return ops, nil
 }
 
+func getHyperparameterInfo(
+	hp expconf.Hyperparameter,
+	prefix string,
+	hpName string,
+	names *[]string,
+	values *[][]interface{},
+) {
+	if hp.RawNestedHyperparameter != nil {
+		for key, val := range *hp.RawNestedHyperparameter {
+			getHyperparameterInfo(val, prefix+hpName+"..", key, names, values)
+		}
+	} else {
+		*names = append(*names, prefix+hpName)
+		*values = append(*values, grid(hp))
+	}
+}
+
+func unflattenSample(h hparamSample) hparamSample {
+	result := make(hparamSample)
+	for key, element := range h {
+		nesting := strings.Split(key, "..")
+		hPointer := result
+		if len(nesting) > 1 {
+			for i := 0; i < len(nesting)-1; i++ {
+				k := nesting[i]
+				if _, ok := hPointer[k]; !ok {
+					hPointer[k] = make(map[string]interface{})
+				}
+				hPointer = hPointer[k].(map[string]interface{})
+			}
+		}
+		hPointer[nesting[len(nesting)-1]] = element
+	}
+	return result
+}
+
 func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}
-	params.Each(func(name string, param expconf.Hyperparameter) {
-		names = append(names, name)
-		values = append(values, grid(param))
-	})
-	return cartesianProduct(names, values)
+	for key, val := range params {
+		getHyperparameterInfo(val, "", key, &names, &values)
+	}
+	flatSamples := cartesianProduct(names, values)
+	var samples []hparamSample
+	for _, sample := range flatSamples {
+		samples = append(samples, unflattenSample(sample))
+	}
+	return samples
 }
 
 func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample {
