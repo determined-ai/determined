@@ -1,17 +1,22 @@
-.. _experimental:
+.. _client:
 
-#########################
- determined.experimental
-#########################
+################################
+ determined.experimental.client
+################################
 
-.. automodule:: determined.experimental
-   :members: create
+************
+ ``Client``
+************
+
+.. automodule:: determined.experimental.client
+   :members: login, create_experiment, get_experiment, get_trial, get_checkpoint, create_model, get_model, get_models
+   :member-order: bysource
 
 ****************
  ``Checkpoint``
 ****************
 
-.. autoclass:: determined.experimental.Checkpoint
+.. autoclass:: determined.experimental.client.Checkpoint
    :members:
    :inherited-members:
    :member-order: bysource
@@ -20,7 +25,7 @@
  ``Determined``
 ****************
 
-.. autoclass:: determined.experimental.Determined
+.. autoclass:: determined.experimental.client.Determined
    :members:
    :inherited-members:
    :member-order: bysource
@@ -29,7 +34,7 @@
  ``ExperimentReference``
 *************************
 
-.. autoclass:: determined.experimental.ExperimentReference
+.. autoclass:: determined.experimental.client.ExperimentReference
    :members:
    :inherited-members:
    :member-order: bysource
@@ -38,7 +43,7 @@
  ``Model``
 ***********
 
-.. autoclass:: determined.experimental.Model
+.. autoclass:: determined.experimental.client.Model
    :members:
    :inherited-members:
    :member-order: bysource
@@ -47,7 +52,7 @@
  ``ModelOrderBy``
 ******************
 
-.. autoclass:: determined.experimental.ModelOrderBy
+.. autoclass:: determined.experimental.client.ModelOrderBy
    :members:
    :inherited-members:
    :member-order: bysource
@@ -56,7 +61,7 @@
  ``ModelSortBy``
 *****************
 
-.. autoclass:: determined.experimental.ModelSortBy
+.. autoclass:: determined.experimental.client.ModelSortBy
    :members:
    :inherited-members:
    :member-order: bysource
@@ -65,7 +70,7 @@
  ``TrialReference``
 ********************
 
-.. autoclass:: determined.experimental.TrialReference
+.. autoclass:: determined.experimental.client.TrialReference
    :members:
    :inherited-members:
    :member-order: bysource

@@ -6,6 +6,9 @@ from determined.common.experimental import checkpoint, session
 
 class TrialReference:
     """
+    A TrialReference object is usually obtained from
+    ``determined.experimental.client.get_trial()``.
+
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
     """

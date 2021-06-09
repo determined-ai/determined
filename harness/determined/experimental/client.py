@@ -34,27 +34,43 @@ def login(
     noverify: bool = False,
 ) -> None:
     """
-    login will configure the default Determined() singleton used by all of the other functions in
-    the client module.
+    ``login()`` will configure the default Determined() singleton used by all of the other functions
+    in the client module.
 
-    It is often unnecessary to call login().  If you have configured your environment so that
+    It is often unnecessary to call ``login()``.  If you have configured your environment so that
     the Determined CLI works without any extra arguments or environment variables, you should not
-    have to call login at all.
+    have to call ``login()`` at all.
 
-    If you do need to call login(), it must be called before any calling any other functions from
-    this module, otherwise it will fail.
+    If you do need to call ``login()``, it must be called before any calling any other functions
+    from this module, otherwise it will fail.
 
-    If you have reason to connect to multiple masters, you should use explicit Determined() objects
-    instead.  Each explicit Determined() object accepts the same parameters as login(), and offers
-    the same functions as what are offered in this module.
+    If you have reason to connect to multiple masters, you should use explicit
+    :class:`~determined.experimental.client.Determined` objects instead.  Each explicit
+    :class:`~determined.experimental.client.Determined` object accepts the same parameters as
+    ``login()``, and offers the same functions as what are offered in this module.
 
     .. note::
 
        Try to avoid having your password in your python code.  If you are running on your local
-       machine, you should always be able to use ``det user login`` on the CLI, and login()
+       machine, you should always be able to use ``det user login`` on the CLI, and ``login()``
        will not need either a user or a password.  If you have ran ``det user login`` with multiple
        users (and you have not ran ``det user logout``), then you should be able to run
        ``login(user=...)`` for any of those users without putting your password in your code.
+
+    Arguments:
+        master (string, optional): The URL of the Determined master.
+            If this argument is not specified, the environment variables
+            DET_MASTER and DET_MASTER_ADDR will be checked for the master URL in that order.
+        user (string, optional): The Determined username used for
+            authentication. (default: ``determined``)
+        password (string, optional): The password associated with the user.
+        cert_path (string, optional): A path to a custom PEM-encoded certificate,
+            against which to validate the master.  (default: ``None``)
+        cert_name (string, optional): The name of the master hostname to use during certificate
+            validation. Normally this is taken from the master URL, but there may be cases where
+            the master is exposed on multiple networks that this value might need to be
+            overridden. (default: ``None``)
+        noverify (boolean, optional): disable all TLS verification entirely.  (default: ``False``)
     """
     global _determined
 
@@ -74,13 +90,13 @@ def create_experiment(
     model_dir: str,
 ) -> ExperimentReference:
     """
-    Create an experiment with config parameters and model directory. The function
-    returns :class:`~determined.experimental.ExperimentReference` of the experiment.
+    Creates an experiment with config parameters and model directory. The function
+    returns an :class:`~determined.experimental.client.ExperimentReference` of the experiment.
 
     Arguments:
-        config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
+        config (string, pathlib.Path, dictionary): Experiment config filename (.yaml)
             or a dict.
-        model_dir(string): directory containing model definition.
+        model_dir (string): Directory containing model definition.
     """
     assert _determined is not None
     return _determined.create_experiment(config, model_dir)
@@ -89,8 +105,11 @@ def create_experiment(
 @_require_singleton
 def get_experiment(experiment_id: int) -> ExperimentReference:
     """
-    Get the :class:`~determined.experimental.ExperimentReference` representing the
+    Get the :class:`~determined.experimental.client.ExperimentReference` representing the
     experiment with the provided experiment ID.
+
+    Arguments:
+        experiment_id (int): The experiment ID.
     """
     assert _determined is not None
     return _determined.get_experiment(experiment_id)
@@ -99,8 +118,11 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
 @_require_singleton
 def get_trial(trial_id: int) -> TrialReference:
     """
-    Get the :class:`~determined.experimental.TrialReference` representing the
+    Get the :class:`~determined.experimental.client.TrialReference` representing the
     trial with the provided trial ID.
+
+    Arguments:
+        trial_id (int): The trial ID.
     """
     assert _determined is not None
     return _determined.get_trial(trial_id)
@@ -109,8 +131,11 @@ def get_trial(trial_id: int) -> TrialReference:
 @_require_singleton
 def get_checkpoint(uuid: str) -> Checkpoint:
     """
-    Get the :class:`~determined.experimental.Checkpoint` representing the
+    Get the :class:`~determined.experimental.client.Checkpoint` representing the
     checkpoint with the provided UUID.
+
+    Arguments:
+        uuid (string): The checkpoint UUID.
     """
     assert _determined is not None
     return _determined.get_checkpoint(uuid)
@@ -121,7 +146,8 @@ def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
     """
-    Add a model to the model registry.
+    Add a :class:`~determined.experimental.client.Model` to the model registry. This function
+    returns a :class:`~determined.experimental.client.Model`.
 
     Arguments:
         name (string): The name of the model. This name must be unique.
@@ -135,9 +161,12 @@ def create_model(
 @_require_singleton
 def get_model(name: str) -> Model:
     """
-    Get the :class:`~determined.experimental.Model` from the model registry
+    Get the :class:`~determined.experimental.client.Model` from the model registry
     with the provided name. If no model with that name is found in the registry,
     an exception is raised.
+
+    Arguments:
+        name (string): The name of the model.
     """
     assert _determined is not None
     return _determined.get_model(name)
@@ -154,9 +183,9 @@ def get_models(
     Get a list of all models in the model registry.
 
     Arguments:
-        sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
+        sort_by: Which field to sort by. See :class:`~determined.experimental.client.ModelSortBy`.
         order_by: Whether to sort in ascending or descending order. See
-            :class:`~determined.experimental.ModelOrderBy`.
+            :class:`~determined.experimental.client.ModelOrderBy`.
         name: If this parameter is set, models will be filtered to only
             include models with names matching this parameter.
         description: If this parameter is set, models will be filtered to
