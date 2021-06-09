@@ -200,7 +200,7 @@ func (t *tensorboardManager) newTensorBoard(
 				RawHostPath:      c.HostPath(),
 				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
 			}).(expconf.BindMount)
-			uniqMounts[sharedFSMount.RawContainerPath] = model.ToModelBindMount(sharedFSMount)
+			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
 
 		case expconf.S3Config:
@@ -241,7 +241,7 @@ func (t *tensorboardManager) newTensorBoard(
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
 			for _, mount := range exp.Config.BindMounts() {
-				uniqMounts[mount.RawContainerPath] = model.ToModelBindMount(mount)
+				uniqMounts[mount.ContainerPath()] = model.ToModelBindMount(mount)
 			}
 
 		default:
