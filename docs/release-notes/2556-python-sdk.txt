@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  Extend the :ref:`Checkpoint Export API <exporting-checkpoints>` into
+   a Python SDK capable of launching and controlling experiments on the
+   cluster, all directly from python. See the docs and examples in the
+   :mod:`~determined.experimental.client` module.
