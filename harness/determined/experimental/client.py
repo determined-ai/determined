@@ -45,8 +45,8 @@ def login(
     from this module, otherwise it will fail.
 
     If you have reason to connect to multiple masters, you should use explicit
-    :class:`~determined.experimental.Determined` objects instead.  Each explicit
-    :class:`~determined.experimental.Determined` object accepts the same parameters as
+    :class:`~determined.experimental.client.Determined` objects instead.  Each explicit
+    :class:`~determined.experimental.client.Determined` object accepts the same parameters as
     ``login()``, and offers the same functions as what are offered in this module.
 
     .. note::
@@ -63,8 +63,14 @@ def login(
             DET_MASTER and DET_MASTER_ADDR will be checked for the master URL in that order.
         user (string, optional): The Determined username used for
             authentication. (default: ``determined``)
-        password (string, optional): The password associated with the Determined
-            user.
+        password (string, optional): The password associated with the user.
+        cert_path (string, optional): A path to a custom PEM-encoded certificate,
+            against which to validate the master.  (default: ``None``)
+        cert_name (string, optional): The name of the master hostname to use during certificate
+            validation. Normally this is taken from the master URL, but there may be cases where
+            the master is exposed on multiple networks that this value might need to be
+            overridden. (default: ``None``)
+        noverify (boolean, optional): disable all TLS verification entirely.  (default: ``False``)
     """
     global _determined
 
@@ -85,7 +91,7 @@ def create_experiment(
 ) -> ExperimentReference:
     """
     Creates an experiment with config parameters and model directory. The function
-    returns an :class:`~determined.experimental.ExperimentReference` of the experiment.
+    returns an :class:`~determined.experimental.client.ExperimentReference` of the experiment.
 
     Arguments:
         config (string, pathlib.Path, dictionary): Experiment config filename (.yaml)
@@ -99,7 +105,7 @@ def create_experiment(
 @_require_singleton
 def get_experiment(experiment_id: int) -> ExperimentReference:
     """
-    Get the :class:`~determined.experimental.ExperimentReference` representing the
+    Get the :class:`~determined.experimental.client.ExperimentReference` representing the
     experiment with the provided experiment ID.
 
     Arguments:
@@ -112,7 +118,7 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
 @_require_singleton
 def get_trial(trial_id: int) -> TrialReference:
     """
-    Get the :class:`~determined.experimental.TrialReference` representing the
+    Get the :class:`~determined.experimental.client.TrialReference` representing the
     trial with the provided trial ID.
 
     Arguments:
@@ -125,7 +131,7 @@ def get_trial(trial_id: int) -> TrialReference:
 @_require_singleton
 def get_checkpoint(uuid: str) -> Checkpoint:
     """
-    Get the :class:`~determined.experimental.Checkpoint` representing the
+    Get the :class:`~determined.experimental.client.Checkpoint` representing the
     checkpoint with the provided UUID.
 
     Arguments:
@@ -140,8 +146,8 @@ def create_model(
     name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
 ) -> Model:
     """
-    Add a :class:`~determined.experimental.Model` to the model registry. This function
-    returns a :class:`~determined.experimental.Model`.
+    Add a :class:`~determined.experimental.client.Model` to the model registry. This function
+    returns a :class:`~determined.experimental.client.Model`.
 
     Arguments:
         name (string): The name of the model. This name must be unique.
@@ -155,12 +161,12 @@ def create_model(
 @_require_singleton
 def get_model(name: str) -> Model:
     """
-    Get the :class:`~determined.experimental.Model` from the model registry
+    Get the :class:`~determined.experimental.client.Model` from the model registry
     with the provided name. If no model with that name is found in the registry,
     an exception is raised.
 
     Arguments:
-        name (string): The name of the model. This name must be unique.
+        name (string): The name of the model.
     """
     assert _determined is not None
     return _determined.get_model(name)
@@ -177,9 +183,9 @@ def get_models(
     Get a list of all models in the model registry.
 
     Arguments:
-        sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
+        sort_by: Which field to sort by. See :class:`~determined.experimental.client.ModelSortBy`.
         order_by: Whether to sort in ascending or descending order. See
-            :class:`~determined.experimental.ModelOrderBy`.
+            :class:`~determined.experimental.client.ModelOrderBy`.
         name: If this parameter is set, models will be filtered to only
             include models with names matching this parameter.
         description: If this parameter is set, models will be filtered to

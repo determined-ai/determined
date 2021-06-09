@@ -24,10 +24,8 @@ class CheckpointState(enum.Enum):
 
 class Checkpoint(object):
     """
-    .. note::
-
-        The preferred path for checkpoint export APIs is
-        ``determined.experimental.client.get_checkpoint()``.
+    A Checkpoint object is usually obtained from
+    ``determined.experimental.client.get_checkpoint()``.
 
     A ``Checkpoint`` represents a trained model.
 
