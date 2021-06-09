@@ -32,8 +32,6 @@ def run_api_server(
     user, password, token = credentials
 
     class RequestHandler(SimpleHTTPRequestHandler):
-        """A class bound around the `users` variables."""
-
         def _info(self) -> Dict[str, Any]:
             return {"cluster_id": "fake-cluster", "version": determined.__version__}
 
@@ -49,7 +47,7 @@ def run_api_server(
             assert posted_credentials.get("password") == expected_password
             return {"token": token}
 
-        def _get_models(self) -> Dict[str, Any]:
+        def _api_v1_models(self) -> Dict[str, Any]:
             assert self.headers["Authorization"] == f"Bearer {token}"
             return {"models": []}
 
@@ -65,7 +63,7 @@ def run_api_server(
             fn = {
                 "/info": self._info,
                 "/users/me": self._users_me,
-                "/api/v1/models/": self._get_models,
+                "/api/v1/models/": self._api_v1_models,
             }.get(self.path.split("?")[0])
             self.do_generic(fn)
 
