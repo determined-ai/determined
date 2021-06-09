@@ -1,0 +1,33 @@
+.experimentTitle {
+  display: flex;
+  margin-top: var(--theme-sizes-layout-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+
+  span {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media only screen and (min-width: $breakpoint-tablet) {
+  .experimentTitle {
+    margin-right: var(--theme-sizes-layout-medium);
+    margin-top: 0;
+  }
+}
+
+.experimentDescription,
+.experimentName {
+  margin-bottom: var(--theme-sizes-layout-medium);
+
+  span {
+    display: inline-block;
+    margin-right: 3px;
+    opacity: 0.75;
+  }
+}
