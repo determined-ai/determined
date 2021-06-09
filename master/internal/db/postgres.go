@@ -319,7 +319,7 @@ FROM (
     LIMIT 1
 ) r
 `, id); err != nil {
-		return nil, errors.Wrapf(err, "failed to get metric names for experient %d", id)
+		return nil, errors.Wrapf(err, "failed to get metric names for experiment %d", id)
 	}
 
 	averageMetrics := make([]string, 0, len(metricNames))

@@ -231,15 +231,15 @@ func (s SearcherConfig) AssertCurrent() error {
 	switch {
 	case s.RawSyncHalvingConfig != nil:
 		return errors.New(
-			"the 'sync_halving' searcher has been removed and is not valid for new experients",
+			"the 'sync_halving' searcher has been removed and is not valid for new experiments",
 		)
 	case s.RawAdaptiveConfig != nil:
 		return errors.New(
-			"the 'adaptive' searcher has been removed and is not valid for new experients",
+			"the 'adaptive' searcher has been removed and is not valid for new experiments",
 		)
 	case s.RawAdaptiveSimpleConfig != nil:
 		return errors.New(
-			"the 'adaptive_simple' searcher has been removed and is not valid for new experients",
+			"the 'adaptive_simple' searcher has been removed and is not valid for new experiments",
 		)
 	}
 	return nil
