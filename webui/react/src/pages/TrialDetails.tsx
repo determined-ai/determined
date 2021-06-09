@@ -33,7 +33,7 @@ enum TabType {
   Hyperparameters = 'hyperparameters',
   Logs = 'logs',
   Overview = 'overview',
-  Profiles = 'profiles',
+  Profiler = 'profiler',
   Workloads = 'workloads',
 }
 
@@ -284,7 +284,7 @@ const TrialDetailsComp: React.FC = () => {
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />
         </TabPane>
-        <TabPane key={TabType.Profiles} tab="Profiles">
+        <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Logs} tab="Logs">
