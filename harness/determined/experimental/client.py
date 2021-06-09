@@ -8,7 +8,7 @@ from determined.common.experimental.experiment import ExperimentReference
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.trial import TrialReference
 
-_determined = None  # Optional[Determined]
+_determined = None  # type: Optional[Determined]
 
 
 def _require_singleton(fn: Callable) -> Callable:
