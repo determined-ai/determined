@@ -109,8 +109,11 @@ const ExperimentDetailsHeader: React.FC<Props> = (
     <>
       <PageHeaderFoldable
         foldableContent={<>
+          <div className={css.experimentName}>
+            <span>Name:</span> {experiment.name}
+          </div>
           <div className={css.experimentDescription}>
-            {experiment.description}
+            <span>Description:</span> {experiment.description}
           </div>
           <TagList
             ghost={true}
@@ -120,8 +123,8 @@ const ExperimentDetailsHeader: React.FC<Props> = (
         </>}
         leftContent={<>
           <ExperimentState experiment={experiment} />
-          <div className={css.experimentName}>
-            {experiment.name}
+          <div className={css.experimentTitle}>
+            Experiment {experiment.id} <span>({experiment.name})</span>
           </div>
         </>}
         options={headerOptions}
