@@ -18,8 +18,8 @@ This guide discusses:
  Querying Checkpoints
 **********************
 
-The :class:`~determined.experimental.client.ExperimentReference` class is a
-reference to an experiment. The reference contains the
+The :class:`~determined.experimental.client.ExperimentReference` class
+is a reference to an experiment. The reference contains the
 :meth:`~determined.experimental.client.ExperimentReference.top_checkpoint`
 method. Without arguments, the method will check the experiment
 configuration searcher field for the ``metric`` and
@@ -37,8 +37,8 @@ order.
 
 The following snippet of Python code can be run after the specified
 experiment has generated a checkpoint. It returns an instance of
-:class:`~determined.experimental.client.Checkpoint` representing the checkpoint
-that has the best validation metric.
+:class:`~determined.experimental.client.Checkpoint` representing the
+checkpoint that has the best validation metric.
 
 .. code:: python
 
@@ -79,12 +79,12 @@ arguments.
 :class:`~determined.experimental.client.TrialReference` is used for
 fine-grained control over checkpoint selection within a trial. It
 contains a
-:meth:`~determined.experimental.client.TrialReference.top_checkpoint` method,
-which mirrors
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` for
-an experiment. It also contains
-:meth:`~determined.experimental.client.TrialReference.select_checkpoint`, which
-offers three ways to query checkpoints:
+:meth:`~determined.experimental.client.TrialReference.top_checkpoint`
+method, which mirrors
+:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint`
+for an experiment. It also contains
+:meth:`~determined.experimental.client.TrialReference.select_checkpoint`,
+which offers three ways to query checkpoints:
 
 #. ``best``: Returns the best checkpoint based on validation metrics as
    discussed above. When using ``best``, ``smaller_is_better`` and
@@ -117,17 +117,18 @@ selecting checkpoints.
  Using the Checkpoint Class
 ****************************
 
-The :class:`~determined.experimental.client.Checkpoint` class can both download
-the checkpoint from persistent storage and load it into memory in a
-Python process.
+The :class:`~determined.experimental.client.Checkpoint` class can both
+download the checkpoint from persistent storage and load it into memory
+in a Python process.
 
 The :meth:`~determined.experimental.client.Checkpoint.download` method
 downloads a checkpoint from persistent storage to a directory on the
 local file system. By default, checkpoints are downloaded to
 ``checkpoints/<checkpoint-uuid>/`` (relative to the current working
-directory). The :meth:`~determined.experimental.client.Checkpoint.download`
-method accepts ``path`` as an optional parameter, which changes the
-checkpoint download location.
+directory). The
+:meth:`~determined.experimental.client.Checkpoint.download` method
+accepts ``path`` as an optional parameter, which changes the checkpoint
+download location.
 
 .. code:: python
 
@@ -138,9 +139,10 @@ checkpoint download location.
 
    specific_path = checkpoint.download(path="specific-checkpoint-path")
 
-The :meth:`~determined.experimental.client.Checkpoint.load` method downloads
-the checkpoint, if it does not already exist locally, and then loads it
-into memory in a Python process, as shown in the following snippet.
+The :meth:`~determined.experimental.client.Checkpoint.load` method
+downloads the checkpoint, if it does not already exist locally, and then
+loads it into memory in a Python process, as shown in the following
+snippet.
 
 .. code:: python
 
@@ -182,8 +184,8 @@ labels, information related to deployment, etc.
    print(checkpoint.metadata)
 
 You may store an arbitrarily nested dictionary using the
-:meth:`~determined.experimental.client.Checkpoint.add_metadata` method. If the
-top level key already exists the entire tree beneath it will be
+:meth:`~determined.experimental.client.Checkpoint.add_metadata` method.
+If the top level key already exists the entire tree beneath it will be
 overwritten.
 
 .. code:: python
@@ -197,9 +199,9 @@ overwritten.
    print(checkpoint.metadata)  # Output: {"metrics": {"acc": 0.92}}
 
 You may remove metadata via the
-:meth:`~determined.experimental.client.Checkpoint.remove_metadata` method. The
-method accepts a list of top level keys. The entire tree beneath the
-keys passed will be deleted.
+:meth:`~determined.experimental.client.Checkpoint.remove_metadata`
+method. The method accepts a list of top level keys. The entire tree
+beneath the keys passed will be deleted.
 
 .. code:: python
 
@@ -248,9 +250,10 @@ successfully downloading the checkpoint.
               |                                      | }
 
 The ``det trial download`` command downloads checkpoints for a specified
-trial. Similar to the :class:`~determined.experimental.client.TrialReference`
-API, the ``det trial download`` command accepts ``--best``,
-``--latest``, and ``--uuid`` options.
+trial. Similar to the
+:class:`~determined.experimental.client.TrialReference` API, the ``det
+trial download`` command accepts ``--best``, ``--latest``, and
+``--uuid`` options.
 
 .. code::
 
@@ -349,9 +352,10 @@ successfully downloading the checkpoints.
  Loading From a Local Path
 ***************************
 
-:class:`~determined.experimental.client.Checkpoint` contains a static method,
-:meth:`~determined.experimental.client.Checkpoint.load_from_path`, that loads a
-checkpoint from a path on the local file system.
+:class:`~determined.experimental.client.Checkpoint` contains a static
+method,
+:meth:`~determined.experimental.client.Checkpoint.load_from_path`, that
+loads a checkpoint from a path on the local file system.
 
 Suppose a checkpoint is downloaded using a command like this:
 
