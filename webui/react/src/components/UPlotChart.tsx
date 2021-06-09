@@ -11,7 +11,8 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
 }
 
-interface SerieMaxMin {
+interface ScaleZoomData {
+  isZoomed?: boolean;
   max?: number;
   min?: number;
 }
@@ -30,7 +31,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
 ) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const isZoomed = useRef<boolean>(false);
+  const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
 
   const hasData: boolean = useMemo(() => {
     // no x values
@@ -50,7 +51,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
   useEffect(() => {
     if (!chartDivRef.current || !hasData || !options) return;
 
-    const scaleMaxMin: Record<string, SerieMaxMin> = {};
+    scalesZoomData.current = {};
 
     const optionsExtended = uPlot.assign(
       {
@@ -58,28 +59,23 @@ const UPlotChart: React.FC<Props> = forwardRef((
         hooks: {
           ready: [ (chart: uPlot) => setChart(chart) ],
           setScale: [ (uPlot: uPlot, scaleKey: string) => {
-            // need to ignore y because uPlot is adding margins to avoid having
-            // series line touching the max top of the chart.
-            if (scaleKey !== 'x') return;
+            if (![ 'x', 'y' ].includes(scaleKey)) return;
 
-            const currentMax: number|undefined = uPlot.scales[scaleKey]?.max;
-            const currentMin: number|undefined = uPlot.scales[scaleKey]?.min;
-            const scaleSeries = uPlot.series.filter(serie => serie.scale === scaleKey);
-            let max: number|undefined = scaleMaxMin[scaleKey]?.max;
-            let min: number|undefined = scaleMaxMin[scaleKey]?.min;
+            const currentMax: number|undefined =
+              uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
+            const currentMin: number|undefined =
+              uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
+            let max: number|undefined = scalesZoomData.current[scaleKey]?.max;
+            let min: number|undefined = scalesZoomData.current[scaleKey]?.min;
 
-            scaleSeries.forEach(serie => {
-              if (serie.max != null && (max == null || serie.max > max)) max = serie.max;
-              if (serie.min != null && (min == null || serie.min < min)) min = serie.min;
-            });
+            if (max == null || currentMax > max) max = currentMax;
+            if (min == null || currentMin < min) min = currentMin;
 
-            scaleMaxMin[scaleKey] = { max, min };
-            if (currentMax != null
-              && max != null
-              && currentMin != null
-              && min != null) {
-              isZoomed.current = (currentMax < max || currentMin > min);
-            }
+            scalesZoomData.current[scaleKey] = {
+              isZoomed: currentMax < max || currentMin > min,
+              max,
+              min,
+            };
           } ],
         },
         width: chartDivRef.current.offsetWidth,
@@ -100,7 +96,8 @@ const UPlotChart: React.FC<Props> = forwardRef((
    */
   useEffect(() => {
     if (!chart || !data) return;
-    chart.setData(data, !isZoomed.current);
+    const isZoomed = !!Object.values(scalesZoomData.current).find(i => i.isZoomed === true);
+    chart.setData(data, !isZoomed);
   }, [ chart, data ]);
 
   /*
