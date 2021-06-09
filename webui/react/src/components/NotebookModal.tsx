@@ -71,9 +71,9 @@ interface FormProps {
 }
 
 interface FullConfigProps {
-  config?: RawJson;
+  config?: string;
   configError?: string;
-  onChange: (config: RawJson) => void;
+  onChange: (config: string) => void;
   setButtonDisabled: (buttonDisabled: boolean) => void;
 }
 
@@ -89,7 +89,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
   const [ fields, dispatch ] = useNotebookForm();
-  const [ config, setConfig ] = useState<RawJson | undefined>();
+  const [ config, setConfig ] = useState<string | undefined>();
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
   const fetchConfig = useCallback(async () => {
@@ -100,7 +100,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
         fields.name,
         fields.pool,
       );
-      setConfig(newConfig);
+      setConfig(yaml.dump(newConfig));
     } catch (e) {
       setConfig(undefined);
     }
@@ -119,7 +119,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   const handleCreateEnvironment = useCallback(() => {
     if (showFullConfig) {
-      launchNotebook(config);
+      launchNotebook(yaml.load(config || '') as RawJson);
     } else {
       launchNotebook(
         undefined,
@@ -132,7 +132,7 @@ const NotebookModal: React.FC<NotebookModalProps> = (
     if (onLaunch) onLaunch();
   }, [ config, fields, onLaunch, showFullConfig ]);
 
-  const handleConfigChange = useCallback((config: RawJson) => setConfig(config), []);
+  const handleConfigChange = useCallback((config: string) => setConfig(config), []);
 
   return (
     <Modal
@@ -165,15 +165,14 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
 
   useEffect(() => {
-    setField([ { name: 'config', value: yaml.dump(config) } ]);
+    setField([ { name: 'config', value: config || '' } ]);
   }, [ config ]);
 
   const handleConfigChange = useCallback((_, allFields) => {
     if (!Array.isArray(allFields) || allFields.length === 0) return;
     try {
       const configString = allFields[0].value;
-      const config = yaml.load(configString) as RawJson;
-      onChange(config);
+      onChange(configString);
     } catch (e) {}
   }, [ onChange ]);
 
@@ -211,6 +210,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
               selectOnLineNumbers: true,
+              wordWrap: 'on',
+              wrappingIndent: 'indent',
             }}
           />
         </Item>

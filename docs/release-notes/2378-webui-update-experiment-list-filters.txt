@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  WebUI: Migrate experiment list filters over to native table filters.

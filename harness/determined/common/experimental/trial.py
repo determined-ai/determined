@@ -1,6 +1,5 @@
 from typing import Optional
 
-from determined._swagger.client.api.trials_api import TrialsApi
 from determined.common import check
 from determined.common.experimental import checkpoint, session
 
@@ -11,13 +10,12 @@ class TrialReference:
     :class:`~determined.experimental.Checkpoint` instances.
     """
 
-    def __init__(self, trial_id: int, session: session.Session, api_ref: TrialsApi):
+    def __init__(self, trial_id: int, session: session.Session):
         self.id = trial_id
         self._session = session
-        self._trials = api_ref
 
     def kill(self) -> None:
-        self._trials.determined_kill_trial(id=self.id)
+        self._session.post(f"/api/v1/trials/{self.id}/kill")
 
     def top_checkpoint(
         self,

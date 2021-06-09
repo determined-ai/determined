@@ -17,6 +17,7 @@ export interface BreadCrumbRoute {
 export interface Props extends CommonProps {
   breadcrumb?: BreadCrumbRoute[];
   docTitle?: string;
+  headerComponent?: React.ReactNode,
   id?: string;
   loading?: boolean;
   options?: React.ReactNode;
@@ -37,7 +38,7 @@ const getFullDocTitle = (title?: string, clusterName?: string) => {
 const Page: React.FC<Props> = (props: Props) => {
   const classes = [ props.className, css.base ];
   const { info } = useStore();
-  const showHeader = props.breadcrumb || props.title;
+  const showHeader = !props.headerComponent && (props.breadcrumb || props.title);
 
   const docTitle = getFullDocTitle(
     props.docTitle || props.title,
@@ -51,6 +52,7 @@ const Page: React.FC<Props> = (props: Props) => {
       <Helmet>
         <title>{docTitle}</title>
       </Helmet>
+      {props.headerComponent}
       {showHeader && <PageHeader
         breadcrumb={props.breadcrumb}
         options={props.options}

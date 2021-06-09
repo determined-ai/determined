@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Webui: Prevent TQDM logs from generating large quantities of
-   whitespace when rendering logs.

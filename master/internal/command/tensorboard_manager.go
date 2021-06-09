@@ -309,7 +309,7 @@ func (t *tensorboardManager) newTensorBoard(
 
 	refineArgs(config.TensorBoardArgs)
 	config.Entrypoint = append(
-		[]string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")},
+		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
 		config.TensorBoardArgs...)
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
