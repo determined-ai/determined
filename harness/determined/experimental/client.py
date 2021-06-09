@@ -4,7 +4,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from determined.common.experimental.checkpoint import Checkpoint
 from determined.common.experimental.determined import Determined
-from determined.common.experimental.experiment import ExperimentReference
+from determined.common.experimental.experiment import (  # noqa: F401
+    ExperimentReference,
+    ExperimentState,
+)
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined.common.experimental.trial import TrialReference
 
@@ -25,6 +28,7 @@ def _require_singleton(fn: Callable) -> Callable:
 def login(
     master: Optional[str] = None,
     user: Optional[str] = None,
+    password: Optional[str] = None,
     cert_path: Optional[str] = None,
     cert_name: Optional[str] = None,
     noverify: bool = False,
@@ -43,6 +47,14 @@ def login(
     If you have reason to connect to multiple masters, you should use explicit Determined() objects
     instead.  Each explicit Determined() object accepts the same parameters as login(), and offers
     the same functions as what are offered in this module.
+
+    .. note::
+
+       Try to avoid having your password in your python code.  If you are running on your local
+       machine, you should always be able to use ``det user login`` on the CLI, and login()
+       will not need either a user or a password.  If you have ran ``det user login`` with multiple
+       users (and you have not ran ``det user logout``), then you should be able to run
+       ``login(user=...)`` for any of those users without putting your password in your code.
     """
     global _determined
 
@@ -53,7 +65,7 @@ def login(
             "client.Determined() objects, which each expose the same functions as this module."
         )
 
-    _determined = Determined(master, user, cert_path, cert_name, noverify)
+    _determined = Determined(master, user, password, cert_path, cert_name, noverify)
 
 
 @_require_singleton
