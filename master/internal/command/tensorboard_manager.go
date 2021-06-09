@@ -272,13 +272,19 @@ func (t *tensorboardManager) newTensorBoard(
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading raw experiment config: %d", mostRecentExpID)
+		return nil, errors.Wrapf(err, "error loading experiment config: %d", mostRecentExpID)
 	}
 
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError,
 			"unable to marshal experiment configuration")
 	}
+
+	expConf, err := expconf.ParseAnyExperimentConfigYAML(confBytes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
+	}
+	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
 	additionalFiles = append(additionalFiles,
 		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
@@ -309,6 +315,8 @@ func (t *tensorboardManager) newTensorBoard(
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
+	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
+		GPU: expConf.Environment().Image().GPU()}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
