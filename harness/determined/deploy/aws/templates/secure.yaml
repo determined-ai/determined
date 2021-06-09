@@ -74,12 +74,12 @@ Parameters:
     Description: Instance Type of Master
     Default: m5.large
 
-  CPUAgentInstanceType:
+  AuxAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the CPU resource pool
     Default: t2.xlarge
 
-  GPUAgentInstanceType:
+  ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the GPU resource pool
     Default: p2.8xlarge
@@ -750,7 +750,7 @@ Resources:
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${CPUAgentInstanceType}
+                  instance_type: ${AuxAgentInstanceType}
                   log_group: ${LogGroup}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
@@ -778,7 +778,7 @@ Resources:
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${GPUAgentInstanceType}
+                  instance_type: ${ComputeAgentInstanceType}
                   log_group: ${LogGroup}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port

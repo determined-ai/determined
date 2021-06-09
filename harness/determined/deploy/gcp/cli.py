@@ -245,16 +245,20 @@ args_description = Cmd(
                             help="instance type for master",
                         ),
                         Arg(
-                            "--cpu-agent-instance-type",
-                            type=str,
-                            default=constants.defaults.CPU_AGENT_INSTANCE_TYPE,
-                            help="instance type for agens in the CPU resource pool",
-                        ),
-                        Arg(
+                            "--compute-agent-instance-type",
                             "--gpu-agent-instance-type",
                             type=str,
-                            default=constants.defaults.GPU_AGENT_INSTANCE_TYPE,
-                            help="instance type for agents in the GPU resource pool",
+                            default=constants.defaults.COMPUTE_AGENT_INSTANCE_TYPE,
+                            help="instance type for agent in the compute "
+                            "(previously, GPU) resource pool",
+                        ),
+                        Arg(
+                            "--aux-agent-instance-type",
+                            "--cpu-agent-instance-type",
+                            type=str,
+                            default=constants.defaults.AUX_AGENT_INSTANCE_TYPE,
+                            help="instance type for agent in the auxiliary "
+                            "(previously, CPU) resource pool",
                         ),
                         Arg(
                             "--db-password",
@@ -263,10 +267,12 @@ args_description = Cmd(
                             help="password for master database",
                         ),
                         Arg(
+                            "--max-aux-containers-per-agent",
                             "--max-cpu-containers-per-agent",
-                            type=str,
-                            default=constants.defaults.MAX_CPU_CONTAINERS_PER_AGENT,
-                            help="max CPU containers running for agents in the CPU resource pool",
+                            type=int,
+                            default=constants.defaults.MAX_AUX_CONTAINERS_PER_AGENT,
+                            help="maximum number of containers on agent in the "
+                            "auxiliary (previously, CPU) resource pool",
                         ),
                         Arg(
                             "--max-idle-agent-period",

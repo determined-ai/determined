@@ -40,7 +40,7 @@ variable "master_docker_network" {
 variable "agent_docker_network" {
 }
 
-variable "max_cpu_containers_per_agent" {
+variable "max_aux_containers_per_agent" {
 }
 
 variable "max_idle_agent_period" {
@@ -58,10 +58,10 @@ variable "tag_allow_internal" {
 variable "tag_allow_ssh" {
 }
 
-variable "cpu_agent_instance_type" {
+variable "aux_agent_instance_type" {
 }
 
-variable "gpu_agent_instance_type" {
+variable "compute_agent_instance_type" {
 }
 
 variable "gpu_type" {
