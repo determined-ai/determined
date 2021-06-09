@@ -62,8 +62,7 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		return err
 	}
-	if _, ok := parsed.(map[string]interface{}); ok {
-		parsedMap := parsed.(map[string]interface{})
+	if parsedMap, ok := parsed.(map[string]interface{}); ok {
 		hpType, hasType := parsedMap["type"]
 		if (hasType && hpType.(string) == "object") || !hasType {
 			nestedHPs := make(map[string]HyperparameterV0)
@@ -88,36 +87,10 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func hpsToMap(hps HyperparameterV0) (map[string]interface{}, error) {
-	output := make(map[string]interface{})
-	var err error
-	for key, hp := range *hps.RawNestedHyperparameter {
-		if hp.RawNestedHyperparameter != nil {
-			output[key], err = hpsToMap(hp)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			hpBytes, _ := hp.MarshalJSON()
-			var unionHP map[string]interface{}
-			err = json.Unmarshal(hpBytes, &unionHP)
-			if err != nil {
-				return nil, err
-			}
-			output[key] = unionHP
-		}
-	}
-	return output, nil
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (h HyperparameterV0) MarshalJSON() ([]byte, error) {
 	if h.RawNestedHyperparameter != nil {
-		hps, err := hpsToMap(h)
-		if err != nil {
-			return []byte("null"), err
-		}
-		return json.Marshal(hps)
+		return json.Marshal(*h.RawNestedHyperparameter)
 	}
 	return union.MarshalEx(h, true)
 }
