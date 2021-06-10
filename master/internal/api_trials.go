@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
@@ -15,8 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/hashicorp/go-multierror"
-
-	"github.com/determined-ai/determined/master/internal/protoutil"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -420,7 +420,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		return status.Error(codes.NotFound, "trial not found")
 	}
 
-	labelsParam, err := protojson.Marshal(req.Labels)
+	labelsJSON, err := protojson.Marshal(req.Labels)
 	if err != nil {
 		return fmt.Errorf("failed to marshal labels: %w", err)
 	}
@@ -432,12 +432,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		case lr.Limit <= 0:
 			return nil, nil
 		}
-
-		var batchOfBatches []*trialv1.TrialProfilerMetricsBatch
-		return model.TrialProfilerMetricsBatchBatch(batchOfBatches), a.m.db.QueryProto(
-			"get_trial_profiler_metrics",
-			&batchOfBatches, labelsParam, lr.Offset, lr.Limit,
-		)
+		return a.m.db.GetTrialProfilerMetricsBatches(labelsJSON, lr.Offset, lr.Limit)
 	}
 
 	onBatch := func(b api.Batch) error {
@@ -525,7 +520,7 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 			continue
 		}
 
-		timestamps, err := protoutil.TimeSliceFromProto(batch.Timestamps)
+		timestamps, err := protoutils.TimeSliceFromProto(batch.Timestamps)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("failed to convert proto timestamps: %w", err))
 			continue
