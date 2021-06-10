@@ -6,6 +6,7 @@ import TagList from 'components/TagList';
 import useExperimentTags from 'hooks/useExperimentTags';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
+import { handlePath, paths } from 'routes/utils';
 import { archiveExperiment, openOrCreateTensorboard, unarchiveExperiment } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase } from 'types';
@@ -55,6 +56,13 @@ const ExperimentDetailsHeader: React.FC<Props> = (
           } catch (e) {
             setIsRunningTensorboard(false);
           }
+        },
+      },
+      {
+        key: 'download-model',
+        label: 'Download Model',
+        onClick: (e) => {
+          handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
       },
     ];
