@@ -202,6 +202,7 @@ if __name__ == "__main__":
         **yaml.safe_load(artifacts["publish-tf1-cpu"]),
         **yaml.safe_load(artifacts["publish-tf1-gpu"]),
         **yaml.safe_load(artifacts["publish-tf2-cpu"]),
+        **yaml.safe_load(artifacts["publish-tf25-gpu"]),
         **yaml.safe_load(artifacts["publish-cuda-11"]),
         **parse_packer_log(artifacts["packer-log"]),
     }

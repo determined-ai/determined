@@ -1,32 +1,27 @@
+import argparse
+import contextlib
+import functools
 import getpass
 import hashlib
 import json
 import os
-import platform
-import typing
-from argparse import Namespace
-from functools import wraps
-from pathlib import Path
-from typing import Any, Callable, Dict, NamedTuple, Optional, cast
+import pathlib
+from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
 
-from determined.common import api, constants
-from determined.common.api import authentication as auth
+import filelock
+
+from determined.common import api, constants, util
+from determined.common.api import certs
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
+_cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
 
 
-def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        auth.initialize_session(namespace.master, v.get("user"), try_reauth=True)
-        return func(namespace)
-
-    return f
+def get_task_token() -> str:
+    return _cur_task_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -43,17 +38,58 @@ class Session:
 
 
 class Authentication:
-    _instance = None
+    def __init__(
+        self,
+        master_address: Optional[str] = None,
+        requested_user: Optional[str] = None,
+        password: Optional[str] = None,
+        try_reauth: bool = False,
+        cert: Optional[certs.Cert] = None,
+    ) -> None:
+        self.master_address = master_address or util.get_default_master_address()
+        self.token_store = TokenStore(self.master_address)
 
-    def __init__(self) -> None:
-        self.token_store = TokenStore()
-        self.session = None  # type: Optional[Session]
+        self.session = self._init_session(requested_user, password, try_reauth, cert)
 
-    @classmethod
-    def instance(cls) -> "Authentication":
-        if cls._instance is None:
-            cls._instance = Authentication()
-        return cls._instance
+    def _init_session(
+        self,
+        requested_user: Optional[str],
+        password: Optional[str],
+        try_reauth: bool,
+        cert: Optional[certs.Cert],
+    ) -> Session:
+        session_user = (
+            requested_user
+            or self.token_store.get_active_user()
+            or constants.DEFAULT_DETERMINED_USER
+        )
+
+        token = self.token_store.get_token(session_user)
+        if token is not None and not _is_token_valid(self.master_address, token, cert):
+            self.token_store.drop_user(session_user)
+            token = None
+
+        if token is not None:
+            return Session(session_user, token)
+
+        if token is None and not try_reauth:
+            raise api.errors.UnauthenticatedException(username=session_user)
+
+        if password is None and session_user == constants.DEFAULT_DETERMINED_USER:
+            password = constants.DEFAULT_DETERMINED_PASSWORD
+        elif session_user is None:
+            session_user = input("Username: ")
+
+        if password is None:
+            password = getpass.getpass("Password for user '{}': ".format(session_user))
+
+        if password:
+            password = api.salt_and_hash(password)
+
+        token = do_login(self.master_address, session_user, password, cert)
+        self.token_store.set_token(session_user, token)
+
+        return Session(session_user, token)
 
     def is_user_active(self, username: str) -> bool:
         return self.token_store.get_active_user() == username
@@ -63,8 +99,6 @@ class Authentication:
         Returns the session user for the current session. If there is no active
         session, then an UnauthenticatedException will be raised.
         """
-        if self.session is None:
-            raise api.errors.UnauthenticatedException(username="")
         return self.session.username
 
     def get_session_token(self, must: bool = True) -> str:
@@ -80,210 +114,294 @@ class Authentication:
                 return ""
         return self.session.token
 
-    def reset_session(self) -> None:
-        self.session = None
 
-    def get_task_token(self) -> str:
-        return cur_task_token
-
-
-class TokenStore:
-    def __init__(self) -> None:
-        try:
-            store = self._load_store()
-        except api.errors.CorruptTokenCacheException as e:
-            self.delete_token_cache()
-            raise e
-        self._tokens = store.get("tokens", {})
-        self._active_user = typing.cast(Optional[str], store.get("active_user", None))
-
-    @classmethod
-    def delete_token_cache(cls) -> None:
-        path = cls._get_token_cache_path()
-        if path.exists():
-            path.unlink()
-
-    @staticmethod
-    def _get_token_cache_path() -> Path:
-        return get_config_path().joinpath("auth.json")
-
-    def get_active_user(self) -> Optional[str]:
-        """
-        Gets the active user from the token cache.
-
-        Returns: Optional[str] which is either the user if there is an active user or None
-        otherwise.
-        """
-        return self._active_user
-
-    @classmethod
-    def _load_store(cls) -> Dict[str, Any]:
-        path = cls._get_token_cache_path()
-        if path.exists():
-            with path.open() as fin:
-                try:
-                    store = typing.cast(Dict[str, Any], json.loads(fin.read()))
-
-                    if not cls._validate_token_store(store):
-                        raise api.errors.CorruptTokenCacheException
-
-                    return store
-
-                except json.JSONDecodeError:
-                    raise api.errors.CorruptTokenCacheException
-        else:
-            return {}
-
-    @staticmethod
-    def _validate_token_store(store: Dict[str, Any]) -> bool:
-        """
-        _validate_token_store makes sure that the data in the token store makes sense
-        (in the sense that the key/value types are what they should be).
-
-        """
-        if "active_user" in store:
-            active_user = typing.cast(str, store["active_user"])
-            if not isinstance(active_user, str):
-                return False
-
-        if "tokens" in store:
-            tokens = typing.cast(Dict[str, str], store["tokens"])
-            if not isinstance(tokens, dict):
-                return False
-            for k, v in tokens.items():
-                if not isinstance(k, str):
-                    return False
-                if not isinstance(v, str):
-                    return False
-        return True
-
-    @staticmethod
-    def _create_det_path_if_necessary() -> None:
-        path = get_config_path()
-        if not path.exists():
-            path.mkdir(parents=True, mode=0o700)
-
-    def get_token(self, user: str) -> Optional[str]:
-        if user in self._tokens:
-            return typing.cast(str, self._tokens[user])
-        return None
-
-    def _write_store(self) -> None:
-        self._create_det_path_if_necessary()
-        cache_path = self._get_token_cache_path()
-        store = {}
-        if self._tokens is not None and len(self._tokens):
-            store["tokens"] = self._tokens
-
-        if self._active_user is not None:
-            store["active_user"] = self._active_user
-
-        with cache_path.open("w") as file_out:
-            json.dump(store, file_out, indent=4, sort_keys=True)
-
-    def drop_user(self, username: str) -> None:
-        if username not in self._tokens:
-            raise api.errors.UnauthenticatedException(username=username)
-
-        del self._tokens[username]
-        if self.get_active_user() == username:
-            self._active_user = None
-        self._write_store()
-
-    def set_token(self, username: str, token: str) -> None:
-        self._tokens[username] = token
-        self._write_store()
-
-    def set_active(self, username: str, active: bool) -> None:
-        if username not in self._tokens:
-            raise api.errors.UnauthenticatedException(username=username)
-
-        self._active_user = username if active else None
-        self._write_store()
-
-
-def get_config_path() -> Path:
-    system = platform.system()
-    if "Linux" in system and "XDG_CONFIG_HOME" in os.environ:
-        config_path = Path(os.environ["XDG_CONFIG_HOME"])
-    elif "Darwin" in system:
-        config_path = Path.home().joinpath("Library").joinpath("Application Support")
-    elif "Windows" in system and "LOCALAPPDATA" in os.environ:
-        config_path = Path(os.environ["LOCALAPPDATA"])
-    else:
-        config_path = Path.home().joinpath(".config")
-
-    return config_path.joinpath("determined")
-
-
-def initialize_session(
-    master_address: str, requested_user: Optional[str] = None, try_reauth: bool = False
-) -> None:
-    auth = Authentication.instance()
-
-    session_user = (
-        requested_user or auth.token_store.get_active_user() or constants.DEFAULT_DETERMINED_USER
+def do_login(
+    master_address: str,
+    username: str,
+    password: str,
+    cert: Optional[certs.Cert] = None,
+) -> str:
+    r = api.post(
+        master_address,
+        "login",
+        body={"username": username, "password": password},
+        authenticated=False,
+        cert=cert,
     )
 
-    token = auth.token_store.get_token(session_user)
-    if token is not None and not _is_token_valid(master_address, token):
-        auth.token_store.drop_user(session_user)
-        token = None
+    token = r.json()["token"]
+    assert isinstance(token, str), "got invalid token response from server"
 
-    if token is not None:
-        auth.session = api.Session(session_user, token)
-        return
-
-    if token is None and not try_reauth:
-        raise api.errors.UnauthenticatedException(username=session_user)
-
-    password = None
-    if session_user == constants.DEFAULT_DETERMINED_USER:
-        password = constants.DEFAULT_DETERMINED_PASSWORD
-    elif session_user is None:
-        session_user = input("Username: ")
-
-    if password is None:
-        password = api.salt_and_hash(
-            getpass.getpass("Password for user '{}': ".format(session_user))
-        )
-
-    token = do_login(master_address, auth, session_user, password)
-
-    auth.token_store.set_token(session_user, token)
-
-    # If the user wasn't set with the '-u' option and the session_user
-    # is the default user, tag them as being the active user.
-    if requested_user is None and session_user == constants.DEFAULT_DETERMINED_USER:
-        auth.token_store.set_active(session_user, True)
-
-    auth.session = api.Session(session_user, token)
+    return token
 
 
-def _is_token_valid(master_address: str, token: str) -> bool:
+def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
     """
     Find out whether the given token is valid by attempting to use it
     on the "/users/me" endpoint.
     """
     headers = {"Authorization": "Bearer {}".format(token)}
     try:
-        r = api.get(master_address, "users/me", headers=headers, authenticated=False)
+        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 
     return r.status_code == 200
 
 
-def do_login(master_address: str, auth: Authentication, username: str, password: str) -> str:
-    r = api.post(
-        master_address,
-        "login",
-        body={"username": username, "password": password},
-        authenticated=False,
-    )
+class TokenStore:
+    """
+    TokenStore is a class for reading/updating a persistent store of user authentication tokens.
+    TokenStore can remember tokens for many users for each of many masters.
 
-    token = cast(str, r.json()["token"])
+    All updates to the file follow a read-modify-write pattern, and use file locks to protect the
+    integrity of the underlying file cache.
+    """
 
-    auth.token_store.set_token(username, token)
+    def __init__(self, master_address: str, path: Optional[pathlib.Path] = None) -> None:
+        self.master_address = master_address
+        self.path = path or util.get_config_path().joinpath("auth.json")
+        self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # Decide on paths for a lock file and a temp files (during writing)
+        self.temp = pathlib.Path(str(self.path) + ".temp")
+        self.lock = pathlib.Path(str(self.path) + ".lock")
 
-    return token
+        with filelock.FileLock(self.lock):
+            store = self._load_store_file()
+
+        self._reconfigure_from_store(store)
+
+    def _reconfigure_from_store(self, store: dict) -> None:
+        substore = store.get("masters", {}).get(self.master_address, {})
+        self._active_user = cast(str, substore.get("active_user"))
+        self._tokens = cast(Dict[str, str], substore.get("tokens", {}))
+
+    def get_active_user(self) -> Optional[str]:
+        return self._active_user
+
+    def get_token(self, user: str) -> Optional[str]:
+        token = self._tokens.get(user)
+        if token is not None:
+            assert isinstance(token, str), "invalid cache; token must be a string"
+        return token
+
+    def delete_token_cache(self) -> None:
+        with filelock.FileLock(self.lock):
+            if self.path.exists():
+                self.path.unlink()
+
+    def drop_user(self, username: str) -> None:
+        with self._persistent_store() as substore:
+            tokens = substore.setdefault("tokens", {})
+            if username in tokens:
+                del tokens[username]
+            if substore.get("active_user") == username:
+                del substore["active_user"]
+
+    def set_token(self, username: str, token: str) -> None:
+        with self._persistent_store() as substore:
+            tokens = substore.setdefault("tokens", {})
+            tokens[username] = token
+
+    def set_active(self, username: str) -> None:
+        with self._persistent_store() as substore:
+            tokens = substore.setdefault("tokens", {})
+            if username not in tokens:
+                raise api.errors.UnauthenticatedException(username=username)
+            substore["active_user"] = username
+
+    @contextlib.contextmanager
+    def _persistent_store(self) -> Iterator[Dict["str", Any]]:
+        """
+        Yields the appropriate store[self.master_address] that can be modified, and the modified
+        result will be written back to file.
+
+        Whatever updates are made will also be updated on self automatically.
+        """
+        with filelock.FileLock(self.lock):
+            store = self._load_store_file()
+            substore = store.setdefault("masters", {}).setdefault(self.master_address, {})
+
+            # No need for try/finally, because we don't update the file after failures.
+            yield substore
+
+            # Reconfigure our cached variables.
+            self._reconfigure_from_store(store)
+
+            with self.temp.open("w") as f:
+                json.dump(store, f, indent=4, sort_keys=True)
+            self.temp.rename(self.path)
+
+    def _load_store_file(self) -> Dict[str, Any]:
+        """
+        Read a token store from a file, shimming it to the most recent version if necessary.
+
+        If a v0 store is found it will be reconfigured as a v1 store based on the master_address
+        that is being currently requested.
+        """
+        try:
+            if not self.path.exists():
+                return {"version": 1}
+
+            try:
+                with self.path.open() as f:
+                    store = json.load(f)
+            except json.JSONDecodeError:
+                raise api.errors.CorruptTokenCacheException()
+
+            if not isinstance(store, dict):
+                raise api.errors.CorruptTokenCacheException()
+
+            version = store.get("version", 0)
+            if version == 0:
+                validate_token_store_v0(store)
+                store = shim_store_v0(store, self.master_address)
+
+            validate_token_store_v1(store)
+
+            return cast(dict, store)
+
+        except api.errors.CorruptTokenCacheException:
+            # Delete invalid caches before exiting.
+            self.path.unlink()
+            raise
+
+
+def shim_store_v0(v0: Dict[str, Any], master_address: str) -> Dict[str, Any]:
+    """
+    v1 schema is just a bit more nesting to support multiple masters.
+    """
+    v1 = {"version": 1, "masters": {master_address: v0}}
+    return v1
+
+
+def validate_token_store_v0(store: Any) -> bool:
+    """
+    Valid v0 schema example:
+
+        {
+          "active_user": "user_a",
+          "tokens": {
+            "user_a": "TOKEN",
+            "user_b": "TOKEN"
+          }
+        }
+    """
+
+    if not isinstance(store, dict):
+        raise api.errors.CorruptTokenCacheException()
+
+    if len(set(store.keys()).difference({"active_user", "tokens"})) > 0:
+        # Extra keys.
+        raise api.errors.CorruptTokenCacheException()
+
+    if "active_user" in store:
+        if not isinstance(store["active_user"], str):
+            raise api.errors.CorruptTokenCacheException()
+
+    if "tokens" in store:
+        tokens = store["tokens"]
+        if not isinstance(tokens, dict):
+            raise api.errors.CorruptTokenCacheException()
+        for k, v in tokens.items():
+            if not isinstance(k, str):
+                raise api.errors.CorruptTokenCacheException()
+            if not isinstance(v, str):
+                raise api.errors.CorruptTokenCacheException()
+    return True
+
+
+def validate_token_store_v1(store: Any) -> bool:
+    """
+    Valid v1 schema example:
+
+        {
+          "version": 1,
+          "masters": {
+            "master_url_a": {
+              "active_user": "user_a",
+              "tokens": {
+                "user_a": "TOKEN",
+                "user_b": "TOKEN"
+              }
+            },
+            "master_url_b": {
+              "active_user": "user_c",
+              "tokens": {
+                "user_c": "TOKEN",
+                "user_d": "TOKEN"
+              }
+            }
+          }
+        }
+
+    Note that store["masters"] is a mapping of string url's to valid v0 schemas.
+    """
+    if not isinstance(store, dict):
+        raise api.errors.CorruptTokenCacheException()
+
+    if len(set(store.keys()).difference({"version", "masters"})) > 0:
+        # Extra keys.
+        raise api.errors.CorruptTokenCacheException()
+
+    # Handle version.
+    version = store.get("version")
+    if version != 1:
+        raise api.errors.CorruptTokenCacheException()
+
+    if "masters" in store:
+        masters = store["masters"]
+        if not isinstance(masters, dict):
+            raise api.errors.CorruptTokenCacheException()
+
+        # Each entry of masters must be a master_url/substore pair.
+        for key, val in masters.items():
+            if not isinstance(key, str):
+                raise api.errors.CorruptTokenCacheException()
+            validate_token_store_v0(val)
+
+    return True
+
+
+# cli_auth is the process-wide authentication used for api calls originating from the cli.
+cli_auth = None  # type: Optional[Authentication]
+
+
+def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
+    """
+    A decorator for cli functions.
+    """
+
+    @functools.wraps(func)
+    def f(namespace: argparse.Namespace) -> Any:
+        global cli_auth
+        v = vars(namespace)
+        cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=True)
+        return func(namespace)
+
+    return f
+
+
+def optional(func: Callable[[argparse.Namespace], Any]) -> Callable[[argparse.Namespace], Any]:
+    """
+    A decorator for cli functions.
+    """
+
+    @functools.wraps(func)
+    def f(namespace: argparse.Namespace) -> Any:
+        global cli_auth
+        v = vars(namespace)
+        try:
+            cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=False)
+        except api.errors.UnauthenticatedException:
+            pass
+
+        return func(namespace)
+
+    return f
+
+
+def must_cli_auth() -> Authentication:
+    if not cli_auth:
+        raise api.errors.UnauthenticatedException(username="")
+    return cli_auth

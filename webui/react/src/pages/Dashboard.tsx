@@ -43,12 +43,9 @@ const countActiveCommand = (commands: CommandTask[]): number => {
 };
 
 const Dashboard: React.FC = () => {
-  const { auth, cluster: overview, users } = useStore();
+  const { cluster: overview, users } = useStore();
   const storage = useStorage(STORAGE_PATH);
-  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, {
-    ...defaultFilters,
-    users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
-  });
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();

@@ -4,8 +4,8 @@ from typing import Any, Dict, List
 
 import requests
 
-import determined.common.api.authentication as auth
 from determined.common import api
+from determined.common.api import authentication, certs
 from tests import config as conf
 
 
@@ -19,7 +19,9 @@ def cluster_slots() -> Dict[str, Any]:
     cluster_slots returns a dict of slots that each agent has.
     :return:  Dict[AgentID, List[Slot]]
     """
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "agents")
     assert r.status_code == requests.codes.ok, r.text
     json = r.json()  # type: Dict[str, Any]
@@ -67,7 +69,7 @@ def wait_for_agents(min_agent_count: int) -> None:
 
 
 def num_agents() -> int:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "agents")
     assert r.status_code == requests.codes.ok, r.text
 

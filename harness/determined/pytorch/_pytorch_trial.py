@@ -161,6 +161,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             ),
                             self.context.get_stop_requested(),
                             invalid_hp=False,
+                            init_invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -172,6 +173,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             {},
                             self.context.get_stop_requested(),
                             invalid_hp=True,
+                            init_invalid_hp=False,
                         )
                     )
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
@@ -181,6 +183,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             self._compute_validation_metrics(),
                             self.context.get_stop_requested(),
                             invalid_hp=False,
+                            init_invalid_hp=False,
                         )
                     )
                 except det.InvalidHP as e:
@@ -192,6 +195,7 @@ class PyTorchTrialController(det.LoopTrialController):
                             {},
                             self.context.get_stop_requested(),
                             invalid_hp=True,
+                            init_invalid_hp=False,
                         )
                     )
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -391,10 +395,12 @@ class PyTorchTrialController(det.LoopTrialController):
             model.eval()
 
         for callback in self.callbacks.values():
-            logging.warning(
-                "on_validation_step_start is now deprecated, please use on_validation_start instead"
-            )
-            callback.on_validation_step_start()
+            if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
+                logging.warning(
+                    "on_validation_step_start is now deprecated, "
+                    "please use on_validation_start instead"
+                )
+                callback.on_validation_step_start()
 
         for callback in self.callbacks.values():
             callback.on_validation_start()
@@ -482,10 +488,11 @@ class PyTorchTrialController(det.LoopTrialController):
             metrics = hvd.broadcast_object(metrics, root_rank=0)
 
         for callback in self.callbacks.values():
-            logging.warning(
-                "on_validation_step_end is now deprecated, please use on_validation_end instead"
-            )
-            callback.on_validation_step_end(metrics)
+            if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
+                logging.warning(
+                    "on_validation_step_end is now deprecated, please use on_validation_end instead"
+                )
+                callback.on_validation_step_end(metrics)
 
         for callback in self.callbacks.values():
             callback.on_validation_end(metrics)

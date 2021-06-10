@@ -6,18 +6,18 @@ from typing import Any, List
 from requests import Response
 
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
 
 
-@authentication_required
+@authentication.required
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
     print(json.dumps(response.json(), indent=4))
 
 
-@authentication_required
+@authentication.required
 def logs(args: Namespace) -> None:
     def process_response(response: Response, latest_log_id: int) -> int:
         for log in response.json():

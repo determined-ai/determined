@@ -1,0 +1,110 @@
+.base {
+  align-items: center;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.25) 100%);
+  color: var(--theme-colors-monochrome-17);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  font-size: var(--theme-sizes-font-small);
+  justify-content: space-between;
+  padding: var(--theme-sizes-layout-big);
+  width: 100%;
+}
+.left {
+  align-items: flex-start;
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+  word-break: break-all;
+}
+.toggle {
+  cursor: pointer;
+  height: var(--theme-sizes-icon-medium);
+  margin: 0 var(--theme-sizes-layout-big);
+  overflow: hidden;
+}
+.options {
+  display: flex;
+  justify-content: flex-end;
+
+  > button {
+    margin-left: var(--theme-sizes-layout-medium);
+  }
+}
+.optionsDropdown {
+  border-color: transparent !important;
+  color: var(--theme-colors-monochrome-17);
+  opacity: 0.9;
+
+  &:focus,
+  &:hover {
+    color: var(--theme-colors-monochrome-17) !important;
+    opacity: 1;
+  }
+}
+.optionsMainButton {
+  color: var(--theme-colors-monochrome-0) !important;
+  display: none;
+  opacity: 0.9;
+
+  &:focus,
+  &:hover {
+    border-color: var(--theme-colors-monochrome-17) !important;
+    color: var(--theme-colors-monochrome-0) !important;
+    opacity: 1;
+  }
+  &:global(.ant-btn-background-ghost) {
+    color: var(--theme-colors-monochrome-17) !important;
+
+    &:focus,
+    &:hover {
+      color: var(--theme-colors-monochrome-17) !important;
+    }
+  }
+  i {
+    margin-right: var(--theme-sizes-layout-small);
+  }
+}
+.bottom {
+  flex: 1 1 100%;
+  margin-top: var(--theme-sizes-layout-big)
+}
+
+@media only screen and (min-width: $breakpoint-tablet) {
+  .left {
+    align-items: center;
+    flex-direction: row;
+  }
+}
+
+@media only screen and (min-width: $breakpoint-desktop-small) {
+  .left {
+    flex: 1 0 45%;
+  }
+  .options {
+    flex: 1 0 45%;
+  }
+  .optionsMainButton:nth-child(1) {
+    display: inline-block;
+  }
+  .optionsDropdownItem:nth-child(1) {
+    display: none;
+  }
+  .optionsDropdownOneChild {
+    display: none !important;
+  }
+}
+
+@media only screen and (min-width: $breakpoint-desktop-medium) {
+  .optionsMainButton:nth-child(2) {
+    display: inline-block;
+  }
+  .optionsDropdownItem:nth-child(2) {
+    display: none;
+  }
+  .optionsDropdownTwoChild {
+    display: none !important;
+  }
+}

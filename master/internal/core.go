@@ -623,13 +623,14 @@ func (m *Master) Run(ctx context.Context) error {
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
-	gzipConfig := middleware.DefaultGzipConfig
-	if m.config.InternalConfig.PrometheusEnabled {
-		gzipConfig.Skipper = func(c echo.Context) bool {
-			return c.Request().URL.Path == "/debug/prom/metrics"
-		}
+
+	gzipConfig := middleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return !staticWebDirectoryPaths[c.Path()]
+		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
+
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
 		Skipper: func(c echo.Context) bool {
 			return !staticWebDirectoryPaths[c.Path()]

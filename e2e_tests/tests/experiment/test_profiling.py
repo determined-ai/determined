@@ -6,8 +6,8 @@ import pytest
 import simplejson
 import yaml
 
-import determined.common.api.authentication as auth
 from determined.common import api
+from determined.common.api import authentication, certs
 from tests import config as conf
 from tests import experiment as exp
 
@@ -25,7 +25,9 @@ from tests import experiment as exp
 def test_streaming_observability_metrics_apis(
     framework_base_experiment: str, framework_timings_enabled: bool
 ) -> None:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
 
     config_path = conf.tutorials_path(f"../{framework_base_experiment}/const.yaml")
     model_def_path = conf.tutorials_path(f"../{framework_base_experiment}")

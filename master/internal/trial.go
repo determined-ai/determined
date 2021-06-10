@@ -169,6 +169,7 @@ type (
 
 		// The following fields tracks the reasons for termination.
 		PendingGracefulTermination bool `json:"pending_graceful_termination"`
+		TerminateNoCheckpoint      bool `json:"terminate_no_checkpoint"`
 		TerminationSent            bool `json:"termination_sent"`
 		CancelUnready              bool `json:"cancel_unready"`
 		Killed                     bool `json:"killed"`
@@ -659,7 +660,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	})
 
 	if msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled ||
-		*msg.ExitedReason == workload.InvalidHP {
+		*msg.ExitedReason == workload.InvalidHP || *msg.ExitedReason == workload.InitInvalidHP {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -668,6 +669,10 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	if msg.ExitedReason != nil {
 		reason := *msg.ExitedReason
 		ctx.Log().Infof("exiting trial early from %v with reason %v", msg.Workload, reason)
+
+		if reason == workload.InitInvalidHP {
+			t.TerminateNoCheckpoint = true
+		}
 
 		immediateExit, err := t.sequencer.WorkloadFailed(msg, reason)
 		if err != nil {
@@ -1114,6 +1119,9 @@ func (t *trial) terminated(ctx *actor.Context) {
 			"ignoring trial runner failure since it was canceled or paused " +
 				"before all containers are connected",
 		)
+		return
+	case t.TerminateNoCheckpoint:
+		ctx.Log().Info("Invalid hyperparameter in trial __init__()")
 		return
 	case t.Killed:
 		ctx.Log().WithField("failure", status.Failure).Info(

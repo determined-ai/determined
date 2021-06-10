@@ -330,6 +330,7 @@ class SubprocessLauncher:
                 "metrics": {},
                 "stop_requested": False,
                 "invalid_hp": True,
+                "init_invalid_hp": False,
             }:
                 check.is_none(
                     chief_worker_response, "Received multiple non-SkippedWorkload messages."

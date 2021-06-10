@@ -1,15 +1,13 @@
 import getpass
 from argparse import Namespace
 from collections import namedtuple
-from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from requests import Response
 from termcolor import colored
 
-import determined.common.api.authentication as auth
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 from . import render
@@ -18,20 +16,6 @@ FullUser = namedtuple(
     "FullUser",
     ["username", "admin", "active", "agent_uid", "agent_gid", "agent_user", "agent_group"],
 )
-
-
-def authentication_optional(func: Callable[[Namespace], Any]) -> Callable[[Namespace], Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        try:
-            auth.initialize_session(namespace.master, v.get("user"), try_reauth=False)
-        except api.errors.UnauthenticatedException:
-            pass
-
-        return func(namespace)
-
-    return f
 
 
 def update_user(
@@ -62,19 +46,19 @@ def update_username(current_username: str, master_address: str, new_username: st
     return api.patch(master_address, "users/{}/username".format(current_username), body=request)
 
 
-@authentication_required
+@authentication.required
 def list_users(args: Namespace) -> None:
     render.render_objects(
         FullUser, [render.unmarshal(FullUser, u) for u in api.get(args.master, path="users").json()]
     )
 
 
-@authentication_required
+@authentication.required
 def activate_user(parsed_args: Namespace) -> None:
     update_user(parsed_args.username, parsed_args.master, active=True)
 
 
-@authentication_required
+@authentication.required
 def deactivate_user(parsed_args: Namespace) -> None:
     update_user(parsed_args.username, parsed_args.master, active=False)
 
@@ -90,56 +74,52 @@ def log_in_user(parsed_args: Namespace) -> None:
     # In order to not send clear-text passwords, we hash the password.
     password = api.salt_and_hash(getpass.getpass(message))
 
-    auth_inst = api.Authentication.instance()
+    token_store = authentication.TokenStore(parsed_args.master)
 
-    auth.do_login(parsed_args.master, auth_inst, username=username, password=password)
-    auth_inst.token_store.set_active(username, True)
+    token = authentication.do_login(parsed_args.master, username, password)
+    token_store.set_token(username, token)
+    token_store.set_active(username)
 
 
-@authentication_optional
+@authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
-    auth_inst = api.Authentication.instance()
-    if auth_inst.session is None:
+    auth = authentication.cli_auth
+    if auth is None:
         return
 
     try:
         api.post(
             parsed_args.master,
             "logout",
-            headers={"Authorization": "Bearer {}".format(auth_inst.get_session_token())},
+            headers={"Authorization": "Bearer {}".format(auth.get_session_token())},
             authenticated=False,
         )
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
 
-    auth_inst.token_store.drop_user(auth_inst.get_session_user())
+    token_store = authentication.TokenStore(parsed_args.master)
+    token_store.drop_user(auth.get_session_user())
 
 
-@authentication_required
+@authentication.required
 def rename(parsed_args: Namespace) -> None:
     update_username(parsed_args.target_user, parsed_args.master, parsed_args.new_username)
 
 
-@authentication_required
+@authentication.required
 def change_password(parsed_args: Namespace) -> None:
-    auth_inst = api.Authentication.instance()
-
     if parsed_args.target_user:
         username = parsed_args.target_user
     elif parsed_args.user:
         username = parsed_args.user
     else:
-        username = auth_inst.get_session_user()
+        username = authentication.must_cli_auth().get_session_user()
 
     if not username:
         # The default user should have been set by now by autologin.
         print(colored("Please log in as an admin or user to change passwords", "red"))
         return
-
-    # If the target user's password isn't being changed by another user, reauthenticate after
-    # password change so that the user doesn't have to do so manually.
-    reauthenticate = parsed_args.target_user is None
 
     password = getpass.getpass("New password for user '{}': ".format(username))
     check_password = getpass.getpass("Confirm password: ")
@@ -153,15 +133,16 @@ def change_password(parsed_args: Namespace) -> None:
 
     update_user(username, parsed_args.master, password=password)
 
-    if reauthenticate:
-        set_active = auth_inst.is_user_active(username)
-        auth_inst = api.Authentication.instance()
+    # If the target user's password isn't being changed by another user, reauthenticate after
+    # password change so that the user doesn't have to do so manually.
+    if parsed_args.target_user is None:
+        token_store = authentication.TokenStore(parsed_args.master)
+        token = authentication.do_login(parsed_args.master, username, password)
+        token_store.set_token(username, token)
+        token_store.set_active(username)
 
-        auth.do_login(parsed_args.master, auth_inst, username, password)
-        auth_inst.token_store.set_active(username, set_active)
 
-
-@authentication_required
+@authentication.required
 def link_with_agent_user(parsed_args: Namespace) -> None:
     if parsed_args.agent_uid is None:
         raise api.errors.BadRequestException("agent-uid argument required")
@@ -182,7 +163,7 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
     update_user(parsed_args.det_username, parsed_args.master, agent_user_group=agent_user_group)
 
 
-@authentication_required
+@authentication.required
 def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
@@ -191,7 +172,7 @@ def create_user(parsed_args: Namespace) -> None:
     api.post(parsed_args.master, "users", body=request)
 
 
-@authentication_required
+@authentication.required
 def whoami(parsed_args: Namespace) -> None:
     response = api.get(parsed_args.master, "users/me")
     user = response.json()

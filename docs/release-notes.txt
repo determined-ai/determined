@@ -8,6 +8,45 @@
  Version 0.15
 **************
 
+Version 0.15.6
+==============
+
+**Release Date:** June 2, 2021
+
+**New Features**
+
+-  Add PyTorch's `word-level language modeling RNN example
+   <https://github.com/pytorch/examples/tree/master/word_language_model>`__
+   as a `Determined example
+   <https://github.com/RehanSD/determined/blob/master/examples/nlp/word_language_model/README.md>`__.
+
+-  Support using the Determined shell as a remote host inside Visual
+   Studio Code and PyCharm IDEs. See :ref:`commands-and-shells` for more
+   information.
+
+**Improvements**
+
+-  Deploy: Add support for ``terraform`` 0.15 when using ``det deploy
+   gcp``.
+
+-  REST API: Add a ``preview`` parameter to the Notebook launch API
+   (``POST /api/v1/notebooks``). If set, this API will return a full
+   configuration that is populated with the template and Notebook
+   configuration.
+
+-  WebUI: Improve Experiment list filtering by moving column filters to
+   the table header.
+
+-  WebUI: Improve the Trial details page by moving hyperparameters,
+   workloads, and logs into separate "tabs" on the Trial detail page.
+
+**Bug Fixes**
+
+-  PyTorchTrial: Fix an issue where a DataLoader iterator that uses
+   multiprocessing could cause a hang when exiting.
+-  WebUI: Prevent TQDM log lines from generating large quantities of
+   whitespace when rendering logs.
+
 Version 0.15.5
 ==============
 

@@ -1,16 +1,60 @@
+import enum
+import sys
 import time
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 
-from determined._swagger.client.api.experiments_api import ExperimentsApi
-from determined._swagger.client.models.determinedexperimentv1_state import (
-    Determinedexperimentv1State,
-)
-from determined.common import api
-from determined.common.experimental import checkpoint
+from determined.common.experimental import checkpoint, session
+
+
+class ExperimentState(enum.Enum):
+    UNSPECIFIED = "STATE_UNSPECIFIED"
+    ACTIVE = "STATE_ACTIVE"
+    PAUSED = "STATE_PAUSED"
+    STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    COMPLETED = "STATE_COMPLETED"
+    CANCELED = "STATE_CANCELED"
+    ERROR = "STATE_ERROR"
+    DELETED = "STATE_DELETED"
+
+
+class _GetExperimentResponse:
+    def __init__(self, raw: Any):
+        if not isinstance(raw, dict):
+            raise ValueError(f"GetExperimentResponse must be a dict; got {raw}")
+        if "config" not in raw:
+            raise ValueError(f"GetExperimentResponse must have a config field; got {raw}")
+
+        # We only parse the config and experiment.state because that is all the python sdk needs.
+
+        config = raw["config"]
+        if not isinstance(config, dict):
+            raise ValueError(f'GetExperimentResponse["config"] must be a dict; got {config}')
+        self.config = cast(Dict[str, Any], config)
+
+        if "experiment" not in raw:
+            raise ValueError(f"GetExperimentResponse must have an experiment field; got {raw}")
+        exp = raw["experiment"]
+        if not isinstance(exp, dict):
+            raise ValueError(f'GetExperimentResponse["experiment"] must be a dict; got {exp}')
+        if "state" not in exp:
+            raise ValueError(f'GetExperimentResponse["experiment"] must have a state; got {exp}')
+        state = exp["state"]
+        if not isinstance(state, str):
+            raise ValueError(
+                f'GetExperimentResponse["experiment"]["state"] must be a str; got {state}'
+            )
+
+        self.state = ExperimentState(state)
 
 
 class ExperimentReference:
     """
+    An ExperimentReference object is usually obtained from
+    ``determined.experimental.client.create_experiment()``
+    or ``determined.experimental.client.get_experiment()``.
+
     Helper class that supports querying the set of checkpoints associated with an
     experiment.
     """
@@ -18,39 +62,52 @@ class ExperimentReference:
     def __init__(
         self,
         experiment_id: int,
-        master: str,
-        api_ref: ExperimentsApi,
+        session: session.Session,
     ):
-        self.id = experiment_id
-        self._master = master
-        self._experiments = api_ref
+        self._id = experiment_id
+        self._session = session
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+    def _get(self) -> _GetExperimentResponse:
+        """
+        _get fetches the main GET experiment endpoint and parses the response.
+        """
+        exp_resp = self._session.get(f"/api/v1/experiments/{self.id}").json()
+        return _GetExperimentResponse(exp_resp)
 
     def activate(self) -> None:
-        self._experiments.determined_activate_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/activate")
 
     def archive(self) -> None:
-        self._experiments.determined_archive_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/archive")
 
     def cancel(self) -> None:
-        self._experiments.determined_cancel_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/cancel")
 
     def delete(self) -> None:
-        self._experiments.determined_delete_experiment(id=self.id)
+        """
+        Delete an experiment and all its artifacts from persistent storage.
 
-    def get_config(self) -> object:
-        exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
-        return exp_resp.config
+        You must be authenticated as admin to delete an experiment.
+        """
+        self._session.delete(f"/api/v1/experiments/{self.id}")
+
+    def get_config(self) -> Dict[str, Any]:
+        return self._get().config
 
     def kill(self) -> None:
-        self._experiments.determined_kill_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/kill")
 
     def pause(self) -> None:
-        self._experiments.determined_pause_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/pause")
 
     def unarchive(self) -> None:
-        self._experiments.determined_unarchive_experiment(id=self.id)
+        self._session.post(f"/api/v1/experiments/{self.id}/unarchive")
 
-    def wait(self, interval: int = 5) -> None:
+    def wait(self, interval: int = 5) -> ExperimentState:
         """
         Wait for the experiment to reach a complete or terminal state.
 
@@ -60,19 +117,17 @@ class ExperimentReference:
         """
         elapsed_time = 0
         while True:
-            exp_resp = self._experiments.determined_get_experiment(experiment_id=self.id)
-            if exp_resp.experiment.state in (
-                Determinedexperimentv1State.COMPLETED,
-                Determinedexperimentv1State.CANCELED,
-                Determinedexperimentv1State.DELETED,
-                Determinedexperimentv1State.ERROR,
+            exp = self._get()
+            if exp.state in (
+                ExperimentState.COMPLETED,
+                ExperimentState.CANCELED,
+                ExperimentState.DELETED,
+                ExperimentState.ERROR,
             ):
-                break
-            elif exp_resp.experiment.state == Determinedexperimentv1State.PAUSED:
+                return exp.state
+            elif exp.state == ExperimentState.PAUSED:
                 raise ValueError(
-                    "Experiment {} is in paused state. Make sure the experiment is active.".format(
-                        self.id
-                    )
+                    f"Experiment {self.id} is in paused state. Make sure the experiment is active."
                 )
             else:
                 # ACTIVE, STOPPING_COMPLETED, etc.
@@ -80,9 +135,9 @@ class ExperimentReference:
                 elapsed_time += interval
                 if elapsed_time % 60 == 0:
                     print(
-                        "Waiting for Experiment {} to complete. Elapsed {} minutes".format(
-                            self.id, elapsed_time / 60
-                        )
+                        f"Waiting for Experiment {self.id} to complete. "
+                        f"Elapsed {elapsed_time / 60} minutes",
+                        file=sys.stderr,
                     )
 
     def top_checkpoint(
@@ -140,8 +195,7 @@ class ExperimentReference:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        r = api.get(
-            self._master,
+        r = self._session.get(
             "/api/v1/experiments/{}/checkpoints".format(self.id),
             params={
                 "states": checkpoint.CheckpointState.COMPLETED.value,
@@ -167,7 +221,7 @@ class ExperimentReference:
         checkpoint_refs = []
         for ckpt in checkpoints:
             if ckpt["trialId"] not in t_ids:
-                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
+                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._session))
                 t_ids.add(ckpt["trialId"])
 
         return checkpoint_refs[:limit]

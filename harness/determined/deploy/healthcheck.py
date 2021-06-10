@@ -1,8 +1,10 @@
 import time
+from typing import Optional
 
 import requests
 
 from determined.common import api
+from determined.common.api import certs
 
 from .errors import MasterTimeoutExpired
 
@@ -14,14 +16,21 @@ def _make_master_url(master_host: str, master_port: int, suffix: str = "") -> st
 
 
 def wait_for_master(
-    master_host: str, master_port: int = 8080, timeout: int = DEFAULT_TIMEOUT
+    master_host: str,
+    master_port: int = 8080,
+    timeout: int = DEFAULT_TIMEOUT,
+    cert: Optional[certs.Cert] = None,
 ) -> None:
     master_url = _make_master_url(master_host, master_port)
 
-    return wait_for_master_url(master_url, timeout)
+    return wait_for_master_url(master_url, timeout, cert)
 
 
-def wait_for_master_url(master_url: str, timeout: int = DEFAULT_TIMEOUT) -> None:
+def wait_for_master_url(
+    master_url: str,
+    timeout: int = DEFAULT_TIMEOUT,
+    cert: Optional[certs.Cert] = None,
+) -> None:
     POLL_INTERVAL = 2
     polling = False
     start_time = time.time()
@@ -29,7 +38,7 @@ def wait_for_master_url(master_url: str, timeout: int = DEFAULT_TIMEOUT) -> None
     try:
         while time.time() - start_time < timeout:
             try:
-                r = api.get(master_url, "info", authenticated=False)
+                r = api.get(master_url, "info", authenticated=False, cert=cert)
                 if r.status_code == requests.codes.ok:
                     return
             except api.errors.MasterNotFoundException:

@@ -5,6 +5,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+
+	"github.com/jackc/pgtype"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/pkg/errors"
@@ -503,6 +508,48 @@ func (t *TrialLog) Resolve() {
 
 	t.Message = fmt.Sprintf("[%s] [%s] %s|| %s %s",
 		timestamp, containerID, rankID, level, *t.Log)
+}
+
+// TrialProfilerMetricsBatch represents a row from the `trial_profiler_metrics` table.
+type TrialProfilerMetricsBatch struct {
+	Values     pgtype.Float4Array      `db:"values"`
+	Batches    pgtype.Int4Array        `db:"batches"`
+	Timestamps pgtype.TimestamptzArray `db:"timestamps"`
+	Labels     []byte                  `db:"labels"`
+}
+
+// ToProto converts a TrialProfilerMetricsBatch to its protobuf representation.
+func (t *TrialProfilerMetricsBatch) ToProto() (*trialv1.TrialProfilerMetricsBatch, error) {
+	var pBatch trialv1.TrialProfilerMetricsBatch
+	var err error
+
+	var pLabels trialv1.TrialProfilerMetricLabels
+	if err = protojson.Unmarshal(t.Labels, &pLabels); err != nil {
+		return nil, errors.Wrap(err, "unmarshaling labels")
+	}
+	pBatch.Labels = &pLabels
+
+	var protoValues []float32
+	if err = t.Values.AssignTo(&protoValues); err != nil {
+		return nil, errors.Wrap(err, "setting values")
+	}
+	pBatch.Values = protoValues
+
+	var protoBatches []int32
+	if err = t.Batches.AssignTo(&protoBatches); err != nil {
+		return nil, errors.Wrap(err, "setting batches")
+	}
+	pBatch.Batches = protoBatches
+
+	var protoTimes []time.Time
+	if err = t.Timestamps.AssignTo(&protoTimes); err != nil {
+		return nil, errors.Wrap(err, "setting timestamps")
+	}
+	if pBatch.Timestamps, err = protoutils.TimeProtoSliceFromTimes(protoTimes); err != nil {
+		return nil, errors.Wrap(err, "parsing times to proto")
+	}
+
+	return &pBatch, nil
 }
 
 // TrialLogBatch represents a batch of model.TrialLog.

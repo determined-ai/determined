@@ -1,0 +1,33 @@
+.experiment {
+  color: var(--theme-colors-monochrome-17);
+  transition: opacity 0.3s;
+
+  i {
+    margin-left: var(--theme-sizes-layout-medium);
+  }
+  &:hover {
+    color: var(--theme-colors-monochrome-17);
+    opacity: 0.75;
+  }
+}
+.trial {
+  margin-top: var(--theme-sizes-layout-medium);
+}
+.state {
+  border-radius: 100px;
+  display: inline-flex;
+  font-size: var(--theme-sizes-font-micro);
+  font-weight: 600;
+  margin-right: var(--theme-sizes-layout-medium);
+  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+  text-transform: uppercase;
+}
+
+@media only screen and (min-width: $breakpoint-tablet) {
+  .experiment {
+    margin-right: var(--theme-sizes-layout-medium);
+  }
+  .trial {
+    margin-top: 0;
+  }
+}

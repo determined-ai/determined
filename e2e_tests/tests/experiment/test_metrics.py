@@ -4,8 +4,8 @@ from typing import Set, Union
 
 import pytest
 
-import determined.common.api.authentication as auth
 from determined.common import api
+from determined.common.api import authentication, certs
 from tests import config as conf
 from tests import experiment as exp
 
@@ -13,7 +13,9 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu  # type: ignore
 @pytest.mark.timeout(600)  # type: ignore
 def test_streaming_metrics_api() -> None:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    # TODO: refactor tests to not use cli singleton auth.
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
 
     pool = mp.pool.ThreadPool(processes=7)
 
@@ -63,7 +65,8 @@ def test_streaming_metrics_api() -> None:
 @pytest.mark.distributed  # type: ignore
 @pytest.mark.timeout(1800)  # type: ignore
 def test_hp_importance_api() -> None:
-    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
 
     pool = mp.pool.ThreadPool(processes=1)
 

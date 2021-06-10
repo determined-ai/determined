@@ -1,23 +1,24 @@
 from typing import Optional
 
-from determined._swagger.client.api.trials_api import TrialsApi
-from determined.common import api, check
-from determined.common.experimental import checkpoint
+from determined.common import check
+from determined.common.experimental import checkpoint, session
 
 
 class TrialReference:
     """
+    A TrialReference object is usually obtained from
+    ``determined.experimental.client.get_trial()``.
+
     Trial reference class used for querying relevant
     :class:`~determined.experimental.Checkpoint` instances.
     """
 
-    def __init__(self, trial_id: int, master: str, api_ref: TrialsApi):
+    def __init__(self, trial_id: int, session: session.Session):
         self.id = trial_id
-        self._master = master
-        self._trials = api_ref
+        self._session = session
 
     def kill(self) -> None:
-        self._trials.determined_kill_trial(id=self.id)
+        self._session.post(f"/api/v1/trials/{self.id}/kill")
 
     def top_checkpoint(
         self,
@@ -98,11 +99,10 @@ class TrialReference:
             )
 
         if uuid:
-            resp = api.get(self._master, "/api/v1/checkpoints/{}".format(uuid))
-            return checkpoint.Checkpoint.from_json(resp.json()["checkpoint"], master=self._master)
+            resp = self._session.get("/api/v1/checkpoints/{}".format(uuid))
+            return checkpoint.Checkpoint.from_json(resp.json()["checkpoint"], self._session)
 
-        r = api.get(
-            self._master,
+        r = self._session.get(
             "/api/v1/trials/{}/checkpoints".format(self.id),
             # The default sort order from the API is by batch number. The order
             # by parameter indicates descending order.
@@ -114,7 +114,7 @@ class TrialReference:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if latest:
-            return checkpoint.Checkpoint.from_json(checkpoints[0], master=self._master)
+            return checkpoint.Checkpoint.from_json(checkpoints[0], self._session)
 
         if not sort_by:
             sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
@@ -126,7 +126,7 @@ class TrialReference:
                 [c for c in checkpoints if c["metrics"] is not None],
                 key=lambda x: x["metrics"]["validationMetrics"][sort_by],
             ),
-            master=self._master,
+            self._session,
         )
 
     def __repr__(self) -> str:

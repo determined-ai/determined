@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  JupyterLab: upgrade the JupyterLab version to 3.0.16.

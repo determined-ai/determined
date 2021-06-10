@@ -177,7 +177,7 @@ func (t *tensorboardManager) newTensorBoard(
 		),
 	}
 
-	uniqMounts := map[expconf.BindMount]bool{}
+	uniqMounts := map[string]model.BindMount{}
 	uniqEnvVars := map[string]string{}
 
 	taskID := sproto.NewTaskID()
@@ -200,7 +200,7 @@ func (t *tensorboardManager) newTensorBoard(
 				RawHostPath:      c.HostPath(),
 				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
 			}).(expconf.BindMount)
-			uniqMounts[sharedFSMount] = true
+			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
 
 		case expconf.S3Config:
@@ -244,7 +244,7 @@ func (t *tensorboardManager) newTensorBoard(
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
 			for _, mount := range exp.Config.BindMounts() {
-				uniqMounts[mount] = true
+				uniqMounts[mount.ContainerPath()] = model.ToModelBindMount(mount)
 			}
 
 		default:
@@ -275,13 +275,19 @@ func (t *tensorboardManager) newTensorBoard(
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading raw experiment config: %d", mostRecentExpID)
+		return nil, errors.Wrapf(err, "error loading experiment config: %d", mostRecentExpID)
 	}
 
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError,
 			"unable to marshal experiment configuration")
 	}
+
+	expConf, err := expconf.ParseAnyExperimentConfigYAML(confBytes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
+	}
+	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
 	additionalFiles = append(additionalFiles,
 		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
@@ -306,13 +312,22 @@ func (t *tensorboardManager) newTensorBoard(
 
 	refineArgs(config.TensorBoardArgs)
 	config.Entrypoint = append(
-		[]string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")},
+		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
 		config.TensorBoardArgs...)
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
-	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
+	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
+		GPU: expConf.Environment().Image().GPU()}
+
+	var bindMounts []model.BindMount
+
+	for _, uniqMount := range uniqMounts {
+		bindMounts = append(bindMounts, uniqMount)
+	}
+
+	config.BindMounts = append(config.BindMounts, bindMounts...)
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
@@ -388,16 +403,6 @@ func (t *tensorboardManager) getTensorBoardConfigs(req TensorboardRequest) (
 	}
 
 	return configs, nil
-}
-
-func getMounts(m map[expconf.BindMount]bool) []model.BindMount {
-	var bindMounts []model.BindMount
-
-	for mount := range m {
-		bindMounts = append(bindMounts, model.ToModelBindMount(mount))
-	}
-
-	return bindMounts
 }
 
 func getEnvVars(m map[string]string) []string {

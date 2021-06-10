@@ -28,4 +28,11 @@ fi
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
-exec jupyter lab --config /run/determined/workdir/jupyter-conf.py --port=${NOTEBOOK_PORT}
+exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
+                 --ServerApp.allow_origin="*" \
+                 --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
+                 --ServerApp.allow_root=True \
+                 --ServerApp.ip="0.0.0.0" \
+                 --ServerApp.open_browser=False \
+                 --ServerApp.token="" \
+                 --ServerApp.trust_xheaders=True

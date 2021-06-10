@@ -21,7 +21,7 @@ interface Props {
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
     .map(getWorkload)

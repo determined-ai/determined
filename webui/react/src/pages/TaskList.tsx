@@ -73,15 +73,9 @@ const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const TaskList: React.FC = () => {
-  const { auth, users } = useStore();
+  const { users } = useStore();
   const storage = useStorage(STORAGE_PATH);
-  const initFilters = storage.getWithDefault(
-    STORAGE_FILTERS_KEY,
-    {
-      ...defaultFilters,
-      users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
-    },
-  );
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ canceler ] = useState(new AbortController());
   const [ tasks, setTasks ] = useState<CommandTask[]>([]);
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);

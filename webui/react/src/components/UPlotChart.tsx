@@ -11,6 +11,12 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
 }
 
+interface ScaleZoomData {
+  isZoomed?: boolean;
+  max?: number;
+  min?: number;
+}
+
 interface Props {
   data?: AlignedData;
   options?: Options;
@@ -25,6 +31,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
 ) => {
   const [ chart, setChart ] = useState<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
+  const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
 
   const hasData: boolean = useMemo(() => {
     // no x values
@@ -44,10 +51,33 @@ const UPlotChart: React.FC<Props> = forwardRef((
   useEffect(() => {
     if (!chartDivRef.current || !hasData || !options) return;
 
+    scalesZoomData.current = {};
+
     const optionsExtended = uPlot.assign(
       {
         cursor: { drag: { dist: 5, uni: 10, x: true, y: true } },
-        hooks: { ready: [ (chart: uPlot) => setChart(chart) ] },
+        hooks: {
+          ready: [ (chart: uPlot) => setChart(chart) ],
+          setScale: [ (uPlot: uPlot, scaleKey: string) => {
+            if (![ 'x', 'y' ].includes(scaleKey)) return;
+
+            const currentMax: number|undefined =
+              uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
+            const currentMin: number|undefined =
+              uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
+            let max: number|undefined = scalesZoomData.current[scaleKey]?.max;
+            let min: number|undefined = scalesZoomData.current[scaleKey]?.min;
+
+            if (max == null || currentMax > max) max = currentMax;
+            if (min == null || currentMin < min) min = currentMin;
+
+            scalesZoomData.current[scaleKey] = {
+              isZoomed: currentMax < max || currentMin > min,
+              max,
+              min,
+            };
+          } ],
+        },
         width: chartDivRef.current.offsetWidth,
       },
       options,
@@ -66,7 +96,8 @@ const UPlotChart: React.FC<Props> = forwardRef((
    */
   useEffect(() => {
     if (!chart || !data) return;
-    chart.setData(data);
+    const isZoomed = !!Object.values(scalesZoomData.current).find(i => i.isZoomed === true);
+    chart.setData(data, !isZoomed);
   }, [ chart, data ]);
 
   /*

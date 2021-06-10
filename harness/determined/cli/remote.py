@@ -4,7 +4,7 @@ from typing import Any, List
 
 from determined.cli import command
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
 from .command import (
@@ -17,7 +17,7 @@ from .command import (
 )
 
 
-@authentication_required
+@authentication.required
 def run_command(args: Namespace) -> None:
     config = parse_config(args.config_file, args.entrypoint, args.config, args.volume)
     resp = launch_command(

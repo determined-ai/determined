@@ -4,35 +4,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-09ff2b6ef00accc2e
-      Agent: ami-0c819f496e64da4c8
+      Agent: ami-0efeca825a571ae06
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-0b329fb1f17558744
-    #   Agent: ami-039f641a3a4bffdf6
+    #   Agent: ami-0d7f0c8fb6e66cb82
     # ap-southeast-1:
     #   Master: ami-048b4b1ddefe6759f
-    #   Agent: ami-0c830dbfbf8ee217e
+    #   Agent: ami-00245a72bd4a858b3
     # ap-southeast-2:
     #   Master: ami-052a251c7ca533c26
-    #   Agent: ami-079a74a5d8f8e774b
+    #   Agent: ami-07ed444fc10e23a2f
     eu-central-1:
       Master: ami-0d3905203a039e3b0
-      Agent: ami-0fd07f4df8a2e88f4
+      Agent: ami-031db13a810aaedee
     eu-west-1:
       Master: ami-0b7fd7bc9c6fb1c78
-      Agent: ami-01d16224bf52784c0
+      Agent: ami-069b5f5168bc2188e
     # eu-west-2:
     #   Master: ami-02ead6ecbd926d792
-    #   Agent: ami-0832933cb11595af1
+    #   Agent: ami-0f7b252df6407ea23
     us-east-1:
       Master: ami-04cc2b0ad9e30a9c8
-      Agent: ami-0a81c9bdc5a503c17
+      Agent: ami-0038750f34e275214
     us-east-2:
       Master: ami-02fc6052104add5ae
-      Agent: ami-0ede23d3c7d598490
+      Agent: ami-0e8f77ea3a8f326c5
     us-west-2:
       Master: ami-0a62a78cfedc09d76
-      Agent: ami-0af62acf91e65418f
+      Agent: ami-059f637cdef525077
 
 Parameters:
   VpcCIDR:
@@ -82,7 +82,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.15.6.dev0
+    Default: 0.16.0.dev0
 
   DBPassword:
     Type: String
@@ -792,6 +792,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       InstanceId: !Ref MasterInstance
+      Domain: vpc
       Tags:
         - Key: user
           Value: !Ref AWS::StackName

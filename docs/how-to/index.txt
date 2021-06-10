@@ -24,6 +24,7 @@ starting guides.
 -  :ref:`how-to-tensorboard`
 -  :ref:`use-trained-models`
 -  :ref:`rest-api-getting-started`
+-  :ref:`how-to-profiling`
 
 The full list of our how-to guides can be found below:
 
