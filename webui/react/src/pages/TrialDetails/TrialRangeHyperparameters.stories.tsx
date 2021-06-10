@@ -41,7 +41,7 @@ const TrialRangeHyperparametersContainer = () => {
         learning_rate: {
           maxval: 1,
           minval: 0.0001,
-          type: ExperimentHyperParamType.Double,
+          type: ExperimentHyperParamType.Log,
         },
         n_filters1: {
           maxval: 64,
