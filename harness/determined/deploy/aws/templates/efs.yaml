@@ -849,6 +849,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       InstanceId: !Ref MasterInstance
+      Domain: vpc
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
