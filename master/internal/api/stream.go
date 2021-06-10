@@ -61,11 +61,12 @@ type TerminationCheckFn func() (bool, error)
 // The type of batches produced by the FetchBatchFn must match those handled by the
 // OnBatchFn or the actor will panic.
 type BatchStreamProcessor struct {
-	req            BatchRequest
-	fetcher        FetchBatchFn
-	process        OnBatchFn
-	terminateCheck TerminationCheckFn
-	batchWaitTime  time.Duration
+	req               BatchRequest
+	fetcher           FetchBatchFn
+	process           OnBatchFn
+	terminateCheck    TerminationCheckFn
+	batchWaitTime     time.Duration
+	batchMissWaitTime time.Duration
 }
 
 // NewBatchStreamProcessor creates a new BatchStreamProcessor.
@@ -75,13 +76,15 @@ func NewBatchStreamProcessor(
 	process OnBatchFn,
 	terminateCheck TerminationCheckFn,
 	batchWaitTime time.Duration,
+	batchMissWaitTime time.Duration,
 ) *BatchStreamProcessor {
 	return &BatchStreamProcessor{
-		req:            req,
-		fetcher:        fetcher,
-		process:        process,
-		terminateCheck: terminateCheck,
-		batchWaitTime:  batchWaitTime,
+		req:               req,
+		fetcher:           fetcher,
+		process:           process,
+		terminateCheck:    terminateCheck,
+		batchWaitTime:     batchWaitTime,
+		batchMissWaitTime: batchMissWaitTime,
 	}
 }
 
@@ -90,6 +93,7 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 	t := time.NewTicker(p.batchWaitTime)
 	defer t.Stop()
 	for {
+		var miss bool
 		switch batch, err := p.fetcher(p.req); {
 		case err != nil:
 			return errors.Wrapf(err, "failed to fetch batch")
@@ -107,6 +111,9 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 					return nil
 				}
 			}
+
+			t.Reset(p.batchMissWaitTime)
+			miss = true
 		default:
 			// Check the ctx again before we process, since fetch takes most of the time and
 			// a send on a closed ctx will print errors in the master log that can be misleading.
@@ -127,6 +134,10 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-t.C:
+			if miss {
+				miss = false
+				t.Reset(p.batchWaitTime)
+			}
 			continue
 		}
 	}
