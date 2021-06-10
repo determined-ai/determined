@@ -680,7 +680,7 @@ class SysMetricCollectorThread(threading.Thread):
 
 class MetricsBatcherThread(threading.Thread):
     """
-    This is a thread that exists solely so that we can batch Timings and ship them to the
+    This is a thread that exists solely so that we can batch measurements and ship them to the
     SenderThread every FLUSH_INTERVAL seconds.
     """
 
