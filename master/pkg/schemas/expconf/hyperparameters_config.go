@@ -47,7 +47,8 @@ type HyperparameterV0 struct {
 	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
 	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
-	RawNestedHyperparameter      *map[string]HyperparameterV0 `union:"type,object" json:"-"`
+	// This option does not actually go through union marshaling and unmarshaling logic.
+	RawNestedHyperparameter *map[string]HyperparameterV0 `union:"type,object" json:"-"`
 }
 
 // Merge prevents recursive merging of hyperparameters.
@@ -63,23 +64,12 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if parsedMap, ok := parsed.(map[string]interface{}); ok {
-		hpType, hasType := parsedMap["type"]
-		if (hasType && hpType.(string) == "object") || !hasType {
-			nestedHPs := make(map[string]HyperparameterV0)
-			if hasType {
-				delete(parsedMap, "type")
-			}
-			for key := range parsedMap {
-				bytes, _ := json.Marshal(parsedMap[key])
-				var hp HyperparameterV0
-				err := json.Unmarshal(bytes, &hp)
-				if err != nil {
-					return err
-				}
-				nestedHPs[key] = hp
-			}
-			h.RawNestedHyperparameter = &nestedHPs
-			return nil
+		_, hasType := parsedMap["type"]
+		// If "type" not in map, then we have a nested hp, which
+		// we will unmarshal into map[string]HyperparameterV0 instead
+		// of using the union unmarshaling logic.
+		if !hasType {
+			return json.Unmarshal(data, &h.RawNestedHyperparameter)
 		}
 		return union.Unmarshal(data, h)
 	}
@@ -89,6 +79,8 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (h HyperparameterV0) MarshalJSON() ([]byte, error) {
+	// Intercept union marshaling logic for nested hps and directly
+	// marshal the underlying map[string]HyperparameterV0.
 	if h.RawNestedHyperparameter != nil {
 		return json.Marshal(*h.RawNestedHyperparameter)
 	}

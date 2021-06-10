@@ -91,7 +91,7 @@ func TestNestedGrid(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	flatSamples := []hparamSample{
+	expected := []hparamSample{
 		{"1": 0, "2": map[string]interface{}{"3": 0}},
 		{"1": 0, "2": map[string]interface{}{"3": 5}},
 		{"1": 0, "2": map[string]interface{}{"3": 10}},
@@ -101,10 +101,6 @@ func TestNestedGrid(t *testing.T) {
 		{"1": 20, "2": map[string]interface{}{"3": 0}},
 		{"1": 20, "2": map[string]interface{}{"3": 5}},
 		{"1": 20, "2": map[string]interface{}{"3": 10}},
-	}
-	var expected []hparamSample
-	for _, sample := range flatSamples {
-		expected = append(expected, unflattenSample(sample))
 	}
 	assert.DeepEqual(t, actual, expected)
 }

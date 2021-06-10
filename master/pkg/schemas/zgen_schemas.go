@@ -1567,13 +1567,6 @@ var (
                 "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter-categorical.json"
             },
             {
-                "unionKey": "type:array",
-                "type": "array",
-                "items": {
-                    "$ref": "http://determined.ai/schemas/expconf/v0/hyperparameter.json"
-                }
-            },
-            {
                 "unionKey": "always",
                 "type": "object",
                 "checks": {
@@ -1590,10 +1583,7 @@ var (
             {
                 "unionKey": "never",
                 "not": {
-                    "type": [
-                        "object",
-                        "array"
-                    ]
+                    "type": "object"
                 }
             }
         ]
