@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
@@ -15,8 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/hashicorp/go-multierror"
-
-	"github.com/determined-ai/determined/master/internal/protoutil"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -43,10 +43,17 @@ const (
 )
 
 var (
-	masterLogsBatchWaitTime           = 100 * time.Millisecond
-	trialLogsBatchWaitTime            = 100 * time.Millisecond
-	distinctFieldBatchWaitTime        = 5 * time.Second
-	trialProfilerMetricsBatchWaitTime = 10 * time.Millisecond
+	masterLogsBatchWaitTime     = 100 * time.Millisecond
+	masterLogsBatchMissWaitTime = time.Second
+
+	trialLogsBatchWaitTime     = 100 * time.Millisecond
+	trialLogsBatchMissWaitTime = time.Second
+
+	distinctFieldBatchWaitTime = 5 * time.Second
+
+	trialProfilerMetricsBatchWaitTime     = 100 * time.Millisecond
+	trialProfilerMetricsBatchMissWaitTime = 5 * time.Second
+
 	// TrialAvailableSeriesBatchWaitTime is exported to be changed by tests.
 	TrialAvailableSeriesBatchWaitTime = 15 * time.Second
 
@@ -128,6 +135,7 @@ func (a *apiServer) TrialLogs(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
 		trialLogsBatchWaitTime,
+		trialLogsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 
@@ -215,6 +223,7 @@ func (a *apiServer) TrialLogsFields(
 		fetch,
 		onBatch,
 		nil,
+		distinctFieldBatchWaitTime,
 		distinctFieldBatchWaitTime,
 	).Run(resp.Context())
 }
@@ -420,7 +429,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		return status.Error(codes.NotFound, "trial not found")
 	}
 
-	labelsParam, err := protojson.Marshal(req.Labels)
+	labelsJSON, err := protojson.Marshal(req.Labels)
 	if err != nil {
 		return fmt.Errorf("failed to marshal labels: %w", err)
 	}
@@ -432,12 +441,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		case lr.Limit <= 0:
 			return nil, nil
 		}
-
-		var batchOfBatches []*trialv1.TrialProfilerMetricsBatch
-		return model.TrialProfilerMetricsBatchBatch(batchOfBatches), a.m.db.QueryProto(
-			"get_trial_profiler_metrics",
-			&batchOfBatches, labelsParam, lr.Offset, lr.Limit,
-		)
+		return a.m.db.GetTrialProfilerMetricsBatches(labelsJSON, lr.Offset, lr.Limit)
 	}
 
 	onBatch := func(b api.Batch) error {
@@ -454,6 +458,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		onBatch,
 		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
 		trialProfilerMetricsBatchWaitTime,
+		trialProfilerMetricsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 
@@ -487,6 +492,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), 10),
+		TrialAvailableSeriesBatchWaitTime,
 		TrialAvailableSeriesBatchWaitTime,
 	).Run(resp.Context())
 }
@@ -525,7 +531,7 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 			continue
 		}
 
-		timestamps, err := protoutil.TimeSliceFromProto(batch.Timestamps)
+		timestamps, err := protoutils.TimeSliceFromProto(batch.Timestamps)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("failed to convert proto timestamps: %w", err))
 			continue

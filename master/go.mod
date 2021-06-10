@@ -31,6 +31,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jackc/pgconn v1.8.0
+	github.com/jackc/pgtype v1.6.2
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/labstack/echo-contrib v0.11.0
