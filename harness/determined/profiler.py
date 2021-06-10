@@ -305,14 +305,13 @@ class ProfilerAgent:
                     trial_id, agent_id, self.send_queue, self.pynvml_wrapper
                 )
 
-            if self.timings_is_enabled:
-                num_producers += 1
-                self.metrics_batcher_queue = (
-                    queue.Queue()
-                )  # type: """queue.Queue[Union[NamedMeasurement, StartMessage, ShutdownMessage]]"""
-                self.metrics_batcher_thread = MetricsBatcherThread(
-                    trial_id, agent_id, self.metrics_batcher_queue, self.send_queue
-                )
+            num_producers += 1
+            self.metrics_batcher_queue = (
+                queue.Queue()
+            )  # type: """queue.Queue[Union[NamedMeasurement, StartMessage, ShutdownMessage]]"""
+            self.metrics_batcher_thread = MetricsBatcherThread(
+                trial_id, agent_id, self.metrics_batcher_queue, self.send_queue
+            )
 
             self.sender_thread = ProfilerSenderThread(
                 self.send_queue, self.master_url, num_producers, self.send_batch_fn
@@ -343,8 +342,7 @@ class ProfilerAgent:
         if self.sysmetrics_is_enabled:
             self.sys_metric_collector_thread.start()
 
-        if self.timings_is_enabled:
-            self.metrics_batcher_thread.start()
+        self.metrics_batcher_thread.start()
 
     def end(self) -> None:
         if not self.is_enabled:
@@ -466,8 +464,7 @@ class ProfilerAgent:
         if self.sysmetrics_is_enabled:
             self.sys_metric_collector_thread.activate()
 
-        if self.timings_is_enabled:
-            self.metrics_batcher_thread.activate()
+        self.metrics_batcher_thread.activate()
 
         self.shutdown_timer.activate()
         self.has_started = True
@@ -494,9 +491,8 @@ class ProfilerAgent:
                 self.sys_metric_collector_thread.send_shutdown_signal()
                 self.sys_metric_collector_thread.join()
 
-            if self.timings_is_enabled:
-                self.metrics_batcher_thread.send_shutdown_signal()
-                self.metrics_batcher_thread.join()
+            self.metrics_batcher_thread.send_shutdown_signal()
+            self.metrics_batcher_thread.join()
 
             self.sender_thread.join()
 
