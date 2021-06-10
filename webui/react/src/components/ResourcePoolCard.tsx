@@ -16,9 +16,9 @@ import css from './ResourcePoolCard.module.scss';
 import ResourcePoolDetails from './ResourcePoolDetails';
 
 interface Props {
-  gpuContainerStates: ResourceState[];
+  computeContainerStates: ResourceState[];
   resourcePool: ResourcePool;
-  totalGpuSlots: number;
+  totalComputeSlots: number;
 }
 
 export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
@@ -48,7 +48,7 @@ const rpAttrs = [
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
-  [ 'auxContainerCapacityPerAgent', 'Max CPU containers per agent' ],
+  [ 'auxContainerCapacityPerAgent', 'Max Aux Containers Per Agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
 ];
 
@@ -65,7 +65,7 @@ const agentStatusText = (numAgents: number): string => {
 };
 
 const ResourcePoolCard: React.FC<Props> = (
-  { gpuContainerStates, resourcePool: rp, totalGpuSlots }: Props,
+  { computeContainerStates, resourcePool: rp, totalComputeSlots }: Props,
 ) => {
   const [ detailVisible, setDetailVisible ] = useState(false);
 
@@ -87,8 +87,8 @@ const ResourcePoolCard: React.FC<Props> = (
   if (!description) descriptionClasses.push(css.empty);
 
   const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
-  if (rp.defaultComputePool) tags.push('default gpu pool');
-  if (rp.defaultAuxPool) tags.push('default cpu pool');
+  if (rp.defaultComputePool) tags.push('default compute pool');
+  if (rp.defaultAuxPool) tags.push('default aux pool');
 
   const toggleModal = useCallback(
     () => {
@@ -107,7 +107,6 @@ const ResourcePoolCard: React.FC<Props> = (
             {tags.map(tag => (
               <Badge key={tag} type={BadgeType.Header}>{tag.toUpperCase()}</Badge>
             ))}
-            {/* QUESTION do we want default gpu or cpu pool */}
           </div>
         </div>
       </div>
@@ -130,10 +129,10 @@ const ResourcePoolCard: React.FC<Props> = (
         <hr />
         <section>
           <SlotAllocationBar
-            resourceStates={gpuContainerStates}
-            totalSlots={totalGpuSlots} />
+            resourceStates={computeContainerStates}
+            totalSlots={totalComputeSlots} />
           <div className={css.cpuContainers}>
-            <span>CPU containers running:</span>
+            <span>Aux containers running:</span>
             <span>{rp.auxContainersRunning}</span>
           </div>
         </section>

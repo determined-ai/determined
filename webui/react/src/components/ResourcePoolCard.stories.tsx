@@ -14,8 +14,8 @@ export default {
 
 export const Default = (): React.ReactNode => {
   return <ResourcePoolCard
-    gpuContainerStates={[]}
+    computeContainerStates={[]}
     resourcePool={rps.random()}
-    totalGpuSlots={3}
+    totalComputeSlots={3}
   />;
 };

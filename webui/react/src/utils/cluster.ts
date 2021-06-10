@@ -1,5 +1,7 @@
 import { Agent, ResourceState, ResourceType } from 'types';
 
+const unspecifiedResourceTypes = new Set([ ResourceType.ALL, ResourceType.UNSPECIFIED ]);
+
 export const getSlotContainerStates = (
   agents: Agent[],
   resourceType: ResourceType,
@@ -9,7 +11,8 @@ export const getSlotContainerStates = (
   const targetAgents = agents.filter(agent =>
     resourcePoolName ? agent.resourcePool === resourcePoolName : true);
   const slotContainerStates = targetAgents
-    .map(agent => agent.resources.filter(res => res.type === resourceType))
+    .map(agent => unspecifiedResourceTypes.has(resourceType) ?
+      agent.resources.filter(res => res.type === resourceType) : agent.resources)
     .reduce((acc, cur) => {
       acc.push(...cur);
       return acc;
