@@ -1,4 +1,4 @@
-- name: bind mounts append when merged
+- name: unique bind mounts append when merged
   merge_as: http://determined.ai/schemas/expconf/v0/bind-mounts.json
   case:
     - host_path: /asdf
@@ -6,6 +6,8 @@
   merge_src:
     - host_path: /zxcv
       container_path: /zxcv
+    - host_path: /not_asdf
+      container_path: /asdf
   merged:
     - host_path: /asdf
       container_path: /asdf
@@ -16,7 +18,7 @@
       propagation:
       read_only:
 
-- name: devices append when merged
+- name: unique devices append when merged
   merge_as: http://determined.ai/schemas/expconf/v0/devices.json
   case:
     - host_path: /asdf
@@ -24,6 +26,8 @@
   merge_src:
     - host_path: /zxcv
       container_path: /zxcv
+    - host_path: /not_asdf
+      container_path: /asdf
   merged:
     - host_path: /asdf
       container_path: /asdf

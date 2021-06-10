@@ -223,7 +223,17 @@ func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
 	// Merge by appending.
 	out := BindMountsConfigV0{}
 	out = append(out, b...)
-	out = append(out, tOther...)
+
+	// Prevent duplicate container paths as a result of the merge.
+	paths := map[string]bool{}
+	for _, mount := range b {
+		paths[mount.ContainerPath()] = true
+	}
+	for _, mount := range tOther {
+		if _, ok := paths[mount.ContainerPath()]; !ok {
+			out = append(out, mount)
+		}
+	}
 	return out
 }
 
@@ -241,12 +251,22 @@ type BindMountV0 struct {
 type DevicesConfigV0 []DeviceV0
 
 // Merge implements the Mergable interface.
-func (b DevicesConfigV0) Merge(other interface{}) interface{} {
+func (d DevicesConfigV0) Merge(other interface{}) interface{} {
 	tOther := other.(DevicesConfigV0)
 	// Merge by appending.
 	out := DevicesConfigV0{}
-	out = append(out, b...)
-	out = append(out, tOther...)
+	out = append(out, d...)
+
+	// Prevent duplicate container paths as a result of the merge.
+	paths := map[string]bool{}
+	for _, mount := range d {
+		paths[mount.ContainerPath()] = true
+	}
+	for _, mount := range tOther {
+		if _, ok := paths[mount.ContainerPath()]; !ok {
+			out = append(out, mount)
+		}
+	}
 	return out
 }
 
