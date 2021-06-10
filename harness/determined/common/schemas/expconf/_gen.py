@@ -35,6 +35,16 @@ schemas = {
             }
         }
     },
+    "checks": {
+        "credential and connection_string must not both be set": {
+            "not": {
+                "required": [
+                    "connection_string",
+                    "credential"
+                ]
+            }
+        }
+    },
     "properties": {
         "type": {
             "const": "azure"

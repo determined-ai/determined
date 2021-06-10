@@ -172,3 +172,13 @@
     container: container1
     connection_string: conn_str
     credential: my_pwd
+
+- name: azure is valid when both account_url and credential specified
+  complete_as:
+    - http://determined.ai/schemas/expconf/v0/azure.json
+  case:
+    type: azure
+    container: my_container
+    account_url: my_acc_url
+    credential: my_pwd
+    
