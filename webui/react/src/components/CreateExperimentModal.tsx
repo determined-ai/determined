@@ -129,7 +129,7 @@ const CreateExperimentModal: React.FC<Props> = ({
       bodyStyle={{ padding: 0 }}
       footer={(
         <>
-          <Button onClick={handleShowForm}>Edit Form</Button>
+          <Button onClick={handleShowForm}>Show Simple Config</Button>
           <Button disabled={!!configError} type="primary" onClick={handleOk}>{type}</Button>
         </>
       )}
@@ -157,7 +157,7 @@ const CreateExperimentModal: React.FC<Props> = ({
   ) : (
     <Modal
       footer={<>
-        <Button onClick={handleShowEditor}>Edit Full Config</Button>
+        <Button onClick={handleShowEditor}>Show Full Config</Button>
         <Button type="primary" onClick={handleOk}>{type}</Button>
       </>}
       style={{ minWidth: '600px' }}
