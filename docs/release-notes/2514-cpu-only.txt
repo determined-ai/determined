@@ -1,0 +1,10 @@
+:orphan:
+
+**Improvements**
+
+-  Added support for CPU-based training. This makes it possible to run
+   Determined on server clusters without GPUs, including on-prem, AWS,
+   GCP, and Kubernetes-based (default scheduler only) configurations.
+
+-  **Breaking Change** REST API: rename ``*gpu*`` and ``*cpu*`` fields
+   in ``ResourcePool`` object to ``*compute**`` and ``*aux*``.
