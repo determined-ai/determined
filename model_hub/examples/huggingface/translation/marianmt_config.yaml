@@ -1,0 +1,51 @@
+name: huggingface_translation_marian
+hyperparameters:
+  pretrained_model_name_or_path: Helsinki-NLP/opus-mt-en-ro
+  model_mode: seq2seq-lm
+  use_pretrained_weights: true
+  use_apex_amp: false
+  # Training Args
+  global_batch_size: 8
+  learning_rate: 5e-5
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  lr_scheduler_type: linear
+  num_warmup_steps: 0
+data:
+  dataset_name: wmt16
+  dataset_config_name: ro-en
+  train_file: null
+  validation_file: null
+  preprocessing_num_workers: null
+  cache_dir: null
+  overwrite_cache: false
+  pad_to_max_length: false
+  source_lang: en
+  target_lang: ro
+  max_source_length: 512
+  max_target_length: 128
+  val_max_target_length: null
+  num_beams: 4
+  ignore_pad_token_for_loss: true
+  source_prefix: null
+  forced_bos_token: null
+
+# Number of records per epoch differs based on max_seq_length.
+records_per_epoch: 610320
+searcher:
+  name: single
+  metric: bleu
+  max_length:
+    epochs: 1
+  smaller_is_better: false
+environment:
+  image: 
+    gpu: determinedai/model-hub-transformers:0.16.2.dev0
+resources:
+  slots_per_trial: 2
+# We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
+# host_path on the agent instance disk for reuse if the same experiment is run on this instance.
+bind_mounts:
+  - host_path: /tmp
+    container_path: /root/.cache
+entrypoint: translation_trial:TranslationTrial

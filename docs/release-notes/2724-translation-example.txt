@@ -1,0 +1,4 @@
+:orphan:
+
+**New Features** - Add Huggingface transformers translation example to
+Determined's model-hub.

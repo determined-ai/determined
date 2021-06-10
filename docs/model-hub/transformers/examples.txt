@@ -45,7 +45,8 @@ table below for a summary of the **model-hub** transformers examples:
 
    -  -  translation
       -  WMT-16
-      -  Coming Soon
+      -  :download:`token-classification.tgz
+         </examples/token-classification.tgz>`
 
 Each of the Determined trials above subclasses the ``BaseTransformerTrial`` and makes use of helper
 functions in ``model_hub.huggingface`` to drastically reduce the code needed to run the example. See
