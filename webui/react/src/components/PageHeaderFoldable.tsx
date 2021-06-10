@@ -10,7 +10,7 @@ export interface Option {
   isLoading?: boolean,
   key: string;
   label: string;
-  onClick?: () => void;
+  onClick?: (ev: React.MouseEvent) => void;
   tooltip?: string;
 }
 
@@ -45,7 +45,7 @@ const PageHeaderFoldable: React.FC<Props> = (
             className={css.optionsDropdownItem}
             disabled={!opt.onClick}
             key={opt.key}
-            onClick={opt.onClick}
+            onClick={(e) => opt.onClick && opt.onClick(e.domEvent)}
           >{renderOptionLabel(opt)}</Menu.Item>
         ))}
       </Menu>
