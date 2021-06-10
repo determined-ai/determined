@@ -213,6 +213,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	imageID := ""
 	instanceType := ""
 	slotsPerAgent := -1
+	slotType := ""
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
@@ -222,6 +223,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			imageID = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
 			slotsPerAgent = pool.Provider.AWS.SlotsPerInstance()
+			slotType = pool.Provider.AWS.SlotType()
 		}
 		if pool.Provider.GCP != nil {
 			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
@@ -229,6 +231,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
 			slotsPerAgent = pool.Provider.GCP.SlotsPerInstance()
+			slotType = pool.Provider.GCP.SlotType()
 			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
 				instanceType = pool.Provider.GCP.InstanceType.MachineType
 			} else {
@@ -261,6 +264,14 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_ROUND_ROBIN
 	}
 
+	slotTypeValue := resourcepoolv1.SlotType_SLOT_TYPE_UNSPECIFIED
+	switch slotType {
+	case "gpu":
+		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_GPU
+	case "cpu":
+		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_CPU
+	}
+
 	resp := &resourcepoolv1.ResourcePool{
 		Name:                         pool.PoolName,
 		Description:                  pool.Description,
@@ -275,6 +286,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		ImageId:                      imageID,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
+		SlotType:                     slotTypeValue,
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)

@@ -50,6 +50,16 @@ enum FittingPolicy {
   FITTING_POLICY_KUBERNETES = 3;
 }
 
+// Device type backing the resource pool slots.
+enum SlotType {
+  // Unknown slot type.
+  SLOT_TYPE_UNSPECIFIED = 0;
+  // CPU-backed slots.
+  SLOT_TYPE_CPU = 1;
+  // CUDA GPU-backed slots.
+  SLOT_TYPE_GPU = 2;
+}
+
 // A Resource Pool is a pool of resources where containers are run.
 message ResourcePool {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -61,6 +71,7 @@ message ResourcePool {
         "num_agents",
         "slots_available",
         "slots_used",
+        "slot_type",
         "aux_container_capacity",
         "aux_containers_running",
         "default_compute_pool",
@@ -100,6 +111,8 @@ message ResourcePool {
   int32 slots_available = 5;
   // The number of slots that are actively running workloads
   int32 slots_used = 6;
+  // Slot device type: cpu, gpu, ...
+  SlotType slot_type = 32;
   // The max number of aux containers that can run in this resource pool
   int32 aux_container_capacity = 7;
   // The current number of aux containers running in this resource pool
