@@ -150,5 +150,27 @@ type AzureConfigV0 struct {
 
 // Merge implements schemas.Mergeable.
 func (a AzureConfigV0) Merge(other interface{}) interface{} {
-	return schemas.UnionMerge(a, other)
+	out := AzureConfigV0{}
+	otherConfig := other.(AzureConfigV0)
+	if a.RawContainer != nil {
+		out.SetContainer(a.Container())
+	} else {
+		out.SetContainer(otherConfig.Container())
+	}
+	if a.RawConnectionString != nil || a.RawAccountURL != nil {
+		if a.RawConnectionString != nil {
+			out.SetConnectionString(a.ConnectionString())
+		} else {
+			out.SetAccountURL(a.AccountURL())
+			out.SetCredential(a.Credential())
+		}
+	} else {
+		if otherConfig.RawConnectionString != nil {
+			out.SetConnectionString(otherConfig.ConnectionString())
+		} else {
+			out.SetAccountURL(otherConfig.AccountURL())
+			out.SetCredential(otherConfig.Credential())
+		}
+	}
+	return out
 }
