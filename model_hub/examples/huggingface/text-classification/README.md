@@ -1,5 +1,5 @@
 # Text Classification
-The two examples here mirror the [text-classification examples](https://github.com/huggingface/transformers/tree/master/examples/text-classification) from the original huggingface transformers repo.
+The two examples here mirror the [text-classification examples](https://github.com/huggingface/transformers/tree/master/examples/pytorch/text-classification) from the original huggingface transformers repo.
 
 ## GLUE Benchmark
 
