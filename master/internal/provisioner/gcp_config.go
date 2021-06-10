@@ -207,6 +207,15 @@ func (c GCPClusterConfig) SlotsPerInstance() int {
 	return slots
 }
 
+// SlotType returns the type of the slot.
+func (c GCPClusterConfig) SlotType() string {
+	slots := c.InstanceType.Slots()
+	if slots > 0 {
+		return "gpu"
+	}
+	return "cpu"
+}
+
 type gceNetworkInterface struct {
 	Network    string `json:"network"`
 	Subnetwork string `json:"subnetwork"`

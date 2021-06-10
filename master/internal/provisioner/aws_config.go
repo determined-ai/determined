@@ -146,6 +146,15 @@ func (c AWSClusterConfig) SlotsPerInstance() int {
 	return slots
 }
 
+// SlotType returns the type of the slot.
+func (c AWSClusterConfig) SlotType() string {
+	slots := c.InstanceType.Slots()
+	if slots > 0 {
+		return "gpu" // nolint: goconst
+	}
+	return "cpu" // nolint: goconst
+}
+
 func validateMaxSpotPrice(spotMaxPriceInput string) error {
 	// Must have 1 or 0 decimalPoints. All other characters must be digits
 	numDecimalPoints := strings.Count(spotMaxPriceInput, ".")
