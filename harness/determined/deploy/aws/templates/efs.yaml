@@ -682,8 +682,8 @@ Resources:
 
             resource_manager:
               type: agent
-              default_cpu_resource_pool: cpu-pool
-              default_gpu_resource_pool: gpu-pool
+              default_cpu_resource_pool: aux-pool
+              default_gpu_resource_pool: compute-pool
               scheduler:
                 type: ${SchedulerType}
             EOF
@@ -697,7 +697,7 @@ Resources:
 
             cat << EOF >> /usr/local/determined/etc/master.yaml
             resource_pools:
-              - pool_name: cpu-pool
+              - pool_name: aux-pool
                 max_cpu_containers_per_agent: ${MaxCPUContainersPerAgent}
                 provider:
                   master_cert_name: ${MasterCertName}
@@ -734,7 +734,7 @@ Resources:
                     mkdir -p /mnt/efs
                     mount -t efs ${EFS}:/ /mnt/efs
 
-              - pool_name: gpu-pool
+              - pool_name: compute-pool
                 max_cpu_containers_per_agent: 0
                 provider:
                   master_cert_name: ${MasterCertName}

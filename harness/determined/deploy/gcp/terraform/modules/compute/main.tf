@@ -44,8 +44,8 @@ resource "google_compute_instance" "master_instance" {
 
     resource_manager:
       type: agent
-      default_cpu_resource_pool: cpu-pool
-      default_gpu_resource_pool: gpu-pool
+      default_cpu_resource_pool: aux-pool
+      default_gpu_resource_pool: compute-pool
       scheduler:
         type: "${var.scheduler_type}"
     EOF
@@ -59,7 +59,7 @@ resource "google_compute_instance" "master_instance" {
 
     cat << EOF >> /usr/local/determined/etc/master.yaml
     resource_pools:
-      - pool_name: cpu-pool
+      - pool_name: aux-pool
         max_aux_containers_per_agent: ${var.max_aux_containers_per_agent}
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
@@ -91,7 +91,7 @@ resource "google_compute_instance" "master_instance" {
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
 
-      - pool_name: gpu-pool
+      - pool_name: compute-pool
         max_aux_containers_per_agent: 0
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
@@ -227,7 +227,7 @@ resource "google_compute_instance" "agent_instance" {
         --restart unless-stopped \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
-        -e DET_RESOURCE_POOL=gpu-pool \
+        -e DET_RESOURCE_POOL=compute-pool \
         ${var.image_repo_prefix}/determined-agent:${var.det_version}  run --master-port=${var.port}
 
   EOT
