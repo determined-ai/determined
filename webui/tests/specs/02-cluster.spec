@@ -20,11 +20,11 @@ Specification to test the responsive design elements.
 
 * Navigate to React page at "/cluster/historical-usage"
 
-* Page should contain "GPU Hours Allocated"
-* Page should contain "GPU Hours by User"
-* Page should contain "GPU Hours by Label"
-* Page should contain "GPU Hours by Resource Pool"
-* Page should contain "GPU Hours by Agent Label"
+* Page should contain "Compute Hours Allocated"
+* Page should contain "Compute Hours by User"
+* Page should contain "Compute Hours by Label"
+* Page should contain "Compute Hours by Resource Pool"
+* Page should contain "Compute Hours by Agent Label"
 
 ## Sign out
 

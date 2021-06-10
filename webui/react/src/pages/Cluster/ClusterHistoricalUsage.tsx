@@ -164,7 +164,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         </Row>
       </div>
 
-      <Section bodyBorder loading={!chartSeries} title="GPU Hours Allocated">
+      <Section bodyBorder loading={!chartSeries} title="Compute Hours Allocated">
         { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
@@ -174,7 +174,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={!chartSeries} title="GPU Hours by User">
+      <Section bodyBorder loading={!chartSeries} title="Compute Hours by User">
         { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
@@ -185,7 +185,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Label">
+      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Label">
         { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
@@ -196,7 +196,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Resource Pool">
+      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Resource Pool">
         { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}
@@ -207,7 +207,7 @@ const ClusterHistoricalUsage: React.FC = () => {
         ) }
       </Section>
 
-      <Section bodyBorder loading={!chartSeries} title="GPU Hours by Agent Label">
+      <Section bodyBorder loading={!chartSeries} title="Compute Hours by Agent Label">
         { chartSeries && (
           <ClusterHistoricalUsageChart
             groupBy={chartSeries.groupedBy}

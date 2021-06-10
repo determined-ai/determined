@@ -11,7 +11,6 @@ import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
 import css from './NotebookModal.module.scss';
-import RadioGroup from './RadioGroup';
 import Spinner from './Spinner';
 
 const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
@@ -43,7 +42,7 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   );
 
   useEffect(() => {
-    if (state.type === ResourceType.GPU && (state.slots === undefined || state.slots < 1)) {
+    if (state.type === ResourceType.ALL && (state.slots === undefined || state.slots < 1)) {
       state.slots = 1;
     }
   }, [ state ]);
@@ -78,8 +77,8 @@ interface FullConfigProps {
 }
 
 interface ResourceInfo {
-  hasCPU: boolean;
-  hasGPU: boolean;
+  hasAux: boolean;
+  hasCompute: boolean;
   showResourceType: boolean;
 }
 
@@ -240,27 +239,27 @@ const NotebookForm:React.FC<FormProps> = (
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
-    { hasCPU: false, hasGPU: true, showResourceType: true },
+    { hasAux: false, hasCompute: true, showResourceType: true },
   );
 
   const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
-      return { hasCPU: false, hasGPU: false, showResourceType: true };
+      return { hasAux: false, hasCompute: false, showResourceType: true };
     }
-    const hasCPUCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
-    const hasGPUCapacity = selectedPool.slotsAvailable > 0
+    const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
+    const hasComputeCapacity = selectedPool.slotsAvailable > 0
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
-    if (hasCPUCapacity && !hasGPUCapacity) {
-      onChange({ key: 'type', value: ResourceType.CPU });
+    if (hasAuxCapacity && !hasComputeCapacity) {
+      onChange({ key: 'type', value: ResourceType.UNSPECIFIED });
       onChange({ key: 'slots', value: 0 });
-    } else if (!hasCPUCapacity && hasGPUCapacity) {
-      onChange({ key: 'type', value: ResourceType.GPU });
+    } else if (!hasAuxCapacity && hasComputeCapacity) {
+      onChange({ key: 'type', value: ResourceType.ALL });
     }
     return {
-      hasCPU: hasCPUCapacity,
-      hasGPU: hasGPUCapacity,
-      showResourceType: hasCPUCapacity && hasGPUCapacity,
+      hasAux: hasAuxCapacity,
+      hasCompute: hasComputeCapacity,
+      showResourceType: hasAuxCapacity && hasComputeCapacity,
     };
   }, [ onChange, resourcePools ]);
 
@@ -319,27 +318,15 @@ const NotebookForm:React.FC<FormProps> = (
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
           </Select>}
         label="Resource Pool" />
-      {resourceInfo.showResourceType &&
-    <LabelledLine
-      content = {
-        <RadioGroup
-          options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
-            { id: ResourceType.GPU, label: ResourceType.GPU } ]}
-          value={fields.type}
-          onChange={(value) => {
-            onChange({ key: 'type', value: value });
-            onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
-          }} />}
-      label="Type" />}
-      {fields.type === ResourceType.GPU &&
-    <LabelledLine
-      content = {
-        <InputNumber
-          defaultValue={fields.slots || 1}
-          min={1}
-          value={fields.slots}
-          onChange={(value) => onChange({ key: 'slots', value: value })} />}
-      label="Slots" />
+      {resourceInfo.hasCompute &&
+        <LabelledLine
+          content = {
+            <InputNumber
+              defaultValue={fields.slots || 1}
+              min={resourceInfo.hasAux ? 0 : 1}
+              value={fields.slots}
+              onChange={(value) => onChange({ key: 'slots', value: value })} />}
+          label="Slots" />
       }
     </div>
   );
