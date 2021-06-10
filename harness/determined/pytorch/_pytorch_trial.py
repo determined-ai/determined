@@ -397,7 +397,8 @@ class PyTorchTrialController(det.LoopTrialController):
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_start, pytorch.PyTorchCallback):
                 logging.warning(
-                    "on_validation_step_start is now deprecated, please use on_validation_start instead"
+                    "on_validation_step_start is now deprecated, "
+                    "please use on_validation_start instead"
                 )
                 callback.on_validation_step_start()
 
