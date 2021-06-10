@@ -138,7 +138,9 @@ const NotebookModal: React.FC<NotebookModalProps> = (
     <Modal
       footer={<>
         <Button
-          onClick={handleSecondary}>{showFullConfig ? 'Edit Form' : 'Edit Full Config'}</Button>
+          onClick={handleSecondary}>
+          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+        </Button>
         <Button
           disabled={buttonDisabled}
           type="primary"
