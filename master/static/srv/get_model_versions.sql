@@ -1,5 +1,5 @@
 WITH mv AS (
-  SELECT version, checkpoint_uuid
+  SELECT version, model_name, checkpoint_uuid
     FROM model_versions
     WHERE model_name = $1
 ),
@@ -36,3 +36,5 @@ SELECT
     version AS version,
     creation_time
     FROM c, m, mv
+    WHERE m.name = mv.model_name
+      AND mv.checkpoint_uuid::text = c.uuid

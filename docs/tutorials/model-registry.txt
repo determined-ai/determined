@@ -233,7 +233,7 @@ follows:
 
 .. code:: bash
 
-   det model register <model_name> <checkpoint_uuid>
+   det model register-version <model_name> <checkpoint_uuid>
 
 Accessing Versions
 ==================
