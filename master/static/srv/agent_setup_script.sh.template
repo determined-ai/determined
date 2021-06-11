@@ -10,15 +10,17 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-force_gpus={{.AgentForceGPUs}}
-if $force_gpus
-then
+slot_type="{{.SlotType}}"
+if [ $slot_type == "gpu" ]; then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
     docker_args+=(-e DET_SLOT_TYPE=gpu)
+elif [ $slot_type == "cpu" ]; then
+    echo "#### Starting agent with cpu slots"
+    docker_args+=(-e DET_SLOT_TYPE=cpu)
 else
-    echo "#### Starting agent with auto slots"
-    docker_args+=(-e DET_SLOT_TYPE=auto)
+    echo "#### Starting agent w/o slots"
+    docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64={{.MasterCertBase64}}

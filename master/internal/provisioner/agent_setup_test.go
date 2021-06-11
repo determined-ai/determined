@@ -6,6 +6,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 )
 
@@ -23,7 +24,7 @@ func TestAgentSetupScript(t *testing.T) {
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		MasterCertBase64:             encodedMasterCert,
-		AgentForceGPUs:               true,
+		SlotType:                     device.GPU,
 		AgentDockerImage:             "test_docker_image",
 		AgentFluentImage:             "fluent-test",
 		AgentDockerRuntime:           "runc",
@@ -45,15 +46,17 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-force_gpus=true
-if $force_gpus
-then
+slot_type="gpu"
+if [ $slot_type == "gpu" ]; then
     echo "#### Starting agent with GPUs"
     docker_args+=(--gpus all)
     docker_args+=(-e DET_SLOT_TYPE=gpu)
+elif [ $slot_type == "cpu" ]; then
+    echo "#### Starting agent with cpu slots"
+    docker_args+=(-e DET_SLOT_TYPE=cpu)
 else
-    echo "#### Starting agent with auto slots"
-    docker_args+=(-e DET_SLOT_TYPE=auto)
+    echo "#### Starting agent w/o slots"
+    docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=

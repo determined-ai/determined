@@ -71,13 +71,12 @@ func newGCPCluster(
 		}
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
-	agentForceGPUs := config.GCP.InstanceType.Slots() > 0 || !config.GCP.CPUSlotsAllowed
 
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,
-		AgentForceGPUs:               agentForceGPUs,
+		SlotType:                     config.GCP.SlotType(),
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
