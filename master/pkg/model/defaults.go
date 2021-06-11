@@ -15,8 +15,11 @@ const (
 
 const (
 	// BestCheckpointPolicy will checkpoint trials after validation if the validation is the best
-	// validation so far.
+	// validation so far for the entire experiment.
 	BestCheckpointPolicy = "best"
+	// TrialBestCheckpointPolicy will checkpoint trials after validation if the validation is the best
+	// validation so far for each trial.
+	TrialBestCheckpointPolicy = "trial_best"
 	// AllCheckpointPolicy will always checkpoint trials after validation.
 	AllCheckpointPolicy = "all"
 	// NoneCheckpointPolicy will not checkpoint trials after validations.

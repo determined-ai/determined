@@ -118,7 +118,7 @@ func (s *trialWorkloadSequencer) SetTrialID(trialID int) {
 // the state. It snapshots this state whenever we've just completed a checkpoint, and should be the
 // only method to alter the snapshot, too.
 func (s *trialWorkloadSequencer) WorkloadCompleted(
-	msg workload.CompletedMessage, isBestValFunc func() bool,
+	msg workload.CompletedMessage, triggerCheckpointPolicy func() bool,
 ) (op *searcher.ValidateAfter, err error) {
 	// Checkpoints are allowed even if they were not specified by sequencer.workload(). This can
 	// occur after a call to precloseCheckpointWorkload or during a replay of a trial that was
@@ -149,7 +149,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 		s.checkpointModelCompleted(msg)
 		return nil, nil
 	case workload.ComputeValidationMetrics:
-		return s.computeValidationMetricsCompleted(msg, isBestValFunc)
+		return s.computeValidationMetricsCompleted(msg, triggerCheckpointPolicy)
 	default:
 		return nil, errors.New("invalid operation for trialWorkloadSequencer")
 	}
@@ -199,7 +199,7 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg workload.CompletedMessage)
 // computeValidationMetricsCompleted updates the internal state of the sequencer to account for a
 // completed COMPUTE_VALIDATION_METRICS worklaod.
 func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
-	msg workload.CompletedMessage, isBestValFunc func() bool,
+	msg workload.CompletedMessage, triggerCheckpointPolicy func() bool,
 ) (op *searcher.ValidateAfter, err error) {
 	if msg.ValidationMetrics == nil {
 		return nil, errors.New("missing validation metrics")
@@ -210,13 +210,8 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 		s.NeedInitialValidation = false
 	}
 	if s.BatchesSinceLastCkpt != 0 {
-		switch s.checkpointPolicy {
-		case model.AllCheckpointPolicy:
+		if triggerCheckpointPolicy() {
 			s.NeedPostValidationCkpt = true
-		case model.BestCheckpointPolicy:
-			if isBestValFunc() {
-				s.NeedPostValidationCkpt = true
-			}
 		}
 	}
 	if s.BatchesSinceLastCkpt == 0 {

@@ -514,20 +514,26 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 }
 
 func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
-	metricName := e.Config.Searcher().Metric()
-	validation, err := metrics.Metric(metricName)
-	if err != nil {
-		// TODO: Better error handling here.
-		return false
-	}
-	smallerIsBetter := e.Config.Searcher().SmallerIsBetter()
-	isBest := (e.BestValidation == nil) ||
-		(smallerIsBetter && validation <= *e.BestValidation) ||
-		(!smallerIsBetter && validation >= *e.BestValidation)
+	validation, isBest := isBestValidation(e.Config, metrics, e.BestValidation)
 	if isBest {
 		e.BestValidation = &validation
 	}
 	return isBest
+}
+
+func isBestValidation(
+	config expconf.ExperimentConfig, metrics workload.ValidationMetrics, currentBest *float64,
+) (float64, bool) {
+	validation, err := metrics.Metric(config.Searcher().Metric())
+	if err != nil {
+		return 0, false
+	}
+
+	smallerIsBetter := config.Searcher().SmallerIsBetter()
+
+	return validation, (currentBest == nil) ||
+		(smallerIsBetter && validation <= *currentBest) ||
+		(!smallerIsBetter && validation >= *currentBest)
 }
 
 func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {

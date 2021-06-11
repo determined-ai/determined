@@ -157,6 +157,8 @@ type (
 	trialState struct {
 		TrialWorkloadSequencerState json.RawMessage `json:"trial_workload_sequencer_state"`
 
+		BestValidation *float64 `json:"best_validation"`
+
 		// restarts is essentially a failure count, it increments when the trial fails and we retry it.
 		Restarts int `json:"restarts"`
 
@@ -692,13 +694,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	}
 
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
-
-	isBestValidationFunc := func() bool {
-		return ctx.Ask(ctx.Self().Parent(), trialQueryIsBestValidation{
-			validationMetrics: *msg.ValidationMetrics,
-		}).Get().(bool)
-	}
-	op, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
+	op, err := t.sequencer.WorkloadCompleted(msg, t.checkpointPolicyFn(ctx, msg))
 	switch {
 	case err != nil:
 		return errors.Wrap(err, "failed to pass completed message to sequencer")
@@ -723,6 +719,33 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 	default:
 		return t.sendNextWorkload(ctx)
 	}
+}
+
+func (t *trial) checkpointPolicyFn(ctx *actor.Context, msg workload.CompletedMessage) func() bool {
+	switch t.config.CheckpointPolicy() {
+	case model.AllCheckpointPolicy:
+		return func() bool { return true }
+	case model.BestCheckpointPolicy:
+		return func() bool {
+			return ctx.Ask(ctx.Self().Parent(), trialQueryIsBestValidation{
+				validationMetrics: *msg.ValidationMetrics,
+			}).Get().(bool)
+		}
+	case model.TrialBestCheckpointPolicy:
+		return func() bool {
+			return t.isBestValidation(*msg.ValidationMetrics)
+		}
+	default:
+		return func() bool { return false }
+	}
+}
+
+func (t *trial) isBestValidation(metrics workload.ValidationMetrics) bool {
+	validation, isBest := isBestValidation(t.config, metrics, t.BestValidation)
+	if isBest {
+		t.BestValidation = &validation
+	}
+	return isBest
 }
 
 func (t *trial) sendNextWorkload(ctx *actor.Context) error {

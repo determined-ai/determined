@@ -109,6 +109,13 @@ an experiment is created with the Determined CLI. For example:
       the :ref:`searcher configuration
       <experiment-configuration_searcher>`.
 
+   - ``trial_best``: A checkpoint will be taken after every validation
+      operation that performs better than all previous validations for
+      each trial. Validation metrics are compared
+      according to the ``metric`` and ``smaller_is_better`` options in
+      the :ref:`searcher configuration
+      <experiment-configuration_searcher>`.
+
    -  ``all``: A checkpoint will be taken after every validation, no
       matter the validation performance.
 
