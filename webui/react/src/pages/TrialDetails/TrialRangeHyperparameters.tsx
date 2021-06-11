@@ -6,6 +6,8 @@ import {
   RawJson, TrialDetails, TrialHyperParameters,
 } from 'types';
 
+import css from './TrialRangeHyperparameters.module.scss';
+
 export interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
@@ -63,32 +65,14 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
           justifyContent: 'space-between',
           textAlign: 'right',
         }}>
-          <p style={{ margin: 0 }}>{config.value.maxval}</p>
-          <p style={{ margin: 0 }}>{config.value.minval}</p>
+          <p className={css.text}>{config.value.maxval}</p>
+          <p className={css.text}>{config.value.minval}</p>
         </div>
-        <div
-          style={{
-            alignSelf: 'center',
-            backgroundColor: 'lightgray',
-            borderRadius: 5,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            justifyContent: 'space-between',
-            marginInline: 5,
-            width: 10,
-          }}>
-          {config.value.vals?.map(op =>
+        <div className={css.track}>
+          {config.value.vals?.map(option =>
             <div
-              key={op.toString()}
-              style={{
-                backgroundColor: 'blue',
-                borderRadius: '100%',
-                height: 12,
-                left: -12/8,
-                position: 'relative',
-                width: 12,
-              }}
+              className={css.trackOption}
+              key={option.toString()}
             />)}
         </div>
         <div style={{
@@ -98,19 +82,8 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
           justifyContent: 'end',
         }}>
           <div style={{ display: 'flex' }}>
-            <div style={{
-              alignSelf: 'center',
-              borderColor: 'transparent lightgray transparent',
-              borderStyle: 'solid',
-              borderWidth: '10px 17.3px 10px 0',
-              height: 0,
-            }} />
-            <div style={{
-              backgroundColor: 'white',
-              border: 'solid lightgray 2px',
-              paddingBlock: 0,
-              paddingInline: 8,
-            }}>
+            <div className={css.pointer} />
+            <div className={css.valueBox}>
               <ParsedHumanReadableValue hp={value} type={config.value.type} />
             </div>
           </div>
@@ -123,17 +96,17 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
 const ParsedHumanReadableValue = (hp: TrialHyperParameters, type: ExperimentHyperParamType) => {
   switch (type) {
     case ExperimentHyperParamType.Categorical:
-      return <p style={{ margin: 0 }}>{hp.value}</p>;
+      return <p className={css.text}>{hp.value}</p>;
     case ExperimentHyperParamType.Constant:
-      return <p style={{ margin: 0 }}>{hp.value}</p>;
+      return <p className={css.text}>{hp.value}</p>;
     case ExperimentHyperParamType.Double:
       return <HumanReadableFloat num={parseFloat(hp.value as string)} />;
     case ExperimentHyperParamType.Int:
-      return <p style={{ margin: 0 }}>{parseInt(hp.value as string)}</p>;
+      return <p className={css.text}>{parseInt(hp.value as string)}</p>;
     case ExperimentHyperParamType.Log:
       return <HumanReadableFloat num={parseFloat(hp.value as string)} />;
     default:
-      return <p style={{ margin: 0 }}>Err</p>;
+      return <p className={css.text}>Err</p>;
   }
 };
 
