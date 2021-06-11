@@ -1,3 +1,25 @@
+.container {
+  align-self: center;
+  display: flex;
+  flex-direction: column
+}
+.innerContainer {
+  display: flex;
+  height: 300px;
+  justify-content: center;
+  width: 100%;
+}
+.valuesTrack {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+}
+.pointerTrack {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
 .text {
   margin: 0;
 }
@@ -24,10 +46,11 @@
   align-self: center;
   border-color: transparent lightgray transparent transparent;
   border-style: solid;
-  border-width: 10px 17.3px 10px 0;
+  border-width: 5px 8.7px 5px 0;
   height: 0;
 }
 .valueBox {
   border: solid lightgray 2px;
+  border-radius: 5px;
   padding: 0 8px;
 }

@@ -54,17 +54,11 @@ interface RangeProps {
 }
 
 const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps) => {
-
   return (
-    <div style={{ alignSelf: 'center', display: 'flex', flexDirection: 'column' }}>
+    <div className={css.container}>
       {config.name}
-      <div style={{ display: 'flex', height: 300, justifyContent: 'center', width: '100%' }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          textAlign: 'right',
-        }}>
+      <div className={css.innerContainer}>
+        <div className={css.valuesTrack}>
           <p className={css.text}>{config.value.maxval}</p>
           <p className={css.text}>{config.value.minval}</p>
         </div>
@@ -75,12 +69,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
               key={option.toString()}
             />)}
         </div>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: `${100}%`,
-          justifyContent: 'end',
-        }}>
+        <div className={css.pointerTrack} style={{ height: `${100}%` }}>
           <div style={{ display: 'flex' }}>
             <div className={css.pointer} />
             <div className={css.valueBox}>
