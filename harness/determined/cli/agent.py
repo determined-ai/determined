@@ -40,7 +40,15 @@ def list_agents(args: argparse.Namespace) -> None:
         print(json.dumps(agents, indent=4))
         return
 
-    headers = ["Agent ID", "Registered Time", "Slots", "Containers", "Resource Pool", "Label"]
+    headers = [
+        "Agent ID",
+        "Registered Time",
+        "Slots",
+        "Containers",
+        "Resource Pool",
+        "Label",
+        "Addresses",
+    ]
     values = [a.values() for a in agents]
 
     render.tabulate_or_csv(headers, values, args.csv)
