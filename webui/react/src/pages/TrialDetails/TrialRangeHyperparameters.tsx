@@ -99,11 +99,18 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
         }}>
           <div style={{ display: 'flex' }}>
             <div style={{
+              alignSelf: 'center',
               borderColor: 'transparent lightgray transparent',
               borderStyle: 'solid',
-              borderWidth: '20px 20px 20px 0',
+              borderWidth: '10px 17.3px 10px 0',
+              height: 0,
             }} />
-            <div style={{ backgroundColor: 'lightgray', padding: 8, paddingBottom: 0 }}>
+            <div style={{
+              backgroundColor: 'white',
+              border: 'solid lightgray 2px',
+              paddingBlock: 0,
+              paddingInline: 8,
+            }}>
               <ParsedHumanReadableValue hp={value} type={config.value.type} />
             </div>
           </div>
