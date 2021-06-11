@@ -18,10 +18,11 @@
 .pointerTrack {
   display: flex;
   flex-direction: column;
-  justify-content: end;
+  justify-content: flex-end;
 }
 .text {
-  margin: 0;
+  color: black;
+  margin: 0
 }
 .track {
   align-self: center;

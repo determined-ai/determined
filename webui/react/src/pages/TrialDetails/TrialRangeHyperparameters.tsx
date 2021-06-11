@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
@@ -70,32 +71,44 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
             />)}
         </div>
         <div className={css.pointerTrack} style={{ height: `${100}%` }}>
-          <div style={{ display: 'flex' }}>
-            <div className={css.pointer} />
-            <div className={css.valueBox}>
-              <ParsedHumanReadableValue hp={value} type={config.value.type} />
-            </div>
-          </div>
+          <Tooltip
+            color="white"
+            placement="right"
+            title={<ParsedHumanReadableValue hp={value} type={config.value.type} />}
+            visible={true} />
         </div>
       </div>
     </div>
   );
 };
 
-const ParsedHumanReadableValue = (hp: TrialHyperParameters, type: ExperimentHyperParamType) => {
+interface PHRVProps {
+  hp: TrialHyperParameters
+  type: ExperimentHyperParamType
+}
+
+const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) => {
   switch (type) {
     case ExperimentHyperParamType.Categorical:
       return <p className={css.text}>{hp.value}</p>;
     case ExperimentHyperParamType.Constant:
       return <p className={css.text}>{hp.value}</p>;
     case ExperimentHyperParamType.Double:
-      return <HumanReadableFloat num={parseFloat(hp.value as string)} />;
+      return (
+        <p className={css.text}>
+          <HumanReadableFloat num={parseFloat(hp.value as string)} />
+        </p>
+      );
     case ExperimentHyperParamType.Int:
       return <p className={css.text}>{parseInt(hp.value as string)}</p>;
     case ExperimentHyperParamType.Log:
-      return <HumanReadableFloat num={parseFloat(hp.value as string)} />;
+      return (
+        <p className={css.text}>
+          <HumanReadableFloat num={parseFloat(hp.value as string)} />
+        </p>
+      );
     default:
-      return <p className={css.text}>Err</p>;
+      return <p className={css.text}>{hp.value}</p>;
   }
 };
 
