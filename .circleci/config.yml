@@ -1429,7 +1429,7 @@ jobs:
         type: string
         default: ""
       environment-gpu-enabled:
-        type: string:
+        type: string
         default: "1"
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
@@ -1519,7 +1519,7 @@ jobs:
         type: string
         default: ""
       environment-gpu-enabled:
-        type: string:
+        type: string
         default: "1"
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
