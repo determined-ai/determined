@@ -47,13 +47,48 @@ type HyperparameterV0 struct {
 	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
 	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
-	// This option does not actually go through union marshaling and unmarshaling logic.
+	// RawNestedHyperparameter is added as a union type to more closely reflect the underlying
+	// schema definition. Doing so also means that we can detect a nested hyperparameter from
+	// a call to the automatically generated HyperparameterV0.GetUnionMember function.
+	//
+	// However, this type does not actually go through union marshaling and unmarshaling logic
+	// so that we can support implicit nesting as follows:
+	// optimizer:
+	//   learning_rate: 0.01
+	//   momentum: 0.9
+	// This means that we do NOT support explicit nesting as we would normally with a union
+	// on type:
+	// optimizer:
+	//   type: object
+	//   vals:
+	//     learning_rate: 0.01
+	//     momentum: 0.9
+	// The former is more user friendly so we will escape the union unmarshaling logic
+	// in its favor. We can add the later behavior in the future if needed.
 	RawNestedHyperparameter *map[string]HyperparameterV0 `union:"type,object" json:"-"`
 }
 
-// Merge prevents recursive merging of hyperparameters.
+// Merge prevents recursive merging of hyperparameters unless h
+// is a nested hyperparameter.  When h is a nested hyperparameter,
+// we merge fields of h and other into a single map.
 func (h HyperparameterV0) Merge(other interface{}) interface{} {
-	// Never merge partial hyperparameters.
+	// Only merge nested hyperparameters.
+	if h.RawNestedHyperparameter != nil {
+		target := *h.RawNestedHyperparameter
+		source := *other.(HyperparameterV0).RawNestedHyperparameter
+		for key, val := range target {
+			_, inSource := source[key]
+			if inSource {
+				target[key] = val.Merge(source[key]).(HyperparameterV0)
+			}
+		}
+		for key, val := range source {
+			_, inTarget := target[key]
+			if !inTarget {
+				target[key] = val
+			}
+		}
+	}
 	return h
 }
 
