@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -25,13 +26,6 @@ const (
 	initContainerTarDstPath = "/run/determined/temp/tar/dst"
 	initContainerWorkDir    = "/run/determined/temp/"
 	determinedLabel         = "determined"
-)
-
-const (
-	// SlotTypeCPU signals CPU-only slots
-	SlotTypeCPU = "cpu"
-	// SlotTypeGPU signals CUDA GPU slots
-	SlotTypeGPU = "gpu"
 )
 
 // pod manages the lifecycle of a Kubernetes pod that executes a
@@ -55,7 +49,7 @@ type pod struct {
 	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
 	scheduler                string
-	slotType                 string
+	slotType                 device.Type
 	slotResourceRequests     PodSlotResourceRequests
 
 	pod              *k8sV1.Pod
@@ -79,7 +73,7 @@ type getPodNodeInfo struct{}
 type podNodeInfo struct {
 	nodeName  string
 	numSlots  int
-	slotType  string
+	slotType  device.Type
 	container *container.Container
 }
 
@@ -98,7 +92,7 @@ func newPod(
 	configMapInterface typedV1.ConfigMapInterface,
 	resourceRequestQueue *actor.Ref,
 	leaveKubernetesResources bool,
-	slotType string,
+	slotType device.Type,
 	slotResourceRequests PodSlotResourceRequests,
 	scheduler string,
 ) *pod {
@@ -430,9 +424,9 @@ func (p *pod) preparePodUpdateMessage(msgText string) string {
 			required := strconv.Itoa(p.slots)
 			var resourceName string
 			switch p.slotType {
-			case SlotTypeCPU:
+			case device.CPU:
 				resourceName = "CPU slots"
-			case SlotTypeGPU:
+			case device.GPU:
 				fallthrough
 			default:
 				resourceName = "GPUs"

@@ -145,20 +145,12 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		slotsUsed += slotsUsedByGroup
 	}
 
-	slotTypeValue := resourcepoolv1.SlotType_SLOT_TYPE_UNSPECIFIED
-	switch k.config.SlotType {
-	case kubernetes.SlotTypeCPU:
-		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_CPU
-	case kubernetes.SlotTypeGPU:
-		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_GPU
-	}
-
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    1,
-		SlotType:                     slotTypeValue,
+		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),

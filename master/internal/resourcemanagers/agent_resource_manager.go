@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -213,7 +214,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	imageID := ""
 	instanceType := ""
 	slotsPerAgent := -1
-	slotType := ""
+	slotType := device.ZeroSlot
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
@@ -264,14 +265,6 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		schedulerType = resourcepoolv1.SchedulerType_SCHEDULER_TYPE_ROUND_ROBIN
 	}
 
-	slotTypeValue := resourcepoolv1.SlotType_SLOT_TYPE_UNSPECIFIED
-	switch slotType {
-	case "gpu":
-		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_GPU
-	case "cpu":
-		slotTypeValue = resourcepoolv1.SlotType_SLOT_TYPE_CPU
-	}
-
 	resp := &resourcepoolv1.ResourcePool{
 		Name:                         pool.PoolName,
 		Description:                  pool.Description,
@@ -286,7 +279,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		ImageId:                      imageID,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
-		SlotType:                     slotTypeValue,
+		SlotType:                     slotType.Proto(),
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)

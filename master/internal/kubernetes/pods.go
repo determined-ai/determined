@@ -48,7 +48,7 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 	scheduler                string
-	slotType                 string
+	slotType                 device.Type
 	slotResourceRequests     PodSlotResourceRequests
 
 	clientSet        *k8sClient.Clientset
@@ -84,7 +84,7 @@ func Initialize(
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 	scheduler string,
-	slotType string,
+	slotType device.Type,
 	slotResourceRequests PodSlotResourceRequests,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
@@ -432,11 +432,11 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		var numSlots int64
 		var deviceType device.Type
 		switch p.slotType {
-		case SlotTypeCPU:
+		case device.CPU:
 			resources := node.Status.Capacity["cpu"]
 			numSlots = int64(float32(resources.Value()) / p.slotResourceRequests.CPU)
 			deviceType = device.CPU
-		case SlotTypeGPU:
+		case device.GPU:
 			fallthrough
 		default:
 			resources := node.Status.Capacity["nvidia.com/gpu"]

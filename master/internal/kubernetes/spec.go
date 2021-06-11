@@ -37,7 +37,7 @@ const (
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	switch p.slotType {
-	case SlotTypeCPU:
+	case device.CPU:
 		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
 		return k8sV1.ResourceRequirements{
 			Limits: map[k8sV1.ResourceName]resource.Quantity{
@@ -47,7 +47,7 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
 			},
 		}
-	case SlotTypeGPU: // default to CUDA-backed slots.
+	case device.GPU: // default to CUDA-backed slots.
 		fallthrough
 	default:
 		return k8sV1.ResourceRequirements{
@@ -87,7 +87,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == SlotTypeGPU)
+	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == device.GPU)
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
@@ -314,11 +314,8 @@ func (p *pod) configurePodSpec(
 }
 
 func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
-	var deviceType device.Type
-	switch p.slotType {
-	case SlotTypeGPU:
-		deviceType = device.GPU
-	default:
+	deviceType := p.slotType
+	if deviceType == device.ZeroSlot {
 		deviceType = device.CPU
 	}
 
