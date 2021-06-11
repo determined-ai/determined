@@ -33,8 +33,8 @@ c AS (
 )
 SELECT
     to_json(c) AS checkpoint,
-    version AS version,
-    creation_time
+    mv.version,
+    m.creation_time
     FROM c, m, mv
     WHERE m.name = mv.model_name
       AND mv.checkpoint_uuid::text = c.uuid
