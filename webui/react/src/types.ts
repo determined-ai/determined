@@ -1,6 +1,6 @@
 import {
-  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
-  V1SlotType,
+  Devicev1Type, V1FittingPolicy, V1Pagination, V1ResourcePoolType,
+  V1SchedulerType,
 } from 'services/api-ts-sdk';
 
 interface WithPagination {
@@ -539,7 +539,7 @@ export interface ResourcePool {
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
-  slotType: V1SlotType;
+  slotType: Devicev1Type;
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;

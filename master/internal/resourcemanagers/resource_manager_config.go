@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
@@ -99,12 +100,12 @@ type KubernetesResourceManagerConfig struct {
 	MasterServiceName        string                             `json:"master_service_name"`
 	LeaveKubernetesResources bool                               `json:"leave_kubernetes_resources"`
 	DefaultScheduler         string                             `json:"default_scheduler"`
-	SlotType                 string                             `json:"slot_type"`
+	SlotType                 device.Type                        `json:"slot_type"`
 	SlotResourceRequests     kubernetes.PodSlotResourceRequests `json:"slot_resource_requests"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
-	SlotType: kubernetes.SlotTypeGPU, // default to CUDA-backed slots.
+	SlotType: device.GPU, // default to CUDA-backed slots.
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -118,14 +119,14 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 func (k KubernetesResourceManagerConfig) Validate() []error {
 	var checkSlotType error
 	switch k.SlotType {
-	case kubernetes.SlotTypeCPU, kubernetes.SlotTypeGPU:
+	case device.CPU, device.GPU:
 		break
 	default:
 		checkSlotType = errors.Errorf("slot_type must be either gpu or cpu")
 	}
 
 	var checkCPUResource error
-	if k.SlotType == kubernetes.SlotTypeCPU {
+	if k.SlotType == device.CPU {
 		checkCPUResource = check.GreaterThan(
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}

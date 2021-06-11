@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 // MaxNamePrefixLen is the max length of the instance name prefix. The full name of an instance
@@ -208,12 +209,15 @@ func (c GCPClusterConfig) SlotsPerInstance() int {
 }
 
 // SlotType returns the type of the slot.
-func (c GCPClusterConfig) SlotType() string {
+func (c GCPClusterConfig) SlotType() device.Type {
 	slots := c.InstanceType.Slots()
 	if slots > 0 {
-		return "gpu"
+		return device.GPU
 	}
-	return "cpu"
+	if c.CPUSlotsAllowed {
+		return device.CPU
+	}
+	return device.ZeroSlot
 }
 
 type gceNetworkInterface struct {

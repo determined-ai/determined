@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.resourcepool.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv1";
 import "protoc-gen-swagger/options/annotations.proto";
+import "determined/device/v1/device.proto";
 
 // The type of the ResourcePool.
 enum ResourcePoolType {
@@ -48,16 +49,6 @@ enum FittingPolicy {
   // A kubernetes placeholder. In k8s, the task placement is delegated to the
   // k8s scheduler so the fitting policy is not relevant.
   FITTING_POLICY_KUBERNETES = 3;
-}
-
-// Device type backing the resource pool slots.
-enum SlotType {
-  // Unknown slot type.
-  SLOT_TYPE_UNSPECIFIED = 0;
-  // CPU-backed slots.
-  SLOT_TYPE_CPU = 1;
-  // CUDA GPU-backed slots.
-  SLOT_TYPE_GPU = 2;
 }
 
 // A Resource Pool is a pool of resources where containers are run.
@@ -112,7 +103,7 @@ message ResourcePool {
   // The number of slots that are actively running workloads
   int32 slots_used = 6;
   // Slot device type: cpu, gpu, ...
-  SlotType slot_type = 32;
+  determined.device.v1.Type slot_type = 32;
   // The max number of aux containers that can run in this resource pool
   int32 aux_container_capacity = 7;
   // The current number of aux containers running in this resource pool
