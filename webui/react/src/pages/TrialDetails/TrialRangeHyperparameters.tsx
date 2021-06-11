@@ -61,8 +61,20 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
       {config.name}
       <div className={css.innerContainer}>
         <div className={css.valuesTrack}>
-          <p className={css.text}>{config.value.maxval}</p>
-          <p className={css.text}>{config.value.minval}</p>
+          {config.value.vals ?
+            config.value.vals?.map(option =>
+              <p className={css.text} key={option.toString()}>{option}</p>) :
+            config.value.type === ExperimentHyperParamType.Log ?
+              (new Array(
+                Math.log10((config.value.maxval || 1)/(config.value.minval || 0)),
+              )).fill(null)
+                .map((logLevel, idx) =>
+                  <p className={css.text} key={idx}>{(config.value.maxval || 1)/(10**idx)}</p>) :
+              <>
+                <p className={css.text}>{config.value.maxval}</p>
+                <p className={css.text}>{config.value.minval}</p>
+              </>
+          }
         </div>
         <div
           className={
@@ -111,11 +123,7 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) 
     case ExperimentHyperParamType.Int:
       return <p className={css.text}>{parseInt(hp.value as string)}</p>;
     case ExperimentHyperParamType.Log:
-      return (
-        <p className={css.text}>
-          <HumanReadableFloat num={parseFloat(hp.value as string)} precision={3} />
-        </p>
-      );
+      return <p className={css.text}>{parseFloat(hp.value as string).toExponential(2)}</p>;
     default:
       return <p className={css.text}>{hp.value}</p>;
   }
