@@ -1,5 +1,10 @@
 :orphan:
 
+**Breaking Changes**
+
+-  JupyterLab will not work in previously release images. Custom image
+   users should be sure to upgrade to 3.0 or higher.
+
 **Improvements**
 
 -  JupyterLab: upgrade the JupyterLab version to 3.0.16.
