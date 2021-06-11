@@ -68,7 +68,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
               (new Array(
                 Math.log10((config.value.maxval || 1)/(config.value.minval || 0)),
               )).fill(null)
-                .map((logLevel, idx) =>
+                .map((_, idx) =>
                   <p className={css.text} key={idx}>{(config.value.maxval || 1)/(10**idx)}</p>) :
               <>
                 <p className={css.text}>{config.value.maxval}</p>
@@ -78,14 +78,19 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
         </div>
         <div
           className={
-            (config.value.vals || config.value.type === ExperimentHyperParamType.Constant) ?
-              css.grayTrack : css.blueTrack
+            (config.value.vals) ?
+              css.grayTrack : config.value.type === ExperimentHyperParamType.Constant ?
+                css.constantTrack : css.blueTrack
           }>
           {config.value.vals?.map(option =>
             <div
               className={css.trackOption}
               key={option.toString()}
             />)}
+          {config.value.type === ExperimentHyperParamType.Constant &&
+          <div
+            className={css.trackOption}
+          />}
         </div>
         <div
           className={css.pointerTrack}
