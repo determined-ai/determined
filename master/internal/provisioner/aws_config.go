@@ -39,7 +39,7 @@ type AWSClusterConfig struct {
 
 	CustomTags []*ec2Tag `json:"custom_tags"`
 
-	CPUSlots bool `json:"cpu_slots"`
+	CPUSlotsAllowed bool `json:"cpu_slots_allowed"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -62,9 +62,9 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType: "p3.8xlarge",
-	SpotEnabled:  false,
-	CPUSlots:     false,
+	InstanceType:    "p3.8xlarge",
+	SpotEnabled:     false,
+	CPUSlotsAllowed: false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -139,7 +139,7 @@ func (c AWSClusterConfig) Validate() []error {
 // SlotsPerInstance returns the number of slots per instance.
 func (c AWSClusterConfig) SlotsPerInstance() int {
 	slots := c.InstanceType.Slots()
-	if slots == 0 && c.CPUSlots {
+	if slots == 0 && c.CPUSlotsAllowed {
 		slots = 1
 	}
 
