@@ -217,10 +217,16 @@ type OptimizationsConfigV0 struct {
 // BindMountsConfigV0 is the configuration for bind mounts.
 type BindMountsConfigV0 []BindMountV0
 
-// Merge implements the Mergable interface.
+// Merge is just merge-by-appending, with a specific form of deduplication.
+//
+// If other contains entries where ContainerPath() would conflict with any entry in the receiver,
+// those entries from other are omitted.  However, there is no deduplication of the receiver's
+// entries relative to each other, or of the other's entries relative to each other.  The reasoning
+// is that if either the user-provided config or the template config is broken, it would be
+// confusing that Merge() would silently fix them.  However it would also be confusing if two valid
+// configs got merged together and resulted in a clearly invalid config.
 func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
 	tOther := other.(BindMountsConfigV0)
-	// Merge by appending.
 	out := BindMountsConfigV0{}
 	out = append(out, b...)
 
@@ -250,10 +256,10 @@ type BindMountV0 struct {
 // DevicesConfigV0 is the configuration for devices.
 type DevicesConfigV0 []DeviceV0
 
-// Merge implements the Mergable interface.
+// Merge is just merge-by-appending, with a specific form of deduplication.
+// See the comment on BindMountsConfigV0.Merge() for details.
 func (d DevicesConfigV0) Merge(other interface{}) interface{} {
 	tOther := other.(DevicesConfigV0)
-	// Merge by appending.
 	out := DevicesConfigV0{}
 	out = append(out, d...)
 
