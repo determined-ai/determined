@@ -9,7 +9,8 @@
 -  **Breaking Change** REST API: rename ``*gpu*`` and ``*cpu*`` fields
    in ``ResourcePool`` object to ``*compute**`` and ``*aux*``.
 
--  **Breaking Changes** Deploy: In ``det deploy gcp`` and ``det deploy aws``,
-   default compute pool has been renamed from ``gpu-pool`` to ``compute-pool``.
-   When upgrading a cluster from a previous version, existing pending experiments
-   may error out, and may need to be resubmitted.
+-  **Breaking Changes** Deploy: In ``det deploy gcp`` and ``det deploy
+   aws``, default compute pool has been renamed from ``gpu-pool`` to
+   ``compute-pool``. When upgrading a cluster from a previous version,
+   existing pending experiments may error out, and may need to be
+   resubmitted.
