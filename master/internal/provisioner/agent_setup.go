@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 )
 
@@ -14,7 +15,7 @@ type agentSetupScriptConfig struct {
 	StartupScriptBase64          string
 	ContainerStartupScriptBase64 string
 	MasterCertBase64             string
-	AgentForceGPUs               bool
+	SlotType                     device.Type
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
