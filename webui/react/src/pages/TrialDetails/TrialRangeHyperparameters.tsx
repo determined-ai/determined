@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import {
@@ -55,6 +55,7 @@ interface RangeProps {
 }
 
 const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps) => {
+  const tooltipContainer = useRef<HTMLDivElement>(null);
   return (
     <div className={css.container}>
       {config.name}
@@ -63,16 +64,24 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
           <p className={css.text}>{config.value.maxval}</p>
           <p className={css.text}>{config.value.minval}</p>
         </div>
-        <div className={css.track}>
+        <div
+          className={
+            (config.value.vals || config.value.type === ExperimentHyperParamType.Constant) ?
+              css.grayTrack : css.blueTrack
+          }>
           {config.value.vals?.map(option =>
             <div
               className={css.trackOption}
               key={option.toString()}
             />)}
         </div>
-        <div className={css.pointerTrack} style={{ height: `${100}%` }}>
+        <div
+          className={css.pointerTrack}
+          ref={tooltipContainer}
+          style={{ height: `${50}%` }}>
           <Tooltip
             color="white"
+            getPopupContainer={() => tooltipContainer.current || document.body}
             placement="right"
             title={<ParsedHumanReadableValue hp={value} type={config.value.type} />}
             visible={true} />
@@ -96,7 +105,7 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) 
     case ExperimentHyperParamType.Double:
       return (
         <p className={css.text}>
-          <HumanReadableFloat num={parseFloat(hp.value as string)} />
+          <HumanReadableFloat num={parseFloat(hp.value as string)} precision={3} />
         </p>
       );
     case ExperimentHyperParamType.Int:
@@ -104,7 +113,7 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) 
     case ExperimentHyperParamType.Log:
       return (
         <p className={css.text}>
-          <HumanReadableFloat num={parseFloat(hp.value as string)} />
+          <HumanReadableFloat num={parseFloat(hp.value as string)} precision={3} />
         </p>
       );
     default:
