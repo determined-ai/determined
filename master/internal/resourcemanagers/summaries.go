@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/device"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
@@ -90,6 +91,7 @@ type ResourceSummary struct {
 	numActiveSlots         int
 	maxNumAuxContainers    int
 	numActiveAuxContainers int
+	slotType               device.Type
 }
 
 func getResourceSummary(
@@ -100,13 +102,29 @@ func getResourceSummary(
 		numActiveSlots:         0,
 		maxNumAuxContainers:    0,
 		numActiveAuxContainers: 0,
+		slotType:               device.ZeroSlot,
 	}
+
+	deviceTypeCount := make(map[device.Type]int)
+
 	for _, agentState := range agentInfo {
 		summary.numAgents++
 		summary.numTotalSlots += agentState.numSlots()
 		summary.numActiveSlots += agentState.numUsedSlots()
 		summary.maxNumAuxContainers += agentState.maxZeroSlotContainers
 		summary.numActiveAuxContainers += agentState.numZeroSlotContainers()
+		for agentDevice := range agentState.devices {
+			deviceTypeCount[agentDevice.Type]++
+		}
 	}
+
+	// If we have homogenous slots, get their type. Otherwise, we default to
+	// `UNSPECIFIED` aka `device.ZeroSlot`, although it may be an error/warning.
+	if len(deviceTypeCount) == 1 {
+		for deviceType := range deviceTypeCount {
+			summary.slotType = deviceType
+		}
+	}
+
 	return summary
 }

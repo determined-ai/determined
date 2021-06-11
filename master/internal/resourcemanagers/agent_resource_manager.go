@@ -375,6 +375,9 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
 	resp.AuxContainerCapacity = int32(resourceSummary.maxNumAuxContainers)
 	resp.AuxContainersRunning = int32(resourceSummary.numActiveAuxContainers)
+	if pool.Provider == nil && resp.NumAgents > 0 {
+		resp.SlotType = resourceSummary.slotType.Proto()
+	}
 
 	return resp, nil
 }
