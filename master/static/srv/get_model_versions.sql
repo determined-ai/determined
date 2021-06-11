@@ -1,10 +1,10 @@
 WITH mv AS (
-  SELECT version, model_name, checkpoint_uuid
-    FROM model_versions
-    WHERE model_name = $1
-),
-m AS (
-  Select * FROM models WHERE name = $1
+  SELECT
+    version,
+    checkpoint_uuid,
+    creation_time
+  FROM model_versions
+  WHERE model_name = $1
 ),
 c AS (
   SELECT
@@ -34,7 +34,6 @@ c AS (
 SELECT
     to_json(c) AS checkpoint,
     mv.version,
-    m.creation_time
-    FROM c, m, mv
-    WHERE m.name = mv.model_name
-      AND mv.checkpoint_uuid::text = c.uuid
+    mv.creation_time
+    FROM c, mv
+    WHERE c.uuid = mv.checkpoint_uuid::text
