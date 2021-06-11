@@ -376,7 +376,6 @@ def test_end_to_end_adaptive() -> None:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_model_registry() -> None:
-    # Given a b
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
         conf.tutorials_path("mnist_pytorch"),
