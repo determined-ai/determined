@@ -128,7 +128,11 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) 
     case ExperimentHyperParamType.Int:
       return <p className={css.text}>{parseInt(hp.value as string)}</p>;
     case ExperimentHyperParamType.Log:
-      return <p className={css.text}>{parseFloat(hp.value as string).toExponential(2)}</p>;
+      return (
+        <Tooltip title={hp.value}>
+          <p className={css.text}>{parseFloat(hp.value as string).toExponential(2)}</p>
+        </Tooltip>
+      );
     default:
       return <p className={css.text}>{hp.value}</p>;
   }
