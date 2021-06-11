@@ -110,7 +110,7 @@ func newAWSCluster(
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
-	agentForceGPUs := config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlots
+	agentForceGPUs := config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlotsAllowed
 
 	cluster := &awsCluster{
 		resourcePool:     resourcePool,

@@ -44,8 +44,8 @@ resource "google_compute_instance" "master_instance" {
 
     resource_manager:
       type: agent
-      default_cpu_resource_pool: aux-pool
-      default_gpu_resource_pool: compute-pool
+      default_aux_resource_pool: aux-pool
+      default_compute_resource_pool: compute-pool
       scheduler:
         type: "${var.scheduler_type}"
     EOF
@@ -117,7 +117,7 @@ resource "google_compute_instance" "master_instance" {
             gpu_type: ${var.gpu_type}
             gpu_num: ${var.gpu_num}
             preemptible: ${var.preemptible}
-          cpu_slots: true
+          cpu_slots_allowed: true
           min_instances: ${var.min_dynamic_agents}
           max_instances: ${var.max_dynamic_agents}
           operation_timeout_period: ${var.operation_timeout_period}

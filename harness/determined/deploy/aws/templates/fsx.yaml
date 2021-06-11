@@ -88,7 +88,7 @@ Parameters:
     Description: Password for database
     NoEcho: true
 
-  MaxCPUContainersPerAgent:
+  MaxAuxContainersPerAgent:
     Type: Number
     Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
     Default: 100
@@ -700,8 +700,8 @@ Resources:
 
             resource_manager:
               type: agent
-              default_cpu_resource_pool: aux-pool
-              default_gpu_resource_pool: compute-pool
+              default_aux_resource_pool: aux-pool
+              default_compute_resource_pool: compute-pool
               scheduler:
                 type: ${SchedulerType}
             EOF
@@ -716,7 +716,7 @@ Resources:
             cat << EOF >> /usr/local/determined/etc/master.yaml
             resource_pools:
               - pool_name: aux-pool
-                max_cpu_containers_per_agent: ${MaxCPUContainersPerAgent}
+                max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
@@ -750,7 +750,7 @@ Resources:
                     mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
 
               - pool_name: compute-pool
-                max_cpu_containers_per_agent: 0
+                max_aux_containers_per_agent: 0
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
@@ -776,7 +776,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
-                  cpu_slots: true
+                  cpu_slots_allowed: true
                   startup_script: |
                     wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
                     bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
