@@ -96,13 +96,11 @@ class SubprocessLauncher:
         # from the main horovod process and sshd processes.
         self._worker_process_ids = []  # type: List[int]
 
-        # Horovod will have a separate training process for each GPU, or a
-        # single process for CPU.
-        self.num_proc = max(1, len(self.env.container_gpus))
-        number_of_worker_processes = self.num_proc if self.hvd_config.use else 1
+        # Horovod will have a separate training process for each slot.
+        self.num_proc = len(self.env.slot_ids) if self.hvd_config.use else 1
 
         # Step 1: Establish the server for communicating with the subprocess.
-        self.broadcast_server = ipc.ZMQBroadcastServer(num_connections=number_of_worker_processes)
+        self.broadcast_server = ipc.ZMQBroadcastServer(num_connections=self.num_proc)
 
         # Step 2: Configure the per-machine WorkerProcessContext.
         self._init_worker_process_env()
