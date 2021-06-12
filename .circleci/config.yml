@@ -2090,6 +2090,7 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
 
@@ -2154,6 +2155,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
               slack-mentions: ["channel"]
