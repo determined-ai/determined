@@ -3,8 +3,7 @@ import React, { useMemo } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import {
-  ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType,
-  RawJson, TrialDetails, TrialHyperParameters,
+  ExperimentBase, ExperimentHyperParamType, TrialDetails,
 } from 'types';
 
 import css from './TrialRangeHyperparameters.module.scss';
@@ -15,95 +14,102 @@ export interface Props {
 }
 
 interface HyperParameter {
-  name: string,
-  value: ExperimentHyperParam,
+  name: string;
+  range: number[];
+  type: ExperimentHyperParamType;
+  val: string;
+  vals?: string[];
 }
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
-  const configSource: HyperParameter[] = useMemo(() => {
-    return Object.entries(experiment.config.hyperparameters).map(([ name, value ]) => {
+  const hyperparameters: HyperParameter[] = useMemo(() => {
+    const config = Object.entries(experiment.config.hyperparameters).map(([ name, value ]) => {
       return {
         name,
         value,
       };
     });
-  }, [ experiment.config.hyperparameters ]);
-
-  const valueSource: {name: string; value: number | string | boolean | RawJson}[] = useMemo(() => {
-    return Object.entries(trial.hparams).map(([ name, value ]) => {
+    const value = Object.entries(trial.hparams).map(([ name, value ]) => {
       return {
         name,
         value,
       };
     });
-  }, [ trial.hparams ]);
+    return config.map(hp => {
+      return (
+        {
+          name: hp.name,
+          range: [ hp.value.minval || 0, hp.value.maxval || 1 ],
+          type: hp.value.type,
+          val: String(value.find(ob => ob.name === hp.name)?.value || 0),
+          vals: hp.value.vals?.map(val => String(val)),
+        }
+      );
+    });
+  }, [ experiment.config.hyperparameters, trial.hparams ]);
 
   return (
     <div style={{ display: 'flex', gap: 20 }}>
-      {configSource.map(hp => <div key={hp.name}>
-        <HyperparameterRange
-          config={hp}
-          value={valueSource.find(hparam => hparam.name === hp.name) || { name: '', value: '' }} />
+      {hyperparameters.map(hp => <div key={hp.name}>
+        <HyperparameterRange hp={hp} />
       </div>)}
     </div>
   );
 };
 
 interface RangeProps {
-  config: HyperParameter
-  value: {name: string, value: number | string | boolean | RawJson}
+  hp: HyperParameter
 }
 
-const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps) => {
+const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   const pointerPosition = useMemo(() => {
-    if (config.value.type === ExperimentHyperParamType.Constant) {
+    if (hp.type === ExperimentHyperParamType.Constant) {
       return 50;
-    } else if (config.value.type === ExperimentHyperParamType.Categorical) {
-      return config.value.vals?.length;
-    } else if (config.value.type === ExperimentHyperParamType.Log) {
+    } else if (hp.type === ExperimentHyperParamType.Categorical) {
+      return hp.vals?.length;
+    } else if (hp.type === ExperimentHyperParamType.Log) {
       return 50;
     } else {
-      return (parseFloat(JSON.stringify(value.value))-(config.value.minval || 0))/
-      ((config.value.maxval || 1)-(config.value.minval || 0));
+      return (parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
     }
-  }, [ config, value ]);
+  }, [ hp ]);
 
   return (
     <div className={css.container}>
-      {config.name}
+      {hp.name}
       <div className={css.innerContainer}>
         <div className={css.valuesTrack}>
-          {config.value.vals ?
-            config.value.vals?.map(option =>
+          {hp.vals ?
+            hp.vals?.map(option =>
               <p className={css.text} key={option.toString()}>{option}</p>) :
-            config.value.type === ExperimentHyperParamType.Log ?
+            hp.type === ExperimentHyperParamType.Log ?
               (new Array(
-                Math.log10((config.value.maxval || 1)/(config.value.minval || 0)),
+                Math.log10((hp.range[1])/(hp.range[0])),
               )).fill(null)
                 .map((_, idx) =>
                   <p className={css.text} key={idx}>
-                    {String((config.value.maxval || 1)/(10**idx)).length > 4 ?
-                      ((config.value.maxval || 1)/(10**idx)).toExponential() :
-                      (config.value.maxval || 1)/(10**idx)}
+                    {String((hp.range[1])/(10**idx)).length > 4 ?
+                      ((hp.range[1])/(10**idx)).toExponential() :
+                      (hp.range[1])/(10**idx)}
                   </p>) :
               <>
-                <p className={css.text}>{config.value.maxval}</p>
-                <p className={css.text}>{config.value.minval}</p>
+                <p className={css.text}>{hp.range[1]}</p>
+                <p className={css.text}>{hp.range[0]}</p>
               </>
           }
         </div>
         <div
           className={
-            (config.value.vals) ?
-              css.grayTrack : config.value.type === ExperimentHyperParamType.Constant ?
+            (hp.vals) ?
+              css.grayTrack : hp.type === ExperimentHyperParamType.Constant ?
                 css.constantTrack : css.blueTrack
           }>
-          {config.value.vals?.map(option =>
+          {hp.vals?.map(option =>
             <div
               className={css.trackOption}
               key={option.toString()}
             />)}
-          {config.value.type === ExperimentHyperParamType.Constant &&
+          {hp.type === ExperimentHyperParamType.Constant &&
           <div
             className={css.trackOption}
           />}
@@ -111,7 +117,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
         <div className={css.pointerTrack}>
           <Pointer
             containerStyle={{ transform: `translateY(${270*(pointerPosition || 50)/100}px)` }}
-            content={<ParsedHumanReadableValue hp={value} type={config.value.type} />} />
+            content={<ParsedHumanReadableValue hp={hp} />} />
         </div>
       </div>
     </div>
@@ -119,32 +125,31 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
 };
 
 interface PHRVProps {
-  hp: TrialHyperParameters
-  type: ExperimentHyperParamType
+  hp: HyperParameter
 }
 
-const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) => {
-  switch (type) {
+const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp }: PHRVProps) => {
+  switch (hp.type) {
     case ExperimentHyperParamType.Categorical:
-      return <p className={css.text}>{hp.value}</p>;
+      return <p className={css.text}>{hp.val}</p>;
     case ExperimentHyperParamType.Constant:
-      return <p className={css.text}>{hp.value}</p>;
+      return <p className={css.text}>{hp.val}</p>;
     case ExperimentHyperParamType.Double:
       return (
         <p className={css.text}>
-          <HumanReadableFloat num={parseFloat(hp.value as string)} precision={3} />
+          <HumanReadableFloat num={parseFloat(hp.val as string)} precision={3} />
         </p>
       );
     case ExperimentHyperParamType.Int:
-      return <p className={css.text}>{parseInt(hp.value as string)}</p>;
+      return <p className={css.text}>{parseInt(hp.val as string)}</p>;
     case ExperimentHyperParamType.Log:
       return (
-        <Tooltip title={hp.value}>
-          <p className={css.text}>{parseFloat(hp.value as string).toExponential(2)}</p>
+        <Tooltip title={hp.val}>
+          <p className={css.text}>{parseFloat(hp.val as string).toExponential(2)}</p>
         </Tooltip>
       );
     default:
-      return <p className={css.text}>{hp.value}</p>;
+      return <p className={css.text}>{hp.val}</p>;
   }
 };
 
