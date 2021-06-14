@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import {
@@ -55,7 +55,21 @@ interface RangeProps {
 }
 
 const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps) => {
-  const tooltipContainer = useRef<HTMLDivElement>(null);
+  const pointerPosition = useMemo(() => {
+    if (config.value.type === ExperimentHyperParamType.Constant) {
+      return 50;
+    } else if (config.value.type === ExperimentHyperParamType.Categorical
+      && config.value.vals !== undefined) {
+      return config.value.vals.length;
+    } else if (config.value.type === ExperimentHyperParamType.Log) {
+      return 50;
+    } else {
+      return 50;
+    }
+  }, [ config.value.type, config.value.vals ]);
+  // eslint-disable-next-line
+  console.log(config.value.vals);
+
   return (
     <div className={css.container}>
       {config.name}
@@ -69,7 +83,11 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
                 Math.log10((config.value.maxval || 1)/(config.value.minval || 0)),
               )).fill(null)
                 .map((_, idx) =>
-                  <p className={css.text} key={idx}>{(config.value.maxval || 1)/(10**idx)}</p>) :
+                  <p className={css.text} key={idx}>
+                    {String((config.value.maxval || 1)/(10**idx)).length > 4 ?
+                      ((config.value.maxval || 1)/(10**idx)).toExponential() :
+                      (config.value.maxval || 1)/(10**idx)}
+                  </p>) :
               <>
                 <p className={css.text}>{config.value.maxval}</p>
                 <p className={css.text}>{config.value.minval}</p>
@@ -92,13 +110,11 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
             className={css.trackOption}
           />}
         </div>
-        <div
-          className={css.pointerTrack}
-          ref={tooltipContainer}
-          style={{ height: `${50}%` }}>
+        <div className={css.pointerTrack}>
           <Tooltip
             color="white"
-            getPopupContainer={() => tooltipContainer.current || document.body}
+            getPopupContainer={(triggerNode) => triggerNode}
+            overlayStyle={{ transform: `translateY(${pointerPosition}%)` }}
             placement="right"
             title={<ParsedHumanReadableValue hp={value} type={config.value.type} />}
             visible={true} />
