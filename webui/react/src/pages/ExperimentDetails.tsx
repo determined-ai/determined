@@ -22,6 +22,7 @@ import { terminalRunStates, upgradeConfig } from 'utils/types';
 const { TabPane } = Tabs;
 
 enum TabType {
+  Configuration = 'configuration',
   Overview = 'overview',
   Visualization = 'visualization',
 }
@@ -35,6 +36,9 @@ interface Params {
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
+const ExperimentConfiguration = React.lazy(() => {
+  return import('./ExperimentDetails/ExperimentConfiguration');
+});
 const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentDetails/ExperimentVisualization');
 });
@@ -43,7 +47,7 @@ const ExperimentDetails: React.FC = () => {
   const { experimentId, tab, viz } = useParams<Params>();
   const location = useLocation();
   const history = useHistory();
-  const defaultTabKey = tab && TAB_KEYS.indexOf(tab) ? tab : DEFAULT_TAB_KEY;
+  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
@@ -187,6 +191,11 @@ const ExperimentDetails: React.FC = () => {
               basePath={`${basePath}/${TabType.Visualization}`}
               experiment={experiment}
               type={viz} />
+          </React.Suspense>
+        </TabPane>
+        <TabPane key="configuration" tab="Configuration">
+          <React.Suspense fallback={<Spinner />}>
+            <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
         </TabPane>
       </Tabs>
