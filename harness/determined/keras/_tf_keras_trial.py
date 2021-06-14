@@ -15,9 +15,10 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import horovod, keras, util, workload
+from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check
+from determined.common import check, experimental
+from determined.common.api import certs
 from determined.horovod import hvd
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
@@ -253,9 +254,9 @@ class TFKerasTrialController(det.TrialController):
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
+        workloads: Optional[workload.Stream] = None,
     ) -> det.TrialController:
         check.is_instance(
             context, keras.TFKerasTrialContext, "TFKerasTrialController needs a TFKerasTrialContext"
@@ -295,9 +296,9 @@ class TFKerasTrialController(det.TrialController):
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
             context,
             env,
-            workloads,
             rendezvous_info,
             hvd_config,
+            workloads,
         )
 
     def __init__(
@@ -340,6 +341,15 @@ class TFKerasTrialController(det.TrialController):
         self._check_validation_data()
 
         self.enqueuers = []  # type: List[keras._Enqueuer]
+
+        self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
+        if self.workloads is None:
+            session = experimental.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session,
+                self.env,
+                self.context.distributed,
+            )
 
         # If a load path is provided, load weights and restore the data location.
         self.multiplexer_load_state = None  # type: Optional[Dict]
@@ -565,6 +575,10 @@ class TFKerasTrialController(det.TrialController):
 
         self.multiplexer._checkpoint_end(path)
 
+        if self.wlsq is not None:
+            with path.joinpath("workload_sequencer.pkl").open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
+
         return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
 
     def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
@@ -617,6 +631,12 @@ class TFKerasTrialController(det.TrialController):
         if cb_state_path.exists():
             with cb_state_path.open("rb") as f:
                 self.multiplexer_load_state = pickle.load(f)
+
+        # Load WorkloadSequencer state.
+        wlsq_path = load_path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
     def run(self) -> None:
         with self.prof:
@@ -748,6 +768,7 @@ class TFKerasTrialController(det.TrialController):
         return metrics
 
     def _control_loop(self) -> None:
+        assert self.workloads is not None
         for wkld, response_func in self.workloads:
             start_time = self._generic._current_timestamp()
             logging.debug(f"Received wkld {wkld.kind}.")
@@ -761,7 +782,7 @@ class TFKerasTrialController(det.TrialController):
                 self.train_workload_metrics = []
                 self.train_workload_len = wkld.num_batches
                 self.multiplexer.set_batches_requested(wkld.num_batches)
-                break
+                return
 
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
@@ -805,13 +826,12 @@ class TFKerasTrialController(det.TrialController):
                     response = workload.Skipped()
                 response_func(response)
 
-            elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                response_func({} if self.is_chief else workload.Skipped())
-                self.multiplexer._corrected_train_end()
-                raise det.errors.WorkerFinishedGracefully()
-
             else:
                 raise AssertionError(f"Unknown workload kind {wkld.kind}.")
+
+        # End-of-training.
+        self.multiplexer._corrected_train_end()
+        raise det.errors.WorkerFinishedGracefully()
 
     def _allreduce_logs(self, logs: Dict) -> Dict:
         if not self.hvd_config.use:

@@ -295,8 +295,6 @@ def reproducibility_test(
         training_metrics[tag] = tm
         validation_metrics[tag] = vm
 
-        yield workload.terminate_workload(), workload.ignore_workload_response
-
     # Trial A
     os.environ["DET_TRIAL_SEED"] = str(seed)
     controller_A = controller_fn(make_workloads("A"))
@@ -346,8 +344,6 @@ def train_and_validate(
         metrics["training"] += tm
         metrics["validation"] += vm
 
-        yield workload.terminate_workload(), workload.ignore_workload_response
-
     controller = make_trial_controller_fn(make_workloads(steps))
     controller.run()
 
@@ -389,8 +385,6 @@ def checkpointing_and_restoring_test(
             nonlocal latest_checkpoint, latest_batch
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
             latest_batch = trainer.get_latest_batch()
-
-        yield workload.terminate_workload(), workload.ignore_workload_response
 
     controller_A1 = make_trial_controller_fn(
         make_workloads(1, "A", True),

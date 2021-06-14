@@ -54,3 +54,8 @@ class ExperimentConfig(dict):
         ), f"searcher metric ({searcher_metric}) is not a string"
 
         return searcher_metric
+
+    def get_min_checkpoint_period(self) -> Dict:
+        min_checkpoint_period = self.get("min_checkpoint_period", {})
+        assert isinstance(min_checkpoint_period, dict)
+        return min_checkpoint_period

@@ -91,6 +91,21 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 controller.run()
 
 
+def do_training(env: det.EnvContext) -> None:
+    # XXX get real rendezvous info
+    rendezvous_info = det.RendezvousInfo(["192.168.0.4:1735"], 0)
+    hvd_config = horovod.HorovodContext.from_configs(
+        env.experiment_config, rendezvous_info, env.hparams
+    )
+    logging.info(f"Horovod config: {hvd_config.__dict__}.")
+    controller = load.prepare_controller(
+        env,
+        rendezvous_info,
+        hvd_config,
+    )
+    controller.run()
+
+
 def main() -> None:
     for k in ENVIRONMENT_VARIABLE_KEYS:
         if k not in os.environ:
@@ -173,7 +188,8 @@ def main() -> None:
         sys.exit(1)
 
     try:
-        build_and_run_training_pipeline(env)
+        # build_and_run_training_pipeline(env)
+        do_training(env)
     except det.InvalidHP:
         logging.info("InvalidHP detected, trial is exiting")
         pass

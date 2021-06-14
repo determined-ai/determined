@@ -128,9 +128,9 @@ def get_trial_from_native(
 
 def load_native(
     env: det.EnvContext,
-    workloads: workload.Stream,
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    workloads: Optional[workload.Stream] = None,
 ) -> det.TrialController:
     check.true(
         env.experiment_config.native_enabled(),
@@ -142,7 +142,7 @@ def load_native(
     return load.load_trial(
         trial_class=trial_class,
         env=env,
-        workloads=workloads,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        workloads=workloads,
     )

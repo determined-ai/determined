@@ -85,8 +85,6 @@ class TestXORTrial:
             # The final accuracy should be 100%.
             assert validation_metrics[-1]["accuracy"] == pytest.approx(1.0)
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=1000)
         controller.run()
 
@@ -119,8 +117,6 @@ class TestXORTrial:
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
             latest_batch = trainer.get_latest_batch()
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = xor_trial_controller(
             self.hparams,
             make_workloads_1(),
@@ -140,8 +136,6 @@ class TestXORTrial:
 
             new_loss = metrics["metrics"]["validation_metrics"]["loss"]
             assert new_loss == pytest.approx(old_loss)
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = xor_trial_controller(
             self.hparams,
@@ -167,8 +161,6 @@ class TestXORTrial:
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = xor_trial_controller(
             self.hparams,
@@ -224,7 +216,6 @@ class TestXORTrial:
                 yield from trainer.send(
                     steps=steps, validation_freq=validation_freq, scheduling_unit=scheduling_unit
                 )
-                yield workload.terminate_workload(), workload.ignore_workload_response
 
             hparams = self.hparams.copy()
             hparams["training_log_path"] = os.path.join(temp_directory, "training.log")
@@ -260,8 +251,6 @@ class TestXORTrial:
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
             latest_batch = trainer.get_latest_batch()
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         def verify_callback(checkpoint_dir: str, checkpoint_num: int) -> None:
             with open(os.path.join(checkpoint_dir, "custom.log"), "r") as fp:
                 assert int(fp.readline()) == checkpoint_num
@@ -295,7 +284,6 @@ class TestXORTrial:
                 trainer = utils.TrainAndValidate()
 
                 yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
-                yield workload.terminate_workload(), workload.ignore_workload_response
 
             hparams = self.hparams.copy()
             hparams["training_end"] = os.path.join(temp_directory, "training_end.log")
@@ -317,7 +305,6 @@ class TestXORTrial:
             trainer = utils.TrainAndValidate(request_stop_step_id=request_stop_step_id)
             yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
             tm, vm = trainer.result()
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         hparams = dict(self.hparams)
         hparams["stop_early"] = stop_early
@@ -359,8 +346,6 @@ class TestLinearTrial:
                 assert metrics["label_sum_list_cls"] == 2 * label_sum
                 assert metrics["label_sum_dict_fn"] == 2 * label_sum
                 assert metrics["label_sum_dict_cls"] == 2 * label_sum
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=estimator_linear_model.LinearEstimator,

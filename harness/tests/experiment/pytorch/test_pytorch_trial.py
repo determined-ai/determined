@@ -68,8 +68,6 @@ class TestPyTorchTrial:
             for older, newer in zip(training_metrics, training_metrics[1:]):
                 assert newer["loss"] <= older["loss"]
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
@@ -89,8 +87,6 @@ class TestPyTorchTrial:
                 assert "binary_error" in metrics
                 assert "accuracy" in metrics
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialWithMultiValidation,
             hparams=self.hparams,
@@ -108,8 +104,6 @@ class TestPyTorchTrial:
 
             for metrics in training_metrics:
                 assert "accuracy" in metrics
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialWithTrainingMetrics,
@@ -130,8 +124,6 @@ class TestPyTorchTrial:
             for metrics in validation_metrics:
                 assert "binary_error" in metrics
                 assert "predictions" in metrics
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialWithNonScalarValidation,
@@ -178,7 +170,6 @@ class TestPyTorchTrial:
             nonlocal latest_checkpoint, latest_batch
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
             latest_batch = trainer.get_latest_batch()
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller1 = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialMulti,
@@ -193,7 +184,6 @@ class TestPyTorchTrial:
         def make_workloads_2() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1)
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         hparams2 = {"hidden_size": 3, "learning_rate": 0.5, "global_batch_size": 4}
 
@@ -233,8 +223,6 @@ class TestPyTorchTrial:
             training_metrics[tag] = tm
             validation_metrics[tag] = vm
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrial,
             hparams=self.hparams,
@@ -268,8 +256,6 @@ class TestPyTorchTrial:
             tm, vm = trainer.result()
             training_metrics[tag] = tm
             validation_metrics[tag] = vm
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialGradClipping,
@@ -315,7 +301,6 @@ class TestPyTorchTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialPerMetricReducers,
@@ -361,8 +346,6 @@ class TestPyTorchTrial:
                 "checkpoints_ended": 1,
             }
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialCallbacks,
             hparams=self.hparams,
@@ -374,7 +357,7 @@ class TestPyTorchTrial:
         # Verify the checkpoint loading callback works.
 
         def make_workloads2() -> workload.Stream:
-            yield workload.terminate_workload(), workload.ignore_workload_response
+            yield workload.train_workload(1, 1, 0), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialCallbacks,
@@ -395,7 +378,6 @@ class TestPyTorchTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialAccessContext,
@@ -425,8 +407,6 @@ class TestPyTorchTrial:
                 assert len(batch_metrics) == num_batches, "did not run for expected num_batches"
                 training_metrics.extend(batch_metrics)
                 total_batches_processed += num_batches
-
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrial,
@@ -463,8 +443,6 @@ class TestPyTorchTrial:
                 assert "fn_reducer" in metrics
                 assert metrics["fn_reducer"] == expect
 
-            yield workload.terminate_workload(), workload.ignore_workload_response
-
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
@@ -477,7 +455,6 @@ class TestPyTorchTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarTrial,
@@ -502,7 +479,6 @@ class TestPyTorchTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
-            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_onevar_model.OneVarTrial,
@@ -553,8 +529,6 @@ class TestPyTorchTrial:
             # monotonically decreasing.
             for older, newer in zip(training_metrics, training_metrics[1:]):
                 assert newer["loss"] <= older["loss"]
-
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         hparams = dict(self.hparams)
         hparams["dataloader_type"] = "torch"

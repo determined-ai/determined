@@ -1,7 +1,7 @@
 import importlib
 import logging
 import sys
-from typing import Type, cast
+from typing import Optional, Type, cast
 
 import determined as det
 from determined import horovod, load, workload
@@ -66,9 +66,9 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
 def load_trial(
     trial_class: Type[det.Trial],
     env: det.EnvContext,
-    workloads: workload.Stream,
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    workloads: Optional[workload.Stream] = None,
 ) -> det.TrialController:
     # Step 1: Validate model definition.
     controller_class = trial_class.trial_controller_class
@@ -98,15 +98,14 @@ def load_trial(
         trial_inst=trial_inst,
         context=trial_context,
         env=env,
-        workloads=workloads,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        workloads=workloads,
     )
 
 
 def prepare_controller(
     env: det.EnvContext,
-    workloads: workload.Stream,
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
@@ -115,9 +114,9 @@ def prepare_controller(
     """
 
     if env.experiment_config.native_enabled():
-        controller = load.load_native(env, workloads, rendezvous_info, hvd_config)
+        controller = load.load_native(env, rendezvous_info, hvd_config)
     else:
         trial_class = trial_class_from_entrypoint(env.experiment_config["entrypoint"])
-        controller = load_trial(trial_class, env, workloads, rendezvous_info, hvd_config)
+        controller = load_trial(trial_class, env, rendezvous_info, hvd_config)
 
     return controller

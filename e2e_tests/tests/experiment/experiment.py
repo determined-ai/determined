@@ -351,8 +351,8 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     assert len(steps) > 0
     zeroth_step = steps[0]
 
-    assert zeroth_step["id"] == 0
     assert zeroth_step["validation"] is not None
+    assert zeroth_step["validation"]["total_batches"] == 0
     assert zeroth_step["validation"]["state"] == "COMPLETED"
 
 
@@ -481,20 +481,19 @@ def run_basic_test(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
-    has_zeroth_step: bool = False,
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
     assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials, has_zeroth_step)
+    verify_completed_experiment_metadata(experiment_id, expected_trials)
 
     return experiment_id
 
 
 def verify_completed_experiment_metadata(
-    experiment_id: int, num_expected_trials: Optional[int], has_zeroth_step: bool = False
+    experiment_id: int, num_expected_trials: Optional[int]
 ) -> None:
     # If `expected_trials` is None, the expected number of trials is
     # non-deterministic.
@@ -516,11 +515,7 @@ def verify_completed_experiment_metadata(
         # Check that steps appear in increasing order of step ID.
         # Step IDs should start at 0 or 1 and have no gaps.
         step_ids = [s["id"] for s in trial["steps"]]
-        assert step_ids == sorted(step_ids)
-        if has_zeroth_step:
-            assert step_ids == list(range(0, len(step_ids)))
-        else:
-            assert step_ids == list(range(1, len(step_ids) + 1))
+        assert step_ids == list(range(1, len(step_ids) + 1))
 
         for step in trial["steps"]:
             assert step["state"] == "COMPLETED"
@@ -650,7 +645,6 @@ def run_basic_test_with_temp_config(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
-    has_zeroth_step: bool = False,
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
@@ -661,7 +655,6 @@ def run_basic_test_with_temp_config(
             expected_trials,
             create_args,
             max_wait_secs=max_wait_secs,
-            has_zeroth_step=has_zeroth_step,
         )
     return experiment_id
 
