@@ -46,7 +46,7 @@ const TrialRangeHyperparametersContainer = () => {
         n_filters1: {
           maxval: 64,
           minval: 8,
-          type: ExperimentHyperParamType.Int,
+          type: ExperimentHyperParamType.Categorical,
           vals: [ 8, 16, 32, 64 ],
         },
       },

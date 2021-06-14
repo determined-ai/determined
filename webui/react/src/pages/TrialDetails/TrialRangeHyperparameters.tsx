@@ -18,7 +18,7 @@ interface HyperParameter {
   range: number[];
   type: ExperimentHyperParamType;
   val: string;
-  vals?: string[];
+  vals: string[];
 }
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
@@ -42,7 +42,8 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
           range: [ hp.value.minval || 0, hp.value.maxval || 1 ],
           type: hp.value.type,
           val: String(value.find(ob => ob.name === hp.name)?.value || 0),
-          vals: hp.value.vals?.map(val => String(val)),
+          vals: hp.value.vals?.map(val => String(val)) ||
+          [ String(hp.value.minval) || '0', String(hp.value.maxval) || '1' ],
         }
       );
     });
@@ -64,13 +65,14 @@ interface RangeProps {
 const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   const pointerPosition = useMemo(() => {
     if (hp.type === ExperimentHyperParamType.Constant) {
-      return 50;
+      return .5;
     } else if (hp.type === ExperimentHyperParamType.Categorical) {
-      return hp.vals?.length;
+      const idx = hp.vals.indexOf(hp.val);
+      return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
     } else if (hp.type === ExperimentHyperParamType.Log) {
-      return 50;
+      return 1-Math.log10(parseFloat(hp.val)/hp.range[0])/(Math.log10(hp.range[1]/hp.range[0]));
     } else {
-      return (parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
+      return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
     }
   }, [ hp ]);
 
@@ -78,33 +80,14 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
     <div className={css.container}>
       {hp.name}
       <div className={css.innerContainer}>
-        <div className={css.valuesTrack}>
-          {hp.vals ?
-            hp.vals?.map(option =>
-              <p className={css.text} key={option.toString()}>{option}</p>) :
-            hp.type === ExperimentHyperParamType.Log ?
-              (new Array(
-                Math.log10((hp.range[1])/(hp.range[0])),
-              )).fill(null)
-                .map((_, idx) =>
-                  <p className={css.text} key={idx}>
-                    {String((hp.range[1])/(10**idx)).length > 4 ?
-                      ((hp.range[1])/(10**idx)).toExponential() :
-                      (hp.range[1])/(10**idx)}
-                  </p>) :
-              <>
-                <p className={css.text}>{hp.range[1]}</p>
-                <p className={css.text}>{hp.range[0]}</p>
-              </>
-          }
-        </div>
+        <ValuesTrack hp={hp} />
         <div
           className={
-            (hp.vals) ?
+            (hp.type === ExperimentHyperParamType.Categorical) ?
               css.grayTrack : hp.type === ExperimentHyperParamType.Constant ?
                 css.constantTrack : css.blueTrack
           }>
-          {hp.vals?.map(option =>
+          {hp.type !== ExperimentHyperParamType.Constant && hp.vals.map(option =>
             <div
               className={css.trackOption}
               key={option.toString()}
@@ -116,12 +99,43 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
         </div>
         <div className={css.pointerTrack}>
           <Pointer
-            containerStyle={{ transform: `translateY(${270*(pointerPosition || 50)/100}px)` }}
+            containerStyle={{ transform: `translateY(${270*pointerPosition}px)` }}
             content={<ParsedHumanReadableValue hp={hp} />} />
         </div>
       </div>
     </div>
   );
+};
+
+interface ValuesTrackProps {
+  hp: HyperParameter
+}
+
+const ValuesTrack: React.FC<ValuesTrackProps> = ({ hp }: ValuesTrackProps) => {
+  switch(hp.type) {
+    case ExperimentHyperParamType.Constant:
+      return null;
+    case ExperimentHyperParamType.Categorical:
+      return <div className={css.valuesTrack}>
+        {hp.vals.map(option =>
+          <p className={css.text} key={option.toString()}>{option}</p>)}
+      </div>;
+    case ExperimentHyperParamType.Log:
+      return <div className={css.valuesTrack}> {(new Array(
+        Math.log10((hp.range[1])/(hp.range[0]))+1,
+      )).fill(null)
+        .map((_, idx) =>
+          <p className={css.text} key={idx}>
+            {String((hp.range[1])/(10**idx)).length > 4 ?
+              ((hp.range[1])/(10**idx)).toExponential() :
+              (hp.range[1])/(10**idx)}
+          </p>)}</div>;
+    default:
+      return <div className={css.valuesTrack}>
+        <p className={css.text}>{hp.range[1]}</p>
+        <p className={css.text}>{hp.range[0]}</p>
+      </div>;
+  }
 };
 
 interface PHRVProps {

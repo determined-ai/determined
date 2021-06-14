@@ -16,10 +16,6 @@
   justify-content: space-between;
   text-align: right;
 }
-.pointerTrack {
-  display: flex;
-  flex-direction: column;
-}
 .text {
   color: black;
   margin: 0
@@ -56,6 +52,7 @@
 }
 .pointerContainer {
   display: flex;
+  transform-origin: bottom;
 }
 .pointerArrow {
   align-self: center;
