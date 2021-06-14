@@ -111,13 +111,9 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
           />}
         </div>
         <div className={css.pointerTrack}>
-          <Tooltip
-            color="white"
-            getPopupContainer={(triggerNode) => triggerNode}
-            overlayStyle={{ transform: `translateY(${pointerPosition}%)` }}
-            placement="right"
-            title={<ParsedHumanReadableValue hp={value} type={config.value.type} />}
-            visible={true} />
+          <Pointer
+            containerStyle={{ transform: `translateY(${300*pointerPosition/100}px)` }}
+            content={<ParsedHumanReadableValue hp={value} type={config.value.type} />} />
         </div>
       </div>
     </div>
@@ -152,6 +148,22 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp, type }: PHRVProps) 
     default:
       return <p className={css.text}>{hp.value}</p>;
   }
+};
+
+interface PointerProps {
+  containerStyle: React.CSSProperties;
+  content: JSX.Element;
+}
+
+const Pointer: React.FC<PointerProps> = ({ containerStyle, content }: PointerProps) => {
+  return (
+    <div className={css.pointerContainer} style={containerStyle}>
+      <div className={css.pointerArrow} />
+      <div className={css.pointerText}>
+        {content}
+      </div>
+    </div>
+  );
 };
 
 export default TrialRangeHyperparameters;
