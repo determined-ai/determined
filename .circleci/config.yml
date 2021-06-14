@@ -1447,7 +1447,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.17-gke.100"
+        default: "1.19.9-gke.1900"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1517,7 +1517,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.17-gke.100"
+        default: "1.19.9-gke.1900"
       machine-type:
         type: string
         default: "n1-standard-8"
