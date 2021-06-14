@@ -20,16 +20,16 @@ you can use different sets of resources for different tasks. Each
 resource pool handles scheduling and instance provisioning
 independently.
 
-When you configure a cluster, you set which pool is the default for CPU
-tasks and which pool is the default for GPU tasks. CPU-only tasks such
-as Tensorboards will run on the default CPU pool unless you specify that
-they should run in a different pool when launching the task. Tasks which
-require a slot, such as experiments or GPU-notebooks, will use the
-default GPU pool unless otherwise specified. For this reason we
-recommend that you always create a cluster with at least two pools, one
-with low-cost CPU instances for CPU-only tasks and one with GPU
-instances for GPU tasks. This is the default setup when launching a
-cluster on AWS or GCP via ``det deploy``.
+When you configure a cluster, you set which pool is the default for
+auxiliary tasks and which pool is the default for compute tasks.
+CPU-only tasks such as Tensorboards will run on the default auxiliary
+pool unless you specify that they should run in a different pool when
+launching the task. Tasks which require a slot, such as experiments or
+GPU-notebooks, will use the default compute pool unless otherwise
+specified. For this reason we recommend that you always create a cluster
+with at least two pools, one with low-cost CPU instances for auxiliary
+tasks and one with GPU instances for compute tasks. This is the default
+setup when launching a cluster on AWS or GCP via ``det deploy``.
 
 Here are some scenarios where it can be valuable to use multiple
 resource pools:
@@ -162,8 +162,8 @@ problem.
      scheduler:
        type: round_robin
        fitting_policy: best
-     default_cpu_resource_pool: pool1
-     default_gpu_resource_pool: pool1
+     default_aux_resource_pool: pool1
+     default_compute_resource_pool: pool1
 
    resource_pools:
      - pool_name: pool1
@@ -189,8 +189,8 @@ pool-specific level:
      scheduler:
        type: round_robin
        fitting_policy: best
-     default_cpu_resource_pool: pool1
-     default_gpu_resource_pool: pool1
+     default_aux_resource_pool: pool1
+     default_compute_resource_pool: pool1
 
    resource_pools:
      - pool_name: pool1
@@ -213,9 +213,10 @@ When creating a task, the job configuration file has a section called
 
 If this field is not set, the task will be launched into one of the two
 default pools defined in the :ref:`master-configuration`. Experiments
-will be launched into the default GPU pool. Tensorboards will be
-launched into the default CPU pool. Commands, Shells, and Notebooks that
-request a slot (which is the default behavior if the ``resources.slots``
-field is not set) will be launched into the default GPU pool. Commands,
-Shells, and Notebooks that explicitly request 0 slots (for example the
-"Launch CPU-only Notebook" button in the Web UI) will use the CPU pool.
+will be launched into the default compute pool. Tensorboards will be
+launched into the default auxiliary pool. Commands, Shells, and
+Notebooks that request a slot (which is the default behavior if the
+``resources.slots`` field is not set) will be launched into the default
+compute pool. Commands, Shells, and Notebooks that explicitly request 0
+slots (for example the "Launch CPU-only Notebook" button in the Web UI)
+will use the auxiliary pool.

@@ -165,7 +165,9 @@ Spinning up the Cluster
          ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
          ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
          ``p3dn.24xlarge``, or any general purpose instance types
-         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants)
+         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants).
+         Prior to 0.16.1, this option was called
+         ``--cpu-agent-instance-type``.
 
       -  t2.xlarge
 
@@ -180,7 +182,8 @@ Spinning up the Cluster
          ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For
          CPU-based training or testing, any general purpose instance
          type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``,
-         ``m5`` and variants)
+         ``m5`` and variants). Prior to 0.16.1, this option was called
+         ``--gpu-agent-instance-type``.
 
       -  p2.8xlarge
 

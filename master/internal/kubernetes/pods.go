@@ -433,13 +433,13 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		var deviceType device.Type
 		switch p.slotType {
 		case device.CPU:
-			resources := node.Status.Capacity["cpu"]
+			resources := node.Status.Allocatable["cpu"]
 			numSlots = int64(float32(resources.Value()) / p.slotResourceRequests.CPU)
 			deviceType = device.CPU
 		case device.GPU:
 			fallthrough
 		default:
-			resources := node.Status.Capacity["nvidia.com/gpu"]
+			resources := node.Status.Allocatable["nvidia.com/gpu"]
 			numSlots = resources.Value()
 			deviceType = device.GPU
 		}

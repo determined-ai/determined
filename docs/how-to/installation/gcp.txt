@@ -173,11 +173,12 @@ Optional Arguments:
 
    -  -  ``--gpu-num``
 
-      -  The number of GPUs on each agent instance. Between 1 and 8
+      -  The number of GPUs on each agent instance. Between 0 and 8
          (more GPUs require a more powerful ``agent-instance-type``).
          Refer to the `GPUs on Compute Engine
          <https://cloud.google.com/compute/docs/gpus>`__ page for
-         specific GCP requirements. Set to 0 for CPU-based training.
+         specific GCP requirements. Can be set to 0 for CPU-based
+         training.
 
       -  8
 
