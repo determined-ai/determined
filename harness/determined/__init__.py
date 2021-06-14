@@ -2,7 +2,6 @@ from determined.__version__ import __version__
 from determined._env_context import EnvContext
 from determined._rendezvous_info import RendezvousInfo
 from determined._execution import (
-    _catch_init_invalid_hp,
     _catch_sys_exit,
     _make_local_execution_env,
     _local_execution_manager,

@@ -55,4 +55,9 @@ fi
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.harness "$@"
+# rendezvous layer: gather all addresses of all containers and store them in an
+# environment variable before invoking the launch layer.
+DET_RENDEZVOUS_INFO="$("$DET_PYTHON_EXECUTABLE" -m determined.exec.rendezvous_info)"
+export DET_RENDEZVOUS_INFO
+
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch_autohorovod "$@"

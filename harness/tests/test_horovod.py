@@ -1,4 +1,3 @@
-import pathlib
 from typing import Any, Dict
 
 import pytest
@@ -97,9 +96,7 @@ def test_create_run_command(
     )
     if debug:
         expected_horovod_run_cmd.append("--verbose")
-    expected_horovod_run_cmd.extend(
-        ["python3", "-m", "determined.exec.worker_process_wrapper", "env_path"]
-    )
+    expected_horovod_run_cmd.append("--")
 
     created_horovod_run_cmd = horovod.create_run_command(
         num_proc_per_machine=num_proc_per_machine,
@@ -107,7 +104,6 @@ def test_create_run_command(
         env=env,
         debug=debug,
         optional_args=[],
-        worker_process_env_path=pathlib.Path("env_path"),
     )
     assert expected_horovod_run_cmd == created_horovod_run_cmd
 

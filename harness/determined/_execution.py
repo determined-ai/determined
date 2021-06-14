@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import constants, gpu, horovod, util
+from determined import constants, gpu, horovod
 from determined.common import api
 
 
@@ -39,19 +39,6 @@ def _catch_sys_exit() -> Any:
             "This might be raised by directly calling or using a library calling sys.exit(). "
             "Please remove any calls to sys.exit() from your model code."
         ) from e
-
-
-@contextlib.contextmanager
-def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
-    try:
-        yield
-    except InvalidHP as e:
-        logging.info("Invalid hyperparameter exception in trial __init__: {}".format(e))
-        wkld, args, response_func = next(workloads)
-        response_func(
-            util.wrap_metrics({}, stop_requested=False, invalid_hp=False, init_invalid_hp=True)
-        )
-        raise
 
 
 def _make_local_execution_exp_config(

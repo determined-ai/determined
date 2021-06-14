@@ -1,7 +1,6 @@
 import importlib
 import logging
 import os
-import pathlib
 from typing import Any, Dict, List, Optional, cast
 
 import determined as det
@@ -147,7 +146,6 @@ def create_run_command(
     env: det.EnvContext,
     debug: bool,
     optional_args: List[str],
-    worker_process_env_path: pathlib.Path,
 ) -> List[str]:
     num_machines = len(ip_addresses)
     num_proc_total = num_proc_per_machine * num_machines
@@ -171,15 +169,7 @@ def create_run_command(
     if debug:
         horovod_process_cmd.append("--verbose")
     horovod_process_cmd.extend(optional_args)
-    # Use "python3" instead of sys.executable since the remote machine may have differing paths.
-    horovod_process_cmd += [
-        "python3",
-        "-m",
-        "determined.exec.worker_process_wrapper",
-        str(worker_process_env_path),
-    ]
-
-    logging.debug(f"Chief worker subprocess launch command: {horovod_process_cmd}.")
+    horovod_process_cmd.append("--")
     return horovod_process_cmd
 
 
