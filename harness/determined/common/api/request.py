@@ -1,6 +1,6 @@
 import webbrowser
 from types import TracebackType
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
 import lomond
@@ -70,6 +70,7 @@ def do_request(
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
     stream: bool = False,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     # If no explicit Authentication object was provided, use the cli's singleton Authentication.
     if auth is None:
@@ -97,6 +98,7 @@ def do_request(
             headers=h,
             verify=cert.bundle if cert else None,
             stream=stream,
+            timeout=timeout,
             server_hostname=cert.name if cert else None,
         )
     except requests.exceptions.SSLError:
@@ -128,6 +130,7 @@ def get(
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
     stream: bool = False,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a GET request to the remote API.
@@ -153,6 +156,7 @@ def delete(
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a DELETE request to the remote API.
@@ -166,6 +170,7 @@ def delete(
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
@@ -177,6 +182,7 @@ def post(
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a POST request to the remote API.
@@ -190,6 +196,7 @@ def post(
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
@@ -201,6 +208,7 @@ def patch(
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a PATCH request to the remote API.
@@ -214,6 +222,7 @@ def patch(
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
@@ -225,6 +234,7 @@ def put(
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a PUT request to the remote API.
@@ -238,6 +248,7 @@ def put(
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 

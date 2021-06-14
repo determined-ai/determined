@@ -25,6 +25,8 @@ class Session:
         path: str,
         params: Optional[Dict[str, Any]],
         body: Optional[Dict[str, Any]],
+        headers: Optional[Dict[str, Any]],
+        timeout: Optional[int],
     ) -> requests.Response:
         return request.do_request(
             method,
@@ -34,6 +36,8 @@ class Session:
             body=body,
             auth=self._auth,
             cert=self._cert,
+            headers=headers,
+            timeout=timeout,
         )
 
     def get(
@@ -41,37 +45,47 @@ class Session:
         path: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("GET", path, params, body)
+        return self._do_request("GET", path, params, body, headers, timeout)
 
     def delete(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("DELETE", path, params, body)
+        return self._do_request("DELETE", path, params, body, headers, timeout)
 
     def post(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("POST", path, params, body)
+        return self._do_request("POST", path, params, body, headers, timeout)
 
     def patch(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("PATCH", path, params, body)
+        return self._do_request("PATCH", path, params, body, headers, timeout)
 
     def put(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
         body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+        timeout: Optional[int] = None,
     ) -> requests.Response:
-        return self._do_request("PUT", path, params, body)
+        return self._do_request("PUT", path, params, body, headers, timeout)
