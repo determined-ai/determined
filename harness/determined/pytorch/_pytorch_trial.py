@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import pickle
 import random
 import time
 from abc import abstractmethod
@@ -9,8 +10,9 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, pytorch, util, workload
-from determined.common import check
+from determined import horovod, layers, pytorch, util, workload
+from determined.common import check, experimental
+from determined.common.api import certs
 from determined.horovod import hvd
 from determined.util import has_param
 
@@ -49,6 +51,13 @@ class PyTorchTrialController(det.TrialController):
         # when the user defines `validate_full_dataset()`.
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         self._set_data_loaders()
+
+        self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
+        if self.workloads is None:
+            session = experimental.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
@@ -192,6 +201,7 @@ class PyTorchTrialController(det.TrialController):
             del self.training_iterator
 
     def _run(self) -> None:
+        assert self.workloads is not None
         for w, response_func in self.workloads:
             start_time = self._generic._current_timestamp()
 
@@ -256,10 +266,6 @@ class PyTorchTrialController(det.TrialController):
                 else:
                     response = workload.Skipped()
                 response_func(response)
-
-            elif w.kind == workload.Workload.Kind.TERMINATE:
-                response_func({} if self.is_chief else workload.Skipped())
-                break
 
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
@@ -767,6 +773,12 @@ class PyTorchTrialController(det.TrialController):
                     "callback will be initialized from scratch"
                 )
 
+        # Load workload sequencer state.
+        wlsq_path = load_path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
+
     def _save(self, path: pathlib.Path) -> workload.Response:
         path.mkdir(parents=True, exist_ok=True)
 
@@ -813,6 +825,10 @@ class PyTorchTrialController(det.TrialController):
 
         for callback in self.callbacks.values():
             callback.on_checkpoint_end(str(path))
+
+        if self.wlsq is not None:
+            with path.joinpath("workload_sequencer.pkl").open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
 
         return cast(
             workload.Response,

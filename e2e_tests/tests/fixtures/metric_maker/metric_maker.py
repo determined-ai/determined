@@ -1,10 +1,13 @@
 import pathlib
+import pickle
 from typing import Any, Dict
 
 import numpy as np
 
 import determined as det
-from determined import horovod, workload
+from determined import horovod, layers, workload
+from determined.common.api import certs
+from determined.experimental import client
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -76,6 +79,13 @@ class MetricMaker(det.TrialController):
         self.validation_structure = self.env.hparams["validation_structure"]
         self.gain_per_batch = self.env.hparams["gain_per_batch"]
 
+        self.wlsq = None
+        if self.workloads is None:
+            session = client.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
+
         if self.env.latest_checkpoint is not None:
             with self._generic._download_initial_checkpoint(
                 self.env.latest_checkpoint
@@ -116,9 +126,6 @@ class MetricMaker(det.TrialController):
                             path,
                             response,
                         )
-                elif w.kind == workload.Workload.Kind.TERMINATE:
-                    self.terminate()
-                    response = workload.Skipped()
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -163,9 +170,19 @@ class MetricMaker(det.TrialController):
         with path.joinpath("checkpoint_file").open("w") as f:
             f.write(str(self.value))
 
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None:
+            with wlsq_path.open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
+
     def load(self, path: pathlib.Path) -> None:
         with path.joinpath("checkpoint_file").open("r") as f:
             self.value = float(f.read())
+
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
 
 class MetricMakerTrial(det.Trial):

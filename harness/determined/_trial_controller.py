@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import determined as det
 from determined import _generic, horovod, profiler, workload
@@ -11,27 +11,24 @@ from determined.horovod import hvd
 
 class TrialController(metaclass=abc.ABCMeta):
     """
-    Abstract base class for TrialControllers.
-
-    A TrialController is the lowest Determined-owned layer of the harness. It consumes Workloads
-    from higher layers of the harness and applies framework-specific logic to execute the
-    workloads.  Framework-specific details like tf.Session objects or keras.Model objects are
-    handled at this level.
+    TrialController is the legacy class that represented the Determined-owned logic to interact with
+    a user-owned Trial class.
     """
 
     def __init__(
         self,
         context: Any,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
+        workloads: Optional[workload.Stream] = None,
     ) -> None:
         self.context = context
         self.env = env
-        self.workloads = workloads
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
+        # The only time that workloads should be non-None here is unit tests or test mode.
+        self.workloads = workloads
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
@@ -72,9 +69,9 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
+        workloads: Optional[workload.Stream] = None,
     ) -> "TrialController":
         """
         Create a TrialController from an instantiated framework-matched Trial.

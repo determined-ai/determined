@@ -487,9 +487,7 @@ def test_pytorch_parallel() -> None:
     config = conf.set_tensor_auto_tuning(config, True)
     config = conf.set_perform_initial_validation(config, True)
 
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.tutorials_path("mnist_pytorch"), 1, has_zeroth_step=True
-    )
+    exp_id = exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
     exp.assert_performed_initial_validation(exp_id)
 
 
@@ -537,9 +535,7 @@ def test_perform_initial_validation() -> None:
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
     config = conf.set_perform_initial_validation(config, True)
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("no_op"), 1, has_zeroth_step=True
-    )
+    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("no_op"), 1)
     exp.assert_performed_initial_validation(exp_id)
 
 

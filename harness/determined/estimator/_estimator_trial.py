@@ -17,9 +17,10 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check
+from determined.common import check, experimental
+from determined.common.api import certs
 from determined.horovod import hvd
 
 VERY_LARGE_NUMBER = 9999999999999999
@@ -231,6 +232,10 @@ class DeterminedControlHook(estimator.RunHook):
             if isinstance(callback, estimator.RunHook):
                 callback.on_checkpoint_end(str(checkpoint_path))
 
+        if self.estimator_trial_controller.wlsq is not None:
+            with checkpoint_path.joinpath("workload_sequencer.pkl").open("wb") as f:
+                pickle.dump(self.estimator_trial_controller.wlsq.get_state(), f)
+
         return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_model"}
 
     def _save_model(self) -> None:
@@ -287,6 +292,7 @@ class DeterminedControlHook(estimator.RunHook):
     def control_loop(self) -> None:
         _generic = self.estimator_trial_controller._generic
 
+        assert self.estimator_trial_controller.workloads is not None
         for wkld, response_func in self.estimator_trial_controller.workloads:
             logging.debug(f"Received wkld {wkld.kind}.")
             start_time = _generic._current_timestamp()
@@ -299,7 +305,7 @@ class DeterminedControlHook(estimator.RunHook):
                 self.train_workload = wkld
                 # Break out of the control loop so that the train process
                 # re-enters the train_and_evaluate() loop.
-                break
+                return
 
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
@@ -340,11 +346,11 @@ class DeterminedControlHook(estimator.RunHook):
                     response = workload.Skipped()
                 response_func(response)
 
-            elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                self.estimator_trial_controller.exit_response_func = response_func
-                raise det.errors.WorkerFinishedGracefully("Exiting normally.")
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
+
+        # End-of-training.
+        raise det.errors.WorkerFinishedGracefully("Exiting normally.")
 
     def on_checkpoint_load(self, checkpoint_dir: str) -> None:
         self.load_rng_state_from_checkpoint(checkpoint_dir)
@@ -413,8 +419,12 @@ class EstimatorTrialController(det.TrialController):
         self.val_spec = val_spec
         self.serving_input_receiver_fns = serving_input_receiver_fns
 
-        # Used to send Terminate response following post-trial close callback.
-        self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
+        self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
+        if self.workloads is None:
+            session = experimental.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
 
         self._init_model()
 
@@ -717,9 +727,6 @@ class EstimatorTrialController(det.TrialController):
                     if isinstance(callback, estimator.RunHook):
                         callback.on_trial_close()
 
-        if self.exit_response_func:
-            self.exit_response_func({} if self.is_chief else workload.Skipped())
-
     def _init_paths(self) -> None:
         """
         Create a unique model directory for each training process. If
@@ -751,6 +758,12 @@ class EstimatorTrialController(det.TrialController):
             # Calibrate the CheckpointState metadata file to the new location.
             estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
             logging.debug(f"Load path set to {self.estimator_dir}.")
+
+            # Load WorkloadSequencer state.
+            wlsq_path = os.path.join(load_path, "workload_sequencer.pkl")
+            if self.wlsq is not None and os.path.exists(wlsq_path):
+                with open(wlsq_path, "rb") as f:
+                    self.wlsq.load_state(pickle.load(f))
 
     def compute_validation_metrics(self) -> workload.Response:
         steps = self.eval_spec.steps if not self.env.test_mode else 1

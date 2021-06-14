@@ -11,7 +11,6 @@ class Workload:
         RUN_STEP = 1
         COMPUTE_VALIDATION_METRICS = 2
         CHECKPOINT_MODEL = 3
-        TERMINATE = 4
 
     def __init__(
         self,
@@ -129,9 +128,6 @@ class WorkloadResponseInterceptor:
 
             ...
 
-            # Close the TrialController.
-            yield from interceptor.send(terminate_workload, [])
-
         # Create a Trial to read this stream of workloads.
         controller = MyTrialController(..., make_workloads())
 
@@ -213,15 +209,4 @@ def checkpoint_workload(
         step_id,
         0,
         total_batches_processed,
-    )
-
-
-def terminate_workload(step_id: int = 1, exp_id: int = 1, trial_id: int = 1) -> Workload:
-    return Workload(
-        Workload.Kind.TERMINATE,
-        exp_id,
-        trial_id,
-        step_id,
-        0,
-        0,
     )

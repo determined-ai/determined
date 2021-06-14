@@ -109,9 +109,6 @@ def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:
     yield workload.checkpoint_workload(), workload.ignore_workload_response
     logging.info("Finished saving a checkpoint.")
 
-    yield workload.terminate_workload(), workload.ignore_workload_response
-    logging.info("The test experiment passed.")
-
 
 def _load_trial_for_checkpoint_export(
     context_dir: pathlib.Path,
@@ -155,11 +152,12 @@ def test_one_batch(
         controller = load.load_trial(
             trial_class=trial_class,
             env=env,
-            workloads=workloads,
             rendezvous_info=rendezvous_info,
             hvd_config=hvd_config,
+            workloads=workloads,
         )
         controller.run()
+        logging.info("The test experiment passed.")
         logging.info(
             "Note: to submit an experiment to the cluster, change local parameter to False"
         )

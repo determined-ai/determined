@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pathlib
+import pickle
 import random
 import time
 from typing import Any, Dict, Optional
@@ -10,8 +11,10 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod, workload
+from determined import horovod, layers, workload
 from determined.common import check
+from determined.common.api import certs
+from determined.experimental import client
 
 
 class NoOpTrialController(det.TrialController):
@@ -59,6 +62,13 @@ class NoOpTrialController(det.TrialController):
 
         self.request_stop = self.env.hparams.get("request_stop", False)
 
+        self.wlsq = None
+        if self.workloads is None:
+            session = client.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
+
         if self.env.latest_checkpoint is not None:
             with self._generic._download_initial_checkpoint(
                 self.env.latest_checkpoint
@@ -101,9 +111,6 @@ class NoOpTrialController(det.TrialController):
                             path,
                             response,
                         )
-                elif w.kind == workload.Workload.Kind.TERMINATE:
-                    self.terminate()
-                    response = workload.Skipped()
                 else:
                     raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -183,6 +190,11 @@ class NoOpTrialController(det.TrialController):
         path.chmod(0o777)
         fpath.chmod(0o777)
 
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None:
+            with wlsq_path.open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
+
     def load(self, path: pathlib.Path) -> None:
         self.chaos_failure(self.chaos_probability_checkpoint)
         time.sleep(self.load_secs)
@@ -197,6 +209,11 @@ class NoOpTrialController(det.TrialController):
             logging.info(
                 "Loaded checkpoint {}, steps_trained {}".format(fpath, self.steps_trained())
             )
+
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
     def chaos_failure(self, probability: Optional[float]) -> None:
         if probability is None:
