@@ -5,6 +5,7 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import {
   ExperimentBase, ExperimentHyperParamType, TrialDetails,
 } from 'types';
+import { clamp } from 'utils/number';
 
 import css from './TrialRangeHyperparameters.module.scss';
 
@@ -70,7 +71,11 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
       const idx = hp.vals.indexOf(hp.val);
       return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
     } else if (hp.type === ExperimentHyperParamType.Log) {
-      return 1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0]));
+      return clamp(
+        1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0])),
+        0,
+        1,
+      );
     } else {
       return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
     }
