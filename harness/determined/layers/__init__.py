@@ -5,3 +5,4 @@ from determined.layers._worker_process import (
     SubprocessReceiver,
     WorkerProcessContext,
 )
+from determined.layers._workload_sequencer import WorkloadSequencer, make_compatibility_workloads

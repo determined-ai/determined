@@ -6,7 +6,7 @@ import sys
 from typing import Any, Iterator, List, Optional, Type, cast
 
 import determined as det
-from determined import horovod, load, workload
+from determined import horovod, load
 from determined.common import check
 
 
@@ -128,7 +128,6 @@ def get_trial_from_native(
 
 def load_native(
     env: det.EnvContext,
-    workloads: workload.Stream,
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
@@ -142,7 +141,6 @@ def load_native(
     return load.load_trial(
         trial_class=trial_class,
         env=env,
-        workloads=workloads,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
     )

@@ -17,7 +17,7 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -419,6 +419,10 @@ class EstimatorTrialController(det.TrialController):
         self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
 
         self._init_model()
+
+        self.workloads = layers.make_compatibility_workloads(
+            None, self.env, self.context.distributed
+        )
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:

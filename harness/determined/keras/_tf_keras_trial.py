@@ -21,7 +21,7 @@ from tensorflow.python.keras.saving.hdf5_format import (
 from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
-from determined import horovod, keras, util, workload
+from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
@@ -348,6 +348,10 @@ class TFKerasTrialController(det.TrialController):
         self.train_workload_inputs = 0
         self.train_workload_len = 0
         self.test_inputs = 0
+
+        self.workloads = layers.make_compatibility_workloads(
+            None, self.env, self.context.distributed
+        )
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()

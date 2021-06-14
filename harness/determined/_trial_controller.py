@@ -3,13 +3,14 @@ import logging
 from typing import Any
 
 import determined as det
-from determined import horovod, profiler, workload
+from determined import horovod, profiler
 from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 from determined.horovod import hvd
 
 
 class TrialController(metaclass=abc.ABCMeta):
+    # XXX: fix docstring
     """
     Abstract base class for TrialControllers.
 
@@ -23,13 +24,11 @@ class TrialController(metaclass=abc.ABCMeta):
         self,
         context: Any,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
     ) -> None:
         self.context = context
         self.env = env
-        self.workloads = workloads
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
 
@@ -72,7 +71,6 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: RendezvousInfo,
         hvd_config: horovod.HorovodContext,
     ) -> "TrialController":

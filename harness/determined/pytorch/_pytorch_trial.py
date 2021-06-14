@@ -9,7 +9,7 @@ import numpy as np
 import torch
 
 import determined as det
-from determined import horovod, pytorch, util, workload
+from determined import horovod, layers, pytorch, util, workload
 from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
@@ -48,6 +48,10 @@ class PyTorchTrialController(det.TrialController):
         # when the user defines `validate_full_dataset()`.
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         self._set_data_loaders()
+
+        self.workloads = layers.make_compatibility_workloads(
+            None, self.env, self.context.distributed
+        )
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
