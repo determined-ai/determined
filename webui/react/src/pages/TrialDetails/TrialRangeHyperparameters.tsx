@@ -67,8 +67,6 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
       return 50;
     }
   }, [ config.value.type, config.value.vals ]);
-  // eslint-disable-next-line
-  console.log(config.value.vals);
 
   return (
     <div className={css.container}>
@@ -112,7 +110,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
         </div>
         <div className={css.pointerTrack}>
           <Pointer
-            containerStyle={{ transform: `translateY(${300*pointerPosition/100}px)` }}
+            containerStyle={{ transform: `translateY(${270*pointerPosition/100}px)` }}
             content={<ParsedHumanReadableValue hp={value} type={config.value.type} />} />
         </div>
       </div>
