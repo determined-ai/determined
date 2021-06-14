@@ -1,4 +1,6 @@
+import { Tooltip } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
+import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -10,6 +12,7 @@ import { handlePath, paths } from 'routes/utils';
 import { archiveExperiment, openOrCreateTensorboard, unarchiveExperiment } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase } from 'types';
+import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -117,11 +120,25 @@ const ExperimentDetailsHeader: React.FC<Props> = (
     <>
       <PageHeaderFoldable
         foldableContent={<>
-          <div className={css.experimentName}>
-            <span>Name:</span> {experiment.name}
+          <div className={css.foldableItem}>
+            <span>Name:</span>
+            {experiment.name}
           </div>
-          <div className={css.experimentDescription}>
-            <span>Description:</span> {experiment.description}
+          <div className={css.foldableItem}>
+            <span>Start Time:</span>
+            <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
+              <TimeAgo datetime={new Date(experiment.startTime)} />
+            </Tooltip>
+          </div>
+          {experiment.endTime != null && (
+            <div className={css.foldableItem}>
+              <span>Duration:</span>
+              {shortEnglishHumannizer(getDuration(experiment))}
+            </div>
+          )}
+          <div className={css.foldableItem}>
+            <span>Description:</span>
+            {experiment.description}
           </div>
           <TagList
             ghost={true}
