@@ -8,7 +8,6 @@ import tensorflow as tf
 
 import determined as det
 from determined import workload
-from determined.exec import harness
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import estimator_linear_model, estimator_xor_model
 
@@ -60,12 +59,6 @@ class TestXORTrial:
             "optimizer": "sgd",
             "shuffle": False,
         }
-
-    def teardown_method(self) -> None:
-        # Cleanup leftover environment variable state.
-        for key in harness.ENVIRONMENT_VARIABLE_KEYS:
-            if key in os.environ:
-                del os.environ[key]
 
     def test_xor_training(self, xor_trial_controller: Callable) -> None:
         def make_workloads() -> workload.Stream:
@@ -323,12 +316,6 @@ class TestLinearTrial:
             "learning_rate": 0.0001,
             "global_batch_size": 4,
         }
-
-    def teardown_method(self) -> None:
-        # Cleanup leftover environment variable state.
-        for key in harness.ENVIRONMENT_VARIABLE_KEYS:
-            if key in os.environ:
-                del os.environ[key]
 
     def test_custom_reducer(self) -> None:
         def make_workloads() -> workload.Stream:

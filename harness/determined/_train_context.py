@@ -315,7 +315,12 @@ class DistributedContext:
             self._chief_zmq.safe_start(lambda: None)
 
         else:
-            chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+            if self._info.cross_rank > 0:
+                # Contact the chief via its rendezvous info.
+                chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+            else:
+                # Contact the chief as localhost.
+                chief_ip_address = "127.0.0.1"
             logging.debug(
                 f"Non-Chief {self._info.rank} setting up comm to "
                 f"{chief_ip_address} w/ ports "

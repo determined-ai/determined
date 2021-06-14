@@ -11,9 +11,7 @@ from typing import Any, Callable, List, Optional, cast
 import pytest
 
 import determined as det
-from determined import ipc, layers, workload
-from tests.experiment import utils
-from tests.fixtures import fake_subprocess_receiver
+from determined import ipc
 
 
 class Subproc(multiprocessing.Process):
@@ -123,29 +121,6 @@ def test_broadcast_server_client() -> None:
                 broadcast_server.broadcast(msg)
                 gathered, _ = broadcast_server.gather_with_polling(health_check)
                 assert all(g == 2 * msg for g in gathered)
-
-
-def test_subprocess_launcher_receiver() -> None:
-    hparams = {"global_batch_size": 1}
-    exp_config = utils.make_default_exp_config(hparams, scheduling_unit=1, searcher_metric="loss")
-    env = utils.make_default_env_context(hparams, exp_config)
-    rendezvous_info = utils.make_default_rendezvous_info()
-    hvd_config = utils.make_default_hvd_config()
-
-    def make_workloads() -> workload.Stream:
-        interceptor = workload.WorkloadResponseInterceptor()
-        for i, wkld in enumerate(fake_subprocess_receiver.fake_workload_gen()):
-            yield from interceptor.send(wkld)
-            assert interceptor.metrics_result() == {"count": i}
-
-    subproc = layers.SubprocessLauncher(
-        env=env,
-        workloads=make_workloads(),
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-        python_subprocess_entrypoint="tests.fixtures.fake_subprocess_receiver",
-    )
-    subproc.run()
 
 
 def test_zmq_server_client() -> None:
