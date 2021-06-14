@@ -51,22 +51,22 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
 
 interface RangeProps {
   config: HyperParameter
-  value: TrialHyperParameters
+  value: {name: string, value: number | string | boolean | RawJson}
 }
 
 const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps) => {
   const pointerPosition = useMemo(() => {
     if (config.value.type === ExperimentHyperParamType.Constant) {
       return 50;
-    } else if (config.value.type === ExperimentHyperParamType.Categorical
-      && config.value.vals !== undefined) {
-      return config.value.vals.length;
+    } else if (config.value.type === ExperimentHyperParamType.Categorical) {
+      return config.value.vals?.length;
     } else if (config.value.type === ExperimentHyperParamType.Log) {
       return 50;
     } else {
-      return 50;
+      return (parseFloat(JSON.stringify(value.value))-(config.value.minval || 0))/
+      ((config.value.maxval || 1)-(config.value.minval || 0));
     }
-  }, [ config.value.type, config.value.vals ]);
+  }, [ config, value ]);
 
   return (
     <div className={css.container}>
@@ -110,7 +110,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ config, value }: RangeProps)
         </div>
         <div className={css.pointerTrack}>
           <Pointer
-            containerStyle={{ transform: `translateY(${270*pointerPosition/100}px)` }}
+            containerStyle={{ transform: `translateY(${270*(pointerPosition || 50)/100}px)` }}
             content={<ParsedHumanReadableValue hp={value} type={config.value.type} />} />
         </div>
       </div>
