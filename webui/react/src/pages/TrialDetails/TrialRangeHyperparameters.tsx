@@ -70,7 +70,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
       const idx = hp.vals.indexOf(hp.val);
       return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
     } else if (hp.type === ExperimentHyperParamType.Log) {
-      return 1-Math.log10(parseFloat(hp.val)/hp.range[0])/(Math.log10(hp.range[1]/hp.range[0]));
+      return 1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0]));
     } else {
       return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
     }
