@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -1006,6 +1008,7 @@ func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error)
 	})
 
 	var raddrs []string
+	var err *multierror.Error
 	for _, caddr := range caddrs {
 		var addrs []cproto.Address
 		for _, addr := range caddr.addresses {
@@ -1018,12 +1021,12 @@ func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error)
 		if len(addrs) == 1 {
 			raddrs = append(raddrs, formatAddress(addrs[0]))
 		} else {
-			return nil, nil, fmt.Errorf(
+			err = multierror.Append(err, fmt.Errorf(
 				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
-				len(addrs), caddr.container.ID, addrs)
+				len(addrs), caddr.container.ID, addrs))
 		}
 	}
-	return caddrs, raddrs, nil
+	return caddrs, raddrs, err.ErrorOrNil()
 }
 
 func (t *trial) processContainerRunning(
