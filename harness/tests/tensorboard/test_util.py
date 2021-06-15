@@ -1,9 +1,14 @@
+import pathlib
+
 import numpy as np
 
 import determined as det
 import determined.common.types
 from determined import constants, workload
+from determined.tensorboard import SharedFSTensorboardManager, get_base_path, get_sync_path
 from determined.tensorboard.metric_writers import util as metric_writers_util
+
+BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
 
 def get_dummy_env() -> det.EnvContext:
@@ -65,3 +70,31 @@ def test_is_numerical_scalar() -> None:
     assert metric_writers_util.is_numerical_scalar(np.array(1))
     assert metric_writers_util.is_numerical_scalar(np.array(-3.14))
     assert metric_writers_util.is_numerical_scalar(np.array([1.0])[0])
+
+
+def test_list_tb_files(tmp_path: pathlib.Path) -> None:
+    env = get_dummy_env()
+    base_path = get_base_path({"base_path": BASE_PATH}, manager=True)
+    sync_path = get_sync_path(env.det_cluster_id, env.det_experiment_id, env.det_trial_id)
+
+    manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
+    test_files = [
+        "79375caf89e9.kernel_stats.pb",
+        "79375caf89e9.memory_profile.json.gz",
+        "events.out.tfevents.example",
+    ]
+
+    test_filepaths = [BASE_PATH.joinpath("tensorboard", test_file) for test_file in test_files]
+    tb_files = manager.list_tb_files(0)
+
+    assert set(test_filepaths) == set(tb_files)
+
+
+def test_list_tb_files_nonexistent_directory(tmp_path: pathlib.Path) -> None:
+    env = get_dummy_env()
+    base_path = pathlib.Path("/non-existent-directory")
+    sync_path = get_sync_path(env.det_cluster_id, env.det_experiment_id, env.det_trial_id)
+    manager = SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
+
+    assert not pathlib.Path(base_path).exists()
+    assert manager.list_tb_files(0) == []

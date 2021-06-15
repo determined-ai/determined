@@ -174,23 +174,22 @@ def _scan_checkpoint_directory(checkpoint_dir: str) -> List[Checkpoint]:
     return list(checkpoints.values())
 
 
-def move_tf_events(event_dir: pathlib.Path) -> None:
+def move_tensorboard_files(event_dir: pathlib.Path) -> None:
     """
-    Given a TensorFlow Estimator model directory, find all nested tfevents
-    files and move them to the TensorBoard log directory. For the most part, we
-    expect only one tfevents file in the root_dir tree. This recursive search
-    for tfevents is an extra measure to make sure we do not miss any events.
+    Given a TensorFlow Estimator model directory, find all nested Tensorboard
+    files and move them to the TensorBoard log directory.
     """
     tensorboard_dir = tensorboard.get_base_path({})
-    for event_file in event_dir.rglob("*tfevents*"):
-        event_file.rename(tensorboard_dir.joinpath(event_file.name))
+    tensorboard_files = tensorboard.util.find_tb_files(event_dir)
+    for file in tensorboard_files:
+        file.rename(tensorboard_dir.joinpath(file.name))
 
 
 def _cleanup_after_train_step(model_dir: pathlib.Path) -> None:
-    # TF event files are written out during training by estimators. We move
+    # Tensorboard files are written out during training by estimators. We move
     # them to the tensorboard directory so that they can be saved to persistent
     # storage.
-    move_tf_events(model_dir)
+    move_tensorboard_files(model_dir)
 
     # By default the Estimator API is configured to accumulate checkpoints
     # in the model directory after every train() invocation. To avoid
@@ -203,7 +202,7 @@ def _cleanup_after_train_step(model_dir: pathlib.Path) -> None:
 
 def _cleanup_after_validation_step(model_dir: pathlib.Path, is_chief: bool) -> None:
     if is_chief:
-        move_tf_events(model_dir)
+        move_tensorboard_files(model_dir)
 
 
 def delete_all_checkpoints_except_most_recent(model_dir: str) -> None:

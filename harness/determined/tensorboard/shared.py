@@ -28,7 +28,7 @@ class SharedFSTensorboardManager(base.TensorboardManager):
     def sync(self) -> None:
         for path in self.to_sync():
             shared_fs_path = self.shared_fs_base.joinpath(path.relative_to(self.base_path))
-            pathlib.Path.mkdir(shared_fs_path.parent, exist_ok=True)
+            pathlib.Path.mkdir(shared_fs_path.parent, parents=True, exist_ok=True)
             shutil.copy(path, shared_fs_path)
 
     def delete(self) -> None:

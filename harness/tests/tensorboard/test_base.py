@@ -90,28 +90,3 @@ def test_illegal_type() -> None:
         tensorboard.build(
             env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
         )
-
-
-def test_list_directory(tmp_path: pathlib.Path) -> None:
-    env = test_util.get_dummy_env()
-    base_path = tensorboard.get_base_path({"base_path": BASE_PATH}, manager=True)
-    sync_path = tensorboard.get_sync_path(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id
-    )
-    manager = tensorboard.SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
-
-    full_event_path = BASE_PATH.joinpath("tensorboard", "events.out.tfevents.example")
-
-    assert set(manager.list_tfevents(0)) == {full_event_path}
-
-
-def test_list_nonexistent_directory(tmp_path: pathlib.Path) -> None:
-    env = test_util.get_dummy_env()
-    base_path = pathlib.Path("/non-existent-directory")
-    sync_path = tensorboard.get_sync_path(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id
-    )
-    manager = tensorboard.SharedFSTensorboardManager(str(tmp_path), base_path, sync_path)
-
-    assert not pathlib.Path(base_path).exists()
-    assert manager.list_tfevents(0) == []
