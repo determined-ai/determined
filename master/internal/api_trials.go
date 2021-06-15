@@ -559,11 +559,11 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var watch trialWatchPreemptionResp
-	if err := a.askAtDefaultSystem(trial, trialWatchPreemptionReq{id: id}, &watch); err != nil {
+	var watch watchPreemptionResp
+	if err := a.askAtDefaultSystem(trial, watchPreemption{id: id}, &watch); err != nil {
 		return err
 	}
-	defer a.m.system.TellAt(trial, trialUnwatchPreemption{id: id})
+	defer a.m.system.TellAt(trial, unwatchPreemption{id: id})
 
 	preempt := <-watch.signal
 	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
@@ -724,13 +724,13 @@ func (a *apiServer) GetTrialRendezvousInfo(
 		return nil, err
 	}
 
-	var watch trialWatchRendezvousInfoResp
-	if err := a.askAtDefaultSystem(trial, trialWatchRendezvousInfoReq{
+	var watch watchRendezvousInfoResp
+	if err := a.askAtDefaultSystem(trial, watchRendezvousInfo{
 		containerID: cproto.ID(req.ContainerId),
 	}, &watch); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(trial, trialUnwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
+	defer a.m.system.TellAt(trial, unwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
 
 	select {
 	case rsp := <-watch.rendezvousInfo:
