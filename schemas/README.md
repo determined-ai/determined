@@ -43,6 +43,7 @@
         - `eventuallyRequired`: Support two-step validation
         - `union`: Excellent error messages when validating union types
         - `optionalRef`: like $ref, but only enforced for non-null values
+        - `eventually`: Defer validation of inner clause till completeness validation phase
     - The canonical implementations (with thorough comments) may be found in
       `determined/common/schemas/extensions.py`.
 

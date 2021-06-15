@@ -113,6 +113,7 @@ func GetCompletenessValidator(url string) *jsonschema.Schema {
 	compiler.Extensions["conditional"] = extensions.ConditionalExtension()
 	compiler.Extensions["optionalRef"] = extensions.OptionalRefExtension()
 	compiler.Extensions["eventuallyRequired"] = extensions.EventuallyRequiredExtension()
+	compiler.Extensions["eventually"] = extensions.EventuallyExtension()
 
 	validator, err := compiler.Compile(url)
 	if err != nil {

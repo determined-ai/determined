@@ -3,6 +3,117 @@
 import json
 
 schemas = {
+    "http://determined.ai/schemas/expconf/v0/azure.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/azure.json",
+    "title": "AzureConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "type"
+    ],
+    "eventuallyRequired": [
+        "container"
+    ],
+    "eventually": {
+        "checks": {
+            "Exactly one of connection_string or account_url must be set": {
+                "oneOf": [
+                    {
+                        "eventuallyRequired": [
+                            "connection_string"
+                        ]
+                    },
+                    {
+                        "eventuallyRequired": [
+                            "account_url"
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    "checks": {
+        "credential and connection_string must not both be set": {
+            "not": {
+                "required": [
+                    "connection_string",
+                    "credential"
+                ],
+                "properties": {
+                    "connection_string": {
+                        "type": "string"
+                    },
+                    "credential": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "properties": {
+        "type": {
+            "const": "azure"
+        },
+        "container": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "connection_string": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "account_url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "credential": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "save_experiment_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "save_trial_best": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        },
+        "save_trial_latest": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 1,
+            "minimum": 0
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/bind-mount.json": json.loads(
         r"""
 {
@@ -324,7 +435,7 @@ schemas = {
         },
         "enforce": {
             "union": {
-                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
                 "items": [
                     {
                         "unionKey": "const:type=shared_fs",
@@ -341,6 +452,10 @@ schemas = {
                     {
                         "unionKey": "const:type=gcs",
                         "$ref": "http://determined.ai/schemas/expconf/v0/gcs.json"
+                    },
+                    {
+                        "unionKey": "const:type=azure",
+                        "$ref": "http://determined.ai/schemas/expconf/v0/azure.json"
                     }
                 ]
             }
@@ -352,9 +467,13 @@ schemas = {
     ],
     "properties": {
         "access_key": true,
+        "account_url": true,
         "bucket": true,
         "checkpoint_path": true,
+        "connection_string": true,
+        "container": true,
         "container_path": true,
+        "credential": true,
         "endpoint_url": true,
         "hdfs_path": true,
         "hdfs_url": true,
