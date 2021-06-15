@@ -181,3 +181,12 @@
     container: my_container
     account_url: my_acc_url
     credential: my_pwd
+
+- name: azure is valid when connection_string and credential specified, but one is null
+  complete_as:
+    - http://determined.ai/schemas/expconf/v0/azure.json
+  case:
+    type: azure
+    container: my_container
+    connection_string: my_conn_str
+    credential: null

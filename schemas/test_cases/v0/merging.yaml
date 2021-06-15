@@ -180,8 +180,6 @@
     type: azure
     connection_string: conn_str
     container: default_container
-    account_url: null
-    credential: null
     save_experiment_best: null
     save_trial_best: null
     save_trial_latest: null

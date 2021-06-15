@@ -37,40 +37,20 @@ schemas = {
     },
     "checks": {
         "credential and connection_string must not both be set": {
-            "anyOf": [
-                {
-                    "conditional": {
-                        "when": {
-                            "required": [
-                                "connection_string"
-                            ]
-                        },
-                        "enforce": {
-                            "properties": {
-                                "credential": {
-                                    "type": "null"
-                                }
-                            }
-                        }
-                    }
-                },
-                {
-                    "conditional": {
-                        "when": {
-                            "required": [
-                                "credential"
-                            ]
-                        },
-                        "enforce": {
-                            "properties": {
-                                "connection_string": {
-                                    "type": "null"
-                                }
-                            }
-                        }
+            "not": {
+                "required": [
+                    "connection_string",
+                    "credential"
+                ],
+                "properties": {
+                    "connection_string": {
+                        "type": "string"
+                    },
+                    "credential": {
+                        "type": "string"
                     }
                 }
-            ]
+            }
         }
     },
     "properties": {

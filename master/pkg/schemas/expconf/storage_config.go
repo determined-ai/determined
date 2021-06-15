@@ -143,34 +143,24 @@ type GCSConfigV0 struct {
 // AzureConfigV0 configures storing checkpoints on Azure.
 type AzureConfigV0 struct {
 	RawContainer        *string `json:"container"`
-	RawConnectionString *string `json:"connection_string"`
-	RawAccountURL       *string `json:"account_url"`
-	RawCredential       *string `json:"credential"`
+	RawConnectionString *string `json:"connection_string,omitempty"`
+	RawAccountURL       *string `json:"account_url,omitempty"`
+	RawCredential       *string `json:"credential,omitempty"`
 }
 
 // Merge implements schemas.Mergeable.
 func (a AzureConfigV0) Merge(other interface{}) interface{} {
 	out := AzureConfigV0{}
 	otherConfig := other.(AzureConfigV0)
-	if a.RawContainer != nil {
-		out.SetContainer(a.Container())
-	} else {
-		out.SetContainer(otherConfig.Container())
-	}
+	out.RawContainer = schemas.Merge(a.RawContainer, otherConfig.RawContainer).(*string)
+	var credSource AzureConfigV0
 	if a.RawConnectionString != nil || a.RawAccountURL != nil {
-		if a.RawConnectionString != nil {
-			out.SetConnectionString(a.ConnectionString())
-		} else {
-			out.SetAccountURL(a.AccountURL())
-			out.SetCredential(a.Credential())
-		}
+		credSource = a
 	} else {
-		if otherConfig.RawConnectionString != nil {
-			out.SetConnectionString(otherConfig.ConnectionString())
-		} else {
-			out.SetAccountURL(otherConfig.AccountURL())
-			out.SetCredential(otherConfig.Credential())
-		}
+		credSource = otherConfig
 	}
+	out.RawConnectionString = schemas.Copy(credSource.RawConnectionString).(*string)
+	out.RawAccountURL = schemas.Copy(credSource.RawAccountURL).(*string)
+	out.RawCredential = schemas.Copy(credSource.RawCredential).(*string)
 	return out
 }
