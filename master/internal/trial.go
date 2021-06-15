@@ -498,12 +498,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 	case actor.ChildFailed:
 		ctx.Log().Info("found child actor failed, terminating forcibly")
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 
 	case killTrial, *apiv1.KillTrialRequest:
 		ctx.Log().Info("received API request to kill trial")
 		t.Killed = true
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 		if ctx.ExpectingResponse() {
 			ctx.Respond(&apiv1.KillTrialResponse{})
 		}
@@ -523,7 +523,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case terminateTimeout:
 		if msg.runID == t.RunID {
 			ctx.Log().Info("forcibly terminating unresponsive trial after timeout expired")
-			t.terminate(ctx, true)
+			t.terminate(ctx)
 		}
 
 	case actor.ChildStopped:
@@ -555,9 +555,9 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 func (t *trial) releaseResource(ctx *actor.Context) error {
 	if !t.allReady() {
 		t.CancelUnready = true
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 	} else {
-		t.terminate(ctx, false)
+		t.preempt(ctx)
 	}
 	return nil
 }
@@ -626,7 +626,7 @@ func (t *trial) processAllocated(
 			int64(t.create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
-			t.terminate(ctx, true)
+			t.terminate(ctx)
 			return err
 		}
 		t.processID(modelTrial.ID)
@@ -634,7 +634,7 @@ func (t *trial) processAllocated(
 		if t.config.PerformInitialValidation() {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
-				t.terminate(ctx, true)
+				t.terminate(ctx)
 				return err
 			}
 		}
@@ -820,7 +820,7 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 	default:
 		ctx.Log().Info("terminating gracefully because there are no more workloads")
 		terminateNow = true
-		t.terminate(ctx, false)
+		t.preempt(ctx)
 	}
 
 	// Command the trial runner to do the thing we decided on (if this is not a replay).
@@ -1051,7 +1051,7 @@ func (t *trial) processContainerTerminated(
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
 	if !ok || t.containerRanks[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 	}
 
 	// If all containers are terminated, the trial is considered terminated.
@@ -1129,22 +1129,31 @@ func (t *trial) trialClosing() bool {
 		model.StoppingStates[t.experimentState]
 }
 
-func (t *trial) terminate(ctx *actor.Context, kill bool) {
+func (t *trial) terminate(ctx *actor.Context) {
 	switch {
 	case len(t.allocations) == 0:
 		ctx.Log().Info("aborting trial before resources are allocated")
 		t.terminated(ctx)
 		ctx.Tell(ctx.Self(), trialAborted{})
-	case kill:
+	default:
 		ctx.Log().Info("forcibly terminating trial")
 		if t.task != nil && t.allocations != nil {
 			for _, allocation := range t.allocations {
 				allocation.Kill(ctx)
 			}
 		}
-	case !t.PendingGracefulTermination:
+	}
+}
+
+func (t *trial) preempt(ctx *actor.Context) {
+	if !t.PendingGracefulTermination {
 		ctx.Log().Info("gracefully terminating trial")
-		t.MarkPendingGracefulTermination()
+		t.PendingGracefulTermination = true
+		for id, w := range t.preemptionWatchers {
+			w <- true
+			close(w)
+			delete(t.preemptionWatchers, id)
+		}
 	}
 }
 
@@ -1263,15 +1272,6 @@ func (t *trial) terminated(ctx *actor.Context) {
 		ctx.Log().
 			WithError(err).
 			Error("failed to process errored message")
-	}
-}
-
-func (t *trial) MarkPendingGracefulTermination() {
-	t.PendingGracefulTermination = true
-	for id, w := range t.preemptionWatchers {
-		w <- true
-		close(w)
-		delete(t.preemptionWatchers, id)
 	}
 }
 
