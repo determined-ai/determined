@@ -11,7 +11,7 @@
         },
         "enforce": {
             "union": {
-                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
                 "items": [
                     {
                         "unionKey": "const:type=shared_fs",

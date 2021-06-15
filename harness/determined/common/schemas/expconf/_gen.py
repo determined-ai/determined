@@ -37,12 +37,40 @@ schemas = {
     },
     "checks": {
         "credential and connection_string must not both be set": {
-            "not": {
-                "required": [
-                    "connection_string",
-                    "credential"
-                ]
-            }
+            "anyOf": [
+                {
+                    "conditional": {
+                        "when": {
+                            "required": [
+                                "connection_string"
+                            ]
+                        },
+                        "enforce": {
+                            "properties": {
+                                "credential": {
+                                    "type": "null"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "conditional": {
+                        "when": {
+                            "required": [
+                                "credential"
+                            ]
+                        },
+                        "enforce": {
+                            "properties": {
+                                "connection_string": {
+                                    "type": "null"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
         }
     },
     "properties": {
@@ -427,7 +455,7 @@ schemas = {
         },
         "enforce": {
             "union": {
-                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', or 'gcs'",
+                "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 'hdfs', 's3', 'gcs' or 'azure'",
                 "items": [
                     {
                         "unionKey": "const:type=shared_fs",
