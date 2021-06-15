@@ -18,6 +18,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 80px;
   text-align: right;
 }
 .text {
@@ -61,9 +62,11 @@
   position: relative;
   width: 15px;
 }
+.pointerTrack {
+  min-width: 80px;
+}
 .pointerContainer {
   display: flex;
-  transform-origin: bottom;
 }
 .pointerArrow {
   align-self: center;

@@ -51,7 +51,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
   }, [ experiment.config.hyperparameters, trial.hparams ]);
 
   return (
-    <div style={{ display: 'flex', gap: 20 }}>
+    <div style={{ display: 'flex' }}>
       {hyperparameters.map(hp => <div key={hp.name}>
         <HyperparameterRange hp={hp} />
       </div>)}
@@ -127,7 +127,7 @@ interface ValuesTrackProps {
 const ValuesTrack: React.FC<ValuesTrackProps> = ({ hp }: ValuesTrackProps) => {
   switch(hp.type) {
     case ExperimentHyperParamType.Constant:
-      return null;
+      return <div className={css.valuesTrack} />;
     case ExperimentHyperParamType.Categorical:
       return <div className={css.valuesTrack}>
         {hp.vals.map(option =>
