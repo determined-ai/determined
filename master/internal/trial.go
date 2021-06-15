@@ -115,16 +115,16 @@ type (
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
 	watchPreemption     struct{ id uuid.UUID }
-	watchPreemptionResp struct{ signal <-chan bool }
+	preemptionWatcher struct{ C <-chan bool }
 	unwatchPreemption   struct{ id uuid.UUID }
 
 	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
 	watchRendezvousInfo     struct{ containerID cproto.ID }
-	watchRendezvousInfoResp struct {
+	rendezvousWatcher struct {
 		// interface{} is *trialv1.RendezvousInfo or error.
-		rendezvousInfo <-chan interface{}
+		C <-chan interface{}
 	}
 	unwatchRendezvousInfo struct{ containerID cproto.ID }
 )
@@ -420,14 +420,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 func (t *trial) registerRendezvousWatcher(
 	ctx *actor.Context, msg watchRendezvousInfo,
-) (watchRendezvousInfoResp, error) {
+) (rendezvousWatcher, error) {
 	// Validate this watch request is unique and not stale.
 	if _, ok := t.containerRanks[msg.containerID]; !ok {
-		return watchRendezvousInfoResp{}, apiutils.AsErrBadRequest(
+		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
 			"rendezvous request from stale container: %s", msg.containerID,
 		)
 	} else if _, ok := t.rendezvousWatchers[msg.containerID]; ok {
-		return watchRendezvousInfoResp{}, apiutils.AsErrBadRequest(
+		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
 			"rendezvous request from already connected container: %s", msg.containerID,
 		)
 	}
@@ -445,12 +445,12 @@ func (t *trial) registerRendezvousWatcher(
 		t.pushRendezvous(ctx)
 	}
 
-	return watchRendezvousInfoResp{rendezvousInfo: w}, nil
+	return rendezvousWatcher{C: w}, nil
 }
 
-func (t *trial) registerPreemptionWatcher(msg watchPreemption) (watchPreemptionResp, error) {
+func (t *trial) registerPreemptionWatcher(msg watchPreemption) (preemptionWatcher, error) {
 	if len(t.allocations) == 0 {
-		return watchPreemptionResp{}, apiutils.AsErrBadRequest(
+		return preemptionWatcher{}, apiutils.AsErrBadRequest(
 			"no preemption status available for unallocated trials",
 		)
 	}
@@ -468,7 +468,7 @@ func (t *trial) registerPreemptionWatcher(msg watchPreemption) (watchPreemptionR
 		w <- false
 	}
 
-	return watchPreemptionResp{signal: w}, nil
+	return preemptionWatcher{C: w}, nil
 }
 
 func (t *trial) processOperations(ops []searcher.Operation) {
