@@ -288,45 +288,6 @@ first, then apply the custom ``determined-autoscaler.yaml``.
    # Apply the custom deployment
    kubectl apply -f <cluster-autoscaler yaml, e.g. `determined-autoscaler.yaml`>
 
-****************
- Tainting Nodes
-****************
-
-Tainting nodes is optional, but users may want to taint nodes to
-restrict which nodes a pod may be scheduled onto. To taint nodes, users
-will need to add a taint type and a tag to the node group specified in
-the cluster config from :ref:`cluster-creation`. An example of the
-modifications is shown for the p2.8xlarge node group from above:
-
-.. code:: YAML
-
-   - name: p2-8xlarge-us-west-2b
-     ...
-     taints:
-       p2.8xlarge-us-west-2b: "true:NoSchedule"
-     ...
-     tags:
-       ...
-       k8s.io/cluster-autoscaler/node-template/taint/p2.8xlarge-us-west-2b: "true:NoSchedule"
-
-Furthermore, tainting requires changes to be made to the GPU enabling
-DaemonSet and more additions to the experiment config. First, to change
-the DaemonSet, save a copy of the `official version
-<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_
-and make the following additions to its tolerations:
-
-.. code:: YAML
-
-   spec:
-     tolerations:
-     ...
-     - key: p2.8xlarge-us-west-2b
-       operator: Exists
-       effect: NoSchedule
-
-To modify the experiment config to run on tainted nodes, refer to the
-:ref:`changes-to-experiment-config` section below.
-
 .. _changes-to-experiment-config:
 
 ******************************
