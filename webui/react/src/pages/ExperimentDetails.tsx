@@ -24,8 +24,6 @@ interface Params {
 
 export interface ExperimentTabsProps {
   experiment: ExperimentBase;
-  fetchExperimentDetails: () => void;
-  validationHistory: ValidationHistory[];
 }
 
 const ExperimentDetails: React.FC = () => {
@@ -137,11 +135,7 @@ const ExperimentDetails: React.FC = () => {
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      <TabsComponent
-        experiment={experiment}
-        fetchExperimentDetails={fetchExperimentDetails}
-        validationHistory={valHistory}
-      />
+      <TabsComponent experiment={experiment} />
       <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}

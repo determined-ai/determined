@@ -4,21 +4,21 @@ import { useHistory, useParams } from 'react-router';
 
 import Spinner from 'components/Spinner';
 import { ExperimentTabsProps } from 'pages/ExperimentDetails';
-import ExperimentOverview from 'pages/ExperimentDetails/ExperimentOverview';
 import { paths } from 'routes/utils';
-import { ExperimentVisualizationType } from 'types';
 
 const { TabPane } = Tabs;
 
 enum TabType {
   Configuration = 'configuration',
+  Hyperparameters = 'hyperparameters',
+  Logs = 'logs',
   Overview = 'overview',
-  Visualization = 'visualization',
+  Profiler = 'profiler',
+  Workloads = 'workloads',
 }
 
 interface Params {
   tab?: TabType;
-  viz?: ExperimentVisualizationType;
 }
 
 const TAB_KEYS = Object.values(TabType);
@@ -27,16 +27,11 @@ const DEFAULT_TAB_KEY = TabType.Overview;
 const ExperimentConfiguration = React.lazy(() => {
   return import('./ExperimentConfiguration');
 });
-const ExperimentVisualization = React.lazy(() => {
-  return import('./ExperimentVisualization');
-});
 
-const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = ({
-  experiment,
-  fetchExperimentDetails,
-  validationHistory,
-}: ExperimentTabsProps) => {
-  const { tab, viz } = useParams<Params>();
+const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = (
+  { experiment }: ExperimentTabsProps,
+) => {
+  const { tab } = useParams<Params>();
   const history = useHistory();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
@@ -57,23 +52,24 @@ const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = ({
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="overview" tab="Overview">
-        <ExperimentOverview
-          experiment={experiment}
-          validationHistory={validationHistory}
-          onTagsChange={fetchExperimentDetails} />
+        Overview
       </TabPane>
-      <TabPane key="visualization" tab="Visualization">
-        <React.Suspense fallback={<Spinner />}>
-          <ExperimentVisualization
-            basePath={`${basePath}/${TabType.Visualization}`}
-            experiment={experiment}
-            type={viz} />
-        </React.Suspense>
+      <TabPane key="hyperparameters" tab="Hyperparameters">
+        Hyperparameters
+      </TabPane>
+      <TabPane key="workloads" tab="Workloads">
+        Workloads
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner />}>
           <ExperimentConfiguration experiment={experiment} />
         </React.Suspense>
+      </TabPane>
+      <TabPane key="profiler" tab="Profiler">
+        Profiler
+      </TabPane>
+      <TabPane key="logs" tab="Logs">
+        Logs
       </TabPane>
     </Tabs>
   );

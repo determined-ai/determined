@@ -4,7 +4,7 @@ import { useHistory, useParams } from 'react-router';
 
 import Spinner from 'components/Spinner';
 import { ExperimentTabsProps } from 'pages/ExperimentDetails';
-import ExperimentOverview from 'pages/ExperimentDetails/ExperimentOverview';
+import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
 import { ExperimentVisualizationType } from 'types';
 
@@ -12,7 +12,7 @@ const { TabPane } = Tabs;
 
 enum TabType {
   Configuration = 'configuration',
-  Overview = 'overview',
+  Trials = 'trials',
   Visualization = 'visualization',
 }
 
@@ -22,7 +22,7 @@ interface Params {
 }
 
 const TAB_KEYS = Object.values(TabType);
-const DEFAULT_TAB_KEY = TabType.Overview;
+const DEFAULT_TAB_KEY = TabType.Visualization;
 
 const ExperimentConfiguration = React.lazy(() => {
   return import('./ExperimentConfiguration');
@@ -31,11 +31,9 @@ const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentVisualization');
 });
 
-const ExperimentMultiTrialTabs: React.FC<ExperimentTabsProps> = ({
-  experiment,
-  fetchExperimentDetails,
-  validationHistory,
-}: ExperimentTabsProps) => {
+const ExperimentMultiTrialTabs: React.FC<ExperimentTabsProps> = (
+  { experiment }: ExperimentTabsProps,
+) => {
   const { tab, viz } = useParams<Params>();
   const history = useHistory();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
@@ -56,12 +54,6 @@ const ExperimentMultiTrialTabs: React.FC<ExperimentTabsProps> = ({
 
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="overview" tab="Overview">
-        <ExperimentOverview
-          experiment={experiment}
-          validationHistory={validationHistory}
-          onTagsChange={fetchExperimentDetails} />
-      </TabPane>
       <TabPane key="visualization" tab="Visualization">
         <React.Suspense fallback={<Spinner />}>
           <ExperimentVisualization
@@ -69,6 +61,9 @@ const ExperimentMultiTrialTabs: React.FC<ExperimentTabsProps> = ({
             experiment={experiment}
             type={viz} />
         </React.Suspense>
+      </TabPane>
+      <TabPane key="trials" tab="Trials">
+        <ExperimentTrials experiment={experiment} />
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner />}>

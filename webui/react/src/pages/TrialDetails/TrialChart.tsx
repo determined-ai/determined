@@ -9,10 +9,9 @@ import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlotChart/trackAxis';
 import useStorage from 'hooks/useStorage';
+import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 import { glasbeyColor } from 'utils/color';
-
-import css from '../ExperimentDetails/ExperimentChart.module.scss';
 
 interface Props {
   defaultMetricNames: MetricName[];
