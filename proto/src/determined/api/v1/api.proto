@@ -593,8 +593,7 @@ service Determined {
   rpc GetTrialRendezvousInfo(GetTrialRendezvousInfoRequest)
       returns (GetTrialRendezvousInfoResponse) {
     option (google.api.http) = {
-      post: "/api/v1/trials/{trial_id}/rendezvous_info"
-      body: "rendezvous_info"
+      get: "/api/v1/trials/{trial_id}/rendezvous_info/{container_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

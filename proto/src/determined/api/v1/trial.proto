@@ -380,17 +380,18 @@ message ReportTrialCheckpointMetadataResponse {}
 // Gathers the rendezvous info for the trial.
 message GetTrialRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "rendezvous_info" ] }
+    json_schema: { required: [ "trial_id", "container_id" ] }
   };
   // The id of the trial.
   int32 trial_id = 1;
   // The id of the container. Used to verify all containers are connected.
   string container_id = 2;
-  // The rendezvous info.
-  determined.trial.v1.RendezvousInfo rendezvous_info = 3;
 }
 // Response to GetTrialRendezvousInfoRequest
 message GetTrialRendezvousInfoResponse {
-  // The rendezvous addresses.
-  repeated string addresses = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "rendezvous_info" ] }
+  };
+  // The rendezvous information.
+  determined.trial.v1.RendezvousInfo rendezvous_info = 1;
 }
