@@ -50,6 +50,13 @@
   position: relative;
   width: 10px;
 }
+.tick {
+  background-color: rgb(0, 155, 222);
+  height: 2px;
+  left: -100%;
+  position: relative;
+  width: 15px;
+}
 .pointerContainer {
   display: flex;
   transform-origin: bottom;

@@ -92,7 +92,9 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
               css.grayTrack : hp.type === ExperimentHyperParamType.Constant ?
                 css.constantTrack : css.blueTrack
           }>
-          {hp.type !== ExperimentHyperParamType.Constant && hp.vals.map(option =>
+          {hp.type !== ExperimentHyperParamType.Constant &&
+          hp.type !== ExperimentHyperParamType.Log &&
+          hp.vals.map(option =>
             <div
               className={css.trackOption}
               key={option.toString()}
@@ -101,6 +103,12 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
           <div
             className={css.trackOption}
           />}
+          {hp.type === ExperimentHyperParamType.Log &&
+          (new Array(
+            Math.log10((hp.range[1])/(hp.range[0]))+1,
+          )).fill(null)
+            .map((_, idx) =>
+              <div className={css.tick} key={idx} />)}
         </div>
         <div className={css.pointerTrack}>
           <Pointer
