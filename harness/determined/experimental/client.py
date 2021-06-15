@@ -1,5 +1,5 @@
 """
-The ``client`` module exposes man of the same capabilities as the ``det`` CLI tool directly to
+The ``client`` module exposes many of the same capabilities as the ``det`` CLI tool directly to
 Python code with an object-oriented interface.
 
 As a simple example, let's walk through the most basic workflow for creating an experiment,

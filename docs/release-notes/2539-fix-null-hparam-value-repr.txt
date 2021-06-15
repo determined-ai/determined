@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix an issue with representing some hyperparameter values as
-   text.
