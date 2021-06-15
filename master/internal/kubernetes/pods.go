@@ -58,14 +58,15 @@ type pods struct {
 	loggingTLSConfig model.TLSClientConfig
 	loggingConfig    model.LoggingConfig
 
-	informer                *actor.Ref
-	nodeInformer            *actor.Ref
-	eventListener           *actor.Ref
-	preemptionListener      *actor.Ref
-	resourceRequestQueue    *actor.Ref
-	podNameToPodHandler     map[string]*actor.Ref
-	containerIDToPodHandler map[string]*actor.Ref
-	podHandlerToMetadata    map[*actor.Ref]podMetadata
+	informer                     *actor.Ref
+	nodeInformer                 *actor.Ref
+	eventListener                *actor.Ref
+	preemptionListener           *actor.Ref
+	resourceRequestQueue         *actor.Ref
+	podNameToPodHandler          map[string]*actor.Ref
+	containerIDToPodHandler      map[string]*actor.Ref
+	podHandlerToMetadata         map[*actor.Ref]podMetadata
+	nodeToSystemResourceRequests map[string]int64
 
 	currentNodes map[string]*k8sV1.Node
 
@@ -93,20 +94,21 @@ func Initialize(
 	}
 
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
-		cluster:                  c,
-		namespace:                namespace,
-		masterServiceName:        masterServiceName,
-		masterTLSConfig:          masterTLSConfig,
-		scheduler:                scheduler,
-		loggingTLSConfig:         loggingTLSConfig,
-		loggingConfig:            loggingConfig,
-		podNameToPodHandler:      make(map[string]*actor.Ref),
-		containerIDToPodHandler:  make(map[string]*actor.Ref),
-		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
-		leaveKubernetesResources: leaveKubernetesResources,
-		slotType:                 slotType,
-		slotResourceRequests:     slotResourceRequests,
-		currentNodes:             make(map[string]*k8sV1.Node),
+		cluster:                      c,
+		namespace:                    namespace,
+		masterServiceName:            masterServiceName,
+		masterTLSConfig:              masterTLSConfig,
+		scheduler:                    scheduler,
+		loggingTLSConfig:             loggingTLSConfig,
+		loggingConfig:                loggingConfig,
+		podNameToPodHandler:          make(map[string]*actor.Ref),
+		containerIDToPodHandler:      make(map[string]*actor.Ref),
+		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
+		leaveKubernetesResources:     leaveKubernetesResources,
+		slotType:                     slotType,
+		slotResourceRequests:         slotResourceRequests,
+		currentNodes:                 make(map[string]*k8sV1.Node),
+		nodeToSystemResourceRequests: make(map[string]int64),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -123,6 +125,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 		if err := p.getMasterIPAndPort(ctx); err != nil {
+			return err
+		}
+		if err := p.getSystemResourceRequests(ctx); err != nil {
 			return err
 		}
 		p.startResourceRequestQueue(ctx)
@@ -223,6 +228,22 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	p.masterIP = masterService.Spec.ClusterIP
 	p.masterPort = masterService.Spec.Ports[0].Port
 	ctx.Log().Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
+	return nil
+}
+
+func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
+	systemPods, err := p.podInterface.List(
+		metaV1.ListOptions{LabelSelector: determinedSystemLabel})
+	if err != nil {
+		return errors.Wrap(err, "failed to get system pods")
+	}
+
+	for _, systemPod := range systemPods.Items {
+		for _, container := range systemPod.Spec.Containers {
+			p.nodeToSystemResourceRequests[systemPod.Spec.NodeName] +=
+				container.Resources.Requests.Cpu().MilliValue()
+		}
+	}
 	return nil
 }
 
@@ -434,7 +455,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		switch p.slotType {
 		case device.CPU:
 			resources := node.Status.Allocatable["cpu"]
-			numSlots = int64(float32(resources.Value()) / p.slotResourceRequests.CPU)
+			milliCPUs := resources.MilliValue() - p.nodeToSystemResourceRequests[node.Name]
+			numSlots = int64(float32(milliCPUs) / (1000. * p.slotResourceRequests.CPU))
 			deviceType = device.CPU
 		case device.GPU:
 			fallthrough

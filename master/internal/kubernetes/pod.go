@@ -26,6 +26,7 @@ const (
 	initContainerTarDstPath = "/run/determined/temp/tar/dst"
 	initContainerWorkDir    = "/run/determined/temp/"
 	determinedLabel         = "determined"
+	determinedSystemLabel   = "determined-system"
 )
 
 // pod manages the lifecycle of a Kubernetes pod that executes a

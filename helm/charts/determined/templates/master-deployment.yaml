@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app: determined-master-{{ .Release.Name }}
+        determined-system: master
       annotations:
         # This is added so that the master deployment restarts when an upgrade occurs that
         # changes the master-config.yaml.
