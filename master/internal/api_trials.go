@@ -559,13 +559,13 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var watch watchPreemptionResp
-	if err := a.askAtDefaultSystem(trial, watchPreemption{id: id}, &watch); err != nil {
+	var w preemptionWatcher
+	if err := a.askAtDefaultSystem(trial, watchPreemption{id: id}, &w); err != nil {
 		return err
 	}
 	defer a.m.system.TellAt(trial, unwatchPreemption{id: id})
 
-	preempt := <-watch.signal
+	preempt := <-w.C
 	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
 	case err != nil:
 		return err
@@ -573,7 +573,7 @@ func (a *apiServer) TrialPreemptionSignal(
 		return nil
 	default:
 		select {
-		case preempt = <-watch.signal:
+		case preempt = <-w.C:
 			return resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt})
 		case <-resp.Context().Done():
 			return nil
@@ -724,16 +724,16 @@ func (a *apiServer) GetTrialRendezvousInfo(
 		return nil, err
 	}
 
-	var watch watchRendezvousInfoResp
+	var w rendezvousWatcher
 	if err := a.askAtDefaultSystem(trial, watchRendezvousInfo{
 		containerID: cproto.ID(req.ContainerId),
-	}, &watch); err != nil {
+	}, &w); err != nil {
 		return nil, err
 	}
 	defer a.m.system.TellAt(trial, unwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
 
 	select {
-	case rsp := <-watch.rendezvousInfo:
+	case rsp := <-w.C:
 		switch rsp := rsp.(type) {
 		case error:
 			return nil, rsp
