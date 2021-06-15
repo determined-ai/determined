@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	"github.com/google/uuid"
@@ -72,6 +74,8 @@ const (
 	// configuration file.
 	trialSSHConfigFile = "/etc/ssh/ssh_config"
 	trialSSHConfigMode = 0644
+
+	pushArchitectureEnabled = false
 )
 
 // Trial-specific actor messages.
@@ -119,8 +123,8 @@ type (
 	// peer addresses on the channel in the response.
 	trialWatchRendezvousInfoReq  struct{ containerID cproto.ID }
 	trialWatchRendezvousInfoResp struct {
-		// interface{} is []string of addresses or error.
-		addresses <-chan interface{}
+		// interface{} is *trialv1.RendezvousInfo or error.
+		rendezvousInfo <-chan interface{}
 	}
 	trialUnwatchRendezvousInfo struct{ containerID cproto.ID }
 )
@@ -424,16 +428,16 @@ func (t *trial) registerRendezvousWatcher(ctx *actor.Context, msg trialWatchRend
 	// size 1 since rendezvous info will only ever be sent once.
 	w := make(chan interface{}, 1)
 	t.rendezvousWatchers[msg.containerID] = w
-	ctx.Respond(trialWatchRendezvousInfoResp{addresses: w})
+	ctx.Respond(trialWatchRendezvousInfoResp{rendezvousInfo: w})
 
 	// If we're not all ready, send the all ready timeout notification and return.
 	t.lastContainerConnectedTime = time.Now()
-	if !t.allReadyV2() {
+	if !t.allReady() {
 		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
 		return
 	}
 
-	t.pushRendezvouzV2()
+	t.pushRendezvous(ctx)
 }
 
 func (t *trial) registerPreemptionWatcher(ctx *actor.Context, msg trialWatchPreemptionReq) {
@@ -549,7 +553,7 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 }
 
 func (t *trial) releaseResource(ctx *actor.Context) error {
-	if !t.allReady(ctx) {
+	if !t.allReady() {
 		t.CancelUnready = true
 		t.terminate(ctx, true)
 	} else {
@@ -866,10 +870,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	t.containerSockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
 
-	if err := t.pushRendezvous(ctx); err != nil {
-		return errors.Wrap(err, "failed to push rendezvous to trial containers")
-	}
-
+	t.pushRendezvous(ctx)
 	return nil
 }
 
@@ -894,155 +895,87 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 // message. The two messages are not guaranteed to come in-order. During each run of the
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
-func (t *trial) allReady(ctx *actor.Context) bool {
+func (t *trial) allReady() bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all terminated.
 	if t.allReadySucceeded {
 		return true
 	}
 
-	// Ensure all ContainerStarted messages have arrived.
-	if len(t.containers) < len(t.allocations) {
-		return false
-	}
+	if pushArchitectureEnabled {
+		allAddressesArrived := len(t.containerAddresses) == len(t.allocations)
+		allWaiting := len(t.rendezvousWatchers) == len(t.allocations)
 
-	// Finally, ensure all sockets have connected.
-	t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
+		t.allReadySucceeded = allAddressesArrived && allWaiting
+	} else {
+		// Ensure all ContainerStarted messages have arrived.
+		if len(t.containers) < len(t.allocations) {
+			return false
+		}
+		// Finally, ensure all sockets have connected.
+		t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
+	}
 	return t.allReadySucceeded
 }
 
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (t *trial) pushRendezvous(ctx *actor.Context) error {
-	if !t.allReady(ctx) {
+func (t *trial) pushRendezvous(ctx *actor.Context) {
+	if !t.allReady() {
 		ctx.Log().Info("found not all containers are connected")
-		return nil
-	}
-	ctx.Log().Info("found all containers are connected successfully")
-
-	type CAddress struct {
-		Container cproto.Container
-		Addresses []cproto.Address
-		Ordinal   int
+		return
 	}
 
-	var caddrs []CAddress
-	for k, v := range t.containers {
-		caddr := CAddress{
-			Container: v,
-			Addresses: t.containerAddresses[k],
-			Ordinal:   t.containerRanks[k],
-		}
-		caddrs = append(caddrs, caddr)
-
-		sort.Slice(caddr.Addresses, func(i, j int) bool {
-			a := caddr.Addresses[i]
-			b := caddr.Addresses[j]
-
-			return a.ContainerPort < b.ContainerPort
-		})
-	}
-
-	sort.Slice(caddrs, func(i, j int) bool {
-		a := caddrs[i]
-		b := caddrs[j]
-		switch {
-		case a.Ordinal == 0 && b.Ordinal != 0:
-			return true
-		case a.Ordinal != 0 && b.Ordinal == 0:
-			return false
-		default:
-			return a.Container.ID < b.Container.ID
-		}
-	})
-
-	var raddrs []string
+	caddrs, raddrs, err := t.rendezvousInfo(ctx)
 	for _, caddr := range caddrs {
-		var addrs []cproto.Address
-		for _, addr := range caddr.Addresses {
-			if MinLocalRendezvousPort <= addr.ContainerPort &&
-				addr.ContainerPort <= MaxLocalRendezvousPort {
-				addrs = append(addrs, addr)
+		c := caddr.container
+		if pushArchitectureEnabled {
+			w := t.rendezvousWatchers[c.ID]
+			if err != nil {
+				w <- err
+			} else {
+				w <- &trialv1.RendezvousInfo{
+					Addresses: raddrs,
+					Rank:      int32(t.containerRanks[c.ID]),
+				}
+			}
+			close(w)
+			delete(t.rendezvousWatchers, c.ID)
+		} else {
+			socket := t.containerSockets[c.ID]
+			if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
+				RendezvousInfo: &rendezvousInfoMessage{
+					Addrs: raddrs,
+					Rank:  caddr.ordinal,
+				},
+			}); err != nil {
+				ctx.Log().WithError(err).Error("cannot write to socket")
 			}
 		}
-
-		if numAddrs := len(addrs); numAddrs == 1 {
-			raddrs = append(raddrs, formatAddress(addrs[0]))
-		} else {
-			ctx.Log().Errorf(
-				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
-				numAddrs, caddr.Container.ID, addrs)
-		}
-	}
-
-	for _, caddr := range caddrs {
-		c := caddr.Container
-		socket := t.containerSockets[c.ID]
-
-		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
-			RendezvousInfo: &rendezvousInfoMessage{
-				Addrs: raddrs,
-				Rank:  caddr.Ordinal,
-			},
-		}); err != nil {
-			ctx.Log().WithError(err).Error("cannot write to socket")
-		}
-	}
-
-	return nil
-}
-
-// pushRendezvouzV2 pushes rendezvous info to all watchers.
-func (t *trial) pushRendezvouzV2() {
-	ri, err := t.rendezvousInfo()
-	for cid, w := range t.rendezvousWatchers {
-		if err != nil {
-			w <- err
-		} else {
-			w <- ri
-		}
-		close(w)
-		delete(t.rendezvousWatchers, cid)
 	}
 }
 
-// allReady returns iff all the containers are reported to be started and connected to ask for
-// rendezvous info.
-// TODO(DET-5280): Truncate V2 and remove old code.
-func (t *trial) allReadyV2() bool {
-	if t.allReadySucceeded {
-		return true
-	}
-
-	// Ensure all ContainerStarted messages have arrived.
-	if len(t.containers) < len(t.allocations) {
-		return false
-	}
-
-	t.allReadySucceeded = len(t.rendezvousWatchers) == len(t.allocations)
-	return t.allReadySucceeded
+type cAddress struct {
+	container cproto.Container
+	addresses []cproto.Address
+	ordinal   int
 }
 
-// rendezvousInfo gathers up the rendezvous ports addresses for the trial.
-func (t *trial) rendezvousInfo() ([]string, error) {
-	type CAddress struct {
-		Container cproto.Container
-		Addresses []cproto.Address
-		Ordinal   int
-	}
+func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error) {
+	ctx.Log().Info("found all containers are connected successfully")
 
-	var caddrs []CAddress
+	var caddrs []cAddress
 	for k, v := range t.containers {
-		caddr := CAddress{
-			Container: v,
-			Addresses: t.containerAddresses[k],
-			Ordinal:   t.containerRanks[k],
+		caddr := cAddress{
+			container: v,
+			addresses: t.containerAddresses[k],
+			ordinal:   t.containerRanks[k],
 		}
 		caddrs = append(caddrs, caddr)
 
-		sort.Slice(caddr.Addresses, func(i, j int) bool {
-			a := caddr.Addresses[i]
-			b := caddr.Addresses[j]
+		sort.Slice(caddr.addresses, func(i, j int) bool {
+			a := caddr.addresses[i]
+			b := caddr.addresses[j]
 
 			return a.ContainerPort < b.ContainerPort
 		})
@@ -1052,19 +985,19 @@ func (t *trial) rendezvousInfo() ([]string, error) {
 		a := caddrs[i]
 		b := caddrs[j]
 		switch {
-		case a.Ordinal == 0 && b.Ordinal != 0:
+		case a.ordinal == 0 && b.ordinal != 0:
 			return true
-		case a.Ordinal != 0 && b.Ordinal == 0:
+		case a.ordinal != 0 && b.ordinal == 0:
 			return false
 		default:
-			return a.Container.ID < b.Container.ID
+			return a.container.ID < b.container.ID
 		}
 	})
 
 	var raddrs []string
 	for _, caddr := range caddrs {
 		var addrs []cproto.Address
-		for _, addr := range caddr.Addresses {
+		for _, addr := range caddr.addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort &&
 				addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
@@ -1074,13 +1007,12 @@ func (t *trial) rendezvousInfo() ([]string, error) {
 		if len(addrs) == 1 {
 			raddrs = append(raddrs, formatAddress(addrs[0]))
 		} else {
-			return nil, fmt.Errorf(
-				"found %d rendezvous addresses (%v) instead of 1 for container %s",
-				len(addrs), addrs, caddr.Container.ID)
+			return nil, nil, fmt.Errorf(
+				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
+				len(addrs), caddr.container.ID, addrs)
 		}
 	}
-
-	return raddrs, nil
+	return caddrs, raddrs, nil
 }
 
 func (t *trial) processContainerRunning(
@@ -1091,14 +1023,7 @@ func (t *trial) processContainerRunning(
 
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	// TODO(DET-5280): Uncomment this code, nuke below it.
-	// if !t.allReadyV2() {
-	// 	return nil
-	// }
-	// t.pushRendezvouzV2()
-	if err := t.pushRendezvous(ctx); err != nil {
-		return errors.Wrap(err, "failed to push rendezvous to trial containers")
-	}
+	t.pushRendezvous(ctx)
 	return nil
 }
 

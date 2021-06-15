@@ -733,12 +733,12 @@ func (a *apiServer) GetTrialRendezvousInfo(
 	defer a.m.system.TellAt(trial, trialUnwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
 
 	select {
-	case rsp := <-watch.addresses:
+	case rsp := <-watch.rendezvousInfo:
 		switch rsp := rsp.(type) {
 		case error:
 			return nil, rsp
-		case []string:
-			return &apiv1.GetTrialRendezvousInfoResponse{Addresses: rsp}, nil
+		case *trialv1.RendezvousInfo:
+			return &apiv1.GetTrialRendezvousInfoResponse{RendezvousInfo: rsp}, nil
 		default:
 			panic("unexpected response from trial")
 		}
