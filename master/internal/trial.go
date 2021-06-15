@@ -955,6 +955,14 @@ func (t *trial) pushRendezvous(ctx *actor.Context) {
 	}
 }
 
+func (t *trial) closeRendezvous() {
+	for cID, w := range t.rendezvousWatchers {
+		w <- errors.New("task terminated")
+		close(w)
+		delete(t.rendezvousWatchers, cID)
+	}
+}
+
 type cAddress struct {
 	container cproto.Container
 	addresses []cproto.Address
@@ -1149,11 +1157,11 @@ func (t *trial) preempt(ctx *actor.Context) {
 	if !t.PendingGracefulTermination {
 		ctx.Log().Info("gracefully terminating trial")
 		t.PendingGracefulTermination = true
-		for id, w := range t.preemptionWatchers {
-			w <- true
-			close(w)
-			delete(t.preemptionWatchers, id)
-		}
+	}
+	for id, w := range t.preemptionWatchers {
+		w <- true
+		close(w)
+		delete(t.preemptionWatchers, id)
 	}
 }
 
@@ -1189,6 +1197,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 			ctx.Log().WithError(err).Error("error delete task session for a trial")
 		}
 	}
+
+	t.preempt(ctx)
+	t.closeRendezvous()
+
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)
