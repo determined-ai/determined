@@ -740,7 +740,7 @@ func (a *apiServer) GetTrialRendezvousInfo(
 		case *trialv1.RendezvousInfo:
 			return &apiv1.GetTrialRendezvousInfoResponse{RendezvousInfo: rsp}, nil
 		default:
-			panic("unexpected response from trial")
+			panic("unexpected response from rendezvousWatcher")
 		}
 	case <-ctx.Done():
 		return nil, nil
