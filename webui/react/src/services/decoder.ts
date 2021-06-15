@@ -269,10 +269,12 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     archived: exp.archived,
     config: ioToExperimentConfig(ioConfig),
     configRaw: config,
+    description: exp.description,
     endTime: exp.endTime as unknown as string,
     id: exp.id,
     // numTrials
     // labels
+    name: exp.name,
     progress: exp.progress != null ? exp.progress : undefined,
     resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
@@ -286,10 +288,10 @@ const mapV1Experiment = (
 ): types.ExperimentItem => {
   return {
     archived: data.archived,
+    description: data.description,
     endTime: data.endTime as unknown as string,
     id: data.id,
     labels: data.labels || [],
-    // capture description for use in the UI.
     name: data.name,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,

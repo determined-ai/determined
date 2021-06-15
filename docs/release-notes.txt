@@ -5,8 +5,134 @@
 ###############
 
 **************
+ Version 0.16
+**************
+
+Version 0.16.0
+==============
+
+**Release Date:** June 14, 2021
+
+**New Features**
+
+-  Python SDK: Extend the :ref:`Checkpoint Export API
+   <exporting-checkpoints>` into a Python SDK capable of launching and
+   controlling experiments on the cluster directly from Python. See the
+   documentation and examples in the
+   :mod:`~determined.experimental.client` module.
+
+-  Trials: Add new support for profiling model code. For all frameworks,
+   collecting system metrics, such as GPU utilization and memory, is
+   supported. For PyTorch, additional profiling for timing is available.
+   To quickly try out profiling, set ``profiling.enabled = true`` in the
+   experiment configuration. For a longer introduction to the features,
+   see the :ref:`guide on profiling <how-to-profiling>` or view details
+   on available configuration options in the :ref:`reference
+   <experiment-configuration_profiling>`.
+
+-  Experiments: Add new ``notes`` and ``name`` fields to experiments.
+
+-  REST API: Add new parameters to ``/api/v1/experiments`` to filter and
+   sort experiments by name.
+
+-  Master configuration: Support ``bind_mounts`` in
+   ``task_container_defaults`` in the master configuration. The
+   configured directories will be mounted for experiments, notebooks,
+   commands, shells, and TensorBoards.
+
+-  Images: Add an environment image containing TensorFlow 2.5 and CUDA
+   11.2.
+
+**Improvements**
+
+-  **Breaking change**: JupyterLab: Upgrade the JupyterLab version to
+   3.0.16. JupyterLab will no longer work with previously released
+   images. Custom image users should upgrade to JupyterLab 3.0 or
+   higher.
+
+-  Scheduling: Support backfilling in the priority scheduler. If there
+   are slots that cannot be filled with high-priority tasks,
+   low-priority tasks will be scheduled onto them. This requires
+   preemption to be enabled in the :ref:`master configuration
+   <master-configuration>`.
+
+-  WebUI: Improve task list filtering by moving column filters to the
+   table header.
+
+-  REST API: Change filtering experiments by description to be
+   case-insensitive when using the ``/api/v1/experiments`` endpoint.
+
+**Bug Fixes**
+
+-  Fix a bug where ``InvalidHP`` exceptions raised in the trial
+   ``__init__()`` caused the trial to restart.
+
+-  WebUI: Fix an issue with representing some hyperparameter values as
+   text.
+
+-  Kubernetes: Prevent Determined from sometimes crashing when handling
+   concurrent job submissions.
+
+-  Master configuration: Fix a bug that was triggered when the master
+   configuration had S3 secrets explicitly configured in
+   ``checkpoint_storage``. Experiments that did not override the
+   master-provided checkpoint storage would fail.
+
+**Deprecated Features**
+
+-  The method :meth:`~determined.experimental.create_trial_instance` is
+   now deprecated. Users should instead use the more flexible
+   ``TrialContext.from_config()``, which is described in
+   :ref:`model-debug`.
+
+**Removed Features**
+
+-  The methods ``det.experimental.keras.init()`` and
+   ``det.experimental.estimator.init()`` have been removed. They were
+   deprecated in 0.13.5.
+
+**************
  Version 0.15
 **************
+
+Version 0.15.6
+==============
+
+**Release Date:** June 2, 2021
+
+**New Features**
+
+-  Add PyTorch's `word-level language modeling RNN example
+   <https://github.com/pytorch/examples/tree/master/word_language_model>`__
+   as a `Determined example
+   <https://github.com/RehanSD/determined/blob/master/examples/nlp/word_language_model/README.md>`__.
+
+-  Support using the Determined shell as a remote host inside Visual
+   Studio Code and PyCharm IDEs. See :ref:`commands-and-shells` for more
+   information.
+
+**Improvements**
+
+-  Deploy: Add support for ``terraform`` 0.15 when using ``det deploy
+   gcp``.
+
+-  REST API: Add a ``preview`` parameter to the Notebook launch API
+   (``POST /api/v1/notebooks``). If set, this API will return a full
+   configuration that is populated with the template and Notebook
+   configuration.
+
+-  WebUI: Improve Experiment list filtering by moving column filters to
+   the table header.
+
+-  WebUI: Improve the Trial details page by moving hyperparameters,
+   workloads, and logs into separate "tabs" on the Trial detail page.
+
+**Bug Fixes**
+
+-  PyTorchTrial: Fix an issue where a DataLoader iterator that uses
+   multiprocessing could cause a hang when exiting.
+-  WebUI: Prevent TQDM log lines from generating large quantities of
+   whitespace when rendering logs.
 
 Version 0.15.5
 ==============

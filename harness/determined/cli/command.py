@@ -9,7 +9,7 @@ from termcolor import colored
 
 from determined.cli import render
 from determined.common import api, context, util, yaml
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 
 CONFIG_DESC = """
 Additional configuration arguments for setting up a command.
@@ -120,7 +120,7 @@ Command = namedtuple(
 )
 
 
-@authentication_required
+@authentication.required
 def list(args: Namespace) -> None:
     api_path = RemoteTaskNewAPIs[args._command]
     api_full_path = "api/v1/{}".format(api_path)
@@ -129,7 +129,7 @@ def list(args: Namespace) -> None:
     if args.all:
         params = {}  # type: Dict[str, Any]
     else:
-        params = {"users": [api.Authentication.instance().get_session_user()]}
+        params = {"users": [authentication.must_cli_auth().get_session_user()]}
 
     res = api.get(args.master, api_full_path, params=params).json()[api_path]
 
@@ -144,7 +144,7 @@ def list(args: Namespace) -> None:
     render.render_table(res, table_header)
 
 
-@authentication_required
+@authentication.required
 def kill(args: Namespace) -> None:
     ids = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
     name = RemoteTaskName[args._command]
@@ -162,7 +162,7 @@ def kill(args: Namespace) -> None:
             print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
 
 
-@authentication_required
+@authentication.required
 def config(args: Namespace) -> None:
     name = RemoteTaskName[args._command]
     api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], args.id)
@@ -170,7 +170,7 @@ def config(args: Namespace) -> None:
     print(render.format_object_as_yaml(res_json["config"]))
 
 
-@authentication_required
+@authentication.required
 def tail_logs(args: Namespace) -> None:
     api_full_path = "{}/{}/events?follow={}&tail={}".format(
         RemoteTaskOldAPIs[args._command],

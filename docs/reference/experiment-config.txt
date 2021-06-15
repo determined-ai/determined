@@ -896,9 +896,9 @@ more information on customizing the trial environment, refer to
    GPU vs. CPU agents by specifying a dict with two keys, ``cpu`` and
    ``gpu``. Default values:
 
-   -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.15.0``
+   -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0``
       for agents with GPUs.
-   -  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.15.0``
+   -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.16.0``
       for agents with only CPUs.
 
 ``force_pull_image``
@@ -1013,6 +1013,33 @@ details.
    trials in this experiment. Must be an integer between 0 and
    2\ :sup:`31`--1. If an ``experiment_seed`` is not explicitly
    specified, the master will automatically generate an experiment seed.
+
+.. _experiment-configuration_profiling:
+
+***********
+ Profiling
+***********
+
+The ``profiling`` section specifies configuration options related to
+profiling experiments. See :ref:`how-to-profiling` for a more detailed
+walkthrough.
+
+**Optional Fields**
+
+``profiling``
+   Profiling is supported for all frameworks, though timings are only
+   collected for ``PyTorchTrial``. Profiles are collected for a maximum
+   of 5 minutes, regardless of the settings below.
+
+   ``enabled``
+      Defines whether profiles should be collected or not. Defaults to
+      false.
+
+   ``begin_on_batch``
+      Specifies the batch on which profiling should begin.
+
+   ``end_after_batch``
+      Specifies the batch after which profiling should end.
 
 .. _data-layer_exp_config:
 

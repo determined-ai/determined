@@ -5,11 +5,12 @@ import (
 	"sort"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -40,23 +41,13 @@ type agent struct {
 	opts *aproto.MasterSetAgentOptions
 }
 
-// AgentSummary summarizes the state on an agent.
-type AgentSummary struct {
-	ID             string       `json:"id"`
-	RegisteredTime time.Time    `json:"registered_time"`
-	Slots          SlotsSummary `json:"slots"`
-	NumContainers  int          `json:"num_containers"`
-	ResourcePool   string       `json:"resource_pool"`
-	Label          string       `json:"label"`
-}
-
 func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{resourcePool: a.resourcePool})
 		a.containers = make(map[container.ID]*actor.Ref)
-	case AgentSummary:
+	case model.AgentSummary:
 		ctx.Respond(a.summarize(ctx))
 	case ws.WebSocketConnected:
 		check.Panic(check.True(a.socket == nil, "websocket already connected"))
@@ -91,20 +82,20 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
-		ctx.Respond(&proto.GetAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.GetAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.GetSlotsRequest:
 		var slots []*agentv1.Slot
 		for _, s := range a.summarize(ctx).Slots {
-			slots = append(slots, toProtoSlot(s))
+			slots = append(slots, s.ToProto())
 		}
 		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
-		ctx.Respond(&proto.EnableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.DisableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: false})
-		ctx.Respond(&proto.DisableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
@@ -195,13 +186,14 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	ctx.Tell(a.slots, sc)
 }
 
-func (a *agent) summarize(ctx *actor.Context) AgentSummary {
-	return AgentSummary{
+func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
+	return model.AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
-		Slots:          ctx.Ask(a.slots, SlotsSummary{}).Get().(SlotsSummary),
+		Slots:          ctx.Ask(a.slots, model.SlotsSummary{}).Get().(model.SlotsSummary),
 		NumContainers:  len(a.containers),
 		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
+		Addresses:      []string{a.address},
 	}
 }

@@ -133,15 +133,21 @@ def wrap_metrics(
     metrics: det.workload.Response,
     stop_requested: bool,
     invalid_hp: bool,
+    init_invalid_hp: bool,
 ) -> det.workload.Response:
     """
-    Make workload response with metrics, stop_requested, and invalid_hp flags.
+    Make workload response with metrics, stop_requested, invalid_hp, and init_invalid_hp flags.
     Skipped if not chief.
     """
     if isinstance(metrics, det.workload.Skipped):
         return metrics
     else:
-        return {"metrics": metrics, "stop_requested": stop_requested, "invalid_hp": invalid_hp}
+        return {
+            "metrics": metrics,
+            "stop_requested": stop_requested,
+            "invalid_hp": invalid_hp,
+            "init_invalid_hp": init_invalid_hp,
+        }
 
 
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:

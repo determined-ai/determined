@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  WebUI: Add `Trial` prefix to trial links on experiment detail page.

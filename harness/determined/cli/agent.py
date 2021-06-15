@@ -7,7 +7,7 @@ from typing import Any, Callable, List
 
 from determined.cli import render
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.check import check_false
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
@@ -16,7 +16,7 @@ def local_id(address: str) -> str:
     return os.path.basename(address)
 
 
-@authentication_required
+@authentication.required
 def list_agents(args: argparse.Namespace) -> None:
     r = api.get(args.master, "agents")
 
@@ -30,6 +30,7 @@ def list_agents(args: argparse.Namespace) -> None:
                 ("num_containers", agent["num_containers"]),
                 ("resource_pool", agent["resource_pool"]),
                 ("label", agent["label"]),
+                ("addresses", ", ".join(agent["addresses"])),
             ]
         )
         for agent_id, agent in sorted(agents.items())
@@ -39,13 +40,21 @@ def list_agents(args: argparse.Namespace) -> None:
         print(json.dumps(agents, indent=4))
         return
 
-    headers = ["Agent ID", "Registered Time", "Slots", "Containers", "Resource Pool", "Label"]
+    headers = [
+        "Agent ID",
+        "Registered Time",
+        "Slots",
+        "Containers",
+        "Resource Pool",
+        "Label",
+        "Addresses",
+    ]
     values = [a.values() for a in agents]
 
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@authentication_required
+@authentication.required
 def list_slots(args: argparse.Namespace) -> None:
     task_res = api.get(args.master, "tasks")
     agent_res = api.get(args.master, "agents")
@@ -101,7 +110,7 @@ def list_slots(args: argparse.Namespace) -> None:
 
 
 def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
-    @authentication_required
+    @authentication.required
     def patch(args: argparse.Namespace) -> None:
         check_false(args.all and args.agent_id)
 
@@ -128,7 +137,7 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
 
 
 def patch_slot(enabled: bool) -> Callable[[argparse.Namespace], None]:
-    @authentication_required
+    @authentication.required
     def patch(args: argparse.Namespace) -> None:
         path = "agents/{}/slots/{}".format(args.agent_id, args.slot_id)
         headers = {"Content-Type": "application/merge-patch+json"}

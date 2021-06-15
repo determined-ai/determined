@@ -12,26 +12,29 @@ import pytest
 from pexpect import spawn
 
 from determined.common import constants, yaml
-from determined.common.api.authentication import Authentication, Credentials, TokenStore
+from determined.common.api import authentication
 from tests import command
 from tests import config as conf
 from tests import experiment as exp
 from tests.filetree import FileTree
 
 EXPECT_TIMEOUT = 5
-ADMIN_CREDENTIALS = Credentials("admin", "")
+ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 
 @pytest.fixture(scope="session")  # type: ignore
-def auth() -> Authentication:
-    a = Authentication.instance()
-    a.reset_session()
-    yield a
-    TokenStore.delete_token_cache()
+def clean_auth() -> None:
+    """
+    clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
+    authentication, and that any settings we save during tests are cleaned up afterwards.
+    """
+    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
+    yield None
+    authentication.TokenStore(conf.make_master_url()).delete_token_cache()
 
 
 @contextlib.contextmanager
-def logged_in_user(credentials: Credentials) -> Generator:
+def logged_in_user(credentials: authentication.Credentials) -> Generator:
     assert log_in_user(credentials) == 0
     yield
     assert log_out_user() == 0
@@ -52,7 +55,7 @@ def det_run(args: List[str]) -> str:
     )
 
 
-def log_in_user(credentials: Credentials) -> int:
+def log_in_user(credentials: authentication.Credentials) -> int:
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
@@ -64,7 +67,7 @@ def log_in_user(credentials: Credentials) -> int:
     return cast(int, child.exitstatus)
 
 
-def create_user(n_username: str, admin_credentials: Credentials) -> None:
+def create_user(n_username: str, admin_credentials: authentication.Credentials) -> None:
     a_username, a_password = admin_credentials
 
     child = det_spawn(["-u", a_username, "user", "create", n_username])
@@ -88,7 +91,7 @@ def create_user(n_username: str, admin_credentials: Credentials) -> None:
 
 
 def change_user_password(
-    target_username: str, target_password: str, admin_credentials: Credentials
+    target_username: str, target_password: str, admin_credentials: authentication.Credentials
 ) -> int:
     a_username, a_password = admin_credentials
 
@@ -112,7 +115,9 @@ def change_user_password(
     return cast(int, child.exitstatus)
 
 
-def create_test_user(admin_credentials: Credentials, add_password: bool = False) -> Credentials:
+def create_test_user(
+    admin_credentials: authentication.Credentials, add_password: bool = False
+) -> authentication.Credentials:
     username = get_random_string()
     create_user(username, admin_credentials)
 
@@ -121,7 +126,7 @@ def create_test_user(admin_credentials: Credentials, add_password: bool = False)
         password = get_random_string()
         assert change_user_password(username, password, admin_credentials) == 0
 
-    return Credentials(username, password)
+    return authentication.Credentials(username, password)
 
 
 def log_out_user(username: Optional[str] = None) -> int:
@@ -175,7 +180,7 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_logout(auth: Authentication) -> None:
+def test_logout(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
     # Set Determined passwordto something in order to disable auto-login.
@@ -201,7 +206,7 @@ def test_logout(auth: Authentication) -> None:
     assert child.exitstatus != 0
 
     # Log in as determined.
-    log_in_user(Credentials(constants.DEFAULT_DETERMINED_USER, password))
+    log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
 
     # Log back in as new user.
     log_in_user(creds)
@@ -222,7 +227,7 @@ def test_logout(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_activate_deactivate(auth: Authentication) -> None:
+def test_activate_deactivate(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
     # Make sure we can log in as the user.
@@ -245,7 +250,7 @@ def test_activate_deactivate(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_change_password(auth: Authentication) -> None:
+def test_change_password(clean_auth: None) -> None:
     # Create a user without a password.
     creds = create_test_user(ADMIN_CREDENTIALS, False)
 
@@ -258,11 +263,11 @@ def test_change_password(auth: Authentication) -> None:
     newPassword = get_random_string()
     assert change_user_password(creds.username, newPassword, ADMIN_CREDENTIALS) == 0
 
-    assert log_in_user(Credentials(creds.username, newPassword)) == 0
+    assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_experiment_creation_and_listing(auth: Authentication) -> None:
+def test_experiment_creation_and_listing(clean_auth: None) -> None:
     # Create 2 users.
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -387,7 +392,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_notebook_creation_and_listing(auth: Authentication) -> None:
+def test_notebook_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -415,7 +420,7 @@ def test_notebook_creation_and_listing(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_tensorboard_creation_and_listing(auth: Authentication) -> None:
+def test_tensorboard_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -452,7 +457,7 @@ def test_tensorboard_creation_and_listing(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_command_creation_and_listing(auth: Authentication) -> None:
+def test_command_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -472,7 +477,7 @@ def test_command_creation_and_listing(auth: Authentication) -> None:
         assert (command_id2, creds2.username) in output
 
 
-def create_linked_user(uid: int, user: str, gid: int, group: str) -> Credentials:
+def create_linked_user(uid: int, user: str, gid: int, group: str) -> authentication.Credentials:
     admin_username, *_rest = ADMIN_CREDENTIALS
 
     user_creds = create_test_user(ADMIN_CREDENTIALS, False)
@@ -503,7 +508,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> Credentials
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_agent_user(auth: Authentication) -> None:
+def test_link_with_agent_user(clean_auth: None) -> None:
     user = create_linked_user(200, "someuser", 300, "somegroup")
 
     expected_output = "someuser:200:somegroup:300"
@@ -518,7 +523,7 @@ def test_link_with_agent_user(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_large_uid(auth: Authentication) -> None:
+def test_link_with_large_uid(clean_auth: None) -> None:
     user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
@@ -533,7 +538,7 @@ def test_link_with_large_uid(auth: Authentication) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_with_existing_agent_user(auth: Authentication) -> None:
+def test_link_with_existing_agent_user(clean_auth: None) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     expected_output = "nobody:65534:nogroup:65534"
@@ -575,7 +580,7 @@ def non_tmp_shared_fs_path() -> Generator:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> None:
+def test_non_root_experiment(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     with logged_in_user(user):
@@ -605,22 +610,25 @@ def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> No
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_link_without_agent_user(auth: Authentication) -> None:
+def test_link_without_agent_user(clean_auth: None) -> None:
     user = create_test_user(ADMIN_CREDENTIALS, False)
 
     expected_output = "root:0:root:0"
     with logged_in_user(user), command.interactive_command(
         "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     ) as cmd:
+        recvd = []
         for line in cmd.stdout:
             if expected_output in line:
                 break
+            recvd.append(line)
         else:
-            raise AssertionError(f"Did not find {expected_output} in output")
+            output = "".join(recvd)
+            raise AssertionError(f"Did not find {expected_output} in output:\n{output}")
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_non_root_shell(auth: Authentication, tmp_path: pathlib.Path) -> None:
+def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(1234, "someuser", 1234, "somegroup")
 
     expected_output = "someuser:1234:somegroup:1234"

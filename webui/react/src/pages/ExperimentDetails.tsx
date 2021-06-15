@@ -1,6 +1,6 @@
 import { Space, Tabs } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation, useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
@@ -9,6 +9,8 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
+import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
+import ExperimentOverview from 'pages/ExperimentDetails/ExperimentOverview';
 import { paths, routeAll } from 'routes/utils';
 import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
 import { createExperiment } from 'services/api';
@@ -17,11 +19,10 @@ import { ExperimentBase, ExperimentVisualizationType, RawJson, ValidationHistory
 import { clone, isEqual } from 'utils/data';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
-import ExperimentOverview from './ExperimentDetails/ExperimentOverview';
-
 const { TabPane } = Tabs;
 
 enum TabType {
+  Configuration = 'configuration',
   Overview = 'overview',
   Visualization = 'visualization',
 }
@@ -35,14 +36,18 @@ interface Params {
 const TAB_KEYS = Object.values(TabType);
 const DEFAULT_TAB_KEY = TabType.Overview;
 
+const ExperimentConfiguration = React.lazy(() => {
+  return import('./ExperimentDetails/ExperimentConfiguration');
+});
 const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentDetails/ExperimentVisualization');
 });
 
 const ExperimentDetails: React.FC = () => {
   const { experimentId, tab, viz } = useParams<Params>();
+  const location = useLocation();
   const history = useHistory();
-  const defaultTabKey = tab && TAB_KEYS.indexOf(tab) ? tab : DEFAULT_TAB_KEY;
+  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
@@ -51,6 +56,11 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
+
+  const isShowNewHeader: boolean = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    return search.get('header') === 'new';
+  }, [ location.search ]);
 
   const id = parseInt(experimentId);
   const basePath = paths.experimentDetails(experimentId);
@@ -84,7 +94,7 @@ const ExperimentDetails: React.FC = () => {
   const showForkModal = useCallback((): void => {
     if (experiment?.configRaw) {
       const rawConfig: RawJson = clone(experiment.configRaw);
-      rawConfig.description = `Fork of ${rawConfig.description}`;
+      if (rawConfig.description) rawConfig.description = `Fork of ${rawConfig.description}`;
       upgradeConfig(rawConfig);
       setForkModalConfig(rawConfig);
     }
@@ -152,6 +162,11 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
+      headerComponent={isShowNewHeader && <ExperimentDetailsHeader
+        experiment={experiment}
+        fetchExperimentDetails={fetchExperimentDetails}
+        showForkModal={showForkModal}
+      />}
       options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
@@ -176,6 +191,11 @@ const ExperimentDetails: React.FC = () => {
               basePath={`${basePath}/${TabType.Visualization}`}
               experiment={experiment}
               type={viz} />
+          </React.Suspense>
+        </TabPane>
+        <TabPane key="configuration" tab="Configuration">
+          <React.Suspense fallback={<Spinner />}>
+            <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
         </TabPane>
       </Tabs>

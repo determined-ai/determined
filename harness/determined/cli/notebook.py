@@ -6,7 +6,7 @@ from termcolor import colored
 
 from determined.cli import command, render
 from determined.common import api
-from determined.common.api.authentication import authentication_required
+from determined.common.api import authentication
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -20,7 +20,7 @@ from .command import (
 )
 
 
-@authentication_required
+@authentication.required
 def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
 
@@ -51,7 +51,7 @@ def start_notebook(args: Namespace) -> None:
             render_event_stream(msg)
 
 
-@authentication_required
+@authentication.required
 def open_notebook(args: Namespace) -> None:
     resp = api.get(args.master, "api/v1/notebooks/{}".format(args.notebook_id)).json()["notebook"]
     check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")

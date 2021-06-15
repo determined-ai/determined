@@ -96,6 +96,6 @@ Tasks
 
 Once the master and agent are configured to use TLS, no further
 configuration is required for tasks that are run in the cluster. In
-shells and notebooks, the Determined :ref:`Python libraries
-<experimental>` will automatically make connections to the master using
-TLS with the appropriate certificate.
+shells and notebooks, the Determined :ref:`Python libraries <client>`
+will automatically make connections to the master using TLS with the
+appropriate certificate.

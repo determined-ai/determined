@@ -1,7 +1,7 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory, useParams } from 'react-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation, useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
@@ -11,6 +11,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
+import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
@@ -32,7 +33,7 @@ enum TabType {
   Hyperparameters = 'hyperparameters',
   Logs = 'logs',
   Overview = 'overview',
-  Profiles = 'profiles',
+  Profiler = 'profiler',
   Workloads = 'workloads',
 }
 
@@ -70,7 +71,13 @@ const TrialDetailsComp: React.FC = () => {
   const [ isContModalVisible, setIsContModalVisible ] = useState(false);
   const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
+  const location = useLocation();
   const routeParams = useParams<Params>();
+
+  const isShowNewHeader: boolean = useMemo(() => {
+    const search = new URLSearchParams(location.search);
+    return search.get('header') === 'new';
+  }, [ location.search ]);
 
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
@@ -130,10 +137,9 @@ const TrialDetailsComp: React.FC = () => {
   const showContModal = useCallback(() => {
     if (experiment?.configRaw && trial) {
       const rawConfig = trialContinueConfig(clone(experiment.configRaw), trial.hparams, trial.id);
-      rawConfig.description = [
-        `Continuation of trial ${trial.id},`,
-        `experiment ${trial.experimentId} (${rawConfig.description || ''})`,
-      ].join(' ');
+      let newDescription = `Continuation of trial ${trial.id}, experiment ${trial.experimentId}`;
+      if (rawConfig.description) newDescription += ` (${rawConfig.description})`;
+      rawConfig.description = newDescription;
       upgradeConfig(rawConfig);
       setContModalConfig(rawConfig);
     }
@@ -252,6 +258,11 @@ const TrialDetailsComp: React.FC = () => {
           path: paths.trialDetails(trialId, experiment.id),
         },
       ]}
+      headerComponent={isShowNewHeader && <TrialDetailsHeader
+        fetchTrialDetails={fetchTrialDetails}
+        handleActionClick={handleActionClick}
+        trial={trial}
+      />}
       options={
         <TrialActions
           trial={trial}
@@ -272,7 +283,7 @@ const TrialDetailsComp: React.FC = () => {
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />
         </TabPane>
-        <TabPane key={TabType.Profiles} tab="Profiles">
+        <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Logs} tab="Logs">

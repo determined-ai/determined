@@ -384,6 +384,7 @@ def test_model_registry() -> None:
 
     d = Determined(conf.make_master_url())
 
+    # Create a model and validate twiddling the metadata.
     mnist = d.create_model("mnist", "simple computer vision model")
     assert mnist.metadata == {}
 
@@ -408,15 +409,35 @@ def test_model_registry() -> None:
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "override"}
 
+    # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint.uuid)
-
     assert model_version.model_version == 1
 
     latest_version = mnist.get_version()
     assert latest_version is not None
     assert latest_version.uuid == checkpoint.uuid
 
+    # Run another basic test and register its checkpoint as a version as well.
+    # Validate the latest has been updated.
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
+        conf.tutorials_path("mnist_pytorch"),
+        None,
+    )
+    checkpoint = d.get_experiment(exp_id).top_checkpoint()
+    model_version = mnist.register_version(checkpoint.uuid)
+    assert model_version.model_version == 2
+
+    latest_version = mnist.get_version()
+    assert latest_version is not None
+    assert latest_version.uuid == checkpoint.uuid
+
+    # Ensure the correct number of versions are present.
+    all_versions = mnist.get_versions()
+    assert len(all_versions) == 2
+
+    # Create some more models and validate listing models.
     d.create_model("transformer", "all you need is attention")
     d.create_model("object-detection", "a bounding box model")
 

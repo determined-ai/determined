@@ -3,8 +3,7 @@ import enum
 import json
 from typing import Any, Dict, List, Optional
 
-from determined.common import api
-from determined.common.experimental.checkpoint import Checkpoint
+from determined.common.experimental import checkpoint, session
 
 
 class ModelSortBy(enum.Enum):
@@ -46,6 +45,10 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
+    A Model object is usually obtained from
+    ``determined.experimental.client.create_model()``
+    or ``determined.experimental.client.get_model()``.
+
     Class representing a model in the model registry. It contains methods for model
     versions and metadata.
 
@@ -60,21 +63,21 @@ class Model:
 
     def __init__(
         self,
+        session: session.Session,
         name: str,
         description: str = "",
         creation_time: Optional[datetime.datetime] = None,
         last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        master: str = "",
     ):
-        self._master = master
+        self._session = session
         self.name = name
         self.description = description
         self.creation_time = creation_time
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
 
-    def get_version(self, version: int = 0) -> Optional[Checkpoint]:
+    def get_version(self, version: int = 0) -> Optional[checkpoint.Checkpoint]:
         """
         Retrieve the checkpoint corresponding to the specified version of the
         model. If the specified version of the model does not exist, an exception
@@ -88,8 +91,7 @@ class Model:
             version (int, optional): The model version number requested.
         """
         if version == 0:
-            resp = api.get(
-                self._master,
+            resp = self._session.get(
                 "/api/v1/models/{}/versions/".format(self.name),
                 {"limit": 1, "order_by": 2},
             )
@@ -99,20 +101,23 @@ class Model:
                 return None
 
             latest_version = data["modelVersions"][0]
-            return Checkpoint.from_json(
+            return checkpoint.Checkpoint.from_json(
                 {
                     **latest_version["checkpoint"],
                     "model_version": latest_version["version"],
                     "model_name": data["model"]["name"],
-                }
+                },
+                self._session,
             )
         else:
-            resp = api.get(self._master, "/api/v1/models/{}/versions/{}".format(self.name, version))
+            resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.name, version))
 
         data = resp.json()
-        return Checkpoint.from_json(data["modelVersion"]["checkpoint"], self._master)
+        return checkpoint.Checkpoint.from_json(data["modelVersion"]["checkpoint"], self._session)
 
-    def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
+    def get_versions(
+        self, order_by: ModelOrderBy = ModelOrderBy.DESC
+    ) -> List[checkpoint.Checkpoint]:
         """
         Get a list of checkpoints corresponding to versions of this model. The
         models are sorted by version number and are returned in descending
@@ -121,49 +126,47 @@ class Model:
         Arguments:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
         """
-        resp = api.get(
-            self._master,
+        resp = self._session.get(
             "/api/v1/models/{}/versions/".format(self.name),
             params={"order_by": order_by.value},
         )
         data = resp.json()
 
         return [
-            Checkpoint.from_json(
+            checkpoint.Checkpoint.from_json(
                 {
                     **version["checkpoint"],
                     "model_version": version["version"],
                     "model_name": data["model"]["name"],
                 },
-                self._master,
+                self._session,
             )
             for version in data["modelVersions"]
         ]
 
-    def register_version(self, checkpoint_uuid: str) -> Checkpoint:
+    def register_version(self, checkpoint_uuid: str) -> checkpoint.Checkpoint:
         """
         Creates a new model version and returns the
-        :class:`~determined.experimental.Checkpoint` corresponding to the
+        :class:`~determined.experimental.checkpoint.Checkpoint` corresponding to the
         version.
 
         Arguments:
             checkpoint_uuid: The UUID of the checkpoint to register.
         """
-        resp = api.post(
-            self._master,
+        resp = self._session.post(
             "/api/v1/models/{}/versions".format(self.name),
             body={"checkpoint_uuid": checkpoint_uuid},
         )
 
         data = resp.json()
 
-        return Checkpoint.from_json(
+        return checkpoint.Checkpoint.from_json(
             {
                 **data["modelVersion"]["checkpoint"],
                 "model_version": data["modelVersion"]["version"],
                 "model_name": data["modelVersion"]["model"]["name"],
             },
-            self._master,
+            self._session,
         )
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
@@ -178,8 +181,7 @@ class Model:
         for key, val in metadata.items():
             self.metadata[key] = val
 
-        api.patch(
-            self._master,
+        self._session.patch(
             "/api/v1/models/{}".format(self.name),
             body={"model": {"metadata": self.metadata, "description": self.description}},
         )
@@ -196,8 +198,7 @@ class Model:
             if key in self.metadata:
                 del self.metadata[key]
 
-        api.patch(
-            self._master,
+        self._session.patch(
             "/api/v1/models/{}".format(self.name),
             body={"model": {"metadata": self.metadata, "description": self.description}},
         )
@@ -215,12 +216,12 @@ class Model:
         return "Model(name={}, metadata={})".format(self.name, json.dumps(self.metadata))
 
     @staticmethod
-    def from_json(data: Dict[str, Any], master: str) -> "Model":
+    def from_json(data: Dict[str, Any], session: session.Session) -> "Model":
         return Model(
+            session,
             data["name"],
             data.get("description", ""),
             data.get("creationTime"),
             data.get("lastUpdatedTime"),
             data.get("metadata", {}),
-            master,
         )

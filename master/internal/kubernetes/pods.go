@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -394,7 +393,7 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 	response := &apiv1.GetAgentsResponse{}
 
 	for _, summary := range summaries {
-		response.Agents = append(response.Agents, agent.ToProtoAgent(summary))
+		response.Agents = append(response.Agents, summary.ToProto())
 	}
 	ctx.Respond(response)
 }
@@ -402,7 +401,7 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 // summarize will return all nodes currently in the k8 cluster that have GPUs as agents.
 // It will map currently running Determined pods to the slots on these Nodes, marking all other
 // slots as Free, even if they are being used by other k8 pods.
-func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
+func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
 	for _, podHandler := range p.podNameToPodHandler {
 		podHandlers = append(podHandlers, podHandler)
@@ -421,7 +420,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
-	summary := make(map[string]agent.AgentSummary)
+	summary := make(map[string]model.AgentSummary)
 	for _, node := range p.currentNodes {
 		gpuResources := node.Status.Capacity["nvidia.com/gpu"]
 		numSlots := gpuResources.Value()
@@ -429,7 +428,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 			continue
 		}
 
-		slotsSummary := make(agent.SlotsSummary)
+		slotsSummary := make(model.SlotsSummary)
 		curSlot := 0
 		for _, podInfo := range podByNode[node.Name] {
 			for i := 0; i < podInfo.numGPUs; i++ {
@@ -438,7 +437,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 					continue
 				}
 
-				slotsSummary[strconv.Itoa(curSlot)] = agent.SlotSummary{
+				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
 					ID:        strconv.Itoa(i),
 					Device:    device.Device{Type: device.GPU},
 					Enabled:   true,
@@ -449,19 +448,25 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		}
 
 		for i := curSlot; i < int(numSlots); i++ {
-			slotsSummary[strconv.Itoa(i)] = agent.SlotSummary{
+			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
 				ID:      strconv.Itoa(i),
 				Device:  device.Device{Type: device.GPU},
 				Enabled: true,
 			}
 		}
 
-		summary[node.Name] = agent.AgentSummary{
+		var addrs []string
+		for _, addr := range node.Status.Addresses {
+			addrs = append(addrs, addr.Address)
+		}
+
+		summary[node.Name] = model.AgentSummary{
 			ID:             node.Name,
 			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
 			Slots:          slotsSummary,
 			NumContainers:  len(podByNode[node.Name]),
 			ResourcePool:   "",
+			Addresses:      addrs,
 		}
 	}
 

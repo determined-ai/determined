@@ -47,7 +47,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.15.6.dev0
+    Default: 0.16.1.dev0
 
   DBPassword:
     Type: String
@@ -670,6 +670,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       InstanceId: !Ref MasterInstance
+      Domain: vpc
       Tags:
           - Key: user
             Value: !Ref AWS::StackName

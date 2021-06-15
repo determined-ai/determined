@@ -1,4 +1,4 @@
-.. _howto-profiling:
+.. _how-to-profiling:
 
 ##############################
  How To Profile An Experiment
@@ -16,9 +16,9 @@ way down to GPU kernels.
 
 Determined provides two tools out-of-the-box for instrumenting training:
 
--  :ref:`System Metrics <howto-profiling-system-metrics>`: measurements
+-  :ref:`System Metrics <how-to-profiling-system-metrics>`: measurements
    of hardware usage
--  :ref:`Timings <howto-profiling-timings>`: durations of actions taken
+-  :ref:`Timings <how-to-profiling-timings>`: durations of actions taken
    during training, such as dataloading
 
 System Metrics are useful to see if the software is taking full
@@ -28,7 +28,7 @@ Timings are useful for identifying the section of code to focus on for
 optimizations. Most commonly, Timings help answers the question of
 whether the dataloader is the main bottleneck in training.
 
-.. _howto-profiling-system-metrics:
+.. _how-to-profiling-system-metrics:
 
 ****************
  System Metrics
@@ -63,7 +63,7 @@ down by GPU.
    experiments on the same agent, it is difficult to analyze. We suggest
    that profiling is done with only a single experiment per agent.
 
-.. _howto-profiling-timings:
+.. _how-to-profiling-timings:
 
 *********
  Timings

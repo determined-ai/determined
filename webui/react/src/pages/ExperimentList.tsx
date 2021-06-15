@@ -73,13 +73,10 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 };
 
 const ExperimentList: React.FC = () => {
-  const { auth, users } = useStore();
+  const { users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, {
-    ...defaultFilters,
-    users: (!auth.user || auth.user?.isAdmin) ? defaultFilters.users : [ auth.user?.username ],
-  });
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();

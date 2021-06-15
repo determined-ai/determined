@@ -233,7 +233,7 @@ follows:
 
 .. code:: bash
 
-   det model register <model_name> <checkpoint_uuid>
+   det model register-version <model_name> <checkpoint_uuid>
 
 Accessing Versions
 ==================
@@ -283,6 +283,6 @@ The CLI equivalent is as follows:
  Next Steps
 ************
 
--  :ref:`experimental`: The reference documentation for this API.
+-  :ref:`client`: The reference documentation for this API.
 -  :ref:`use-trained-models`
 -  :ref:`exporting-checkpoints`
