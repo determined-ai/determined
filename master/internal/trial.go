@@ -1331,7 +1331,7 @@ func newPreemption() *preemption {
 
 func (p *preemption) watch(msg watchPreemption) (preemptionWatcher, error) {
 	if p == nil {
-		return preemptionWatcher{}, errors.New("no preemption status available for unallocated task")
+		return preemptionWatcher{}, errors.New("no preemption status available nil preemption")
 	}
 
 	// Register and respond with the watcher channel. Size 2; at most 2 messages
