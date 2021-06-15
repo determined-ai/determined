@@ -65,19 +65,28 @@ interface RangeProps {
 
 const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   const pointerPosition = useMemo(() => {
-    if (hp.type === ExperimentHyperParamType.Constant) {
-      return .5;
-    } else if (hp.type === ExperimentHyperParamType.Categorical) {
-      const idx = hp.vals.indexOf(hp.val);
-      return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
-    } else if (hp.type === ExperimentHyperParamType.Log) {
-      return clamp(
-        1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0])),
-        0,
-        1,
-      );
-    } else {
-      return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
+    switch (hp.type) {
+      case ExperimentHyperParamType.Constant:
+      {
+        return 0.5;
+      }
+      case ExperimentHyperParamType.Categorical:
+      {
+        const idx = hp.vals.indexOf(hp.val);
+        return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
+      }
+      case ExperimentHyperParamType.Log:
+      {
+        return clamp(
+          1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0])),
+          0,
+          1,
+        );
+      }
+      default:
+      {
+        return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
+      }
     }
   }, [ hp ]);
 
