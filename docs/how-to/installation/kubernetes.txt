@@ -314,6 +314,7 @@ effect. GKE also allows taints to be applied to clusters. Tolerations can be app
 AKS
 ^^^
 .. code::
+
    az aks nodepool add \
       --resource-group ${AKS_RESOURCE_GROUP} \
       --cluster-name ${AKS_CLUSTER_NAME} \
@@ -332,7 +333,8 @@ AKS
 
 GKE
 ^^^
-.. code:: 
+.. code::
+
    gcloud container clusters create ${GKE_CLUSTER_NAME} \
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
@@ -354,7 +356,7 @@ will need to add a taint type and a tag to the node group specified in
 the cluster config from :ref:`cluster-creation`. An example of the
 modifications is shown for a p2.8xlarge node group:
 
-.. code:: YAML
+.. code:: yaml
 
    - name: p2-8xlarge-us-west-2b
      ...
@@ -371,7 +373,7 @@ the DaemonSet, save a copy of the `official version
 <https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_
 and make the following additions to its tolerations:
 
-.. code:: YAML
+.. code:: yaml
 
    spec:
      tolerations:
@@ -391,6 +393,7 @@ Taints
 To taint a node with kubectl, use `kubectl taint nodes`.
 
 .. code::
+
    kubectl taint nodes ${NODE_NAME} ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
    kubectl taint nodes ${NODE_NAME} accelerator=gpu:NoSchedule
@@ -400,6 +403,7 @@ Tolerations
 To specify a toleration, use the `toleration` field in the PodSpec.
 
 .. code:: YAML
+
    tolerations:
       - key: "${TAINT_TAG}"
          operator: "Equal"
