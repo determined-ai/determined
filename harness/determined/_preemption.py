@@ -1,8 +1,10 @@
-import json
-import selectors
+import logging
 import socket
 import threading
+import time
 from typing import Any, Optional
+
+import requests
 
 from determined.common import api
 from determined.common.api import certs
@@ -36,76 +38,45 @@ class _PreemptionWatcher(threading.Thread):
         self._trial_id = trial_id
         self._cert = cert
 
-        # We will use a selector loop as a non-blocking way to stream through the requests library.
-        # We use a socketpair for a cross-platform way to wake up a selector loop mid-stream.
-        self._rsock = None  # type: Optional[socket.socket]
-        self._wsock = None  # type: Optional[socket.socket]
-
         self._should_preempt = None  # type: Optional[bool]
+        self._should_quit = False
 
         self._cond = threading.Condition()
-        super().__init__()
 
-    def run(self) -> None:
-        assert self._rsock is not None
-        assert self._wsock is not None
+        # Set daemon=True, since the requests library only supports blocking reads.  Under the hood,
+        # the requests library uses buffered IO on top of the socket, which means that we can't even
+        # use select() to know if a read would block; select() won't know that some data is
+        # available in the buffer.  We would probably have to move to an async-based HTTP library
+        # to make the PreemptionWatcher properly preemptible.
+        super().__init__(daemon=True)
 
-        with api.get(
+    def _get_preemption(self, longpoll_time: int) -> bool:
+        return api.get(
             self._master_url,
             f"/api/v1/trials/{self._trial_id}/signals/preemption",
-            stream=True,
             cert=self._cert,
-        ) as r:
-            lines = r.iter_lines()
+            params={"timeout": longpoll_time},
+            timeout=70,
+        ).json()["result"]["preempt"] is True
 
-            # The first response is always immediate, so we always block for it.  This is doubly
-            # important because we can only select on the HTTP connection socket _after_ we call
-            # next(lines) at least once.
-            for line in lines:
-                if not line:
-                    # Empty keepalive message.
-                    continue
-                break
+    def run(self) -> None:
+        # Do a rapid check for the initial value.
+        with self._cond:
+            self._should_preempt = self._get_preemption(0)
+            # Wake the main thread in case it was waiting for the initial response.
+            self._cond.notify()
 
-            j = json.loads(line)
-
-            with self._cond:
-                self._should_preempt = j["result"]["preempt"]
-                # Wake the main thread in case it was waiting for the main response.
-                self._cond.notify()
-
-            if self._should_preempt:
-                return
-
-            # It may be a long time between the first response and the second.  We want to be
-            # responsive to .close() calls from the main thread, so we block on input from either
-            # the HTTP connection socket or on our own _rsock socket.
-            with selectors.DefaultSelector() as sel:
-                sel.register(r.raw, selectors.EVENT_READ)
-                sel.register(self._rsock, selectors.EVENT_READ)
-
-                while True:
-                    for key, _ in sel.select():
-                        if key.fileobj == self._rsock:
-                            # self._rsock is only written to when we are supposed to close.
-                            return
-
-                        assert key.fileobj == r.raw
-                        # Calling next() is blocking, but it should only block for a trivial amount
-                        # of time; basically only in the case that one message from the preemption
-                        # API got broken into two network packets.
-                        line = next(lines)
-
-                        if not line:
-                            # Empty keepalive message.
-                            continue
-
-                        j = json.loads(line)
-
-                        self._should_preempt = j["result"]["preempt"]
-
-                        if self._should_preempt:
-                            return
+        # Continuously poll for preemption status to change.  Always retry after network failures;
+        # if the master is unreachable, either user code will exit due to some more critical API
+        # failure, or the user will kill the workload.
+        while self._should_preempt and not self._should_quit:
+            try:
+                self._get_preemption(60)
+            except requests.Timeout:
+                logging.exception("timeout communicating with preemption API, retrying")
+            except Exception:
+                logging.exception("failure communicating with preemption API, retrying in 10s")
+                time.sleep(10)
 
     def start(self) -> None:
         self._rsock, self._wsock = socket.socketpair()
@@ -117,10 +88,6 @@ class _PreemptionWatcher(threading.Thread):
         # Sending any message at all will wake up the selector loop.
         self._wsock.send(b"quit")
         self.join()
-        self._rsock.close()
-        self._rsock = None
-        self._wsock.close()
-        self._wsock = None
 
     def __enter__(self) -> "_PreemptionWatcher":
         self.start()
