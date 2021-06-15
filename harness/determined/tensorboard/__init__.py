@@ -9,3 +9,4 @@ from determined.tensorboard.metric_writers import BatchMetricWriter, MetricWrite
 from determined.tensorboard.s3 import S3TensorboardManager
 from determined.tensorboard.shared import SharedFSTensorboardManager
 import determined.tensorboard.util
+from determined.tensorboard.azure import AzureTensorboardManager

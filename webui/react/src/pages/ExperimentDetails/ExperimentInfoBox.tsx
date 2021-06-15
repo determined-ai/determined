@@ -1,6 +1,4 @@
 import { Button, Tooltip } from 'antd';
-import Modal from 'antd/es/modal/Modal';
-import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -10,14 +8,11 @@ import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
 import TagList from 'components/TagList';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, ExperimentBase } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-
-import css from './ExperimentInfoBox.module.scss';
 
 interface Props extends TopWorkloads {
   experiment: ExperimentBase;
@@ -29,20 +24,15 @@ export interface TopWorkloads {
   bestValidation?: number;
 }
 
-const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
-
 const ExperimentInfoBox: React.FC<Props> = (
   { experiment, bestValidation, bestCheckpoint, onTagsChange }: Props,
 ) => {
   const config = experiment.config;
-  const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const experimentTags = useExperimentTags(onTagsChange);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-  const handleHideConfig = useCallback(() => setShowConfig(false), []);
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
-  const handleShowConfig = useCallback(() => setShowConfig(true), []);
 
   const infoRows: InfoRow[] = [
     {
@@ -57,11 +47,6 @@ const ExperimentInfoBox: React.FC<Props> = (
           <HumanReadableFloat num={bestValidation} /> {`(${config.searcher.metric})`}
         </>,
       label: 'Best Validation',
-    },
-    {
-      content:
-          <Button onClick={handleShowConfig}>View Configuration</Button>,
-      label: 'Configuration',
     },
     {
       content: bestCheckpoint && <Button onClick={handleShowBestCheckpoint}>
@@ -107,30 +92,6 @@ const ExperimentInfoBox: React.FC<Props> = (
         show={showBestCheckpoint}
         title={`Best Checkpoint for Experiment ${experiment.id}`}
         onHide={handleHideBestCheckpoint} />}
-      <Modal
-        bodyStyle={{ padding: 0 }}
-        className={css.forkModal}
-        footer={null}
-        title={`Configuration for Experiment ${experiment.id}`}
-        visible={showConfig}
-        width={768}
-        onCancel={handleHideConfig}>
-        <React.Suspense
-          fallback={<div className={css.loading}><Spinner className="minHeight" /></div>}>
-          <MonacoEditor
-            height="60vh"
-            language="yaml"
-            options={{
-              minimap: { enabled: false },
-              occurrencesHighlight: false,
-              readOnly: true,
-              scrollBeyondLastLine: false,
-              selectOnLineNumbers: true,
-            }}
-            theme="vs-light"
-            value={yaml.dump(experiment.configRaw)} />
-        </React.Suspense>
-      </Modal>
     </Section>
   );
 };

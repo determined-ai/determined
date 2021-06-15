@@ -232,6 +232,9 @@ func (t *tensorboardManager) newTensorBoard(
 
 			logBasePath = "s3://" + c.Bucket()
 
+		case expconf.AzureConfig:
+			logBasePath = "azure://" + c.Container()
+
 		case expconf.GCSConfig:
 			logBasePath = "gs://" + c.Bucket()
 

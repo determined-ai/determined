@@ -21,13 +21,12 @@
   }
 }
 
-.experimentDescription,
-.experimentName {
+.foldableItem {
   margin-bottom: var(--theme-sizes-layout-medium);
 
   span {
     display: inline-block;
-    margin-right: 3px;
+    margin-right: 5px;
     opacity: 0.75;
   }
 }

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.16.0.dev0",
+    version="0.16.1.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -35,6 +35,7 @@ setup(
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
         "simplejson",
+        "azure-storage-blob",
         "termcolor>=1.1.0",
         "boto3",
         # CLI:
