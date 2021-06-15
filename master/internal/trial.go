@@ -114,15 +114,15 @@ type (
 	// The trial responds to this message with a channel of bools, where sends of true
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
-	watchPreemption     struct{ id uuid.UUID }
+	watchPreemption   struct{ id uuid.UUID }
 	preemptionWatcher struct{ C <-chan bool }
-	unwatchPreemption   struct{ id uuid.UUID }
+	unwatchPreemption struct{ id uuid.UUID }
 
 	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
-	watchRendezvousInfo     struct{ containerID cproto.ID }
-	rendezvousWatcher struct {
+	watchRendezvousInfo struct{ containerID cproto.ID }
+	rendezvousWatcher   struct {
 		// interface{} is *trialv1.RendezvousInfo or error.
 		C <-chan interface{}
 	}
@@ -432,15 +432,14 @@ func (t *trial) registerRendezvousWatcher(
 		)
 	}
 
-	// Register and respond with the watcher channel. Channel is
-	// size 1 since rendezvous info will only ever be sent once.
+	// Channel is size 1 since rendezvous info will only ever be sent once.
 	w := make(chan interface{}, 1)
 	t.rendezvousWatchers[msg.containerID] = w
 
-	// If we're not all ready, send the all ready timeout notification and return.
 	t.lastContainerConnectedTime = time.Now()
 	if !t.allReady() {
 		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
+		ctx.Log().Info("found not all containers are connected")
 	} else {
 		t.pushRendezvous(ctx)
 	}
@@ -862,11 +861,6 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 }
 
 func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConnected) error {
-	t.lastContainerConnectedTime = time.Now()
-	if len(t.containers) < len(t.allocations) {
-		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
-	}
-
 	// Check to make sure this is not a connection from a stale container.
 	if _, ok := t.containerRanks[msg.ContainerID]; !ok {
 		ctx.Respond(errors.Errorf("socket connection from stale container: %s", msg.ContainerID))
@@ -878,7 +872,13 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	t.containerSockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
 
-	t.pushRendezvous(ctx)
+	t.lastContainerConnectedTime = time.Now()
+	if !t.allReady() {
+		ctx.Log().Info("found not all sockets are connected")
+		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
+	} else {
+		t.pushRendezvous(ctx)
+	}
 	return nil
 }
 
@@ -929,11 +929,6 @@ func (t *trial) allReady() bool {
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
 func (t *trial) pushRendezvous(ctx *actor.Context) {
-	if !t.allReady() {
-		ctx.Log().Info("found not all containers are connected")
-		return
-	}
-
 	caddrs, raddrs, err := t.rendezvousInfo(ctx)
 	for _, caddr := range caddrs {
 		c := caddr.container
@@ -1039,7 +1034,11 @@ func (t *trial) processContainerRunning(
 
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	t.pushRendezvous(ctx)
+	if !t.allReady() {
+		ctx.Log().Info("found not all containers are connected")
+	} else {
+		t.pushRendezvous(ctx)
+	}
 	return nil
 }
 
