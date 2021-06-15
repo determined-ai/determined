@@ -3,6 +3,10 @@
   display: flex;
   flex-direction: column
 }
+.title {
+  align-self: center;
+  margin: 0;
+}
 .innerContainer {
   display: flex;
   height: 300px;

@@ -29,25 +29,25 @@ const TrialRangeHyperparametersContainer = () => {
       },
       dataLayer: { type: 'shared_fs' },
       hyperparameters: {
-        dropout1: {
-          maxval: 0.8,
-          minval: 0.2,
-          type: ExperimentHyperParamType.Double,
-        },
-        global_batch_size: {
-          type: ExperimentHyperParamType.Constant,
-          val: 64,
-        },
-        learning_rate: {
-          maxval: 1,
-          minval: 0.0001,
-          type: ExperimentHyperParamType.Log,
-        },
-        n_filters1: {
+        categorical: {
           maxval: 64,
           minval: 8,
           type: ExperimentHyperParamType.Categorical,
           vals: [ 8, 16, 32, 64 ],
+        },
+        constant: {
+          type: ExperimentHyperParamType.Constant,
+          val: 64,
+        },
+        double: {
+          maxval: 0.8,
+          minval: 0.2,
+          type: ExperimentHyperParamType.Double,
+        },
+        log: {
+          maxval: 1,
+          minval: 0.0001,
+          type: ExperimentHyperParamType.Log,
         },
       },
       labels: [],
@@ -221,10 +221,10 @@ const TrialRangeHyperparametersContainer = () => {
     endTime: '2021-06-09T15:35:27.464642Z',
     experimentId: 1,
     hparams: {
-      dropout1: 0.675007115766233,
-      global_batch_size: 64,
-      learning_rate: 0.5138800609919691,
-      n_filters1: 16,
+      categorical: 16,
+      constant: 64,
+      double: 0.675007115766233,
+      log: 0.5138800609919691,
     },
     id: 1,
     latestValidationMetric: {

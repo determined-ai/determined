@@ -83,7 +83,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
 
   return (
     <div className={css.container}>
-      {hp.name}
+      <p className={css.title}>{hp.name}</p>
       <div className={css.innerContainer}>
         <ValuesTrack hp={hp} />
         <div
