@@ -47,9 +47,6 @@ func TestRendezvousInfo(t *testing.T) {
 				ContainerPort: 1,
 			},
 			{
-				ContainerPort: MinLocalRendezvousPort + 1,
-			},
-			{
 				ContainerPort: 10,
 			},
 			{
@@ -62,9 +59,6 @@ func TestRendezvousInfo(t *testing.T) {
 		{
 			{
 				ContainerPort: 200,
-			},
-			{
-				ContainerPort: MinLocalRendezvousPort,
 			},
 			{
 				ContainerPort: 20,
