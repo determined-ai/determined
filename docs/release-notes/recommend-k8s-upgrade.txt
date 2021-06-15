@@ -1,7 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  There was an issue in 0.15.6 where Determined on k8s might crash when
-   handling concurrent job submissions. We recommend that kubernetes
-   users upgrade to 0.16.0 to avoid encountering this behavior.
