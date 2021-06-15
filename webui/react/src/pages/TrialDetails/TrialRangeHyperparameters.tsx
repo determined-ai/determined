@@ -95,30 +95,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
       <p className={css.title}>{hp.name}</p>
       <div className={css.innerContainer}>
         <ValuesTrack hp={hp} />
-        <div
-          className={
-            (hp.type === ExperimentHyperParamType.Categorical) ?
-              css.grayTrack : hp.type === ExperimentHyperParamType.Constant ?
-                css.constantTrack : css.blueTrack
-          }>
-          {hp.type !== ExperimentHyperParamType.Constant &&
-          hp.type !== ExperimentHyperParamType.Log &&
-          hp.vals.map(option =>
-            <div
-              className={css.trackOption}
-              key={option.toString()}
-            />)}
-          {hp.type === ExperimentHyperParamType.Constant &&
-          <div
-            className={css.trackOption}
-          />}
-          {hp.type === ExperimentHyperParamType.Log &&
-          (new Array(
-            Math.log10((hp.range[1])/(hp.range[0]))+1,
-          )).fill(null)
-            .map((_, idx) =>
-              <div className={css.tick} key={idx} />)}
-        </div>
+        <MainTrack hp={hp} />
         <div className={css.pointerTrack}>
           <Pointer
             containerStyle={{ transform: `translateY(${270*pointerPosition}px)` }}
@@ -129,11 +106,11 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   );
 };
 
-interface ValuesTrackProps {
+interface TrackProps {
   hp: HyperParameter
 }
 
-const ValuesTrack: React.FC<ValuesTrackProps> = ({ hp }: ValuesTrackProps) => {
+const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   switch(hp.type) {
     case ExperimentHyperParamType.Constant:
       return <div className={css.valuesTrack} />;
@@ -158,6 +135,46 @@ const ValuesTrack: React.FC<ValuesTrackProps> = ({ hp }: ValuesTrackProps) => {
         <p className={css.text}>{hp.range[0]}</p>
       </div>;
   }
+};
+
+const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
+  let trackType;
+  let content;
+  switch(hp.type) {
+    case ExperimentHyperParamType.Categorical:
+      trackType = css.grayTrack;
+      content = hp.vals.map(option =>
+        <div
+          className={css.trackOption}
+          key={option.toString()}
+        />);
+      break;
+    case ExperimentHyperParamType.Constant:
+      trackType = css.constantTrack;
+      content = <div
+        className={css.trackOption}
+      />;
+      break;
+    case ExperimentHyperParamType.Log:
+      trackType = css.blueTrack;
+      content = (new Array(
+        Math.log10((hp.range[1])/(hp.range[0]))+1,
+      )).fill(null)
+        .map((_, idx) =>
+          <div className={css.tick} key={idx} />);
+      break;
+    default:
+      trackType = css.blueTrack;
+      content = hp.vals.map(option =>
+        <div
+          className={css.trackOption}
+          key={option.toString()}
+        />);
+  }
+  return (
+    <div className={trackType}>
+      {content}
+    </div>);
 };
 
 interface PHRVProps {
