@@ -112,14 +112,6 @@ type (
 		socket      *websocket.Conn
 	}
 
-	// watchPreemption begins watching if the trial has been preempted.
-	// The trial responds to this message with a channel of bools, where sends of true
-	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
-	// block until you receive _something_ but not until the first preemption).
-	watchPreemption   struct{ id uuid.UUID }
-	preemptionWatcher struct{ C <-chan bool }
-	unwatchPreemption struct{ id uuid.UUID }
-
 	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
@@ -245,8 +237,9 @@ type (
 		privateKey     []byte
 		publicKey      []byte
 
-		// Map of watcher ID to a bool indicating if the trial should preempt.
-		preemptionWatchers map[uuid.UUID]chan<- bool
+		// preemption represents the preemption state of the current allocated task.
+		// If there is no current task, or it is unallocated, it is nil.
+		preemption *preemption
 		// Map of container ID to watcher ID a rendezvous info listener.
 		rendezvousWatchers map[cproto.ID]chan<- interface{}
 	}
@@ -289,7 +282,6 @@ func newTrial(
 		agentUserGroup: exp.agentUserGroup,
 		taskSpec:       exp.taskSpec,
 
-		preemptionWatchers: make(map[uuid.UUID]chan<- bool),
 		rendezvousWatchers: make(map[cproto.ID]chan<- interface{}),
 	}
 }
@@ -323,13 +315,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		// the scheduler. This should be refactored into the terminating logic.
 
 	case watchPreemption:
-		if resp, err := t.registerPreemptionWatcher(msg); err != nil {
+		if resp, err := t.preemption.watch(msg); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(resp)
 		}
 	case unwatchPreemption:
-		delete(t.preemptionWatchers, msg.id)
+		t.preemption.unwatch(msg)
 
 	case watchRendezvousInfo:
 		if resp, err := t.registerRendezvousWatcher(ctx, msg); err != nil {
@@ -449,29 +441,6 @@ func (t *trial) registerRendezvousWatcher(
 	return rendezvousWatcher{C: w}, nil
 }
 
-func (t *trial) registerPreemptionWatcher(msg watchPreemption) (preemptionWatcher, error) {
-	if len(t.allocations) == 0 {
-		return preemptionWatcher{}, apiutils.AsErrBadRequest(
-			"no preemption status available for unallocated trials",
-		)
-	}
-
-	// Register and respond with the watcher channel. Size 2; at most 2 messages
-	// can be sent and we don't want to block or lose them.
-	w := make(chan bool, 2)
-	t.preemptionWatchers[msg.id] = w
-
-	if t.PendingGracefulTermination {
-		w <- true
-		close(w)
-		delete(t.preemptionWatchers, msg.id)
-	} else {
-		w <- false
-	}
-
-	return preemptionWatcher{C: w}, nil
-}
-
 func (t *trial) processOperations(ops []searcher.Operation) {
 	for _, op := range ops {
 		switch op := op.(type) {
@@ -567,6 +536,7 @@ func (t *trial) releaseResource(ctx *actor.Context) error {
 		t.terminate(ctx)
 	} else {
 		t.preempt(ctx)
+		t.preemption.preempt()
 	}
 	return nil
 }
@@ -708,6 +678,7 @@ func (t *trial) processAllocated(
 	if err != nil {
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
+	t.preemption = newPreemption()
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
 		taskSpec := *t.taskSpec
@@ -1168,11 +1139,6 @@ func (t *trial) preempt(ctx *actor.Context) {
 		ctx.Log().Info("gracefully terminating trial")
 		t.PendingGracefulTermination = true
 	}
-	for id, w := range t.preemptionWatchers {
-		w <- true
-		close(w)
-		delete(t.preemptionWatchers, id)
-	}
 }
 
 // terminated handles errors and restarting for trials when they are failed, paused, canceled,
@@ -1208,7 +1174,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 		}
 	}
 
-	t.preempt(ctx)
+	t.preemption.close()
 	t.closeRendezvous()
 
 	t.task = nil
@@ -1333,4 +1299,79 @@ func (t *trial) tellWithSnapshot(
 		snapshot:  ss,
 	}))
 	return nil
+}
+
+type (
+	// watchPreemption begins watching if the task has been preempted.
+	// The task responds to this message with a channel of bools, where sends of true
+	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
+	// block until you receive _something_ but not until the first preemption).
+	watchPreemption   struct{ id uuid.UUID }
+	preemptionWatcher struct{ C <-chan bool }
+	unwatchPreemption struct{ id uuid.UUID }
+
+	// preemption represents the preemption status of a task. A task is assumed to be preempted
+	// exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
+	// preemption. This is nice until we move to trial has many task actors / generic task actor,
+	// where the lifetime of a "preemption" is equivalent to the lifetime of task and they can be
+	// initialized together.
+	preemption struct {
+		preempted bool
+		// Map of watcher ID to a bool indicating if the trial should preempt.
+		watchers map[uuid.UUID]chan<- bool
+	}
+)
+
+func newPreemption() *preemption {
+	return &preemption{
+		preempted: false,
+		watchers:  map[uuid.UUID]chan<- bool{},
+	}
+}
+
+func (p *preemption) watch(msg watchPreemption) (preemptionWatcher, error) {
+	if p == nil {
+		return preemptionWatcher{}, errors.New("no preemption status available for unallocated task")
+	}
+
+	// Register and respond with the watcher channel. Size 2; at most 2 messages
+	// can be sent and we don't want to block or lose them.
+	w := make(chan bool, 2)
+	p.watchers[msg.id] = w
+
+	if p.preempted {
+		w <- true
+		close(w)
+		delete(p.watchers, msg.id)
+	} else {
+		w <- false
+	}
+
+	return preemptionWatcher{C: w}, nil
+}
+
+func (p *preemption) unwatch(msg unwatchPreemption) {
+	if p == nil {
+		return
+	}
+	delete(p.watchers, msg.id)
+}
+
+func (p *preemption) preempt() {
+	if p == nil {
+		return
+	}
+	p.preempted = true
+	for id, w := range p.watchers {
+		w <- true
+		close(w)
+		delete(p.watchers, id)
+	}
+}
+
+func (p *preemption) close() {
+	if p == nil {
+		return
+	}
+	p.preempt()
 }
