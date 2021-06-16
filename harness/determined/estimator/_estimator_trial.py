@@ -739,7 +739,7 @@ class EstimatorTrialController(det.TrialController):
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
-        with self._generic._load_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+        with self._generic._download_initial_checkpoint(self.env.latest_checkpoint) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))

@@ -105,7 +105,7 @@ def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:
     v_metrics = validation["metrics"]["validation_metrics"]
     logging.info(f"Finished validating, validation metrics: {v_metrics}")
 
-    logging.info("Saving a checkpoint to.")
+    logging.info("Saving a checkpoint.")
     yield workload.checkpoint_workload(), workload.ignore_workload_response
     logging.info("Finished saving a checkpoint.")
 
