@@ -16,7 +16,7 @@ export interface Props {
 
 interface HyperParameter {
   name: string;
-  range: number[];
+  range: [number, number];
   type: ExperimentHyperParamType;
   val: string;
   vals: string[];
@@ -25,16 +25,10 @@ interface HyperParameter {
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
   const hyperparameters: HyperParameter[] = useMemo(() => {
     const config = Object.entries(experiment.config.hyperparameters).map(([ name, value ]) => {
-      return {
-        name,
-        value,
-      };
+      return { name, value };
     });
     const value = Object.entries(trial.hparams).map(([ name, value ]) => {
-      return {
-        name,
-        value,
-      };
+      return { name, value };
     });
     return config.map(hp => {
       return (
@@ -44,7 +38,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
           type: hp.value.type,
           val: String(value.find(ob => ob.name === hp.name)?.value || 0),
           vals: hp.value.vals?.map(val => String(val)) ||
-          [ String(hp.value.minval) || '0', String(hp.value.maxval) || '1' ],
+          [ String(hp.value.minval || 0), String(hp.value.maxval || 1) ],
         }
       );
     });
@@ -67,26 +61,17 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   const pointerPosition = useMemo(() => {
     switch (hp.type) {
       case ExperimentHyperParamType.Constant:
-      {
         return 0.5;
-      }
       case ExperimentHyperParamType.Categorical:
       {
         const idx = hp.vals.indexOf(hp.val);
-        return ((idx=== -1 ? 0 : idx)/(hp.vals.length-1));
+        return ((idx === -1 ? 0 : idx)/(hp.vals.length-1));
       }
       case ExperimentHyperParamType.Log:
-      {
-        return clamp(
-          1-Math.log(parseFloat(hp.val)/hp.range[0])/(Math.log(hp.range[1]/hp.range[0])),
-          0,
-          1,
-        );
-      }
+        return clamp(1-Math.log(parseFloat(hp.val)/hp.range[0])/
+            (Math.log(hp.range[1]/hp.range[0])), 0, 1);
       default:
-      {
         return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
-      }
     }
   }, [ hp ]);
 
@@ -120,15 +105,15 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
           <p className={css.text} key={option.toString()}>{option}</p>)}
       </div>;
     case ExperimentHyperParamType.Log:
-      return <div className={css.valuesTrack}> {(new Array(
-        Math.log10((hp.range[1])/(hp.range[0]))+1,
-      )).fill(null)
-        .map((_, idx) =>
-          <p className={css.text} key={idx}>
-            {String((hp.range[1])/(10**idx)).length > 4 ?
-              ((hp.range[1])/(10**idx)).toExponential() :
-              (hp.range[1])/(10**idx)}
-          </p>)}</div>;
+      return <div className={css.valuesTrack}>
+        {(new Array(Math.log10((hp.range[1])/(hp.range[0]))+1)).fill(null)
+          .map((_, idx) =>
+            <p className={css.text} key={idx}>
+              {String((hp.range[1])/(10**idx)).length > 4 ?
+                ((hp.range[1])/(10**idx)).toExponential() :
+                (hp.range[1])/(10**idx)}
+            </p>)}
+      </div>;
     default:
       return <div className={css.valuesTrack}>
         <p className={css.text}>{hp.range[1]}</p>
@@ -157,9 +142,8 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       break;
     case ExperimentHyperParamType.Log:
       trackType = css.blueTrack;
-      content = (new Array(
-        Math.log10((hp.range[1])/(hp.range[0]))+1,
-      )).fill(null)
+      content = (new Array(Math.log10((hp.range[1])/(hp.range[0]))+1))
+        .fill(null)
         .map((_, idx) =>
           <div className={css.tick} key={idx} />);
       break;
