@@ -147,8 +147,8 @@ Make sure you back up the database and temporarily shut down the master
 before proceeding further.
 
 To fix this error message, locate the up migration with a suffix of
-``.up.sql`` and a migration number matching A_LONG_NUMBER in the error
-message in `here
+``.up.sql`` and a prefix matching the long number in the error
+message in `this directory
 <https://github.com/determined-ai/determined/tree/master/master/static/migrations>_`
 and carefully run the SQL within the file manually against the database
 used by Determined. For convenience, all the information needed to
@@ -166,4 +166,5 @@ running the following SQL:
    UPDATE schema_migrations SET dirty = false;
 
 And restart the master. Otherwise, please seek assistance in the
-community slack.
+community `Slack
+<https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`__.
