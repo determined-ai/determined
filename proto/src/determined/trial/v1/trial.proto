@@ -102,6 +102,8 @@ message TrialProfilerMetricLabels {
     // For timing metrics, like how long a backwards pass or getting a batch
     // from the dataloader took.
     PROFILER_METRIC_TYPE_TIMING = 2;
+    // For other miscellaneous metrics.
+    PROFILER_METRIC_TYPE_MISC = 3;
   }
   // The ID of the trial.
   int32 trial_id = 1;

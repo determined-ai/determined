@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import random
+import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -307,10 +308,12 @@ class PyTorchTrialController(det.LoopTrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
+            batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next"):
                 batch = next(self.training_iterator)
-            num_inputs += pytorch.data_length(batch)
+            batch_inputs = pytorch.data_length(batch)
+            num_inputs += batch_inputs
 
             with self.prof.record_timing("to_device"):
                 batch = self.context.to_device(batch)
@@ -354,6 +357,9 @@ class PyTorchTrialController(det.LoopTrialController):
                         metric = metric.cpu().detach().numpy()
                     tr_metrics[name] = metric
 
+            batch_dur = time.time() - batch_start_time
+            samples_per_second = batch_inputs / batch_dur
+            self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
