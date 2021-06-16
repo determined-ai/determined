@@ -71,7 +71,8 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
         return clamp(1-Math.log(parseFloat(hp.val)/hp.range[0])/
             (Math.log(hp.range[1]/hp.range[0])), 0, 1);
       default:
-        return 1-(parseFloat(hp.val)-hp.range[0])/(hp.range[1] - hp.range[0]);
+        return clamp(1-(parseFloat(hp.val)-hp.range[0])/
+            (hp.range[1] - hp.range[0]), 0, 1);
     }
   }, [ hp ]);
 
