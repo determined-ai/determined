@@ -60,7 +60,9 @@ class NoOpTrialController(det.TrialController):
         self.request_stop = self.env.hparams.get("request_stop", False)
 
         if self.env.latest_checkpoint is not None:
-            with self._generic._load_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
                 self.load(pathlib.Path(load_path))
         else:
             self.trained_steps = collections.Counter()

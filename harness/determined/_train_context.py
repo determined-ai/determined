@@ -531,7 +531,8 @@ class DistributedContext:
 
     def _local_chief_contextmanager(self, fn: Callable) -> Callable:
         """
-        Like _local_chief_fn, but wraps a context manager rather than a normal function.
+        Wrap a contextmanager such that the real context manager only runs on the chief, but the
+        results are distributed to all the local workers.
         """
         if self._is_local_chief:
 

@@ -42,7 +42,7 @@ class _GenericContext:
         self._tensorboard_writer = tensorboard.get_metric_writer()
 
     @contextlib.contextmanager
-    def _load_initial_checkpoint(self, checkpoint: Dict) -> Iterator[pathlib.Path]:
+    def _download_initial_checkpoint(self, checkpoint: Dict) -> Iterator[pathlib.Path]:
         """
         Wrap a storage_mgr.restore_path() context manager, but only download/cleanup on the
         local chief.

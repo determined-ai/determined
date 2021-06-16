@@ -333,7 +333,9 @@ class TFKerasTrialController(det.TrialController):
         # If a load path is provided, load weights and restore the data location.
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
-            with self._generic._load_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
                 self._load(pathlib.Path(load_path))
 
         self._configure_callbacks(train_config.callbacks)

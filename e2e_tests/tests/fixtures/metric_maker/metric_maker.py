@@ -77,7 +77,9 @@ class MetricMaker(det.TrialController):
         self.gain_per_batch = self.env.hparams["gain_per_batch"]
 
         if self.env.latest_checkpoint is not None:
-            with self._generic._load_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
                 self.load(pathlib.Path(load_path))
 
     @staticmethod

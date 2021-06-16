@@ -125,7 +125,6 @@ def test_broadcast_server_client() -> None:
 
 
 def test_subprocess_launcher_receiver() -> None:
-    utils.make_default_exp_config
     hparams = {"global_batch_size": 1}
     exp_config = utils.make_default_exp_config(hparams, scheduling_unit=1, searcher_metric="loss")
     env = utils.make_default_env_context(hparams, exp_config)

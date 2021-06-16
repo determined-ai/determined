@@ -51,5 +51,6 @@ class ExperimentConfig(dict):
         searcher_metric = self.get("searcher", {}).get("metric")
         assert isinstance(
             searcher_metric, str
-        ), f"searcher metric is not a string {searcher_metric} in {self}"
+        ), f"searcher metric ({searcher_metric}) is not a string"
+
         return searcher_metric
