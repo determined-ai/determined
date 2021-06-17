@@ -508,9 +508,10 @@ service Determined {
   // sent immediately, for synchronization purposes. If it is to preempt, that
   // will be the only signal and the trial should preempt. Otherwise, the trial
   // should continue to listen. The only signal ever sent after this will be to
-  // preempt.
+  // preempt. For convenience, a context deadline can be passed by adding a
+  // header like `Grpc-Timeout: 1S` to the request.
   rpc TrialPreemptionSignal(TrialPreemptionSignalRequest)
-      returns (stream TrialPreemptionSignalResponse) {
+      returns (TrialPreemptionSignalResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/{trial_id}/signals/preemption"
     };

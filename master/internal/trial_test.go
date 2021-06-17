@@ -207,10 +207,9 @@ func TestPreemption(t *testing.T) {
 
 	// should immediately receive initial status.
 	select {
-	case preempt := <-w.C:
-		assert.Check(t, !preempt)
+	case <-w.C:
+		t.Fatal("received preemption but should not have")
 	default:
-		t.Error("preemption.watch returned empty channel (should come with initial status)")
 	}
 
 	// on preemption, it should also receive status.
@@ -218,10 +217,9 @@ func TestPreemption(t *testing.T) {
 
 	// should receive updated preemption status.
 	select {
-	case preempt := <-w.C:
-		assert.Check(t, preempt)
+	case <-w.C:
 	default:
-		t.Error("preemption.watch did not contain preemption status")
+		t.Fatal("did not receive preemption")
 	}
 
 	// preempted preemption unwatching should work.
@@ -234,10 +232,9 @@ func TestPreemption(t *testing.T) {
 
 	// should immediately receive initial status and initial status should be preemption.
 	select {
-	case preempt := <-w.C:
-		assert.Check(t, preempt)
+	case <-w.C:
 	default:
-		t.Error("preemption.watch returned empty channel (should come with initial status)")
+		t.Fatal("preemptionWatcher.C was empty channel (should come with initial status when preempted)")
 	}
 
 	// preempted preemption unwatching should work.
