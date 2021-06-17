@@ -62,6 +62,7 @@ const ExperimentDetailsHeader: React.FC<Props> = (
         },
       },
       {
+        icon: <Icon name="download" size="small" />,
         key: 'download-model',
         label: 'Download Model',
         onClick: (e) => {

@@ -108,3 +108,15 @@
     display: none !important;
   }
 }
+
+@media only screen and (min-width: $breakpoint-desktop-large) {
+  .optionsMainButton:nth-child(3) {
+    display: inline-block;
+  }
+  .optionsDropdownItem:nth-child(3) {
+    display: none;
+  }
+  .optionsDropdownThreeChild {
+    display: none !important;
+  }
+}
