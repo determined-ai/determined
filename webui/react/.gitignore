@@ -3,7 +3,6 @@
 # dependencies
 /.pnp
 .pnp.js
-src/services/api-ts-sdk/
 
 # testing
 /coverage
@@ -21,3 +20,4 @@ build-storybook/
 node_modules/
 
 report.*.json
+done.stamp
