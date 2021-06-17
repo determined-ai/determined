@@ -38,6 +38,7 @@ const PageHeaderFoldable: React.FC<Props> = (
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
+    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
     dropdownOptions = (
       <Menu>
         {options.map(opt => (
@@ -67,7 +68,7 @@ const PageHeaderFoldable: React.FC<Props> = (
         )}
 
         <div className={css.options}>
-          {options && options.slice(0, 2).map((opt, i) => (
+          {options && options.slice(0, 3).map((opt, i) => (
             <Button
               className={css.optionsMainButton}
               disabled={!opt.onClick}
