@@ -536,7 +536,6 @@ func (t *trial) releaseResource(ctx *actor.Context) error {
 		t.terminate(ctx)
 	} else {
 		t.preempt(ctx)
-		t.preemption.preempt()
 	}
 	return nil
 }
@@ -1121,7 +1120,7 @@ func (t *trial) trialClosing() bool {
 func (t *trial) terminate(ctx *actor.Context) {
 	switch {
 	case len(t.allocations) == 0:
-		ctx.Log().Info("aborting trial before resources are allocated")
+		ctx.Log().Info("aborting trial before resources are allocated in response to kill")
 		t.terminated(ctx)
 		ctx.Tell(ctx.Self(), trialAborted{})
 	default:
@@ -1135,9 +1134,15 @@ func (t *trial) terminate(ctx *actor.Context) {
 }
 
 func (t *trial) preempt(ctx *actor.Context) {
-	if !t.PendingGracefulTermination {
+	switch {
+	case len(t.allocations) == 0:
+		ctx.Log().Info("aborting trial before resources are allocated in response to preemption")
+		t.terminated(ctx)
+		ctx.Tell(ctx.Self(), trialAborted{})
+	case !t.PendingGracefulTermination:
 		ctx.Log().Info("gracefully terminating trial")
 		t.PendingGracefulTermination = true
+		t.preemption.preempt()
 	}
 }
 
