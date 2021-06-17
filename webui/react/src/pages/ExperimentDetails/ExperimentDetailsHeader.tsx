@@ -121,8 +121,8 @@ const ExperimentDetailsHeader: React.FC<Props> = (
       <PageHeaderFoldable
         foldableContent={<>
           <div className={css.foldableItem}>
-            <span>Name:</span>
-            {experiment.name}
+            <span>Description:</span>
+            {experiment.description}
           </div>
           <div className={css.foldableItem}>
             <span>Start Time:</span>
@@ -136,10 +136,6 @@ const ExperimentDetailsHeader: React.FC<Props> = (
               {shortEnglishHumannizer(getDuration(experiment))}
             </div>
           )}
-          <div className={css.foldableItem}>
-            <span>Description:</span>
-            {experiment.description}
-          </div>
           <TagList
             ghost={true}
             tags={experiment.config.labels || []}
@@ -149,7 +145,7 @@ const ExperimentDetailsHeader: React.FC<Props> = (
         leftContent={<>
           <ExperimentState experiment={experiment} />
           <div className={css.experimentTitle}>
-            Experiment {experiment.id} <span>({experiment.name})</span>
+            Experiment {experiment.id} | <span>{experiment.name}</span>
           </div>
         </>}
         options={headerOptions}
