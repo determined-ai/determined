@@ -259,6 +259,7 @@ const TrialDetailsComp: React.FC = () => {
         },
       ]}
       headerComponent={isShowNewHeader && <TrialDetailsHeader
+        experiment={experiment}
         fetchTrialDetails={fetchTrialDetails}
         handleActionClick={handleActionClick}
         trial={trial}

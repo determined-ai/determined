@@ -6,17 +6,18 @@ import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { Action, trialWillNeverHaveData } from 'pages/TrialDetails/TrialActions';
 import { openOrCreateTensorboard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails } from 'types';
 import { openCommand } from 'wait';
 
 interface Props {
+  experiment: ExperimentBase;
   fetchTrialDetails: () => void;
   handleActionClick: (action: Action) => void;
   trial: TrialDetails;
 }
 
 const TrialDetailsHeader: React.FC<Props> = (
-  { fetchTrialDetails, handleActionClick, trial }: Props,
+  { experiment, fetchTrialDetails, handleActionClick, trial }: Props,
 ) => {
   const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
 
@@ -65,7 +66,7 @@ const TrialDetailsHeader: React.FC<Props> = (
 
   return (
     <PageHeaderFoldable
-      leftContent={<TrialHeaderLeft trial={trial} />}
+      leftContent={<TrialHeaderLeft experiment={experiment} trial={trial} />}
       options={headerOptions}
       style={{ backgroundColor: getStateColorCssVar(trial.state) }}
     />

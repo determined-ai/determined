@@ -1,7 +1,19 @@
 .experiment {
+  align-items: center;
   color: var(--theme-colors-monochrome-17);
+  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: opacity 0.3s;
+  width: 100%;
 
+  span {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   i {
     margin-left: var(--theme-sizes-layout-medium);
   }
@@ -26,6 +38,7 @@
 @media only screen and (min-width: $breakpoint-tablet) {
   .experiment {
     margin-right: var(--theme-sizes-layout-medium);
+    width: auto;
   }
   .trial {
     margin-top: 0;
