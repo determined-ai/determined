@@ -550,34 +550,26 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 }
 
 func (a *apiServer) TrialPreemptionSignal(
+	ctx context.Context,
 	req *apiv1.TrialPreemptionSignalRequest,
-	resp apiv1.Determined_TrialPreemptionSignalServer,
-) error {
+) (*apiv1.TrialPreemptionSignalResponse, error) {
 	trial, err := a.trialActorFromID(int(req.TrialId))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	id := uuid.New()
 	var w preemptionWatcher
 	if err := a.askAtDefaultSystem(trial, watchPreemption{id: id}, &w); err != nil {
-		return err
+		return nil, err
 	}
 	defer a.m.system.TellAt(trial, unwatchPreemption{id: id})
 
-	preempt := <-w.C
-	switch err := resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt}); {
-	case err != nil:
-		return err
-	case preempt:
-		return nil
-	default:
-		select {
-		case preempt = <-w.C:
-			return resp.Send(&apiv1.TrialPreemptionSignalResponse{Preempt: preempt})
-		case <-resp.Context().Done():
-			return nil
-		}
+	select {
+	case <-w.C:
+		return &apiv1.TrialPreemptionSignalResponse{Preempt: true}, nil
+	case <-ctx.Done():
+		return &apiv1.TrialPreemptionSignalResponse{Preempt: false}, nil
 	}
 }
 

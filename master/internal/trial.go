@@ -1312,7 +1312,7 @@ type (
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
 	watchPreemption   struct{ id uuid.UUID }
-	preemptionWatcher struct{ C <-chan bool }
+	preemptionWatcher struct{ C <-chan struct{} }
 	unwatchPreemption struct{ id uuid.UUID }
 
 	// preemption represents the preemption status of a task. A task is assumed to be preempted
@@ -1323,14 +1323,14 @@ type (
 	preemption struct {
 		preempted bool
 		// Map of watcher ID to a bool indicating if the trial should preempt.
-		watchers map[uuid.UUID]chan<- bool
+		watchers map[uuid.UUID]chan<- struct{}
 	}
 )
 
 func newPreemption() *preemption {
 	return &preemption{
 		preempted: false,
-		watchers:  map[uuid.UUID]chan<- bool{},
+		watchers:  map[uuid.UUID]chan<- struct{}{},
 	}
 }
 
@@ -1339,17 +1339,14 @@ func (p *preemption) watch(msg watchPreemption) (preemptionWatcher, error) {
 		return preemptionWatcher{}, errors.New("no preemption status available nil preemption")
 	}
 
-	// Register and respond with the watcher channel. Size 2; at most 2 messages
-	// can be sent and we don't want to block or lose them.
-	w := make(chan bool, 2)
+	// Size 1; at most a single message can be sent and we don't want to block.
+	w := make(chan struct{}, 1)
 	p.watchers[msg.id] = w
 
 	if p.preempted {
-		w <- true
+		w <- struct{}{}
 		close(w)
 		delete(p.watchers, msg.id)
-	} else {
-		w <- false
 	}
 
 	return preemptionWatcher{C: w}, nil
@@ -1368,7 +1365,7 @@ func (p *preemption) preempt() {
 	}
 	p.preempted = true
 	for id, w := range p.watchers {
-		w <- true
+		w <- struct{}{}
 		close(w)
 		delete(p.watchers, id)
 	}

@@ -273,7 +273,7 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
-// Stream updates to the preemption status for a trial.
+// Long poll for updates to the preemption status for a trial.
 message TrialPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
