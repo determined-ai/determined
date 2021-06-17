@@ -453,6 +453,16 @@ service Determined {
       tags: [ "Experiments", "Trials" ]
     };
   }
+  // Get the summary of trial profiles.
+  rpc GetTrialProfilerSummary(GetTrialProfilerSummaryRequest)
+      returns (GetTrialProfilerSummaryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/profiler/summary"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Unimplemented" ]
+    };
+  }
   // Stream trial profiler metrics.
   rpc GetTrialProfilerMetrics(GetTrialProfilerMetricsRequest)
       returns (stream GetTrialProfilerMetricsResponse) {

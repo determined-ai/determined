@@ -224,6 +224,24 @@ message GetTrialResponse {
   repeated WorkloadContainer workloads = 2;
 }
 
+// Get a summary of the trial's profiling metrics.
+message GetTrialProfilerSummaryRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id" ] }
+  };
+  // The ID of the trial.
+  int32 trial_id = 1;
+}
+
+// Response to TrialLogFieldsRequest.
+message GetTrialProfilerSummaryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "summary" ] }
+  };
+  // The labels for the series requested.
+  determined.trial.v1.TrialProfilerSummary summary = 1;
+}
+
 // Stream trial profiler metrics.
 message GetTrialProfilerMetricsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

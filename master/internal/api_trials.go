@@ -423,6 +423,12 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	return resp, nil
 }
 
+func (a *apiServer) GetTrialProfilerSummary(
+	_ context.Context, _ *apiv1.GetTrialProfilerSummaryRequest,
+) (*apiv1.GetTrialProfilerSummaryResponse, error) {
+	panic("implement me")
+}
+
 func (a *apiServer) GetTrialProfilerMetrics(
 	req *apiv1.GetTrialProfilerMetricsRequest,
 	resp apiv1.Determined_GetTrialProfilerMetricsServer,
