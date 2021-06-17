@@ -29,9 +29,12 @@ const PauseButton: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id ]);
 
+  const classes = [ css.pauseButton ];
+  if (isLoading) classes.push(css.loadingButton);
+
   return (
     <Button
-      className={css.pauseButton}
+      className={classes.join(' ')}
       ghost={true}
       icon={<Icon name="pause" size="large" />}
       loading={isLoading}
@@ -57,9 +60,12 @@ const PlayButton: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id ]);
 
+  const classes = [ css.playButton ];
+  if (isLoading) classes.push(css.loadingButton);
+
   return (
     <Button
-      className={css.playButton}
+      className={classes.join(' ')}
       ghost={true}
       icon={<Icon name="play" size="large" />}
       loading={isLoading}
@@ -82,10 +88,13 @@ const StopButton: React.FC<Props> = ({ experiment }: Props) => {
     setIsOpen(false);
   }, []);
 
+  const classes = [ css.stopButton ];
+  if (isLoading) classes.push(css.loadingButton);
+
   return (
     <>
       <Button
-        className={css.stopButton}
+        className={classes.join(' ')}
         ghost={true}
         icon={<Icon name="stop" size="large" />}
         loading={isLoading}

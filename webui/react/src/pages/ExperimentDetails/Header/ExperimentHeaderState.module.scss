@@ -11,6 +11,9 @@
 .playButton i {
   padding-left: 3px;
 }
+.loadingButton::before {
+  opacity: 0.1;
+}
 .stopButton {
   border-color: transparent !important;
 }
