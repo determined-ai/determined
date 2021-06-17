@@ -60,14 +60,14 @@ const ClusterOverview: React.FC = () => {
 
   usePolling(fetchResourcePools, { interval: 10000 });
 
-  const cpuContainers = useMemo(() => {
+  const auxContainers = useMemo(() => {
     const tally = {
       running: 0,
       total: 0,
     };
     resourcePools.forEach(rp => {
-      tally.total += rp.cpuContainerCapacity;
-      tally.running += rp.cpuContainersRunning;
+      tally.total += rp.auxContainerCapacity;
+      tally.running += rp.auxContainersRunning;
     });
     return tally;
   }, [ resourcePools ]);
@@ -172,7 +172,7 @@ const ClusterOverview: React.FC = () => {
             </OverviewStats> : null
           }
           <OverviewStats title="CPU Containers Running">
-            {cpuContainers.running} <small>/ {cpuContainers.total}</small>
+            {auxContainers.running} <small>/ {auxContainers.total}</small>
           </OverviewStats>
         </Grid>
       </Section>

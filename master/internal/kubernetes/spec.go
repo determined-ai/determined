@@ -36,13 +36,28 @@ const (
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
-	return k8sV1.ResourceRequirements{
-		Limits: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
-		Requests: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
+	switch p.slotType {
+	case device.CPU:
+		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
+		return k8sV1.ResourceRequirements{
+			Limits: map[k8sV1.ResourceName]resource.Quantity{
+				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
+			},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{
+				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
+			},
+		}
+	case device.GPU: // default to CUDA-backed slots.
+		fallthrough
+	default:
+		return k8sV1.ResourceRequirements{
+			Limits: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
+		}
 	}
 }
 
@@ -60,7 +75,7 @@ func (p *pod) configureEnvVars(
 	}
 
 	var slotIds []string
-	for i := 0; i < p.gpus; i++ {
+	for i := 0; i < p.slots; i++ {
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
@@ -72,7 +87,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
+	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == device.GPU)
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
@@ -213,7 +228,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		newPod.Spec.PriorityClassName = "determined-system-priority"
 		minAvailable = 0
 	} else {
-		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.gpus)))
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
 	if newPod.Spec.PriorityClassName == "" {
@@ -299,9 +314,9 @@ func (p *pod) configurePodSpec(
 }
 
 func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
+	deviceType := p.slotType
+	if deviceType == device.ZeroSlot {
+		deviceType = device.CPU
 	}
 
 	spec := p.taskSpec

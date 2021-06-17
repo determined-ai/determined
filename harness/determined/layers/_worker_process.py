@@ -90,18 +90,17 @@ class SubprocessLauncher:
         self.hvd_config = hvd_config
         self._python_subprocess_entrypoint = python_subprocess_entrypoint
 
+        self.debug = self.env.experiment_config.debug_enabled()
+
         # The process ids for the workers that are launched by Horovod. These are different
         # from the main horovod process and sshd processes.
         self._worker_process_ids = []  # type: List[int]
 
-        self.num_gpus = len(self.env.container_gpus)
-        self.debug = self.env.experiment_config.debug_enabled()
-
-        # Horovod will have a separate training process for each GPU.
-        number_of_worker_processes = self.num_gpus if self.hvd_config.use else 1
+        # Horovod will have a separate training process for each slot.
+        self.num_proc = len(self.env.slot_ids) if self.hvd_config.use else 1
 
         # Step 1: Establish the server for communicating with the subprocess.
-        self.broadcast_server = ipc.ZMQBroadcastServer(num_connections=number_of_worker_processes)
+        self.broadcast_server = ipc.ZMQBroadcastServer(num_connections=self.num_proc)
 
         # Step 2: Configure the per-machine WorkerProcessContext.
         self._init_worker_process_env()
@@ -167,7 +166,7 @@ class SubprocessLauncher:
         logging.debug(f"Starting training process on: {self.rendezvous_info.get_rank()}.")
 
         horovod_process_cmd = horovod.create_run_command(
-            num_gpus_per_machine=self.num_gpus,
+            num_proc_per_machine=self.num_proc,
             ip_addresses=self.rendezvous_info.get_ip_addresses(),
             env=self.env,
             debug=self.env.experiment_config.debug_enabled(),
@@ -194,7 +193,7 @@ class SubprocessLauncher:
         ]
         logging.debug(
             f"Non-chief [{self.rendezvous_info.get_rank()}] training process launch "
-            "command: {run_sshd_command}."
+            f"command: {run_sshd_command}."
         )
         return subprocess.Popen(run_sshd_command)
 

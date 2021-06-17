@@ -36,6 +36,7 @@ type Provisioner struct {
 
 type provider interface {
 	instanceType() instanceType
+	slotsPerInstance() int
 	prestart(ctx *actor.Context)
 	list(ctx *actor.Context) ([]*Instance, error)
 	launch(ctx *actor.Context, instanceNum int)
@@ -97,7 +98,7 @@ func (p *Provisioner) Receive(ctx *actor.Context) error {
 
 // SlotsPerInstance returns the number of Slots per instance the provisioner launches.
 func (p *Provisioner) SlotsPerInstance() int {
-	return p.provider.instanceType().Slots()
+	return p.provider.slotsPerInstance()
 }
 
 func (p *Provisioner) provision(ctx *actor.Context) {

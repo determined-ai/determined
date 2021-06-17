@@ -156,28 +156,34 @@ Spinning up the Cluster
       -  AWS instance type to use for the master.
       -  m5.large
 
-   -  -  ``--cpu-agent-instance-type``
+   -  -  ``--aux-agent-instance-type``
 
-      -  AWS instance type to use for the agents in the CPU resource
-         pool. Must be one of the following instance types:
+      -  AWS instance type to use for the agents in the auxiliary
+         resource pool. Must be one of the following instance types:
          ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
          ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
          ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
          ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
          ``p3dn.24xlarge``, or any general purpose instance types
-         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants)
+         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants).
+         Prior to 0.16.1, this option was called
+         ``--cpu-agent-instance-type``.
 
       -  t2.xlarge
 
-   -  -  ``--gpu-agent-instance-type``
+   -  -  ``--compute-agent-instance-type``
 
-      -  AWS instance type to use for the agents in the GPU resource
-         pool. Must be one of the following instance types:
-         ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
-         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
-         ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
-         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
-         ``p3dn.24xlarge``.
+      -  AWS instance type to use for the agents in the compute resource
+         pool. For GPU-based training, must be one of the following
+         instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
+         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
+         ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
+         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
+         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For
+         CPU-based training or testing, any general purpose instance
+         type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``,
+         ``m5`` and variants). Prior to 0.16.1, this option was called
+         ``--gpu-agent-instance-type``.
 
       -  p2.8xlarge
 
@@ -194,9 +200,9 @@ Spinning up the Cluster
       -  The password for ``postgres`` user for database.
       -  postgres
 
-   -  -  ``--max-cpu-containers-per-agent``
-      -  The maximum number of CPU-only containers to launch on each
-         agent in the default CPU :ref:`resource pool <resource-pools>`.
+   -  -  ``--max-aux-containers-per-agent``
+      -  The maximum number of containers to launch on each agent in the
+         default auxiliary :ref:`resource pool <resource-pools>`.
       -  100
 
    -  -  ``--max-idle-agent-period``

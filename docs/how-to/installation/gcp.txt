@@ -173,11 +173,12 @@ Optional Arguments:
 
    -  -  ``--gpu-num``
 
-      -  The number of GPUs on each agent instance. Between 1 and 8
+      -  The number of GPUs on each agent instance. Between 0 and 8
          (more GPUs require a more powerful ``agent-instance-type``).
          Refer to the `GPUs on Compute Engine
          <https://cloud.google.com/compute/docs/gpus>`__ page for
-         specific GCP requirements.
+         specific GCP requirements. Can be set to 0 for CPU-based
+         training.
 
       -  8
 
@@ -189,9 +190,9 @@ Optional Arguments:
       -  Number of non-preemptible static agent instances.
       -  0
 
-   -  -  ``--max-cpu-containers-per-agent``
-      -  The maximum CPU containers running for agents in the CPU
-         resource pool.
+   -  -  ``--max-aux-containers-per-agent``
+      -  The maximum number of containers running for agents in the
+         auxiliary resource pool.
       -  100
 
    -  -  ``--max-idle-agent-period``
@@ -219,13 +220,13 @@ Optional Arguments:
       -  Instance type to use for the master instance.
       -  n1-standard-2
 
-   -  -  ``--cpu-agent-instance-type``
-      -  Instance type to use for the agent instances in the CPU
+   -  -  ``--aux-agent-instance-type``
+      -  Instance type to use for the agent instances in the auxiliary
          resource pool.
       -  n1-standard-4
 
-   -  -  ``--gpu-agent-instance-type``
-      -  Instance type to use for the agent instances in the GPU
+   -  -  ``--compute-agent-instance-type``
+      -  Instance type to use for the agent instances in the compute
          resource pool.
       -  n1-standard-32
 
@@ -371,7 +372,7 @@ This command line will spin up a cluster of up to 2 A100s in the
 
    det deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID \
       --max-dynamic-agents 2 \
-      --gpu-agent-instance-type a2-highgpu-1g --gpu-num 1 \
+      --compute-agent-instance-type a2-highgpu-1g --gpu-num 1 \
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
       --gpu-env-image determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0 \

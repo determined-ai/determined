@@ -295,7 +295,10 @@ commands:
             # If a test mark is specified, preselect only files that contain tests with that mark to
             # minimize how wrong CircleCI's splitting can get things.
             if [ -n "<<parameters.mark>>" ]; then
-              find tests -name 'test*.py' -print0 | xargs -0 grep -rl 'pytest\.mark\.<<parameters.mark>>'
+              mark="<<parameters.mark>>"
+              # Extract the first mark for complex conditions such as 'mark1 and not mark2'.
+              mark_prefix=${mark%% and*}
+              find tests -name 'test*.py' -print0 | xargs -0 grep -rl "pytest\.mark\.$mark_prefix"
             else
               circleci tests glob 'tests/**/test*.py'
             fi | circleci tests split --split-by=timings > /tmp/tests-to-run
@@ -361,10 +364,10 @@ commands:
       master-cert-name:
         type: string
         default: ""
-      cpu-agent-instance-type:
+      aux-agent-instance-type:
         type: string
         default: "m5.large"
-      gpu-agent-instance-type:
+      compute-agent-instance-type:
         type: string
         default: "p2.xlarge"
       max-dynamic-agents:
@@ -410,8 +413,8 @@ commands:
               $(< /tmp/det-deploy-extra-args) \
               --cluster-id <<parameters.cluster-id>> \
               --det-version <<parameters.det-version>> \
-              --cpu-agent-instance-type <<parameters.cpu-agent-instance-type>> \
-              --gpu-agent-instance-type <<parameters.gpu-agent-instance-type>> \
+              --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
+              --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>>
   terminate-aws-cluster:
@@ -432,10 +435,10 @@ commands:
         type: string
       det-version:
         type: string
-      gpu-agent-instance-type:
+      compute-agent-instance-type:
         type: string
         default: "p2.xlarge"
-      cpu-agent-instance-type:
+      aux-agent-instance-type:
         type: string
         default: "m5.large"
       max-dynamic-agents:
@@ -453,8 +456,8 @@ commands:
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
-          cpu-agent-instance-type: <<parameters.cpu-agent-instance-type>>
-          gpu-agent-instance-type: <<parameters.gpu-agent-instance-type>>
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           master-tls-cert: <<parameters.master-tls-cert>>
           master-tls-key: <<parameters.master-tls-key>>
@@ -500,6 +503,10 @@ commands:
         type: string
       gpus-per-machine:
         type: integer
+      slot-type:
+        type: string
+      slot-resource-requests-cpu:
+        type: integer
       region:
         type: string
       node-locations:
@@ -530,28 +537,56 @@ commands:
           command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1
           name: Create GKE cluster
       - run:
-          command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
-          name: Create GPU node pool
-      - run:
           command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
           name: Get Kubeconfig
-      - run:
-          command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
-          name: Install NVIDIA drivers
-      - helm/install-helm-chart:
-          chart: helm/charts/determined
-          helm-version: v3.2.4
-          namespace: "default"
-          wait: true
-          release-name: "ci"
-          values-to-override: |
-            detVersion=<<parameters.det-version>>,\
-            maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
-            checkpointStorage.type=gcs,\
-            checkpointStorage.bucket=det-ci
+      - when:
+          condition: <<parameters.gpus-per-machine>>
+          steps:
+          - run:
+              command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+              name: Install NVIDIA drivers
+          - helm/install-helm-chart:
+              chart: helm/charts/determined
+              helm-version: v3.2.4
+              namespace: "default"
+              wait: true
+              release-name: "ci"
+              values-to-override: |
+                detVersion=<<parameters.det-version>>,\
+                maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
+                checkpointStorage.type=gcs,\
+                checkpointStorage.bucket=det-ci
+      - unless:
+          condition: <<parameters.gpus-per-machine>>
+          steps:
+          - helm/install-helm-chart:
+              chart: helm/charts/determined
+              helm-version: v3.2.4
+              namespace: "default"
+              wait: true
+              release-name: "ci"
+              values-to-override: |
+                detVersion=<<parameters.det-version>>,\
+                maxSlotsPerPod=1,\
+                checkpointStorage.type=gcs,\
+                checkpointStorage.bucket=det-ci,\
+                slotType=<<parameters.slot-type>>,\
+                slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>
       - set-master-address-gke:
           release-name: "ci"
           namespace: "default"
+      - when:
+          condition: <<parameters.gpus-per-machine>>
+          steps:
+          - run:
+              command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+              name: Create GPU node pool
+      - unless:
+          condition: <<parameters.gpus-per-machine>>
+          steps:
+          - run:
+              command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+              name: Create CPU node pool
 
   setup-gke-cluster-cuda-11:
     parameters:
@@ -1328,10 +1363,10 @@ jobs:
 
   deploy:
     parameters:
-      gpu-agent-instance-type:
+      compute-agent-instance-type:
         type: string
         default: "p2.xlarge"
-      cpu-agent-instance-type:
+      aux-agent-instance-type:
         type: string
         default: "m5.large"
 
@@ -1357,8 +1392,8 @@ jobs:
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH////--}
           det-version: ${CIRCLE_SHA1}
-          gpu-agent-instance-type: <<parameters.gpu-agent-instance-type>>
-          cpu-agent-instance-type: <<parameters.cpu-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
       - slack/status:
@@ -1372,10 +1407,10 @@ jobs:
         type: string
       mark:
         type: string
-      gpu-agent-instance-type:
+      compute-agent-instance-type:
         type: string
         default: p2.xlarge
-      cpu-agent-instance-type:
+      aux-agent-instance-type:
         type: string
         default: m5.large
       max-dynamic-agents:
@@ -1393,6 +1428,11 @@ jobs:
       slack-channel:
         type: string
         default: ""
+      environment-gpu-enabled:
+        type: string
+        default: "1"
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
       - image: determinedai/cimg-base:stable
     parallelism: <<parameters.parallelism>>
@@ -1410,8 +1450,8 @@ jobs:
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-          cpu-agent-instance-type: <<parameters.cpu-agent-instance-type>>
-          gpu-agent-instance-type: <<parameters.gpu-agent-instance-type>>
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           master-tls-cert: ${MASTER_TLS_CERT}
           master-tls-key: ${MASTER_TLS_KEY}
@@ -1460,6 +1500,12 @@ jobs:
       gpus-per-machine:
         type: integer
         default: 1
+      slot-type:
+        type: string
+        default: gpu
+      slot-resource-requests-cpu:
+        type: integer
+        default: 0
       region:
         type: string
         default: "us-west1"
@@ -1472,6 +1518,11 @@ jobs:
       slack-channel:
         type: string
         default: ""
+      environment-gpu-enabled:
+        type: string
+        default: "1"
+    environment:
+      DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
       - image: determinedai/cimg-base:stable
     parallelism: <<parameters.parallelism>>
@@ -1490,6 +1541,8 @@ jobs:
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
           gpus-per-machine: <<parameters.gpus-per-machine>>
+          slot-type: <<parameters.slot-type>>
+          slot-resource-requests-cpu: <<parameters.slot-resource-requests-cpu>>
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
@@ -1766,8 +1819,8 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [8]
 
       - test-e2e-aws:
@@ -1781,8 +1834,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               slack-mentions: ["${SLACK_USER_ID}"]
@@ -1828,8 +1881,8 @@ workflows:
           matrix:
             parameters:
               parallelism: [2]
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
               slack-mentions: ["${SLACK_USER_ID}"]
@@ -1862,8 +1915,8 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["model-hub"]
               mark: ["model_hub"]
               slack-mentions: ["${SLACK_USER_ID}"]
@@ -1902,6 +1955,26 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
 
+      - test-e2e-gke:
+          name: test-e2e-gke-single-cpu
+          context: gcp
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+
       - request-k8-tests:
           type: approval
           filters: *upstream-feature-branch
@@ -1909,6 +1982,30 @@ workflows:
       - request-k8-tests-cuda-11:
           type: approval
           filters: *upstream-feature-branch
+
+      - request-k8-tests-cpu:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - request-e2e-cpu-distributed:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-cpu-distributed
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-e2e-cpu-distributed
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [16]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
@@ -1978,6 +2075,25 @@ workflows:
                 - determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0
                 - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.0
 
+      - test-e2e-gke:
+          name: test-e2e-gke-single-cpu
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-cpu"]
+              mark: ["e2e_gpu and not gpu_required"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+
       - test-det-deploy:
           name: test-det-deploy-local
           requires:
@@ -2014,8 +2130,8 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
@@ -2026,9 +2142,22 @@ workflows:
             parameters:
               cluster-id-prefix: ["model-hub"]
               mark: ["model_hub"]
-              gpu-agent-instance-type: ["p2.8xlarge"]
-              cpu-agent-instance-type: ["m5.large"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-cpu-distributed
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed and not gpu_required"]
+              compute-agent-instance-type: ["c5.2xlarge"]
+              environment-gpu-enabled: ["0"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [16]
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
 

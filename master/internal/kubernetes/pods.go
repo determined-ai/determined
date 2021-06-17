@@ -48,6 +48,8 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 	scheduler                string
+	slotType                 device.Type
+	slotResourceRequests     PodSlotResourceRequests
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -56,14 +58,15 @@ type pods struct {
 	loggingTLSConfig model.TLSClientConfig
 	loggingConfig    model.LoggingConfig
 
-	informer                *actor.Ref
-	nodeInformer            *actor.Ref
-	eventListener           *actor.Ref
-	preemptionListener      *actor.Ref
-	resourceRequestQueue    *actor.Ref
-	podNameToPodHandler     map[string]*actor.Ref
-	containerIDToPodHandler map[string]*actor.Ref
-	podHandlerToMetadata    map[*actor.Ref]podMetadata
+	informer                     *actor.Ref
+	nodeInformer                 *actor.Ref
+	eventListener                *actor.Ref
+	preemptionListener           *actor.Ref
+	resourceRequestQueue         *actor.Ref
+	podNameToPodHandler          map[string]*actor.Ref
+	containerIDToPodHandler      map[string]*actor.Ref
+	podHandlerToMetadata         map[*actor.Ref]podMetadata
+	nodeToSystemResourceRequests map[string]int64
 
 	currentNodes map[string]*k8sV1.Node
 
@@ -82,6 +85,8 @@ func Initialize(
 	loggingConfig model.LoggingConfig,
 	leaveKubernetesResources bool,
 	scheduler string,
+	slotType device.Type,
+	slotResourceRequests PodSlotResourceRequests,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -89,18 +94,21 @@ func Initialize(
 	}
 
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
-		cluster:                  c,
-		namespace:                namespace,
-		masterServiceName:        masterServiceName,
-		masterTLSConfig:          masterTLSConfig,
-		scheduler:                scheduler,
-		loggingTLSConfig:         loggingTLSConfig,
-		loggingConfig:            loggingConfig,
-		podNameToPodHandler:      make(map[string]*actor.Ref),
-		containerIDToPodHandler:  make(map[string]*actor.Ref),
-		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
-		leaveKubernetesResources: leaveKubernetesResources,
-		currentNodes:             make(map[string]*k8sV1.Node),
+		cluster:                      c,
+		namespace:                    namespace,
+		masterServiceName:            masterServiceName,
+		masterTLSConfig:              masterTLSConfig,
+		scheduler:                    scheduler,
+		loggingTLSConfig:             loggingTLSConfig,
+		loggingConfig:                loggingConfig,
+		podNameToPodHandler:          make(map[string]*actor.Ref),
+		containerIDToPodHandler:      make(map[string]*actor.Ref),
+		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
+		leaveKubernetesResources:     leaveKubernetesResources,
+		slotType:                     slotType,
+		slotResourceRequests:         slotResourceRequests,
+		currentNodes:                 make(map[string]*k8sV1.Node),
+		nodeToSystemResourceRequests: make(map[string]int64),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -117,6 +125,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return err
 		}
 		if err := p.getMasterIPAndPort(ctx); err != nil {
+			return err
+		}
+		if err := p.getSystemResourceRequests(ctx); err != nil {
 			return err
 		}
 		p.startResourceRequestQueue(ctx)
@@ -220,6 +231,22 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	return nil
 }
 
+func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
+	systemPods, err := p.podInterface.List(
+		metaV1.ListOptions{LabelSelector: determinedSystemLabel})
+	if err != nil {
+		return errors.Wrap(err, "failed to get system pods")
+	}
+
+	for _, systemPod := range systemPods.Items {
+		for _, container := range systemPod.Spec.Containers {
+			p.nodeToSystemResourceRequests[systemPod.Spec.NodeName] +=
+				container.Resources.Requests.Cpu().MilliValue()
+		}
+	}
+	return nil
+}
+
 func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
 
@@ -281,7 +308,8 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) 
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.masterTLSConfig, p.loggingTLSConfig, p.loggingConfig, p.podInterface, p.configMapInterface,
-		p.resourceRequestQueue, p.leaveKubernetesResources, p.scheduler,
+		p.resourceRequestQueue, p.leaveKubernetesResources,
+		p.slotType, p.slotResourceRequests, p.scheduler,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
@@ -422,8 +450,21 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 
 	summary := make(map[string]model.AgentSummary)
 	for _, node := range p.currentNodes {
-		gpuResources := node.Status.Capacity["nvidia.com/gpu"]
-		numSlots := gpuResources.Value()
+		var numSlots int64
+		var deviceType device.Type
+		switch p.slotType {
+		case device.CPU:
+			resources := node.Status.Allocatable["cpu"]
+			milliCPUs := resources.MilliValue() - p.nodeToSystemResourceRequests[node.Name]
+			numSlots = int64(float32(milliCPUs) / (1000. * p.slotResourceRequests.CPU))
+			deviceType = device.CPU
+		case device.GPU:
+			fallthrough
+		default:
+			resources := node.Status.Allocatable["nvidia.com/gpu"]
+			numSlots = resources.Value()
+			deviceType = device.GPU
+		}
 		if numSlots < 1 {
 			continue
 		}
@@ -431,7 +472,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		slotsSummary := make(model.SlotsSummary)
 		curSlot := 0
 		for _, podInfo := range podByNode[node.Name] {
-			for i := 0; i < podInfo.numGPUs; i++ {
+			for i := 0; i < podInfo.numSlots; i++ {
 				if curSlot >= int(numSlots) {
 					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
 					continue
@@ -439,7 +480,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
 					ID:        strconv.Itoa(i),
-					Device:    device.Device{Type: device.GPU},
+					Device:    device.Device{Type: deviceType},
 					Enabled:   true,
 					Container: podInfo.container,
 				}
@@ -450,7 +491,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 		for i := curSlot; i < int(numSlots); i++ {
 			slotsSummary[strconv.Itoa(i)] = model.SlotSummary{
 				ID:      strconv.Itoa(i),
-				Device:  device.Device{Type: device.GPU},
+				Device:  device.Device{Type: deviceType},
 				Enabled: true,
 			}
 		}

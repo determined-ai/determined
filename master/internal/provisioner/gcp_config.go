@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 // MaxNamePrefixLen is the max length of the instance name prefix. The full name of an instance
@@ -42,6 +43,7 @@ type GCPClusterConfig struct {
 	InstanceType gceInstanceType `json:"instance_type"`
 
 	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
+	CPUSlotsAllowed        bool     `json:"cpu_slots_allowed"`
 }
 
 // DefaultGCPClusterConfig returns the default configuration of the gcp cluster.
@@ -56,6 +58,7 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 			GPUNum:      4,
 		},
 		OperationTimeoutPeriod: Duration(5 * time.Minute),
+		CPUSlotsAllowed:        false,
 	}
 }
 
@@ -193,6 +196,28 @@ func (c *GCPClusterConfig) merge() *compute.Instance {
 		Preemptible:       c.InstanceType.Preemptible,
 	}
 	return rb
+}
+
+// SlotsPerInstance returns the number of slots per instance.
+func (c GCPClusterConfig) SlotsPerInstance() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlotsAllowed {
+		slots = 1
+	}
+
+	return slots
+}
+
+// SlotType returns the type of the slot.
+func (c GCPClusterConfig) SlotType() device.Type {
+	slots := c.InstanceType.Slots()
+	if slots > 0 {
+		return device.GPU
+	}
+	if c.CPUSlotsAllowed {
+		return device.CPU
+	}
+	return device.ZeroSlot
 }
 
 type gceNetworkInterface struct {

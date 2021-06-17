@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 const spotPriceNotSetPlaceholder = "OnDemand"
@@ -38,6 +39,8 @@ type AWSClusterConfig struct {
 	SpotMaxPrice string `json:"spot_max_price"`
 
 	CustomTags []*ec2Tag `json:"custom_tags"`
+
+	CPUSlotsAllowed bool `json:"cpu_slots_allowed"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -60,8 +63,9 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType: "p3.8xlarge",
-	SpotEnabled:  false,
+	InstanceType:    "p3.8xlarge",
+	SpotEnabled:     false,
+	CPUSlotsAllowed: false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -131,6 +135,28 @@ func (c AWSClusterConfig) Validate() []error {
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 		spotPriceIsNotValidNumberErr,
 	}
+}
+
+// SlotsPerInstance returns the number of slots per instance.
+func (c AWSClusterConfig) SlotsPerInstance() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlotsAllowed {
+		slots = 1
+	}
+
+	return slots
+}
+
+// SlotType returns the type of the slot.
+func (c AWSClusterConfig) SlotType() device.Type {
+	slots := c.InstanceType.Slots()
+	if slots > 0 {
+		return device.GPU
+	}
+	if c.CPUSlotsAllowed {
+		return device.CPU
+	}
+	return device.ZeroSlot
 }
 
 func validateMaxSpotPrice(spotMaxPriceInput string) error {

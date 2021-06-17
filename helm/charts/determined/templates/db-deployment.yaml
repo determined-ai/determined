@@ -17,6 +17,7 @@ spec:
     metadata:
       labels:
         app: determined-db-{{ .Release.Name }}
+        determined-system: db
     spec:
       containers:
       - name: determined-db-{{ .Release.Name }}

@@ -44,8 +44,8 @@ resource "google_compute_instance" "master_instance" {
 
     resource_manager:
       type: agent
-      default_cpu_resource_pool: cpu-pool
-      default_gpu_resource_pool: gpu-pool
+      default_aux_resource_pool: aux-pool
+      default_compute_resource_pool: compute-pool
       scheduler:
         type: "${var.scheduler_type}"
     EOF
@@ -59,8 +59,8 @@ resource "google_compute_instance" "master_instance" {
 
     cat << EOF >> /usr/local/determined/etc/master.yaml
     resource_pools:
-      - pool_name: cpu-pool
-        max_cpu_containers_per_agent: ${var.max_cpu_containers_per_agent}
+      - pool_name: aux-pool
+        max_aux_containers_per_agent: ${var.max_aux_containers_per_agent}
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
           agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
@@ -81,7 +81,7 @@ resource "google_compute_instance" "master_instance" {
             email: "${var.service_account_email}"
             scopes: ["https://www.googleapis.com/auth/cloud-platform"]
           instance_type:
-            machine_type: ${var.cpu_agent_instance_type}
+            machine_type: ${var.aux_agent_instance_type}
             gpu_type: ${var.gpu_type}
             gpu_num: 0
             preemptible: ${var.preemptible}
@@ -91,8 +91,8 @@ resource "google_compute_instance" "master_instance" {
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
 
-      - pool_name: gpu-pool
-        max_cpu_containers_per_agent: 0
+      - pool_name: compute-pool
+        max_aux_containers_per_agent: 0
         provider:
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
           agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
@@ -113,10 +113,11 @@ resource "google_compute_instance" "master_instance" {
             email: "${var.service_account_email}"
             scopes: ["https://www.googleapis.com/auth/cloud-platform"]
           instance_type:
-            machine_type: ${var.gpu_agent_instance_type}
+            machine_type: ${var.compute_agent_instance_type}
             gpu_type: ${var.gpu_type}
             gpu_num: ${var.gpu_num}
             preemptible: ${var.preemptible}
+          cpu_slots_allowed: true
           min_instances: ${var.min_dynamic_agents}
           max_instances: ${var.max_dynamic_agents}
           operation_timeout_period: ${var.operation_timeout_period}
@@ -186,7 +187,7 @@ resource "google_compute_instance" "master_instance" {
 // Create configured number of static agents
 resource "google_compute_instance" "agent_instance" {
   name = "det-static-agent-${var.unique_id}-${var.det_version_key}-${count.index}"
-  machine_type = var.gpu_agent_instance_type
+  machine_type = var.compute_agent_instance_type
   zone = var.zone
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
 
@@ -226,7 +227,7 @@ resource "google_compute_instance" "agent_instance" {
         --restart unless-stopped \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
-        -e DET_RESOURCE_POOL=gpu-pool \
+        -e DET_RESOURCE_POOL=compute-pool \
         ${var.image_repo_prefix}/determined-agent:${var.det_version}  run --master-port=${var.port}
 
   EOT

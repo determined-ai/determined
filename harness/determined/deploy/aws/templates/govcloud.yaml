@@ -19,12 +19,12 @@ Parameters:
     Description: Instance Type of Master
     Default: m5.large
 
-  CPUAgentInstanceType:
+  AuxAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the CPU resource pool
     Default: t2.xlarge
 
-  GPUAgentInstanceType:
+  ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the GPU resource pool
     Default: g4dn.xlarge
@@ -54,7 +54,7 @@ Parameters:
     Description: Password for database (eg. "postgres")
     NoEcho: true
 
-  MaxCPUContainersPerAgent:
+  MaxAuxContainersPerAgent:
     Type: Number
     Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
     Default: 100
@@ -521,8 +521,8 @@ Resources:
 
             resource_manager:
               type: agent
-              default_cpu_resource_pool: cpu-pool
-              default_gpu_resource_pool: gpu-pool
+              default_aux_resource_pool: aux-pool
+              default_compute_resource_pool: compute-pool
               scheduler:
                 type: ${SchedulerType}
             EOF
@@ -536,15 +536,15 @@ Resources:
 
             cat << EOF >> /usr/local/determined/etc/master.yaml
             resource_pools:
-              - pool_name: cpu-pool
-                max_cpu_containers_per_agent: ${MaxCPUContainersPerAgent}
+              - pool_name: aux-pool
+                max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${CPUAgentInstanceType}
+                  instance_type: ${AuxAgentInstanceType}
                   log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
@@ -564,15 +564,15 @@ Resources:
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
 
-              - pool_name: gpu-pool
-                max_cpu_containers_per_agent: 0
+              - pool_name: compute-pool
+                max_aux_containers_per_agent: 0
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${GPUAgentInstanceType}
+                  instance_type: ${ComputeAgentInstanceType}
                   log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
@@ -591,6 +591,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
+                  cpu_slots_allowed: true
             EOF
 
             if [ "$scheme" = https ]; then

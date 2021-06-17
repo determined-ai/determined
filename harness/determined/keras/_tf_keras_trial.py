@@ -211,12 +211,6 @@ class TFKerasTrialController(det.LoopTrialController):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
     ) -> None:
-        context.model = keras._get_multi_gpu_model_if_using_native_parallel(
-            pre_compiled_model=context.model,
-            env=env,
-            hvd_config=hvd_config,
-        )
-
         if "optimizer" in compile_args.arguments:
             # For backwards compatibility we check if an optimizer is passed as part
             # of the compile call. If `wrap_optimizer()` is used, we will ignore this
@@ -224,6 +218,10 @@ class TFKerasTrialController(det.LoopTrialController):
             compile_args.arguments["optimizer"] = context._process_optimizer_from_compile(
                 compile_args.arguments["optimizer"]
             )
+
+        # context.model is Optional[Model]. This assert signals to mypy it can't
+        # be none because we check that in `from_trial`.
+        assert context.model is not None
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__

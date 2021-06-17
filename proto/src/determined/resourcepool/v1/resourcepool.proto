@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.resourcepool.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/resourcepoolv1";
 import "protoc-gen-swagger/options/annotations.proto";
+import "determined/device/v1/device.proto";
 
 // The type of the ResourcePool.
 enum ResourcePoolType {
@@ -61,14 +62,15 @@ message ResourcePool {
         "num_agents",
         "slots_available",
         "slots_used",
-        "cpu_container_capacity",
-        "cpu_containers_running",
-        "default_gpu_pool",
-        "default_cpu_pool",
+        "slot_type",
+        "aux_container_capacity",
+        "aux_containers_running",
+        "default_compute_pool",
+        "default_aux_pool",
         "preemptible",
         "min_agents",
         "max_agents",
-        "cpu_container_capacity_per_agent",
+        "aux_container_capacity_per_agent",
         "scheduler_type",
         "scheduler_fitting_policy",
         "location",
@@ -100,14 +102,16 @@ message ResourcePool {
   int32 slots_available = 5;
   // The number of slots that are actively running workloads
   int32 slots_used = 6;
-  // The max number of CPU containers that can run in this resource pool
-  int32 cpu_container_capacity = 7;
-  // The current number of CPU containers running in this resource pool
-  int32 cpu_containers_running = 8;
-  // Is this resource pool the default GPU pool?
-  bool default_gpu_pool = 9;
-  // Is this resource pool the default CPU pool?
-  bool default_cpu_pool = 10;
+  // Slot device type: cpu, gpu, ...
+  determined.device.v1.Type slot_type = 32;
+  // The max number of aux containers that can run in this resource pool
+  int32 aux_container_capacity = 7;
+  // The current number of aux containers running in this resource pool
+  int32 aux_containers_running = 8;
+  // Is this resource pool the default compute pool?
+  bool default_compute_pool = 9;
+  // Is this resource pool the default auxiliary pool?
+  bool default_aux_pool = 10;
   // Is this resource pool using preemptible/spot instances? Only meaningful in
   // an AWS or GCP resource pool.
   bool preemptible = 11;
@@ -119,8 +123,9 @@ message ResourcePool {
   int32 max_agents = 13;
   // The number of slots that exists on an dynamic agent.
   int32 slots_per_agent = 14;
-  // The maximum number of CPU containers that can run on an individual agent
-  int32 cpu_container_capacity_per_agent = 15;
+  // The maximum number of auxiliary containers that can run on an individual
+  // agent
+  int32 aux_container_capacity_per_agent = 15;
   // The type of the scheduler. Either 'FAIR_SHARE', 'PRIORITY', or
   // 'ROUND_ROBIN'
   SchedulerType scheduler_type = 16;

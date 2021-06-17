@@ -25,6 +25,7 @@ def test_pl_mnist_gan() -> None:
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 @pytest.mark.parametrize("api_style", ["apex", "auto"])  # type: ignore
 def test_pl_const_with_amp(api_style: str) -> None:
     dir_name = "pytorch_lightning_amp"

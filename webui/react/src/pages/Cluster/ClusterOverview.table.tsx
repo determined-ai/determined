@@ -44,17 +44,17 @@ export const columns: ColumnType<ResourcePool>[] = [
     title: 'Total Slots',
   },
   {
-    dataIndex: 'cpuContainerCapacity',
-    key: 'cpuContainerCapacity',
+    dataIndex: 'auxContainerCapacity',
+    key: 'auxContainerCapacity',
     sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.cpuContainerCapacity, b.cpuContainerCapacity),
+      numericSorter(a.auxContainerCapacity, b.auxContainerCapacity),
     title: 'Max CPU Containers Per Agent',
   },
   {
-    dataIndex: 'cpuContainersRunning',
-    key: 'cpuContainersRunning',
+    dataIndex: 'auxContainersRunning',
+    key: 'auxContainersRunning',
     sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.cpuContainersRunning, b.cpuContainersRunning),
+      numericSorter(a.auxContainersRunning, b.auxContainersRunning),
     title: 'CPUs Used',
   },
 ];

@@ -13,7 +13,7 @@ hyperparameters:
     minval: 5
     maxval: 20
   learning_rate:
-    type: log    
+    type: log
     base: 10
     minval: -4.0
     maxval: -2.0

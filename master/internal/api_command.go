@@ -86,9 +86,9 @@ func (a *apiServer) makeFullCommandSpec(
 	// If the resource pool isn't set, fill in the default at creation time.
 	if config.Resources.ResourcePool == "" {
 		if config.Resources.Slots == 0 {
-			config.Resources.ResourcePool = sproto.GetDefaultCPUResourcePool(a.m.system)
+			config.Resources.ResourcePool = sproto.GetDefaultAuxResourcePool(a.m.system)
 		} else {
-			config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(a.m.system)
+			config.Resources.ResourcePool = sproto.GetDefaultComputeResourcePool(a.m.system)
 		}
 	}
 

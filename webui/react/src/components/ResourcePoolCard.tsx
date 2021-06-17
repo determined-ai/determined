@@ -48,7 +48,7 @@ const rpAttrs = [
   [ 'preemptible', 'Spot/Preemptible' ],
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
-  [ 'cpuContainerCapacityPerAgent', 'Max CPU containers per agent' ],
+  [ 'auxContainerCapacityPerAgent', 'Max CPU containers per agent' ],
   [ 'schedulerType', 'Scheduler Type' ],
 ];
 
@@ -87,8 +87,8 @@ const ResourcePoolCard: React.FC<Props> = (
   if (!description) descriptionClasses.push(css.empty);
 
   const tags: string[] = [ V1ResourcePoolTypeToLabel[type] ];
-  if (rp.defaultGpuPool) tags.push('default gpu pool');
-  if (rp.defaultCpuPool) tags.push('default cpu pool');
+  if (rp.defaultComputePool) tags.push('default gpu pool');
+  if (rp.defaultAuxPool) tags.push('default cpu pool');
 
   const toggleModal = useCallback(
     () => {
@@ -134,7 +134,7 @@ const ResourcePoolCard: React.FC<Props> = (
             totalSlots={totalGpuSlots} />
           <div className={css.cpuContainers}>
             <span>CPU containers running:</span>
-            <span>{rp.cpuContainersRunning}</span>
+            <span>{rp.auxContainersRunning}</span>
           </div>
         </section>
         <hr />

@@ -1,5 +1,6 @@
 import {
-  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
+  Devicev1Type, V1FittingPolicy, V1Pagination, V1ResourcePoolType,
+  V1SchedulerType,
 } from 'services/api-ts-sdk';
 
 interface WithPagination {
@@ -522,11 +523,11 @@ export interface Template {
 }
 
 export interface ResourcePool {
-  cpuContainerCapacity: number;
-  cpuContainerCapacityPerAgent: number;
-  cpuContainersRunning: number;
-  defaultCpuPool: boolean;
-  defaultGpuPool?: boolean;
+  auxContainerCapacity: number;
+  auxContainerCapacityPerAgent: number;
+  auxContainersRunning: number;
+  defaultAuxPool: boolean;
+  defaultComputePool?: boolean;
   description: string;
   details: RPDetails;
   imageId: string;
@@ -539,6 +540,7 @@ export interface ResourcePool {
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
+  slotType: Devicev1Type;
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;
