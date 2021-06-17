@@ -2,7 +2,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import {
-  Agent, Auth, ClusterOverview, DetailedUser, DeterminedInfo, ResourceType,
+  Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo, ResourceType,
 } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { clone, isEqual } from 'utils/data';
@@ -87,7 +87,7 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-const initResourceTally = { allocation: 0, available: 0, total: 0 };
+export const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.GPU]: clone(initResourceTally),

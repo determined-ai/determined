@@ -1,6 +1,5 @@
 import {
-  Devicev1Type, V1FittingPolicy, V1Pagination, V1ResourcePoolType,
-  V1SchedulerType,
+  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
 } from 'services/api-ts-sdk';
 
 interface WithPagination {
@@ -53,10 +52,7 @@ export enum ResourceType {
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
-export const resourceTypes: ResourceType[] = [
-  ResourceType.CPU,
-  ResourceType.GPU,
-];
+export const deviceTypes = new Set([ ResourceType.CPU, ResourceType.GPU ]);
 
 export enum ResourceState { // This is almost CommandState
   Unspecified = 'UNSPECIFIED',
@@ -178,7 +174,7 @@ export interface NotebookConfig {
   pool?: string;
   slots?: number;
   template?: string;
-  type?: ResourceType.CPU | ResourceType.GPU
+  type?: ResourceType;
 }
 
 export enum CheckpointStorageType {
@@ -540,7 +536,7 @@ export interface ResourcePool {
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
-  slotType: Devicev1Type;
+  slotType: ResourceType;
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;

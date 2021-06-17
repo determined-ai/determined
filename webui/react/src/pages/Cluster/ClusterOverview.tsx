@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Message, { MessageType } from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
@@ -12,14 +13,16 @@ import SlotAllocationBar from 'components/SlotAllocationBar';
 import {
   defaultRowClassName, getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
-import { agentsToOverview, useStore } from 'contexts/Store';
+import { agentsToOverview, initResourceTally, useStore } from 'contexts/Store';
 import { useFetchAgents } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns } from 'pages/Cluster/ClusterOverview.table';
 import { getResourcePools } from 'services/api';
 import { ShirtSize } from 'themes';
-import { Pagination, ResourcePool, ResourceState, ResourceType } from 'types';
+import {
+  ClusterOverviewResource, Pagination, ResourcePool, ResourceState, ResourceType,
+} from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 
 import css from './ClusterOverview.module.scss';
@@ -76,11 +79,18 @@ const ClusterOverview: React.FC = () => {
     return getSlotContainerStates(agents || [], ResourceType.GPU);
   }, [ agents ]);
 
-  const getTotalGpuSlots = useCallback((resPoolName: string) => {
-    if (!agents) return 0;
+  const cpuSlotStates = useMemo(() => {
+    return getSlotContainerStates(agents || [], ResourceType.CPU);
+  }, [ agents ]);
+
+  const getSlotTypeOverview = useCallback((
+    resPoolName: string,
+    resType: ResourceType,
+  ): ClusterOverviewResource => {
+    if (!agents || resType === ResourceType.UNSPECIFIED) return initResourceTally;
     const resPoolAgents = agents.filter(agent => agent.resourcePool === resPoolName);
     const overview = agentsToOverview(resPoolAgents);
-    return overview.GPU.total;
+    return overview[resType];
   }, [ agents ]);
 
   const columns = useMemo(() => {
@@ -88,18 +98,18 @@ const ClusterOverview: React.FC = () => {
     const descriptionRender = (_: unknown, record: ResourcePool): React.ReactNode =>
       <div className={css.descriptionColumn}>{record.description}</div>;
 
-    const slotsBarRender = (_:unknown, record: ResourcePool): React.ReactNode => {
+    const slotsBarRender = (_:unknown, rp: ResourcePool): React.ReactNode => {
       const containerStates: ResourceState[] =
-        getSlotContainerStates(agents || [], ResourceType.GPU, record.name);
+        getSlotContainerStates(agents || [], rp.slotType, rp.name);
+      const totalSlots = getSlotTypeOverview(rp.name, rp.slotType).total;
 
-      const totalGpuSlots = getTotalGpuSlots(record.name);
-
-      if (totalGpuSlots === 0) return null;
+      if (totalSlots === 0) return null;
       return <SlotAllocationBar
         className={css.chartColumn}
         hideHeader
         resourceStates={containerStates}
-        totalSlots={totalGpuSlots} />;
+        title={rp.slotType}
+        totalSlots={totalSlots} />;
 
     };
 
@@ -114,7 +124,7 @@ const ClusterOverview: React.FC = () => {
     });
 
     return newColumns;
-  }, [ agents, getTotalGpuSlots, sorter ]);
+  }, [ agents, getSlotTypeOverview, sorter ]);
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
@@ -171,17 +181,32 @@ const ClusterOverview: React.FC = () => {
               {overview.CPU.total - overview.CPU.available} <small>/ {overview.CPU.total}</small>
             </OverviewStats> : null
           }
-          <OverviewStats title="CPU Containers Running">
-            {auxContainers.running} <small>/ {auxContainers.total}</small>
-          </OverviewStats>
+          {auxContainers.total ?
+            <OverviewStats title="Aux Containers Running">
+              {auxContainers.running} <small>/ {auxContainers.total}</small>
+            </OverviewStats>: null
+          }
         </Grid>
       </Section>
       <Section hideTitle title="Overall Allocation">
-        <SlotAllocationBar
-          resourceStates={gpuSlotStates}
-          showLegends
-          size={ShirtSize.enormous}
-          totalSlots={overview.GPU.total} />
+        {overview.ALL.total === 0 ?
+          <Message title="No connected agents." type={MessageType.Empty} /> : null }
+        {overview.GPU.total > 0 &&
+          <SlotAllocationBar
+            resourceStates={gpuSlotStates}
+            showLegends
+            size={ShirtSize.enormous}
+            title={`Compute (${ResourceType.GPU})`}
+            totalSlots={overview.GPU.total} />
+        }
+        {overview.CPU.total > 0 &&
+          <SlotAllocationBar
+            resourceStates={cpuSlotStates}
+            showLegends
+            size={ShirtSize.enormous}
+            title={`Compute (${ResourceType.CPU})`}
+            totalSlots={overview.CPU.total} />
+        }
       </Section>
       <Section
         options={<GridListRadioGroup value={selectedView} onChange={handleRadioChange} />}
@@ -191,12 +216,13 @@ const ClusterOverview: React.FC = () => {
         <Grid gap={ShirtSize.medium} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => {
             return <ResourcePoolCard
-              gpuContainerStates={
-                getSlotContainerStates(agents || [], ResourceType.GPU, rp.name)
+              computeContainerStates={
+                getSlotContainerStates(agents || [], rp.slotType, rp.name)
               }
               key={idx}
               resourcePool={rp}
-              totalGpuSlots={getTotalGpuSlots(rp.name)} />;
+              resourceType={rp.slotType}
+              totalComputeSlots={getSlotTypeOverview(rp.name, rp.slotType).total} />;
           })}
         </Grid>
         }
