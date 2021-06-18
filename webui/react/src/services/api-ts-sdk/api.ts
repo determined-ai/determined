@@ -1748,7 +1748,7 @@ export interface V1GetExperimentValidationHistoryResponse {
 }
 
 /**
- * Sortss experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
+ * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.
  * @export
  * @enum {string}
  */
@@ -3491,29 +3491,35 @@ export interface V1ResourcePool {
      */
     slotsUsed: number;
     /**
-     * 
-     * @type {number}
+     * Slot device type: cpu, gpu, ...
+     * @type {Devicev1Type}
      * @memberof V1ResourcePool
      */
-    cpuContainerCapacity: number;
+    slotType: Devicev1Type;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePool
      */
-    cpuContainersRunning: number;
+    auxContainerCapacity: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1ResourcePool
+     */
+    auxContainersRunning: number;
     /**
      * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
-    defaultGpuPool: boolean;
+    defaultComputePool: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
-    defaultCpuPool: boolean;
+    defaultAuxPool: boolean;
     /**
      * Is this resource pool using preemptible/spot instances? Only meaningful in an AWS or GCP resource pool.
      * @type {boolean}
@@ -3543,7 +3549,7 @@ export interface V1ResourcePool {
      * @type {number}
      * @memberof V1ResourcePool
      */
-    cpuContainerCapacityPerAgent: number;
+    auxContainerCapacityPerAgent: number;
     /**
      * 
      * @type {V1SchedulerType}
