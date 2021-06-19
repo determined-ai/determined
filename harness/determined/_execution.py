@@ -55,7 +55,10 @@ def _catch_init_invalid_hp(workloads: Iterator[Any]) -> Any:
 
 
 def _make_local_execution_exp_config(
-    input_config: Optional[Dict[str, Any]], managed_training: bool, test_mode: bool
+    input_config: Optional[Dict[str, Any]],
+    checkpoint_dir: str,
+    managed_training: bool,
+    test_mode: bool,
 ) -> Dict[str, Any]:
     """
     Create a local experiment configuration based on an input configuration and
@@ -87,19 +90,25 @@ def _make_local_execution_exp_config(
             )
         del input_config[key]
 
-    return {**constants.DEFAULT_EXP_CFG, **input_config}
+    checkpoint_storage = {
+        "type": "shared_fs",
+        "host_path": os.path.abspath(checkpoint_dir),
+    }
+
+    return {"checkpoint_storage": checkpoint_storage, **constants.DEFAULT_EXP_CFG, **input_config}
 
 
 def _make_local_execution_env(
     managed_training: bool,
     test_mode: bool,
     config: Optional[Dict[str, Any]],
+    checkpoint_dir: str,
     hparams: Optional[Dict[str, Any]] = None,
     limit_gpus: Optional[int] = None,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(
         _make_local_execution_exp_config(
-            config, managed_training=managed_training, test_mode=test_mode
+            config, checkpoint_dir, managed_training=managed_training, test_mode=test_mode
         )
     )
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))

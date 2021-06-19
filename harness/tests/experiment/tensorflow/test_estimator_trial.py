@@ -1,5 +1,4 @@
 import os
-import pathlib
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -32,17 +31,19 @@ def xor_trial_controller(request):
         hparams: Dict[str, Any],
         workloads: workload.Stream,
         scheduling_unit: int = 1,
-        load_path: Optional[str] = None,
         exp_config: Optional[Dict] = None,
+        checkpoint_dir: Optional[str] = None,
+        latest_checkpoint: Optional[Dict[str, Any]] = None,
     ) -> det.TrialController:
         return utils.make_trial_controller_from_trial_implementation(
             trial_class=request.param,
             hparams=hparams,
             workloads=workloads,
             scheduling_unit=scheduling_unit,
-            load_path=load_path,
             exp_config=exp_config,
             trial_seed=325,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=latest_checkpoint,
         )
 
     return _xor_trial_controller
@@ -82,7 +83,7 @@ class TestXORTrial:
             # The final accuracy should be 100%.
             assert validation_metrics[-1]["accuracy"] == pytest.approx(1.0)
 
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=1000)
         controller.run()
@@ -96,7 +97,8 @@ class TestXORTrial:
         )
 
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
-        checkpoint_dir = tmp_path.joinpath("checkpoint")
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        latest_checkpoint = None
         old_loss = -1
 
         def make_workloads_1() -> workload.Stream:
@@ -108,13 +110,19 @@ class TestXORTrial:
             training_metrics, validation_metrics = trainer.result()
             old_loss = validation_metrics[-1]["loss"]
 
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
+            interceptor = workload.WorkloadResponseInterceptor()
+            yield from interceptor.send(workload.checkpoint_workload())
+            nonlocal latest_checkpoint
+            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
 
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+            yield workload.terminate_workload(), workload.ignore_workload_response
 
-        controller = xor_trial_controller(self.hparams, make_workloads_1(), scheduling_unit=10)
+        controller = xor_trial_controller(
+            self.hparams,
+            make_workloads_1(),
+            scheduling_unit=10,
+            checkpoint_dir=checkpoint_dir,
+        )
         controller.run()
 
         # Restore the checkpoint on a new trial instance and recompute
@@ -123,33 +131,46 @@ class TestXORTrial:
         def make_workloads_2() -> workload.Stream:
             interceptor = workload.WorkloadResponseInterceptor()
 
-            yield from interceptor.send(workload.validation_workload(), [])
+            yield from interceptor.send(workload.validation_workload())
             metrics = interceptor.metrics_result()
 
             new_loss = metrics["metrics"]["validation_metrics"]["loss"]
             assert new_loss == pytest.approx(old_loss)
 
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = xor_trial_controller(
-            self.hparams, make_workloads_2(), scheduling_unit=10, load_path=checkpoint_dir
+            self.hparams,
+            make_workloads_2(),
+            scheduling_unit=10,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=latest_checkpoint,
         )
         controller.run()
 
     def test_checkpointing_with_serving_fn(
         self, tmp_path: Path, xor_trial_controller: Callable
     ) -> None:
-        checkpoint_dir = tmp_path.joinpath("checkpoint")
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        latest_checkpoint = None
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
             yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=10)
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
 
-        controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=10)
+            interceptor = workload.WorkloadResponseInterceptor()
+            yield from interceptor.send(workload.checkpoint_workload())
+            nonlocal latest_checkpoint
+            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+
+            yield workload.terminate_workload(), workload.ignore_workload_response
+
+        controller = xor_trial_controller(
+            self.hparams,
+            make_workloads(),
+            scheduling_unit=10,
+            checkpoint_dir=checkpoint_dir,
+        )
         controller.run()
 
         def load_saved_model(path: str) -> None:
@@ -162,7 +183,7 @@ class TestXORTrial:
         # in the checkpoint directory. Within the "inference" subdirectory,
         # there should be a single timestamped subdirectory that contains the
         # exported SavedModel.
-        export_path = os.path.join(checkpoint_dir, "inference")
+        export_path = os.path.join(checkpoint_dir, latest_checkpoint["uuid"], "inference")
         assert os.path.exists(export_path)
         _, dirs, _ = next(os.walk(export_path))
         assert len(dirs) == 1
@@ -170,10 +191,17 @@ class TestXORTrial:
 
     def test_optimizer_state(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: Optional[str] = None,
+            latest_checkpoint: Optional[Dict[str, Any]] = None,
         ) -> det.TrialController:
             hparams = {**self.hparams, "optimizer": "adam"}
-            return xor_trial_controller(hparams, workloads, load_path=load_path)
+            return xor_trial_controller(
+                hparams,
+                workloads,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
+            )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
@@ -189,7 +217,7 @@ class TestXORTrial:
                 yield from trainer.send(
                     steps=steps, validation_freq=validation_freq, scheduling_unit=scheduling_unit
                 )
-                yield workload.terminate_workload(), [], workload.ignore_workload_response
+                yield workload.terminate_workload(), workload.ignore_workload_response
 
             hparams = self.hparams.copy()
             hparams["training_log_path"] = os.path.join(temp_directory, "training.log")
@@ -210,39 +238,45 @@ class TestXORTrial:
                 assert int(fp.readline()) == steps / validation_freq
 
     def test_custom_hook(self, tmp_path: Path) -> None:
-        def make_workloads(checkpoint_dir: pathlib.Path) -> workload.Stream:
+        checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+        latest_checkpoint = None
+
+        def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
             yield from trainer.send(steps=10, validation_freq=5, scheduling_unit=5)
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
 
-        def verify_callback(checkpoint_dir: pathlib.Path, checkpoint_num: int) -> None:
-            with open(str(checkpoint_dir.joinpath("custom.log")), "r") as fp:
+            interceptor = workload.WorkloadResponseInterceptor()
+            yield from interceptor.send(workload.checkpoint_workload())
+            nonlocal latest_checkpoint
+            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+
+            yield workload.terminate_workload(), workload.ignore_workload_response
+
+        def verify_callback(checkpoint_dir: str, checkpoint_num: int) -> None:
+            with open(os.path.join(checkpoint_dir, "custom.log"), "r") as fp:
                 assert int(fp.readline()) == checkpoint_num
 
-        checkpoint_dir1 = tmp_path.joinpath("checkpoint1")
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=estimator_xor_model.XORTrialWithCustomHook,
             hparams=self.hparams,
-            workloads=make_workloads(checkpoint_dir=checkpoint_dir1),
+            workloads=make_workloads(),
             scheduling_unit=5,
+            checkpoint_dir=checkpoint_dir,
         )
         controller.run()
-        verify_callback(checkpoint_dir=checkpoint_dir1, checkpoint_num=1)
+        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint["uuid"]), checkpoint_num=1)
 
-        checkpoint_dir2 = tmp_path.joinpath("checkpoint2")
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=estimator_xor_model.XORTrialWithCustomHook,
             hparams=self.hparams,
-            workloads=make_workloads(checkpoint_dir=checkpoint_dir2),
+            workloads=make_workloads(),
             scheduling_unit=5,
-            load_path=checkpoint_dir1,
+            checkpoint_dir=checkpoint_dir,
+            latest_checkpoint=latest_checkpoint,
         )
         controller.run()
-        verify_callback(checkpoint_dir=checkpoint_dir2, checkpoint_num=2)
+        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint["uuid"]), checkpoint_num=2)
 
     def test_end_of_training_hook(self):
         with tempfile.TemporaryDirectory() as temp_directory:
@@ -251,7 +285,7 @@ class TestXORTrial:
                 trainer = utils.TrainAndValidate()
 
                 yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
-                yield workload.terminate_workload(), [], workload.ignore_workload_response
+                yield workload.terminate_workload(), workload.ignore_workload_response
 
             hparams = self.hparams.copy()
             hparams["training_end"] = os.path.join(temp_directory, "training_end.log")
@@ -273,7 +307,7 @@ class TestXORTrial:
             trainer = utils.TrainAndValidate(request_stop_step_id=request_stop_step_id)
             yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
             tm, vm = trainer.result()
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+            yield workload.terminate_workload(), workload.ignore_workload_response
 
         hparams = dict(self.hparams)
         hparams["stop_early"] = stop_early
@@ -316,7 +350,7 @@ class TestLinearTrial:
                 assert metrics["label_sum_dict_fn"] == 2 * label_sum
                 assert metrics["label_sum_dict_cls"] == 2 * label_sum
 
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
+            yield workload.terminate_workload(), workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=estimator_linear_model.LinearEstimator,

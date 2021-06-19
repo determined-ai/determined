@@ -76,6 +76,8 @@ class XORTrial(estimator.EstimatorTrial):
     the solution with a hidden size of 2, and a MSE loss function.
     """
 
+    _searcher_metric = "loss"
+
     def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
 

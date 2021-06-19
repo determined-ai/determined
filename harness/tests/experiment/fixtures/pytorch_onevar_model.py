@@ -91,6 +91,8 @@ def triangle_label_sum(updates: List) -> Any:
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
+    _searcher_metric = "val_loss"
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 

@@ -4,7 +4,7 @@ from typing import Any, Dict
 import numpy as np
 
 import determined as det
-from determined import horovod
+from determined import horovod, workload
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -54,7 +54,7 @@ def structure_equal(a: Any, b: Any) -> bool:
     return a == b
 
 
-class MetricMaker(det.CallbackTrialController):
+class MetricMaker(det.TrialController):
     """
     MetricMaker is a class designed to test that metrics reported from a trial
     are faithfully passed to the master and stored in the database.
@@ -76,6 +76,12 @@ class MetricMaker(det.CallbackTrialController):
         self.validation_structure = self.env.hparams["validation_structure"]
         self.gain_per_batch = self.env.hparams["gain_per_batch"]
 
+        if self.env.latest_checkpoint is not None:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
+                self.load(pathlib.Path(load_path))
+
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
         return MetricMaker(*args, **kwargs)
@@ -83,6 +89,43 @@ class MetricMaker(det.CallbackTrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         pass
+
+    def run(self) -> None:
+        for w, response_func in self.workloads:
+            start_time = self._generic._current_timestamp()
+            try:
+                if w.kind == workload.Workload.Kind.RUN_STEP:
+                    response = self.train_for_step(
+                        w.step_id, w.num_batches
+                    )  # type: workload.Response
+                    response = self._generic._after_training(w, start_time, response)
+                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    response = self.compute_validation_metrics(w.step_id)
+                    searcher_metric = self.env.experiment_config.get_searcher_metric()
+                    response = self._generic._after_validation(
+                        w, start_time, searcher_metric, response
+                    )
+                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        self.save(pathlib.Path(path))
+                        response = {}
+                        response = self._generic._after_checkpoint(
+                            w,
+                            start_time,
+                            storage_id,
+                            path,
+                            response,
+                        )
+                elif w.kind == workload.Workload.Kind.TERMINATE:
+                    self.terminate()
+                    response = workload.Skipped()
+                else:
+                    raise AssertionError("Unexpected workload: {}".format(w.kind))
+
+            except det.errors.SkipWorkloadException:
+                response = workload.Skipped()
+
+            response_func(response)
 
     def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         # Get the base value for each batch

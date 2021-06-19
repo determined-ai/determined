@@ -125,20 +125,21 @@ def test_broadcast_server_client() -> None:
 
 
 def test_subprocess_launcher_receiver() -> None:
-    env = utils.make_default_env_context(hparams={"global_batch_size": 1})
+    hparams = {"global_batch_size": 1}
+    exp_config = utils.make_default_exp_config(hparams, scheduling_unit=1, searcher_metric="loss")
+    env = utils.make_default_env_context(hparams, exp_config)
     rendezvous_info = utils.make_default_rendezvous_info()
     hvd_config = utils.make_default_hvd_config()
 
     def make_workloads() -> workload.Stream:
         interceptor = workload.WorkloadResponseInterceptor()
         for i, wkld in enumerate(fake_subprocess_receiver.fake_workload_gen()):
-            yield from interceptor.send(wkld, [])
+            yield from interceptor.send(wkld)
             assert interceptor.metrics_result() == {"count": i}
 
     subproc = layers.SubprocessLauncher(
         env=env,
         workloads=make_workloads(),
-        load_path=None,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
         python_subprocess_entrypoint="tests.fixtures.fake_subprocess_receiver",
