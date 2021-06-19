@@ -1,4 +1,6 @@
 import abc
+import contextlib
+import functools
 import logging
 import shutil
 import socket
@@ -87,6 +89,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
             managed_training=False,
             test_mode=False,
             config=config,
+            checkpoint_dir="/tmp",
             limit_gpus=1,
         )
         return cls(env_context, hvd_config, rendezvous_info)
@@ -516,7 +519,7 @@ class DistributedContext:
 
     def _zmq_broadcast_local(self, stuff: Any = None) -> Any:
         """
-        Every local worker gets the value sent by the local chief.
+        Every worker gets the value sent by the local chief.
         """
         if self._info.local_size < 2:
             return stuff
@@ -525,3 +528,36 @@ class DistributedContext:
         else:
             stuff = self._local_worker_zmq.recv()
         return stuff
+
+    def _local_chief_contextmanager(self, fn: Callable) -> Callable:
+        """
+        Like _local_chief_fn, but wraps a context manager rather than a normal function.
+        """
+        if self._is_local_chief:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*args: Any, **kwargs: Any) -> Any:
+                with fn(*args, **kwargs) as out:
+                    # broadcast to local workers
+                    _ = self._zmq_broadcast_local(out)
+                    try:
+                        yield out
+                    finally:
+                        # wait for local workers
+                        _ = self._zmq_gather_local(None)
+
+        else:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*__: Any, **___: Any) -> Any:
+                # wait for local chief
+                out = self._zmq_broadcast_local(None)
+                try:
+                    yield out
+                finally:
+                    # wait for local workers
+                    _ = self._zmq_gather_local(None)
+
+        return _fn

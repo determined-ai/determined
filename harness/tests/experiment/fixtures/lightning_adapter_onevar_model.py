@@ -84,6 +84,8 @@ class OneDatasetLDM(pl.LightningDataModule):
 
 
 class OneVarTrial(LightningAdapter):
+    _searcher_metric = "val_loss"
+
     def __init__(self, context: pytorch.PyTorchTrialContext, lm_class=OneVarLM) -> None:
         self.context = context
         lm = lm_class(**context.get_hparams())

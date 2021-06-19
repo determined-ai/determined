@@ -206,7 +206,7 @@ class SocketManager(workload.Source):
 
             self.socket.send_text(metrics_json)
 
-        yield wkld, [], respond
+        yield wkld, respond
 
         if self.env.debug:
             profiler.stop()

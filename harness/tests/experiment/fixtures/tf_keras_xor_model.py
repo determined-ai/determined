@@ -25,6 +25,7 @@ def predictions(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 
 class XORTrial(keras.TFKerasTrial):
+    _searcher_metric = "val_loss"
     """
     Models a lightweight neural network model with one hidden layer to
     learn a binary XOR function. See Deep Learning Book, chapter 6.1 for
