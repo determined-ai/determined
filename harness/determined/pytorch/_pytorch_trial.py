@@ -21,7 +21,7 @@ except ImportError:
     pass
 
 
-class PyTorchTrialController(det.LoopTrialController):
+class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
@@ -134,7 +134,12 @@ class PyTorchTrialController(det.LoopTrialController):
         # values after we load state.
         self.training_iterator = iter(self.training_loader)
         try:
-            self._load()
+            # If a load path is provided load weights and restore the data location.
+            if self.env.latest_checkpoint is not None:
+                with self._generic._load_initial_checkpoint(
+                    self.env.latest_checkpoint
+                ) as load_path:
+                    self._load(pathlib.Path(load_path))
 
             if self.hvd_config.use:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
@@ -150,63 +155,75 @@ class PyTorchTrialController(det.LoopTrialController):
             del self.training_iterator
 
     def _run(self) -> None:
-        for w, args, response_func in self.workloads:
+        for w, response_func in self.workloads:
+            start_time = self._generic._current_timestamp()
+
             if w.kind == workload.Workload.Kind.RUN_STEP:
                 try:
-                    response_func(
-                        util.wrap_metrics(
-                            self._train_for_step(
-                                w.step_id,
-                                w.num_batches,
-                                w.total_batches_processed,
-                            ),
-                            self.context.get_stop_requested(),
-                            invalid_hp=False,
-                            init_invalid_hp=False,
-                        )
+                    response = util.wrap_metrics(
+                        self._train_for_step(
+                            w.step_id,
+                            w.num_batches,
+                            w.total_batches_processed,
+                        ),
+                        self.context.get_stop_requested(),
+                        invalid_hp=False,
+                        init_invalid_hp=False,
                     )
                 except det.InvalidHP as e:
                     logging.info(
                         "Invalid hyperparameter exception in trial train step: {}".format(e)
                     )
-                    response_func(
-                        util.wrap_metrics(
-                            {},
-                            self.context.get_stop_requested(),
-                            invalid_hp=True,
-                            init_invalid_hp=False,
-                        )
+                    response = util.wrap_metrics(
+                        {},
+                        self.context.get_stop_requested(),
+                        invalid_hp=True,
+                        init_invalid_hp=False,
                     )
+                response = self._generic._after_training(w, start_time, response)
+                response_func(response)
+
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
-                    response_func(
-                        util.wrap_metrics(
-                            self._compute_validation_metrics(),
-                            self.context.get_stop_requested(),
-                            invalid_hp=False,
-                            init_invalid_hp=False,
-                        )
+                    response = util.wrap_metrics(
+                        self._compute_validation_metrics(),
+                        self.context.get_stop_requested(),
+                        invalid_hp=False,
+                        init_invalid_hp=False,
                     )
                 except det.InvalidHP as e:
                     logging.info(
                         "Invalid hyperparameter exception in trial validation step: {}".format(e)
                     )
-                    response_func(
-                        util.wrap_metrics(
-                            {},
-                            self.context.get_stop_requested(),
-                            invalid_hp=True,
-                            init_invalid_hp=False,
-                        )
+                    response = util.wrap_metrics(
+                        {},
+                        self.context.get_stop_requested(),
+                        invalid_hp=True,
+                        init_invalid_hp=False,
                     )
+                searcher_metric = self.env.experiment_config.get_searcher_metric()
+                response = self._generic._after_validation(w, start_time, searcher_metric, response)
+                response_func(response)
+
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                check.eq(len(args), 1)
-                check.is_instance(args[0], pathlib.Path)
-                path = cast(pathlib.Path, args[0])
-                response_func(self._save(path))
+                if self.is_chief:
+                    with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        response = self._save(pathlib.Path(path))
+                        response = self._generic._after_checkpoint(
+                            w,
+                            start_time,
+                            storage_id,
+                            path,
+                            response,
+                        )
+                else:
+                    response = workload.Skipped()
+                response_func(response)
+
             elif w.kind == workload.Workload.Kind.TERMINATE:
                 response_func({} if self.is_chief else workload.Skipped())
                 break
+
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -590,10 +607,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         return metrics_lists, all_num_batches
 
-    def _load(self) -> None:
-        if not self.load_path:
-            return
-
+    def _load(self, load_path: pathlib.Path) -> None:
         # Backwards compat with older checkpoint formats. List is newest to
         # oldest known state_dict locations.
         potential_paths = [
@@ -605,7 +619,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         checkpoint: Optional[Dict[str, Any]] = None
         for ckpt_path in potential_paths:
-            maybe_ckpt = self.load_path.joinpath(*ckpt_path)
+            maybe_ckpt = load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
                 checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
                 break
@@ -705,9 +719,6 @@ class PyTorchTrialController(det.LoopTrialController):
                 )
 
     def _save(self, path: pathlib.Path) -> workload.Response:
-        if not self.is_chief:
-            return workload.Skipped()
-
         path.mkdir(parents=True, exist_ok=True)
 
         util.write_user_code(path, self.env.on_cluster)

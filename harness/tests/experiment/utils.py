@@ -2,7 +2,6 @@ import distutils.util
 import os
 import pathlib
 import tempfile
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -46,7 +45,6 @@ class TrainAndValidate:
                     num_batches=scheduling_unit,
                     total_batches_processed=total_batches_processed,
                 ),
-                [],
             )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
@@ -54,7 +52,7 @@ class TrainAndValidate:
             self._training_metrics.extend(batch_metrics)
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
             total_batches_processed += scheduling_unit
-            if metrics["stop_requested"]:
+            if metrics.get("exited_reason") == "USER_CANCELED":
                 assert step_id == self.request_stop_step_id
                 stop_requested = True
 
@@ -63,12 +61,11 @@ class TrainAndValidate:
                     workload.validation_workload(
                         step_id, total_batches_processed=total_batches_processed
                     ),
-                    [],
                 )
                 validation = interceptor.metrics_result()
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
-                if validation["stop_requested"]:
+                if validation.get("exited_reason") == "USER_CANCELED":
                     assert step_id == self.request_stop_step_id
                     stop_requested = True
 
@@ -87,7 +84,12 @@ class TrainAndValidate:
         return self._avg_training_metrics
 
 
-def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Dict:
+def make_default_exp_config(
+    hparams: Dict[str, Any],
+    scheduling_unit: int,
+    searcher_metric: str,
+    checkpoint_dir: Optional[str] = None,
+) -> Dict:
     return {
         "scheduling_unit": scheduling_unit,
         "resources": {"native_parallel": False, "slots_per_trial": 1},
@@ -99,15 +101,22 @@ def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Di
             "average_training_metrics": False,
         },
         "data_layer": {"type": "shared_fs"},
+        "checkpoint_storage": {
+            "type": "shared_fs",
+            "host_path": checkpoint_dir or "/tmp",
+        },
+        "searcher": {
+            "metric": searcher_metric,
+        },
     }
 
 
 def make_default_env_context(
-    hparams: Dict[str, Any], experiment_config: Optional[Dict] = None, trial_seed: int = 0
+    hparams: Dict[str, Any],
+    experiment_config: Dict,
+    trial_seed: int = 0,
+    latest_checkpoint: Optional[Dict[str, Any]] = None,
 ) -> det.EnvContext:
-    if experiment_config is None:
-        experiment_config = make_default_exp_config(hparams, 1)
-
     # TODO(ryan): Fix the parameter passing so that this doesn't read from environment variables,
     # and we can get rid of the @expose_gpus fixture.
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
@@ -130,7 +139,7 @@ def make_default_env_context(
         master_cert_name=None,
         container_id="",
         hparams=hparams,
-        latest_checkpoint=None,
+        latest_checkpoint=latest_checkpoint,
         use_gpu=use_gpu,
         container_gpus=gpu_uuids,
         slot_ids=[],
@@ -222,43 +231,29 @@ def make_xor_data_sequences(
     )
 
 
-def make_trial_controller(
-    trial_class: Type[det.Trial],
-    hparams: Dict[str, Any],
-    workloads: workload.Stream,
-    env: Optional[det.EnvContext] = None,
-    load_path: Optional[pathlib.Path] = None,
-) -> det.TrialController:
-    """
-    Create a TrialController for a given Trial class, using the Trial.get_trial_controller_class()
-    static method, as the harness code would.
-    """
-    if env is None:
-        env = make_default_env_context(hparams=hparams)
-
-    return load.load_trial(
-        trial_class,
-        env=env,
-        workloads=workloads,
-        load_path=load_path,
-        rendezvous_info=make_default_rendezvous_info(),
-        hvd_config=make_default_hvd_config(),
-    )
-
-
 def make_trial_controller_from_trial_implementation(
     trial_class: Type[det.Trial],
     hparams: Dict,
     workloads: workload.Stream,
     scheduling_unit: int = 1,
-    load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
+    checkpoint_dir: Optional[str] = None,
+    latest_checkpoint: Optional[Dict[str, Any]] = None,
 ) -> det.TrialController:
     if not exp_config:
-        exp_config = make_default_exp_config(hparams, scheduling_unit)
+        assert hasattr(
+            trial_class, "_searcher_metric"
+        ), "Trial classes for unit tests should be annotated with a _searcher_metric attribute"
+        searcher_metric = trial_class._searcher_metric  # type: ignore
+        exp_config = make_default_exp_config(
+            hparams, scheduling_unit, searcher_metric, checkpoint_dir=checkpoint_dir
+        )
     env = make_default_env_context(
-        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
+        hparams=hparams,
+        experiment_config=exp_config,
+        trial_seed=trial_seed,
+        latest_checkpoint=latest_checkpoint,
     )
 
     rendezvous_info = make_default_rendezvous_info()
@@ -268,7 +263,6 @@ def make_trial_controller_from_trial_implementation(
         trial_class=trial_class,
         env=env,
         workloads=workloads,
-        load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
     )
@@ -299,7 +293,7 @@ def reproducibility_test(
         training_metrics[tag] = tm
         validation_metrics[tag] = vm
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
+        yield workload.terminate_workload(), workload.ignore_workload_response
 
     # Trial A
     os.environ["DET_TRIAL_SEED"] = str(seed)
@@ -326,7 +320,11 @@ def reproducibility_test(
 
 
 RestorableMakeControllerFn = Callable[
-    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")],  # noqa: F821
+    [
+        workload.Stream,
+        DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
+        DefaultNamedArg(Optional[Dict], "latest_checkpoint"),  # noqa: F821
+    ],
     det.TrialController,
 ]
 
@@ -345,7 +343,7 @@ def train_and_validate(
         metrics["training"] += tm
         metrics["validation"] += vm
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
+        yield workload.terminate_workload(), workload.ignore_workload_response
 
     controller = make_trial_controller_fn(make_workloads(steps))
     controller.run()
@@ -354,7 +352,7 @@ def train_and_validate(
 
 
 def checkpointing_and_restoring_test(
-    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: Path
+    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
     """
     Tests if a trial controller of any framework can checkpoint and restore from that checkpoint
@@ -370,11 +368,10 @@ def checkpointing_and_restoring_test(
 
     training_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
     validation_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
-    checkpoint_dir = tmp_path.joinpath("checkpoint")
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
 
-    def make_workloads(
-        steps: int, tag: str, checkpoint_dir: Optional[pathlib.Path] = None
-    ) -> workload.Stream:
+    def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
         trainer = TrainAndValidate()
 
         yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
@@ -382,20 +379,29 @@ def checkpointing_and_restoring_test(
         training_metrics[tag] += tm
         validation_metrics[tag] += vm
 
-        if checkpoint_dir is not None:
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
+        if checkpoint is not None:
+            interceptor = workload.WorkloadResponseInterceptor()
+            yield from interceptor.send(workload.checkpoint_workload())
+            nonlocal latest_checkpoint
+            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
+        yield workload.terminate_workload(), workload.ignore_workload_response
 
-    controller_A1 = make_trial_controller_fn(make_workloads(1, "A", checkpoint_dir))
+    controller_A1 = make_trial_controller_fn(
+        make_workloads(1, "A", True),
+        checkpoint_dir=checkpoint_dir,
+    )
     controller_A1.run()
+    assert latest_checkpoint is not None, "make_workloads did not set the latest_checkpoint"
 
-    controller_A2 = make_trial_controller_fn(make_workloads(1, "A"), load_path=checkpoint_dir)
+    controller_A2 = make_trial_controller_fn(
+        make_workloads(1, "A", False),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+    )
     controller_A2.run()
 
-    controller_B = make_trial_controller_fn(make_workloads(2, "B"))
+    controller_B = make_trial_controller_fn(make_workloads(2, "B", False))
     controller_B.run()
 
     for A, B in zip(training_metrics["A"], training_metrics["B"]):

@@ -46,3 +46,10 @@ class ExperimentConfig(dict):
         min_validation_period = self.get("min_validation_period", {})
         assert isinstance(min_validation_period, dict)
         return min_validation_period
+
+    def get_searcher_metric(self) -> str:
+        searcher_metric = self.get("searcher", {}).get("metric")
+        assert isinstance(
+            searcher_metric, str
+        ), f"searcher metric is not a string {searcher_metric} in {self}"
+        return searcher_metric

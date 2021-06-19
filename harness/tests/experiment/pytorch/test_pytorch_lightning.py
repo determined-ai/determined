@@ -22,14 +22,17 @@ class TestLightningAdapter:
 
     def test_checkpointing_and_restoring(self, tmp_path: pathlib.Path) -> None:
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
         ) -> det.TrialController:
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=la_model.OneVarTrial,
                 hparams=self.hparams,
                 workloads=workloads,
-                load_path=load_path,
                 trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -48,15 +51,18 @@ class TestLightningAdapter:
                 super().__init__(context, OneVarLM)
 
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLA,
                 hparams=self.hparams,
                 workloads=workloads,
-                load_path=load_path,
                 trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -71,15 +77,18 @@ class TestLightningAdapter:
                 super().__init__(context, OneVarLM)
 
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLA,
                 hparams=self.hparams,
                 workloads=workloads,
-                load_path=load_path,
                 trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
             )
 
         with pytest.raises(AssertionError):
@@ -91,15 +100,18 @@ class TestLightningAdapter:
                 assert self.last_lr > self.read_lr_value()
 
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=OneVarLAFreq1,
                 hparams=self.hparams,
                 workloads=workloads,
-                load_path=load_path,
                 trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
             )
 
         utils.train_and_validate(make_trial_controller_fn)
@@ -113,7 +125,9 @@ class TestLightningAdapter:
                     assert self.last_lr == self.read_lr_value()
 
         def make_trial_controller_fn(
-            workloads: workload.Stream, load_path: typing.Optional[str] = None
+            workloads: workload.Stream,
+            checkpoint_dir: typing.Optional[str] = None,
+            latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
         ) -> det.TrialController:
 
             updated_params = {
@@ -124,8 +138,9 @@ class TestLightningAdapter:
                 trial_class=OneVarLAFreq2,
                 hparams=updated_params,
                 workloads=workloads,
-                load_path=load_path,
                 trial_seed=self.trial_seed,
+                checkpoint_dir=checkpoint_dir,
+                latest_checkpoint=latest_checkpoint,
             )
 
         utils.train_and_validate(make_trial_controller_fn)

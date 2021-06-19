@@ -23,15 +23,12 @@ Basic workflow is:
     message.
 
 """
-import contextlib
 import distutils.util
 import faulthandler
 import json
 import logging
 import os
-import pathlib
 import sys
-from typing import Any, Dict, Iterator, Optional
 
 import simplejson
 
@@ -62,26 +59,6 @@ ENVIRONMENT_VARIABLE_KEYS = {
 }
 
 
-@contextlib.contextmanager
-def maybe_load_checkpoint(
-    storage_mgr: storage.StorageManager, checkpoint: Optional[Dict[str, Any]]
-) -> Iterator[Optional[pathlib.Path]]:
-    """
-    Either wrap a storage_mgr.restore_path() context manager, or be a noop
-    context manager if there is no checkpoint to load.
-    """
-
-    if checkpoint is None:
-        yield None
-
-    else:
-        metadata = storage.StorageMetadata.from_json(checkpoint)
-        logging.info("Restoring trial from checkpoint {}".format(metadata.storage_id))
-
-        with storage_mgr.restore_path(metadata) as path:
-            yield pathlib.Path(path)
-
-
 def build_and_run_training_pipeline(env: det.EnvContext) -> None:
 
     # Create the socket manager. The socket manager will connect to the master and read messages
@@ -89,66 +66,31 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
     #
     # TODO(ryan): Pull profiler hooks out of SocketManager and into their own layer.
     with layers.SocketManager(env) as socket_mgr:
-
-        # Create the storage manager. This is used to download the initial checkpoint here in
-        # build_training_pipeline and also used by the workload manager to create and store
-        # checkpoints during training.
-        storage_mgr = storage.build(
-            env.experiment_config["checkpoint_storage"],
-            container_path=constants.SHARED_FS_CONTAINER_PATH,
-        )
-
-        [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(
-            env, constants.SHARED_FS_CONTAINER_PATH
-        )
-
-        # Create the workload manager. The workload manager will receive workloads from the
-        # socket_mgr, and augment them with some additional arguments. Additionally, the
-        # workload manager is responsible for some generic workload hooks for things like timing
-        # workloads, preparing checkpoints, and uploading completed checkpoints.  Finally, the
-        # workload manager does some sanity checks on response messages that originate from the
-        # trial.
-        #
-        # TODO(ryan): Refactor WorkloadManager into separate layers that do each separate task.
-        workload_mgr = layers.build_workload_manager(
-            env,
-            iter(socket_mgr),
-            socket_mgr.get_rendezvous_info(),
-            storage_mgr,
-            tensorboard_mgr,
-            tensorboard_writer,
-        )
-
-        workloads = iter(workload_mgr)
+        workloads = iter(socket_mgr)
         hvd_config = horovod.HorovodContext.from_configs(
             env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
         )
         logging.info(f"Horovod config: {hvd_config.__dict__}.")
 
-        # Load the checkpoint, if necessary. Any possible sinks to this pipeline will need access
-        # to this checkpoint.
-        with maybe_load_checkpoint(storage_mgr, env.latest_checkpoint) as load_path:
+        # Horovod distributed training is done inside subprocesses.
+        if hvd_config.use:
+            subproc = layers.SubprocessLauncher(
+                env, workloads, socket_mgr.get_rendezvous_info(), hvd_config
+            )
+            subproc.run()
+        else:
+            if env.experiment_config.debug_enabled():
+                faulthandler.dump_traceback_later(30, repeat=True)
 
-            # Horovod distributed training is done inside subprocesses.
-            if hvd_config.use:
-                subproc = layers.SubprocessLauncher(
-                    env, workloads, load_path, socket_mgr.get_rendezvous_info(), hvd_config
-                )
-                subproc.run()
-            else:
-                if env.experiment_config.debug_enabled():
-                    faulthandler.dump_traceback_later(30, repeat=True)
-
-                with det._catch_sys_exit():
-                    with det._catch_init_invalid_hp(workloads):
-                        controller = load.prepare_controller(
-                            env,
-                            workloads,
-                            load_path,
-                            socket_mgr.get_rendezvous_info(),
-                            hvd_config,
-                        )
-                    controller.run()
+            with det._catch_sys_exit():
+                with det._catch_init_invalid_hp(workloads):
+                    controller = load.prepare_controller(
+                        env,
+                        workloads,
+                        socket_mgr.get_rendezvous_info(),
+                        hvd_config,
+                    )
+                controller.run()
 
 
 def main() -> None:

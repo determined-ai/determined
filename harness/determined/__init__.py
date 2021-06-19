@@ -9,12 +9,11 @@ from determined._execution import (
     InvalidHP,
 )
 from determined._train_context import NativeContext, TrialContext, DistributedContext, RankInfo
+from determined._generic import _GenericContext
 from determined._trial import Trial
 from determined._experiment_config import ExperimentConfig
 from determined._hparam import Categorical, Constant, Double, Integer, Log
 from determined._trial_controller import (
-    CallbackTrialController,
-    LoopTrialController,
     TrialController,
 )
 from determined import errors

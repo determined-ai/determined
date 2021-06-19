@@ -1,11 +1,10 @@
 import importlib
 import logging
-import pathlib
 import sys
-from typing import Optional, Tuple, Type, cast
+from typing import Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload
+from determined import horovod, load, workload
 from determined.common import check
 
 
@@ -68,7 +67,6 @@ def load_trial(
     trial_class: Type[det.Trial],
     env: det.EnvContext,
     workloads: workload.Stream,
-    load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
@@ -101,7 +99,6 @@ def load_trial(
         context=trial_context,
         env=env,
         workloads=workloads,
-        load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
     )
@@ -110,7 +107,6 @@ def load_trial(
 def prepare_controller(
     env: det.EnvContext,
     workloads: workload.Stream,
-    load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
@@ -119,37 +115,9 @@ def prepare_controller(
     """
 
     if env.experiment_config.native_enabled():
-        controller = load.load_native(env, workloads, load_path, rendezvous_info, hvd_config)
+        controller = load.load_native(env, workloads, rendezvous_info, hvd_config)
     else:
         trial_class = trial_class_from_entrypoint(env.experiment_config["entrypoint"])
-        controller = load_trial(trial_class, env, workloads, load_path, rendezvous_info, hvd_config)
+        controller = load_trial(trial_class, env, workloads, rendezvous_info, hvd_config)
 
     return controller
-
-
-def prepare_tensorboard(
-    env: det.EnvContext,
-    container_path: Optional[str] = None,
-) -> Tuple[tensorboard.TensorboardManager, tensorboard.BatchMetricWriter]:
-    tensorboard_mgr = tensorboard.build(
-        env.det_cluster_id,
-        env.det_experiment_id,
-        env.det_trial_id,
-        env.experiment_config["checkpoint_storage"],
-        container_path,
-    )
-    try:
-        from determined.tensorboard.metric_writers import tensorflow
-
-        writer: tensorboard.MetricWriter = tensorflow.TFWriter()
-
-    except ModuleNotFoundError:
-        logging.warning("Tensorflow writer not found")
-        from determined.tensorboard.metric_writers import pytorch
-
-        writer = pytorch.TorchWriter()
-
-    return (
-        tensorboard_mgr,
-        tensorboard.BatchMetricWriter(writer),
-    )

@@ -56,7 +56,6 @@ def main() -> None:
                 controller = load.prepare_controller(
                     worker_process_env.env,
                     workloads,
-                    worker_process_env.load_path,
                     worker_process_env.rendezvous_info,
                     worker_process_env.hvd_config,
                 )
