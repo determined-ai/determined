@@ -1,5 +1,8 @@
 import abc
 import logging
+import shutil
+import socket
+import tempfile
 from typing import Any, Callable, Dict, List, Optional, cast
 
 import determined as det
@@ -206,39 +209,120 @@ class DistributedContext:
 
         if self._hvd_config.use:
             self._is_chief = horovod.hvd.rank() == 0
+            self._is_local_chief = horovod.hvd.local_rank() == 0
         else:
             self._is_chief = True
+            self._is_local_chief = True
 
-        if self._hvd_config.use:
-            # Initialize zmq comms.
-            srv_pub_port = (
-                constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._env.det_trial_unique_port_offset
+        self._init_ipc()
+
+    def _init_ipc(self) -> None:
+        if not self._hvd_config.use or horovod.hvd.size() < 2:
+            # No broadcasting necessary.
+            return
+
+        srv_pub_port = (
+            constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._env.det_trial_unique_port_offset
+        )
+        srv_pull_port = (
+            constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._env.det_trial_unique_port_offset
+        )
+
+        # Global broadcast server.
+        if self._is_chief:
+            logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+            self._chief_zmq = ipc.ZMQBroadcastServer(
+                num_connections=self._env.experiment_config.slots_per_trial() - 1,
+                pub_url=f"tcp://*:{srv_pub_port}",
+                pull_url=f"tcp://*:{srv_pull_port}",
             )
-            srv_pull_port = (
-                constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._env.det_trial_unique_port_offset
+            self._chief_zmq.safe_start(lambda: None)
+
+        else:
+            chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+            logging.debug(
+                f"Non-Chief {horovod.hvd.rank()} setting up comm to "
+                f"{chief_ip_address} w/ ports "
+                f"{srv_pub_port}/{srv_pull_port}."
+            )
+            self._worker_zmq = ipc.ZMQBroadcastClient(
+                srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
+                srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
+            )
+            self._worker_zmq.safe_start()
+
+        if horovod.hvd.local_size() < 2:
+            # No local broadcasting necessary.
+            return
+
+        # Local broadcast server.
+        self.tempdir = None
+        if self._is_local_chief:
+            pub_url = None
+            pull_url = None
+            if hasattr(socket, "AF_UNIX"):
+                # On systems with unix sockets, we get a slight performance bump by using them.
+                self.tempdir = tempfile.mkdtemp(prefix="ipc")
+                pub_url = f"ipc://{self.tempdir}/pub.sock"
+                pull_url = f"ipc://{self.tempdir}/pull.sock"
+
+            logging.debug(f"Local Chief setting up server with urls {pub_url}/{pull_url}.")
+            self._local_chief_zmq = ipc.ZMQBroadcastServer(
+                num_connections=self._rendezvous_info.get_size() - 1,
+                pub_url=pub_url,
+                pull_url=pull_url,
             )
 
-            if self._is_chief:
-                logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
-                self._chief_zmq = ipc.ZMQBroadcastServer(
-                    num_connections=self._env.experiment_config.slots_per_trial() - 1,
-                    pub_url=f"tcp://*:{srv_pub_port}",
-                    pull_url=f"tcp://*:{srv_pull_port}",
-                )
-                self._chief_zmq.safe_start(lambda: None)
+            if pub_url is None:
+                pub_url = f"tcp://localhost:{self._local_chief_zmq.get_pub_port()}"
 
-            else:
-                chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
-                logging.debug(
-                    f"Non-Chief {horovod.hvd.rank()} setting up comm to "
-                    f"{chief_ip_address} w/ ports "
-                    f"{srv_pub_port}/{srv_pull_port}."
-                )
-                self._worker_zmq = ipc.ZMQBroadcastClient(
-                    srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
-                    srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
-                )
-                self._worker_zmq.safe_start(lambda: None)
+            if pull_url is None:
+                pull_url = f"tcp://localhost:{self._local_chief_zmq.get_pull_port()}"
+
+            # Do a global allgather to initialize local clients on every node.
+            local_chief = (horovod.hvd.cross_rank(), pub_url, pull_url)
+            _ = self._zmq_allgather(local_chief)
+            self._local_chief_zmq.safe_start(lambda: None)
+
+        else:
+            # Start with the global allgather.
+            all_local_chiefs = self._zmq_allgather(None)
+            cross_rank = horovod.hvd.cross_rank()
+            my_local_chief = [x for x in all_local_chiefs if x is not None and x[0] == cross_rank]
+            assert (
+                len(my_local_chief) == 1
+            ), f"did not find exactly 1 local_chief for machine {cross_rank} in {all_local_chiefs}"
+            _, pub_url, pull_url = my_local_chief[0]
+
+            assert isinstance(pub_url, str), f"invalid pub_url: {pub_url}"
+            assert isinstance(pull_url, str), f"invalid pub_url: {pull_url}"
+
+            logging.debug(f"Local Worker setting up server with urls {pub_url}/{pull_url}.")
+            self._local_worker_zmq = ipc.ZMQBroadcastClient(pub_url, pull_url)
+            self._local_worker_zmq.safe_start()
+
+    def close(self) -> None:
+        # if statements in close() mirror the if statements of _init_ipc().
+        if not self._hvd_config.use or horovod.hvd.size() < 2:
+            return
+
+        # Global broadcast server.
+        if self._is_chief:
+            self._chief_zmq.close()
+        else:
+            self._worker_zmq.close()
+
+        if horovod.hvd.local_size() < 2:
+            return
+
+        # Local broadcast server.
+        if self._is_local_chief:
+            self._local_chief_zmq.close()
+            if self.tempdir is not None:
+                shutil.rmtree(self.tempdir)
+                self.tempdir = None
+        else:
+            self._local_worker_zmq.close()
 
     def get_rank(self) -> int:
         """
@@ -282,7 +366,7 @@ class DistributedContext:
         """
         Gather stuff to the chief.  The chief returns a list of all stuff, and workers return None.
         """
-        if not self._hvd_config.use:
+        if not self._hvd_config.use or horovod.hvd.size() < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
         if self._is_chief:
@@ -298,11 +382,32 @@ class DistributedContext:
         logging.debug(f"Worker {self.get_rank()} finished zmq gather.")
         return out
 
+    def _zmq_gather_local(self, stuff: Any) -> Optional[List]:
+        """
+        Gather stuff to the local chief.  The local chief returns a list of all stuff, and local
+        workers return None.
+        """
+        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+            return [stuff]
+        logging.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
+        if self._is_local_chief:
+            worker_stuff, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
+            self._local_chief_zmq.broadcast(None)
+            out = [stuff, *worker_stuff]  # type: Optional[List]
+        else:
+            self._local_worker_zmq.send(stuff)
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self._local_worker_zmq.recv()
+            out = None
+        logging.debug(f"Worker {self.get_rank()} finished zmq gather local.")
+        return out
+
     def _zmq_allgather(self, stuff: Any) -> List:
         """
         Gather stuff to the chief and broadcast all of it back to the workers.
         """
-        if not self._hvd_config.use:
+        if not self._hvd_config.use or horovod.hvd.size() < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
@@ -314,3 +419,44 @@ class DistributedContext:
             all_stuff = self._worker_zmq.recv()
         logging.debug(f"Worker {self.get_rank()} finished zmq allgather.")
         return all_stuff
+
+    def _zmq_allgather_local(self, stuff: Any) -> List:
+        """
+        Gather stuff to the local chief and broadcast all of it back to the local workers.
+        """
+        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+            return [stuff]
+        logging.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
+        if self._is_local_chief:
+            worker_stuff, _ = self._local_chief_zmq.gather_with_polling(lambda: None)
+            all_stuff = [stuff, *worker_stuff]
+            self._local_chief_zmq.broadcast(all_stuff)
+        else:
+            self._local_worker_zmq.send(stuff)
+            all_stuff = self._local_worker_zmq.recv()
+        logging.debug(f"Worker {self.get_rank()} finished zmq local allgather.")
+        return all_stuff
+
+    def _zmq_broadcast(self, stuff: Any) -> Any:
+        """
+        Every worker gets the value sent by the chief.
+        """
+        if not self._hvd_config.use or horovod.hvd.size() < 2:
+            return stuff
+        if self._is_chief:
+            self._chief_zmq.broadcast(stuff)
+        else:
+            stuff = self._worker_zmq.recv()
+        return stuff
+
+    def _zmq_broadcast_local(self, stuff: Any = None) -> Any:
+        """
+        Every local worker gets the value sent by the local chief.
+        """
+        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+            return stuff
+        if self._is_local_chief:
+            self._local_chief_zmq.broadcast(stuff)
+        else:
+            stuff = self._local_worker_zmq.recv()
+        return stuff

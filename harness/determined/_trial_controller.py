@@ -104,6 +104,9 @@ class TrialController(metaclass=abc.ABCMeta):
         if env.experiment_config.averaging_training_metrics_enabled():
             check.true(self.supports_averaging_training_metrics())
 
+    def close(self) -> None:
+        self.context.close()
+
 
 class CallbackTrialController(TrialController):
     """
