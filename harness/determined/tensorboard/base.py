@@ -1,8 +1,10 @@
 import abc
+import logging
 import pathlib
 import time
 from typing import List
 
+from determined import tensorboard
 from determined.tensorboard import util
 
 
@@ -61,3 +63,18 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         Delete all objects from the backing persistent storage.
         """
         pass
+
+
+def get_metric_writer() -> tensorboard.BatchMetricWriter:
+    try:
+        from determined.tensorboard.metric_writers import tensorflow
+
+        writer: tensorboard.MetricWriter = tensorflow.TFWriter()
+
+    except ModuleNotFoundError:
+        logging.warning("Tensorflow writer not found")
+        from determined.tensorboard.metric_writers import pytorch
+
+        writer = pytorch.TorchWriter()
+
+    return tensorboard.BatchMetricWriter(writer)

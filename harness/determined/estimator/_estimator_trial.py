@@ -72,6 +72,8 @@ class DeterminedControlHook(estimator.RunHook):
 
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
+        self.train_start_time = estimator_trial_controller._generic._current_timestamp()
+        self.train_workload = None  # type: Optional[workload.Workload]
 
         self.prof = estimator_trial_controller.prof
 
@@ -154,17 +156,24 @@ class DeterminedControlHook(estimator.RunHook):
 
         # Send the result of the training step back to the main process.
         check.is_not_none(self.train_response_func, "no response_func at end of train_for_step")
-        self.train_response_func = cast(workload.ResponseFunc, self.train_response_func)
+        assert self.train_response_func is not None
+        assert self.train_workload is not None
         if self.estimator_trial_controller.is_chief:
             response = {
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
                 "invalid_hp": False,
                 "init_invalid_hp": False,
-            }
-            self.train_response_func(response)
+            }  # type: workload.Response
+            response = self.estimator_trial_controller._generic._after_training(
+                self.train_workload,
+                self.train_start_time,
+                response,
+            )
         else:
-            self.train_response_func(workload.Skipped())
+            response = workload.Skipped()
+
+        self.train_response_func(response)
 
         # Reset step counter and clear the step metrics from memory.
         self.train_response_func = None
@@ -278,43 +287,61 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        for wkld, args, response_func in self.estimator_trial_controller.workloads:
-            logging.debug(f"Received wkld {wkld.kind} with args {args}.")
+        _generic = self.estimator_trial_controller._generic
+
+        for wkld, response_func in self.estimator_trial_controller.workloads:
+            logging.debug(f"Received wkld {wkld.kind}.")
+            start_time = _generic._current_timestamp()
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Store values for the training loop.
                 self.num_batches = wkld.num_batches
                 self.train_response_func = response_func
+                self.train_start_time = start_time
+                self.train_workload = wkld
                 # Break out of the control loop so that the train process
                 # re-enters the train_and_evaluate() loop.
                 break
+
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 try:
-                    response_func(
-                        det.util.wrap_metrics(
-                            self._compute_validation_metrics(),
-                            self.estimator_trial_controller.context.get_stop_requested(),
-                            invalid_hp=False,
-                            init_invalid_hp=False,
-                        )
+                    response = det.util.wrap_metrics(
+                        self._compute_validation_metrics(),
+                        self.estimator_trial_controller.context.get_stop_requested(),
+                        invalid_hp=False,
+                        init_invalid_hp=False,
                     )
                 except det.InvalidHP as e:
                     logging.info(
                         "Invalid hyperparameter exception in trial validation step: {}".format(e)
                     )
-                    response_func(
-                        det.util.wrap_metrics(
-                            {},
-                            self.estimator_trial_controller.context.get_stop_requested(),
-                            invalid_hp=True,
-                            init_invalid_hp=False,
-                        )
+                    response = det.util.wrap_metrics(
+                        {},
+                        self.estimator_trial_controller.context.get_stop_requested(),
+                        invalid_hp=True,
+                        init_invalid_hp=False,
                     )
+                searcher_metric = (
+                    self.estimator_trial_controller.env.experiment_config.get_searcher_metric()
+                )
+                response = _generic._after_validation(wkld, start_time, searcher_metric, response)
+                response_func(response)
+
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], pathlib.Path)
-                path = cast(pathlib.Path, args[0])
-                response_func(self._checkpoint_model(path))
+                if self.estimator_trial_controller.is_chief:
+                    with _generic._storage_mgr.store_path() as (storage_id, path):
+                        response = self._checkpoint_model(pathlib.Path(path))
+                        response = _generic._after_checkpoint(
+                            wkld,
+                            start_time,
+                            storage_id,
+                            path,
+                            response,
+                        )
+                else:
+                    response = workload.Skipped()
+                response_func(response)
+
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
                 self.estimator_trial_controller.exit_response_func = response_func
                 raise det.errors.WorkerFinishedGracefully("Exiting normally.")
@@ -349,7 +376,7 @@ class DeterminedControlHook(estimator.RunHook):
             pickle.dump(rng_state, f)
 
 
-class EstimatorTrialController(det.LoopTrialController):
+class EstimatorTrialController(det.TrialController):
     def __init__(
         self,
         estimator: tf.estimator.Estimator,
@@ -360,7 +387,7 @@ class EstimatorTrialController(det.LoopTrialController):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        super().__init__(context, *args, **kwargs)  # type: ignore
+        super().__init__(context, *args, **kwargs)
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
@@ -706,24 +733,26 @@ class EstimatorTrialController(det.LoopTrialController):
 
         # Add suffix so that horovod processes don't overwrite each other.
         suffix = str(0) if not self.hvd_config.use else str(hvd.local_rank())
-        if self.load_path is None:
+
+        if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
-        for callback in self.train_hooks:
-            if isinstance(callback, estimator.RunHook):
-                callback.on_checkpoint_load(str(self.load_path))
+        with self._generic._download_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+            for callback in self.train_hooks:
+                if isinstance(callback, estimator.RunHook):
+                    callback.on_checkpoint_load(str(load_path))
 
-        self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
-        if self.estimator_dir.exists():
-            shutil.rmtree(str(self.estimator_dir))
-        logging.debug(f"Copying from {self.load_path} to {self.estimator_dir}.")
-        shutil.copytree(str(self.load_path), str(self.estimator_dir))
+            self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
+            if self.estimator_dir.exists():
+                shutil.rmtree(str(self.estimator_dir))
+            logging.debug(f"Copying from {load_path} to {self.estimator_dir}.")
+            shutil.copytree(str(load_path), str(self.estimator_dir))
 
-        # Calibrate the CheckpointState metadata file to the new location.
-        estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
-        logging.debug(f"Load path set to {self.estimator_dir}.")
+            # Calibrate the CheckpointState metadata file to the new location.
+            estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
+            logging.debug(f"Load path set to {self.estimator_dir}.")
 
     def compute_validation_metrics(self) -> workload.Response:
         steps = self.eval_spec.steps if not self.env.test_mode else 1

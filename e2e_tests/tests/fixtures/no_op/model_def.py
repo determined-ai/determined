@@ -10,11 +10,11 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod
+from determined import horovod, workload
 from determined.common import check
 
 
-class NoOpTrialController(det.CallbackTrialController):
+class NoOpTrialController(det.TrialController):
     """
     A trial class which does nothing (except for maybe sleep) during training
     and validation.  For testing purposes.
@@ -59,10 +59,13 @@ class NoOpTrialController(det.CallbackTrialController):
 
         self.request_stop = self.env.hparams.get("request_stop", False)
 
-        if self.load_path is None:
-            self.trained_steps = collections.Counter()
+        if self.env.latest_checkpoint is not None:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
+                self.load(pathlib.Path(load_path))
         else:
-            self.load(self.load_path)
+            self.trained_steps = collections.Counter()
 
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
@@ -71,6 +74,43 @@ class NoOpTrialController(det.CallbackTrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         np.random.seed(env.trial_seed)
+
+    def run(self) -> None:
+        for w, response_func in self.workloads:
+            start_time = self._generic._current_timestamp()
+            try:
+                if w.kind == workload.Workload.Kind.RUN_STEP:
+                    response = self.train_for_step(
+                        w.step_id, w.num_batches
+                    )  # type: workload.Response
+                    response = self._generic._after_training(w, start_time, response)
+                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    response = self.compute_validation_metrics(w.step_id)
+                    searcher_metric = self.env.experiment_config.get_searcher_metric()
+                    response = self._generic._after_validation(
+                        w, start_time, searcher_metric, response
+                    )
+                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        self.save(pathlib.Path(path))
+                        response = {}
+                        response = self._generic._after_checkpoint(
+                            w,
+                            start_time,
+                            storage_id,
+                            path,
+                            response,
+                        )
+                elif w.kind == workload.Workload.Kind.TERMINATE:
+                    self.terminate()
+                    response = workload.Skipped()
+                else:
+                    raise AssertionError("Unexpected workload: {}".format(w.kind))
+
+            except det.errors.SkipWorkloadException:
+                response = workload.Skipped()
+
+            response_func(response)
 
     def steps_trained(self) -> int:
         return sum(self.trained_steps.values())

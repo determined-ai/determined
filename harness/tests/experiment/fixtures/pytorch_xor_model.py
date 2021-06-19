@@ -129,6 +129,8 @@ class BaseXORTrial(pytorch.PyTorchTrial):
 
 
 class XORTrial(BaseXORTrial):
+    _searcher_metric = "loss"
+
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, labels = batch
         output = self.model(data)
@@ -138,6 +140,8 @@ class XORTrial(BaseXORTrial):
 
 
 class XORTrialMulti(XORTrial):
+    _searcher_metric = "binary_error"
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
@@ -181,6 +185,8 @@ class XORTrialWithTrainingMetrics(XORTrialMulti):
 
 
 class XORTrialWithMultiValidation(XORTrialMulti):
+    _searcher_metric = "accuracy"
+
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         data, labels = batch
         output = self.model(data)
@@ -191,6 +197,8 @@ class XORTrialWithMultiValidation(XORTrialMulti):
 
 
 class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
+    _searcher_metric = "binary_error"
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
@@ -231,6 +239,8 @@ class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
 
 
 class XORTrialCustomEval(BaseXORTrial):
+    _searcher_metric = "loss"
+
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         loss_sum = 0.0
         for data, labels in iter(data_loader):
@@ -314,6 +324,8 @@ class XORTrialCallbacks(XORTrialMulti):
 
 
 class XORTrialAccessContext(BaseXORTrial):
+    _searcher_metric = "loss"
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 

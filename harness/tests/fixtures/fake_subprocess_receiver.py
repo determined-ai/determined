@@ -36,7 +36,7 @@ def main() -> None:
         expected = fake_workload_gen()
         actual = iter(subrec)
         for i, wkld in enumerate(expected):
-            actual_wkld, _, resp_fn = next(actual)
+            actual_wkld, resp_fn = next(actual)
             assert wkld == actual_wkld
             resp_fn({"count": i})
 

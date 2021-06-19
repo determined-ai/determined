@@ -5,7 +5,3 @@ from determined.layers._worker_process import (
     SubprocessReceiver,
     WorkerProcessContext,
 )
-from determined.layers._workload_manager import (
-    WorkloadManager,
-    build_workload_manager,
-)

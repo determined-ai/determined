@@ -31,6 +31,8 @@ class AncientTrial(keras.TFKerasTrial):
     Don't change this model architecture or add any fancy features or the test won't be valid.
     """
 
+    _searcher_metric = "val_loss"
+
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
         self.my_batch_size = self.context.get_per_slot_batch_size()

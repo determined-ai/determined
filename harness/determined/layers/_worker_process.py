@@ -5,7 +5,7 @@ import pickle
 import subprocess
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
 import psutil
 
@@ -23,7 +23,6 @@ class WorkerProcessContext:
         hvd_config: horovod.HorovodContext,
         rendezvous_info: det.RendezvousInfo,
         env: det.EnvContext,
-        load_path: Optional[pathlib.Path],
     ) -> None:
         self.broadcast_pub_port = broadcast_pub_port
         self.broadcast_pull_port = broadcast_pull_port
@@ -31,7 +30,6 @@ class WorkerProcessContext:
         self.hvd_config = hvd_config
         self.rendezvous_info = rendezvous_info
         self.env = env
-        self.load_path = load_path
 
     @staticmethod
     def from_file(path: pathlib.Path) -> "WorkerProcessContext":
@@ -69,12 +67,12 @@ class SubprocessReceiver(workload.Source):
         while True:
             obj = self._broadcast_client.recv()
 
-            wkld, args = cast(Tuple[workload.Workload, List[Any]], obj)
+            wkld = cast(workload.Workload, obj)
 
             def _respond(message: Any) -> None:
                 self._broadcast_client.send(message)
 
-            yield wkld, args, _respond
+            yield wkld, _respond
 
 
 class SubprocessLauncher:
@@ -82,7 +80,6 @@ class SubprocessLauncher:
         self,
         env: det.EnvContext,
         workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
         rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         python_subprocess_entrypoint: Optional[str] = None,
@@ -90,7 +87,6 @@ class SubprocessLauncher:
 
         self.env = env
         self.workloads = workloads
-        self.load_path = load_path
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
         self._python_subprocess_entrypoint = python_subprocess_entrypoint
@@ -155,7 +151,6 @@ class SubprocessLauncher:
             hvd_config=self.hvd_config,
             rendezvous_info=self.rendezvous_info,
             env=self.env,
-            load_path=self.load_path,
         )
         self._worker_process_env_path = pathlib.Path(
             "{}-{}-{}".format(
@@ -273,8 +268,8 @@ class SubprocessLauncher:
 
         try:
             self._do_startup_message_sequence()
-            for wkld, args, response_func in self.workloads:
-                response_func(self._send_recv_workload(wkld, args))
+            for wkld, response_func in self.workloads:
+                response_func(self._send_recv_workload(wkld))
         finally:
             self.broadcast_server.close()
 
@@ -301,9 +296,9 @@ class SubprocessLauncher:
                 time.sleep(3)
                 raise det.errors.WorkerError("Detected that worker process died.")
 
-    def _send_recv_workload(self, wkld: workload.Workload, args: List[Any]) -> workload.Response:
+    def _send_recv_workload(self, wkld: workload.Workload) -> workload.Response:
         # Broadcast every workload to every worker on this machine.
-        self.broadcast_server.broadcast((wkld, args))
+        self.broadcast_server.broadcast(wkld)
 
         if wkld.kind == workload.Workload.Kind.TERMINATE:
             # Do not perform health checks once worker have been instructed to terminate.

@@ -1,6 +1,6 @@
 import abc
 from enum import Enum, unique
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
 from determined.common import check
 from determined.common.types import ExperimentID, StepID, TrialID
@@ -81,19 +81,12 @@ ResponseFunc = Callable[[Response], None]
 
 
 """
-Args is auxiliary information relevant to a workload which does not come from the master, such as
-the path to a checkpoint directory for a trial to save to.
-"""
-Args = List[Any]
-
-
-"""
 Stream describes the main message passing interface between layers of the harness.  Higher layers
 will yield workloads to lower layers, with closures to be called for the response.  Yielding a
 response closure alongside the workload only works because the messaging paradigm in the harness is
 synchronous.
 """
-Stream = Iterator[Tuple[Workload, Args, ResponseFunc]]
+Stream = Iterator[Tuple[Workload, ResponseFunc]]
 
 
 class Source(metaclass=abc.ABCMeta):
@@ -110,8 +103,7 @@ class Source(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __iter__(self) -> Stream:
         """
-        Generate tuples of (workload, workload args, response closure) to pass to the next layer
-        down.
+        Generate tuples of (workload, response closure) to pass to the next layer down.
         """
         pass
 
@@ -131,7 +123,7 @@ class WorkloadResponseInterceptor:
             interceptor = WorkloadResponseInterceptor()
 
             # Yield some workload message to the TrialController.
-            yield from interceptor.send(my_workload, my_workload_args)
+            yield from interceptor.send(my_workload)
 
             # Check that the result is appropriate.
             check.is_reasonable(interceptor.result())
@@ -156,10 +148,10 @@ class WorkloadResponseInterceptor:
         check.is_none(self._response, "_respond() was called twice by the TrialController")
         self._response = resp
 
-    def send(self, workload: Workload, workload_args: Args) -> Stream:
+    def send(self, workload: Workload) -> Stream:
         """Yield a workload with our _respond() function so we can intercept the response."""
         self._response = None
-        yield workload, workload_args, self._respond
+        yield workload, self._respond
 
     def result(self) -> Response:
         """Read the WorkloadResponse from the TrialController (only call once per send)."""

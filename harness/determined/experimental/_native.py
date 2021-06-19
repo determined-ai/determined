@@ -89,29 +89,27 @@ def _submit_experiment(
         return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
 
-def _make_test_workloads(
-    checkpoint_dir: pathlib.Path, config: det.ExperimentConfig
-) -> workload.Stream:
+def _make_test_workloads(config: det.ExperimentConfig) -> workload.Stream:
     interceptor = workload.WorkloadResponseInterceptor()
 
     logging.info("Training one batch")
-    yield from interceptor.send(workload.train_workload(1), [])
+    yield from interceptor.send(workload.train_workload(1))
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.scheduling_unit())
     logging.info(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one batch")
-    yield from interceptor.send(workload.validation_workload(1), [])
+    yield from interceptor.send(workload.validation_workload(1))
     validation = interceptor.metrics_result()
     v_metrics = validation["metrics"]["validation_metrics"]
     logging.info(f"Finished validating, validation metrics: {v_metrics}")
 
-    logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
-    yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
-    logging.info(f"Finished saving a checkpoint to {checkpoint_dir}.")
+    logging.info("Saving a checkpoint.")
+    yield workload.checkpoint_workload(), workload.ignore_workload_response
+    logging.info("Finished saving a checkpoint.")
 
-    yield workload.terminate_workload(), [], workload.ignore_workload_response
+    yield workload.terminate_workload(), workload.ignore_workload_response
     logging.info("The test experiment passed.")
 
 
@@ -124,7 +122,11 @@ def _load_trial_for_checkpoint_export(
     with det._local_execution_manager(context_dir):
         trial_class = load.trial_class_from_entrypoint(config["entrypoint"])
         env, rendezvous_info, hvd_config = det._make_local_execution_env(
-            managed_training=managed_training, test_mode=False, config=config, hparams=hparams
+            managed_training=managed_training,
+            test_mode=False,
+            config=config,
+            checkpoint_dir="/tmp",
+            hparams=hparams,
         )
         trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
     return trial_class, trial_context
@@ -138,28 +140,29 @@ def test_one_batch(
     config = {**(config or {}), "scheduling_unit": 1}
 
     logging.info("Running a minimal test experiment locally")
-    checkpoint_dir = tempfile.TemporaryDirectory()
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(
-        managed_training=True, test_mode=True, config=config, limit_gpus=1
-    )
-    workloads = _make_test_workloads(
-        pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
-    )
-    logging.info(f"Using hyperparameters: {env.hparams}.")
-    logging.debug(f"Using a test experiment config: {env.experiment_config}.")
+    with tempfile.TemporaryDirectory() as checkpoint_dir:
+        env, rendezvous_info, hvd_config = det._make_local_execution_env(
+            managed_training=True,
+            test_mode=True,
+            config=config,
+            checkpoint_dir=checkpoint_dir,
+            limit_gpus=1,
+        )
+        workloads = _make_test_workloads(env.experiment_config)
+        logging.info(f"Using hyperparameters: {env.hparams}.")
+        logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
-    # Case 2: test one batch for Trial implementation.
-    controller = load.load_trial(
-        trial_class=trial_class,
-        env=env,
-        workloads=workloads,
-        load_path=None,
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-    )
-    controller.run()
-    checkpoint_dir.cleanup()
-    logging.info("Note: to submit an experiment to the cluster, change local parameter to False")
+        controller = load.load_trial(
+            trial_class=trial_class,
+            env=env,
+            workloads=workloads,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+        )
+        controller.run()
+        logging.info(
+            "Note: to submit an experiment to the cluster, change local parameter to False"
+        )
 
 
 def create(
@@ -293,7 +296,11 @@ def create_trial_instance(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
     env, rendezvous_info, hvd_config = det._make_local_execution_env(
-        managed_training=False, test_mode=False, config=config, hparams=hparams
+        managed_training=False,
+        test_mode=False,
+        config=config,
+        checkpoint_dir="/tmp",
+        hparams=hparams,
     )
     trial_context = trial_def.trial_context_class(env, hvd_config, rendezvous_info=rendezvous_info)
     return trial_def(trial_context)
