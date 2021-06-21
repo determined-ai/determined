@@ -115,10 +115,13 @@ type (
 	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
-	watchRendezvousInfo struct{ containerID cproto.ID }
-	rendezvousWatcher   struct {
-		// interface{} is *trialv1.RendezvousInfo or error.
-		C <-chan interface{}
+	watchRendezvousInfo   struct{ containerID cproto.ID }
+	rendezvousInfoOrError struct {
+		info *trialv1.RendezvousInfo
+		err  error
+	}
+	rendezvousWatcher struct {
+		C <-chan rendezvousInfoOrError
 	}
 	unwatchRendezvousInfo struct{ containerID cproto.ID }
 )
@@ -241,7 +244,7 @@ type (
 		// If there is no current task, or it is unallocated, it is nil.
 		preemption *preemption
 		// Map of container ID to watcher ID a rendezvous info listener.
-		rendezvousWatchers map[cproto.ID]chan<- interface{}
+		rendezvousWatchers map[cproto.ID]chan<- rendezvousInfoOrError
 	}
 )
 
@@ -282,7 +285,7 @@ func newTrial(
 		agentUserGroup: exp.agentUserGroup,
 		taskSpec:       exp.taskSpec,
 
-		rendezvousWatchers: make(map[cproto.ID]chan<- interface{}),
+		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
 	}
 }
 
@@ -427,7 +430,7 @@ func (t *trial) registerRendezvousWatcher(
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
-	w := make(chan interface{}, 1)
+	w := make(chan rendezvousInfoOrError, 1)
 	t.rendezvousWatchers[msg.containerID] = w
 
 	t.lastContainerConnectedTime = time.Now()
@@ -907,11 +910,13 @@ func (t *trial) pushRendezvous(ctx *actor.Context) {
 		if pushArchitectureEnabled {
 			w := t.rendezvousWatchers[c.ID]
 			if err != nil {
-				w <- err
+				w <- rendezvousInfoOrError{err: err}
 			} else {
-				w <- &trialv1.RendezvousInfo{
-					Addresses: raddrs,
-					Rank:      int32(t.containerRanks[c.ID]),
+				w <- rendezvousInfoOrError{
+					info: &trialv1.RendezvousInfo{
+						Addresses: raddrs,
+						Rank:      int32(t.containerRanks[c.ID]),
+					},
 				}
 			}
 			close(w)
@@ -932,7 +937,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) {
 
 func (t *trial) closeRendezvous() {
 	for cID, w := range t.rendezvousWatchers {
-		w <- errors.New("task terminated")
+		w <- rendezvousInfoOrError{err: errors.New("task terminated")}
 		close(w)
 		delete(t.rendezvousWatchers, cID)
 	}
