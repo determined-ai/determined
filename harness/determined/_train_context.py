@@ -225,6 +225,7 @@ class DistributedContext:
                     pub_port=srv_pub_port,
                     pull_port=srv_pull_port,
                 )
+                self._chief_zmq.safe_start(lambda: None)
 
             else:
                 chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
@@ -237,6 +238,7 @@ class DistributedContext:
                     srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
                     srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
                 )
+                self._worker_zmq.safe_start()
 
     def get_rank(self) -> int:
         """

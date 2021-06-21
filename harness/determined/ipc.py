@@ -19,6 +19,14 @@ class _OneSidedBarrier:
         self.message = message
 
 
+class _HelloMessage:
+    pass
+
+
+class _FinalHelloMessage:
+    pass
+
+
 class ConnectedMessage:
     """
     ConnectedMessage is sent by a SubprocessReceiver to the SubprocessLauncher when it is starts
@@ -77,6 +85,7 @@ class ZMQBroadcastServer:
     See ZMQ documentation for a related discussion on PUB-SUB sockets:
     http://zguide.zeromq.org/page:all#Getting-the-Message-Out (look for "one more important thing")
     http://zguide.zeromq.org/page:all#Node-Coordination
+    (link broke, use http://web.archive.org/web/20191011190012/http://zguide.zeromq.org/page:all)
     """
 
     def __init__(
@@ -101,6 +110,35 @@ class ZMQBroadcastServer:
 
         self._send_serial = 0
         self._recv_serial = 0
+
+    def safe_start(self, health_check: Callable[[], None]) -> None:
+        """
+        Broadcast Hello messages over and over until all clients response with a Hello message.
+
+        The reason for this is that the only way to be 100% confidient that a subscriber has
+        connected is for it to actually receive a message over the pub/sub connection.
+
+        After each client sees its first Hello, it will send a single Hello message to the
+        server.
+
+        After all connections have been made, the server will broadcast a FinalHello.
+        """
+
+        connections_made = 0
+        while connections_made < self._num_connections:
+            # Send a Hello.
+            self._pub_socket.send_pyobj(_HelloMessage())
+
+            # Check for an incoming connection.
+            if self._pull_socket.poll(50) == 0:
+                health_check()
+                continue
+
+            obj = self._pull_socket.recv_pyobj()
+            check.is_instance(obj, _HelloMessage, "got non-_HelloMessage in server safe_start")
+            connections_made += 1
+
+        self._pub_socket.send_pyobj(_FinalHelloMessage())
 
     def __enter__(self) -> "ZMQBroadcastServer":
         return self
@@ -180,6 +218,25 @@ class ZMQBroadcastClient:
 
         self._send_serial = 0
         self._recv_serial = 0
+
+    def safe_start(self) -> None:
+        """
+        See ZMQBroadcastServer.safe_start().
+        """
+
+        # Get the first HelloMessage to guarantee our SUB socket is connected.
+        obj = self._sub_socket.recv_pyobj()
+        check.is_instance(obj, _HelloMessage, "got non-HelloMessage in client.safe_start()")
+
+        # Send our own _HelloMessage.
+        self._push_socket.send_pyobj(_HelloMessage())
+
+        while True:
+            # Discard all further Hellos until the FinalHello.
+            obj = self._sub_socket.recv_pyobj()
+            if isinstance(obj, _FinalHelloMessage):
+                break
+            check.is_instance(obj, _HelloMessage, "got non-HelloMessage in client.safe_start()")
 
     def __enter__(self) -> "ZMQBroadcastClient":
         return self
