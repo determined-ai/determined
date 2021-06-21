@@ -85,6 +85,9 @@ variable "preemptible" {
 variable "operation_timeout_period" {
 }
 
+variable "filestore_address" {
+}
+
 variable "gcs_bucket" {
 }
 

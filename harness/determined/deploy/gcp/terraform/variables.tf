@@ -1,10 +1,15 @@
-// AUTH
+/******************************************
+	AUTH
+ *****************************************/
+
 variable "keypath" {
   type = string
   default = null
 }
 
-// GCP
+/******************************************
+	GCP
+ *****************************************/
 
 variable "cluster_id" {
   type = string
@@ -32,9 +37,15 @@ variable "subnetwork" {
   default = null
 }
 
+variable "filestore_address" {
+  type = string
+  default = ""
+}
+
 variable "gcs_bucket" {
   type = string
   default = null
+  description = "The name for the provided GCS bucket"
 }
 
 variable "service_account_email" {
@@ -48,7 +59,9 @@ variable "create_static_ip" {
 }
 
 
-// CLUSTER
+/******************************************
+	Cluster
+ *****************************************/
 
 variable "master_instance_type" {
   type = string
@@ -145,7 +158,9 @@ variable "preemption_enabled" {
   default = false
 }
 
-// DETERMINED
+/******************************************
+	Determined
+ *****************************************/
 
 variable "environment_image" {
   type = string
@@ -174,7 +189,9 @@ variable "gpu_env_image" {
   default = ""
 }
 
-// MASTER
+/******************************************
+	Master
+ *****************************************/
 
 variable "scheme" {
   type = string
@@ -187,7 +204,9 @@ variable "port" {
 }
 
 
-// DATABASE
+/******************************************
+	Database
+ *****************************************/
 
 variable "db_version" {
   type = string
