@@ -3,7 +3,7 @@ import logging
 import shutil
 import socket
 import tempfile
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional
 
 import determined as det
 from determined import constants, horovod, ipc
@@ -24,7 +24,29 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.env = env
         self.hvd_config = hvd_config
         self.rendezvous_info = rendezvous_info
-        self.distributed = DistributedContext(env, hvd_config, rendezvous_info)
+
+        if hvd_config.use:
+            rank_info = RankInfo(
+                rank=horovod.hvd.rank(),
+                size=horovod.hvd.size(),
+                local_rank=horovod.hvd.local_rank(),
+                local_size=horovod.hvd.local_size(),
+                cross_rank=horovod.hvd.cross_rank(),
+                cross_size=horovod.hvd.cross_size(),
+            )
+        else:
+            rank_info = RankInfo(
+                rank=0,
+                size=1,
+                local_rank=0,
+                local_size=1,
+                cross_rank=0,
+                cross_size=1,
+            )
+
+        self.distributed = DistributedContext(
+            rank_info, rendezvous_info, env.det_trial_unique_port_offset
+        )
         self._stop_requested = False
 
     @classmethod
@@ -190,6 +212,49 @@ class NativeContext(_TrainContext):
         self._train_fn = train_fn
 
 
+class RankInfo:
+    def __init__(
+        self,
+        *,
+        rank: int,
+        size: int,
+        local_rank: int,
+        local_size: int,
+        cross_rank: int,
+        cross_size: int,
+    ) -> None:
+        self._rank = rank
+        self._size = size
+        self._local_rank = local_rank
+        self._local_size = local_size
+        self._cross_rank = cross_rank
+        self._cross_size = cross_size
+
+    @property
+    def rank(self) -> int:
+        return self._rank
+
+    @property
+    def size(self) -> int:
+        return self._size
+
+    @property
+    def local_rank(self) -> int:
+        return self._local_rank
+
+    @property
+    def local_size(self) -> int:
+        return self._local_size
+
+    @property
+    def cross_rank(self) -> int:
+        return self._cross_rank
+
+    @property
+    def cross_size(self) -> int:
+        return self._cross_size
+
+
 class DistributedContext:
     """
     DistributedContext extends all TrialContexts and NativeContexts under
@@ -199,40 +264,47 @@ class DistributedContext:
 
     def __init__(
         self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
+        rank_info: RankInfo,
         rendezvous_info: det.RendezvousInfo,
+        unique_port_offset: int,
+        force_tcp: bool = False,
     ) -> None:
-        self._env = env
-        self._hvd_config = hvd_config
+        self._info = rank_info
         self._rendezvous_info = rendezvous_info
+        self._unique_port_offset = unique_port_offset
 
-        if self._hvd_config.use:
-            self._is_chief = horovod.hvd.rank() == 0
-            self._is_local_chief = horovod.hvd.local_rank() == 0
-        else:
-            self._is_chief = True
-            self._is_local_chief = True
+        self._is_chief = self._info.rank == 0
+        self._is_local_chief = self._info.local_rank == 0
 
-        self._init_ipc()
+        if len(self._rendezvous_info.get_addrs()) != self._info.cross_size:
+            raise AssertionError(
+                f"rendezvous_info has {len(self._rendezvous_info.get_addrs())} addresses but "
+                f"rank_info indicates there are {self._info.cross_size} machines"
+            )
 
-    def _init_ipc(self) -> None:
-        if not self._hvd_config.use or horovod.hvd.size() < 2:
+        self._init_ipc(force_tcp)
+
+    def _init_ipc(self, force_tcp: bool) -> None:
+        if self._info.size < 2:
             # No broadcasting necessary.
             return
 
-        srv_pub_port = (
-            constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._env.det_trial_unique_port_offset
-        )
-        srv_pull_port = (
-            constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._env.det_trial_unique_port_offset
-        )
+        # Why does this work?  Why don't multiple agents in training decide on different ports,
+        # causing them to be unable to communicate?
+        #
+        # Answer: unique port offsets are set on by the determined-master on a per-container basis.
+        # Multi-agent dtrain only allows for one-container-per-node, in which case
+        # unique_port_offset is always 0, and every container in training will agree on the same
+        # port.  Single-agent dtrain always within a single container, so the unique_port_offset
+        # may not be zero but all workers (in that same container) will still agree.
+        srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._unique_port_offset
+        srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._unique_port_offset
 
         # Global broadcast server.
         if self._is_chief:
             logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
             self._chief_zmq = ipc.ZMQBroadcastServer(
-                num_connections=self._env.experiment_config.slots_per_trial() - 1,
+                num_connections=self._info.size - 1,
                 pub_url=f"tcp://*:{srv_pub_port}",
                 pull_url=f"tcp://*:{srv_pull_port}",
             )
@@ -241,7 +313,7 @@ class DistributedContext:
         else:
             chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
             logging.debug(
-                f"Non-Chief {horovod.hvd.rank()} setting up comm to "
+                f"Non-Chief {self._info.rank} setting up comm to "
                 f"{chief_ip_address} w/ ports "
                 f"{srv_pub_port}/{srv_pull_port}."
             )
@@ -251,7 +323,7 @@ class DistributedContext:
             )
             self._worker_zmq.safe_start()
 
-        if horovod.hvd.local_size() < 2:
+        if self._info.local_size < 2:
             # No local broadcasting necessary.
             return
 
@@ -260,7 +332,7 @@ class DistributedContext:
         if self._is_local_chief:
             pub_url = None
             pull_url = None
-            if hasattr(socket, "AF_UNIX"):
+            if hasattr(socket, "AF_UNIX") and not force_tcp:
                 # On systems with unix sockets, we get a slight performance bump by using them.
                 self.tempdir = tempfile.mkdtemp(prefix="ipc")
                 pub_url = f"ipc://{self.tempdir}/pub.sock"
@@ -268,7 +340,7 @@ class DistributedContext:
 
             logging.debug(f"Local Chief setting up server with urls {pub_url}/{pull_url}.")
             self._local_chief_zmq = ipc.ZMQBroadcastServer(
-                num_connections=self._rendezvous_info.get_size() - 1,
+                num_connections=self._info.local_size - 1,
                 pub_url=pub_url,
                 pull_url=pull_url,
             )
@@ -280,18 +352,20 @@ class DistributedContext:
                 pull_url = f"tcp://localhost:{self._local_chief_zmq.get_pull_port()}"
 
             # Do a global allgather to initialize local clients on every node.
-            local_chief = (horovod.hvd.cross_rank(), pub_url, pull_url)
+            local_chief = (self._info.cross_rank, pub_url, pull_url)
             _ = self._zmq_allgather(local_chief)
             self._local_chief_zmq.safe_start(lambda: None)
 
         else:
             # Start with the global allgather.
             all_local_chiefs = self._zmq_allgather(None)
-            cross_rank = horovod.hvd.cross_rank()
-            my_local_chief = [x for x in all_local_chiefs if x is not None and x[0] == cross_rank]
-            assert (
-                len(my_local_chief) == 1
-            ), f"did not find exactly 1 local_chief for machine {cross_rank} in {all_local_chiefs}"
+            my_local_chief = [
+                x for x in all_local_chiefs if x is not None and x[0] == self._info.cross_rank
+            ]
+            assert len(my_local_chief) == 1, (
+                f"did not find exactly 1 local_chief for machine {self._info.cross_rank} "
+                f"in {all_local_chiefs}"
+            )
             _, pub_url, pull_url = my_local_chief[0]
 
             assert isinstance(pub_url, str), f"invalid pub_url: {pub_url}"
@@ -303,7 +377,7 @@ class DistributedContext:
 
     def close(self) -> None:
         # if statements in close() mirror the if statements of _init_ipc().
-        if not self._hvd_config.use or horovod.hvd.size() < 2:
+        if self._info.size < 2:
             return
 
         # Global broadcast server.
@@ -312,7 +386,7 @@ class DistributedContext:
         else:
             self._worker_zmq.close()
 
-        if horovod.hvd.local_size() < 2:
+        if self._info.local_size < 2:
             return
 
         # Local broadcast server.
@@ -330,10 +404,7 @@ class DistributedContext:
         unique ID within the trial; that is, no two processes in the same trial
         will be assigned the same rank.
         """
-        if not self._hvd_config.use:
-            return 0
-
-        return cast(int, horovod.hvd.rank())
+        return self._info.rank
 
     def get_local_rank(self) -> int:
         """
@@ -342,31 +413,25 @@ class DistributedContext:
         in the same trial that are executing on the same agent will be assigned
         the same rank.
         """
-        if not self._hvd_config.use:
-            return 0
-
-        return cast(int, horovod.hvd.local_rank())
+        return self._info.local_rank
 
     def get_size(self) -> int:
         """
         Return the number of slots this trial is running on.
         """
-        return self._env.experiment_config.slots_per_trial()
+        return self._info.size
 
     def get_num_agents(self) -> int:
         """
         Return the number of agents this trial is running on.
         """
-        if not self._hvd_config.use:
-            return 1
-
-        return cast(int, self.get_size() // horovod.hvd.local_size())
+        return self._info.cross_size
 
     def _zmq_gather(self, stuff: Any) -> Optional[List]:
         """
         Gather stuff to the chief.  The chief returns a list of all stuff, and workers return None.
         """
-        if not self._hvd_config.use or horovod.hvd.size() < 2:
+        if self._info.size < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather.")
         if self._is_chief:
@@ -387,7 +452,7 @@ class DistributedContext:
         Gather stuff to the local chief.  The local chief returns a list of all stuff, and local
         workers return None.
         """
-        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+        if self._info.local_size < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq gather local.")
         if self._is_local_chief:
@@ -407,7 +472,7 @@ class DistributedContext:
         """
         Gather stuff to the chief and broadcast all of it back to the workers.
         """
-        if not self._hvd_config.use or horovod.hvd.size() < 2:
+        if self._info.size < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq allgather.")
         if self._is_chief:
@@ -424,7 +489,7 @@ class DistributedContext:
         """
         Gather stuff to the local chief and broadcast all of it back to the local workers.
         """
-        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+        if self._info.local_size < 2:
             return [stuff]
         logging.debug(f"Worker {self.get_rank()} beginning zmq local allgather.")
         if self._is_local_chief:
@@ -441,7 +506,7 @@ class DistributedContext:
         """
         Every worker gets the value sent by the chief.
         """
-        if not self._hvd_config.use or horovod.hvd.size() < 2:
+        if self._info.size < 2:
             return stuff
         if self._is_chief:
             self._chief_zmq.broadcast(stuff)
@@ -453,7 +518,7 @@ class DistributedContext:
         """
         Every local worker gets the value sent by the local chief.
         """
-        if not self._hvd_config.use or horovod.hvd.local_size() < 2:
+        if self._info.local_size < 2:
             return stuff
         if self._is_local_chief:
             self._local_chief_zmq.broadcast(stuff)
