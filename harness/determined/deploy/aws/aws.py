@@ -30,7 +30,7 @@ def stop_master(master_id: str, boto3_session: boto3.session.Session, delete: bo
     ec2 = boto3_session.client("ec2")
     waiter = ec2.get_waiter("instance_stopped")
     try:
-        ec2.stop_instances(InstanceIds=[master_id.replace("cc", "dd")])
+        ec2.stop_instances(InstanceIds=[master_id])
     except ClientError as ex:
         if delete:
             error_code = ex.response.get("Error", {}).get("Code")
