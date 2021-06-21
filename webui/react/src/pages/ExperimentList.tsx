@@ -220,6 +220,15 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    const isActive = (x: unknown) => x !== undefined;
+    Object.values(filters).forEach(value => {
+      if (isActive(value)) count++;
+    });
+    return count;
+  }, [ filters ]);
+
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -434,6 +443,7 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
+
       },
       {
         dataIndex: 'name',
@@ -657,8 +667,17 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const filterControls = (
+    <div>
+      <p>
+        {activeFilterCount} active filters
+        <button onClick={() => { setFilters(defaultFilters); }}>reset</button>
+      </p>
+    </div>
+  );
+
   return (
-    <Page id="experiments" title="Experiments">
+    <Page id="experiments" options={filterControls} title="Experiments">
       <TableBatch selectedRowCount={selectedRowKeys.length}>
         <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
