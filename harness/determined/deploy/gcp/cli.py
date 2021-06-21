@@ -34,7 +34,7 @@ def validate_scheduler_type() -> Callable:
 
 
 def deploy_gcp(command: str, args: argparse.Namespace) -> None:
-    # Preprocess the local path to store the states. #
+    # Preprocess the local path to store the states.
 
     # Set local state path as our current working directory. This is a no-op
     # when the --local-state-path arg isn't used. We do this because Terraform
@@ -52,20 +52,20 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
 
-    # Initialize determined configurations. #
+    # Initialize determined configurations.
     det_configs = {}
     args_dict = vars(args)
     for arg in args_dict:
         if args_dict[arg] is not None:
             det_configs[arg] = args_dict[arg]
 
-    # Handle down subcommand. #
+    # Handle down subcommand.
     if command == "down":
-        gcp.delete(det_configs, env, args.auto_approve)
+        gcp.delete(det_configs, env, args.no_prompt)
         print("Delete Successful")
         return
 
-    # Handle Up subcommand. #
+    # Handle Up subcommand.
     if (args.cpu_env_image and not args.gpu_env_image) or (
         args.gpu_env_image and not args.cpu_env_image
     ):
@@ -84,6 +84,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "user",
         "no_preflight_checks",
         "no_wait_for_master",
+        "no_prompt",
         "func",
         "_command",
         "_subcommand",
@@ -147,10 +148,9 @@ args_description = Cmd(
                             help="local directory for storing cluster state",
                         ),
                         Arg(
-                            "--auto-approve",
-                            type=bool,
-                            default=True,
-                            help="skip interactive approval",
+                            "--no-prompt",
+                            action="store_true",
+                            help="no prompt when deleting resources",
                         ),
                     ],
                 ),

@@ -256,7 +256,7 @@ def terminate_running_agents(compute: Any, tf_vars: Dict) -> None:
     delete_instances(compute, tf_vars, agent_instances)
 
 
-def delete(configs: Dict, env: Dict, auto_approve: bool) -> None:
+def delete(configs: Dict, env: Dict, no_prompt: bool) -> None:
     """Deprovision a given deployment.
 
     The order of operations for deprovisioning is:
@@ -278,7 +278,7 @@ def delete(configs: Dict, env: Dict, auto_approve: bool) -> None:
 
     command += ["-input=false"]
 
-    if auto_approve:
+    if not no_prompt:
         command += ["-auto-approve"]
 
     command += [f"-var-file={vars_file_path}"]

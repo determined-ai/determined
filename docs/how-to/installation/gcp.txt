@@ -30,7 +30,8 @@ To get started on GCP, you will need to create a `project
 
 The following GCP APIs must be enabled on your GCP project:
 
--  `Cloud Filestore API <https://console.cloud.google.com/apis/library/file.googleapis.com>`__
+-  `Cloud Filestore API
+   <https://console.cloud.google.com/apis/library/file.googleapis.com>`__
 -  `Cloud Resource Manager API
    <https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
 -  `Cloud SQL Admin API

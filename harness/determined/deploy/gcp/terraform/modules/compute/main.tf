@@ -67,7 +67,8 @@ resource "google_compute_instance" "master_instance" {
     if [ -n "${var.filestore_address}" ]; then
       cat << EOF >> /usr/local/determined/etc/master.yaml
           startup_script: |
-                          mkdir -p /mnt/filestore
+                          apt-get -y update && apt-get -y install nfs-common
+                          mkdir -p /mnt/shared_fs
                           mount ${var.filestore_address} /mnt/shared_fs
                           df -h --type=nfs
     EOF
@@ -111,7 +112,8 @@ resource "google_compute_instance" "master_instance" {
     if [ -n "${var.filestore_address}" ]; then
       cat << EOF >> /usr/local/determined/etc/master.yaml
           startup_script: |
-                          mkdir -p /mnt/filestore
+                          apt-get -y update && apt-get -y install nfs-common
+                          mkdir -p /mnt/shared_fs
                           mount ${var.filestore_address} /mnt/shared_fs
                           df -h --type=nfs
     EOF
@@ -147,11 +149,12 @@ resource "google_compute_instance" "master_instance" {
           operation_timeout_period: ${var.operation_timeout_period}
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
+
+    task_container_defaults:
     EOF
 
     if [ -n "${var.cpu_env_image}" ] || [ -n "${var.gpu_env_image}" ]; then
       cat << EOF >> /usr/local/determined/etc/master.yaml
-    task_container_defaults:
       image:
     EOF
       if [ -n "${var.cpu_env_image}" ]; then
@@ -164,13 +167,14 @@ resource "google_compute_instance" "master_instance" {
         gpu: ${var.gpu_env_image}
     EOF
       fi
-      if [ -n "${var.filestore_address}" ]; then
-        cat << EOF >> /usr/local/determined/etc/master.yaml
-        bind_mounts:
-          - host_path: /mnt/shared_fs
-            container_path: /run/determined/shared_fs
+    fi
+
+    if [ -n "${var.filestore_address}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+      bind_mounts:
+        - host_path: /mnt/shared_fs
+          container_path: /run/determined/shared_fs
     EOF
-      fi
     fi
 
     apt-get remove docker docker-engine docker.io containerd runc
