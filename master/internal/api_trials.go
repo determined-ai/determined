@@ -717,7 +717,7 @@ func (a *apiServer) GetTrialRendezvousInfo(
 	}
 
 	var w rendezvousWatcher
-	if err := a.askAtDefaultSystem(trial, watchRendezvousInfo{
+	if err = a.askAtDefaultSystem(trial, watchRendezvousInfo{
 		containerID: cproto.ID(req.ContainerId),
 	}, &w); err != nil {
 		return nil, err
@@ -726,14 +726,10 @@ func (a *apiServer) GetTrialRendezvousInfo(
 
 	select {
 	case rsp := <-w.C:
-		switch rsp := rsp.(type) {
-		case error:
-			return nil, rsp
-		case *trialv1.RendezvousInfo:
-			return &apiv1.GetTrialRendezvousInfoResponse{RendezvousInfo: rsp}, nil
-		default:
-			panic("unexpected response from rendezvousWatcher")
+		if rsp.err != nil {
+			return nil, err
 		}
+		return &apiv1.GetTrialRendezvousInfoResponse{RendezvousInfo: rsp.info}, nil
 	case <-ctx.Done():
 		return nil, nil
 	}
