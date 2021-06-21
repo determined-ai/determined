@@ -1,4 +1,4 @@
-FROM determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-3a452bc
+FROM determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-df5f9aa
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
