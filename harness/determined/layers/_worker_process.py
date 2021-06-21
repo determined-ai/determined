@@ -60,6 +60,11 @@ class SubprocessReceiver(workload.Source):
         # checks on it.
         self._broadcast_client.send(ipc.ConnectedMessage(process_id=os.getpid()))
 
+        # Avoid hangs when receiving from the broadcast server.  Run this after sending the
+        # ConnectedMessage so that the broadcast server has a pid for running a healthcheck while
+        # this runs.
+        self._broadcast_client.safe_start()
+
     def __iter__(self) -> workload.Stream:
         while True:
             obj = self._broadcast_client.recv()
@@ -257,6 +262,9 @@ class SubprocessLauncher:
             )
             response = cast(ipc.ConnectedMessage, response)
             self._worker_process_ids.append(response.process_id)
+
+        # Avoid hangs when sending to the broadcast client.
+        self.broadcast_server.safe_start(self._health_check)
 
     def run(self) -> None:
         """
