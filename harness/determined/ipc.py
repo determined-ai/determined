@@ -89,7 +89,7 @@ class ZMQBroadcastServer:
     """
 
     def __init__(
-        self, num_connections: int, pub_port: Optional[int] = None, pull_port: Optional[int] = None
+        self, num_connections: int, pub_url: Optional[str] = None, pull_url: Optional[str] = None
     ) -> None:
         self._num_connections = num_connections
 
@@ -98,15 +98,18 @@ class ZMQBroadcastServer:
         self._pub_socket = context.socket(zmq.PUB)
         self._pull_socket = context.socket(zmq.PULL)
 
-        if pub_port is None:
-            self._pub_port = self._pub_socket.bind_to_random_port("tcp://*")  # type: int
-        else:
-            self._pub_port = self._pub_socket.bind(f"tcp://*:{pub_port}")
+        self._pub_port = None  # type: Optional[int]
+        self._pull_port = None  # type: Optional[int]
 
-        if pull_port is None:
-            self._pull_port = self._pull_socket.bind_to_random_port("tcp://*")  # type: int
+        if pub_url is None:
+            self._pub_port = self._pub_socket.bind_to_random_port("tcp://*")
         else:
-            self._pull_port = self._pull_socket.bind(f"tcp://*:{pull_port}")
+            self._pub_socket.bind(pub_url)
+
+        if pull_url is None:
+            self._pull_port = self._pull_socket.bind_to_random_port("tcp://*")
+        else:
+            self._pull_socket.bind(pull_url)
 
         self._send_serial = 0
         self._recv_serial = 0
@@ -151,9 +154,13 @@ class ZMQBroadcastServer:
         self._pull_socket.close()
 
     def get_pub_port(self) -> int:
+        if self._pub_port is None:
+            raise ValueError("get_pub_port() is only safe when pub_url was None")
         return self._pub_port
 
     def get_pull_port(self) -> int:
+        if self._pull_port is None:
+            raise ValueError("get_pull_port() is only safe when pull_url was None")
         return self._pull_port
 
     def broadcast(self, obj: Any) -> None:
