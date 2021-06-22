@@ -280,6 +280,8 @@ message TrialPreemptionSignalRequest {
   };
   // The requested trial's id.
   int32 trial_id = 1;
+  // The timeout in seconds.
+  int32 timeout_seconds = 2;
 }
 // Response to TrialPreemptionSignalRequest.
 message TrialPreemptionSignalResponse {

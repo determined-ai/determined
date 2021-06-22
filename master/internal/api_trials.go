@@ -565,6 +565,8 @@ func (a *apiServer) TrialPreemptionSignal(
 	}
 	defer a.m.system.TellAt(trial, unwatchPreemption{id: id})
 
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
+	defer cancel()
 	select {
 	case <-w.C:
 		return &apiv1.TrialPreemptionSignalResponse{Preempt: true}, nil
