@@ -71,23 +71,28 @@ type HyperparameterV0 struct {
 // Merge prevents recursive merging of hyperparameters unless h
 // is a nested hyperparameter.  When h is a nested hyperparameter,
 // we merge fields of h and other into a single map.
+// A new HyperparameterV0 instance is returned.
 func (h HyperparameterV0) Merge(other interface{}) interface{} {
 	// Only merge nested hyperparameters.
-	if h.RawNestedHyperparameter != nil {
+	if h.RawNestedHyperparameter != nil && other.(HyperparameterV0).RawNestedHyperparameter != nil {
+		newNestedHP := make(map[string]HyperparameterV0)
 		target := *h.RawNestedHyperparameter
 		source := *other.(HyperparameterV0).RawNestedHyperparameter
 		for key, val := range target {
-			_, inSource := source[key]
-			if inSource {
-				target[key] = val.Merge(source[key]).(HyperparameterV0)
+			if sourceVal, inSource := source[key]; inSource {
+				newNestedHP[key] = val.Merge(sourceVal).(HyperparameterV0)
+			} else {
+				newNestedHP[key] = val
 			}
 		}
 		for key, val := range source {
-			_, inTarget := target[key]
-			if !inTarget {
-				target[key] = val
+			if _, inTarget := target[key]; !inTarget {
+				newNestedHP[key] = val
 			}
 		}
+		var newHP HyperparameterV0
+		newHP.RawNestedHyperparameter = &newNestedHP
+		return newHP
 	}
 	return h
 }

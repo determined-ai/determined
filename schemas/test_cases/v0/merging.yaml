@@ -111,6 +111,18 @@
         type: const
         val: language-modeling
 
+- name: only merge if both values are nested hps
+  merge_as: http://determined.ai/schemas/expconf/v0/hyperparameter.json
+  case:
+    transformer:
+  merge_src:
+    transformer:
+      task: language-modeling
+  merged:
+    transformer:
+      type: const
+      val: 
+
 - name: checkpoint storage merges only allow one union type
   merge_as: http://determined.ai/schemas/expconf/v0/checkpoint-storage.json
   case:
