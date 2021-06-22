@@ -8,7 +8,9 @@ import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import { paths, routeAll } from 'routes/utils';
-import { getExperimentDetails, getExpValidationHistory, isNotFound } from 'services/api';
+import {
+  getExperimentDetails, getExpTrials, getExpValidationHistory, isNotFound,
+} from 'services/api';
 import { createExperiment } from 'services/api';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, ExperimentSearcherName, RawJson, ValidationHistory } from 'types';
@@ -22,16 +24,13 @@ interface Params {
   experimentId: string;
 }
 
-export interface ExperimentTabsProps {
-  experiment: ExperimentBase;
-}
-
 const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
+  const [ firstTrialId, setFirstTrialId ] = useState<number>();
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
@@ -111,6 +110,15 @@ const ExperimentDetails: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  useEffect(() => {
+    (async () => {
+      const expTrials = await getExpTrials({ id }, { signal: canceler.signal });
+      if (expTrials.trials[0]) {
+        setFirstTrialId(expTrials.trials[0].id);
+      }
+    })();
+  }, [ canceler, id ]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   } else if (pageError) {
@@ -122,9 +130,15 @@ const ExperimentDetails: React.FC = () => {
     return <Spinner />;
   }
 
-  const isSingleTrial = experiment?.config.searcher.name === ExperimentSearcherName.Single;
+  let tabsComponent = <ExperimentMultiTrialTabs experiment={experiment} />;
 
-  const TabsComponent = isSingleTrial ? ExperimentSingleTrialTabs : ExperimentMultiTrialTabs;
+  const isSingleTrial = experiment?.config.searcher.name === ExperimentSearcherName.Single;
+  if (isSingleTrial) {
+    if (!firstTrialId) {
+      return <Spinner />;
+    }
+    tabsComponent = <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />;
+  }
 
   return (
     <Page
@@ -135,7 +149,7 @@ const ExperimentDetails: React.FC = () => {
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      <TabsComponent experiment={experiment} />
+      {tabsComponent}
       <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}

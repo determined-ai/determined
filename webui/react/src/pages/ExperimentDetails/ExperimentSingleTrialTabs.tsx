@@ -3,8 +3,17 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Spinner from 'components/Spinner';
-import { ExperimentTabsProps } from 'pages/ExperimentDetails';
+import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
+import { getTrialDetails } from 'services/api';
+import { ExperimentBase, TrialDetails } from 'types';
+import { terminalRunStates } from 'utils/types';
+
+import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
+import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
+import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
+import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
+import TrialDetailsWorkloads from '../TrialDetails/TrialDetailsWorkloads';
 
 const { TabPane } = Tabs;
 
@@ -28,15 +37,23 @@ const ExperimentConfiguration = React.lazy(() => {
   return import('./ExperimentConfiguration');
 });
 
-const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = (
-  { experiment }: ExperimentTabsProps,
+export interface Props {
+  experiment: ExperimentBase;
+  trialId: number;
+}
+
+const ExperimentSingleTrialTabs: React.FC<Props> = (
+  { experiment, trialId }: Props,
 ) => {
-  const { tab } = useParams<Params>();
+  const [ canceler ] = useState(new AbortController());
+  const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const history = useHistory();
-  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-  const [ tabKey, setTabKey ] = useState(defaultTabKey);
+  const { tab } = useParams<Params>();
 
   const basePath = paths.experimentDetails(experiment.id);
+  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
+
+  const [ tabKey, setTabKey ] = useState(defaultTabKey);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -49,16 +66,33 @@ const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = (
     }
   }, [ basePath, history, tab ]);
 
+  const fetchTrialDetails = useCallback(async () => {
+    const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
+    setTrialDetails(response);
+  }, [ canceler, trialId ]);
+
+  const { stopPolling } = usePolling(fetchTrialDetails);
+
+  useEffect(() => {
+    if (trialDetails && terminalRunStates.has(trialDetails.state)) {
+      stopPolling();
+    }
+  }, [ trialDetails, stopPolling ]);
+
+  if (!trialDetails) {
+    return <Spinner />;
+  }
+
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="overview" tab="Overview">
-        Overview
+        <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
       </TabPane>
       <TabPane key="hyperparameters" tab="Hyperparameters">
-        Hyperparameters
+        <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
       </TabPane>
       <TabPane key="workloads" tab="Workloads">
-        Workloads
+        <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner />}>
@@ -66,10 +100,10 @@ const ExperimentSingleTrialTabs: React.FC<ExperimentTabsProps> = (
         </React.Suspense>
       </TabPane>
       <TabPane key="profiler" tab="Profiler">
-        Profiler
+        <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
       </TabPane>
       <TabPane key="logs" tab="Logs">
-        Logs
+        <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
       </TabPane>
     </Tabs>
   );

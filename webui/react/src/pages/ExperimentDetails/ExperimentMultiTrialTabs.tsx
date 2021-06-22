@@ -3,10 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Spinner from 'components/Spinner';
-import { ExperimentTabsProps } from 'pages/ExperimentDetails';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
 import { paths } from 'routes/utils';
-import { ExperimentVisualizationType } from 'types';
+import { ExperimentBase, ExperimentVisualizationType } from 'types';
 
 const { TabPane } = Tabs;
 
@@ -31,8 +30,12 @@ const ExperimentVisualization = React.lazy(() => {
   return import('./ExperimentVisualization');
 });
 
-const ExperimentMultiTrialTabs: React.FC<ExperimentTabsProps> = (
-  { experiment }: ExperimentTabsProps,
+export interface Props {
+  experiment: ExperimentBase;
+}
+
+const ExperimentMultiTrialTabs: React.FC<Props> = (
+  { experiment }: Props,
 ) => {
   const { tab, viz } = useParams<Params>();
   const history = useHistory();
