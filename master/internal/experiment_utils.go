@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/determined-ai/determined/master/pkg/workload"
+	"github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -59,6 +60,7 @@ func checkpointFromCheckpointMetrics(metrics workload.CheckpointMetrics) model.C
 }
 
 func saveWorkload(db *db.PgDB, w workload.Workload) error {
+	logrus.Info("adding a step")
 	switch w.Kind {
 	case workload.RunStep:
 		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.TotalBatches()))

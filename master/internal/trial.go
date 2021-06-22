@@ -612,13 +612,6 @@ func (t *trial) processAllocated(
 		}
 		t.processID(modelTrial.ID)
 		ctx.AddLabel("trial-id", t.id)
-		if t.config.PerformInitialValidation() {
-			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
-				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
-				t.terminate(ctx)
-				return err
-			}
-		}
 		ctx.Tell(t.rm, sproto.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
 			TaskHandler: ctx.Self(),
@@ -635,10 +628,6 @@ func (t *trial) processAllocated(
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		return errors.Wrap(err, "failed to get workload from sequencer after allocation")
-	}
-
-	if err = saveWorkload(t.db, w); err != nil {
-		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
