@@ -1,18 +1,22 @@
 .base {
-  .launchBlock {
-    align-items: center;
-    display: flex;
+  align-items: center;
+  display: flex;
 
-    .launchButton {
-      background-color: transparent;
-      border-color: var(--theme-colors-monochrome-9);
-      border-radius: var(--theme-sizes-border-radius);
-      border-style: solid;
-      border-width: var(--theme-sizes-border-width);
-      color: var(--theme-colors-monochrome-17);
-      flex-grow: 1;
-      flex-shrink: 1;
-      overflow: hidden;
+  .launchButton {
+    background-color: transparent;
+    border-color: var(--theme-colors-monochrome-7);
+    border-radius: var(--theme-sizes-border-radius);
+    border-style: solid;
+    border-width: var(--theme-sizes-border-width);
+    color: var(--theme-colors-monochrome-7);
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: var(--theme-sizes-layout-medium);
+    overflow: hidden;
+
+    &:hover {
+      border-color: var(--theme-colors-monochrome-5);
+      color: var(--theme-colors-monochrome-5);
     }
   }
 }

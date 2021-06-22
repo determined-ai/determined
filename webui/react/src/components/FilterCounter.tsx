@@ -11,7 +11,7 @@ interface Props {
 const FilterCounter: React.FC<Props> = ({ activeFilterCount, onReset }: Props) => {
   if (activeFilterCount === 0) return <></>;
   const text = `${activeFilterCount} active filter${activeFilterCount > 1 ? 's' : ''}`;
-  return <div className={css.launchBlock}>
+  return <div className={css.base}>
     <span>{text} </span>
     <Button
       className={css.launchButton}
