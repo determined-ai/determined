@@ -436,7 +436,7 @@ func (t *trial) registerRendezvousWatcher(
 	t.lastContainerConnectedTime = time.Now()
 	if !t.allReady() {
 		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
-		ctx.Log().Info("found not all containers are connected")
+		ctx.Log().Debug("not sending rendezvous information because not all trial containers are connected")
 	} else {
 		t.pushRendezvous(ctx)
 	}
