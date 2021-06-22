@@ -24,6 +24,9 @@ func (h HyperparameterV0) GetUnionMember() interface{} {
 	if h.RawCategoricalHyperparameter != nil {
 		return *h.RawCategoricalHyperparameter
 	}
+	if h.RawNestedHyperparameter != nil {
+		return *h.RawNestedHyperparameter
+	}
 	panic("no union member defined")
 }
 

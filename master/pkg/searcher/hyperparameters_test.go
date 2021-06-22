@@ -9,6 +9,67 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+func TestNestedHyperparameters(t *testing.T) {
+	hpMap := make(map[string]expconf.Hyperparameter)
+	hpMap["type"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "adam"},
+	}
+	hpMap["learning_rate"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.01},
+	}
+	hpMap["momentum"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.9},
+	}
+	spec := expconf.Hyperparameters{
+		"optimizer": expconf.Hyperparameter{
+			RawNestedHyperparameter: &hpMap,
+		},
+	}
+	hps := spec["optimizer"].RawNestedHyperparameter
+	assert.Equal(
+		t,
+		(*hps)["type"].RawConstHyperparameter.RawVal,
+		"adam",
+	)
+	assert.Equal(
+		t,
+		(*hps)["learning_rate"].RawConstHyperparameter.RawVal,
+		0.01,
+	)
+	assert.Equal(
+		t,
+		(*hps)["momentum"].RawConstHyperparameter.RawVal,
+		0.9,
+	)
+}
+
+func TestNestedSampling(t *testing.T) {
+	hpMap := make(map[string]expconf.Hyperparameter)
+	hpMap["type"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: "adam"},
+	}
+	hpMap["learning_rate"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.01},
+	}
+	hpMap["momentum"] = expconf.Hyperparameter{
+		RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 0.9},
+	}
+	spec := expconf.Hyperparameters{
+		"optimizer": expconf.Hyperparameter{
+			RawNestedHyperparameter: &hpMap,
+		},
+	}
+	rand := nprand.New(0)
+	sample := sampleAll(spec, rand)
+	hpTarget := make(map[string]interface{})
+	hpTarget["type"] = "adam"
+	hpTarget["learning_rate"] = 0.01
+	hpTarget["momentum"] = 0.9
+	target := make(hparamSample)
+	target["optimizer"] = hpTarget
+	assert.DeepEqual(t, sample, target)
+}
+
 func TestSamplingReproducibility(t *testing.T) {
 	spec := expconf.Hyperparameters{
 		"cat": {RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{

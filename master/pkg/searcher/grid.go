@@ -106,36 +106,94 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 }
 
 func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
-	var names []string
-	var values [][]interface{}
-	params.Each(func(name string, param expconf.Hyperparameter) {
-		names = append(names, name)
-		values = append(values, grid(param))
-	})
-	return cartesianProduct(names, values)
+	hpToInd, valueSets := getHPsValueSets(params)
+	values := cartesianProduct(valueSets)
+	var samples []hparamSample
+	for _, val := range values {
+		samples = append(samples, createHparamSample(params, hpToInd, val))
+	}
+	return samples
 }
 
-func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample {
+// Returns gridded values for a single hyperparameter.
+func getHPValueSet(h expconf.Hyperparameter) [][]interface{} {
+	var valueSets [][]interface{}
+	if h.RawNestedHyperparameter != nil {
+		for _, nestedHP := range *h.RawNestedHyperparameter {
+			valueSets = append(valueSets, getHPValueSet(nestedHP)...)
+		}
+	} else {
+		valueSets = append(valueSets, append(grid(h), h))
+	}
+	return valueSets
+}
+
+// Returns the gridded values for all hyperparameters in valueSets.
+// hpToInd maps each Hyperparameter to the corresponding index in valueSets
+// so we will know how to parse those values into hparamSample later.
+func getHPsValueSets(params expconf.Hyperparameters) (
+	map[expconf.Hyperparameter]int, [][]interface{}) {
+	var results [][]interface{}
+	params.Each(func(name string, param expconf.Hyperparameter) {
+		results = append(results, getHPValueSet(param)...)
+	})
+	var valueSets [][]interface{}
+	hpToInd := make(map[expconf.Hyperparameter]int)
+	for i, val := range results {
+		valueSets = append(valueSets, val[0:len(val)-1])
+		hpPtr := val[len(val)-1].(expconf.Hyperparameter)
+		hpToInd[hpPtr] = i
+	}
+	return hpToInd, valueSets
+}
+
+func hpToVal(
+	param expconf.Hyperparameter,
+	hpToInd map[expconf.Hyperparameter]int,
+	values []interface{}) interface{} {
+	if param.RawNestedHyperparameter != nil {
+		nestedSamples := make(map[string]interface{})
+		for nestedName, nestedHP := range *param.RawNestedHyperparameter {
+			nestedSamples[nestedName] = values[hpToInd[nestedHP]]
+		}
+		return nestedSamples
+	}
+	ind := hpToInd[param]
+	return values[ind]
+}
+
+// Create a hparamSample for a given generated set of values in the
+// gridded space.
+func createHparamSample(
+	hparams expconf.Hyperparameters,
+	hpToInd map[expconf.Hyperparameter]int,
+	values []interface{}) hparamSample {
+	sample := make(hparamSample)
+	hparams.Each(func(name string, param expconf.Hyperparameter) {
+		sample[name] = hpToVal(param, hpToInd, values)
+	})
+	return sample
+}
+
+func cartesianProduct(valueSets [][]interface{}) [][]interface{} {
 	switch {
-	case len(names) == 0:
+	case len(valueSets) == 0:
 		return nil
-	case len(names) == 1:
-		cross := make([]hparamSample, 0, len(valueSets[0]))
+	case len(valueSets) == 1:
+		cross := make([][]interface{}, 0, len(valueSets[0]))
 		for _, value := range valueSets[0] {
-			cross = append(cross, hparamSample{names[0]: value})
+			cross = append(cross, []interface{}{value})
 		}
 		return cross
 	default:
-		right := cartesianProduct(names[1:], valueSets[1:])
-		name, left := names[0], valueSets[0]
-		cross := make([]hparamSample, 0, len(left)*len(right))
+		right := cartesianProduct(valueSets[1:])
+		left := valueSets[0]
+		cross := make([][]interface{}, 0, len(left)*len(right))
 		for _, lValue := range left {
 			for _, rValue := range right {
-				duplicate := make(hparamSample)
-				for oKey, oValue := range rValue {
-					duplicate[oKey] = oValue
-				}
-				duplicate[name] = lValue
+				var duplicate []interface{}
+				duplicate = append(duplicate, lValue)
+				duplicate = append(duplicate, rValue...)
 				cross = append(cross, duplicate)
 			}
 		}

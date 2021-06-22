@@ -63,6 +63,7 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 	}
 	var hpsOrder []string // HPs must be in the same order for the arff file
 	hps := experimentConfig.Hyperparameters()
+	hps = expconf.FlattenHPs(hps)
 
 	for key, element := range hps {
 		var st string
