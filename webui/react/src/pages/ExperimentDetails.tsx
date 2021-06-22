@@ -1,14 +1,12 @@
-import { Space, Tabs } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router';
+import { Tabs } from 'antd';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
-import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentOverview from 'pages/ExperimentDetails/ExperimentOverview';
 import { paths, routeAll } from 'routes/utils';
@@ -45,7 +43,6 @@ const ExperimentVisualization = React.lazy(() => {
 
 const ExperimentDetails: React.FC = () => {
   const { experimentId, tab, viz } = useParams<Params>();
-  const location = useLocation();
   const history = useHistory();
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
   const [ tabKey, setTabKey ] = useState(defaultTabKey);
@@ -56,11 +53,6 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
-
-  const isShowNewHeader: boolean = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    return search.get('header') === 'new';
-  }, [ location.search ]);
 
   const id = parseInt(experimentId);
   const basePath = paths.experimentDetails(experimentId);
@@ -162,21 +154,12 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
-      headerComponent={isShowNewHeader && <ExperimentDetailsHeader
+      headerComponent={<ExperimentDetailsHeader
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
         showForkModal={showForkModal}
       />}
-      options={<ExperimentActions
-        experiment={experiment}
-        onClick={{ Fork: showForkModal }}
-        onSettled={fetchExperimentDetails} />}
       stickyHeader
-      subTitle={<Space align="center" size="small">
-        {experiment?.config.name}
-        <Badge state={experiment.state} type={BadgeType.State} />
-        {experiment.archived && <Badge>ARCHIVED</Badge>}
-      </Space>}
       title={`Experiment ${experimentId}`}>
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">

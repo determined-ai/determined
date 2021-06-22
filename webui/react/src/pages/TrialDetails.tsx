@@ -1,17 +1,15 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
-import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
+import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
@@ -71,13 +69,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ isContModalVisible, setIsContModalVisible ] = useState(false);
   const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
-  const location = useLocation();
   const routeParams = useParams<Params>();
-
-  const isShowNewHeader: boolean = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    return search.get('header') === 'new';
-  }, [ location.search ]);
 
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
@@ -251,27 +243,13 @@ const TrialDetailsComp: React.FC = () => {
 
   return (
     <Page
-      breadcrumb={[
-        expBreadcrumbRoute,
-        {
-          breadcrumbName: `Trial ${trialId}`,
-          path: paths.trialDetails(trialId, experiment.id),
-        },
-      ]}
-      headerComponent={isShowNewHeader && <TrialDetailsHeader
+      headerComponent={<TrialDetailsHeader
         experiment={experiment}
         fetchTrialDetails={fetchTrialDetails}
         handleActionClick={handleActionClick}
         trial={trial}
       />}
-      options={
-        <TrialActions
-          trial={trial}
-          onClick={handleActionClick}
-          onSettled={fetchTrialDetails} />
-      }
       stickyHeader
-      subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}
     >
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
