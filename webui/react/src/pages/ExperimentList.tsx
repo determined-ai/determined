@@ -221,15 +221,6 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    const isInactive = (x: unknown) => x === undefined;
-    Object.values(filters).forEach(value => {
-      if (!isInactive(value)) count++;
-    });
-    return count;
-  }, [ filters ]);
-
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -444,7 +435,6 @@ const ExperimentList: React.FC = () => {
         render: experimentNameRenderer,
         sorter: true,
         title: 'ID',
-
       },
       {
         dataIndex: 'name',
@@ -672,6 +662,15 @@ const ExperimentList: React.FC = () => {
     setFilters(defaultFilters);
     handleFilterChange(defaultFilters);
   }, [ setFilters, handleFilterChange ]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    const isInactive = (x: unknown) => x === undefined;
+    Object.values(filters).forEach(value => {
+      if (!isInactive(value)) count++;
+    });
+    return count;
+  }, [ filters ]);
 
   return (
     <Page

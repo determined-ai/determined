@@ -180,9 +180,11 @@ const TaskList: React.FC = () => {
   }, [ updateFilters, filters ]);
 
   const activeFilterCount = useMemo(() => {
-    let count = -1;
+    let count = 0;
+    const filtersToIgnore = new Set([ 'limit' ]);
     const isInactive = (x: unknown) => x === undefined;
-    Object.values(filters).forEach(value => {
+    Object.entries(filters).forEach(([ key, value ]) => {
+      if (filtersToIgnore.has(key)) return;
       if (!isInactive(value)) count++;
     });
     return count;
