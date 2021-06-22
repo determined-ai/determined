@@ -178,6 +178,7 @@ func (s *shellManager) newShell(
 		},
 
 		serviceAddress: &serviceAddress,
+		assignedPort:   port,
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
