@@ -16,15 +16,10 @@ if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1 ; then
 fi
 
 TENSORBOARD_VERSION=$(pip show tensorboard | grep Version | sed "s/[^:]*: *//")
-TENSORBOARD_VERSION_MAJOR=$( echo "$TENSORBOARD_VERSION" | sed " s/[.].*//")
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-if [ "$TENSORBOARD_VERSION_MAJOR" == 2 ]; then
-  "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
-  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard --bind_all --logdir_spec "$@"
-else
-  exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard --logdir "$@"
-fi
+"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"
