@@ -5,7 +5,7 @@ import { useHistory, useParams } from 'react-router';
 
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
-import Page, { BreadCrumbRoute } from 'components/Page';
+import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -22,8 +22,6 @@ import { isAborted } from 'services/utils';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
 import { clone } from 'utils/data';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
-
-const maxBreadcrumbDescLength = 30;
 
 const { TabPane } = Tabs;
 
@@ -216,29 +214,6 @@ const TrialDetailsComp: React.FC = () => {
 
   if (!trial || !experiment) {
     return <Spinner />;
-  }
-
-  let expBreadcrumbName = `Experiment ${experiment.id}`;
-  if (experiment.config.name) {
-    if (experiment.config.name.length > maxBreadcrumbDescLength) {
-      let truncatedDesc = experiment.config.name.slice(0, maxBreadcrumbDescLength);
-
-      // Don't add ellipsis after underscore, it looks wrong
-      while (truncatedDesc.endsWith('_')){
-        truncatedDesc = truncatedDesc.slice(0, -1);
-      }
-      expBreadcrumbName = expBreadcrumbName.concat(` (${truncatedDesc}…)`);
-    } else {
-      expBreadcrumbName = expBreadcrumbName.concat(` (${experiment.config.name})`);
-    }
-  }
-
-  const expBreadcrumbRoute : BreadCrumbRoute = {
-    breadcrumbName: expBreadcrumbName,
-    path: paths.experimentDetails(experiment.id),
-  };
-  if (experiment.config.name.length > maxBreadcrumbDescLength) {
-    expBreadcrumbRoute.breadcrumbTooltip = experiment.config.name;
   }
 
   return (
