@@ -1,4 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { ClearOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -220,11 +221,11 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
+  const isInactive = (x: unknown) => x === undefined || (Array.isArray(x) && x.length === 0);
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    const isActive = (x: unknown) => x !== undefined;
     Object.values(filters).forEach(value => {
-      if (isActive(value)) count++;
+      if (!isInactive(value)) count++;
     });
     return count;
   }, [ filters ]);
@@ -667,17 +668,17 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const filterControls = (
-    <div>
-      <p>
-        {activeFilterCount} active filters
-        <button onClick={() => { setFilters(defaultFilters); }}>reset</button>
-      </p>
-    </div>
-  );
+  const filterComp = useMemo(() => {
+    if (activeFilterCount === 0) return '';
+    const text = `${activeFilterCount} active filters${activeFilterCount > 1 ? 's' : ''}`;
+    return <div>
+      <span>{text} </span>
+      <ClearOutlined title="Clear filters" onClick={() => { setFilters(defaultFilters); }} />
+    </div>;
+  }, [ activeFilterCount ]);
 
   return (
-    <Page id="experiments" options={filterControls} title="Experiments">
+    <Page id="experiments" options={filterComp} subTitle={filterComp} title="Experiments">
       <TableBatch selectedRowCount={selectedRowKeys.length}>
         <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
