@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import subprocess
 import sys
@@ -109,8 +108,8 @@ def get_tensorboard_args(args):
     task_id = os.environ["DET_TASK_ID"]
     port = os.environ["TENSORBOARD_PORT"]
 
-    # Version is passed in from tensorboard-entrypoint.sh which determines the version of tensorboard
-    # running within the started container
+    # Version is passed in from tensorboard-entrypoint.sh which determines the version of
+    # tensorboard running within the started container
     version = args.pop(0)
 
     # logdir is the second argument passed in from tensorboard_manager.go. If multiple directories
