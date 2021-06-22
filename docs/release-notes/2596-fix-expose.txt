@@ -1,0 +1,7 @@
+:orphan:
+
+**Fixes**
+
+-  Support using Docker images with ``EXPOSE`` commands as images for
+   Notebooks/Shells/Tensorboards. Previously, the ``EXPOSE`` command
+   could break the proxy through the Determined master.

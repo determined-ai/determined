@@ -74,6 +74,7 @@ type command struct {
 	readinessMessageSent bool
 	metadata             map[string]interface{}
 	serviceAddress       *string
+	assignedPort         *int
 
 	registeredTime time.Time
 	task           *sproto.AllocateRequest
@@ -206,8 +207,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 		case msg.Container.State == container.Running:
 			c.addresses = msg.ContainerStarted.Addresses
 
-			names := make([]string, 0, len(c.addresses))
+			// TODO(DET-5682): refactor this logic and the rendezvous info logic that does the same
+			// thing into a helper function.
+			var names []string
 			for _, address := range c.addresses {
+				// Only proxy the port we expect to proxy.  If a dockerfile uses an EXPOSE command,
+				// additional addresses will appear her, but currently we only proxy one uuid to one
+				// port, so it doesn't make sense to send multiple proxy.Register messages for a
+				// single ServiceID (only the last one would work).
+				if c.assignedPort == nil || address.ContainerPort != *c.assignedPort {
+					continue
+				}
+
 				// We are keying on task ID instead of container ID. Revisit this when we need to
 				// proxy multi-container tasks or when containers are created prior to being
 				// assigned to an agent.
@@ -220,6 +231,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 					ProxyTCP: c.proxyTCP,
 				})
 				names = append(names, string(c.taskID))
+			}
+			if c.assignedPort == nil && len(names) > 0 {
+				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
+			} else if len(names) != 1 {
+				ctx.Log().Errorf(
+					"expected to proxy exactly 1 port but proxied %v instead", len(names),
+				)
 			}
 			c.proxyNames = names
 			ctx.Tell(c.eventStream, event{
