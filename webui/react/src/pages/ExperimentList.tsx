@@ -1,10 +1,10 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { ClearOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -668,22 +668,16 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  const filterComp = useMemo(() => {
-    if (activeFilterCount === 0) return '';
-    const text = `${activeFilterCount} active filter${activeFilterCount > 1 ? 's' : ''}`;
-    return <div>
-      <span>{text} </span>
-      <ClearOutlined
-        title="Clear filters"
-        onClick={() => {
-          setFilters(defaultFilters);
-          handleFilterChange(defaultFilters);
-        }} />
-    </div>;
-  }, [ activeFilterCount, handleFilterChange ]);
+  const resetFilters = useCallback(() => {
+    setFilters(defaultFilters);
+    handleFilterChange(defaultFilters);
+  }, [ setFilters, handleFilterChange ]);
 
   return (
-    <Page id="experiments" options={filterComp} subTitle={filterComp} title="Experiments">
+    <Page
+      id="experiments"
+      options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} />}
+      title="Experiments">
       <TableBatch selectedRowCount={selectedRowKeys.length}>
         <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
