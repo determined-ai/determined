@@ -86,9 +86,11 @@ func GetDefaultAuxResourcePool(system *actor.System) string {
 	return resp.(GetDefaultAuxResourcePoolResponse).PoolName
 }
 
-// ValidateRP validates if the resource pool exists when using the agent resource manager.
+// ValidateRP validates if the resource pool exists when using the agent resource manager,
+// or if it's the dummy kubernetes pool.
 func ValidateRP(system *actor.System, name string) error {
-	if name == "" || UseAgentRM(system) && GetRP(system, name) != nil {
+	if name == "" || UseAgentRM(system) && GetRP(system, name) != nil ||
+		UseK8sRM(system) && name == "kubernetes" {
 		return nil
 	}
 	return errors.Errorf("cannot find resource pool: %s", name)
