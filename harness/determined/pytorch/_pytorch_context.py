@@ -8,6 +8,7 @@ import determined as det
 from determined import pytorch
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard import get_base_path
 
 # Apex is included only for GPU trials.
 try:
@@ -59,6 +60,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
+        self.profiler = None  # type: torch.profiler.profile
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -253,6 +255,17 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # Return the original LR scheduler to the user in case they have customizations that we
         # don't care about.
         return lr_scheduler
+
+    def set_profiler(self, *args, **kwargs) -> None:
+        """
+        Sets a torch profiler instance on the trial context to be called in _pytorch_trial
+        when training.
+        """
+        self.profiler = torch.profiler.profile(
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
+            *args,
+            **kwargs,
+        )
 
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
