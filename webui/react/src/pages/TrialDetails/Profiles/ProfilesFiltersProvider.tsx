@@ -17,9 +17,7 @@ export interface ProfilesFiltersInterface {
 
 export interface ProfilesFiltersContextInterface {
   filters: ProfilesFiltersInterface,
-  hasProfilingData: boolean,
   setFilters: (value: ProfilesFiltersInterface) => void,
-  setHasProfilingData: (value: boolean) => void,
   systemSeries: AvailableSeriesType,
   timingMetrics: MetricsAggregateInterface,
 }
@@ -42,7 +40,6 @@ interface Props {
 
 const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) => {
   const [ filters, setFilters ] = useState<FiltersInterface>({});
-  const [ hasProfilingData, setHasProfilingData ] = useState<boolean>(false);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
@@ -154,12 +151,10 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
 
   const context = useMemo<ProfilesFiltersContextInterface>(() => ({
     filters,
-    hasProfilingData,
     setFilters,
-    setHasProfilingData,
     systemSeries,
     timingMetrics,
-  }), [ filters, hasProfilingData, systemSeries, timingMetrics ]);
+  }), [ filters, systemSeries, timingMetrics ]);
 
   if (!canRender || !isUrlParsed) {
     return <Alert message="No data available." type="warning" />;

@@ -1,7 +1,8 @@
 import { Alert } from 'antd';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricChart from 'pages/TrialDetails/Profiles/SystemMetricChart';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
@@ -16,8 +17,6 @@ export interface Props {
 const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
   const {
     filters,
-    hasProfilingData,
-    setHasProfilingData,
     timingMetrics,
   } = useProfilesFilterContext();
 
@@ -29,13 +28,9 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
     filters.gpuUuid,
   );
 
-  // memoize if trial has profiling data
-  useEffect(() => {
-    if (hasProfilingData || systemMetrics.isEmpty) return;
-    setHasProfilingData(true);
-  }, [ hasProfilingData, setHasProfilingData, systemMetrics.isEmpty ]);
-
-  if (!hasProfilingData) {
+  if (systemMetrics.isLoading) {
+    return <Spinner spinning={systemMetrics.isLoading} />;
+  } else if (systemMetrics.isEmpty) {
     return <Alert message="No data available." type="warning" />;
   }
 
