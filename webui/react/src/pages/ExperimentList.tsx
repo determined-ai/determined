@@ -670,12 +670,17 @@ const ExperimentList: React.FC = () => {
 
   const filterComp = useMemo(() => {
     if (activeFilterCount === 0) return '';
-    const text = `${activeFilterCount} active filters${activeFilterCount > 1 ? 's' : ''}`;
+    const text = `${activeFilterCount} active filter${activeFilterCount > 1 ? 's' : ''}`;
     return <div>
       <span>{text} </span>
-      <ClearOutlined title="Clear filters" onClick={() => { setFilters(defaultFilters); }} />
+      <ClearOutlined
+        title="Clear filters"
+        onClick={() => {
+          setFilters(defaultFilters);
+          handleFilterChange(defaultFilters);
+        }} />
     </div>;
-  }, [ activeFilterCount ]);
+  }, [ activeFilterCount, handleFilterChange ]);
 
   return (
     <Page id="experiments" options={filterComp} subTitle={filterComp} title="Experiments">
