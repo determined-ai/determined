@@ -334,10 +334,10 @@ class TFKerasContext:
             self._compiled_optimizer = optimizer
             return optimizer
 
-        if optimizer in self._wrapped_optimizers:
+        if len(self._wrapped_optimizers) > 0:
             logging.debug(
                 "Skipping wrapping optimizer that is part of the compile "
-                "call as it was already wrapped explicitly via wrap_optimizer()."
+                "call as the user has already used the wrap_optimizer() API."
             )
             wrapped_optimizer = optimizer
         else:
