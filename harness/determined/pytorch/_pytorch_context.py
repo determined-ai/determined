@@ -279,11 +279,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
         if self.hvd_config.use:
-            check.gt(self.n_gpus, 0)
-            # We launch a horovod process per GPU. Each process
-            # needs to bind to a unique GPU.
-            self.device = torch.device(hvd.local_rank())
-            torch.cuda.set_device(self.device)
+            if self.n_gpus > 0:
+                # We launch a horovod process per GPU. Each process
+                # needs to bind to a unique GPU.
+                self.device = torch.device("cuda", hvd.local_rank())
+                torch.cuda.set_device(self.device)
+            else:
+                self.device = torch.device("cpu")
         elif self.n_gpus > 0:
             self.device = torch.device("cuda", 0)
         else:
