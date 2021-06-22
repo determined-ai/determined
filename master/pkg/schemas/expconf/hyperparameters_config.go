@@ -90,9 +90,7 @@ func (h HyperparameterV0) Merge(other interface{}) interface{} {
 				newNestedHP[key] = val
 			}
 		}
-		var newHP HyperparameterV0
-		newHP.RawNestedHyperparameter = &newNestedHP
-		return newHP
+		return HyperparameterV0{RawNestedHyperparameter: &newNestedHP}
 	}
 	return h
 }
