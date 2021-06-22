@@ -221,9 +221,9 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
-  const isInactive = (x: unknown) => x === undefined || (Array.isArray(x) && x.length === 0);
   const activeFilterCount = useMemo(() => {
     let count = 0;
+    const isInactive = (x: unknown) => x === undefined;
     Object.values(filters).forEach(value => {
       if (!isInactive(value)) count++;
     });
