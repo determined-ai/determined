@@ -1,0 +1,23 @@
+description: rb-push-trial
+entrypoint: model_def:NoopTrial
+hyperparameters:
+  global_batch_size: 64
+  my_value:
+    type: int
+    minval: 50
+    maxval: 500
+scheduling_unit: 5
+searcher:
+  metric: error
+  name: random
+  max_length:
+    batches: 100
+  max_trials: 1
+  smaller_is_better: false
+min_validation_period:
+  batches: 10
+
+max_restarts: 0
+
+resources:
+  slots_per_trial: 4
