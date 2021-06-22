@@ -908,18 +908,14 @@ func (t *trial) pushRendezvous(ctx *actor.Context) {
 	for _, caddr := range caddrs {
 		c := caddr.container
 		if pushArchitectureEnabled {
-			w := t.rendezvousWatchers[c.ID]
-			if err != nil {
-				w <- rendezvousInfoOrError{err: err}
-			} else {
-				w <- rendezvousInfoOrError{
-					info: &trialv1.RendezvousInfo{
-						Addresses: raddrs,
-						Rank:      int32(t.containerRanks[c.ID]),
-					},
-				}
+			t.rendezvousWatchers[c.ID] <- rendezvousInfoOrError{
+				info: &trialv1.RendezvousInfo{
+					Addresses: raddrs,
+					Rank:      int32(t.containerRanks[c.ID]),
+				},
+				err: err,
 			}
-			close(w)
+			close(t.rendezvousWatchers[c.ID])
 			delete(t.rendezvousWatchers, c.ID)
 		} else {
 			socket := t.containerSockets[c.ID]
