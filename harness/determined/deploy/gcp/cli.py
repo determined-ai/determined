@@ -205,6 +205,14 @@ args_description = Cmd(
                             "(the network should not already exist in the project)",
                         ),
                         Arg(
+                            "--filestore-address",
+                            type=str,
+                            default="",
+                            help="the address of an existing Filestore in the format of "
+                            "'ip-address:/file-share'; if not provided, a new Filestore "
+                            "instance will be created",
+                        ),
+                        Arg(
                             "--det-version",
                             type=str,
                             default=determined.__version__,
