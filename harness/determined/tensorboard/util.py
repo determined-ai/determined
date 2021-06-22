@@ -2,7 +2,13 @@ import logging
 import pathlib
 from typing import List
 
-tb_file_types = ["*tfevents*", "*.trace.json.gz", "*.memory_profile.json.gz", "*.pb"]
+tb_file_types = [
+    "*tfevents*",
+    "*.trace.json.gz",
+    "*.trace.json",
+    "*.memory_profile.json.gz",
+    "*.pb",
+]
 
 
 def find_tb_files(base_dir: pathlib.Path) -> List[pathlib.Path]:

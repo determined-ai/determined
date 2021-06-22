@@ -326,12 +326,13 @@ class PyTorchTrialController(det.LoopTrialController):
                     ):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
-            with self.prof.record_timing("train_batch"):
+            with self.prof.record_timing("train_batch") and self.context.profiler as torch_profiler:
                 tr_metrics = self.trial.train_batch(
                     batch=batch,
                     epoch_idx=self.get_epoch_idx(batch_idx),
                     batch_idx=batch_idx,
                 )
+                torch_profiler.step()
             if self._should_update_scaler():
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
