@@ -214,7 +214,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return batch_id // len(self.training_loader)
 
     def _average_training_metrics(
-        self, per_batch_metrics: List[Dict[str, Any]]
+            self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
         check.true(self.hvd_config.use, "Can only average training metrics in multi-GPU training.")
@@ -259,7 +259,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return per_batch_metrics
 
     def _auto_step_lr_scheduler_per_batch(
-        self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
+            self, batch_idx: int, lr_scheduler: pytorch.LRScheduler
     ) -> None:
         """
         This function aims at automatically step a LR scheduler. It should be called per batch.
@@ -291,7 +291,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return True
 
     def _train_for_step(
-        self, step_id: int, num_batches: int, total_batches_processed: int
+            self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
         check.gt(step_id, 0)
         self.context.reset_reducers()
@@ -322,18 +322,26 @@ class PyTorchTrialController(det.LoopTrialController):
             if self.context.is_epoch_start():
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
+                            f"callbacks.{callback.__class__.__name__}.on_training_epoch_start"
                     ):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
-            with self.prof.record_timing("train_batch") \
-                 and self.context.profiler as torch_profiler:
-                tr_metrics = self.trial.train_batch(
-                    batch=batch,
-                    epoch_idx=self.get_epoch_idx(batch_idx),
-                    batch_idx=batch_idx,
-                )
-                torch_profiler and torch_profiler.step()
+
+            with self.prof.record_timing("train_batch"):
+                if self.context.profiler:
+                    with self.context.profiler as torch_profiler:
+                        tr_metrics = self.trial.train_batch(
+                            batch=batch,
+                            epoch_idx=self.get_epoch_idx(batch_idx),
+                            batch_idx=batch_idx,
+                        )
+                        torch_profiler.step()
+                else:
+                    tr_metrics = self.trial.train_batch(
+                        batch=batch,
+                        epoch_idx=self.get_epoch_idx(batch_idx),
+                        batch_idx=batch_idx,
+                    )
             if self._should_update_scaler():
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
@@ -483,11 +491,11 @@ class PyTorchTrialController(det.LoopTrialController):
         )
 
         if self.hvd_config.use and any(
-            map(
-                lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
-                or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
-                self.callbacks.values(),
-            )
+                map(
+                    lambda c: util.is_overridden(c.on_validation_end, pytorch.PyTorchCallback)
+                              or util.is_overridden(c.on_validation_step_end, pytorch.PyTorchCallback),
+                    self.callbacks.values(),
+                )
         ):
             logging.debug(
                 "Broadcasting metrics to all worker processes to execute a "
@@ -535,7 +543,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return metrics_reducers
 
     def _reduce_metrics(
-        self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
+            self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
     ) -> Dict[str, Any]:
         metrics = {
             name: pytorch._reduce_metrics(
@@ -573,7 +581,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return metrics
 
     def _combine_metrics_across_processes(
-        self, metrics: Dict[str, Any], num_batches: int
+            self, metrics: Dict[str, Any], num_batches: int
     ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
         # The chief receives the metric from every other training process.
         check.true(self.hvd_config.use)
@@ -836,7 +844,7 @@ class PyTorchTrial(det.Trial):
 
     @abstractmethod
     def train_batch(
-        self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
+            self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
         """
         Train on one batch.
