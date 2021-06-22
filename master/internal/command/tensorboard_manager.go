@@ -346,7 +346,7 @@ func (t *tensorboardManager) newTensorBoard(
 			},
 		},
 		serviceAddress: &serviceAddress,
-		assignedPort:   port,
+		assignedPort:   &port,
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,

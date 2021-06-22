@@ -182,7 +182,7 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 			},
 		},
 		serviceAddress: &serviceAddress,
-		assignedPort:   port,
+		assignedPort:   &port,
 
 		owner: commandOwner{
 			ID:       params.User.ID,
