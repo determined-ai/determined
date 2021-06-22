@@ -104,12 +104,18 @@ def get_tensorboard_args(args: List[str]) -> List[str]:
     Builds tensorboard startup args from args passed in from tensorboard-entrypoint.sh
     Args are added and deprecated at the mercy of tensorboard; all of the below are necessary to
     support versions 1.14, 2.4, and 2.5
+
+    - If multiple directories are specified and the tensorboard version is > 1,
+    use legacy logdir_spec behavior
+
+    - Tensorboard 2+ no longer exposes all ports. Must pass in "--bind_all" to expose localhost
+
+    - Tensorboard 2.5.0 introduces an experimental feature (default load_fast=true)
+    which prevents multiple plugins from loading correctly.
     """
     task_id = os.environ["DET_TASK_ID"]
     port = os.environ["TENSORBOARD_PORT"]
 
-    # Version is passed in from tensorboard-entrypoint.sh which determines the version of
-    # tensorboard running within the started container
     version = args.pop(0)
 
     # logdir is the second argument passed in from tensorboard_manager.go. If multiple directories
@@ -122,24 +128,10 @@ def get_tensorboard_args(args: List[str]) -> List[str]:
     major, minor = get_tensorboard_version(version)
 
     if major == "2":
-        """
-        Tensorboard 2+ no longer exposes all ports. Must pass in "--bind_all" to expose localhost
-        :return: list of startup args passed to tensorboard
-        """
         tensorboard_args.append("--bind_all")
         if minor == "5":
-            """
-            Tensorboard 2.5.0 introduces a new experimental feature, fast data loading, which
-            is enabled (load_fast=true) by default. This feature is designed to speed up crawling
-            of logdir files, but prevents plugins from loading correctly. It is disabled here for
-            the Tensorflow profiling plugin (tensorboard-plugin-profile) to work.
-            """
             tensorboard_args.append("--load_fast=false")
         if len(logdir.split(",")) > 1:
-            """
-            Tensorboard 2+ no longer accepts multiple comma-delimited directories as logdir.
-            This legacy behavior must be passed in as "logdir_spec".
-            """
             tensorboard_args.append(f"--logdir_spec={logdir}")
             return tensorboard_args
 
