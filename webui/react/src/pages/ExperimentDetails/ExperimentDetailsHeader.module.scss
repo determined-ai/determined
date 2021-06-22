@@ -16,6 +16,7 @@
 
 @media only screen and (min-width: $breakpoint-tablet) {
   .experimentTitle {
+    font-size: var(--theme-sizes-font-medium);
     margin-right: var(--theme-sizes-layout-medium);
     margin-top: 0;
   }

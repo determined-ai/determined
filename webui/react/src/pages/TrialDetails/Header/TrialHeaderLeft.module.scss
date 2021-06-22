@@ -33,14 +33,17 @@
   margin-right: var(--theme-sizes-layout-medium);
   padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
   text-transform: uppercase;
+  vertical-align: top;
 }
 
 @media only screen and (min-width: $breakpoint-tablet) {
   .experiment {
+    font-size: var(--theme-sizes-font-medium);
     margin-right: var(--theme-sizes-layout-medium);
     width: auto;
   }
   .trial {
+    font-size: var(--theme-sizes-font-medium);
     margin-top: 0;
   }
 }
