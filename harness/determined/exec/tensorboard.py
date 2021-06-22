@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 import boto3
 import requests
@@ -87,7 +87,7 @@ def main(args: List[str]) -> int:
     return p.wait()
 
 
-def get_tensorboard_version(version):
+def get_tensorboard_version(version: str) -> Tuple[str, str]:
     """
     Gets the version of the tensorboard package currently installed. Used
     by downstream processes to determine args passed in.
@@ -99,7 +99,7 @@ def get_tensorboard_version(version):
     return major, minor
 
 
-def get_tensorboard_args(args):
+def get_tensorboard_args(args: List[str]) -> List[str]:
     """
     Builds tensorboard startup args from args passed in from tensorboard-entrypoint.sh
     Args are added and deprecated at the mercy of tensorboard; all of the below are necessary to
