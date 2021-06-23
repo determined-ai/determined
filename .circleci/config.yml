@@ -822,7 +822,7 @@ jobs:
       - helm/install-helm-client
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.8"
+          extras-requires: "tensorflow==2.4.1 torch==1.8.1"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
