@@ -3,11 +3,26 @@ import React, { useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
-import { Action, trialWillNeverHaveData } from 'pages/TrialDetails/TrialActions';
 import { openOrCreateTensorboard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, RunState, TrialDetails } from 'types';
+import { getWorkload, isMetricsWorkload } from 'utils/step';
+import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
+
+export enum Action {
+  Continue = 'Continue',
+  Tensorboard = 'Tensorboard',
+}
+
+export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+  const isTerminal = terminalRunStates.has(trial.state);
+  const workloadsWithSomeMetric = trial.workloads
+    .map(getWorkload)
+    .filter(isMetricsWorkload)
+    .filter(workload => workload.metrics && workload.state === RunState.Completed);
+  return isTerminal && workloadsWithSomeMetric.length === 0;
+};
 
 interface Props {
   experiment: ExperimentBase;
