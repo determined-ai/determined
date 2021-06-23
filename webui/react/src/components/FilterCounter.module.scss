@@ -4,19 +4,38 @@
 
   .launchButton {
     background-color: transparent;
-    border-color: var(--theme-colors-monochrome-7);
     border-radius: var(--theme-sizes-border-radius);
+    border-color: var(--theme-colors-monochrome-7);
     border-style: solid;
     border-width: var(--theme-sizes-border-width);
+
+    &:hover {
+      border-color: var(--theme-colors-monochrome-5);
+      color: var(--theme-colors-monochrome-5);
+    }
+  }
+  .expanded .launchButton {
     color: var(--theme-colors-monochrome-7);
     flex-grow: 1;
     flex-shrink: 1;
     margin-left: var(--theme-sizes-layout-medium);
     overflow: hidden;
+  }
+  .collapsed .launchButton {
+    align-items: center;
+    display: none;
+    flex-shrink: 0;
+    justify-content: center;
+    width: var(--theme-sizes-layout-giant);
+    height: var(--theme-sizes-layout-giant);
+  }
 
-    &:hover {
-      border-color: var(--theme-colors-monochrome-5);
-      color: var(--theme-colors-monochrome-5);
+  @media only screen and (max-width: $breakpoint-mobile) {
+    .expanded {
+      display: none;
+    }
+    .collapsed {
+      display: flex;
     }
   }
 }
