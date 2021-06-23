@@ -33,8 +33,6 @@ CREATE TABLE public.trial_snapshots (
     CONSTRAINT uq_trial_snapshots_experiment_id_request_id UNIQUE(experiment_id, request_id)
 );
 
-DROP TABLE public.tasks;
-
 DROP TABLE public.task_runs;
 
 DROP TABLE public.trial_runner_metadata;

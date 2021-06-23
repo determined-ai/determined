@@ -566,6 +566,17 @@ service Determined {
       tags: "Internal"
     };
   }
+  // For bookkeeping, update trial runner metadata (currently just state).
+  rpc PostTrialRunnerMetadata(PostTrialRunnerMetadataRequest)
+      returns (PostTrialRunnerMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/runner/metadata"
+      body: "metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Record training metrics for specified training.
   rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
       returns (ReportTrialTrainingMetricsResponse) {

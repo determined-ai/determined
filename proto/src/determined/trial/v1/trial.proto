@@ -247,3 +247,12 @@ message RendezvousInfo {
   // The container rank.
   int32 rank = 2;
 }
+
+// The metadata pertaining to the current running task for a trial.
+message TrialRunnerMetadata {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "state" ] }
+  };
+  // The state of the trial runner.
+  string state = 1;
+}
