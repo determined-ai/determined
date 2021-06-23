@@ -77,6 +77,7 @@ export const useFetchAvailableSeries = (trialId: number): AvailableSeries => {
 
         event.labels.forEach(label => {
           const agentId: string = label.agentId as unknown as string;
+          // The reported gpuuuid can be empty since the slot might not be backed by gpu.
           const gpuUuid: string = label.gpuUuid as unknown as string;
           const metricType: string = label.metricType as unknown as string;
           const name: string = label.name as unknown as string;

@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import SelectFilter from 'components/SelectFilter';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
@@ -29,6 +29,11 @@ const SystemMetricFilter: React.FC = () => {
   const handleChangeName = useCallback((newName: SelectValue) => {
     setFilters({ name: newName as unknown as string });
   }, [ setFilters ]);
+
+  const uuidOptions = useMemo(() => {
+    return filters.name && filters.agentId &&
+      systemSeries[filters.name][filters.agentId].filter(uuid => uuid && uuid.length > 0) || [];
+  }, [ systemSeries, filters ]);
 
   return (
     <>
@@ -59,9 +64,8 @@ const SystemMetricFilter: React.FC = () => {
         ))}
       </SelectFilter>
 
-      {filters.name && filters.agentId
-      && systemSeries[filters.name][filters.agentId].length > 0 && (
-        <SelectFilter
+      { uuidOptions.length > 0 &&
+        (<SelectFilter
           allowClear={true}
           enableSearchFilter={false}
           label="GPU"
@@ -71,12 +75,11 @@ const SystemMetricFilter: React.FC = () => {
           value={filters.gpuUuid}
           onChange={handleChangeGpuUuid}
         >
-          {systemSeries[filters.name][filters.agentId].map(gpuUuid => (
+          {uuidOptions.map(gpuUuid => (
             <Option key={gpuUuid} value={gpuUuid}>{gpuUuid}</Option>
           ))}
         </SelectFilter>
-      )}
-
+        )}
     </>
   );
 };
