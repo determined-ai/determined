@@ -4,8 +4,8 @@
 
   .launchButton {
     background-color: transparent;
-    border-radius: var(--theme-sizes-border-radius);
     border-color: var(--theme-colors-monochrome-7);
+    border-radius: var(--theme-sizes-border-radius);
     border-style: solid;
     border-width: var(--theme-sizes-border-width);
 
@@ -25,8 +25,8 @@
     align-items: center;
     display: none;
     flex-shrink: 0;
-    justify-content: center;
     height: var(--theme-sizes-layout-giant);
+    justify-content: center;
   }
 
   @media only screen and (max-width: $breakpoint-tablet) {
