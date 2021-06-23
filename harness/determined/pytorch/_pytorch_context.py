@@ -262,9 +262,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         when training.
         """
         self.profiler = torch.profiler.profile(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(
-                get_base_path({})
-            ),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
             *args,
             **kwargs,
         )
