@@ -29,6 +29,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
+        auto_bind_mount=(not args.no_auto_bind_mount),
     )
 
 
@@ -51,6 +52,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
         db_password=args.db_password,
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
+        auto_bind_mount=(not args.no_auto_bind_mount),
         cluster_name=args.cluster_name,
     )
 
@@ -157,6 +159,11 @@ args_description = Cmd(
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
+                Arg(
+                    "--no-auto-bind-mount",
+                    help="disable bind mounting the user's home directory into task containers",
+                    action="store_true",
+                ),
             ],
         ),
         Cmd(
@@ -218,6 +225,11 @@ args_description = Cmd(
                 Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
+                    action="store_true",
+                ),
+                Arg(
+                    "--no-auto-bind-mount",
+                    help="disable bind mounting the user's home directory into task containers",
                     action="store_true",
                 ),
                 Arg(

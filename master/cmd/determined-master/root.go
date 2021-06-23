@@ -122,6 +122,11 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
 	}
 
+    configMap, err := applyBindMount(configMap)
+    if err != nil {
+        return nil, errors.Wrap(err, "invalid bind mount location")
+    }
+
 	config := internal.DefaultConfig()
 	bs, err := json.Marshal(configMap)
 	if err != nil {
@@ -135,6 +140,30 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, error) {
+    vTCD, tcdExisted := configMap["task_container_defaults"]
+    if !tcdExisted {
+        return nil, errors.New("task container defaults do not exist")
+    }
+    vTCDMap, ok := vTCD.(map[string]interface{})
+	if !ok {
+		return nil, errors.New("wrong type for task container defaults field")
+	}
+    vBM, bmExisted := vTCDMap["bind_mounts"]
+    if !bmExisted {
+        return nil, errors.New("bind mount specification does not exist")
+    }
+    
+    switch vBMStr, ok := vBM.(string); {
+        case !ok:
+            return nil, errors.New("wrong type for bind mounts field")
+        // case vBMStr == "/home":
+        // case vBMStr == "no":
+    }
+
+    return configMap, nil
 }
 
 func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {
