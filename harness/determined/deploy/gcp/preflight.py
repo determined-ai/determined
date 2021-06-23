@@ -20,6 +20,7 @@ PREEMPTIBLE_QUOTA_CODES = {k: "PREEMPTIBLE_" + v for (k, v) in ON_DEMAND_QUOTA_C
 
 
 def check_quota(configs: Dict) -> None:
+    print("Checking quota...\n")
     try:
         try:
             compute = googleapiclient.discovery.build("compute", "v1")

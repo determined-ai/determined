@@ -62,6 +62,19 @@ resource "google_compute_instance" "master_instance" {
       - pool_name: aux-pool
         max_aux_containers_per_agent: ${var.max_aux_containers_per_agent}
         provider:
+    EOF
+
+    if [ -n "${var.filestore_address}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+          startup_script: |
+                          apt-get -y update && apt-get -y install nfs-common
+                          mkdir -p /mnt/shared_fs
+                          mount ${var.filestore_address} /mnt/shared_fs
+                          df -h --type=nfs
+    EOF
+    fi
+
+    cat << EOF >> /usr/local/determined/etc/master.yaml
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
           agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
           master_url: ${var.scheme}://internal-ip:${var.port}
@@ -94,6 +107,19 @@ resource "google_compute_instance" "master_instance" {
       - pool_name: compute-pool
         max_aux_containers_per_agent: 0
         provider:
+    EOF
+
+    if [ -n "${var.filestore_address}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+          startup_script: |
+                          apt-get -y update && apt-get -y install nfs-common
+                          mkdir -p /mnt/shared_fs
+                          mount ${var.filestore_address} /mnt/shared_fs
+                          df -h --type=nfs
+    EOF
+    fi
+
+    cat << EOF >> /usr/local/determined/etc/master.yaml
           boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
           agent_docker_image: ${var.image_repo_prefix}/determined-agent:${var.det_version}
           master_url: ${var.scheme}://internal-ip:${var.port}
@@ -123,11 +149,12 @@ resource "google_compute_instance" "master_instance" {
           operation_timeout_period: ${var.operation_timeout_period}
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
+
+    task_container_defaults:
     EOF
 
     if [ -n "${var.cpu_env_image}" ] || [ -n "${var.gpu_env_image}" ]; then
       cat << EOF >> /usr/local/determined/etc/master.yaml
-    task_container_defaults:
       image:
     EOF
       if [ -n "${var.cpu_env_image}" ]; then
@@ -140,6 +167,14 @@ resource "google_compute_instance" "master_instance" {
         gpu: ${var.gpu_env_image}
     EOF
       fi
+    fi
+
+    if [ -n "${var.filestore_address}" ]; then
+      cat << EOF >> /usr/local/determined/etc/master.yaml
+      bind_mounts:
+        - host_path: /mnt/shared_fs
+          container_path: /run/determined/shared_fs
+    EOF
     fi
 
     apt-get remove docker docker-engine docker.io containerd runc

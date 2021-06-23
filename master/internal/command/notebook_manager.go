@@ -33,7 +33,7 @@ const (
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookDefaultPage = "/run/determined/workdir/Notebook.ipynb"
+	notebookDefaultPage = "/run/determined/workdir/test.ipynb"
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 )
 
 func generateServiceAddress(taskID string) (string, error) {
-	tmpl := "/proxy/{{.TaskID}}/lab/tree/Notebook.ipynb?reset"
+	tmpl := "/proxy/{{.TaskID}}/"
 
 	t, err := template.New("").Parse(strings.TrimSpace(tmpl))
 	if err != nil {

@@ -34,6 +34,8 @@ def validate_scheduler_type() -> Callable:
 
 
 def deploy_gcp(command: str, args: argparse.Namespace) -> None:
+    # Preprocess the local path to store the states.
+
     # Set local state path as our current working directory. This is a no-op
     # when the --local-state-path arg isn't used. We do this because Terraform
     # module directories are populated with relative paths, and we want to
@@ -44,23 +46,35 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     if not os.path.exists(args.local_state_path):
         os.makedirs(args.local_state_path)
     os.chdir(args.local_state_path)
+    print("Using local state path:", args.local_state_path)
 
     # Set the TF_DATA_DIR where Terraform will store its supporting files
     env = os.environ.copy()
     env["TF_DATA_DIR"] = os.path.join(args.local_state_path, "terraform_data")
 
-    # Create det_configs dictionary
+    # Initialize determined configurations.
     det_configs = {}
-
-    # Add args to det_configs dict
     args_dict = vars(args)
     for arg in args_dict:
         if args_dict[arg] is not None:
             det_configs[arg] = args_dict[arg]
 
+    # Handle down subcommand.
+    if command == "down":
+        gcp.delete(det_configs, env, args.no_prompt)
+        print("Delete Successful")
+        return
+
+    # Handle Up subcommand.
+    if (args.cpu_env_image and not args.gpu_env_image) or (
+        args.gpu_env_image and not args.cpu_env_image
+    ):
+        print("If a CPU or GPU image is specified, both should be.")
+        sys.exit(1)
+
     # Not all args will be passed to Terraform, list the ones that won't be
     # TODO(ilia): Switch to filtering variables_to_include instead, i.e.
-    # only pass the ones recognized by terraform.
+    #             only pass the ones recognized by terraform.
     variables_to_exclude = [
         "command",
         "dry_run",
@@ -70,23 +84,12 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "user",
         "no_preflight_checks",
         "no_wait_for_master",
+        "no_prompt",
         "func",
         "_command",
         "_subcommand",
         "_subsubcommand",
     ]
-
-    # Delete
-    if command == "down":
-        gcp.delete(det_configs, env)
-        print("Delete Successful")
-        return
-
-    if (args.cpu_env_image and not args.gpu_env_image) or (
-        args.gpu_env_image and not args.cpu_env_image
-    ):
-        print("If a CPU or GPU image is specified, both should be.")
-        sys.exit(1)
 
     # Dry-run flag
     if args.dry_run:
@@ -94,7 +97,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         print("Printed plan. To execute, run `det deploy gcp`")
         return
 
-    print("Starting Determined Deployment")
+    print("Starting Determined deployment on GCP...\n")
     gcp.deploy(det_configs, env, variables_to_exclude)
 
     if not args.no_wait_for_master:
@@ -143,6 +146,11 @@ args_description = Cmd(
                             type=str,
                             default=os.getcwd(),
                             help="local directory for storing cluster state",
+                        ),
+                        Arg(
+                            "--no-prompt",
+                            action="store_true",
+                            help="no prompt when deleting resources",
                         ),
                     ],
                 ),
@@ -195,6 +203,14 @@ args_description = Cmd(
                             default="det-default",
                             help="network name to create "
                             "(the network should not already exist in the project)",
+                        ),
+                        Arg(
+                            "--filestore-address",
+                            type=str,
+                            default="",
+                            help="the address of an existing Filestore in the format of "
+                            "'ip-address:/file-share'; if not provided, a new Filestore "
+                            "instance will be created",
                         ),
                         Arg(
                             "--det-version",

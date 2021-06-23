@@ -30,6 +30,8 @@ To get started on GCP, you will need to create a `project
 
 The following GCP APIs must be enabled on your GCP project:
 
+-  `Cloud Filestore API
+   <https://console.cloud.google.com/apis/library/file.googleapis.com>`__
 -  `Cloud Resource Manager API
    <https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
 -  `Cloud SQL Admin API
@@ -318,6 +320,7 @@ the Google Cloud Console
 <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__
 and ensure it has the following IAM roles:
 
+-  Cloud Filestore Editor
 -  Cloud SQL Admin
 -  Compute Admin
 -  Compute Network Admin

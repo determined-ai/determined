@@ -64,6 +64,27 @@ module "ip" {
 
 
 /******************************************
+	Filestore configuration
+ *****************************************/
+
+module "filestore" {
+  count = var.filestore_address == "" ? 1 : 0
+
+  source = "./modules/filestore"
+
+  project_id = var.project_id
+  zone = var.zone
+  network_name = module.network.network_name
+
+  unique_id = local.unique_id
+}
+
+locals {
+  filestore_address = "${var.filestore_address=="" ? module.filestore[0].address : var.filestore_address}"
+}
+
+
+/******************************************
 	GCS configuration
  *****************************************/
 
@@ -151,6 +172,7 @@ module "compute" {
   subnetwork_name = module.network.subnetwork_name
   static_ip = module.ip.static_ip_address
   service_account_email = module.service_account.service_account_email
+  filestore_address = local.filestore_address
   gcs_bucket = module.gcs.gcs_bucket
   database_hostname = module.database.database_hostname
   database_name = module.database.database_name
