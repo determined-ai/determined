@@ -60,7 +60,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
-        self.profiler = None  # type: Optional[torch.profiler.profile]
+        self.profiler = None
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -261,8 +261,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         Sets a torch profiler instance on the trial context to be called in _pytorch_trial
         when training.
         """
-        self.profiler = torch.profiler.profile(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
+        self.profiler = torch.profiler.profile(  # type: ignore
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(  # type: ignore
+                get_base_path({})
+            ),
             *args,
             **kwargs,
         )
