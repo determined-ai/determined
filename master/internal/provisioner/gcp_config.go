@@ -48,7 +48,7 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-df5f9aa",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-744337d",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
