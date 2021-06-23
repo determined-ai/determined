@@ -263,8 +263,8 @@ func (t *tensorboardManager) newTensorBoard(
 		}
 
 		for _, id := range exp.TrialIDs {
-			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
+			trialDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/trial/%d/",
+				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}

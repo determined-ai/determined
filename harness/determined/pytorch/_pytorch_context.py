@@ -60,7 +60,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
-        self.profiler = None  # type: torch.profiler.profile
+        self.profiler = None  # type: Optional[torch.profiler.profile]
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -256,7 +256,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # don't care about.
         return lr_scheduler
 
-    def set_profiler(self, *args, **kwargs) -> None:
+    def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
         """
         Sets a torch profiler instance on the trial context to be called in _pytorch_trial
         when training.
