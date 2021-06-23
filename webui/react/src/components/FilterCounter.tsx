@@ -1,5 +1,4 @@
-import { ClearOutlined } from '@ant-design/icons';
-import { Badge, Button } from 'antd';
+import { Button } from 'antd';
 import React from 'react';
 
 import { capitalize } from 'utils/string';
@@ -22,12 +21,9 @@ const FilterCounter: React.FC<Props> = ({ activeFilterCount, onReset }: Props) =
         onClick={onReset}>Clear Filters</Button>
     </div>
     <div className={css.collapsed}>
-      <Badge count={activeFilterCount}>
-        <ClearOutlined
-          className={css.launchButton}
-          title={`Clear ${activeFilterCount} ${capitalize(phrase)}`}
-          onClick={onReset} />
-      </Badge>
+      <Button
+        className={css.launchButton}
+        onClick={onReset}>Clear {activeFilterCount} {capitalize(phrase)}</Button>
     </div>
   </div>;
 };

@@ -26,15 +26,14 @@
     display: none;
     flex-shrink: 0;
     justify-content: center;
-    width: var(--theme-sizes-layout-giant);
     height: var(--theme-sizes-layout-giant);
   }
 
-  @media only screen and (max-width: $breakpoint-mobile) {
+  @media only screen and (max-width: $breakpoint-tablet) {
     .expanded {
       display: none;
     }
-    .collapsed {
+    .collapsed .launchButton {
       display: flex;
     }
   }
