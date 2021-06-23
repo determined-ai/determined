@@ -394,7 +394,7 @@ class LightningAdapter(PyTorchTrial):
         """
         type(self._pls.lm).global_step = batch_idx  # type: ignore
         self._pls.lm.on_validation_batch_start(batch, batch_idx, dataloader_idx=0)
-        rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)  # type: ignore
+        rv = self._pls.lm.validation_step(batch, batch_idx=batch_idx)
         self._pls.lm.on_validation_batch_end(rv, batch, batch_idx, dataloader_idx=0)
 
         metrics = None
