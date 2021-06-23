@@ -261,8 +261,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         Sets a torch profiler instance on the trial context to be called in _pytorch_trial
         when training.
         """
-        self.profiler = torch.profiler.profile(  # type: ignore
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(  # type: ignore
+        self.profiler = torch.profiler.profile(
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(
                 get_base_path({})
             ),
             *args,
