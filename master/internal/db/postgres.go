@@ -1220,6 +1220,23 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 	return nil
 }
 
+// UpdateTrialRunnerState updates a trial runner's state.
+func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
+	return db.UpdateTrialRunnerMetadata(id, &trialv1.TrialRunnerMetadata{State: state})
+}
+
+// UpdateTrialRunnerMetadata updates a trial's metadata about its runner.
+func (db *PgDB) UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error {
+	if _, err := db.sql.Exec(`
+INSERT INTO trial_runner_metadata (trial_id, state)
+VALUES ($1, $2)
+ON CONFLICT (trial_id)
+DO UPDATE SET state = EXCLUDED.state`, id, md.State); err != nil {
+		return errors.Wrap(err, "saving trial runner state")
+	}
+	return nil
+}
+
 // RollBackTrial deletes from the database all steps, checkpoints, and validations for the trial
 // that happened after the batch provided.
 func (db *PgDB) RollBackTrial(id, totalBatches int) error {
@@ -1396,9 +1413,9 @@ VALUES (
 // AddTrialRun saves a new run for the trial.
 func (db *PgDB) AddTrialRun(trialID, runID int) error {
 	_, err := db.sql.Exec(`
-INSERT INTO runs (run_type, run_type_fk, id)
+INSERT INTO task_runs (task_type, task_type_fk_id, run_id)
 VALUES ('TRIAL', $1, $2)
-ON CONFLICT (run_type, run_type_fk, id)
+ON CONFLICT (task_type, task_type_fk_id, run_id)
 DO UPDATE SET start_time = now()`, trialID, runID)
 	return err
 }
@@ -1406,22 +1423,57 @@ DO UPDATE SET start_time = now()`, trialID, runID)
 // CompleteTrialRun the given run.
 func (db *PgDB) CompleteTrialRun(trialID, runID int) error {
 	_, err := db.sql.Exec(`
-UPDATE runs
+UPDATE task_runs
 SET end_time = now()
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1 AND id = $2`, trialID, runID)
+WHERE task_type = 'TRIAL'
+  AND task_type_fk_id = $1
+  AND run_id = $2`, trialID, runID)
 	return err
 }
 
 // EndTrialRuns sets the end time on all open runs to now.
 func (db *PgDB) EndTrialRuns(trialID int) error {
 	_, err := db.sql.Exec(`
-UPDATE runs
+UPDATE task_runs
 SET end_time = now()
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1
+WHERE task_type = 'TRIAL'
+  AND task_type_fk_id = $1
   AND end_time IS NULL`, trialID)
 	return err
+}
+
+// TrialRunIDAndRestartCount returns the run ID and restart count for a trial.
+func (db *PgDB) TrialRunIDAndRestartCount(trialID int) (int, int, error) {
+	var runID, restart int
+	if err := db.sql.QueryRowx(`
+SELECT id
+FROM task_runs
+WHERE task_type = 'TRIAL'
+  AND task_type_fk_id = $1
+ORDER BY id DESC
+LIMIT 1`, trialID).Scan(&runID); err != nil {
+		return 0, 0, errors.Wrap(err, "failed to scan task run ID")
+	}
+
+	if err := db.sql.QueryRowx(`
+SELECT restarts
+FROM trials
+WHERE id = $1`, trialID).Scan(&restart); err != nil {
+		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
+	}
+
+	return runID, restart, nil
+}
+
+// SetTrialRestartCount sets the trial's restart count.
+func (db *PgDB) SetTrialRestartCount(trialID, restartCount int) error {
+	if _, err := db.sql.Exec(`
+UPDATE trials
+SET restarts = $2
+WHERE id = $1`, trialID, restartCount); err != nil {
+		return errors.Wrap(err, "failed to scan trial restart count")
+	}
+	return nil
 }
 
 // StepByTotalBatches looks up a step by (TrialID, TotalBatches) pair,
@@ -1641,12 +1693,12 @@ SELECT coalesce(greatest(
 	(SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
 	(SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
 	(
-	    SELECT coalesce(r.start_time, t.start_time)
+	    SELECT coalesce(tr.start_time, t.start_time)
 		FROM trials t
-		LEFT JOIN runs r ON t.id = r.run_type_fk
+		LEFT JOIN task_runs tr ON t.id = tr.task_type_fk_id
 		WHERE t.id = $1
-	      AND r.run_type = 'TRIAL'
-	    ORDER BY r.id DESC
+	      AND tr.task_type = 'TRIAL'
+	    ORDER BY tr.id DESC
 	    LIMIT 1
 	)), now())
 `, trialID).Scan(&endTime); err != nil {
@@ -1659,14 +1711,14 @@ func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) err
 	var cRunID int
 	switch err := tx.QueryRowxContext(ctx, `
 SELECT coalesce(max(id), 0)
-FROM runs
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1
+FROM task_runs
+WHERE task_type = 'TRIAL'
+  AND task_type_fk_id = $1
 `, trialID).Scan(&cRunID); {
 	case err != nil:
 		return errors.Wrap(err, "querying current run")
 	case int(runID) != cRunID:
-		return api.AsErrBadRequest("invalid run id, %d != %d", runID, cRunID)
+		return api.AsValidationError("invalid run id, %d != %d", runID, cRunID)
 	default:
 		return nil
 	}

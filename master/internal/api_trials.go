@@ -299,13 +299,10 @@ func (a *apiServer) KillTrial(
 		return nil, status.Errorf(codes.NotFound, "trial %d not found", req.Id)
 	}
 
-	resp := apiv1.KillTrialResponse{}
-	addr := actor.Addr("trials", req.Id).String()
-	err = a.actorRequest(addr, req, &resp)
-	if status.Code(err) == codes.NotFound {
-		return &apiv1.KillTrialResponse{}, nil
+	if err = a.askAtDefaultSystem(actor.Addr("trials", req.Id), killTrial{}, nil); err != nil {
+		return nil, err
 	}
-	return &resp, err
+	return &apiv1.KillTrialResponse{}, nil
 }
 
 func (a *apiServer) GetExperimentTrials(
@@ -583,8 +580,8 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 		return nil, err
 	}
 
-	var resp searcher.ValidateAfter
-	if err := a.askAtDefaultSystem(exp, trialGetCurrentOperation{
+	var resp TrialSearcherState
+	if err := a.askAtDefaultSystem(exp, trialGetSearcherState{
 		trialID: int(req.TrialId),
 	}, &resp); err != nil {
 		return nil, err
@@ -593,9 +590,10 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 	return &apiv1.GetCurrentTrialSearcherOperationResponse{
 		Op: &experimentv1.SearcherOperation{
 			Union: &experimentv1.SearcherOperation_ValidateAfter{
-				ValidateAfter: resp.ToProto(),
+				ValidateAfter: resp.Op.ToProto(),
 			},
 		},
+		Complete: resp.Complete,
 	}, nil
 }
 
@@ -611,17 +609,10 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	}
 	exp := actor.Addr("experiments", eID)
 
-	// TODO(DET-5210): Sending a trial snapshot along forces an experiment snapshot,
-	// but with a nil snapshot it won't save the trial snapshot. At the end of push
-	// arch, we should just remove trial snapshots entirely (they should snapshotted
-	// but separately, not through/with experiments, since it's really just run id and restarts).
 	if err = a.askAtDefaultSystem(exp, trialCompleteOperation{
-		metric: req.CompletedOperation.SearcherMetric,
-		op:     searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
-		trialSnapshot: trialSnapshot{
-			trialID:   int(req.TrialId),
-			requestID: rID,
-		},
+		trialID: int(req.TrialId),
+		metric:  req.CompletedOperation.SearcherMetric,
+		op:      searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -631,7 +622,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	eID, _, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
 	switch {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, trialNotFound
@@ -640,13 +631,9 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	}
 	exp := actor.Addr("experiments", eID)
 
-	// TODO(DET-5210): Ditto comment in apiServer.ReportTrialSearcherValidation.
 	if err = a.askAtDefaultSystem(exp, trialReportEarlyExit{
-		reason: workload.ExitedReasonFromProto(req.EarlyExit.Reason),
-		trialSnapshot: trialSnapshot{
-			trialID:   int(req.TrialId),
-			requestID: rID,
-		},
+		trialID: int(req.TrialId),
+		reason:  workload.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {
 		return nil, err
 	}

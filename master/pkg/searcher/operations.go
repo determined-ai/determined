@@ -108,14 +108,14 @@ type Create struct {
 	RequestID model.RequestID `json:"request_id"`
 	// TrialSeed must be a value between 0 and 2**31 - 1.
 	TrialSeed             uint32                      `json:"trial_seed"`
-	Hparams               hparamSample                `json:"hparams"`
+	Hparams               HParamSample                `json:"hparams"`
 	Checkpoint            *Checkpoint                 `json:"checkpoint"`
 	WorkloadSequencerType model.WorkloadSequencerType `json:"workload_sequencer_type"`
 }
 
 // NewCreate initializes a new Create operation with a new request ID and the given hyperparameters.
 func NewCreate(
-	rand *nprand.State, s hparamSample, sequencerType model.WorkloadSequencerType) Create {
+	rand *nprand.State, s HParamSample, sequencerType model.WorkloadSequencerType) Create {
 	return Create{
 		RequestID:             model.NewRequestID(rand),
 		TrialSeed:             uint32(rand.Int64n(1 << 31)),
@@ -127,7 +127,7 @@ func NewCreate(
 // NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
 // hyperparameters and checkpoint to initially load from.
 func NewCreateFromCheckpoint(
-	rand *nprand.State, s hparamSample, parentID model.RequestID,
+	rand *nprand.State, s HParamSample, parentID model.RequestID,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
 	create := NewCreate(rand, s, sequencerType)

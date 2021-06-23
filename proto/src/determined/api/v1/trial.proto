@@ -301,6 +301,8 @@ message GetCurrentTrialSearcherOperationRequest {
 message GetCurrentTrialSearcherOperationResponse {
   // The current searcher operation.
   determined.experiment.v1.SearcherOperation op = 1;
+  // If the current operation has been completed.
+  bool complete = 2;
 }
 
 // Reports to the searcher that the trial has completed the current requested

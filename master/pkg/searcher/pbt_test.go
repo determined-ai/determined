@@ -233,7 +233,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 			},
 		},
 	}
-	sample := hparamSample{
+	sample := HParamSample{
 		"cat":    3,
 		"const":  "val",
 		"double": 50.,
@@ -256,7 +256,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		resamplingConfig.RawExploreFunction.ResampleProbability = 1
 
 		// Create a hyperparameter sample where none of the values are actually valid, then resample it.
-		invalidSample := make(hparamSample)
+		invalidSample := make(HParamSample)
 		spec.Each(func(name string, _ expconf.Hyperparameter) {
 			invalidSample[name] = nil
 		})

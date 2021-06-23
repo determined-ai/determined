@@ -189,7 +189,7 @@ func (a *apiServer) askAtDefaultSystem(
 		)
 	case resp.Error() != nil:
 		switch {
-		case errors.Is(resp.Error(), api.ErrBadRequest):
+		case errors.Is(resp.Error(), api.ErrInvalid):
 			return status.Errorf(
 				codes.InvalidArgument,
 				resp.Error().Error(),

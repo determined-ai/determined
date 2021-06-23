@@ -17,13 +17,11 @@ class EnvContext:
         container_id: str,
         experiment_config: Dict[str, Any],
         hparams: Dict[str, Any],
-        initial_workload: workload.Workload,
         latest_checkpoint: Optional[Dict[str, Any]],
         use_gpu: bool,
         container_gpus: List[str],
         slot_ids: List[int],
         debug: bool,
-        workload_manager_type: str,
         det_rendezvous_port: str,
         det_trial_unique_port_offset: int,
         det_trial_runner_network_interface: str,
@@ -45,13 +43,11 @@ class EnvContext:
         self.container_id = container_id
         self.experiment_config = det.ExperimentConfig(experiment_config)
         self.hparams = hparams
-        self.initial_workload = initial_workload
         self.latest_checkpoint = latest_checkpoint
         self.use_gpu = use_gpu
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids
         self.debug = debug
-        self.workload_manager_type = workload_manager_type
         self.det_rendezvous_port = det_rendezvous_port
         self.det_trial_unique_port_offset = det_trial_unique_port_offset
         self.det_trial_runner_network_interface = det_trial_runner_network_interface
@@ -66,9 +62,6 @@ class EnvContext:
         self.on_cluster = on_cluster
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
-
-    def first_step(self) -> types.StepID:
-        return self.initial_workload.step_id
 
     def rendezvous_port(self) -> int:
         return int(self.det_rendezvous_port)

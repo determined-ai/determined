@@ -18,7 +18,7 @@ type (
 	// in a shim if needed.
 	gridSearchState struct {
 		PendingTrials    int              `json:"pending_trials"`
-		RemainingTrials  []hparamSample   `json:"remaining_trials"`
+		RemainingTrials  []HParamSample   `json:"remaining_trials"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 	// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
@@ -36,7 +36,7 @@ func newGridSearch(config expconf.GridConfig) SearchMethod {
 		GridConfig: config,
 		gridSearchState: gridSearchState{
 			SearchMethodType: GridSearch,
-			RemainingTrials:  make([]hparamSample, 0),
+			RemainingTrials:  make([]HParamSample, 0),
 		},
 	}
 }
@@ -105,7 +105,7 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 	return ops, nil
 }
 
-func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
+func newHyperparameterGrid(params expconf.Hyperparameters) []HParamSample {
 	var names []string
 	var values [][]interface{}
 	params.Each(func(name string, param expconf.Hyperparameter) {
@@ -115,23 +115,23 @@ func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
 	return cartesianProduct(names, values)
 }
 
-func cartesianProduct(names []string, valueSets [][]interface{}) []hparamSample {
+func cartesianProduct(names []string, valueSets [][]interface{}) []HParamSample {
 	switch {
 	case len(names) == 0:
 		return nil
 	case len(names) == 1:
-		cross := make([]hparamSample, 0, len(valueSets[0]))
+		cross := make([]HParamSample, 0, len(valueSets[0]))
 		for _, value := range valueSets[0] {
-			cross = append(cross, hparamSample{names[0]: value})
+			cross = append(cross, HParamSample{names[0]: value})
 		}
 		return cross
 	default:
 		right := cartesianProduct(names[1:], valueSets[1:])
 		name, left := names[0], valueSets[0]
-		cross := make([]hparamSample, 0, len(left)*len(right))
+		cross := make([]HParamSample, 0, len(left)*len(right))
 		for _, lValue := range left {
 			for _, rValue := range right {
-				duplicate := make(hparamSample)
+				duplicate := make(HParamSample)
 				for oKey, oValue := range rValue {
 					duplicate[oKey] = oValue
 				}

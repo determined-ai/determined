@@ -10,12 +10,10 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 
-	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -306,14 +304,15 @@ func (g GCCheckpoints) ResourcesConfig() expconf.ResourcesConfig {
 
 // StartTrial is a description of a task for running a trial container.
 type StartTrial struct {
-	ExperimentConfig    expconf.ExperimentConfig
-	ModelDefinition     archive.Archive
-	HParams             map[string]interface{}
-	TrialSeed           uint32
-	LatestCheckpoint    *model.Checkpoint
-	InitialWorkload     workload.Workload
-	WorkloadManagerType model.WorkloadManagerType
-	AdditionalFiles     archive.Archive
+	ExperimentID     int
+	TrialID          int
+	TaskRunID        int
+	ExperimentConfig expconf.ExperimentConfig
+	ModelDefinition  archive.Archive
+	HParams          map[string]interface{}
+	TrialSeed        uint32
+	LatestCheckpoint *model.Checkpoint
+	AdditionalFiles  archive.Archive
 
 	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
@@ -353,8 +352,8 @@ func (s StartTrial) Archives(u *model.AgentUserGroup) []container.RunArchive {
 func (s StartTrial) Description() string {
 	return fmt.Sprintf(
 		"exp-%d-trial-%d-rank-%d",
-		s.InitialWorkload.ExperimentID,
-		s.InitialWorkload.TrialID,
+		s.ExperimentID,
+		s.TrialID,
 		s.Rank,
 	)
 }
@@ -381,14 +380,13 @@ func (s StartTrial) EnvVars(t TaskSpec) map[string]string {
 	portOffset := trialUniquePortOffset(t.Devices)
 	portStr := rendezvousPort(portOffset)
 	return map[string]string{
-		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
-		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.InitialWorkload.TrialID),
+		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.ExperimentID),
+		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.TrialID),
+		"DET_TASK_RUN_ID":              fmt.Sprintf("%d", s.TaskRunID),
 		"DET_TRIAL_SEED":               fmt.Sprintf("%d", s.TrialSeed),
 		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
 		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_INITIAL_WORKLOAD":         jsonify(s.InitialWorkload),
 		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
-		"DET_WORKLOAD_MANAGER_TYPE":    string(s.WorkloadManagerType),
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
@@ -397,7 +395,7 @@ func (s StartTrial) EnvVars(t TaskSpec) map[string]string {
 // LoggingFields implements InnerSpec.
 func (s StartTrial) LoggingFields() map[string]string {
 	return map[string]string{
-		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),
+		"trial_id": strconv.Itoa(s.TrialID),
 	}
 }
 
