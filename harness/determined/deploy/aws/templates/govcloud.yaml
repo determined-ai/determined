@@ -4,10 +4,10 @@ Description: Determined Template
 Mappings:
   RegionMap:
     us-gov-east-1:
-      Master: ami-af9379de
+      Master: ami-0ce79d6fa9e9a242e
       Agent: ami-0b71e56244b8ac1cb
     us-gov-west-1:
-      Master: ami-84556de5
+      Master: ami-04a2f96ef9b12b2b1
       Agent: ami-0d26002529bfac823
 Parameters:
   Keypair:
