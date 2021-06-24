@@ -48,10 +48,10 @@ def get_ubuntu_ami(release: str, region: str) -> str:
     results = [line for line in ami_lines if filters(line)]
 
     if len(results) > 1:
-      print(f"Found multiple AMIs for {region}!", file=sys.stderr)
+        print(f"Found multiple AMIs for {region}!", file=sys.stderr)
     if len(results) == 0:
-      print(f"Failed to find AMI for {region}!", file=sys.stderr)
-      return None
+        print(f"Failed to find AMI for {region}!", file=sys.stderr)
+        return None
 
     return results[0][7]
 
