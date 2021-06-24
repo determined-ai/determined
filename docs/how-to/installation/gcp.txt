@@ -364,7 +364,6 @@ A100 GPUs; however, there are a few considerations:
 -  Adjust maximum number of instances and to be within your quota using
    ``--max-dynamic-agents NUMBER``.
 
-
 This command line will spin up a cluster of up to 2 A100s in the
 ``us-central1-c`` zone:
 
