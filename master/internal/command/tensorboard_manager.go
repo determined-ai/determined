@@ -271,7 +271,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	// Get the most recent experiment config as raw json and add it to the container. This
-	// is used to determine if the experiment is backed by S3.
+	// is used for automatically configuring checkpoint storage, registry auth, etc.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
@@ -317,9 +317,13 @@ func (t *tensorboardManager) newTensorBoard(
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
+	// TODO: when migrating commands to use the expconf framework, an explicitly-provided config for
+	// a tensorboard should be able to override the values pulled from the latest experiment config.
+	// The way it is currently written, the values from the experiment config are non-configurable.
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
 		GPU: expConf.Environment().Image().GPU()}
+	config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
 
 	var bindMounts []model.BindMount
 
