@@ -364,9 +364,6 @@ A100 GPUs; however, there are a few considerations:
 -  Adjust maximum number of instances and to be within your quota using
    ``--max-dynamic-agents NUMBER``.
 
--  For compatibility and performance reasons, Determined is currently
-   using CUDA 10.2 by default. A100s require CUDA 11, so you need to use
-   :ref:`corresponding environment images <cuda-11-images>`.
 
 This command line will spin up a cluster of up to 2 A100s in the
 ``us-central1-c`` zone:
