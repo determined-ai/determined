@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/labstack/echo/v4"
 )
@@ -61,4 +63,22 @@ func AsErrNotFound(msg string, args ...interface{}) error {
 		msg,
 		args...,
 	)
+}
+
+// APIErr2GRPC converts internal api error categories into grpc status.Errors.
+func APIErr2GRPC(err error) error {
+	switch {
+	case errors.Is(err, ErrBadRequest):
+		return status.Errorf(
+			codes.InvalidArgument,
+			err.Error(),
+		)
+	case errors.Is(err, ErrNotFound):
+		return status.Errorf(
+			codes.NotFound,
+			err.Error(),
+		)
+	default:
+		return nil
+	}
 }

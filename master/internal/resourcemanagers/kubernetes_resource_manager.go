@@ -120,6 +120,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetDefaultAuxResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: ""})
 
+	case sproto.ValidateCommandResourcesRequest:
+		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: &fulfillable})
+
 	case schedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)

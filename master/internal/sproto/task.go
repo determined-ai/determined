@@ -65,3 +65,33 @@ type Allocation interface {
 	Start(ctx *actor.Context, spec tasks.TaskSpec)
 	Kill(ctx *actor.Context)
 }
+
+type (
+	// ValidateCommandResourcesRequest is a message asking resource manager whether the given
+	// resource pool can (or, rather, if it's not impossible to) fulfill the command request
+	// for the given amount of slots.
+	ValidateCommandResourcesRequest struct {
+		ResourcePool string
+		Slots        int
+	}
+
+	// ValidateCommandResourcesResponse is the response to ValidateCommandResourcesRequest.
+	ValidateCommandResourcesResponse struct {
+		// Fulfillable values:
+		// - nil: unknown
+		// - false: impossible to fulfill
+		// - true: ok
+		Fulfillable *bool
+	}
+)
+
+// ValidateRPResources checks if the resource pool can fulfill resource request for single-node
+// notebook/command/shell etc. Returns &true if yes, &false if not, and nil if unknown.
+func ValidateRPResources(system *actor.System, resourcePoolName string, slots int) *bool {
+	resp := system.Ask(
+		GetCurrentRM(system), ValidateCommandResourcesRequest{
+			ResourcePool: resourcePoolName,
+			Slots:        slots,
+		}).Get()
+	return resp.(ValidateCommandResourcesResponse).Fulfillable
+}

@@ -269,6 +269,14 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
+	case sproto.ValidateCommandResourcesRequest:
+		if rp.slotsPerInstance > 0 {
+			fulfillable := rp.slotsPerInstance >= msg.Slots
+			ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: &fulfillable})
+		} else {
+			ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: nil})
+		}
+
 	default:
 		reschedule = false
 		return actor.ErrUnexpectedMessage(ctx)
