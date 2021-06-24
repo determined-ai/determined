@@ -9,7 +9,7 @@ Usage: refresh-ubuntu-amis.py path/to/bumpenvs.yaml
 """
 
 import sys
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import requests
 import yaml
@@ -26,7 +26,7 @@ def cacheable_get(url: str) -> str:
     return get_cache[url]
 
 
-def get_ubuntu_ami(release: str, region: str) -> str:
+def get_ubuntu_ami(release: str, region: str) -> Union[None, str]:
     resp = cacheable_get(
         f"https://cloud-images.ubuntu.com/query/{release}/server/released.current.txt"
     )
