@@ -93,10 +93,10 @@ In the current version of Determined, experiments and tasks are executed
 in containers with the following:
 
 -  Ubuntu 18.04
--  CUDA 10.2
+-  CUDA 11.1
 -  Python 3.7
--  TensorFlow 1.15.5
--  PyTorch 1.7.1
+-  TensorFlow 2.4.2
+-  PyTorch 1.9.0
 
 Determined will automatically select GPU-specific versions of each
 library when running on agents with GPUs.
@@ -114,29 +114,6 @@ and values of the hyperparameters for the current trial.
    and
    ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.1``
    for GPU and CPU respectively.
-
-.. _cuda-11-images:
-
-CUDA 11 Images
-==============
-
-Determined also supports running CUDA 11-enabled versions of the
-frameworks, and has a Docker image you can use for experiments and tasks
-containing the following:
-
--  Ubuntu 18.04
--  CUDA 11.0
--  Python 3.7
--  TensorFlow 2.4.1
--  PyTorch 1.7.1
--  PyTorch Lightning 1.2
-
-This can be configured in your experiment configuration like below:
-
-.. code:: yaml
-
-   environment:
-     image: "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.1"
 
 Older Images
 ============
