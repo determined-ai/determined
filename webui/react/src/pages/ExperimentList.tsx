@@ -4,6 +4,7 @@ import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/in
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import FilterCounter from 'components/FilterCounter';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -657,8 +658,25 @@ const ExperimentList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const resetFilters = useCallback(() => {
+    setFilters(defaultFilters);
+    handleFilterChange(defaultFilters);
+  }, [ setFilters, handleFilterChange ]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    const isInactive = (x: unknown) => x === undefined;
+    Object.values(filters).forEach(value => {
+      if (!isInactive(value)) count++;
+    });
+    return count;
+  }, [ filters ]);
+
   return (
-    <Page id="experiments" title="Experiments">
+    <Page
+      id="experiments"
+      options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} />}
+      title="Experiments">
       <TableBatch selectedRowCount={selectedRowKeys.length}>
         <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard

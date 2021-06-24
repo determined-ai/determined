@@ -4,6 +4,7 @@ import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/int
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
@@ -173,6 +174,21 @@ const TaskList: React.FC = () => {
   const handleTypeFilterReset = useCallback(() => {
     updateFilters({ ...filters, types: undefined });
   }, [ filters, updateFilters ]);
+
+  const resetFilters = useCallback(() => {
+    updateFilters({ ...defaultFilters, limit: filters.limit });
+  }, [ updateFilters, filters ]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    const filtersToIgnore = new Set([ 'limit' ]);
+    const isInactive = (x: unknown) => x === undefined;
+    Object.entries(filters).forEach(([ key, value ]) => {
+      if (filtersToIgnore.has(key)) return;
+      if (!isInactive(value)) count++;
+    });
+    return count;
+  }, [ filters ]);
 
   const typeFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
@@ -429,7 +445,10 @@ const TaskList: React.FC = () => {
   }, [ canceler ]);
 
   return (
-    <Page id="tasks" title="Tasks">
+    <Page
+      id="tasks"
+      options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} /> }
+      title="Tasks">
       <div className={css.base}>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button
