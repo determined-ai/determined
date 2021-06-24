@@ -244,7 +244,15 @@ def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[st
     response = cfn.describe_stacks(StackName=stack_name)
     response_dict = {}
 
-    for output in response["Stacks"][0]["Outputs"]:
+    try:
+        stack_outputs = response["Stacks"][0]["Outputs"]
+    except (KeyError, IndexError):
+        raise RuntimeError(
+            f"Stack {stack_name} is in an inconsistent state. "
+            "Manual cleanup from the CloudFormation console may be needed."
+        )
+
+    for output in stack_outputs:
         k, v = output["OutputKey"], output["OutputValue"]
         response_dict[k] = v
     return response_dict
