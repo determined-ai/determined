@@ -47,9 +47,11 @@ def get_ubuntu_ami(release: str, region: str) -> str:
 
     results = [line for line in ami_lines if filters(line)]
 
-    assert (
-        len(results) == 1
-    ), f"expected one match to {release}/{region} but got {results}"
+    if len(results) > 1:
+      print(f"Found multiple AMIs for {region}!", file=sys.stderr)
+    if len(results) == 0:
+      print(f"Failed to find AMI for {region}!", file=sys.stderr)
+      return None
 
     return results[0][7]
 
@@ -78,13 +80,15 @@ if __name__ == "__main__":
             region = image_type.rstrip("_master_ami").replace("_", "-")
             # Master AMIs are based on Focal.
             new_ami = get_ubuntu_ami("focal", region)
-            update_tag_for_image_type(subconf, new_ami)
+            if new_ami is not None:
+                update_tag_for_image_type(subconf, new_ami)
 
         if image_type.endswith("_bastion_ami"):
             region = image_type.rstrip("_bastion_ami").replace("_", "-")
             # Bastion AMIs are based on Focal.
             new_ami = get_ubuntu_ami("focal", region)
-            update_tag_for_image_type(subconf, new_ami)
+            if new_ami is not None:
+                update_tag_for_image_type(subconf, new_ami)
 
     with open(path, "w") as f:
         yaml.dump(conf, f, sort_keys=True)
