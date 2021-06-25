@@ -3,6 +3,7 @@ package internal
 import (
 	"archive/tar"
 	"fmt"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"sort"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
@@ -30,10 +30,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-)
-
-const (
-	allReadyTimeoutPeriod = 10 * time.Minute
 )
 
 const (
@@ -72,28 +68,7 @@ const (
 
 // Trial-specific actor messages.
 type (
-	killTrial    struct{}
-
-	// It is possible that it takes very long for all containers to be connected after the first
-	// container is connected. This might happen when the k8s cluster waits for new instances
-	// to spin up, which might not happen at all. At the same time, taking up part of all
-	// the resources and waiting is wasteful. So we need to detect this situation.
-	allReadyTimeout struct {
-		runID int
-	}
-
-	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
-	// When all the containers are ready, the trial will send all the
-	// peer addresses on the channel in the response.
-	watchRendezvousInfo   struct{ containerID cproto.ID }
-	rendezvousInfoOrError struct {
-		info *trialv1.RendezvousInfo
-		err  error
-	}
-	rendezvousWatcher struct {
-		C <-chan rendezvousInfoOrError
-	}
-	unwatchRendezvousInfo struct{ containerID cproto.ID }
+	killTrial struct{}
 )
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -133,14 +108,9 @@ type trial struct {
 	allocations []sproto.Allocation
 
 	// The following fields tracks containers and their states.
-	lastContainerConnectedTime time.Time
-	startedContainers          map[cproto.ID]bool
-	containers                 map[cproto.ID]cproto.Container // only for running containers.
-	containerRanks             map[cproto.ID]int              // only for launched containers.
-	containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
-	terminatedContainers       map[cproto.ID]terminatedContainerWithState
-	// tracks if allReady check has passed successfully.
-	allReadySucceeded bool
+	startedContainers    map[cproto.ID]bool
+	containers           map[cproto.ID]cproto.Container // only for running containers.
+	terminatedContainers map[cproto.ID]terminatedContainerWithState
 
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
@@ -149,11 +119,12 @@ type trial struct {
 
 	// searcher encapsulates the searcher state of the trial.
 	searcher trialSearcher
-	// preemption encapsulates the preemption state of the current allocated task.
+	// preemption encapsulates the preemption state of the currently allocated task.
 	// If there is no current task, or it is unallocated, it is nil.
 	preemption *preemption
-	// Map of container ID to watcher ID a rendezvous info listener.
-	rendezvousWatchers map[cproto.ID]chan<- rendezvousInfoOrError
+	// rendezvous encapsulates logic of rendezvousing containers of the currently
+	// allocated task. If there is no current task, or it is unallocated, it is nil.
+	rendezvous *rendezvous
 
 	// restarts is essentially a failure count, it increments when the trial fails and we retry it.
 	restarts int
@@ -188,14 +159,10 @@ func newTrial(
 
 		startedContainers:    make(map[cproto.ID]bool),
 		containers:           make(map[cproto.ID]cproto.Container),
-		containerRanks:       make(map[cproto.ID]int),
-		containerAddresses:   make(map[cproto.ID][]cproto.Address),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
 
 		agentUserGroup: exp.agentUserGroup,
 		taskSpec:       exp.taskSpec,
-
-		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
 
 		searcher: newTrialSearcher(state),
 	}
@@ -218,12 +185,20 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 	case model.State:
 		t.experimentState = msg
+		if t.task == nil && model.StoppingStates[t.experimentState] {
+			ctx.Self().Stop()
+		} else if t.task != nil && msg != model.ActiveState {
+			_ = t.releaseResource(ctx)
+		}
 
 	case sproto.ContainerLog:
 		t.insertLog(ctx, msg.Container, msg.Message())
 
 	case TrialSearcherState:
 		t.searcher.setState(msg)
+		if t.task == nil && t.searcher.finished() {
+			ctx.Self().Stop()
+		}
 
 	case watchPreemption:
 		if resp, err := t.preemption.watch(msg); err != nil {
@@ -235,13 +210,18 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.preemption.unwatch(msg)
 
 	case watchRendezvousInfo:
-		if resp, err := t.registerRendezvousWatcher(ctx, msg); err != nil {
+		resp, err := t.rendezvous.watch(msg)
+		if  err != nil {
 			ctx.Respond(err)
-		} else {
-			ctx.Respond(resp)
+			return nil
 		}
+
+		if t.rendezvous.ready() {
+			ctx.Log().Info("all containers are connected successfully (watcher connected)")
+		}
+		ctx.Respond(resp)
 	case unwatchRendezvousInfo:
-		delete(t.rendezvousWatchers, msg.containerID)
+		t.rendezvous.unwatch(msg)
 
 	case actor.PostStop:
 		if !t.idSet {
@@ -277,77 +257,49 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 	}
 
-	if t.experimentState != model.ActiveState {
-		_ = t.releaseResource(ctx)
-	}
-
 	if t.task == nil && t.searcher.workRemaining() && t.experimentState == model.ActiveState {
-		slotsNeeded := t.config.Resources().SlotsPerTrial()
-		label := t.config.Resources().AgentLabel()
-		resourcePool := t.config.Resources().ResourcePool()
-		var name string
-		if t.idSet {
-			name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
-		} else {
-			name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
-		}
-
-		t.runID++
-		if err := t.db.AddTrialRun(t.id, t.runID); err != nil {
-			return errors.Wrap(err, "failed to save trial run")
-		}
-
-		t.task = &sproto.AllocateRequest{
-			ID:             sproto.NewTaskID(),
-			Name:           name,
-			Group:          ctx.Self().Parent(),
-			SlotsNeeded:    slotsNeeded,
-			NonPreemptible: false,
-			Label:          label,
-			ResourcePool:   resourcePool,
-			FittingRequirements: sproto.FittingRequirements{
-				SingleAgent: false,
-			},
-			TaskActor: ctx.Self(),
-		}
-		if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
-			ctx.Log().Error(err)
-			t.terminated(ctx)
+		if err := t.allocate(ctx); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func (t *trial) registerRendezvousWatcher(
-	ctx *actor.Context, msg watchRendezvousInfo,
-) (rendezvousWatcher, error) {
-	// Validate this watch request is unique and not stale.
-	if _, ok := t.containerRanks[msg.containerID]; !ok {
-		return rendezvousWatcher{}, apiutils.AsValidationError(
-			"rendezvous request from stale container: %s", msg.containerID,
-		)
-	} else if _, ok := t.rendezvousWatchers[msg.containerID]; ok {
-		return rendezvousWatcher{}, apiutils.AsValidationError(
-			"rendezvous request from already connected container: %s", msg.containerID,
-		)
-	}
-
-	// Channel is size 1 since rendezvous info will only ever be sent once.
-	w := make(chan rendezvousInfoOrError, 1)
-	t.rendezvousWatchers[msg.containerID] = w
-
-	t.lastContainerConnectedTime = time.Now()
-	if !t.allReady() {
-		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.runID})
-		ctx.Log().Debug(
-			"not sending rendezvous information because not all trial containers are connected",
-		)
+func (t *trial) allocate(ctx *actor.Context) error {
+	slotsNeeded := t.config.Resources().SlotsPerTrial()
+	label := t.config.Resources().AgentLabel()
+	resourcePool := t.config.Resources().ResourcePool()
+	var name string
+	if t.idSet {
+		name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
 	} else {
-		t.pushRendezvous(ctx)
+		name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
 	}
 
-	return rendezvousWatcher{C: w}, nil
+	t.runID++
+	if err := t.db.AddTrialRun(t.id, t.runID); err != nil {
+		return errors.Wrap(err, "failed to save trial run")
+	}
+
+	t.task = &sproto.AllocateRequest{
+		ID:             sproto.NewTaskID(),
+		Name:           name,
+		Group:          ctx.Self().Parent(),
+		SlotsNeeded:    slotsNeeded,
+		NonPreemptible: false,
+		Label:          label,
+		ResourcePool:   resourcePool,
+		FittingRequirements: sproto.FittingRequirements{
+			SingleAgent: false,
+		},
+		TaskActor: ctx.Self(),
+	}
+	if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
+		ctx.Log().Error(err)
+		t.terminated(ctx)
+	}
+	return nil
 }
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
@@ -376,15 +328,8 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		t.terminate(ctx)
 
 	case allReadyTimeout:
-		if msg.runID == t.runID &&
-			time.Now().After(t.lastContainerConnectedTime.Add(allReadyTimeoutPeriod)) {
-			ctx.Tell(t.logger, model.TrialLog{
-				TrialID: t.id, Message: "some containers are taking a long time to " +
-					"connect to master; when running on kubernetes this may happen " +
-					"because only some of the pods have been scheduled; it is possible " +
-					"that some pods will never be scheduled without adding compute " +
-					"resources or pausing / killing other experiments in the cluster",
-			})
+		if err := t.rendezvous.checkTimeout(msg.runID); err != nil {
+			ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: err.Error()})
 		}
 
 	case actor.ChildStopped:
@@ -414,7 +359,7 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 }
 
 func (t *trial) releaseResource(ctx *actor.Context) error {
-	if !t.allReady() {
+	if !t.rendezvous.ready() {
 		t.canceledBeforeReady = true
 		t.terminate(ctx)
 	} else {
@@ -513,6 +458,8 @@ func (t *trial) processAllocated(
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
 	t.preemption = newPreemption()
+	t.rendezvous = newRendezvous(t.runID, ranksFromAllocations(msg.Allocations))
+	actors.NotifyAfter(ctx, rendezvousTimeoutDuration, allReadyTimeout{runID: t.runID})
 
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
@@ -523,7 +470,6 @@ func (t *trial) processAllocated(
 	}
 
 	for rank, a := range msg.Allocations {
-		t.containerRanks[a.Summary().ID] = rank
 		taskSpec := *t.taskSpec
 		taskSpec.AgentUserGroup = t.agentUserGroup
 		taskSpec.TaskToken = taskToken
@@ -546,132 +492,16 @@ func (t *trial) processAllocated(
 	return nil
 }
 
-func formatAddress(p cproto.Address) string {
-	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
-}
-
-// allReady returns true if and only if all the containers are reported to be started with the
-// ContainerStarted message and their sockets to be connected with the containerConnected
-// message. The two messages are not guaranteed to come in-order. During each run of the
-// trial, once all the containers are ready this function will return true afterward because this
-// function is used in deciding if the trial should be forcibly killed when terminating.
-func (t *trial) allReady() bool {
-	// If a trial has passed allReady it can never return to a state of not ready until the
-	// current containers are all terminated.
-	if t.allReadySucceeded {
-		return true
-	}
-
-	allAddressesArrived := len(t.containerAddresses) == len(t.allocations)
-	allWaiting := len(t.rendezvousWatchers) == len(t.allocations)
-
-	t.allReadySucceeded = allAddressesArrived && allWaiting
-	return t.allReadySucceeded
-}
-
-// pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
-// containers in the trial.
-func (t *trial) pushRendezvous(ctx *actor.Context) {
-	caddrs, raddrs, err := t.rendezvousInfo(ctx)
-	for _, caddr := range caddrs {
-		c := caddr.container
-		w := t.rendezvousWatchers[c.ID]
-		if err != nil {
-			w <- rendezvousInfoOrError{err: err}
-		} else {
-			w <- rendezvousInfoOrError{
-				info: &trialv1.RendezvousInfo{
-					Addresses: raddrs,
-					Rank:      int32(t.containerRanks[c.ID]),
-				},
-			}
-		}
-		close(w)
-		delete(t.rendezvousWatchers, c.ID)
-	}
-}
-
-func (t *trial) closeRendezvous() {
-	for cID, w := range t.rendezvousWatchers {
-		w <- rendezvousInfoOrError{err: errors.New("task terminated")}
-		close(w)
-		delete(t.rendezvousWatchers, cID)
-	}
-}
-
-type cAddress struct {
-	container cproto.Container
-	addresses []cproto.Address
-	ordinal   int
-}
-
-func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error) {
-	ctx.Log().Info("found all containers are connected successfully")
-
-	var caddrs []cAddress
-	for k, v := range t.containers {
-		caddr := cAddress{
-			container: v,
-			addresses: t.containerAddresses[k],
-			ordinal:   t.containerRanks[k],
-		}
-		caddrs = append(caddrs, caddr)
-
-		sort.Slice(caddr.addresses, func(i, j int) bool {
-			a := caddr.addresses[i]
-			b := caddr.addresses[j]
-
-			return a.ContainerPort < b.ContainerPort
-		})
-	}
-
-	sort.Slice(caddrs, func(i, j int) bool {
-		a := caddrs[i]
-		b := caddrs[j]
-		switch {
-		case a.ordinal == 0 && b.ordinal != 0:
-			return true
-		case a.ordinal != 0 && b.ordinal == 0:
-			return false
-		default:
-			return a.container.ID < b.container.ID
-		}
-	})
-
-	var raddrs []string
-	var err *multierror.Error
-	for _, caddr := range caddrs {
-		var addrs []cproto.Address
-		for _, addr := range caddr.addresses {
-			if MinLocalRendezvousPort <= addr.ContainerPort &&
-				addr.ContainerPort <= MaxLocalRendezvousPort {
-				addrs = append(addrs, addr)
-			}
-		}
-
-		if len(addrs) == 1 {
-			raddrs = append(raddrs, formatAddress(addrs[0]))
-		} else {
-			err = multierror.Append(err, fmt.Errorf(
-				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
-				len(addrs), caddr.container.ID, addrs))
-		}
-	}
-	return caddrs, raddrs, err.ErrorOrNil()
-}
-
 func (t *trial) processContainerRunning(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
 ) error {
 	ctx.Log().Infof("found container running: %s (rank %d)",
-		msg.Container.ID, t.containerRanks[msg.Container.ID])
+		msg.Container.ID, t.rendezvous.rank(msg.Container.ID))
 
 	t.containers[msg.Container.ID] = msg.Container
-	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	if !t.allReady() {
-		ctx.Log().Info("found not all containers are connected")
-	} else {
-		t.pushRendezvous(ctx)
+	t.rendezvous.containerStarted(msg.Container.ID, msg.ContainerStarted.Addresses)
+	if t.rendezvous.ready() {
+		ctx.Log().Info("all containers are connected successfully (task container state changed)")
 	}
 	return nil
 }
@@ -679,23 +509,25 @@ func (t *trial) processContainerRunning(
 func (t *trial) processContainerTerminated(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
 ) {
-	ctx.Log().Infof("found container terminated: %s", msg.Container.ID)
-	t.terminatedContainers[msg.Container.ID] = terminatedContainerWithState{
-		exitStatus: *msg.ContainerStopped,
-		isLeader:   t.containerRanks[msg.Container.ID] == 0,
+	cID := msg.Container.ID
+	exit := *msg.ContainerStopped
+
+	ctx.Log().Infof("found container terminated: %s", cID)
+	t.terminatedContainers[cID] = terminatedContainerWithState{
+		exitStatus: exit,
+		isLeader:   t.rendezvous.isLeader(cID),
 	}
 
-	_, ok := t.containers[msg.Container.ID]
-	delete(t.containers, msg.Container.ID)
-	delete(t.containerAddresses, msg.Container.ID)
+	_, ok := t.containers[cID]
+	delete(t.containers, cID)
+	t.rendezvous.containerTerminated(cID)
 
-	exitMsg := msg.ContainerStopped.String()
-	t.insertLog(ctx, msg.Container, exitMsg)
+	t.insertLog(ctx, msg.Container, exit.String())
 
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
-	if !ok || t.containerRanks[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
+	if !ok || t.rendezvous.isLeader(cID) || exit.Failure != nil {
 		t.terminate(ctx)
 	}
 
@@ -705,24 +537,17 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) canLog(ctx *actor.Context, msg string) bool {
+func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
 		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
-		return false
+		return
 	}
 
 	if t.logger == nil {
 		// A trial created for a unit test does not have a logger.
-		return false
-	}
-	return true
-}
-
-func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
-	if !t.canLog(ctx, msg) {
 		return
 	}
 
@@ -785,14 +610,15 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 
 	t.preemption.close()
-	t.closeRendezvous()
+	t.preemption = nil
+
+	t.rendezvous.close()
+	t.rendezvous = nil
 
 	t.task = nil
 	t.allocations = nil
-	t.containerRanks = make(map[cproto.ID]int)
 	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
-	t.allReadySucceeded = false
 	t.terminatedContainers = make(map[cproto.ID]terminatedContainerWithState)
 	t.startedContainers = make(map[cproto.ID]bool)
 
@@ -853,6 +679,237 @@ func (t trial) getLeaderTerminatedState() (terminatedContainerWithState, bool) {
 		}
 	}
 	return terminatedContainerWithState{}, false
+}
+
+var (
+	rendezvousTimeoutDuration = 10 * time.Minute
+)
+
+type (
+	// watchRendezvousInfo begins watching for rendezvous info.
+	// When all the containers are ready, the trial will send all the
+	// peer addresses on the channel in the response.
+	watchRendezvousInfo   struct{ containerID cproto.ID }
+	rendezvousInfoOrError struct {
+		info *trialv1.RendezvousInfo
+		err  error
+	}
+	rendezvousWatcher struct {
+		C <-chan rendezvousInfoOrError
+	}
+	unwatchRendezvousInfo struct{ containerID cproto.ID }
+
+	// It is possible that it takes very long for all containers to be connected after the first
+	// container is connected. This might happen when the k8s cluster waits for new instances
+	// to spin up, which might not happen at all. At the same time, taking up part of all
+	// the resources and waiting is wasteful. So we need to detect this situation.
+	allReadyTimeout struct {
+		runID int
+	}
+
+	// rendezvous encapsulates the rendezvous state of a trial.
+	rendezvous struct {
+		runID             int
+		watchers          map[cproto.ID]chan<- rendezvousInfoOrError
+		ranks             map[cproto.ID]int
+		addresses         map[cproto.ID][]cproto.Address
+		lastWatchTime     time.Time
+		allReadySucceeded bool
+	}
+)
+
+func newRendezvous(runID int, ranks map[cproto.ID]int) *rendezvous {
+	return &rendezvous{
+		runID:     runID,
+		ranks:     ranks,
+		addresses: map[cproto.ID][]cproto.Address{},
+		watchers:  map[cproto.ID]chan<- rendezvousInfoOrError{},
+	}
+}
+
+func ranksFromAllocations(allocations []sproto.Allocation) map[cproto.ID]int {
+	ranks := map[cproto.ID]int{}
+	for rank, a := range allocations {
+		ranks[a.Summary().ID] = rank
+	}
+	return ranks
+}
+
+func (r *rendezvous) watch(msg watchRendezvousInfo) (rendezvousWatcher, error) {
+	if r == nil {
+		return rendezvousWatcher{}, apiutils.AsValidationError(
+			"no rendezvous for unallocated task",
+		)
+	} else if _, ok := r.ranks[msg.containerID]; !ok {
+		return rendezvousWatcher{}, apiutils.AsValidationError(
+			"rendezvous request from stale container: %s", msg.containerID,
+		)
+	} else if _, ok := r.watchers[msg.containerID]; ok {
+		return rendezvousWatcher{}, apiutils.AsValidationError(
+			"rendezvous request from already connected container: %s", msg.containerID,
+		)
+	}
+
+	// Channel is size 1 since rendezvous info will only ever be sent once.
+	w := make(chan rendezvousInfoOrError, 1)
+	r.watchers[msg.containerID] = w
+	r.lastWatchTime = time.Now()
+	if r.ready() {
+		r.push()
+	}
+	return rendezvousWatcher{C: w}, nil
+}
+
+func (r *rendezvous) unwatch(msg unwatchRendezvousInfo) {
+	if r == nil {
+		return
+	}
+	delete(r.watchers, msg.containerID)
+}
+
+func (r *rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
+	r.addresses[id] = addresses
+	if r.ready() {
+		r.push()
+	}
+}
+
+func (r *rendezvous) containerTerminated(id cproto.ID) {
+	delete(r.addresses, id)
+}
+
+func (r rendezvous) isLeader(id cproto.ID) bool {
+	return r.ranks[id] == 0
+}
+
+func (r rendezvous) rank(id cproto.ID) int {
+	return r.ranks[id]
+}
+
+// ready returns true if and only if all the containers are reported to be started with the
+// ContainerStarted message and their sockets to be connected with the containerConnected
+// message. The two messages are not guaranteed to come in-order. During each run of the
+// trial, once all the containers are ready this function will return true afterward because this
+// function is used in deciding if the trial should be forcibly killed when terminating.
+func (r *rendezvous) ready() bool {
+	// If a trial has passed allReady it can never return to a state of not ready until the
+	// current containers are all terminated.
+	if r.allReadySucceeded {
+		return true
+	}
+
+	allAddressesArrived := len(r.addresses) == len(r.ranks)
+	allWaiting := len(r.watchers) == len(r.ranks)
+
+	r.allReadySucceeded = allAddressesArrived && allWaiting
+	return r.allReadySucceeded
+}
+
+// push gathers up the external addresses for the exposed ports and sends them to all the
+// containers in the trial.
+func (r rendezvous) push() bool {
+	if !r.ready() {
+		return false
+	}
+	caddrs, raddrs, err := r.info()
+	for _, caddr := range caddrs {
+		w := r.watchers[caddr.id]
+		w <- rendezvousInfoOrError{
+			info: &trialv1.RendezvousInfo{
+				Addresses: raddrs,
+				Rank:      int32(r.ranks[caddr.id]),
+			},
+			err: err,
+		}
+		close(w)
+		delete(r.watchers, caddr.id)
+	}
+	return true
+}
+
+// checkTimeout checks if the task should timeout waiting for rendezvous.
+func (r *rendezvous) checkTimeout(runID int) error {
+	if runID == r.runID &&
+		time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration)) {
+		return errors.New("some containers are taking a long time to " +
+			"connect to master; when running on kubernetes this may happen " +
+			"because only some of the pods have been scheduled; it is possible " +
+			"that some pods will never be scheduled without adding compute " +
+			"resources or pausing / killing other experiments in the cluster",
+		)
+	}
+	return nil
+}
+
+func (r *rendezvous) close() {
+	for cID, w := range r.watchers {
+		w <- rendezvousInfoOrError{err: errors.New("task terminated")}
+		close(w)
+		delete(r.watchers, cID)
+	}
+}
+
+type cAddress struct {
+	id        cproto.ID
+	addresses []cproto.Address
+	ordinal   int
+}
+
+func (r *rendezvous) info() ([]cAddress, []string, error) {
+	var caddrs []cAddress
+	for id, rank := range r.ranks {
+		caddr := cAddress{
+			id:        id,
+			addresses: r.addresses[id],
+			ordinal:   rank,
+		}
+		caddrs = append(caddrs, caddr)
+
+		sort.Slice(caddr.addresses, func(i, j int) bool {
+			a := caddr.addresses[i]
+			b := caddr.addresses[j]
+
+			return a.ContainerPort < b.ContainerPort
+		})
+	}
+
+	sort.Slice(caddrs, func(i, j int) bool {
+		a := caddrs[i]
+		b := caddrs[j]
+		switch {
+		case a.ordinal == 0 && b.ordinal != 0:
+			return true
+		case a.ordinal != 0 && b.ordinal == 0:
+			return false
+		default:
+			return a.id < b.id
+		}
+	})
+
+	var raddrs []string
+	var err *multierror.Error
+	for _, caddr := range caddrs {
+		var addrs []cproto.Address
+		for _, addr := range caddr.addresses {
+			if MinLocalRendezvousPort <= addr.ContainerPort &&
+				addr.ContainerPort <= MaxLocalRendezvousPort {
+				addrs = append(addrs, addr)
+			}
+		}
+
+		if len(addrs) == 1 {
+			raddrs = append(raddrs, formatAddress(addrs[0]))
+		} else {
+			err = multierror.Append(err, fmt.Errorf(
+				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
+				len(addrs), caddr.id, addrs))
+		}
+	}
+	return caddrs, raddrs, err.ErrorOrNil()
+}
+
+func formatAddress(p cproto.Address) string {
+	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
 }
 
 type (

@@ -24,14 +24,10 @@ CREATE TABLE public.task_runs (
     CONSTRAINT task_runs_run_id_trial_id_unique UNIQUE (task_type, task_type_fk_id, run_id)
 );
 
--- This table is here solely to color how the task table may look.
-CREATE TABLE public.tasks (
+CREATE TABLE public.trial_runner_metadata (
     id SERIAL,
-    task_id uuid NOT NULL,
-    start_time timestamp without time zone NOT NULL DEFAULT now(),
-    end_time timestamp without time zone NULL,
-    task_type task_type NOT NULL,
-    task_type_fk_id integer NOT NULL,
-    CONSTRAINT tasks_task_id_trial_id_unique UNIQUE (task_type, task_type_fk_id, task_id)
+    trial_id int,
+    state text,
+    CONSTRAINT trial_runner_metadata_trial_id_unique UNIQUE (trial_id),
+    CONSTRAINT trial_runner_metadata_trial_id_fk FOREIGN KEY (trial_id) REFERENCES public.trials(id)
 );
-
