@@ -32,7 +32,12 @@ const proxyTo = (targetServer) => {
     if ('OPTIONS' === req.method) {
       res.send(200);
     } else {
-      req.pipe(request({ qs: req.query, uri: url })).pipe(res);
+      req.pipe(
+        request({ qs: req.query, uri: url }).on('error', err => {
+          console.error(err);
+          res.status(500).send('proxy: error piping the request');
+        }),
+      ).pipe(res);
     }
   };
 };
