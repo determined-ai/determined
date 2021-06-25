@@ -1546,6 +1546,20 @@ export interface V1GetAgentsResponse {
 }
 
 /**
+ * Response to GetBestSearcherValidationMetricRequest.
+ * @export
+ * @interface V1GetBestSearcherValidationMetricResponse
+ */
+export interface V1GetBestSearcherValidationMetricResponse {
+    /**
+     * The value of the metric.
+     * @type {number}
+     * @memberof V1GetBestSearcherValidationMetricResponse
+     */
+    metric?: number;
+}
+
+/**
  * Response to GetCheckpointRequest.
  * @export
  * @interface V1GetCheckpointResponse
@@ -5675,6 +5689,113 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options: any = {}): FetchArgs {
+            // verify required parameter 'startDate' is not null or undefined
+            if (startDate === null || startDate === undefined) {
+                throw new RequiredError('startDate','Required parameter startDate was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            // verify required parameter 'endDate' is not null or undefined
+            if (endDate === null || endDate === undefined) {
+                throw new RequiredError('endDate','Required parameter endDate was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            // verify required parameter 'period' is not null or undefined
+            if (period === null || period === undefined) {
+                throw new RequiredError('period','Required parameter period was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            const localVarPath = `/allocation/aggregated`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (startDate !== undefined) {
+                localVarQueryParameter['start_date'] = startDate;
+            }
+
+            if (endDate !== undefined) {
+                localVarQueryParameter['end_date'] = endDate;
+            }
+
+            if (period !== undefined) {
+                localVarQueryParameter['period'] = period;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
+            // verify required parameter 'timestampAfter' is not null or undefined
+            if (timestampAfter === null || timestampAfter === undefined) {
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getRawResourceAllocationCsv.');
+            }
+            // verify required parameter 'timestampBefore' is not null or undefined
+            if (timestampBefore === null || timestampBefore === undefined) {
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling getRawResourceAllocationCsv.');
+            }
+            const localVarPath = `/allocation/raw`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (timestampAfter !== undefined) {
+                localVarQueryParameter['timestamp_after'] = timestampAfter;
+            }
+
+            if (timestampBefore !== undefined) {
+                localVarQueryParameter['timestamp_before'] = timestampBefore;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -5941,6 +6062,47 @@ export const ClusterApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -6089,6 +6251,29 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
             return ClusterApiFp(configuration).determinedResourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
+            return ClusterApiFp(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+            return ClusterApiFp(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
     };
 };
@@ -6264,6 +6449,33 @@ export class ClusterApi extends BaseAPI {
      */
     public determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
         return ClusterApiFp(this.configuration).determinedResourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+     * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+     * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+     * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
+        return ClusterApiFp(this.configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a detailed view of resource allocation during the given time period (CSV).
+     * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+        return ClusterApiFp(this.configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
     }
 
 }
@@ -8686,6 +8898,43 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the best searcher validation for an experiment by the given metric.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetBestSearcherValidationMetric(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetBestSearcherValidationMetric.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -9459,6 +9708,25 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the best searcher validation for an experiment by the given metric.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetBestSearcherValidationMetric(experimentId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -9806,6 +10074,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the best searcher validation for an experiment by the given metric.
+         * @param {number} experimentId The ID of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetBestSearcherValidationMetric(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).determinedGetBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the current searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {*} [options] Override http request option.
@@ -10021,6 +10299,18 @@ export class InternalApi extends BaseAPI {
      */
     public determinedCreateExperiment(body: V1CreateExperimentRequest, options?: any) {
         return InternalApiFp(this.configuration).determinedCreateExperiment(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the best searcher validation for an experiment by the given metric.
+     * @param {number} experimentId The ID of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedGetBestSearcherValidationMetric(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).determinedGetBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
