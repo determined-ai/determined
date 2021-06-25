@@ -88,6 +88,7 @@ func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Ce
 	addr := fmt.Sprintf(":%d", port)
 	opts := []grpc.DialOption{
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1 << 26)),
+		grpc.WithNoProxy(),
 	}
 	if cert == nil {
 		opts = append(opts, grpc.WithInsecure())
