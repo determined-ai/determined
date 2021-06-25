@@ -14,7 +14,7 @@
   publish = "build/"
 
   # Default build command.
-  command = "echo 'default context'"
+  command = "make get-deps build"
 
   environment = { PUBLIC_URL = "", SERVER_ADDRESS = "https://detai.ml/fixed" }
 
