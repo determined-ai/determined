@@ -35,7 +35,7 @@ func TestRendezvous(t *testing.T) {
 			var ws []rendezvousWatcher
 			watch := func(cID cproto.ID) func() {
 				return func() {
-					w, err := r.watch(watchRendezvousInfo{cID})
+					w, err := r.watch(cID)
 					assert.NilError(t, err, cID)
 					ws = append(ws, w)
 				}
@@ -72,8 +72,8 @@ func TestRendezvous(t *testing.T) {
 				rendezvousArrived(w)
 			}
 
-			r.unwatch(unwatchRendezvousInfo{c1})
-			r.unwatch(unwatchRendezvousInfo{c2})
+			r.unwatch(c1)
+			r.unwatch(c2)
 		})
 	}
 
@@ -91,9 +91,9 @@ func TestRendezvousUninitialized(t *testing.T) {
 
 	// All API-connected methods (so ones a user could call) should not panic the actor.
 	id := cproto.NewID()
-	_, err := r.watch(watchRendezvousInfo{})
+	_, err := r.watch(id)
 	assert.ErrorContains(t, err, "no rendezvous for unallocated task")
-	r.unwatch(unwatchRendezvousInfo{containerID: id})
+	r.unwatch(id)
 }
 
 func TestRendezvousValidation(t *testing.T) {
@@ -102,13 +102,13 @@ func TestRendezvousValidation(t *testing.T) {
 		c1: 0,
 	})
 
-	_, err := r.watch(watchRendezvousInfo{cproto.NewID()})
+	_, err := r.watch(cproto.NewID())
 	assert.ErrorContains(t, err, "rendezvous request from stale container")
 
-	_, err = r.watch(watchRendezvousInfo{c1})
+	_, err = r.watch(c1)
 	assert.NilError(t, err)
 
-	_, err = r.watch(watchRendezvousInfo{c1})
+	_, err = r.watch(c1)
 	assert.ErrorContains(t, err, "rendezvous request from already connected container")
 }
 
@@ -118,12 +118,12 @@ func TestTerminationInRendezvous(t *testing.T) {
 	r := newRendezvous(0, ranks)
 
 	r.containerStarted(c1, addressesFromContainerID(c1))
-	_, err := r.watch(watchRendezvousInfo{c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
 	r.containerTerminated(c1)
 
 	r.containerStarted(c2, addressesFromContainerID(c2))
-	_, err = r.watch(watchRendezvousInfo{c2})
+	_, err = r.watch(c2)
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -135,12 +135,12 @@ func TestUnwatchInRendezvous(t *testing.T) {
 	r := newRendezvous(0, ranks)
 
 	r.containerStarted(c1, addressesFromContainerID(c1))
-	_, err := r.watch(watchRendezvousInfo{c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
-	r.unwatch(unwatchRendezvousInfo{c1})
+	r.unwatch(c1)
 
 	r.containerStarted(c2, addressesFromContainerID(c2))
-	_, err = r.watch(watchRendezvousInfo{c2})
+	_, err = r.watch(c2)
 	assert.NilError(t, err)
 
 	assert.Check(t, !r.ready())
@@ -153,7 +153,7 @@ func TestRendezvousTimeout(t *testing.T) {
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
 	r := newRendezvous(0, ranks)
 
-	_, err := r.watch(watchRendezvousInfo{c1})
+	_, err := r.watch(c1)
 	assert.NilError(t, err)
 	r.containerStarted(c1, addressesFromContainerID(c1))
 
@@ -178,11 +178,11 @@ func TestPreemption(t *testing.T) {
 
 	// Watch nil should not panic and return an error.
 	id := uuid.New()
-	_, err := p.watch(watchPreemption{id: id})
+	_, err := p.watch(id)
 	assert.Error(t, err, "no preemption status available nil preemption")
 
 	// All method on nil should not panic.
-	p.unwatch(unwatchPreemption{id: id})
+	p.unwatch(id)
 	p.preempt()
 	p.close()
 
@@ -191,7 +191,7 @@ func TestPreemption(t *testing.T) {
 
 	// real watcher connects
 	id = uuid.New()
-	w, err := p.watch(watchPreemption{id: id})
+	w, err := p.watch(id)
 	assert.NilError(t, err)
 
 	// should immediately receive initial status.
@@ -212,11 +212,11 @@ func TestPreemption(t *testing.T) {
 	}
 
 	// preempted preemption unwatching should work.
-	p.unwatch(unwatchPreemption{id})
+	p.unwatch(id)
 
 	// new post-preemption watch connects
 	id = uuid.New()
-	w, err = p.watch(watchPreemption{id: id})
+	w, err = p.watch(id)
 	assert.NilError(t, err)
 
 	// should immediately receive initial status and initial status should be preemption.
@@ -227,7 +227,7 @@ func TestPreemption(t *testing.T) {
 	}
 
 	// preempted preemption unwatching should work.
-	p.unwatch(unwatchPreemption{id})
+	p.unwatch(id)
 }
 
 // orderings returns all orders for n operations.

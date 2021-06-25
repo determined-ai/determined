@@ -50,6 +50,10 @@ type (
 		trialID int
 	}
 
+	trialParentStateChanged struct {
+		state model.State
+	}
+
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
@@ -502,9 +506,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
 	ctx.Log().Infof("experiment state changed to %s", state)
-	for _, child := range ctx.Children() {
-		ctx.Tell(child, state)
-	}
+	ctx.TellAll(trialParentStateChanged{state: state}, ctx.Children()...)
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}

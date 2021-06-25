@@ -707,11 +707,11 @@ func (a *apiServer) GetTrialRendezvousInfo(
 
 	var w rendezvousWatcher
 	if err = a.askAtDefaultSystem(trial, watchRendezvousInfo{
-		containerID: cproto.ID(req.ContainerId),
+		id: cproto.ID(req.ContainerId),
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(trial, unwatchRendezvousInfo{containerID: cproto.ID(req.ContainerId)})
+	defer a.m.system.TellAt(trial, unwatchRendezvousInfo{id: cproto.ID(req.ContainerId)})
 
 	select {
 	case rsp := <-w.C:
