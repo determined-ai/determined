@@ -75,10 +75,6 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
             f"Stack {stack_name} is in inconsistent state. "
             "This error is ignored as stack is going to be deleted."
         )
-        if stack_uses_spot(stack_name, boto3_session):
-            print("Terminating Running Agents and Pending Spot Requests")
-            clean_up_spot(stack_name, boto3_session)
-            print("Agents and Spot Requests Terminated")
         delete_stack(stack_name, boto3_session)
         return
 
