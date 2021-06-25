@@ -381,6 +381,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the best searcher validation for an experiment by the given metric.
+  rpc GetBestSearcherValidationMetric(GetBestSearcherValidationMetricRequest)
+      returns (GetBestSearcherValidationMetricResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/searcher/best_searcher_validation_metric"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of checkpoints for an experiment.
   rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest)

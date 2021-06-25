@@ -85,17 +85,13 @@ func filterToParams(f api.Filter) []interface{} {
 }
 
 func orderByToSQL(order apiv1.OrderBy) string {
-	const (
-		ascKeyword  = "ASC"
-		descKeyword = "DESC"
-	)
 	switch order {
 	case apiv1.OrderBy_ORDER_BY_UNSPECIFIED:
-		return ascKeyword
+		return asc
 	case apiv1.OrderBy_ORDER_BY_ASC:
-		return ascKeyword
+		return asc
 	case apiv1.OrderBy_ORDER_BY_DESC:
-		return descKeyword
+		return desc
 	default:
 		panic(fmt.Sprintf("unexpected order by: %s", order))
 	}
