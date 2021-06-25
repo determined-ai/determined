@@ -18,6 +18,10 @@ DELETE_MASTER_IGNORE_ERRORS = (
 )
 
 
+class NoStackOutputError(Exception):
+    pass
+
+
 def get_user(boto3_session: boto3.session.Session) -> str:
     sts = boto3_session.client("sts")
     response = sts.get_caller_identity()
@@ -62,8 +66,19 @@ def stop_master(master_id: str, boto3_session: boto3.session.Session, delete: bo
 def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
 
+    # Check if we have stack outputs containing ec2 instance and
+    # bucket information, if not, just remove the stack.
+    try:
+        stack_output = get_output(stack_name, boto3_session)
+    except NoStackOutputError:
+        print(
+            f"Stack {stack_name} is in inconsistent state. "
+            "This error is ignored as stack is going to be deleted."
+        )
+        delete_stack(stack_name, boto3_session)
+        return
+
     # First, shut down the master so no new agents are started.
-    stack_output = get_output(stack_name, boto3_session)
     master_id = stack_output[constants.cloudformation.MASTER_ID]
     describe_instance_response = ec2.describe_instances(
         Filters=[{"Name": "instance-id", "Values": [master_id]}],
@@ -244,7 +259,15 @@ def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[st
     response = cfn.describe_stacks(StackName=stack_name)
     response_dict = {}
 
-    for output in response["Stacks"][0]["Outputs"]:
+    try:
+        stack_outputs = response["Stacks"][0]["Outputs"]
+    except (KeyError, IndexError):
+        raise NoStackOutputError(
+            f"Stack {stack_name} is in an inconsistent state. "
+            "Manual cleanup from the CloudFormation console may be needed."
+        )
+
+    for output in stack_outputs:
         k, v = output["OutputKey"], output["OutputValue"]
         response_dict[k] = v
     return response_dict
