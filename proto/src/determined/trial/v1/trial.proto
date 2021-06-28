@@ -236,3 +236,14 @@ message CheckpointMetadata {
   // The number of epochs trained on when these metrics were reported.
   float total_epochs = 10;
 }
+
+// The rendezvous info for the trial to rendezvous with sibling containers.
+message RendezvousInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "addresses", "rank" ] }
+  };
+  // The rendezvous addresses of the other containers.
+  repeated string addresses = 1;
+  // The container rank.
+  int32 rank = 2;
+}
