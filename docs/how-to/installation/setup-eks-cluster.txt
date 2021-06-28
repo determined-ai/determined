@@ -67,7 +67,7 @@ insert the cluster name and S3 bucket name.
    metadata:
      name: <cluster-name> # Specify your cluster name here
      region: us-west-2 # The default region is us-west-2
-     version: "1.15" # 1.16 and 1.17 are also supported
+     version: "1.16" # 1.17 is also supported
 
    # Cluster availability zones must be explicitly named in order for single availability zone node groups to work.
    availabilityZones:

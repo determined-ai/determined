@@ -12,7 +12,7 @@ The master is responsible for
 
 -  Storing experiment, trial, and workload metadata.
 -  Scheduling and dispatching work to agents.
--  Advancing the experiment, trial, workload state machines over time.
+-  Advancing the experiment, trial, and workload state machines over time.
 
 Each agent manages a number of **slots**, which represent computing
 devices, typically one slot per CPU or GPU. On startup the agent sends
