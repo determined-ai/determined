@@ -289,14 +289,6 @@ class DistributedContext:
             # No broadcasting necessary.
             return
 
-        # Why does this work?  Why don't multiple agents in training decide on different ports,
-        # causing them to be unable to communicate?
-        #
-        # Answer: unique port offsets are set on by the determined-master on a per-container basis.
-        # Multi-agent dtrain only allows for one-container-per-node, in which case
-        # unique_port_offset is always 0, and every container in training will agree on the same
-        # port.  Single-agent dtrain always within a single container, so the unique_port_offset
-        # may not be zero but all workers (in that same container) will still agree.
         srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._unique_port_offset
         srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._unique_port_offset
 

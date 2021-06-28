@@ -118,7 +118,7 @@ class ZMQBroadcastServer:
         """
         Broadcast Hello messages over and over until all clients response with a Hello message.
 
-        The reason for this is that the only way to be 100% confidient that a subscriber has
+        The reason for this is that the only way to be 100% confident that a subscriber has
         connected is for it to actually receive a message over the pub/sub connection.
 
         After each client sees its first Hello, it will send a single Hello message to the
