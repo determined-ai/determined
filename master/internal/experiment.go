@@ -27,6 +27,7 @@ import (
 
 // Experiment-specific actor messages.
 type (
+	// Searcher-related messages.
 	trialCreated struct {
 		trialID   int
 		requestID model.RequestID
@@ -44,13 +45,11 @@ type (
 		requestID model.RequestID
 		progress  model.PartialUnits
 	}
-
-	// Searcher-related messages.
 	trialGetSearcherState struct {
 		trialID int
 	}
 
-	trialParentStateChanged struct {
+	experimentStateChanged struct {
 		state model.State
 	}
 
@@ -506,7 +505,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
 	ctx.Log().Infof("experiment state changed to %s", state)
-	ctx.TellAll(trialParentStateChanged{state: state}, ctx.Children()...)
+	ctx.TellAll(experimentStateChanged{state: state}, ctx.Children()...)
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}
