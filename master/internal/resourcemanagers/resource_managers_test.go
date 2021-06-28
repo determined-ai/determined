@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -60,6 +59,7 @@ func TestResourceManagerValidateRPResourcesUnknown(t *testing.T) {
 	}
 
 	Setup(system, echo.New(), conf, nil, nil)
-	value := sproto.ValidateRPResources(system, defaultResourcePoolName, 1)
-	assert.Assert(t, is.Nil(value))
+	value, err := sproto.ValidateRPResources(system, defaultResourcePoolName, 1)
+	assert.Assert(t, err == nil)
+	assert.Assert(t, value)
 }

@@ -122,7 +122,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 	case sproto.ValidateCommandResourcesRequest:
 		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
-		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: &fulfillable})
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
 	case schedulerTick:
 		if k.reschedule {

@@ -94,9 +94,13 @@ func (a *apiServer) makeFullCommandSpec(
 	}
 
 	if config.Resources.Slots > 0 {
-		fillable := sproto.ValidateRPResources(
+		fillable, err := sproto.ValidateRPResources(
 			a.m.system, config.Resources.ResourcePool, config.Resources.Slots)
-		if fillable != nil && !*fillable {
+		if err != nil {
+			return nil, nil, errors.Wrapf(
+				err, "failed to check resource pool resources: ")
+		}
+		if !fillable {
 			return nil, nil, errCommandUnfulfillable
 		}
 	}
