@@ -123,7 +123,7 @@ def master_up(
     else:
         restart_policy = "no"
     if auto_bind_mount:
-        bind_mount = "/home"
+        bind_mount = str(Path.home())
     else:
         bind_mount = "no"
 
