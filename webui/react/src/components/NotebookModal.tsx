@@ -79,7 +79,7 @@ interface FullConfigProps {
 interface ResourceInfo {
   hasAux: boolean;
   hasCompute: boolean;
-  maxSlots: number;
+  maxSlots: number | undefined;
   showResourceType: boolean;
 }
 
@@ -253,7 +253,7 @@ const NotebookForm:React.FC<FormProps> = (
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
     const maxSlots = hasComputeCapacity ?
       (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0 ?
-        selectedPool.slotsPerAgent : 2**16) : 0;
+        selectedPool.slotsPerAgent : undefined) : 0;
     if (hasAuxCapacity && !hasComputeCapacity) {
       onChange({ key: 'type', value: ResourceType.UNSPECIFIED });
       onChange({ key: 'slots', value: 0 });
