@@ -1,8 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Support spining up and down a Filestore instance when running ``det
-   deploy gcp up/down``. This Filestore instance will automatically be
-   mounted to all the agents and bind-mounted into the task containers.
-   You can also use a pre-existing Filestore instance.
