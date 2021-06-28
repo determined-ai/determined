@@ -77,7 +77,7 @@ const (
 	trialSSHConfigFile = "/etc/ssh/ssh_config"
 	trialSSHConfigMode = 0644
 
-	pushArchitectureEnabled = false
+	pushArchitectureEnabled = true
 )
 
 // Trial-specific actor messages.
