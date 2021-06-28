@@ -79,6 +79,7 @@ interface FullConfigProps {
 interface ResourceInfo {
   hasAux: boolean;
   hasCompute: boolean;
+  maxSlots: number | undefined;
   showResourceType: boolean;
 }
 
@@ -239,17 +240,20 @@ const NotebookForm:React.FC<FormProps> = (
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
-    { hasAux: false, hasCompute: true, showResourceType: true },
+    { hasAux: false, hasCompute: true, maxSlots: 1, showResourceType: true },
   );
 
   const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
-      return { hasAux: false, hasCompute: false, showResourceType: true };
+      return { hasAux: false, hasCompute: false, maxSlots: 0, showResourceType: true };
     }
     const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
     const hasComputeCapacity = selectedPool.slotsAvailable > 0
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
+    const maxSlots = hasComputeCapacity ?
+      (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0 ?
+        selectedPool.slotsPerAgent : undefined) : 0;
     if (hasAuxCapacity && !hasComputeCapacity) {
       onChange({ key: 'type', value: ResourceType.UNSPECIFIED });
       onChange({ key: 'slots', value: 0 });
@@ -259,6 +263,7 @@ const NotebookForm:React.FC<FormProps> = (
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
+      maxSlots: maxSlots,
       showResourceType: hasAuxCapacity && hasComputeCapacity,
     };
   }, [ onChange, resourcePools ]);
@@ -323,6 +328,7 @@ const NotebookForm:React.FC<FormProps> = (
           content = {
             <InputNumber
               defaultValue={fields.slots || 1}
+              max={resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
               onChange={(value) => onChange({ key: 'slots', value: value })} />}

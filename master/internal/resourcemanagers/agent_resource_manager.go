@@ -82,6 +82,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetDefaultAuxResourcePoolRequest:
 		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
 
+	case sproto.ValidateCommandResourcesRequest:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
+
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig))
 		for _, pool := range a.poolsConfig {
@@ -136,8 +139,12 @@ func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
+		sender := "unknown"
+		if ctx.Sender() != nil {
+			sender = ctx.Sender().Address().String()
+		}
 		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
-			resourcePool, ctx.Message(), ctx.Sender().Address().String())
+			resourcePool, ctx.Message(), sender)
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
