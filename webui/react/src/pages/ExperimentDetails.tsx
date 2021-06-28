@@ -34,6 +34,7 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
+  const [ isSingleTrial, setIsSingleTrial ] = useState(false);
 
   const id = parseInt(experimentId);
 
@@ -45,6 +46,7 @@ const ExperimentDetails: React.FC = () => {
       ]);
       if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
       if (!isEqual(validationHistory, valHistory)) setValHistory(validationHistory);
+      setIsSingleTrial(experimentData?.config.searcher.name === ExperimentSearcherName.Single);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e);
     }
@@ -132,7 +134,6 @@ const ExperimentDetails: React.FC = () => {
 
   let tabsComponent = <ExperimentMultiTrialTabs experiment={experiment} />;
 
-  const isSingleTrial = experiment?.config.searcher.name === ExperimentSearcherName.Single;
   if (isSingleTrial) {
     if (!firstTrialId) {
       return <Spinner />;
