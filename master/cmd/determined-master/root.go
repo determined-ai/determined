@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -122,13 +123,13 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
 	}
 
-    configMap, err := applyBindMount(configMap)
-    if err != nil {
-        return nil, errors.Wrap(err, "invalid bind mount location")
-    }
+	configMapv2, err := applyBindMount(configMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid bind mount location")
+	}
 
 	config := internal.DefaultConfig()
-	bs, err := json.Marshal(configMap)
+	bs, err := json.Marshal(configMapv2)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal configuration map into json bytes")
 	}
@@ -143,27 +144,46 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 }
 
 func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, error) {
-    vTCD, tcdExisted := configMap["task_container_defaults"]
-    if !tcdExisted {
-        return nil, errors.New("task container defaults do not exist")
-    }
-    vTCDMap, ok := vTCD.(map[string]interface{})
-	if !ok {
-		return nil, errors.New("wrong type for task container defaults field")
+	_, fieldExists := configMap["auto_bind_mount"]
+	if !fieldExists {
+		return nil, errors.New("field auto_bind_mount registered incorrectly")
 	}
-    vBM, bmExisted := vTCDMap["bind_mounts"]
-    if !bmExisted {
-        return nil, errors.New("bind mount specification does not exist")
-    }
-    
-    switch vBMStr, ok := vBM.(string); {
-        case !ok:
-            return nil, errors.New("wrong type for bind mounts field")
-        // case vBMStr == "/home":
-        // case vBMStr == "no":
-    }
 
-    return configMap, nil
+	if configMap["auto_bind_mount"] != "no" {
+		_, tcdExisted := configMap["task_container_defaults"]
+		if !tcdExisted {
+			newTCD := make(map[string]interface{})
+			bindMounts := make([]model.BindMount, 1)
+			bindMounts[0] = model.BindMount{
+				HostPath:      configMap["auto_bind_mount"].(string),
+				ContainerPath: "/run/determined/shared_fs",
+			}
+			newTCD["bind_mounts"] = bindMounts
+			configMap["task_container_defaults"] = []map[string]interface{}{newTCD}
+		}
+	}
+	delete(configMap, "auto_bind_mount")
+	return configMap, nil
+
+	/*
+		    vTCDMap, ok := vTCD.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("wrong type for task container defaults field")
+			}
+		    vBM, bmExisted := vTCDMap["bind_mounts"]
+		    if !bmExisted {
+		        return nil, errors.New("bind mount specification does not exist")
+		    }
+
+		    switch vBMStr, ok := vBM.(string); {
+		        case !ok:
+		            return nil, errors.New("wrong type for bind mounts field")
+		        case vBMStr == "/home":
+		            return nil, errors.New("got home")
+		        // case vBMStr == "no":
+		    }
+		    return configMap, nil
+	*/
 }
 
 func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {

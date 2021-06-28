@@ -139,7 +139,6 @@ func registerConfig() {
 	registerEnv(name("checkpoint-storage", "type"))
 	registerEnv(name("checkpoint-storage", "host-path"))
 
-
-    // This env var is used by `det deploy` to override bind_mounts.
-    registerEnv(name("task-container-defaults", "bind-mounts"))
+	// This env var is used by `det deploy` to override bind_mounts.
+	registerEnv(name("auto-bind-mount"))
 }
