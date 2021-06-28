@@ -58,4 +58,4 @@ DET_RENDEZVOUS_INFO="$("$DET_PYTHON_EXECUTABLE" -m determined.exec.rendezvous_in
 export DET_RENDEZVOUS_INFO
 
 cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.harness "$@"
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch_autohorovod "$@"

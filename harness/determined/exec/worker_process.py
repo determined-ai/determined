@@ -47,25 +47,14 @@ def main() -> None:
     sub_url = f"tcp://localhost:{worker_process_env.broadcast_pull_port}"
     with ipc.ZMQBroadcastClient(pub_url, sub_url) as broadcast_client:
 
-        # Wrap the communication layer in a workload.Stream.
-        subrec = layers.SubprocessReceiver(broadcast_client)
-        workloads = iter(subrec)
+        _ = layers.SubprocessReceiver(broadcast_client)
 
         with det._catch_sys_exit():
-            with det._catch_init_invalid_hp(workloads):
-                controller = load.prepare_controller(
-                    worker_process_env.env,
-                    workloads,
-                    worker_process_env.rendezvous_info,
-                    worker_process_env.hvd_config,
-                )
-
-            try:
-                controller.run()
-
-            except Exception as e:
-                broadcast_client.send_exception_message()
-                raise e
+            load.prepare_controller(
+                worker_process_env.env,
+                worker_process_env.rendezvous_info,
+                worker_process_env.hvd_config,
+            ).run()
 
 
 if __name__ == "__main__":

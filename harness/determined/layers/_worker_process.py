@@ -43,7 +43,7 @@ class WorkerProcessContext:
             pickle.dump(self, f)
 
 
-class SubprocessReceiver(workload.Source):
+class SubprocessReceiver:
     """
     SubprocessReceiver is a lightweight wrapper around the ZMQBroadcastClient. ZMQ details are
     handled automatically, while any received workloads are passed along blindly, resulting in a
@@ -58,35 +58,19 @@ class SubprocessReceiver(workload.Source):
         # checks on it.
         self._broadcast_client.send(ipc.ConnectedMessage(process_id=os.getpid()))
 
-        # Avoid hangs when receiving from the broadcast server.  Run this after sending the
-        # ConnectedMessage so that the broadcast server has a pid for running a healthcheck while
-        # this runs.
-        self._broadcast_client.safe_start()
-
-    def __iter__(self) -> workload.Stream:
-        while True:
-            obj = self._broadcast_client.recv()
-
-            wkld = cast(workload.Workload, obj)
-
-            def _respond(message: Any) -> None:
-                self._broadcast_client.send(message)
-
-            yield wkld, _respond
+        # That's literally all we do with the broadcast client.
 
 
 class SubprocessLauncher:
     def __init__(
         self,
         env: det.EnvContext,
-        workloads: workload.Stream,
         rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         python_subprocess_entrypoint: Optional[str] = None,
     ) -> None:
 
         self.env = env
-        self.workloads = workloads
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
         self._python_subprocess_entrypoint = python_subprocess_entrypoint
@@ -203,7 +187,7 @@ class SubprocessLauncher:
         while True:
             ssh_attempt_cmd = ["ssh", "localhost", "-p", str(constants.HOROVOD_SSH_PORT), "ls"]
             ssh_attempt_process = subprocess.run(
-                ssh_attempt_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10
+                ssh_attempt_cmd, timeout=10
             )
             if ssh_attempt_process.returncode == 0:
                 logging.debug(
@@ -258,9 +242,6 @@ class SubprocessLauncher:
             response = cast(ipc.ConnectedMessage, response)
             self._worker_process_ids.append(response.process_id)
 
-        # Avoid hangs when sending to the broadcast client.
-        self.broadcast_server.safe_start(self._health_check)
-
     def run(self) -> None:
         """
         The main control loop for controlling worker processes.
@@ -268,8 +249,31 @@ class SubprocessLauncher:
 
         try:
             self._do_startup_message_sequence()
-            for wkld, response_func in self.workloads:
-                response_func(self._send_recv_workload(wkld))
+
+            if self.rendezvous_info.get_rank() == 0:
+                # The chief node just waits for horovodrun to exit.
+                ret = self._subproc.wait()
+                if ret != 0:
+                    raise ValueError(f"horovodrun exited with error code: {ret}")
+            else:
+                # The worker nodes wait for for all ssh sessions to exit, then kills sshd.
+                while self._worker_process_ids:
+                    time.sleep(1)
+                    if self._subproc.poll() is not None:
+                        raise det.errors.WorkerError("sshd process died")
+                    for pid in self._worker_process_ids:
+                        if not psutil.pid_exists(pid):
+                            logging.debug("detected that sshd session died")
+                            self._worker_process_ids.remove(pid)
+
+                # Wait a few seconds, in case some processes are in the process of exiting but have
+                # not finished logging quite yet.
+                time.sleep(3)
+
+                # Shut down sshd.
+                self._subproc.kill()
+                self._subproc.wait()
+
         finally:
             self.broadcast_server.close()
 
@@ -282,8 +286,7 @@ class SubprocessLauncher:
 
     def _health_check(self) -> None:
         """
-        Raise an error if the train process dies.  Useful while gathering responses from workers to
-        prevent hanging in case of a dead worker.
+        Raise an error if the main subprocess dies.
         """
 
         if self._subproc.poll() is not None:
@@ -295,56 +298,3 @@ class SubprocessLauncher:
                 # not finished logging quite yet.
                 time.sleep(3)
                 raise det.errors.WorkerError("Detected that worker process died.")
-
-    def _send_recv_workload(self, wkld: workload.Workload) -> workload.Response:
-        # Broadcast every workload to every worker on this machine.
-        self.broadcast_server.broadcast(wkld)
-
-        if wkld.kind == workload.Workload.Kind.TERMINATE:
-            # Do not perform health checks once worker have been instructed to terminate.
-            self._worker_process_ids = []
-
-        try:
-            responses, exception_received = self.broadcast_server.gather_with_polling(
-                self._health_check
-            )
-        except det.errors.WorkerError:
-            if wkld.kind == workload.Workload.Kind.TERMINATE:
-                return {}
-            raise
-
-        if exception_received:
-            raise det.errors.WorkerError("Training process died.")
-
-        # Find the response from the chief worker for the trial (the only non-SkippedWorkload). The
-        # chief may report to another container, in which case we will only have SkippedWorkloads.
-        chief_worker_response = None  # Optional[workload.Metrics]
-        for response in responses:
-            if isinstance(response, workload.Skipped):
-                continue
-            # Any other response must be a Dict[str, Any]-like object.
-            check.is_instance(
-                response, dict, f"Received non-metrics object from worker: {response}"
-            )
-            # There should only be one chief response.
-            # Special case InvalidHP messages
-            if chief_worker_response != {
-                "metrics": {},
-                "stop_requested": False,
-                "invalid_hp": True,
-                "init_invalid_hp": False,
-            }:
-                check.is_none(
-                    chief_worker_response, "Received multiple non-SkippedWorkload messages."
-                )
-            chief_worker_response = cast(Dict[str, Any], response)
-
-        # Confirm that if we have did not see a chief response then we are not the chief machine.
-        if chief_worker_response is None:
-            check.gt(
-                self.rendezvous_info.get_rank(),
-                0,
-                "Received SkippedWorkload message from chief worker.",
-            )
-
-        return workload.Skipped() if chief_worker_response is None else chief_worker_response
