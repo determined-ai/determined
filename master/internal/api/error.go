@@ -79,6 +79,6 @@ func APIErr2GRPC(err error) error {
 			err.Error(),
 		)
 	default:
-		return nil
+		return err
 	}
 }

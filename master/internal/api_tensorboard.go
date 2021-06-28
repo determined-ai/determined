@@ -77,10 +77,7 @@ func (a *apiServer) LaunchTensorboard(
 		MustZeroSlot: true,
 	})
 	if err != nil {
-		if grpcErr := api.APIErr2GRPC(err); grpcErr != nil {
-			return nil, grpcErr
-		}
-		return nil, err
+		return nil, api.APIErr2GRPC(err)
 	}
 
 	tensorboardLaunchReq := command.TensorboardRequest{

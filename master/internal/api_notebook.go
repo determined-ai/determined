@@ -88,10 +88,7 @@ func (a *apiServer) LaunchNotebook(
 		Files:        req.Files,
 	})
 	if err != nil {
-		if grpcErr := api.APIErr2GRPC(err); grpcErr != nil {
-			return nil, grpcErr
-		}
-		return nil, errors.Wrapf(err, "failed to prepare launch params")
+		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
 	if req.Preview {
