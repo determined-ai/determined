@@ -213,6 +213,12 @@ class NativeContext(_TrainContext):
 
 
 class RankInfo:
+    """
+    RankInfo was worker identity information that is:
+     - dependent on the launch layer
+     - created/used in the worker process
+    """
+
     def __init__(
         self,
         *,
