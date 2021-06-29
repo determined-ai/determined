@@ -3,9 +3,9 @@ import React, { useCallback, useState } from 'react';
 
 import { ConditionalButton } from 'components/types';
 import { openOrCreateTensorboard } from 'services/api';
-import { RunState, TrialDetails } from 'types';
-import { getWorkload, isMetricsWorkload } from 'utils/step';
+import { TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
+import { getWorkload, isMetricsWorkload } from 'utils/workloads';
 import { openCommand } from 'wait';
 
 export enum Action {
@@ -25,8 +25,7 @@ export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
   const workloadsWithSomeMetric = trial.workloads
     .map(getWorkload)
-    .filter(isMetricsWorkload)
-    .filter(workload => workload.metrics && workload.state === RunState.Completed);
+    .filter(wl => isMetricsWorkload(wl) && wl.metrics);
   return isTerminal && workloadsWithSomeMetric.length === 0;
 };
 
