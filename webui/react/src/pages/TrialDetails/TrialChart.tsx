@@ -45,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
       metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
-        if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
+        if (!metricsWl || !metricsWl.metrics) return;
 
         const x = metricsWl.totalBatches;
         if (!xValues.includes(x)) xValues.push(x);
