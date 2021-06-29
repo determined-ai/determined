@@ -1,10 +1,15 @@
 import abc
+import itertools
 import multiprocessing
 import sys
 import textwrap
+import threading
 import traceback
-from typing import Any, List, Optional, cast
+from typing import Any, Callable, List, Optional, cast
 
+import pytest
+
+import determined as det
 from determined import ipc, layers, workload
 from tests.experiment import utils
 from tests.fixtures import fake_subprocess_receiver
@@ -158,3 +163,109 @@ def test_zmq_server_client() -> None:
     server.send(server_object)
     client_object = client.receive()
     assert server_object == client_object
+
+
+@pytest.mark.parametrize("cross_size", [1, 4])  # type: ignore
+@pytest.mark.parametrize("local_size", [1, 4])  # type: ignore
+@pytest.mark.parametrize("force_tcp", [False, True])  # type: ignore
+def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
+    size = cross_size * local_size
+    # Generate one rendezvous_info per node.
+    rendezvous_info = [
+        det.RendezvousInfo(
+            addrs=["localhost:12345"] * cross_size,
+            rank=i,
+        )
+        for i in range(cross_size)
+    ]
+
+    def do_parallel(fn: Callable) -> List:
+        """
+        Run the same function on one-thread-per-rank, assert there were no exceptions, and return
+        the results from each rank.
+        """
+        results = [None] * size  # type: List
+        errors = [None] * size  # type: List
+        threads = []
+
+        for cross_rank, local_rank in itertools.product(range(cross_size), range(local_size)):
+            rank = cross_rank * local_size + local_rank
+
+            def _fn(rank: int, cross_rank: int, local_rank: int) -> None:
+                try:
+                    results[rank] = fn(rank, cross_rank, local_rank)
+                except Exception:
+                    errors[rank] = traceback.format_exc()
+                    raise
+
+            threads.append(threading.Thread(target=_fn, args=(rank, cross_rank, local_rank)))
+
+        for thread in threads:
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        assert errors == [None] * size, "not all threads exited without error"
+
+        return results
+
+    # Create all of the DistributedContexts.
+    def make_distributed_context(rank: int, cross_rank: int, local_rank: int) -> Any:
+        rank_info = det.RankInfo(
+            rank=cross_rank * local_size + local_rank,
+            size=cross_size * local_size,
+            local_rank=local_rank,
+            local_size=local_size,
+            cross_rank=cross_rank,
+            cross_size=cross_size,
+        )
+        return det.DistributedContext(
+            rank_info=rank_info,
+            rendezvous_info=rendezvous_info[cross_rank],
+            unique_port_offset=0,
+            force_tcp=force_tcp,
+        )
+
+    contexts = do_parallel(make_distributed_context)
+
+    # Perform a broadcast.
+    results = do_parallel(lambda rank, _, __: contexts[rank]._zmq_broadcast(rank))
+    assert results == [0] * size, "not all threads ran broadcast correctly"
+
+    # Perform a local broadcast.
+    results = do_parallel(lambda rank, _, __: contexts[rank]._zmq_broadcast_local(rank))
+    expect = [rank - (rank % local_size) for rank in range(size)]  # type: Any
+
+    assert results == expect, "not all threads ran broadcast_local correctly"
+
+    # Perform a gather.
+    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_gather(rank) or []))
+    chief = set(range(size))
+    expect = [set(range(size)) if rank == 0 else set() for rank in range(size)]
+    assert results == [chief] + [set()] * (size - 1), "not all threads ran gather correctly"
+
+    # Perform a local gather.
+    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_gather_local(rank) or []))
+    expect = [
+        set(range(rank, rank + local_size)) if rank % local_size == 0 else set()
+        for rank in range(size)
+    ]
+    assert results == expect, "not all threads ran gather correctly"
+
+    # Perform an allgather.
+    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_allgather(rank)))
+    expect = set(range(size))
+    assert results == [expect] * size, "not all threads ran allgather correctly"
+
+    # Perform a local allgather.
+    results = do_parallel(lambda rank, _, __: set(contexts[rank]._zmq_allgather_local(rank)))
+    expect = [
+        set(range(cross_rank * local_size, (cross_rank + 1) * local_size))
+        for cross_rank, _ in itertools.product(range(cross_size), range(local_size))
+    ]
+    assert results == expect, "not all threads ran allgather_local correctly"
+
+    # Close all contexts.
+    for context in contexts:
+        context.close()

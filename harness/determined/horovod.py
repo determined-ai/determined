@@ -66,6 +66,26 @@ class _PolyHorovod:
         check.is_not_none(self._poly_hvd_module, "Horovod could not be imported in this process.")
         return getattr(self._poly_hvd_module, attr)
 
+    def cross_rank(self) -> Any:
+        """
+        Horovod versions <= v0.21.3 accidentally did not expose cross_rank or cross_size for keras.
+
+        See https://github.com/horovod/horovod/pull/3008.
+        """
+        if self._poly_hvd_type == "tensorflow.keras":
+            # The horovod.tensorflow module ultimately provides size/local_size/cross_size.
+            import horovod.tensorflow
+
+            return horovod.tensorflow.cross_rank()
+        return self._poly_hvd_module.cross_rank()
+
+    def cross_size(self) -> Any:
+        if self._poly_hvd_type == "tensorflow.keras":
+            import horovod.tensorflow
+
+            return horovod.tensorflow.cross_size()
+        return self._poly_hvd_module.cross_size()
+
 
 hvd = _PolyHorovod()
 
