@@ -1,6 +1,6 @@
-import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
+import React, { MouseEvent, PropsWithChildren, useCallback } from 'react';
 
-import { handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
+import { AnyMouseEventHandler, handlePath, linkPath, windowOpenFeatures } from 'routes/utils';
 
 import css from './Link.module.scss';
 
@@ -12,7 +12,7 @@ export interface Props {
   inherit?: boolean;
   isButton?: boolean;
   label?: string;
-  onClick?: MouseEventHandler;
+  onClick?: AnyMouseEventHandler;
   path?: string;
   popout?: boolean;
   rawLink?: boolean;
