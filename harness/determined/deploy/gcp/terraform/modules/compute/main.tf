@@ -103,6 +103,7 @@ resource "google_compute_instance" "master_instance" {
           operation_timeout_period: ${var.operation_timeout_period}
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
+          use_cloud_logging: true
 
       - pool_name: compute-pool
         max_aux_containers_per_agent: 0
@@ -149,6 +150,7 @@ resource "google_compute_instance" "master_instance" {
           operation_timeout_period: ${var.operation_timeout_period}
           base_config:
             minCpuPlatform: ${var.min_cpu_platform_agent}
+          use_cloud_logging: true
 
     task_container_defaults:
     EOF
@@ -203,6 +205,7 @@ resource "google_compute_instance" "master_instance" {
         --name determined-master \
         --network ${var.master_docker_network} \
         --restart unless-stopped \
+        --log-driver=gcplogs \
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
         -v /usr/local/determined/etc/db_ssl_root_cert.pem:/etc/determined/etc/db_ssl_root_cert.pem \

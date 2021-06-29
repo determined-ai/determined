@@ -87,6 +87,7 @@ func newGCPCluster(
 		AgentID: `$(curl "http://metadata.google.internal/computeMetadata/v1/instance/` +
 			`name" -H "Metadata-Flavor: Google")`,
 		ResourcePool: resourcePool,
+		LogOptions:   config.GCP.buildDockerLogString(),
 	}))
 
 	cluster := &gcpCluster{
