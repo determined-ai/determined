@@ -2,6 +2,6 @@
 
 **Improvements**
 
--  Automatically bind-mount the user's home directory into task containers
-   for for clusters spun up using `det deploy local` and add a flag to
-   disable this feature.
+-  Automatically bind-mount the user's home directory into task
+   containers for for clusters spun up using `det deploy local` and add
+   a flag to disable this feature.
