@@ -250,6 +250,7 @@ export interface ExperimentConfig {
     maxSlots?: number;
   };
   searcher: {
+    max_trials?: number;
     metric: string;
     name: ExperimentSearcherName;
     smallerIsBetter: boolean;

@@ -46,7 +46,10 @@ const ExperimentDetails: React.FC = () => {
       ]);
       if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
       if (!isEqual(validationHistory, valHistory)) setValHistory(validationHistory);
-      setIsSingleTrial(experimentData?.config.searcher.name === ExperimentSearcherName.Single);
+      setIsSingleTrial(
+        experimentData?.config.searcher.name === ExperimentSearcherName.Single
+        || experimentData?.config.searcher.max_trials === 1,
+      );
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e);
     }
