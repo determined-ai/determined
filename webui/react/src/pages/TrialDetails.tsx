@@ -136,7 +136,7 @@ const TrialDetailsComp: React.FC = () => {
     setIsContModalVisible(true);
   }, [ experiment?.configRaw, trial ]);
 
-  const handleActionClick = useCallback((action: TrialAction) => (): void => {
+  const handleActionClick = useCallback((action: TrialAction) => {
     switch (action) {
       case TrialAction.Continue:
         showContModal();
