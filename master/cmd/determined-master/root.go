@@ -158,7 +158,7 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 		if !tcdExisted {
 			newTCD := make(map[string]interface{})
 			bindMounts := []model.BindMount{
-			    model.BindMount{
+				{
 					HostPath:      vBindMount,
 					ContainerPath: "/run/determined/shared_fs",
 				},
