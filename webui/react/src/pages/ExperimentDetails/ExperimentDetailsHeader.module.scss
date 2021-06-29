@@ -23,11 +23,11 @@
 }
 
 .foldableItem {
+  display: flex;
   margin-bottom: var(--theme-sizes-layout-medium);
-
-  span {
-    display: inline-block;
-    margin-right: 5px;
-    opacity: 0.75;
-  }
+}
+.foldableItemLabel {
+  display: inline-block;
+  margin-right: 5px;
+  opacity: 0.75;
 }
