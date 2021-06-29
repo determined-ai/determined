@@ -1,11 +1,10 @@
 import { Modal } from 'antd';
 import React, { useMemo } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
-  ExperimentConfig, RunState } from 'types';
+  ExperimentConfig } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize, getBatchNumber } from 'utils/types';
@@ -70,8 +69,6 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const CheckpointModal: React.FC<Props> = (
   { config, checkpoint, onHide, show, title, ...props }: Props,
 ) => {
-  const state = checkpoint.state as unknown as RunState;
-
   const totalSize = useMemo(() => {
     return humanReadableBytes(checkpointSize(checkpoint));
   }, [ checkpoint ]);
@@ -117,7 +114,6 @@ const CheckpointModal: React.FC<Props> = (
             </div>
           ),
         )}
-        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {searcherMetric && renderRow(

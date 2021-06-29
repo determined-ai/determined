@@ -6,7 +6,7 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { ShirtSize } from 'themes';
 import {
-  CheckpointDetail, CheckpointState, CheckpointWorkload, ExperimentBase, TrialDetails,
+  CheckpointDetail, CheckpointWorkload, ExperimentBase, TrialDetails,
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -35,9 +35,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial.workloads
-      .filter(step => step.checkpoint
-        && step.checkpoint.state === CheckpointState.Completed)
-      .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
+      .filter(wlWrapper => !!wlWrapper.checkpoint)
+      .map(wlWrapper => checkpointSize(wlWrapper.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);
   }, [ trial.workloads ]);

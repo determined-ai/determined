@@ -12,9 +12,8 @@ import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import {
-  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
-} from 'types';
+import { CheckpointWorkload, ExperimentBase,
+  MetricName, MetricsWorkload, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
@@ -98,8 +97,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
     const totalBytes = trial.workloads
-      .filter(step => step.checkpoint
-      && step.checkpoint.state === CheckpointState.Completed)
+      .filter(step => !!step.checkpoint)
       .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
       .reduce((acc, cur) => acc + cur, 0);
     return humanReadableBytes(totalBytes);

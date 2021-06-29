@@ -10,7 +10,7 @@ import {
 import { LaunchTensorboardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
-import { isMetricsWorkload } from './step';
+import { isMetricsWorkload } from './workload';
 
 /* Conversions to Tasks */
 
