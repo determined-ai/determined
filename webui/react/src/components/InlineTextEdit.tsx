@@ -1,10 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { KeyboardEvent, useCallback, useRef, useState } from 'react';
 import ContentEditable from 'react-contenteditable';
 
 import Icon from 'components/Icon';
+import { IndicatorUnpositioned } from 'components/Spinner';
 
 import css from './InlineTextEdit.module.scss';
-import { IndicatorUnpositioned } from './Spinner';
 
 interface Props {
   setValue: (newValue: string) => void;
@@ -19,8 +19,11 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   const inputRef = React.useRef<HTMLElement>();
 
   const clear = useCallback(() => {
-    setIsChanged(false);
     innerValueRef.current = value;
+    setIsChanged(false);
+
+    if (!inputRef.current) return;
+    inputRef.current.blur();
   }, [ value ]);
   const focus = useCallback(() => {
     if (!inputRef.current) return;
@@ -47,6 +50,16 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   const handleSetRef = useCallback((el: HTMLElement) => {
     inputRef.current = el;
   }, []);
+  const handleKeyDown = useCallback((evt: KeyboardEvent<HTMLDivElement>) => {
+    if (evt.key === 'Escape') {
+      evt.preventDefault();
+      clear();
+    }
+    if (evt.key === 'Enter') {
+      evt.preventDefault();
+      save();
+    }
+  }, [ clear, save ]);
 
   return (
     <>
@@ -58,6 +71,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
         onBlur={handleBlur}
         onChange={handleChange}
         onFocus={handleFocus}
+        onKeyDown={handleKeyDown}
       />
       {isSaving && (
         <IndicatorUnpositioned size="small" />

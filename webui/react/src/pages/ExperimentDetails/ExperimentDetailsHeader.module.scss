@@ -7,7 +7,7 @@
 
   span {
     display: inline-block;
-    margin-left: 4px;
+    margin-left: var(--theme-sizes-layout-small);
     opacity: 0.75;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -28,6 +28,6 @@
 }
 .foldableItemLabel {
   display: inline-block;
-  margin-right: 5px;
+  margin-right: var(--theme-sizes-layout-small);
   opacity: 0.75;
 }
