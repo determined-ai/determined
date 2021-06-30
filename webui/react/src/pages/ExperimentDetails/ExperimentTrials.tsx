@@ -1,4 +1,4 @@
-import { Button, Col, Row, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -15,24 +15,18 @@ import { Renderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
-import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { paths } from 'routes/utils';
 import { getExpTrials } from 'services/api';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum } from 'services/utils';
-import {
-  CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem, ValidationHistory,
-} from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
 
-import { columns as defaultColumns } from './ExperimentOverview.table';
+import { columns as defaultColumns } from './ExperimentTrials.table';
 
 interface Props {
   experiment: ExperimentBase;
-  onTagsChange: () => void;
-  validationHistory: ValidationHistory[];
 }
 
 const STORAGE_PATH = 'experiment-detail';
@@ -44,11 +38,7 @@ const defaultSorter: ApiSorter<V1GetExperimentTrialsRequestSortBy> = {
   key: V1GetExperimentTrialsRequestSortBy.ID,
 };
 
-const ExperimentOverview: React.FC<Props> = ({
-  experiment,
-  validationHistory,
-  onTagsChange,
-}: Props) => {
+const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
@@ -189,34 +179,18 @@ const ExperimentOverview: React.FC<Props> = ({
 
   return (
     <>
-      <Row gutter={[ 16, 16 ]}>
-        <Col lg={10} span={24} xl={8} xxl={6}>
-          <ExperimentInfoBox
-            experiment={experiment}
-            onTagsChange={onTagsChange}
-          />
-        </Col>
-        <Col lg={14} span={24} xl={16} xxl={18}>
-          <ExperimentChart
-            startTime={experiment.startTime}
-            validationHistory={validationHistory}
-            validationMetric={experiment.config?.searcher.metric} />
-        </Col>
-        <Col span={24}>
-          <Section title="Trials">
-            <ResponsiveTable
-              columns={columns}
-              dataSource={trials}
-              loading={isLoading}
-              pagination={getFullPaginationConfig(pagination, total)}
-              rowClassName={defaultRowClassName({ clickable: false })}
-              rowKey="id"
-              showSorterTooltip={false}
-              size="small"
-              onChange={handleTableChange} />
-          </Section>
-        </Col>
-      </Row>
+      <Section>
+        <ResponsiveTable
+          columns={columns}
+          dataSource={trials}
+          loading={isLoading}
+          pagination={getFullPaginationConfig(pagination, total)}
+          rowClassName={defaultRowClassName({ clickable: false })}
+          rowKey="id"
+          showSorterTooltip={false}
+          size="small"
+          onChange={handleTableChange} />
+      </Section>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
@@ -227,4 +201,4 @@ const ExperimentOverview: React.FC<Props> = ({
   );
 };
 
-export default ExperimentOverview;
+export default ExperimentTrials;
