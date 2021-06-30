@@ -40,6 +40,8 @@ The following GCP APIs must be enabled on your GCP project:
    <https://console.developers.google.com/apis/api/iam.googleapis.com/overview>`__
 -  `Service Networking API
    <https://console.cloud.google.com/apis/library/servicenetworking.googleapis.com>`__
+-  `Cloud Logging API
+   <https://console.cloud.google.com/apis/api/logging.googleapis.com/overview>`__
 
 Credentials
 ===========
