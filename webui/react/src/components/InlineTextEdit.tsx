@@ -64,10 +64,13 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   return (
     <>
       <ContentEditable
+        autoCapitalize="false"
+        autoCorrect="false"
         className={css.input}
         disabled={isSaving}
         html={innerValueRef.current}
         innerRef={handleSetRef}
+        spellCheck="false"
         onBlur={handleBlur}
         onChange={handleChange}
         onFocus={handleFocus}
