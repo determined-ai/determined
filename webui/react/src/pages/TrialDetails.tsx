@@ -10,11 +10,11 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
-import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
+import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths, routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
@@ -232,7 +232,7 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          <TrialDetailsHyperparameters experiment={experiment} trial={trial} />
+          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />
