@@ -37,6 +37,7 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
     return Object.entries(trial.hparams).map(([ hyperparameter, value ]) => {
       return {
         hyperparameter,
+        key: hyperparameter,
         value: isObject(value) ? JSON.stringify(value, null, 2) : String(value),
       };
     });
