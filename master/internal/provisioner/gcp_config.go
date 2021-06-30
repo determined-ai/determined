@@ -44,6 +44,8 @@ type GCPClusterConfig struct {
 
 	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
 	CPUSlotsAllowed        bool     `json:"cpu_slots_allowed"`
+
+	UseCloudLogging bool `json:"use_cloud_logging"`
 }
 
 // DefaultGCPClusterConfig returns the default configuration of the gcp cluster.
@@ -218,6 +220,13 @@ func (c GCPClusterConfig) SlotType() device.Type {
 		return device.CPU
 	}
 	return device.ZeroSlot
+}
+
+func (c GCPClusterConfig) buildDockerLogString() string {
+	if c.UseCloudLogging {
+		return "--log-driver gcplogs"
+	}
+	return ""
 }
 
 type gceNetworkInterface struct {
