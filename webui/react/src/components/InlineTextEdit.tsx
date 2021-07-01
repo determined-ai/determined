@@ -21,6 +21,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   const clear = useCallback(() => {
     innerValueRef.current = value;
     setIsChanged(false);
+    setIsFocused(false);
 
     if (!inputRef.current) return;
     inputRef.current.blur();
@@ -51,7 +52,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
     inputRef.current = el;
   }, []);
   const handleKeyDown = useCallback((evt: KeyboardEvent<HTMLDivElement>) => {
-    if (evt.key === 'Escape') {
+    if ([ 'Esc', 'Escape' ].includes(evt.key)) {
       evt.preventDefault();
       clear();
     }

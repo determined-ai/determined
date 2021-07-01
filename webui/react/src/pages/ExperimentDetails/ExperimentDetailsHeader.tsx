@@ -6,6 +6,7 @@ import Icon from 'components/Icon';
 import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
@@ -41,8 +42,20 @@ const ExperimentDetailsHeader: React.FC<Props> = (
   }, [ experiment.archived ]);
 
   const handleDescriptionUpdate = useCallback(async (newValue: string) => {
-    await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
-    await fetchExperimentDetails();
+    try {
+      await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment description.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
   }, [ experiment.id, fetchExperimentDetails ]);
 
   const headerOptions = useMemo<Option[]>(() => {
