@@ -14,11 +14,13 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
     return null;
   }
 
+  const progressPercent = experiment.progress * 100;
+
   return (
-    <Tooltip title={experiment.progress.toFixed(2) + '%'}>
+    <Tooltip title={progressPercent.toFixed(0) + '%'}>
       <Progress
         className={css.base}
-        percent={experiment.progress}
+        percent={progressPercent}
         showInfo={false}
         status="active"
       />
