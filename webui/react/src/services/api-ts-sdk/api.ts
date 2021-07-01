@@ -509,26 +509,6 @@ export interface StreamResultOfV1TrialLogsResponse {
 /**
  * 
  * @export
- * @interface StreamResultOfV1TrialPreemptionSignalResponse
- */
-export interface StreamResultOfV1TrialPreemptionSignalResponse {
-    /**
-     * 
-     * @type {V1TrialPreemptionSignalResponse}
-     * @memberof StreamResultOfV1TrialPreemptionSignalResponse
-     */
-    result?: V1TrialPreemptionSignalResponse;
-    /**
-     * 
-     * @type {RuntimeStreamError}
-     * @memberof StreamResultOfV1TrialPreemptionSignalResponse
-     */
-    error?: RuntimeStreamError;
-}
-
-/**
- * 
- * @export
  * @interface StreamResultOfV1TrialsSampleResponse
  */
 export interface StreamResultOfV1TrialsSampleResponse {
@@ -2301,6 +2281,20 @@ export interface V1GetTrialProfilerMetricsResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1GetTrialRendezvousInfoResponse
+ */
+export interface V1GetTrialRendezvousInfoResponse {
+    /**
+     * The rendezvous information.
+     * @type {V1RendezvousInfo}
+     * @memberof V1GetTrialRendezvousInfoResponse
+     */
+    rendezvousInfo: V1RendezvousInfo;
+}
+
+/**
  * Response to GetTrialRequest.
  * @export
  * @interface V1GetTrialResponse
@@ -3275,6 +3269,26 @@ export interface V1PutTemplateResponse {
      * @memberof V1PutTemplateResponse
      */
     template?: V1Template;
+}
+
+/**
+ * The rendezvous info for the trial to rendezvous with sibling containers.
+ * @export
+ * @interface V1RendezvousInfo
+ */
+export interface V1RendezvousInfo {
+    /**
+     * The rendezvous addresses of the other containers.
+     * @type {Array<string>}
+     * @memberof V1RendezvousInfo
+     */
+    addresses: Array<string>;
+    /**
+     * The container rank.
+     * @type {number}
+     * @memberof V1RendezvousInfo
+     */
+    rank: number;
 }
 
 /**
@@ -9078,6 +9092,49 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {number} trialId The id of the trial.
+         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrialRendezvousInfo.');
+            }
+            // verify required parameter 'containerId' is not null or undefined
+            if (containerId === null || containerId === undefined) {
+                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling determinedGetTrialRendezvousInfo.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/rendezvous_info/{containerId}`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)))
+                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -9450,7 +9507,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Stream preemption signals for the given trial. Upon connection a signal is sent immediately, for synchronization purposes. If it is to preempt, that will be the only signal and the trial should preempt. Otherwise, the trial should continue to listen. The only signal ever sent after this will be to preempt.
+         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -9804,6 +9861,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {number} trialId The id of the trial.
+         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialRendezvousInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -9965,12 +10042,12 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Stream preemption signals for the given trial. Upon connection a signal is sent immediately, for synchronization purposes. If it is to preempt, that will be the only signal and the trial should preempt. Otherwise, the trial should continue to listen. The only signal ever sent after this will be to preempt.
+         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialPreemptionSignal(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialPreemptionSignalResponse> {
+        determinedTrialPreemptionSignal(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TrialPreemptionSignalResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedTrialPreemptionSignal(trialId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10125,6 +10202,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {number} trialId The id of the trial.
+         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any) {
+            return InternalApiFp(configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -10214,7 +10302,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Stream preemption signals for the given trial. Upon connection a signal is sent immediately, for synchronization purposes. If it is to preempt, that will be the only signal and the trial should preempt. Otherwise, the trial should continue to listen. The only signal ever sent after this will be to preempt.
+         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
          * @param {number} trialId The requested trial&#39;s id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -10364,6 +10452,19 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+     * @param {number} trialId The id of the trial.
+     * @param {string} containerId The id of the container. Used to verify all containers are connected.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any) {
+        return InternalApiFp(this.configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
@@ -10469,7 +10570,7 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Stream preemption signals for the given trial. Upon connection a signal is sent immediately, for synchronization purposes. If it is to preempt, that will be the only signal and the trial should preempt. Otherwise, the trial should continue to listen. The only signal ever sent after this will be to preempt.
+     * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
      * @param {number} trialId The requested trial&#39;s id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
