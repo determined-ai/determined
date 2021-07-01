@@ -10,6 +10,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
+import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
@@ -21,6 +22,7 @@ import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
 import { clone } from 'utils/data';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 const { TabPane } = Tabs;
@@ -232,7 +234,11 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          {
+            isSingleTrialExperiment(experiment) ?
+              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          }
         </TabPane>
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />

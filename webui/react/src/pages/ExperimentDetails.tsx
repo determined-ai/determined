@@ -13,8 +13,9 @@ import {
 } from 'services/api';
 import { createExperiment } from 'services/api';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, ExperimentSearcherName, RawJson, ValidationHistory } from 'types';
+import { ExperimentBase, RawJson, ValidationHistory } from 'types';
 import { clone, isEqual } from 'utils/data';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { terminalRunStates, upgradeConfig } from 'utils/types';
 
 import ExperimentMultiTrialTabs from './ExperimentDetails/ExperimentMultiTrialTabs';
@@ -47,8 +48,7 @@ const ExperimentDetails: React.FC = () => {
       if (!isEqual(experimentData, experiment)) setExperiment(experimentData);
       if (!isEqual(validationHistory, valHistory)) setValHistory(validationHistory);
       setIsSingleTrial(
-        experimentData?.config.searcher.name === ExperimentSearcherName.Single
-        || experimentData?.config.searcher.max_trials === 1,
+        isSingleTrialExperiment(experimentData),
       );
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e);
