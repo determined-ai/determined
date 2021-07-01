@@ -3,6 +3,7 @@ package tasks
 import (
 	"archive/tar"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -116,6 +117,11 @@ func (t *TaskSpec) baseEnvVars() map[string]string {
 		e["DET_MASTER_CERT_FILE"] = certPath
 	}
 
+	if t.TaskContainerDefaults.StartupScript != nil {
+		e["DET_STARTUP_SCRIPT"] = base64.StdEncoding.EncodeToString([]byte(
+			*t.TaskContainerDefaults.StartupScript))
+	}
+
 	return e
 }
 
@@ -163,7 +169,14 @@ func (s StartCommand) Environment(TaskSpec) expconf.EnvironmentConfig {
 }
 
 // EnvVars implements InnerSpec.
-func (s StartCommand) EnvVars(TaskSpec) map[string]string { return nil }
+func (s StartCommand) EnvVars(t TaskSpec) map[string]string {
+	envs := map[string]string{}
+	env := s.Environment(t)
+	if env.RawStartupScript != nil {
+		envs["DET_STARTUP_SCRIPT"] = base64.StdEncoding.EncodeToString([]byte(*env.RawStartupScript))
+	}
+	return envs
+}
 
 // LoggingFields implements InnerSpec.
 func (s StartCommand) LoggingFields() map[string]string { return nil }
@@ -268,7 +281,14 @@ func (g GCCheckpoints) Environment(t TaskSpec) expconf.EnvironmentConfig {
 }
 
 // EnvVars implements InnerSpec.
-func (g GCCheckpoints) EnvVars(TaskSpec) map[string]string { return nil }
+func (g GCCheckpoints) EnvVars(t TaskSpec) map[string]string {
+	envs := map[string]string{}
+	env := g.Environment(t)
+	if env.RawStartupScript != nil {
+		envs["DET_STARTUP_SCRIPT"] = base64.StdEncoding.EncodeToString([]byte(*env.RawStartupScript))
+	}
+	return envs
+}
 
 // LoggingFields implements InnerSpec.
 func (g GCCheckpoints) LoggingFields() map[string]string { return nil }
@@ -380,7 +400,7 @@ func (s StartTrial) Environment(t TaskSpec) expconf.EnvironmentConfig {
 func (s StartTrial) EnvVars(t TaskSpec) map[string]string {
 	portOffset := trialUniquePortOffset(t.Devices)
 	portStr := rendezvousPort(portOffset)
-	return map[string]string{
+	envs := map[string]string{
 		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
 		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.InitialWorkload.TrialID),
 		"DET_TRIAL_SEED":               fmt.Sprintf("%d", s.TrialSeed),
@@ -392,6 +412,13 @@ func (s StartTrial) EnvVars(t TaskSpec) map[string]string {
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
+
+	env := s.Environment(t)
+	if env.RawStartupScript != nil {
+		envs["DET_STARTUP_SCRIPT"] = base64.StdEncoding.EncodeToString([]byte(*env.RawStartupScript))
+	}
+
+	return envs
 }
 
 // LoggingFields implements InnerSpec.

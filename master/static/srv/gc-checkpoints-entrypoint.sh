@@ -15,4 +15,7 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
+echo $DET_STARTUP_SCRIPT | base64 --decode > /run/determined/startup_script
+cd ${WORKING_DIR} && test -f /run/determined/startup_script && source /run/determined/startup_script
+
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.gc_checkpoints "$@"

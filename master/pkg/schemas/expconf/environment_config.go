@@ -53,6 +53,8 @@ type EnvironmentConfigV0 struct {
 
 	RawAddCapabilities  []string `json:"add_capabilities"`
 	RawDropCapabilities []string `json:"drop_capabilities"`
+
+	RawStartupScript *string `json:"startup_script"`
 }
 
 //go:generate ../gen.sh

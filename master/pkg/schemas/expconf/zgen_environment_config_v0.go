@@ -82,6 +82,14 @@ func (e *EnvironmentConfigV0) SetDropCapabilities(val []string) {
 	e.RawDropCapabilities = val
 }
 
+func (e EnvironmentConfigV0) StartupScript() *string {
+	return e.RawStartupScript
+}
+
+func (e *EnvironmentConfigV0) SetStartupScript(val *string) {
+	e.RawStartupScript = val
+}
+
 func (e EnvironmentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedEnvironmentConfigV0()
 }

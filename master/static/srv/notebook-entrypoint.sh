@@ -28,6 +28,10 @@ fi
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
+
+echo $DET_STARTUP_SCRIPT | base64 --decode > /run/determined/startup_script
+pushd ${WORKING_DIR} && test -f /run/determined/startup_script && source /run/determined/startup_script && popd
+
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
                  --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \

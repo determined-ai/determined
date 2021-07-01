@@ -34,6 +34,8 @@ type Environment struct {
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`
+
+	StartupScript *string `json:"startup_script"`
 }
 
 // RuntimeItem configures the runtime image.

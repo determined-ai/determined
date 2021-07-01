@@ -902,6 +902,13 @@ var (
                 "type": "string"
             }
         },
+        "startup_script": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "pod_spec": {
             "type": [
                 "object",

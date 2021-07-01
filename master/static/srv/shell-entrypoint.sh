@@ -22,6 +22,9 @@ fi
 
 pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
 
+echo $DET_STARTUP_SCRIPT | base64 --decode > /run/determined/startup_script
+pushd ${WORKING_DIR} && test -f /run/determined/startup_script && source /run/determined/startup_script && popd
+
 # Prepend each key in authorized_keys with a set of environment="KEY=VALUE"
 # options to inject the entire docker environment into the eventual ssh
 # session via an options in the authorized keys file.  See syntax described in

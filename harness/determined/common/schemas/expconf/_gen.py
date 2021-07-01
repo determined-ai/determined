@@ -976,6 +976,9 @@ schemas = {
                 "type": "string"
             }
         },
+        "startup_script": {
+            "type": "string"
+        },
         "pod_spec": {
             "type": [
                 "object",

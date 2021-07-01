@@ -21,5 +21,8 @@ TENSORBOARD_VERSION=$(pip show tensorboard | grep Version | sed "s/[^:]*: *//")
 
 cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
+echo $DET_STARTUP_SCRIPT | base64 --decode > /run/determined/startup_script
+cd ${WORKING_DIR} && test -f /run/determined/startup_script && source /run/determined/startup_script
+
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"

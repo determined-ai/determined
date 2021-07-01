@@ -54,6 +54,7 @@
       - CAP_STRING
     drop_capabilities:
       - OTHER_CAP_STRING
+    startup_script: null
 
 - name: single searcher defaults
   sane_as:
