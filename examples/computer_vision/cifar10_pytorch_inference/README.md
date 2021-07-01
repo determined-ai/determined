@@ -24,4 +24,4 @@ configuration file in place of `const.yaml`.
 
 ## Results
 Running inference the model with the hyperparameter settings in `const.yaml` should yield
-a validation error of ~6%.
+a validation error of ~6.9%.
