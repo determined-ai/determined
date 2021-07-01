@@ -123,13 +123,13 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
 	}
 
-	configMapv2, err := applyBindMount(configMap)
+	configMap, err = applyBindMount(configMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "invalid bind mount location")
 	}
 
 	config := internal.DefaultConfig()
-	bs, err := json.Marshal(configMapv2)
+	bs, err := json.Marshal(configMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal configuration map into json bytes")
 	}
@@ -153,7 +153,7 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 		return nil, errors.New("wrong type for bind mount field")
 	}
 
-	if vBindMount != "no" {
+	if vBindMount != "" {
 		_, tcdExisted := configMap["task_container_defaults"]
 		if !tcdExisted {
 			newTCD := make(map[string]interface{})

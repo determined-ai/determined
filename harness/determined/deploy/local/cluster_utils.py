@@ -125,7 +125,7 @@ def master_up(
     if auto_bind_mount:
         bind_mount = str(Path.home())
     else:
-        bind_mount = "no"
+        bind_mount = ""
 
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
