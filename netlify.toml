@@ -29,8 +29,3 @@
   to = "/index.html"
   status = 200
   force = false
-
-  # Redirect from /old-path?id=123 to /new-path. Each combination of query
-  # params needs to be defined in a separate [[redirects]] block.
-  # More information at https://docs.netlify.com/routing/redirects/redirect-options/#query-parameters
-  #query = {id = ":id"}
