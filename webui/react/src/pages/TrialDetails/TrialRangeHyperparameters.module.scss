@@ -1,4 +1,10 @@
 .container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.hpContainer {
   align-self: center;
   display: flex;
   flex-direction: column;
@@ -12,7 +18,7 @@
   display: flex;
   height: 300px;
   justify-content: center;
-  margin-top: 15px;
+  margin-top: 5px;
 }
 .valuesTrack {
   display: flex;

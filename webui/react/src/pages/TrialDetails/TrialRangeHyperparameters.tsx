@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import Section from 'components/Section';
 import {
   ExperimentBase, ExperimentHyperParamType, TrialDetails,
 } from 'types';
@@ -45,11 +46,13 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
   }, [ experiment.config.hyperparameters, trial.hparams ]);
 
   return (
-    <div style={{ display: 'flex' }}>
-      {hyperparameters.map(hp => <div key={hp.name}>
-        <HyperparameterRange hp={hp} />
-      </div>)}
-    </div>
+    <Section bodyBorder bodyScroll>
+      <div className={css.container}>
+        {hyperparameters.map(hp => <div key={hp.name}>
+          <HyperparameterRange hp={hp} />
+        </div>)}
+      </div>
+    </Section>
   );
 };
 
@@ -77,7 +80,7 @@ const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   }, [ hp ]);
 
   return (
-    <div className={css.container}>
+    <div className={css.hpContainer}>
       <p className={css.title}>{hp.name}</p>
       <div className={css.innerContainer}>
         <ValuesTrack hp={hp} />
