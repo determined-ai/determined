@@ -1,15 +1,19 @@
 import { Tooltip } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
+import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useExperimentTags from 'hooks/useExperimentTags';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
 import { handlePath, paths } from 'routes/utils';
-import { archiveExperiment, openOrCreateTensorboard, unarchiveExperiment } from 'services/api';
+import {
+  archiveExperiment, openOrCreateTensorboard, patchExperiment, unarchiveExperiment,
+} from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentBase } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -36,6 +40,23 @@ const ExperimentDetailsHeader: React.FC<Props> = (
     setIsRunningArchive(false);
     setIsRunningUnarchive(false);
   }, [ experiment.archived ]);
+
+  const handleDescriptionUpdate = useCallback(async (newValue: string) => {
+    try {
+      await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment description.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
 
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [
@@ -122,18 +143,21 @@ const ExperimentDetailsHeader: React.FC<Props> = (
       <PageHeaderFoldable
         foldableContent={<>
           <div className={css.foldableItem}>
-            <span>Description:</span>
-            {experiment.description}
+            <span className={css.foldableItemLabel}>Description:</span>
+            <InlineTextEdit
+              setValue={handleDescriptionUpdate}
+              value={experiment.description || ''}
+            />
           </div>
           <div className={css.foldableItem}>
-            <span>Start Time:</span>
+            <span className={css.foldableItemLabel}>Start Time:</span>
             <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
               <TimeAgo datetime={new Date(experiment.startTime)} />
             </Tooltip>
           </div>
           {experiment.endTime != null && (
             <div className={css.foldableItem}>
-              <span>Duration:</span>
+              <span className={css.foldableItemLabel}>Duration:</span>
               {shortEnglishHumannizer(getDuration(experiment))}
             </div>
           )}
