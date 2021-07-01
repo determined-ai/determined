@@ -154,7 +154,7 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 	}
 
 	if vBindMount != "" {
-		_, tcdExisted := configMap["task_container_defaults"]
+		tcd, tcdExisted := configMap["task_container_defaults"]
 		if !tcdExisted {
 			newTCD := make(map[string]interface{})
 			bindMounts := []model.BindMount{
@@ -166,7 +166,18 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 			newTCD["bind_mounts"] = bindMounts
 			configMap["task_container_defaults"] = newTCD
 		} else {
-			return nil, errors.New("have to add code for task container defaults existing")
+			vTCD, ok := tcd.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("wrong type for task_container_defaults field")
+			}
+
+			vTCD["bind_mounts"] = append(
+				vTCD["bind_mounts"].([]model.BindMount),
+				model.BindMount{
+					HostPath:      vBindMount,
+					ContainerPath: "/run/determined/shared_fs",
+				},
+			)
 		}
 	}
 	delete(configMap, "auto_bind_mount")
