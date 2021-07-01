@@ -1,5 +1,3 @@
-$color-blue: rgb(0, 155, 222);
-
 .container {
   align-self: center;
   display: flex;
@@ -41,7 +39,7 @@ $color-blue: rgb(0, 155, 222);
   width: 5px;
 }
 .blueTrack {
-  background-color: $color-blue;
+  background-color: var(--theme-colors-action-normal);
 }
 .grayTrack {
   background-color: lightgray;
@@ -51,7 +49,7 @@ $color-blue: rgb(0, 155, 222);
   justify-content: center;
 }
 .trackOption {
-  background-color: $color-blue;
+  background-color: var(--theme-colors-action-normal);
   border-radius: 100%;
   height: 10px;
   left: -50%;
@@ -59,7 +57,7 @@ $color-blue: rgb(0, 155, 222);
   width: 10px;
 }
 .tick {
-  background-color: $color-blue;
+  background-color: var(--theme-colors-action-normal);
   height: 2px;
   left: -100%;
   position: relative;
