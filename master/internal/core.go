@@ -583,6 +583,8 @@ func (m *Master) Run(ctx context.Context) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            cert,
+        SegmentEnabled:        m.config.Telemetry.Enabled,
+        SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 	}
 
 	go m.cleanUpExperimentSnapshots()

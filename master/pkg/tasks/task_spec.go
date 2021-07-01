@@ -74,6 +74,9 @@ type TaskSpec struct {
 	HarnessPath           string
 	TaskContainerDefaults model.TaskContainerDefaultsConfig
 	MasterCert            *tls.Certificate
+
+    SegmentEnabled        bool
+    SegmentAPIKey         string
 }
 
 // SetInner sets the concrete task represented by this spec.
@@ -115,6 +118,11 @@ func (t *TaskSpec) baseEnvVars() map[string]string {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	}
+
+    e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+    if t.SegmentEnabled {
+        e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
+    }
 
 	return e
 }
