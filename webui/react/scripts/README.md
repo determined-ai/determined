@@ -3,7 +3,7 @@
 ## proxy.js
 
 You can use `proxy.js` to bypass CORS restrictions when communicating with a remote server,
-eg a remote Determiend master.
+eg a remote Determined master.
 
 For example, to connect the WebUI to a remote cluster with address `MY_SERVER_ADDRESS` you'd
 run the proxy with `./proxy.js MY_SERVER_ADDRESS`. This will start a local server which is
