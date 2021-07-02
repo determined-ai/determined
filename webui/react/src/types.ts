@@ -174,7 +174,6 @@ export interface NotebookConfig {
   pool?: string;
   slots?: number;
   template?: string;
-  type?: ResourceType;
 }
 
 export enum CheckpointStorageType {
