@@ -15,12 +15,14 @@ import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
+import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths, routeAll } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
 import { clone } from 'utils/data';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 const { TabPane } = Tabs;
@@ -232,7 +234,11 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          <TrialDetailsHyperparameters experiment={experiment} trial={trial} />
+          {
+            isSingleTrialExperiment(experiment) ?
+              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          }
         </TabPane>
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />
