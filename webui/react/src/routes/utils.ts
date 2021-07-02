@@ -114,13 +114,22 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
 const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
+export const routeInternalReact = (path: string): void => {
+  history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+};
 
+/*
+  routeAll determines whether a path should be routed through internal React router or hanled
+  by the browser.
+  input `path` should include the PUBLIC_URL if there is one set. eg if react is being served
+  in a subdirectory.
+*/
 export const routeAll = (path: string): void => {
   const matchingReactRoute = findReactRoute(path);
   if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+    routeInternalReact(path);
   }
 };
 
