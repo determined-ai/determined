@@ -2220,13 +2220,6 @@ workflows:
             - build-helm
             - build-proto
 
-      - publish-python-package:
-          matrix:
-            parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - package-and-push-system-rc:
           requires:
             - build-react
@@ -2240,6 +2233,13 @@ workflows:
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - publish-python-package:
+          matrix:
+            parameters:
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
+          context: determined-production
+          filters: *release-and-rc-filters
 
       - publish-docs:
           requires:
