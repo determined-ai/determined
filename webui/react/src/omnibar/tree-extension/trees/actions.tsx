@@ -4,9 +4,9 @@ import React from 'react';
 import root from 'omnibar/tree-extension/trees';
 import { FinalAction } from 'omnibar/tree-extension/types';
 import { dfsStaticRoutes } from 'omnibar/tree-extension/utils';
-import { routeInternalReact } from 'routes/utils';
+import { routeToReactUrl } from 'routes/utils';
 export const alertAction = (msg: string): FinalAction => (() => { message.info(msg); });
-export const visitAction = (url: string) => ((): void => routeInternalReact(url));
+export const visitAction = (url: string) => ((): void => routeToReactUrl(url));
 export const noOp = (): void => undefined;
 export const parseIds = (input: string): number[] => input.split(',').map(i => parseInt(i));
 

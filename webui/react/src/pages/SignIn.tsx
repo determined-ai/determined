@@ -11,7 +11,7 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
-import { locationToPath, routeAll, routeInternalReact } from 'routes/utils';
+import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import { getPath } from 'utils/data';
 
 import css from './SignIn.module.scss';
@@ -52,7 +52,7 @@ const SignIn: React.FC = () => {
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       const redirect = queries.redirect || locationToPath(loginRedirect);
       if (!redirect) {
-        routeInternalReact(defaultRoute.path);
+        routeToReactUrl(defaultRoute.path);
       } else {
         routeAll(redirect);
       }

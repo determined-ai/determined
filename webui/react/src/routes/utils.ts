@@ -114,7 +114,7 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
 const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
-export const routeInternalReact = (path: string): void => {
+export const routeToReactUrl = (path: string): void => {
   history.push(stripUrl(path), { loginRedirect: clone(window.location) });
 };
 
@@ -129,7 +129,7 @@ export const routeAll = (path: string): void => {
   if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    routeInternalReact(path);
+    routeToReactUrl(path);
   }
 };
 

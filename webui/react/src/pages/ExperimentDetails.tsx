@@ -7,7 +7,7 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
-import { paths, routeInternalReact } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import {
   getExperimentDetails, getExpTrials, getExpValidationHistory, isNotFound,
 } from 'services/api';
@@ -89,7 +89,7 @@ const ExperimentDetails: React.FC = () => {
       setExperiment(undefined);
 
       // Route to newly forkex experiment.
-      routeInternalReact(paths.experimentDetails(configId));
+      routeToReactUrl(paths.experimentDetails(configId));
 
       // Add a slight delay to allow polling function to update.
       setTimeout(() => startPolling(), 100);
