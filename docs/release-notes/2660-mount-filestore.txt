@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+- Support ``startup_script`` field in the environment configuration and task
+  container defaults configuration. This script will run inside each task container.
+- ``det deploy gcp`` now mounts the Filestore inside the task container and no longer
+  mounts it on dynamic agents.
