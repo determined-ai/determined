@@ -311,6 +311,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
     pod_spec: Optional[Dict[str, Any]] = None
     ports: Optional[Dict[str, int]] = None
     registry_auth: Optional[RegistryAuthConfigV0] = None
+    startup_script: Optional[str] = None
 
     @schemas.auto_init
     def __init__(
@@ -323,6 +324,7 @@ class EnvironmentConfigV0(schemas.SchemaBase):
         pod_spec: Optional[Dict[str, Any]] = None,
         ports: Optional[Dict[str, int]] = None,
         registry_auth: Optional[RegistryAuthConfigV0] = None,
+        startup_script: Optional[str] = None,
     ) -> None:
         pass
 
