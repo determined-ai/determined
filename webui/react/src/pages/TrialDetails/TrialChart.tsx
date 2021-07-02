@@ -48,10 +48,10 @@ const TrialChart: React.FC<Props> = ({
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number>> = {};
-    metricNames.forEach((metric, index) => yValues[index] = {});
+    metrics.forEach((metric, index) => yValues[index] = {});
 
     (workloads || []).forEach(wlWrapper => {
-      metricNames.forEach((metric, index) => {
+      metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
         if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
@@ -70,7 +70,7 @@ const TrialChart: React.FC<Props> = ({
     });
 
     return [ xValues, ...yValuesArray ];
-  }, [ metricNames, workloads ]);
+  }, [ metrics, workloads ]);
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [
@@ -86,18 +86,15 @@ const TrialChart: React.FC<Props> = ({
       },
       series: [
         { label: 'Batch' },
-        ...metricNames.map((metricName, index) => ({
+        ...metrics.map((metricName, index) => ({
           label: metricName.name,
-          show: (metrics.find(metric => (
-            metricName.name === metric.name && metricName.type === metric.type
-          ))) != null,
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,
         })),
       ],
     };
-  }, [ metricNames, metrics, scale ]);
+  }, [ metrics, scale ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);
