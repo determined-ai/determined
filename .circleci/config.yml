@@ -1368,9 +1368,7 @@ jobs:
       aux-agent-instance-type:
         type: string
         default: "m5.large"
-      cluster-id:
-        type: string
-        default: determined-${CIRCLE_BRANCH////--}
+
       max-dynamic-agents:
         type: integer
         default: 1
@@ -1391,7 +1389,7 @@ jobs:
           determined: true
           executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
-          cluster-id: <<parameters.cluster-id>>
+          cluster-id: determined-${CIRCLE_BRANCH////--}
           det-version: ${CIRCLE_SHA1}
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
@@ -1799,7 +1797,7 @@ workflows:
             - package-and-push-system-local
 
       - deploy:
-          enable-cors: false
+          enable-cors: true
           context: aws
           filters:
             branches:
@@ -1808,19 +1806,6 @@ workflows:
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 2
-
-      - deploy:
-          name: deploy-preview-cluster
-          enable-cors: true
-          context: aws
-          # filters:
-          #   branches:
-          #     only:
-          #       - master
-          requires:
-            - package-and-push-system-dev
-          max-dynamic-agents: 1
-          cluster-id: determined-preview
 
       - deploy:
           name: deploy-release-party
