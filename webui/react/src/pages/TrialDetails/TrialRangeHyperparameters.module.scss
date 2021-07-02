@@ -1,7 +1,7 @@
 .container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--theme-sizes-layout-large);
   justify-content: center;
 }
 .hpContainer {
@@ -18,7 +18,7 @@
   display: flex;
   height: 300px;
   justify-content: center;
-  margin-top: 5px;
+  margin-top: var(--theme-sizes-layout-tiny);
 }
 .valuesTrack {
   display: flex;
@@ -88,7 +88,7 @@
   background-color: white;
   border-radius: 2px;
   box-shadow: 3px 2px 5px lightgray;
-  padding: 2px 8px;
+  padding: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium);
 
   &::after {
     background-color: white;
