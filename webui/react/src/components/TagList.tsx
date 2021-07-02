@@ -15,7 +15,7 @@ interface Props {
   tags: string[];
 }
 
-const TAG_MAX_LENGTH = 20;
+const TAG_MAX_LENGTH = 10;
 const COMPACT_MAX_THRESHOLD = 4;
 
 const EditableTagList: React.FC<Props> = (
