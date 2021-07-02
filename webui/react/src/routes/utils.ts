@@ -20,6 +20,8 @@ export const serverAddress = (path = ''): string => {
   return (customServer || reactHostAddress()) + path;
 };
 
+// Returns the address to the server hosting react assets
+// excluding the path to the subdirectory if any.
 export const reactHostAddress = (): string => {
   return `${window.location.protocol}//${window.location.host}`;
 };
@@ -90,14 +92,17 @@ const stripUrl = (aUrl: string): string => {
   return rest;
 };
 
-const findReactRoute = (url: string): RouteConfig | undefined => {
+export const findReactRoute = (url: string): RouteConfig | undefined => {
   if (isFullPath(url)) {
     if (!url.startsWith(reactHostAddress())) return undefined;
     // Fit it into a relative path
     url = url.replace(reactHostAddress(), '');
   }
+  if (!url.startsWith(process.env.PUBLIC_URL)) {
+    return undefined;
+  }
   // Check to see if the path matches any of the defined app routes.
-  const pathname = parseUrl(url).pathname.replace(process.env.PUBLIC_URL, '');
+  const pathname = url.replace(process.env.PUBLIC_URL, '');
   return routes
     .filter(route => route.path !== '*')
     .find(route => {
