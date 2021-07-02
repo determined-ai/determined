@@ -151,6 +151,8 @@ resource "google_compute_instance" "master_instance" {
                       mkdir -p /run/determined/shared_fs
                       mount ${var.filestore_address} /run/determined/shared_fs
                       df -h --type=nfs
+      add_capabilities:
+        - SYS_ADMIN
     EOF
     fi
 
