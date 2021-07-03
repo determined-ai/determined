@@ -133,13 +133,13 @@ func createPodWithMockQueue() (
 	map[string]*actor.Ref,
 ) {
 	commandSpec := tasks.CommandSpec{
+		Base: tasks.TaskSpec{
+			TaskID:         "task",
+			ContainerID:    "container",
+			ClusterID:      "cluster",
+			AgentUserGroup: createAgentUserGroup(),
+		},
 		Config: model.CommandConfig{Description: "test-config"},
-	}
-	taskSpec := tasks.TaskSpec{
-		TaskID:         "task",
-		ContainerID:    "container",
-		ClusterID:      "cluster",
-		AgentUserGroup: createAgentUserGroup(),
 	}
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
@@ -148,7 +148,7 @@ func createPodWithMockQueue() (
 		actorMap["task"],
 		actorMap["cluster"],
 		actorMap["resource"],
-		commandSpec.ToTaskSpec(taskSpec),
+		commandSpec.ToTaskSpec(),
 	)
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),

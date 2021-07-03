@@ -139,6 +139,7 @@ func (s *shellManager) newShell(
 
 	return &command{
 		CommandSpec: tasks.CommandSpec{
+			Base:      *params.TaskSpec,
 			Config:    *config,
 			UserFiles: params.UserFiles,
 			AdditionalFiles: archive.Archive{
@@ -184,8 +185,6 @@ func (s *shellManager) newShell(
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
 		proxyTCP: true,
 

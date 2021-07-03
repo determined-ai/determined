@@ -46,7 +46,7 @@ func newSummary(c *command) summary {
 		ExitStatus:     c.exitStatus,
 		Misc:           c.metadata,
 		IsReady:        c.readinessMessageSent,
-		AgentUserGroup: c.agentUserGroup,
+		AgentUserGroup: c.Base.AgentUserGroup,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 	}
 }

@@ -62,9 +62,7 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 type command struct {
 	tasks.CommandSpec
 
-	owner          commandOwner
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
+	owner commandOwner
 
 	taskID               sproto.TaskID
 	readinessChecks      map[string]readinessCheck
@@ -291,10 +289,8 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.allocation = msg.Allocations[0]
 
-		taskSpec := *c.taskSpec
-		taskSpec.AgentUserGroup = c.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec(taskSpec))
+		c.Base.TaskToken = taskToken
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec())
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -446,7 +442,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
-		AgentUserGroup: protoutils.ToStruct(c.agentUserGroup),
+		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 	}
 }
 

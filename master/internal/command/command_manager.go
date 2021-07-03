@@ -103,6 +103,7 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 
 	return &command{
 		CommandSpec: tasks.CommandSpec{
+			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
 			UserFiles: params.UserFiles,
 		},
@@ -112,8 +113,6 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
 		db: c.db,
 	}

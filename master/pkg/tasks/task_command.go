@@ -8,17 +8,19 @@ import (
 
 // CommandSpec is a description of a task for running a command.
 type CommandSpec struct {
+	Base TaskSpec
+
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s CommandSpec) ToTaskSpec(base TaskSpec) TaskSpec {
-	res := base
+func (s CommandSpec) ToTaskSpec() TaskSpec {
+	res := s.Base
 
-	res.Archives = base.makeArchives([]container.RunArchive{
-		wrapArchive(base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
+	res.Archives = s.Base.makeArchives([]container.RunArchive{
+		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
 	})
 
@@ -28,7 +30,7 @@ func (s CommandSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 
 	res.Environment = s.Config.Environment.ToExpconf()
 
-	res.EnvVars = base.makeEnvVars(nil)
+	res.EnvVars = s.Base.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
 

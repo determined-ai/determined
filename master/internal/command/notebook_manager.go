@@ -155,6 +155,7 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 
 	return &command{
 		CommandSpec: tasks.CommandSpec{
+			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
 			UserFiles: params.UserFiles,
 			AdditionalFiles: archive.Archive{
@@ -190,8 +191,6 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
 		db: n.db,
 	}, nil
