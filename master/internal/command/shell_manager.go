@@ -25,12 +25,8 @@ import (
 )
 
 const (
-	shellSSHDir             = "/run/determined/ssh"
-	shellAuthorizedKeysFile = "/run/determined/ssh/authorized_keys_unmodified"
-	shellSSHDConfigFile     = "/run/determined/ssh/sshd_config"
-	shellHostPrivKeyFile    = "/run/determined/ssh/id_rsa"
-	shellHostPubKeyFile     = "/run/determined/ssh/id_rsa.pub"
-	shellEntrypointScript   = "/run/determined/ssh/shell-entrypoint.sh"
+	shellSSHDConfigFile   = "/run/determined/ssh/sshd_config"
+	shellEntrypointScript = "/run/determined/ssh/shell-entrypoint.sh"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minSshdPort = 3200
 	maxSshdPort = minSshdPort + 299
@@ -93,7 +89,7 @@ func (s *shellManager) processLaunchRequest(
 
 	ctx.Log().Info("creating shell")
 
-	shell := s.newShell(params, keys)
+	shell := s.newShell(params, &keys)
 	if err = check.Validate(shell.Config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -110,7 +106,7 @@ func (s *shellManager) processLaunchRequest(
 
 func (s *shellManager) newShell(
 	params *CommandParams,
-	keyPair ssh.PrivateAndPublicKeys,
+	keyPair *ssh.PrivateAndPublicKeys,
 ) *command {
 	config := params.FullConfig
 
@@ -146,27 +142,12 @@ func (s *shellManager) newShell(
 		},
 		proxyTCP: true,
 
+		generatedKeys: keyPair,
 		CommandSpec: tasks.CommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *config,
 			UserFiles: params.UserFiles,
 			AdditionalFiles: archive.Archive{
-				params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
-				params.AgentUserGroup.OwnedArchiveItem(
-					shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
-				),
-				params.AgentUserGroup.OwnedArchiveItem(
-					shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
-				),
-				params.AgentUserGroup.OwnedArchiveItem(
-					shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
-				),
-				params.AgentUserGroup.OwnedArchiveItem(
-					shellSSHDConfigFile,
-					etc.MustStaticFile(etc.SSHDConfigResource),
-					0644,
-					tar.TypeReg,
-				),
 				params.AgentUserGroup.OwnedArchiveItem(
 					shellEntrypointScript,
 					etc.MustStaticFile(etc.ShellEntrypointResource),

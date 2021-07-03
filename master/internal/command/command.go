@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -67,6 +68,7 @@ type command struct {
 	readinessChecks map[string]readinessCheck
 	proxyTCP        bool
 
+	generatedKeys *ssh.PrivateAndPublicKeys
 	tasks.CommandSpec
 	owner commandOwner
 
@@ -287,8 +289,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.allocation = msg.Allocations[0]
 
-		c.Base.TaskToken = taskToken
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec(), 0)
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.generatedKeys, taskToken), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 

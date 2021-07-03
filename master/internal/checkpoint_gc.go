@@ -44,10 +44,9 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
-		t.Base.TaskToken = taskToken
 
 		for rank, a := range msg.Allocations {
-			a.Start(ctx, t.ToTaskSpec(), rank)
+			a.Start(ctx, t.ToTaskSpec(taskToken), rank)
 		}
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.

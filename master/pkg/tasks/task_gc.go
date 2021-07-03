@@ -27,8 +27,10 @@ type GCCkptSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (g GCCkptSpec) ToTaskSpec() TaskSpec {
+func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 	res := g.Base
+
+	res.TaskToken = taskToken
 
 	res.Archives = g.Base.makeArchives([]container.RunArchive{
 		wrapArchive(

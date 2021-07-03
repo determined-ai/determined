@@ -9,8 +9,10 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
@@ -33,8 +35,43 @@ type TrialSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec() TaskSpec {
+func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
 	res := s.Base
+	res.TaskToken = taskToken
+
+	additionalFiles := archive.Archive{
+		s.Base.AgentUserGroup.OwnedArchiveItem(
+			trialEntrypointFile,
+			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
+			trialEntrypointMode,
+			tar.TypeReg,
+		),
+
+		s.Base.AgentUserGroup.OwnedArchiveItem(sshDir, nil, sshDirMode, tar.TypeDir),
+		s.Base.AgentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
+			keys.PublicKey,
+			trialAuthorizedKeysMode,
+			tar.TypeReg,
+		),
+		s.Base.AgentUserGroup.OwnedArchiveItem(
+			pubKeyFile, keys.PublicKey, pubKeyMode, tar.TypeReg,
+		),
+		s.Base.AgentUserGroup.OwnedArchiveItem(
+			privKeyFile, keys.PrivateKey, privKeyMode, tar.TypeReg,
+		),
+		s.Base.AgentUserGroup.OwnedArchiveItem(sshdConfigFile,
+			etc.MustStaticFile(etc.SSHDConfigResource),
+			sshdConfigMode,
+			tar.TypeReg,
+		),
+
+		archive.RootItem(
+			trialSSHConfigFile,
+			etc.MustStaticFile(etc.SSHConfigResource),
+			trialSSHConfigMode,
+			tar.TypeReg,
+		),
+	}
 
 	res.Archives = s.Base.makeArchives([]container.RunArchive{
 		wrapArchive(
@@ -44,7 +81,7 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 			},
 			rootDir,
 		),
-		wrapArchive(s.AdditionalFiles, rootDir),
+		wrapArchive(additionalFiles, rootDir),
 		wrapArchive(
 			archive.Archive{
 				s.Base.AgentUserGroup.OwnedArchiveItem(
