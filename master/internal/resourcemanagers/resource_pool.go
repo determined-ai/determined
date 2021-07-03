@@ -380,7 +380,7 @@ func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 				State:   cproto.Assigned,
 				Devices: c.devices,
 			},
-			Spec: image.ToContainerSpec(spec),
+			Spec: spec.ToContainerSpec(),
 		},
 	})
 }

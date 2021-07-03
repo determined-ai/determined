@@ -70,12 +70,15 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			taskSpec := *t.taskSpec
 			taskSpec.AgentUserGroup = t.agentUserGroup
 			taskSpec.TaskToken = taskToken
-			taskSpec.SetInner(&tasks.GCCheckpoints{
+			taskSpec.TaskContainer = &tasks.GCCheckpoints{
 				ExperimentID:       t.experiment.ID,
 				LegacyConfig:       t.legacyConfig,
 				ToDelete:           checkpoints,
 				DeleteTensorboards: t.gcTensorboards,
-			})
+
+				Devices:               taskSpec.Devices,
+				TaskContainerDefaults: taskSpec.TaskContainerDefaults,
+			}
 			a.Start(ctx, taskSpec)
 		}
 	case sproto.ReleaseResources:

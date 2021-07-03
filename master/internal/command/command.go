@@ -297,11 +297,11 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		taskSpec := *c.taskSpec
 		taskSpec.AgentUserGroup = c.agentUserGroup
 		taskSpec.TaskToken = taskToken
-		taskSpec.SetInner(&tasks.StartCommand{
+		taskSpec.TaskContainer = &tasks.StartCommand{
 			Config:          c.config,
 			UserFiles:       c.userFiles,
 			AdditionalFiles: c.additionalFiles,
-		})
+		}
 		msg.Allocations[0].Start(ctx, taskSpec)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})

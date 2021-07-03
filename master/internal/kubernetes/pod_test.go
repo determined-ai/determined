@@ -141,7 +141,7 @@ func createPodWithMockQueue() (
 		ClusterID:      "cluster",
 		AgentUserGroup: createAgentUserGroup(),
 	}
-	task.SetInner(&startCmd)
+	task.TaskContainer = &startCmd
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
 
