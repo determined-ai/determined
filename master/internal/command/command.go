@@ -60,30 +60,28 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	tasks.CommandSpec
-
-	owner commandOwner
-
-	taskID               sproto.TaskID
-	readinessChecks      map[string]readinessCheck
-	readinessMessageSent bool
-	metadata             map[string]interface{}
-	serviceAddress       *string
-	assignedPort         *int
-
-	registeredTime time.Time
-	task           *sproto.AllocateRequest
-	container      *container.Container
-	allocation     sproto.Allocation
-	proxyNames     []string
-	exitStatus     *string
-	addresses      []container.Address
-
 	db          *db.PgDB
 	proxy       *actor.Ref
 	eventStream *actor.Ref
 
-	proxyTCP bool
+	readinessChecks map[string]readinessCheck
+	proxyTCP        bool
+
+	tasks.CommandSpec
+	owner commandOwner
+
+	taskID         sproto.TaskID
+	serviceAddress *string
+	assignedPort   *int
+
+	readinessMessageSent bool
+	registeredTime       time.Time
+	task                 *sproto.AllocateRequest
+	container            *container.Container
+	allocation           sproto.Allocation
+	proxyNames           []string
+	exitStatus           *string
+	addresses            []container.Address
 }
 
 // Receive implements the actor.Actor interface.
@@ -290,7 +288,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		c.allocation = msg.Allocations[0]
 
 		c.Base.TaskToken = taskToken
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec())
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec(), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -436,8 +434,8 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
-		PrivateKey:     c.metadata["privateKey"].(string),
-		PublicKey:      c.metadata["publicKey"].(string),
+		PrivateKey:     c.Metadata["privateKey"].(string),
+		PublicKey:      c.Metadata["publicKey"].(string),
 		Username:       c.owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
@@ -453,11 +451,11 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 	}
 
 	var eids []int32
-	for _, id := range c.metadata["experiment_ids"].([]int) {
+	for _, id := range c.Metadata["experiment_ids"].([]int) {
 		eids = append(eids, int32(id))
 	}
 	var tids []int32
-	for _, id := range c.metadata["trial_ids"].([]int) {
+	for _, id := range c.Metadata["trial_ids"].([]int) {
 		tids = append(tids, int32(id))
 	}
 	return &tensorboardv1.Tensorboard{

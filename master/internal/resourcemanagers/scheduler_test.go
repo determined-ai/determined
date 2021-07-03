@@ -95,8 +95,8 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		panic(errMock)
 
 	case sproto.ResourcesAllocated:
-		for _, allocation := range msg.Allocations {
-			allocation.Start(ctx, image.TaskSpec{})
+		for rank, allocation := range msg.Allocations {
+			allocation.Start(ctx, image.TaskSpec{}, rank)
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})

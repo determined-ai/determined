@@ -138,6 +138,14 @@ func (s *shellManager) newShell(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
+		db: s.db,
+		readinessChecks: map[string]readinessCheck{
+			"shell": func(log sproto.ContainerLog) bool {
+				return strings.Contains(log.String(), "Server listening on")
+			},
+		},
+		proxyTCP: true,
+
 		CommandSpec: tasks.CommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *config,
@@ -166,28 +174,18 @@ func (s *shellManager) newShell(
 					tar.TypeReg,
 				),
 			},
-		},
-
-		taskID: taskID,
-		metadata: map[string]interface{}{
-			"privateKey": string(keyPair.PrivateKey),
-			"publicKey":  string(keyPair.PublicKey),
-		},
-		readinessChecks: map[string]readinessCheck{
-			"shell": func(log sproto.ContainerLog) bool {
-				return strings.Contains(log.String(), "Server listening on")
+			Metadata: map[string]interface{}{
+				"privateKey": string(keyPair.PrivateKey),
+				"publicKey":  string(keyPair.PublicKey),
 			},
 		},
-
-		serviceAddress: &serviceAddress,
-		assignedPort:   &port,
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
 
-		proxyTCP: true,
-
-		db: s.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}
 }

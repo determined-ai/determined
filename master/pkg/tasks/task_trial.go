@@ -16,6 +16,8 @@ import (
 
 // TrialSpec is a description of a task for running a trial container.
 type TrialSpec struct {
+	Base TaskSpec
+
 	ExperimentConfig    expconf.ExperimentConfig
 	ModelDefinition     archive.Archive
 	HParams             map[string]interface{}
@@ -28,26 +30,24 @@ type TrialSpec struct {
 	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool
-
-	Rank int
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec(base TaskSpec) TaskSpec {
-	res := base
+func (s TrialSpec) ToTaskSpec() TaskSpec {
+	res := s.Base
 
-	res.Archives = base.makeArchives([]container.RunArchive{
+	res.Archives = s.Base.makeArchives([]container.RunArchive{
 		wrapArchive(
 			archive.Archive{
-				base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
-				base.AgentUserGroup.OwnedArchiveItem(modelCopy, nil, 0700, tar.TypeDir),
+				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
+				s.Base.AgentUserGroup.OwnedArchiveItem(modelCopy, nil, 0700, tar.TypeDir),
 			},
 			rootDir,
 		),
 		wrapArchive(s.AdditionalFiles, rootDir),
 		wrapArchive(
 			archive.Archive{
-				base.AgentUserGroup.OwnedArchiveItem(
+				s.Base.AgentUserGroup.OwnedArchiveItem(
 					"checkpoint.json",
 					[]byte(jsonify(s.LatestCheckpoint)),
 					0600,
@@ -56,15 +56,14 @@ func (s TrialSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 			},
 			trainDir,
 		),
-		wrapArchive(base.AgentUserGroup.OwnArchive(s.ModelDefinition), modelCopy),
-		wrapArchive(base.AgentUserGroup.OwnArchive(s.ModelDefinition), ContainerWorkDir),
+		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), modelCopy),
+		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), ContainerWorkDir),
 	})
 
 	res.Description = fmt.Sprintf(
-		"exp-%d-trial-%d-rank-%d",
+		"exp-%d-trial-%d",
 		s.InitialWorkload.ExperimentID,
 		s.InitialWorkload.TrialID,
-		s.Rank,
 	)
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
@@ -74,11 +73,11 @@ func (s TrialSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 	if ports == nil {
 		ports = make(map[string]int)
 	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(base.Devices))
+	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
 	env.SetPorts(ports)
 	res.Environment = env
 
-	portOffset := trialUniquePortOffset(base.Devices)
+	portOffset := trialUniquePortOffset(s.Base.Devices)
 	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
 		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
@@ -92,7 +91,7 @@ func (s TrialSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
-	res.EnvVars = base.makeEnvVars(envVars)
+	res.EnvVars = s.Base.makeEnvVars(envVars)
 
 	res.LoggingFields = map[string]string{
 		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),

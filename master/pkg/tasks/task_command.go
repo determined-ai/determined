@@ -13,6 +13,7 @@ type CommandSpec struct {
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
+	Metadata        map[string]interface{}
 }
 
 // ToTaskSpec generates a TaskSpec.

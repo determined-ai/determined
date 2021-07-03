@@ -235,10 +235,9 @@ type (
 		// tracks if allReady check has passed successfully.
 		allReadySucceeded bool
 
-		agentUserGroup *model.AgentUserGroup
-		taskSpec       *tasks.TaskSpec
-		privateKey     []byte
-		publicKey      []byte
+		taskSpec   *tasks.TaskSpec
+		privateKey []byte
+		publicKey  []byte
 
 		// preemption represents the preemption state of the current allocated task.
 		// If there is no current task, or it is unallocated, it is nil.
@@ -282,8 +281,7 @@ func newTrial(
 		containerSockets:     make(map[cproto.ID]*actor.Ref),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
 
-		agentUserGroup: exp.agentUserGroup,
-		taskSpec:       exp.taskSpec,
+		taskSpec: exp.taskSpec,
 
 		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
 	}
@@ -413,6 +411,60 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+func (t *trial) makeTrialSpec(taskToken string, w workload.Workload) *tasks.TrialSpec {
+	taskSpec := *t.taskSpec
+	taskSpec.TaskToken = taskToken
+
+	additionalFiles := archive.Archive{
+		taskSpec.AgentUserGroup.OwnedArchiveItem(
+			trialEntrypointFile,
+			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
+			trialEntrypointMode,
+			tar.TypeReg,
+		),
+
+		taskSpec.AgentUserGroup.OwnedArchiveItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
+		taskSpec.AgentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
+			t.publicKey,
+			trialAuthorizedKeysMode,
+			tar.TypeReg,
+		),
+		taskSpec.AgentUserGroup.OwnedArchiveItem(
+			trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg,
+		),
+		taskSpec.AgentUserGroup.OwnedArchiveItem(
+			trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg,
+		),
+		taskSpec.AgentUserGroup.OwnedArchiveItem(trialSSHDConfigFile,
+			etc.MustStaticFile(etc.SSHDConfigResource),
+			trialSSHDConfigMode,
+			tar.TypeReg,
+		),
+
+		archive.RootItem(
+			trialSSHConfigFile,
+			etc.MustStaticFile(etc.SSHConfigResource),
+			trialSSHConfigMode,
+			tar.TypeReg,
+		),
+	}
+
+	res := &tasks.TrialSpec{
+		Base: taskSpec,
+
+		ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ModelDefinition:     t.modelDefinition,
+		HParams:             t.create.Hparams,
+		TrialSeed:           t.create.TrialSeed,
+		LatestCheckpoint:    t.sequencer.LatestCheckpoint,
+		InitialWorkload:     w,
+		WorkloadManagerType: t.sequencer.WorkloadManagerType(),
+		AdditionalFiles:     additionalFiles,
+		IsMultiAgent:        len(t.allocations) > 1,
+	}
+	return res
 }
 
 func (t *trial) registerRendezvousWatcher(
@@ -643,62 +695,17 @@ func (t *trial) processAllocated(
 
 	ctx.Log().Infof("starting trial container: %v", w)
 
-	additionalFiles := archive.Archive{
-		t.agentUserGroup.OwnedArchiveItem(
-			trialEntrypointFile,
-			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
-			trialEntrypointMode,
-			tar.TypeReg,
-		),
-
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
-		t.agentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
-			t.publicKey,
-			trialAuthorizedKeysMode,
-			tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			trialSSHDConfigMode,
-			tar.TypeReg,
-		),
-
-		archive.RootItem(
-			trialSSHConfigFile,
-			etc.MustStaticFile(etc.SSHConfigResource),
-			trialSSHConfigMode,
-			tar.TypeReg,
-		),
-	}
 	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
 	if err != nil {
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
 	t.preemption = newPreemption()
+
+	trialSpec := t.makeTrialSpec(taskToken, w)
+
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
-		taskSpec := *t.taskSpec
-		taskSpec.AgentUserGroup = t.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		trialSpec := &tasks.TrialSpec{
-			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
-			ModelDefinition:     t.modelDefinition,
-			HParams:             t.create.Hparams,
-			TrialSeed:           t.create.TrialSeed,
-			LatestCheckpoint:    t.sequencer.LatestCheckpoint,
-			InitialWorkload:     w,
-			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-			AdditionalFiles:     additionalFiles,
-			IsMultiAgent:        len(t.allocations) > 1,
-			Rank:                rank,
-		}
-		a.Start(ctx, trialSpec.ToTaskSpec(taskSpec))
+		a.Start(ctx, trialSpec.ToTaskSpec(), rank)
 	}
 
 	return nil

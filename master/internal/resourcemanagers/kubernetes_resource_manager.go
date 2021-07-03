@@ -345,7 +345,7 @@ func (p podAllocation) Summary() sproto.ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
+func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec, rank int) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
@@ -353,6 +353,7 @@ func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
+		Rank:      rank,
 	})
 }
 

@@ -9,24 +9,14 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type checkpointGCTask struct {
-	rm             *actor.Ref
-	db             *db.PgDB
-	experiment     *model.Experiment
-	legacyConfig   expconf.LegacyConfig
-	gcTensorboards bool
+	rm *actor.Ref
+	db *db.PgDB
 
-	keepExperimentBest int
-	keepTrialBest      int
-	keepTrialLatest    int
-
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
+	tasks.GCCkptSpec
 
 	task *sproto.AllocateRequest
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
@@ -38,7 +28,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		t.task = &sproto.AllocateRequest{
 			ID:   sproto.NewTaskID(),
-			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
+			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
@@ -48,35 +38,16 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		ctx.Tell(t.rm, *t.task)
 
 	case sproto.ResourcesAllocated:
+		ctx.Log().Info("starting checkpoint garbage collection")
+
 		taskToken, err := t.db.StartTaskSession(string(msg.ID))
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
+		t.Base.TaskToken = taskToken
 
-		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(
-			t.experiment.ID,
-			t.keepExperimentBest,
-			t.keepTrialBest,
-			t.keepTrialLatest,
-			true,
-		)
-		if err != nil {
-			return err
-		}
-
-		ctx.Log().Info("starting checkpoint garbage collection")
-
-		for _, a := range msg.Allocations {
-			taskSpec := *t.taskSpec
-			taskSpec.AgentUserGroup = t.agentUserGroup
-			taskSpec.TaskToken = taskToken
-			gcCkptSpec := &tasks.GCCkptSpec{
-				ExperimentID:       t.experiment.ID,
-				LegacyConfig:       t.legacyConfig,
-				ToDelete:           checkpoints,
-				DeleteTensorboards: t.gcTensorboards,
-			}
-			a.Start(ctx, gcCkptSpec.ToTaskSpec(taskSpec))
+		for rank, a := range msg.Allocations {
+			a.Start(ctx, t.ToTaskSpec(), rank)
 		}
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.

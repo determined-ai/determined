@@ -444,8 +444,9 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	return nil
 }
 
-func configureUniqueName(t tasks.TaskSpec) string {
-	return fmt.Sprintf("%s-%s-%s", t.Description, t.TaskID, petName.Generate(2, "-"))
+func configureUniqueName(t tasks.TaskSpec, rank int) string {
+	return fmt.Sprintf("%s-%d-%s-%s",
+		t.Description, rank, t.TaskID, petName.Generate(2, "-"))
 }
 
 func trialNameFromPod(podName string) string {

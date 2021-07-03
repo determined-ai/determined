@@ -366,7 +366,7 @@ func (c containerAllocation) Summary() sproto.ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
+func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec, rank int) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)

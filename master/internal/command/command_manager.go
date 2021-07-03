@@ -102,18 +102,18 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
+		db: c.db,
+
 		CommandSpec: tasks.CommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
 			UserFiles: params.UserFiles,
 		},
-
-		taskID: sproto.NewTaskID(),
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
 
-		db: c.db,
+		taskID: sproto.NewTaskID(),
 	}
 }

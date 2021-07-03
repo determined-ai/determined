@@ -336,31 +336,31 @@ func (t *tensorboardManager) newTensorBoard(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		CommandSpec: tasks.CommandSpec{
-			Base:            *params.TaskSpec,
-			Config:          *config,
-			UserFiles:       params.UserFiles,
-			AdditionalFiles: additionalFiles,
-		},
-
-		taskID: taskID,
-		metadata: map[string]interface{}{
-			"experiment_ids": req.ExperimentIDs,
-			"trial_ids":      req.TrialIDs,
-		},
+		db: t.db,
 		readinessChecks: map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
-		serviceAddress: &serviceAddress,
-		assignedPort:   &port,
+
+		CommandSpec: tasks.CommandSpec{
+			Base:            *params.TaskSpec,
+			Config:          *config,
+			UserFiles:       params.UserFiles,
+			AdditionalFiles: additionalFiles,
+			Metadata: map[string]interface{}{
+				"experiment_ids": req.ExperimentIDs,
+				"trial_ids":      req.TrialIDs,
+			},
+		},
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
 
-		db: t.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}, nil
 }
 

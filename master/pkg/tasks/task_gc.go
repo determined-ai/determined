@@ -18,6 +18,8 @@ import (
 
 // GCCkptSpec is a description of a task for running checkpoint GC.
 type GCCkptSpec struct {
+	Base TaskSpec
+
 	ExperimentID       int
 	LegacyConfig       expconf.LegacyConfig
 	ToDelete           json.RawMessage
@@ -25,25 +27,25 @@ type GCCkptSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (g GCCkptSpec) ToTaskSpec(base TaskSpec) TaskSpec {
-	res := base
+func (g GCCkptSpec) ToTaskSpec() TaskSpec {
+	res := g.Base
 
-	res.Archives = base.makeArchives([]container.RunArchive{
+	res.Archives = g.Base.makeArchives([]container.RunArchive{
 		wrapArchive(
 			archive.Archive{
-				base.AgentUserGroup.OwnedArchiveItem(
+				g.Base.AgentUserGroup.OwnedArchiveItem(
 					"storage_config.json",
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
 					0600,
 					tar.TypeReg,
 				),
-				base.AgentUserGroup.OwnedArchiveItem(
+				g.Base.AgentUserGroup.OwnedArchiveItem(
 					"checkpoints_to_delete.json",
 					[]byte(jsonify(g.ToDelete)),
 					0600,
 					tar.TypeReg,
 				),
-				base.AgentUserGroup.OwnedArchiveItem(
+				g.Base.AgentUserGroup.OwnedArchiveItem(
 					etc.GCCheckpointsEntrypointResource,
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 					0700,
@@ -76,14 +78,14 @@ func (g GCCkptSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 	}
 	// Fill the rest of the environment with default values.
 	defaultConfig := expconf.ExperimentConfig{}
-	base.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
+	g.Base.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
 
 	if defaultConfig.RawEnvironment != nil {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
 
-	res.EnvVars = base.makeEnvVars(nil)
+	res.EnvVars = g.Base.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {

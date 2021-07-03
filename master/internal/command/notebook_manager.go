@@ -154,6 +154,13 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 	}
 
 	return &command{
+		db: n.db,
+		readinessChecks: map[string]readinessCheck{
+			"notebook": func(log sproto.ContainerLog) bool {
+				return jupyterReadyPattern.MatchString(log.String())
+			},
+		},
+
 		CommandSpec: tasks.CommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
@@ -177,21 +184,13 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 				),
 			},
 		},
-
-		taskID: taskID,
-		readinessChecks: map[string]readinessCheck{
-			"notebook": func(log sproto.ContainerLog) bool {
-				return jupyterReadyPattern.MatchString(log.String())
-			},
-		},
-		serviceAddress: &serviceAddress,
-		assignedPort:   &port,
-
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
 
-		db: n.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}, nil
 }

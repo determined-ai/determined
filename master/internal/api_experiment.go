@@ -29,6 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -121,17 +122,31 @@ func (a *apiServer) DeleteExperiment(
 	}
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+
+	checkpoints, err := a.m.db.ExperimentCheckpointsToGCRaw(
+		exp.ID,
+		0,
+		0,
+		0,
+		true,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	taskSpec := *a.m.taskSpec
+	taskSpec.AgentUserGroup = agentUserGroup
+
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
-		agentUserGroup:     agentUserGroup,
-		taskSpec:           a.m.taskSpec,
-		rm:                 a.m.rm,
-		db:                 a.m.db,
-		experiment:         exp,
-		legacyConfig:       conf,
-		gcTensorboards:     true,
-		keepExperimentBest: 0,
-		keepTrialBest:      0,
-		keepTrialLatest:    0,
+		GCCkptSpec: tasks.GCCkptSpec{
+			Base:               taskSpec,
+			ExperimentID:       exp.ID,
+			LegacyConfig:       conf,
+			ToDelete:           checkpoints,
+			DeleteTensorboards: true,
+		},
+		rm: a.m.rm,
+		db: a.m.db,
 	}).AwaitTermination(); gcErr != nil {
 		return nil, errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}

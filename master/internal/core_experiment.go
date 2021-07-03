@@ -333,17 +333,31 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	}
 
 	if patch.CheckpointStorage != nil {
+		checkpoints, err := m.db.ExperimentCheckpointsToGCRaw(
+			dbExp.ID,
+			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
+			dbExp.Config.CheckpointStorage().SaveTrialBest(),
+			dbExp.Config.CheckpointStorage().SaveTrialLatest(),
+			true,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		taskSpec := *m.taskSpec
+		taskSpec.AgentUserGroup = agentUserGroup
+
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
-				agentUserGroup:     agentUserGroup,
-				taskSpec:           m.taskSpec,
-				rm:                 m.rm,
-				db:                 m.db,
-				experiment:         dbExp,
-				legacyConfig:       dbExp.Config.AsLegacy(),
-				keepExperimentBest: dbExp.Config.CheckpointStorage().SaveExperimentBest(),
-				keepTrialBest:      dbExp.Config.CheckpointStorage().SaveTrialBest(),
-				keepTrialLatest:    dbExp.Config.CheckpointStorage().SaveTrialLatest(),
+				GCCkptSpec: tasks.GCCkptSpec{
+					Base:               taskSpec,
+					ExperimentID:       dbExp.ID,
+					LegacyConfig:       dbExp.Config.AsLegacy(),
+					ToDelete:           checkpoints,
+					DeleteTensorboards: true,
+				},
+				rm: m.rm,
+				db: m.db,
 			})
 	}
 
