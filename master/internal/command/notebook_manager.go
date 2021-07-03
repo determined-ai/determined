@@ -80,7 +80,7 @@ func (n *notebookManager) processLaunchRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	if err = check.Validate(notebook.config); err != nil {
+	if err = check.Validate(notebook.Config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -154,28 +154,30 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 	}
 
 	return &command{
-		taskID:    taskID,
-		config:    *config,
-		userFiles: params.UserFiles,
-		additionalFiles: archive.Archive{
-			params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
-			params.AgentUserGroup.OwnedArchiveItem(
-				jupyterEntrypoint,
-				etc.MustStaticFile(etc.NotebookEntrypointResource),
-				0700,
-				tar.TypeReg,
-			),
-			params.AgentUserGroup.OwnedArchiveItem(
-				notebookDefaultPage,
-				etc.MustStaticFile(etc.NotebookTemplateResource),
-				0644,
-				tar.TypeReg,
-			),
+		CommandSpec: tasks.CommandSpec{
+			Config:    *params.FullConfig,
+			UserFiles: params.UserFiles,
+			AdditionalFiles: archive.Archive{
+				params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(
+					jupyterEntrypoint,
+					etc.MustStaticFile(etc.NotebookEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					notebookDefaultPage,
+					etc.MustStaticFile(etc.NotebookTemplateResource),
+					0644,
+					tar.TypeReg,
+				),
+			},
 		},
 
+		taskID: taskID,
 		readinessChecks: map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
 				return jupyterReadyPattern.MatchString(log.String())

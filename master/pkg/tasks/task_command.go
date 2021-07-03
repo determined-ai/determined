@@ -28,6 +28,8 @@ func (s CommandSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 
 	res.Environment = s.Config.Environment.ToExpconf()
 
+	res.EnvVars = base.makeEnvVars(nil)
+
 	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
 
 	if shm := s.Config.Resources.ShmSize; shm != nil {

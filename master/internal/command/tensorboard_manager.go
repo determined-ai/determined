@@ -139,7 +139,7 @@ func (t *tensorboardManager) processLaunchRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	if err := check.Validate(b.config); err != nil {
+	if err := check.Validate(b.Config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
 		return nil, http.StatusBadRequest, err
 	}
@@ -336,10 +336,13 @@ func (t *tensorboardManager) newTensorBoard(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
+		CommandSpec: tasks.CommandSpec{
+			Config:          *config,
+			UserFiles:       params.UserFiles,
+			AdditionalFiles: additionalFiles,
+		},
+
+		taskID: taskID,
 		metadata: map[string]interface{}{
 			"experiment_ids": req.ExperimentIDs,
 			"trial_ids":      req.TrialIDs,

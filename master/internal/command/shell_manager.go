@@ -94,7 +94,7 @@ func (s *shellManager) processLaunchRequest(
 	ctx.Log().Info("creating shell")
 
 	shell := s.newShell(params, keys)
-	if err = check.Validate(shell.config); err != nil {
+	if err = check.Validate(shell.Config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -137,36 +137,37 @@ func (s *shellManager) newShell(
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
-	additionalFiles := archive.Archive{
-		params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			0644,
-			tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellEntrypointScript,
-			etc.MustStaticFile(etc.ShellEntrypointResource),
-			0700,
-			tar.TypeReg,
-		),
-	}
-
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
+		CommandSpec: tasks.CommandSpec{
+			Config:    *config,
+			UserFiles: params.UserFiles,
+			AdditionalFiles: archive.Archive{
+				params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellSSHDConfigFile,
+					etc.MustStaticFile(etc.SSHDConfigResource),
+					0644,
+					tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellEntrypointScript,
+					etc.MustStaticFile(etc.ShellEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+			},
+		},
+
+		taskID: taskID,
 		metadata: map[string]interface{}{
 			"privateKey": string(keyPair.PrivateKey),
 			"publicKey":  string(keyPair.PublicKey),

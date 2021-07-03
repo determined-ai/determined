@@ -83,6 +83,8 @@ func (g GCCkptSpec) ToTaskSpec(base TaskSpec) TaskSpec {
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
 
+	res.EnvVars = base.makeEnvVars(nil)
+
 	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
 		res.Mounts = append(res.Mounts, mount.Mount{
