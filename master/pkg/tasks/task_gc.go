@@ -10,42 +10,40 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-// GCCheckpoints is a description of a task for running checkpoint GC.
-type GCCheckpoints struct {
+// GCCkptSpec is a description of a task for running checkpoint GC.
+type GCCkptSpec struct {
 	ExperimentID       int
 	LegacyConfig       expconf.LegacyConfig
 	ToDelete           json.RawMessage
 	DeleteTensorboards bool
-
-	Devices               []device.Device
-	TaskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
-// ExtraArchives implements TaskContainer.
-func (g GCCheckpoints) ExtraArchives(u *model.AgentUserGroup) []container.RunArchive {
-	return []container.RunArchive{
+// ToTaskSpec generates a TaskSpec.
+func (g GCCkptSpec) ToTaskSpec(base TaskSpec) TaskSpec {
+	res := base
+
+	res.Archives = base.makeArchives([]container.RunArchive{
 		wrapArchive(
 			archive.Archive{
-				u.OwnedArchiveItem(
+				base.AgentUserGroup.OwnedArchiveItem(
 					"storage_config.json",
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
 					0600,
 					tar.TypeReg,
 				),
-				u.OwnedArchiveItem(
+				base.AgentUserGroup.OwnedArchiveItem(
 					"checkpoints_to_delete.json",
 					[]byte(jsonify(g.ToDelete)),
 					0600,
 					tar.TypeReg,
 				),
-				u.OwnedArchiveItem(
+				base.AgentUserGroup.OwnedArchiveItem(
 					etc.GCCheckpointsEntrypointResource,
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 					0700,
@@ -54,15 +52,11 @@ func (g GCCheckpoints) ExtraArchives(u *model.AgentUserGroup) []container.RunArc
 			},
 			ContainerWorkDir,
 		),
-	}
-}
+	})
 
-// Description implements TaskContainer.
-func (g GCCheckpoints) Description() string { return "gc" }
+	res.Description = "gc"
 
-// Entrypoint implements TaskContainer.
-func (g GCCheckpoints) Entrypoint() []string {
-	e := []string{
+	res.Entrypoint = []string{
 		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
@@ -72,40 +66,26 @@ func (g GCCheckpoints) Entrypoint() []string {
 		"checkpoints_to_delete.json",
 	}
 	if g.DeleteTensorboards {
-		e = append(e, "--delete-tensorboards")
+		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}
-	return e
-}
 
-// Environment implements TaskContainer.
-func (g GCCheckpoints) Environment() expconf.EnvironmentConfig {
 	// Keep only the EnvironmentVariables provided by the experiment's config.
 	envvars := g.LegacyConfig.EnvironmentVariables()
 	env := expconf.EnvironmentConfig{
 		RawEnvironmentVariables: &envvars,
 	}
-
 	// Fill the rest of the environment with default values.
 	defaultConfig := expconf.ExperimentConfig{}
-	g.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
+	base.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
 
 	if defaultConfig.RawEnvironment != nil {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
-	return schemas.WithDefaults(env).(expconf.EnvironmentConfig)
-}
+	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
 
-// ExtraEnvVars implements TaskContainer.
-func (g GCCheckpoints) ExtraEnvVars() map[string]string { return nil }
-
-// LoggingFields implements TaskContainer.
-func (g GCCheckpoints) LoggingFields() map[string]string { return nil }
-
-// Mounts implements TaskContainer.
-func (g GCCheckpoints) Mounts() []mount.Mount {
-	mounts := ToDockerMounts(g.LegacyConfig.BindMounts())
+	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
-		mounts = append(mounts, mount.Mount{
+		res.Mounts = append(res.Mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: fs.HostPath(),
 			Target: model.DefaultSharedFSContainerPath,
@@ -114,20 +94,6 @@ func (g GCCheckpoints) Mounts() []mount.Mount {
 			},
 		})
 	}
-	return mounts
-}
 
-// ShmSize implements TaskContainer.
-func (g GCCheckpoints) ShmSize() int64 { return 0 }
-
-// UseFluentLogging implements TaskContainer.
-func (g GCCheckpoints) UseFluentLogging() bool { return false }
-
-// UseHostMode implements TaskContainer.
-func (g GCCheckpoints) UseHostMode() bool { return false }
-
-// ResourcesConfig implements TaskContainer.
-func (g GCCheckpoints) ResourcesConfig() expconf.ResourcesConfig {
-	// The GCCheckpoints resources config is effictively unused, so we return an empty one.
-	return expconf.ResourcesConfig{}
+	return res
 }

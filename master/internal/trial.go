@@ -686,7 +686,7 @@ func (t *trial) processAllocated(
 		taskSpec := *t.taskSpec
 		taskSpec.AgentUserGroup = t.agentUserGroup
 		taskSpec.TaskToken = taskToken
-		taskSpec.TaskContainer = &tasks.StartTrial{
+		trialSpec := &tasks.TrialSpec{
 			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
 			ModelDefinition:     t.modelDefinition,
 			HParams:             t.create.Hparams,
@@ -697,9 +697,8 @@ func (t *trial) processAllocated(
 			AdditionalFiles:     additionalFiles,
 			IsMultiAgent:        len(t.allocations) > 1,
 			Rank:                rank,
-			Devices:             taskSpec.Devices,
 		}
-		a.Start(ctx, taskSpec)
+		a.Start(ctx, trialSpec.ToTaskSpec(taskSpec))
 	}
 
 	return nil

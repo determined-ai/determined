@@ -132,20 +132,24 @@ func createPodWithMockQueue() (
 	map[string]*mockReceiver,
 	map[string]*actor.Ref,
 ) {
-	startCmd := tasks.StartCommand{
+	commandSpec := tasks.CommandSpec{
 		Config: model.CommandConfig{Description: "test-config"},
 	}
-	task := tasks.TaskSpec{
+	taskSpec := tasks.TaskSpec{
 		TaskID:         "task",
 		ContainerID:    "container",
 		ClusterID:      "cluster",
 		AgentUserGroup: createAgentUserGroup(),
 	}
-	task.TaskContainer = &startCmd
 	system := actor.NewSystem("test-sys")
 	podMap, actorMap := createReceivers(system)
 
-	newPod := createPod(actorMap["task"], actorMap["cluster"], actorMap["resource"], task)
+	newPod := createPod(
+		actorMap["task"],
+		actorMap["cluster"],
+		actorMap["resource"],
+		commandSpec.ToTaskSpec(taskSpec),
+	)
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),
 		newPod,

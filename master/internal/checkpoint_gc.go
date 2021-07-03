@@ -70,16 +70,13 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			taskSpec := *t.taskSpec
 			taskSpec.AgentUserGroup = t.agentUserGroup
 			taskSpec.TaskToken = taskToken
-			taskSpec.TaskContainer = &tasks.GCCheckpoints{
+			gcCkptSpec := &tasks.GCCkptSpec{
 				ExperimentID:       t.experiment.ID,
 				LegacyConfig:       t.legacyConfig,
 				ToDelete:           checkpoints,
 				DeleteTensorboards: t.gcTensorboards,
-
-				Devices:               taskSpec.Devices,
-				TaskContainerDefaults: taskSpec.TaskContainerDefaults,
 			}
-			a.Start(ctx, taskSpec)
+			a.Start(ctx, gcCkptSpec.ToTaskSpec(taskSpec))
 		}
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.
