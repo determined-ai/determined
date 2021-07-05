@@ -81,6 +81,7 @@ const TrialChart: React.FC<Props> = ({
         },
       ],
       height: 400,
+      legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
       scales: {
         x: { time: false },
