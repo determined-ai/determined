@@ -75,10 +75,12 @@ const TrialChart: React.FC<Props> = ({
     return {
       axes: [
         { label: 'Batches' },
-        { label: 'Metric Value' },
+        {
+          label: metrics.length === 1 ?
+            `${metrics[0].name} (${metrics[0].type})` : 'Metric Value',
+        },
       ],
       height: 400,
-      legend: { show: false },
       plugins: [ tooltipsPlugin(), trackAxis() ],
       scales: {
         x: { time: false },
@@ -86,8 +88,8 @@ const TrialChart: React.FC<Props> = ({
       },
       series: [
         { label: 'Batch' },
-        ...metrics.map((metricName, index) => ({
-          label: metricName.name,
+        ...metrics.map((metric, index) => ({
+          label: `${metric.name} (${metric.type})`,
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,
