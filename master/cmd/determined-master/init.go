@@ -138,4 +138,7 @@ func registerConfig() {
 	// We don't register pflags for these to avoid setting a default.
 	registerEnv(name("checkpoint-storage", "type"))
 	registerEnv(name("checkpoint-storage", "host-path"))
+
+	// This env var is used by `det deploy` to override bind_mounts.
+	registerEnv(name("auto-bind-mount"))
 }
