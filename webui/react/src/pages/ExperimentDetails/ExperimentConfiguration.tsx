@@ -11,9 +11,9 @@ interface Props {
 
 const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
   return (
-    <Section bodyBorder>
+    <Section bodyBorder bodyScroll>
       <MonacoEditor
-        height="60vh"
+        height="100%"
         language="yaml"
         options={{
           minimap: { enabled: false },
