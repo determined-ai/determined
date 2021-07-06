@@ -20,6 +20,8 @@ export const serverAddress = (path = ''): string => {
   return (customServer || reactHostAddress()) + path;
 };
 
+// Returns the address to the server hosting react assets
+// excluding the path to the subdirectory if any.
 export const reactHostAddress = (): string => {
   return `${window.location.protocol}//${window.location.host}`;
 };
@@ -90,14 +92,17 @@ const stripUrl = (aUrl: string): string => {
   return rest;
 };
 
-const findReactRoute = (url: string): RouteConfig | undefined => {
+export const findReactRoute = (url: string): RouteConfig | undefined => {
   if (isFullPath(url)) {
     if (!url.startsWith(reactHostAddress())) return undefined;
     // Fit it into a relative path
     url = url.replace(reactHostAddress(), '');
   }
+  if (!url.startsWith(process.env.PUBLIC_URL)) {
+    return undefined;
+  }
   // Check to see if the path matches any of the defined app routes.
-  const pathname = parseUrl(url).pathname.replace(process.env.PUBLIC_URL, '');
+  const pathname = url.replace(process.env.PUBLIC_URL, '');
   return routes
     .filter(route => route.path !== '*')
     .find(route => {
@@ -109,13 +114,22 @@ const findReactRoute = (url: string): RouteConfig | undefined => {
 const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
+export const routeToReactUrl = (path: string): void => {
+  history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+};
 
+/*
+  routeAll determines whether a path should be routed through internal React router or hanled
+  by the browser.
+  input `path` should include the PUBLIC_URL if there is one set. eg if react is being served
+  in a subdirectory.
+*/
 export const routeAll = (path: string): void => {
   const matchingReactRoute = findReactRoute(path);
   if (!matchingReactRoute) {
     routeToExternalUrl(path);
   } else {
-    history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+    routeToReactUrl(path);
   }
 };
 

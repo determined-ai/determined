@@ -11,7 +11,7 @@ import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
-import { locationToPath, routeAll } from 'routes/utils';
+import { locationToPath, routeAll, routeToReactUrl } from 'routes/utils';
 import { getPath } from 'utils/data';
 
 import css from './SignIn.module.scss';
@@ -51,7 +51,11 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       const redirect = queries.redirect || locationToPath(loginRedirect);
-      routeAll(redirect || defaultRoute.path);
+      if (!redirect) {
+        routeToReactUrl(defaultRoute.path);
+      } else {
+        routeAll(redirect);
+      }
     } else if (auth.checked) {
       storeDispatch({ type: StoreAction.HideUISpinner });
     }
