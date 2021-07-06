@@ -16,7 +16,7 @@ import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
-import { paths, routeAll } from 'routes/utils';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -159,7 +159,7 @@ const TrialDetailsComp: React.FC = () => {
         parentId: trial.experimentId,
       });
       setIsContModalVisible(false);
-      routeAll(paths.experimentDetails(newExperimentId));
+      routeToReactUrl(paths.experimentDetails(newExperimentId));
     } catch (e) {
       handleError({
         error: e,
