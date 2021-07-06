@@ -1,4 +1,4 @@
-import { Tabs } from 'antd';
+import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
@@ -39,7 +39,7 @@ const ExperimentConfiguration = React.lazy(() => {
 
 export interface Props {
   experiment: ExperimentBase;
-  trialId: number;
+  trialId?: number;
 }
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
@@ -67,6 +67,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   }, [ basePath, history, tab ]);
 
   const fetchTrialDetails = useCallback(async () => {
+    if (!trialId) return;
     const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
     setTrialDetails(response);
   }, [ canceler, trialId ]);
@@ -79,20 +80,25 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ trialDetails, stopPolling ]);
 
-  if (!trialDetails) {
-    return <Spinner />;
-  }
-
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="overview" tab="Overview">
-        <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+        {trialDetails
+          ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+          : <Alert message="No data available." type="warning" />
+        }
       </TabPane>
       <TabPane key="hyperparameters" tab="Hyperparameters">
-        <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
+        {trialDetails ?
+          <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
+          : <Alert message="No data available." type="warning" />
+        }
       </TabPane>
       <TabPane key="workloads" tab="Workloads">
-        <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
+        {trialDetails ?
+          <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
+          : <Alert message="No data available." type="warning" />
+        }
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner />}>
@@ -100,10 +106,16 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         </React.Suspense>
       </TabPane>
       <TabPane key="profiler" tab="Profiler">
-        <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
+        {trialDetails ?
+          <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
+          : <Alert message="No data available." type="warning" />
+        }
       </TabPane>
       <TabPane key="logs" tab="Logs">
-        <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
+        {trialDetails ?
+          <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
+          : <Alert message="No data available." type="warning" />
+        }
       </TabPane>
     </Tabs>
   );

@@ -5,6 +5,7 @@ import CreateExperimentModal, { CreateExperimentType } from 'components/CreateEx
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import { paths, routeAll } from 'routes/utils';
@@ -61,7 +62,26 @@ const ExperimentDetails: React.FC = () => {
     valHistory,
   ]);
 
+  const fetchFirstTrialId = useCallback(async () => {
+    try {
+      const expTrials = await getExpTrials({ id }, { signal: canceler.signal });
+      if (expTrials.trials[0]) {
+        setFirstTrialId(expTrials.trials[0].id);
+      }
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Failed to fetch experiment trials.',
+        silent: true,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ canceler, id ]);
+
   const { startPolling, stopPolling } = usePolling(fetchExperimentDetails);
+  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
   const showForkModal = useCallback((): void => {
     if (experiment?.configRaw) {
@@ -116,13 +136,9 @@ const ExperimentDetails: React.FC = () => {
   }, [ canceler ]);
 
   useEffect(() => {
-    (async () => {
-      const expTrials = await getExpTrials({ id }, { signal: canceler.signal });
-      if (expTrials.trials[0]) {
-        setFirstTrialId(expTrials.trials[0].id);
-      }
-    })();
-  }, [ canceler, id ]);
+    if (!isSingleTrial || firstTrialId != null) return;
+    return () => stopPollingFirstTrialId();
+  }, [ firstTrialId, isSingleTrial, stopPollingFirstTrialId ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
@@ -138,9 +154,6 @@ const ExperimentDetails: React.FC = () => {
   let tabsComponent = <ExperimentMultiTrialTabs experiment={experiment} />;
 
   if (isSingleTrial) {
-    if (!firstTrialId) {
-      return <Spinner />;
-    }
     tabsComponent = <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />;
   }
 
