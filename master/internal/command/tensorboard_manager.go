@@ -317,13 +317,13 @@ func (t *tensorboardManager) newTensorBoard(
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
 	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
-	// TODO: when migrating commands to use the expconf framework, an explicitly-provided config for
-	// a tensorboard should be able to override the values pulled from the latest experiment config.
-	// The way it is currently written, the values from the experiment config are non-configurable.
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
 		GPU: expConf.Environment().Image().GPU()}
-	config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+	// Prefer RegistryAuth already present over the one from inferred from the experiment.
+	if config.Environment.RegistryAuth == nil {
+		config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+	}
 
 	var bindMounts []model.BindMount
 
