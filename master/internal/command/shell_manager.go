@@ -143,7 +143,7 @@ func (s *shellManager) newShell(
 		proxyTCP: true,
 
 		generatedKeys: keyPair,
-		CommandSpec: tasks.CommandSpec{
+		GenericCommandSpec: tasks.GenericCommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *config,
 			UserFiles: params.UserFiles,

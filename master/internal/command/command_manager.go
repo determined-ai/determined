@@ -104,7 +104,7 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 	return &command{
 		db: c.db,
 
-		CommandSpec: tasks.CommandSpec{
+		GenericCommandSpec: tasks.GenericCommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
 			UserFiles: params.UserFiles,

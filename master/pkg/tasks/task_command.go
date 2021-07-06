@@ -10,8 +10,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
 
-// CommandSpec is a description of a task for running a command.
-type CommandSpec struct {
+// GenericCommandSpec is a description of a task for running a command.
+type GenericCommandSpec struct {
 	Base TaskSpec
 
 	Config          model.CommandConfig
@@ -21,7 +21,7 @@ type CommandSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
 	res := s.Base
 
 	res.TaskToken = taskToken

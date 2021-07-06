@@ -343,7 +343,7 @@ func (t *tensorboardManager) newTensorBoard(
 			},
 		},
 
-		CommandSpec: tasks.CommandSpec{
+		GenericCommandSpec: tasks.GenericCommandSpec{
 			Base:            *params.TaskSpec,
 			Config:          *config,
 			UserFiles:       params.UserFiles,

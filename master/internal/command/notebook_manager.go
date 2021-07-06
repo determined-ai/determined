@@ -161,7 +161,7 @@ func (n *notebookManager) newNotebook(params *CommandParams) (*command, error) {
 			},
 		},
 
-		CommandSpec: tasks.CommandSpec{
+		GenericCommandSpec: tasks.GenericCommandSpec{
 			Base:      *params.TaskSpec,
 			Config:    *params.FullConfig,
 			UserFiles: params.UserFiles,

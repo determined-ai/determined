@@ -69,7 +69,7 @@ type command struct {
 	proxyTCP        bool
 
 	generatedKeys *ssh.PrivateAndPublicKeys
-	tasks.CommandSpec
+	tasks.GenericCommandSpec
 	owner commandOwner
 
 	taskID         sproto.TaskID
