@@ -271,7 +271,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	// Get the most recent experiment config as raw json and add it to the container. This
-	// is used to determine if the experiment is backed by S3.
+	// is used for automatically configuring checkpoint storage, registry auth, etc.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
@@ -320,6 +320,10 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
 		GPU: expConf.Environment().Image().GPU()}
+	// Prefer RegistryAuth already present over the one from inferred from the experiment.
+	if config.Environment.RegistryAuth == nil {
+		config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+	}
 
 	var bindMounts []model.BindMount
 
