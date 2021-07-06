@@ -74,6 +74,24 @@ In the WebUI, navigate to the ``Cluster`` page, where you should now see
 slots available (either CPU or GPU, depending on what hardware is
 available on the machine).
 
+For single-agent clusters launched with:
+
+.. code::
+
+   det deploy local cluster-up --auto-bind-mount <absolute directory path>
+
+the cluster will automatically mount the specified directory into the
+`/run/determined/shared_fs` directory in the cluster’s task containers.
+If `--auto-bind-mount` is not specified, the cluster will default to
+mounting your home directory. This will allow you to access your local
+preferences and any relevant files stored in the specified directory
+with the cluster's notebooks, shells, and tensorboard tasks. To disable
+this feature, use:
+
+.. code::
+
+   det deploy local cluster-up --no-auto-bind-mount
+
 For production deployments, you'll want to :ref:`use a cluster
 configuration file <configuring-cluster-install>`. To provide this
 configuration file to ``det deploy``, use:
