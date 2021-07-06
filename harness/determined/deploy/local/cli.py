@@ -30,6 +30,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
         auto_bind_mount=args.auto_bind_mount,
+        no_auto_bind_mount=args.no_auto_bind_mount,
     )
 
 
@@ -53,6 +54,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
         auto_bind_mount=args.auto_bind_mount,
+        no_auto_bind_mount=args.no_auto_bind_mount,
         cluster_name=args.cluster_name,
     )
 
@@ -159,13 +161,16 @@ args_description = Cmd(
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                BoolOptArg(
+                Arg(
                     "--auto-bind-mount",
+                    type=str,
+                    default=None,
+                    help="directory to mount into task containers (default: user's home directory)",
+                ),
+                Arg(
                     "--no-auto-bind-mount",
-                    dest="auto_bind_mount",
-                    default=True,
-                    true_help="bind mount the user's home directory into task containers",
-                    false_help="disable mounting the user's home directory into task containers",
+                    help="disable mounting user's home directory into task containers",
+                    action="store_true",
                 ),
             ],
         ),
@@ -230,13 +235,16 @@ args_description = Cmd(
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                BoolOptArg(
+                Arg(
                     "--auto-bind-mount",
+                    type=str,
+                    default=str(Path.home()),
+                    help="directory to mount into task containers (default: user's home directory)",
+                ),
+                Arg(
                     "--no-auto-bind-mount",
-                    dest="auto_bind_mount",
-                    default=True,
-                    true_help="bind mount the user's home directory into task containers",
-                    false_help="disable mounting the user's home directory into task containers",
+                    help="disable mounting user's home directory into task containers",
+                    action="store_true",
                 ),
                 Arg(
                     "--cluster-name",
