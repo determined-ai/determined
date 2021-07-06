@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+-  PyTorchTrial: improved support for custom batches in PyTorch, e.g. as
+   used in ``pytorch_geometric``. See ``PyTorchTrial`` method
+   ``get_batch_length`` or
+   ``examples/graphs/proteins_pytorch_geometric`` for further details.

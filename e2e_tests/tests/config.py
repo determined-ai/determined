@@ -68,6 +68,10 @@ def model_hub_examples_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../model_hub/examples", path)
 
 
+def graphs_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/graphs", path)
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = util.safe_load_yaml_with_exceptions(f)
