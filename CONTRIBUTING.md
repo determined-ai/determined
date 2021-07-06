@@ -57,6 +57,7 @@ git clone git@github.com:determined-ai/determined.git
 - Protoc (>= 3.0)
 - Java (>= 7)
 - cURL (>= 7)
+- jq (>= 1.6)
 
 ### Building Determined
 
