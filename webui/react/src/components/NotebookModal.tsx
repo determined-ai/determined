@@ -6,7 +6,7 @@ import React, { Dispatch, useCallback, useEffect, useReducer, useState } from 'r
 
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import { NotebookConfig, RawJson, ResourcePool, ResourceType, Template } from 'types';
+import { NotebookConfig, RawJson, ResourcePool, Template } from 'types';
 import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
@@ -20,6 +20,7 @@ const { Item } = Form;
 
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
+const DEFAULT_SLOT_COUNT = 1;
 
 type DispatchFunction =
   (Dispatch<{
@@ -38,14 +39,8 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   const storage = useStorage(STORAGE_PATH);
   const [ state, dispatch ] = useReducer(
     reducer,
-    storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
+    storage.getWithDefault(STORAGE_KEY, { slots: DEFAULT_SLOT_COUNT }),
   );
-
-  useEffect(() => {
-    if (state.type === ResourceType.ALL && (state.slots === undefined || state.slots < 1)) {
-      state.slots = 1;
-    }
-  }, [ state ]);
 
   const storeConfig = useCallback((values: NotebookConfig) => {
     const { name, ...storedValues } = values;
@@ -80,7 +75,6 @@ interface ResourceInfo {
   hasAux: boolean;
   hasCompute: boolean;
   maxSlots: number | undefined;
-  showResourceType: boolean;
 }
 
 const NotebookModal: React.FC<NotebookModalProps> = (
@@ -240,13 +234,13 @@ const NotebookForm:React.FC<FormProps> = (
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
-    { hasAux: false, hasCompute: true, maxSlots: 1, showResourceType: true },
+    { hasAux: false, hasCompute: true, maxSlots: DEFAULT_SLOT_COUNT },
   );
 
   const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
-      return { hasAux: false, hasCompute: false, maxSlots: 0, showResourceType: true };
+      return { hasAux: false, hasCompute: false, maxSlots: 0 };
     }
     const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
     const hasComputeCapacity = selectedPool.slotsAvailable > 0
@@ -255,16 +249,12 @@ const NotebookForm:React.FC<FormProps> = (
       (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0 ?
         selectedPool.slotsPerAgent : undefined) : 0;
     if (hasAuxCapacity && !hasComputeCapacity) {
-      onChange({ key: 'type', value: ResourceType.UNSPECIFIED });
       onChange({ key: 'slots', value: 0 });
-    } else if (!hasAuxCapacity && hasComputeCapacity) {
-      onChange({ key: 'type', value: ResourceType.ALL });
     }
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
-      showResourceType: hasAuxCapacity && hasComputeCapacity,
     };
   }, [ onChange, resourcePools ]);
 
@@ -327,7 +317,7 @@ const NotebookForm:React.FC<FormProps> = (
         <LabelledLine
           content = {
             <InputNumber
-              defaultValue={fields.slots || 1}
+              defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
               max={resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
