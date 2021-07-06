@@ -46,14 +46,15 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
-    history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
+    history.replace(`${basePath}/${key}`);
   }, [ basePath, history ]);
 
+  // Sets the default sub route.
   useEffect(() => {
-    if (tab && (!TAB_KEYS.includes(tab) || tab === DEFAULT_TAB_KEY)) {
-      history.replace(basePath);
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      history.replace(`${basePath}/${tabKey}`);
     }
-  }, [ basePath, history, tab ]);
+  }, [ basePath, history, tab, tabKey ]);
 
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
