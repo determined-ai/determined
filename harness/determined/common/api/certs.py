@@ -121,7 +121,7 @@ class CertStore:
 
             with temp.open("w") as f:
                 json.dump(store, f, indent=4, sort_keys=True)
-            temp.rename(self.path)
+            temp.replace(self.path)
 
     def get_cert(self, url: str) -> Optional[str]:
         """

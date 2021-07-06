@@ -211,7 +211,7 @@ class TokenStore:
             substore["active_user"] = username
 
     @contextlib.contextmanager
-    def _persistent_store(self) -> Iterator[Dict["str", Any]]:
+    def _persistent_store(self) -> Iterator[Dict[str, Any]]:
         """
         Yields the appropriate store[self.master_address] that can be modified, and the modified
         result will be written back to file.
@@ -230,7 +230,7 @@ class TokenStore:
 
             with self.temp.open("w") as f:
                 json.dump(store, f, indent=4, sort_keys=True)
-            self.temp.rename(self.path)
+            self.temp.replace(self.path)
 
     def _load_store_file(self) -> Dict[str, Any]:
         """
