@@ -66,13 +66,11 @@ class GCNTrial(PyTorchTrial):
             use_node_attr=True,
         )
 
-        val_ratio = 0.2
-        num_training = int(len(self.dataset) * (1 - val_ratio))
+        num_training = self.context.get_hparam("training_records")
         num_val = len(self.dataset) - num_training
         self.train_subset, self.valid_subset = random_split(
             self.dataset, [num_training, num_val]
         )
-        print("sets: ", len(self.train_subset), len(self.valid_subset))
 
         self.num_feature = self.dataset.num_features
         self.num_class = self.dataset.num_classes
@@ -141,7 +139,7 @@ class GCNTrial(PyTorchTrial):
             collate_fn=Collater([], []),
         )
 
-    def calculate_batch_length(self, batch):
+    def get_batch_length(self, batch):
         # Since `torch_geometric.data.batch.Batch` has a custom way of exposing
         # the batch dimension size, the users must override this method,
         # so the trial could properly calculate the batch sizes at runtime.

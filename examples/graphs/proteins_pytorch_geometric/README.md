@@ -7,7 +7,7 @@ Key part of this example code is contained in the following functions in `model_
 - `build_training_data_loader`, `build_validation_data_loader`:
   use `determined.pytorch.DataLoader` in conjunction with `torch_geometric.data.dataloader.Collater`
   to make use of graph data mini-batching.
-- `calculate_batch_length`: `pytorch_geometric` provides its own class for batches,
+- `get_batch_length`: `pytorch_geometric` provides its own class for batches,
   `torch_geometric.data.batch.Batch`. Since it has a custom way of exposing the batch dimension size,
   `batch.num_graphs`, the users must override this method, so the trial could properly calculate
   the batch sizes at runtime.

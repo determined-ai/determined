@@ -5,7 +5,8 @@ hyperparameters:
   lr: 5.e-4
   weight_decay: 1.e-4
   hidden_channels: 32
-records_per_epoch: 1001
+  training_records: 890
+records_per_epoch: 890
 searcher:
   name: single
   metric: validation_loss

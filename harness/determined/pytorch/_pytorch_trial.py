@@ -312,7 +312,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next"):
                 batch = next(self.training_iterator)
-            batch_inputs = self.trial.calculate_batch_length(batch)
+            batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
 
             with self.prof.record_timing("to_device"):
@@ -434,7 +434,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 callback.on_validation_epoch_start()
             for idx, batch in enumerate(self.validation_loader):
                 batch = self.context.to_device(batch)
-                num_inputs += self.trial.calculate_batch_length(batch)
+                num_inputs += self.trial.get_batch_length(batch)
 
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):
                     vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
@@ -980,7 +980,7 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
-    def calculate_batch_length(self, batch: Any) -> int:
+    def get_batch_length(self, batch: Any) -> int:
         """Count the number of records in a given batch.
 
         Override this method when you are using custom batch types, as produced
@@ -1001,7 +1001,7 @@ class PyTorchTrial(det.Trial):
                     collate_fn=Collater([], []),
                 )
 
-            def calculate_batch_length(self, batch):
+            def get_batch_length(self, batch):
                 # `batch` is `torch_geometric.data.batch.Batch`.
                 return batch.num_graphs
 
