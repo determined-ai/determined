@@ -2,9 +2,11 @@ package command
 
 import (
 	"fmt"
-	"math/rand"
+	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/labstack/echo/v4"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 
@@ -44,6 +46,59 @@ type terminateForGC struct{}
 type commandOwner struct {
 	ID       model.UserID `json:"id"`
 	Username string       `json:"username"`
+}
+
+// GenericCommandReq is the request to launch a generic command actor.
+type GenericCommandReq struct {
+	GenericCommandSpec tasks.GenericCommandSpec
+	User               *model.User
+	Port               *int
+	Keys               *ssh.PrivateAndPublicKeys
+	ProxyTCP           bool
+}
+
+func generateServiceAddress(taskID string) string {
+	return fmt.Sprintf("/proxy/%s/", taskID)
+}
+
+func createGenericCommandActor(
+	ctx *actor.Context,
+	db *db.PgDB,
+	msg GenericCommandReq,
+	readinessCheck map[string]readinessCheck,
+) error {
+	taskID := sproto.NewTaskID()
+
+	serviceAddress := generateServiceAddress(string(taskID))
+
+	cmd := &command{
+		db:              db,
+		readinessChecks: readinessCheck,
+
+		GenericCommandSpec: msg.GenericCommandSpec,
+		owner: commandOwner{
+			ID:       msg.User.ID,
+			Username: msg.User.Username,
+		},
+
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   msg.Port,
+		generatedKeys:  msg.Keys,
+		proxyTCP:       msg.ProxyTCP,
+	}
+
+	a, _ := ctx.ActorOf(cmd.taskID, cmd)
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
+		ctx.Respond(echo.NewHTTPError(
+			http.StatusInternalServerError,
+			errors.Wrap(err, "failed to create generic command").Error()))
+		return nil
+	}
+	summary := summaryFut.Get().(summary)
+	ctx.Respond(summary.ID)
+	return nil
 }
 
 // DefaultConfig is the default configuration used by all
@@ -380,10 +435,7 @@ func (c *command) State() State {
 }
 
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
-	serviceAddress, err := generateServiceAddress(string(c.taskID))
-	if err != nil {
-		return nil, errors.Wrapf(err, "generating service address for %s", c.taskID)
-	}
+	serviceAddress := generateServiceAddress(string(c.taskID))
 
 	exitStatus := protoutils.DefaultStringValue
 	if c.exitStatus != nil {
@@ -468,30 +520,11 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
-		ServiceAddress: fmt.Sprintf(tensorboardServiceAddress, c.taskID),
+		ServiceAddress: fmt.Sprintf(*c.serviceAddress, c.taskID),
 		ExperimentIds:  eids,
 		TrialIds:       tids,
 		Username:       c.owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
-	}
-}
-
-func getPort(min, max int) int {
-	return rand.Intn(max-min) + min
-}
-
-func setPodSpec(
-	config *model.CommandConfig,
-	taskContainerDefaults model.TaskContainerDefaultsConfig,
-) {
-	if config.Environment.PodSpec != nil {
-		return
-	}
-
-	if config.Resources.Slots == 0 {
-		config.Environment.PodSpec = taskContainerDefaults.CPUPodSpec
-	} else {
-		config.Environment.PodSpec = taskContainerDefaults.GPUPodSpec
 	}
 }

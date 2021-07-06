@@ -1,11 +1,21 @@
 package internal
 
 import (
+	"archive/tar"
 	"context"
 	"fmt"
+	"net/http"
 
+	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -98,7 +108,79 @@ func (a *apiServer) LaunchNotebook(
 		}, nil
 	}
 
-	notebookLaunchReq := command.NotebookLaunchRequest{CommandParams: params}
+	const (
+		jupyterDir        = "/run/determined/jupyter/"
+		jupyterConfigDir  = "/run/determined/jupyter/config"
+		jupyterDataDir    = "/run/determined/jupyter/data"
+		jupyterRuntimeDir = "/run/determined/jupyter/runtime"
+		jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+		// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+		minNotebookPort     = 2900
+		maxNotebookPort     = minNotebookPort + 299
+		notebookDefaultPage = "/run/determined/workdir/test.ipynb"
+	)
+	var (
+		notebookEntrypoint = []string{jupyterEntrypoint}
+	)
+
+	config := params.FullConfig
+
+	// Postprocess the config. Add Jupyter and configuration to the container.
+
+	// Select a random port from the range to assign to the notebook. In host
+	// mode, this mitigates the risk of multiple notebook processes binding
+	// the same port on an agent.
+	port := getPort(minNotebookPort, maxNotebookPort)
+	notebookPorts := map[string]int{"notebook": port}
+	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
+
+	config.Environment.Ports = notebookPorts
+	config.Environment.EnvironmentVariables.CPU = append(
+		config.Environment.EnvironmentVariables.CPU, portVar)
+	config.Environment.EnvironmentVariables.GPU = append(
+		config.Environment.EnvironmentVariables.GPU, portVar)
+
+	config.Entrypoint = notebookEntrypoint
+
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
+
+	if config.Description == "" {
+		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
+		config.Description = fmt.Sprintf("Notebook (%s)", petName)
+	}
+
+	if err = check.Validate(config); err != nil {
+		return nil, echo.NewHTTPError(
+			http.StatusBadRequest, errors.Wrap(err, "failed to launch notebook").Error())
+	}
+
+	notebookLaunchReq := command.GenericCommandReq{
+		GenericCommandSpec: tasks.GenericCommandSpec{
+			Base:      *params.TaskSpec,
+			Config:    *params.FullConfig,
+			UserFiles: params.UserFiles,
+			AdditionalFiles: archive.Archive{
+				params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+				params.AgentUserGroup.OwnedArchiveItem(
+					jupyterEntrypoint,
+					etc.MustStaticFile(etc.NotebookEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+				params.AgentUserGroup.OwnedArchiveItem(
+					notebookDefaultPage,
+					etc.MustStaticFile(etc.NotebookTemplateResource),
+					0644,
+					tar.TypeReg,
+				),
+			},
+		},
+		User: params.User,
+		Port: &port,
+	}
 	notebookIDFut := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)
 	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
 		return nil, err

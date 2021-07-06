@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"net/http"
+
+	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/labstack/echo/v4"
 
 	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
@@ -19,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -26,6 +32,25 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
+
+func getPort(min, max int) int {
+	return rand.Intn(max-min) + min
+}
+
+func setPodSpec(
+	config *model.CommandConfig,
+	taskContainerDefaults model.TaskContainerDefaultsConfig,
+) {
+	if config.Environment.PodSpec != nil {
+		return
+	}
+
+	if config.Resources.Slots == 0 {
+		config.Environment.PodSpec = taskContainerDefaults.CPUPodSpec
+	} else {
+		config.Environment.PodSpec = taskContainerDefaults.GPUPodSpec
+	}
+}
 
 var commandsAddr = actor.Addr("commands")
 var errCommandUnfulfillable = errors.New("resource request unfulfillable")
@@ -203,7 +228,38 @@ func (a *apiServer) LaunchCommand(
 		return nil, api.APIErr2GRPC(err)
 	}
 
-	commandLaunchReq := command.CommandLaunchRequest{CommandParams: params}
+	// Postprocess the config.
+	if params.FullConfig.Description == "" {
+		params.FullConfig.Description = fmt.Sprintf(
+			"Command (%s)",
+			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+		)
+	}
+	if len(params.FullConfig.Entrypoint) == 1 {
+		// If an entrypoint is specified as a singleton string, Determined will follow the "shell form"
+		// convention of Docker that executes the Command with "/bin/sh -c" prepended.
+		//
+		// https://docs.docker.com/engine/reference/builder/#shell-form-entrypoint-example
+		var shellFormEntrypoint = []string{"/bin/sh", "-c"}
+
+		params.FullConfig.Entrypoint = append(shellFormEntrypoint, params.FullConfig.Entrypoint...)
+	}
+	setPodSpec(params.FullConfig, params.TaskSpec.TaskContainerDefaults)
+	if err = check.Validate(*params.FullConfig); err != nil {
+		return nil, echo.NewHTTPError(
+			http.StatusBadRequest,
+			errors.Wrap(err, "failed to launch command").Error(),
+		)
+	}
+
+	commandLaunchReq := command.GenericCommandReq{
+		GenericCommandSpec: tasks.GenericCommandSpec{
+			Base:      *params.TaskSpec,
+			Config:    *params.FullConfig,
+			UserFiles: params.UserFiles,
+		},
+		User: params.User,
+	}
 	commandIDFut := a.m.system.AskAt(commandsAddr, commandLaunchReq)
 	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err

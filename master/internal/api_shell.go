@@ -1,14 +1,26 @@
 package internal
 
 import (
+	"archive/tar"
 	"context"
 	"fmt"
+	"net/http"
+	"strconv"
+
+	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ssh"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
@@ -49,7 +61,74 @@ func (a *apiServer) LaunchShell(
 		return nil, api.APIErr2GRPC(err)
 	}
 
-	shellLaunchReq := command.ShellLaunchRequest{CommandParams: params}
+	const (
+		shellSSHDConfigFile   = "/run/determined/ssh/sshd_config"
+		shellEntrypointScript = "/run/determined/ssh/shell-entrypoint.sh"
+		// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+		minSshdPort = 3200
+		maxSshdPort = minSshdPort + 299
+	)
+
+	var passphrase *string
+	if pwd, ok := params.Data["passphrase"]; ok {
+		if typed, typedOK := pwd.(string); typedOK {
+			passphrase = &typed
+		}
+	}
+	keys, err := ssh.GenerateKey(passphrase)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err)
+	}
+
+	config := params.FullConfig
+
+	// Postprocess the config.
+	if config.Description == "" {
+		config.Description = fmt.Sprintf(
+			"Shell (%s)",
+			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+		)
+	}
+
+	// Select a random port from the range to assign to sshd. In host
+	// mode, this mitigates the risk of multiple sshd processes binding
+	// the same port on an agent.
+	port := getPort(minSshdPort, maxSshdPort)
+
+	config.Environment.Ports = map[string]int{"shell": port}
+	config.Entrypoint = []string{
+		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
+	}
+
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
+
+	if err = check.Validate(config); err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	shellLaunchReq := command.GenericCommandReq{
+		GenericCommandSpec: tasks.GenericCommandSpec{
+			Base:      *params.TaskSpec,
+			Config:    *params.FullConfig,
+			UserFiles: params.UserFiles,
+			AdditionalFiles: archive.Archive{
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellEntrypointScript,
+					etc.MustStaticFile(etc.ShellEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+			},
+			Metadata: map[string]interface{}{
+				"privateKey": string(keys.PrivateKey),
+				"publicKey":  string(keys.PublicKey),
+			},
+		},
+		User:     params.User,
+		Port:     &port,
+		Keys:     &keys,
+		ProxyTCP: true,
+	}
 	shellIDFut := a.m.system.AskAt(shellsAddr, shellLaunchReq)
 	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err

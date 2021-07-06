@@ -1,16 +1,34 @@
 package internal
 
 import (
+	"archive/tar"
 	"context"
+	"fmt"
+	"net/http"
+	"net/url"
 	"os"
+	"sort"
+	"strings"
 	"time"
+
+	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
@@ -61,15 +79,6 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {
-	experimentIds := make([]int, 0)
-	trialIds := make([]int, 0)
-	for _, id := range req.ExperimentIds {
-		experimentIds = append(experimentIds, int(id))
-	}
-	for _, id := range req.TrialIds {
-		trialIds = append(trialIds, int(id))
-	}
-
 	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -80,10 +89,209 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.APIErr2GRPC(err)
 	}
 
-	tensorboardLaunchReq := command.TensorboardRequest{
-		CommandParams: params,
-		ExperimentIDs: experimentIds,
-		TrialIDs:      trialIds,
+	if len(req.ExperimentIds) == 0 && len(req.TrialIds) == 0 {
+		err = errors.New("must set experiment or trial ids")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	// Create a new TensorBoard
+	const (
+		expConfPath = "/run/determined/workdir/experiment_config.json"
+		// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+		minTensorBoardPort        = 2600
+		maxTensorBoardPort        = minTensorBoardPort + 299
+		tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
+	)
+
+	exps, err := getTensorBoardConfigs(a.m.db, req)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if len(exps) == 0 {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "no experiments found")
+	}
+
+	var logDirs []string
+
+	additionalFiles := archive.Archive{
+		params.AgentUserGroup.OwnedArchiveItem(
+			tensorboardEntrypointFile,
+			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
+			tar.TypeReg,
+		),
+	}
+
+	uniqMounts := map[string]model.BindMount{}
+	uniqEnvVars := map[string]string{}
+
+	config := params.FullConfig
+
+	uniqEnvVars["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+	for _, exp := range exps {
+		var logBasePath string
+
+		switch c := exp.Config.CheckpointStorage().GetUnionMember().(type) {
+		case expconf.SharedFSConfig:
+			// Mount the checkpoint location into the TensorBoard container to
+			// make the logs visible to TensorBoard. Bind mounts must be unique
+			// and therefore we use a map here to deduplicate mounts.
+			sharedFSMount := schemas.WithDefaults(expconf.BindMount{
+				RawContainerPath: model.DefaultSharedFSContainerPath,
+				RawHostPath:      c.HostPath(),
+				RawPropagation:   ptrs.StringPtr(model.DefaultSharedFSPropagation),
+			}).(expconf.BindMount)
+			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
+			logBasePath = c.PathInContainer()
+
+		case expconf.S3Config:
+			if c.AccessKey() != nil {
+				uniqEnvVars["AWS_ACCESS_KEY_ID"] = *c.AccessKey()
+			}
+			if c.SecretKey() != nil {
+				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.SecretKey()
+			}
+			if c.EndpointURL() != nil {
+				endpoint, urlErr := url.Parse(*c.EndpointURL())
+				if urlErr != nil {
+					return nil, echo.NewHTTPError(http.StatusInternalServerError,
+						"unable to parse checkpoint_storage.s3.endpoint_url")
+				}
+
+				// The TensorBoard container needs access to the original URL
+				// and the URL in "host:port" form.
+				uniqEnvVars["DET_S3_ENDPOINT"] = *c.EndpointURL()
+				uniqEnvVars["S3_ENDPOINT"] = endpoint.Host
+
+				uniqEnvVars["S3_USE_HTTPS"] = "0"
+				if endpoint.Scheme == "https" {
+					uniqEnvVars["S3_USE_HTTPS"] = "1"
+				}
+			}
+
+			uniqEnvVars["AWS_BUCKET"] = c.Bucket()
+
+			logBasePath = "s3://" + c.Bucket()
+
+		case expconf.AzureConfig:
+			logBasePath = "azure://" + c.Container()
+
+		case expconf.GCSConfig:
+			logBasePath = "gs://" + c.Bucket()
+
+		case expconf.HDFSConfig:
+			logBasePath = "hdfs://" + c.Path()
+
+			// The credentials files for HDFS exist on agent machines and are
+			// bind mounted into the container.
+			for _, mount := range exp.Config.BindMounts() {
+				uniqMounts[mount.ContainerPath()] = model.ToModelBindMount(mount)
+			}
+
+		default:
+			return nil, echo.NewHTTPError(
+				http.StatusBadRequest, fmt.Sprintf(
+					"unknown storage backend for experiment: %T", c,
+				),
+			)
+		}
+
+		if len(exp.TrialIDs) == 0 {
+			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
+				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID)
+			logDirs = append(logDirs, expDir)
+			continue
+		}
+
+		for _, id := range exp.TrialIDs {
+			trialDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/trial/%d/",
+				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
+
+			logDirs = append(logDirs, trialDir)
+		}
+	}
+
+	// Get the most recent experiment config as raw json and add it to the container. This
+	// is used for automatically configuring checkpoint storage, registry auth, etc.
+	mostRecentExpID := exps[len(exps)-1].ExperimentID
+	confBytes, err := a.m.db.ExperimentConfigRaw(int(mostRecentExpID))
+	if err != nil {
+		return nil, errors.Wrapf(err, "error loading experiment config: %d", mostRecentExpID)
+	}
+
+	expConf, err := expconf.ParseAnyExperimentConfigYAML(confBytes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
+	}
+	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
+
+	additionalFiles = append(additionalFiles,
+		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
+
+	// Multiple experiments may have different s3 credentials. We sort the
+	// experiments in ascending experiment ID order and dedupicate the
+	// environment variables by key name. This gives the behavior of selecting
+	// the most recent s3 credentials to start the tensorboard process with.
+	envVars := getEnvVars(uniqEnvVars)
+
+	// Select a random port from the range to assign to TensorBoard. In host
+	// mode, this mitigates the risk of multiple TensorBoard processes binding
+	// the same port on an agent.
+	port := getPort(minTensorBoardPort, maxTensorBoardPort)
+	config.Environment.Ports = map[string]int{"tensorboard": port}
+	envVars = append(envVars, fmt.Sprintf("TENSORBOARD_PORT=%d", port))
+
+	config.Description = fmt.Sprintf(
+		"TensorBoard (%s)",
+		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+	)
+
+	refineArgs(config.TensorBoardArgs)
+	config.Entrypoint = append(
+		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
+		config.TensorBoardArgs...)
+
+	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
+	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
+	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
+	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
+		GPU: expConf.Environment().Image().GPU()}
+	// Prefer RegistryAuth already present over the one from inferred from the experiment.
+	if config.Environment.RegistryAuth == nil {
+		config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+	}
+
+	var bindMounts []model.BindMount
+
+	for _, uniqMount := range uniqMounts {
+		bindMounts = append(bindMounts, uniqMount)
+	}
+
+	config.BindMounts = append(config.BindMounts, bindMounts...)
+
+	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
+
+	// Finish creating.
+
+	if err = check.Validate(req.Config); err != nil {
+		err = errors.Wrap(err, "failed to validate tensorboard config")
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	tensorboardLaunchReq := command.GenericCommandReq{
+		GenericCommandSpec: tasks.GenericCommandSpec{
+			Base:            *params.TaskSpec,
+			Config:          *config,
+			UserFiles:       params.UserFiles,
+			AdditionalFiles: additionalFiles,
+			Metadata: map[string]interface{}{
+				"experiment_ids": req.ExperimentIds,
+				"trial_ids":      req.TrialIds,
+			},
+		},
+		User: params.User,
+		Port: &port,
 	}
 	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
 	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
@@ -103,4 +311,88 @@ func (a *apiServer) LaunchTensorboard(
 		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
 		Config:      protoutils.ToStruct(*params.FullConfig),
 	}, err
+}
+
+func getTensorBoardConfigs(db *db.PgDB, req *apiv1.LaunchTensorboardRequest) (
+	[]*tensorboardConfig, error) {
+	confByID := map[int32]*tensorboardConfig{}
+
+	for _, expID := range req.ExperimentIds {
+		conf, err := db.LegacyExperimentConfigByID(int(expID))
+		if err != nil {
+			return nil, err
+		}
+
+		confByID[expID] = &tensorboardConfig{ExperimentID: expID, Config: conf}
+	}
+
+	for _, trialID := range req.TrialIds {
+		expID, err := db.ExperimentIDByTrialID(int(trialID))
+		if err != nil {
+			return nil, err
+		}
+
+		conf, err := db.LegacyExperimentConfigByID(expID)
+		if err != nil {
+			return nil, err
+		}
+
+		if conf, ok := confByID[int32(expID)]; ok {
+			conf.TrialIDs = append(conf.TrialIDs, trialID)
+			continue
+		}
+
+		confByID[int32(expID)] = &tensorboardConfig{
+			ExperimentID: int32(expID), Config: conf, TrialIDs: []int32{trialID},
+		}
+	}
+
+	var expIDs []int
+	for expID := range confByID {
+		expIDs = append(expIDs, int(expID))
+	}
+
+	sort.Ints(expIDs)
+	var configs []*tensorboardConfig
+	for _, expID := range expIDs {
+		configs = append(configs, confByID[int32(expID)])
+	}
+
+	return configs, nil
+}
+
+func getEnvVars(m map[string]string) []string {
+	var envVars []string
+
+	for k, v := range m {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	return envVars
+}
+
+func refineArgs(s []string) {
+	trimmed := ""
+	for x := range s {
+		trimmed = strings.TrimLeft(s[x], "-")
+		if trimmed == "h" {
+			s[x] = "-h"
+		} else {
+			s[x] = "--" + trimmed
+		}
+	}
+}
+
+type tensorboardConfig struct {
+	Config       expconf.LegacyConfig
+	ExperimentID int32
+	TrialIDs     []int32
+}
+
+// TensorboardRequest describes a request for a new Tensorboard.
+type TensorboardRequest struct {
+	CommandParams *command.CommandParams
+
+	ExperimentIDs []int `json:"experiment_ids"`
+	TrialIDs      []int `json:"trial_ids"`
 }

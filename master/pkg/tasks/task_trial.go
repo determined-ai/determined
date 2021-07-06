@@ -27,7 +27,6 @@ type TrialSpec struct {
 	LatestCheckpoint    *model.Checkpoint
 	InitialWorkload     workload.Workload
 	WorkloadManagerType model.WorkloadManagerType
-	AdditionalFiles     archive.Archive
 
 	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.

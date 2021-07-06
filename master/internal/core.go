@@ -841,8 +841,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.db,
 		m.proxy,
 		m.config.TensorBoardTimeout,
-		m.config.Security.DefaultTask,
-		m.makeTaskSpec,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
