@@ -335,11 +335,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			GCCkptSpec: tasks.GCCkptSpec{
-				Base:               taskSpec,
-				ExperimentID:       e.Experiment.ID,
-				LegacyConfig:       e.Config.AsLegacy(),
-				ToDelete:           checkpoints,
-				DeleteTensorboards: true,
+				Base:         taskSpec,
+				ExperimentID: e.Experiment.ID,
+				LegacyConfig: e.Config.AsLegacy(),
+				ToDelete:     checkpoints,
 			},
 
 			rm: e.rm,
