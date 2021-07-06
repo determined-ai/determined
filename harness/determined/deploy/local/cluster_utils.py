@@ -109,7 +109,8 @@ def master_up(
     db_password: str,
     delete_db: bool,
     autorestart: bool,
-    auto_bind_mount: bool,
+    auto_bind_mount: Optional[str],
+    no_auto_bind_mount: bool,
     cluster_name: str,
 ) -> None:
     command = ["up", "-d"]
@@ -123,8 +124,10 @@ def master_up(
     else:
         restart_policy = "no"
     if auto_bind_mount:
-        bind_mount = str(Path.home())
+        bind_mount = auto_bind_mount
     else:
+        bind_mount = str(Path.home())
+    if no_auto_bind_mount:
         bind_mount = ""
 
     env = {
@@ -176,7 +179,8 @@ def cluster_up(
     delete_db: bool,
     gpu: bool,
     autorestart: bool,
-    auto_bind_mount: bool,
+    auto_bind_mount: Optional[str],
+    no_auto_bind_mount: bool,
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
@@ -190,6 +194,7 @@ def cluster_up(
         delete_db=delete_db,
         autorestart=autorestart,
         auto_bind_mount=auto_bind_mount,
+        no_auto_bind_mount=no_auto_bind_mount,
         cluster_name=cluster_name,
     )
     for agent_number in range(num_agents):
