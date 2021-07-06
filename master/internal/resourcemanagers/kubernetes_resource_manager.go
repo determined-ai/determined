@@ -85,6 +85,9 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			handler:            podsActor,
 			devices:            make(map[device.Device]*cproto.ID),
 			zeroSlotContainers: make(map[cproto.ID]bool),
+			// Expose a fake number here just to signal to the UI
+			// that this RP does support the aux containers.
+			maxZeroSlotContainers: 1,
 		}
 
 	case
@@ -165,7 +168,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		MinAgents:                    0,
 		MaxAgents:                    0,
 		SlotsPerAgent:                int32(k.config.MaxSlotsPerPod),
-		AuxContainerCapacityPerAgent: 0,
+		AuxContainerCapacityPerAgent: int32(k.agent.maxZeroSlotContainers),
 		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
 		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
 		Location:                     "kubernetes",
