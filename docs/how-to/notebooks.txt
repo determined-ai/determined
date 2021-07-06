@@ -194,7 +194,7 @@ notebook:
    EOL
    $ det notebook start --config-file config.yaml
 
-To launch a notebook with `det deploy local cluster-up`, a user can the
+To launch a notebook with `det deploy local cluster-up`, a user can add
 the `--auto-bind-mount` flag which mounts the user's home directory into
 the task containers by default:
 
