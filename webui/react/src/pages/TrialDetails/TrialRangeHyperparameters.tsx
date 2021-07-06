@@ -36,7 +36,9 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
         {
           name: hp.name,
           range: [ hp.value.minval || 0.00001, hp.value.maxval || 1 ],
-          type: hp.value.type,
+          type: (hp.value.type === ExperimentHyperParamType.Log &&
+            [ hp.value.minval|| 0.00001, hp.value.maxval || 1 ].some(val => val < 0))
+            ? ExperimentHyperParamType.Double : hp.value.type,
           val: String(value.find(ob => ob.name === hp.name)?.value || 0),
           vals: hp.value.vals?.map(val => String(val)) ||
           [ String(hp.value.minval || 0), String(hp.value.maxval || 1) ],
@@ -110,7 +112,7 @@ const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       </div>;
     case ExperimentHyperParamType.Log:
       return <div className={css.valuesTrack}>
-        {(new Array(Math.log10((hp.range[1])/(hp.range[0]))+1)).fill(null)
+        {(new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1))).fill(null)
           .map((_, idx) =>
             <p className={css.text} key={idx}>
               {String((hp.range[1])/(10**idx)).length > 4 ?
@@ -146,7 +148,7 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
       break;
     case ExperimentHyperParamType.Log:
       trackType = css.blueTrack;
-      content = (new Array(Math.log10((hp.range[1])/(hp.range[0]))+1))
+      content = (new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1)))
         .fill(null)
         .map((_, idx) =>
           <div className={css.tick} key={idx} />);
