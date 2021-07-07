@@ -1724,8 +1724,8 @@ workflows:
   test-gpu-nightly:
     jobs:
       - request-gpu-nightly:
-        type: approval
-        filters: *upstream-feature-branch
+          type: approval
+          filters: *upstream-feature-branch
 
       - test-e2e-aws:
           name: test-e2e-gpu-nightly
@@ -1744,8 +1744,8 @@ workflows:
   test-gpu-distributed-nightly:
     jobs:
       - request-gpu-distributed:
-        type: approval
-        filters: *upstream-feature-branch
+          type: approval
+          filters: *upstream-feature-branch
 
       - test-e2e-aws:
           name: test-e2e-gpu-distributed
