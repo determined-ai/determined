@@ -92,11 +92,12 @@
 
   &::after {
     background-color: white;
+    border-radius: 2px;
     content: '';
-    height: 25px;
-    left: 8px;
+    height: 100%;
+    left: 8.5px;
     position: absolute;
-    top: 2px;
-    width: 6px;
+    top: 0;
+    width: 8px;
   }
 }
