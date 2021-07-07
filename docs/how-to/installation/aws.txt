@@ -100,12 +100,14 @@ secure``).
 -  ``efs``: The EFS deployment creates an `EFS
    <https://aws.amazon.com/efs/>`_ drive and a Determined cluster into a
    separate VPC. The EFS drive attaches to agent instances at
-   ``/mnt/efs``.
+   ``/mnt/efs``. This path is automatically bind-mounted into the task
+   containers.
 
 -  ``fsx``: The FSX deployment creates a `Lustre FSx
    <https://aws.amazon.com/fsx/lustre/>`_ drive and a Determined cluster
    into a separate VPC. The FSx drive attaches to agent instances at
-   ``/mnt/fsx``.
+   ``/mnt/fsx``. This path is automatically bind-mounted into the task
+   containers.
 
 -  ``secure``: The secure deployment creates resources to lock down the
    Determined cluster. These resources are:
