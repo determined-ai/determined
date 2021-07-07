@@ -123,6 +123,13 @@ const TaskList: React.FC = () => {
     // sortKey
     searchParams.append('sortKey', (sorter.key || '') as string);
 
+    // type
+    if (filters.types && filters.types.length > 0) {
+      filters.types.forEach(type => searchParams.append('type', type));
+    } else {
+      searchParams.append('type', URL_ALL);
+    }
+
     // states
     if (filters.states && filters.states.length > 0) {
       filters.states.forEach(state => searchParams.append('state', state));
@@ -189,6 +196,12 @@ const TaskList: React.FC = () => {
       [ 'id', 'type', 'name', 'startTime', 'state', 'resourcePool', 'username' ]
         .includes(sortKey)) {
       sorter.key = sortKey as keyof CommandTask;
+    }
+
+    // types
+    const type = urlSearchParams.getAll('type');
+    if (type != null) {
+      filters.types = (type.includes(URL_ALL) ? undefined : type as CommandType[]);
     }
 
     // states
