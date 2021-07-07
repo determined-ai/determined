@@ -160,7 +160,7 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 			bindMounts := []model.BindMount{
 				{
 					HostPath:      vBindMount,
-					ContainerPath: "/run/determined/shared_fs",
+					ContainerPath: "/run/determined/workdir/shared_fs",
 				},
 			}
 			newTCD["bind_mounts"] = bindMounts
@@ -175,7 +175,7 @@ func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, e
 				vTCD["bind_mounts"].([]model.BindMount),
 				model.BindMount{
 					HostPath:      vBindMount,
-					ContainerPath: "/run/determined/shared_fs",
+					ContainerPath: "/run/determined/workdir/shared_fs",
 				},
 			)
 		}
