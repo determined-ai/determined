@@ -50,11 +50,10 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
-      const redirect = queries.redirect || locationToPath(loginRedirect);
-      if (!redirect) {
-        routeToReactUrl(defaultRoute.path);
+      if (!queries.redirect) {
+        routeToReactUrl(locationToPath(loginRedirect) || defaultRoute.path);
       } else {
-        routeAll(redirect);
+        routeAll(queries.redirect);
       }
     } else if (auth.checked) {
       storeDispatch({ type: StoreAction.HideUISpinner });
