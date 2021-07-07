@@ -1,4 +1,4 @@
-name: mmdet_maskrcnn
+name: mmdet_maskrcnn_fake_distributed
 data:
   backend: fake
   train_ann_file: /tmp/instances_train2017.json
@@ -6,7 +6,7 @@ data:
   workers_per_gpu: 2
 hyperparameters:
   global_batch_size: 4
-  config_file: configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_poly_1x_coco_v1.py
+  config_file: /mmdetection/configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_poly_1x_coco_v1.py
   clip_grads: false
   clip_grads_norm: 0.04
   # Config for MultiStepLR scheduler

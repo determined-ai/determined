@@ -42,11 +42,7 @@ class MMDetTrial(PyTorchTrial):
 
         print(self.cfg)
 
-        self.model = self.context.wrap_model(
-            build_detector(
-                self.cfg.model, train_cfg=self.cfg.train_cfg, test_cfg=self.cfg.test_cfg
-            )
-        )
+        self.model = self.context.wrap_model(build_detector(self.cfg.model))
 
         self.optimizer = self.context.wrap_optimizer(
             build_optimizer(self.model, self.cfg.optimizer)
@@ -89,8 +85,8 @@ class MMDetTrial(PyTorchTrial):
     def evaluate_full_dataset(
         self, data_loader: torch.utils.data.DataLoader
     ) -> Dict[str, Any]:
-        if self.data_config["backend"]=="fake":
-            return {'bbox_mAP': 0}
+        if self.data_config["backend"] == "fake":
+            return {"bbox_mAP": 0}
 
         # Will need custom reducer to do this across gpus
         prog_bar = ProgressBar(len(data_loader.dataset))
@@ -137,5 +133,7 @@ class MMDetTrial(PyTorchTrial):
         # if self.context.distributed.get_size() > 1:
         #    self.cfg.data.val.pipeline = replace_ImageToTensor(self.cfg.data.test.pipeline)
 
-        dataset, dataloader = build_dataloader(self.cfg.data.val, 1, 1, 8, False)
+        self.val_dataset, dataloader = build_dataloader(
+            self.cfg.data.val, 1, 1, 8, False
+        )
         return dataloader
