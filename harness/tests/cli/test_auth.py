@@ -8,7 +8,7 @@ from tests.confdir import use_test_config_dir
 
 MOCK_MASTER_URL = "http://localhost:8080"
 AUTH_V0_PATH = Path(__file__).parent / "auth_v0.json"
-UNTRUSTED_CERT_PATH = Path(__file__).parent / "untrusted-root.badssl.com.crt"
+UNTRUSTED_CERT_PATH = Path(__file__).parents[1] / "common" / "untrusted-root.badssl.com.crt"
 
 
 def test_auth_json_v0_upgrade() -> None:
