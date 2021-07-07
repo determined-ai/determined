@@ -218,10 +218,9 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--no-filestore",
-                            type=bool,
-                            default=False,
                             help="whether to create a new Filestore if no filestore "
-                            "address is provided",
+                                 "address is provided",
+                            action="store_true",
                         ),
                         Arg(
                             "--det-version",
