@@ -1,9 +1,9 @@
 name: detr_coco_finetune
 hyperparameters:
-    lr: 1e-4
+    lr: 1.0e-4
     lr_backbone: 0
     global_batch_size: 4
-    weight_decay: 1e-4
+    weight_decay: 1.0e-4
     lr_drop: 4
     clip_max_norm: 0.1
 

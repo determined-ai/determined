@@ -2,8 +2,8 @@ name: data_layer_mnist_tf_keras_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
-  learning_rate: 1e-4
-  learning_rate_decay: 1e-6
+  learning_rate: 1.0e-4
+  learning_rate_decay: 1.0e-6
   layer1_dropout: 0.25
   layer2_dropout: 0.25
   layer3_dropout: 0.5

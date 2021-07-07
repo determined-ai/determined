@@ -26,8 +26,8 @@ hyperparameters:
   dropoute: 0.1
   nonmono: 5
   alpha: 0
-  beta: 1e-3
-  weight_decay: 8e-7
+  beta: 1.0e-3
+  weight_decay: 8.0e-7
   max_seq_length_delta: 20
   clip_gradients_l2_norm: 0.25
 

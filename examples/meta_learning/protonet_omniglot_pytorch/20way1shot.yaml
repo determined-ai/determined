@@ -8,7 +8,7 @@ data:
     val_workers: 4
 
 hyperparameters:
-  learning_rate: 1e-3
+  learning_rate: 1.0e-3
   weight_decay: 0
   reduce_every: 200
   lr_gamma: 0.5
