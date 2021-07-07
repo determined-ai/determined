@@ -66,6 +66,11 @@ MNIST <pytorch-mnist-tutorial>` and :ref:`tf.keras MNIST
       -  :download:`deformabledetr_coco_pytorch.tgz
          </examples/deformabledetr_coco_pytorch.tgz>`
 
+   -  -  PyTorch
+      -  COCO
+      -  :download:`efficientdet_pytorch.tgz
+         </examples/efficientdet_pytorch.tgz>`
+
    -  -  PyTorch (Lightning Adapter)
       -  MNIST
       -  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
