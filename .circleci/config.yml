@@ -1813,10 +1813,10 @@ workflows:
           name: deploy-preview-cluster
           enable-cors: true
           context: aws
-          # filters:
-          #   branches:
-          #     only:
-          #       - master
+          filters:
+            branches:
+              only:
+                - master
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 1
