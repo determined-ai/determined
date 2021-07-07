@@ -89,6 +89,23 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     }
   }, [ experiment.id, fetchExperimentDetails ]);
 
+  const handleNameUpdate = useCallback(async (newValue: string) => {
+    try {
+      await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment name.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
   const headerOptions = useMemo(() => {
     const options: Record<RecordKey, Option> = {
       archive: {
@@ -218,8 +235,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         </>}
         leftContent={<>
           <ExperimentState experiment={experiment} />
-          <div className={css.experimentTitle}>
-            Experiment {experiment.id} | <span>{experiment.name}</span>
+          <div className={css.experimentId}>
+            Experiment {experiment.id}
+          </div>
+          <div className={css.experimentName}>
+            <InlineTextEdit setValue={handleNameUpdate} value={experiment.name} />
           </div>
         </>}
         options={headerOptions}

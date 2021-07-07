@@ -33,6 +33,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   const save = useCallback(async () => {
     setIsSaving(true);
     setIsChanged(false);
+    setIsFocused(false);
     await setValue(innerValueRef.current);
     setIsSaving(false);
   }, [ setValue ]);
@@ -63,7 +64,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
   }, [ clear, save ]);
 
   return (
-    <>
+    <div className={css.wrapper}>
       <ContentEditable
         autoCapitalize="false"
         autoCorrect="false"
@@ -87,7 +88,7 @@ const InlineTextEdit: React.FC<Props> = ({ setValue, value }: Props) => {
       {!isSaving && !isFocused && !isChanged && (
         <span className={css.button} onClick={focus}><Icon name="pencil" size="small" /></span>
       )}
-    </>
+    </div>
   );
 };
 
