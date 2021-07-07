@@ -133,7 +133,7 @@ class MMDetTrial(PyTorchTrial):
         # if self.context.distributed.get_size() > 1:
         #    self.cfg.data.val.pipeline = replace_ImageToTensor(self.cfg.data.test.pipeline)
 
-        self.val_dataset, dataloader = build_dataloader(
+        dataset, dataloader = build_dataloader(
             self.cfg.data.val, 1, 1, 8, False
         )
         return dataloader
