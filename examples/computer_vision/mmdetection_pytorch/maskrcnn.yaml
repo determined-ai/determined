@@ -6,7 +6,7 @@ data:
   workers_per_gpu: 2
 hyperparameters:
   global_batch_size: 16
-  config_file: configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_poly_1x_coco_v1.py
+  config_file: /mmdetection/configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_poly_1x_coco_v1.py
   clip_grads: false
   # Config for MultiStepLR scheduler
   step1: 58560 # 8 epochs * 7320 batches per epoch
@@ -29,7 +29,7 @@ environment:
   image: liamdetermined/development:mmdetection
 max_restarts: 0
 bind_mounts:
-    - host_path: /data
+    - host_path: /tmp
       container_path: /data
 resources:
   slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use
