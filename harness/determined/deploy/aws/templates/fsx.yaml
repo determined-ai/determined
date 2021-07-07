@@ -795,9 +795,15 @@ Resources:
             EOF
             fi
 
+            cat << EOF >> /usr/local/determined/etc/master.yaml
+            task_container_defaults:
+              bind_mounts:
+                - host_path: /mnt/fsx
+                  container_path: /run/determined/shared_fs
+            EOF
+
             if [ -n "${CpuEnvImage}" ] || [ -n "${GpuEnvImage}" ]; then
               cat << EOF >> /usr/local/determined/etc/master.yaml
-            task_container_defaults:
               image:
             EOF
               if [ -n "${CpuEnvImage}" ]; then
