@@ -12,7 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 func newMaxSlot(maxSlot int) *int {
@@ -96,7 +96,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 
 	case sproto.ResourcesAllocated:
 		for rank, allocation := range msg.Allocations {
-			allocation.Start(ctx, image.TaskSpec{}, rank)
+			allocation.Start(ctx, tasks.TaskSpec{}, rank)
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})

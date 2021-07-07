@@ -65,7 +65,6 @@ func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string
 	if shm := s.Config.Resources.ShmSize; shm != nil {
 		res.ShmSize = int64(*shm)
 	}
-	res.ShmSize = 0
 
 	res.ResourcesConfig = s.Config.Resources.ToExpconf()
 

@@ -141,7 +141,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
 	}
-	res.ShmSize = 0
 
 	res.ResourcesConfig = s.ExperimentConfig.Resources()
 
