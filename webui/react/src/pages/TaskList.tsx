@@ -566,7 +566,11 @@ const TaskList: React.FC = () => {
     storage.set(STORAGE_SORTER_KEY, updatedSorter);
     setSorter(updatedSorter);
 
-    const updatedFilters = { ...filters, limit: tablePagination.pageSize };
+    const updatedFilters = {
+      ...filters,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
     storage.set(STORAGE_FILTERS_KEY, updatedFilters);
     setFilters(updatedFilters);
   }, [ columns, filters, setSorter, storage ]);
