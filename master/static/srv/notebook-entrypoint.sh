@@ -2,7 +2,7 @@
 
 set -e
 
-WORKING_DIR="/run/determined"
+WORKING_DIR="/run/determined/workdir"
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
 if [ -z "$DET_PYTHON_EXECUTABLE" ] ; then
