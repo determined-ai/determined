@@ -72,6 +72,9 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         print("If a CPU or GPU image is specified, both should be.")
         sys.exit(1)
 
+    if args.no_filestore:
+        args.filestore_address = ""
+
     # Not all args will be passed to Terraform, list the ones that won't be
     # TODO(ilia): Switch to filtering variables_to_include instead, i.e.
     #             only pass the ones recognized by terraform.
@@ -85,6 +88,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "no_preflight_checks",
         "no_wait_for_master",
         "no_prompt",
+        "no_filestore",
         "func",
         "_command",
         "_subcommand",
@@ -211,6 +215,13 @@ args_description = Cmd(
                             help="the address of an existing Filestore in the format of "
                             "'ip-address:/file-share'; if not provided, a new Filestore "
                             "instance will be created",
+                        ),
+                        Arg(
+                            "--no-filestore",
+                            type=bool,
+                            default=False,
+                            help="whether to create a new Filestore if no filestore "
+                            "address is provided",
                         ),
                         Arg(
                             "--det-version",

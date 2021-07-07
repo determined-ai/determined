@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+-  ``det deploy aws up`` will automatically bind-mount the path to the
+   mounted FSx and EFS into task containers.
