@@ -1720,48 +1720,6 @@ workflows:
     jobs:
       - test-intg-master
       - test-intg-agent
-    
-  test-gpu-nightly:
-    jobs:
-      - request-gpu-nightly:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-nightly
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["nightly"]
-              mark: ["nightly"]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
-
-  test-gpu-distributed-nightly:
-    jobs:
-      - request-gpu-distributed:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-distributed
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-distributed
-          matrix:
-            parameters:
-              cluster-id-prefix: ["distributed"]
-              mark: ["distributed"]
-              compute-agent-instance-type: ["p2.8xlarge"]
-              aux-agent-instance-type: ["m5.large"]
-              max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
 
   test-e2e:
     jobs:
@@ -2144,6 +2102,44 @@ workflows:
               parallelism: [2]
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
+
+      - request-gpu-nightly:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-nightly
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+
+      - request-gpu-distributed:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-gpu-distributed
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-gpu-distributed
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
 
   nightly:
     triggers:
