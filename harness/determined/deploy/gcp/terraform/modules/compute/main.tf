@@ -175,7 +175,7 @@ resource "google_compute_instance" "master_instance" {
       cat << EOF >> /usr/local/determined/etc/master.yaml
       bind_mounts:
         - host_path: /mnt/shared_fs
-          container_path: /run/determined/shared_fs
+          container_path: /run/determined/workdir/shared_fs
     EOF
     fi
 
