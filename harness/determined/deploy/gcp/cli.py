@@ -219,7 +219,7 @@ args_description = Cmd(
                         Arg(
                             "--no-filestore",
                             help="whether to create a new Filestore if no filestore "
-                                 "address is provided",
+                            "address is provided",
                             action="store_true",
                         ),
                         Arg(
