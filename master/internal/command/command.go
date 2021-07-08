@@ -191,7 +191,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.GetTensorboardRequest:
 		ctx.Respond(&apiv1.GetTensorboardResponse{
 			Tensorboard: c.toTensorboard(ctx),
-			Config:      protoutils.ToStruct(c.config),
+			Config:      protoutils.ToStruct(c.Config),
 		})
 
 	case *apiv1.KillTensorboardRequest:
