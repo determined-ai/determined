@@ -2120,16 +2120,16 @@ workflows:
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
 
-      - request-gpu-distributed:
+      - request-gpu-distributed-nightly:
           type: approval
           filters: *upstream-feature-branch
 
       - test-e2e-aws:
-          name: test-e2e-gpu-distributed
+          name: test-e2e-gpu-distributed-nightly
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-gpu-distributed
+            - request-gpu-distributed-nightly
             - package-and-push-system-dev
           matrix:
             parameters:
