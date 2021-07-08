@@ -20,10 +20,9 @@ const sampleTrialItem: TrialItem = {
     startTime: Date.now.toString(),
     state: CheckpointState.Completed,
     totalBatches: 10000,
-
   },
   experimentId: 1,
-  hparams: {
+  hyperparameters: {
     boolVal: false,
     floatVale: 3.5,
     intVal: 3,
