@@ -3,10 +3,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import Spinner from 'components/Spinner';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, RunState, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -42,13 +43,16 @@ export interface Props {
   trialId?: number;
 }
 
+const NoDataAlert = <Alert message="No data available." type="warning" />;
+
 const ExperimentSingleTrialTabs: React.FC<Props> = (
   { experiment, trialId }: Props,
 ) => {
-  const [ canceler ] = useState(new AbortController());
-  const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const history = useHistory();
   const { tab } = useParams<Params>();
+  const [ canceler ] = useState(new AbortController());
+  const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
+  const [ hasLoaded, setHasLoaded ] = useState(false);
 
   const basePath = paths.experimentDetails(experiment.id);
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
@@ -69,8 +73,21 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
 
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
-    const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-    setTrialDetails(response);
+
+    try {
+      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
+      setTrialDetails(response);
+      setHasLoaded(true);
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Failed to fetch experiment trials.',
+        silent: true,
+        type: ErrorType.Server,
+      });
+    }
   }, [ canceler, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
@@ -81,25 +98,36 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ trialDetails, stopPolling ]);
 
+  useEffect(() => {
+    const isPaused = experiment.state === RunState.Paused;
+    setHasLoaded(!!trialDetails || isPaused);
+  }, [ experiment.state, trialDetails ]);
+
+  useEffect(() => {
+    return () => {
+      canceler.abort();
+      stopPolling();
+    };
+  }, [ canceler, stopPolling ]);
+
+  if (!hasLoaded) return <Spinner />;
+
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="overview" tab="Overview">
         {trialDetails
           ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
-          : <Alert message="No data available." type="warning" />
-        }
+          : NoDataAlert}
       </TabPane>
       <TabPane key="hyperparameters" tab="Hyperparameters">
-        {trialDetails ?
-          <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
-          : <Alert message="No data available." type="warning" />
-        }
+        {trialDetails
+          ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
+          : NoDataAlert}
       </TabPane>
       <TabPane key="workloads" tab="Workloads">
-        {trialDetails ?
-          <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
-          : <Alert message="No data available." type="warning" />
-        }
+        {trialDetails
+          ? <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
+          : NoDataAlert}
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
         <React.Suspense fallback={<Spinner />}>
@@ -107,16 +135,14 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         </React.Suspense>
       </TabPane>
       <TabPane key="profiler" tab="Profiler">
-        {trialDetails ?
-          <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
-          : <Alert message="No data available." type="warning" />
-        }
+        {trialDetails
+          ? <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
+          : NoDataAlert}
       </TabPane>
       <TabPane key="logs" tab="Logs">
-        {trialDetails ?
-          <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
-          : <Alert message="No data available." type="warning" />
-        }
+        {trialDetails
+          ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
+          : NoDataAlert}
       </TabPane>
     </Tabs>
   );

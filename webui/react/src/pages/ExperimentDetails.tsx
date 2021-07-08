@@ -151,12 +151,6 @@ const ExperimentDetails: React.FC = () => {
     return <Spinner />;
   }
 
-  let tabsComponent = <ExperimentMultiTrialTabs experiment={experiment} />;
-
-  if (isSingleTrial) {
-    tabsComponent = <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />;
-  }
-
   return (
     <Page
       headerComponent={<ExperimentDetailsHeader
@@ -166,7 +160,11 @@ const ExperimentDetails: React.FC = () => {
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      {tabsComponent}
+      {isSingleTrial ? (
+        <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />
+      ) : (
+        <ExperimentMultiTrialTabs experiment={experiment} />
+      )}
       <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}
