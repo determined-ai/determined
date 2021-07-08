@@ -37,8 +37,8 @@ type mockAllocation struct {
 func (mockAllocation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{}
 }
-func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec) {}
-func (mockAllocation) Kill(ctx *actor.Context)                       {}
+func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {}
+func (mockAllocation) Kill(ctx *actor.Context)                                 {}
 
 func TestRendezvousInfo(t *testing.T) {
 	addresses := [][]cproto.Address{

@@ -39,14 +39,14 @@ func newSummary(c *command) summary {
 		RegisteredTime: c.registeredTime,
 		Owner:          c.owner,
 		ID:             c.taskID,
-		Config:         c.config,
+		Config:         c.Config,
 		State:          c.State().String(),
 		ServiceAddress: c.serviceAddress,
 		Addresses:      c.addresses,
 		ExitStatus:     c.exitStatus,
-		Misc:           c.metadata,
+		Misc:           c.Metadata,
 		IsReady:        c.readinessMessageSent,
-		AgentUserGroup: c.agentUserGroup,
-		ResourcePool:   c.config.Resources.ResourcePool,
+		AgentUserGroup: c.Base.AgentUserGroup,
+		ResourcePool:   c.Config.Resources.ResourcePool,
 	}
 }

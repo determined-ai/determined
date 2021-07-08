@@ -72,7 +72,7 @@ func (c *commandManager) processLaunchRequest(
 	ctx.Log().Info("creating command")
 
 	command := c.newCommand(req.CommandParams)
-	if err := check.Validate(command.config); err != nil {
+	if err := check.Validate(command.Config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -102,16 +102,18 @@ func (c *commandManager) newCommand(params *CommandParams) *command {
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:    sproto.NewTaskID(),
-		config:    *params.FullConfig,
-		userFiles: params.UserFiles,
+		db: c.db,
+
+		CommandSpec: tasks.CommandSpec{
+			Base:      *params.TaskSpec,
+			Config:    *params.FullConfig,
+			UserFiles: params.UserFiles,
+		},
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
-		db: c.db,
+		taskID: sproto.NewTaskID(),
 	}
 }

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"archive/tar"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -31,7 +30,6 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -53,29 +51,6 @@ const (
 	// Each distributed trial can take up to 2 host based ports and we assume a maximum.
 	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
-
-	trialEntrypointFile = "/run/determined/train/entrypoint.sh"
-	trialEntrypointMode = 0744
-
-	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
-	// important that we don't overwrite the user's host $HOME/.ssh/id_rsa, if the user happens to
-	// mount their host $HOME into the container's $HOME. Since we control the invocation of sshd,
-	// we can keep our sshd_config in a location not likely to be mounted by users.
-	trialAuthorizedKeysFile = "/run/determined/ssh/authorized_keys"
-	trialAuthorizedKeysMode = 0600
-	trialRSAPublicKeyFile   = "/run/determined/ssh/id_rsa.pub"
-	trialRSAPublicKeyMode   = 0600
-	trialRSAPrivateKeyFile  = "/run/determined/ssh/id_rsa"
-	trialRSAPrivateKeyMode  = 0600
-	trialSSHDConfigFile     = "/run/determined/ssh/sshd_config"
-	trialSSHDConfigMode     = 0600
-	trialSSHDir             = "/run/determined/ssh"
-	trialSSHDirMode         = 0700
-
-	// horovodrun controls how ssh is invoked, and we are force to overwrite a default ssh
-	// configuration file.
-	trialSSHConfigFile = "/etc/ssh/ssh_config"
-	trialSSHConfigMode = 0644
 
 	pushArchitectureEnabled = false
 )
@@ -235,10 +210,8 @@ type (
 		// tracks if allReady check has passed successfully.
 		allReadySucceeded bool
 
-		agentUserGroup *model.AgentUserGroup
-		taskSpec       *tasks.TaskSpec
-		privateKey     []byte
-		publicKey      []byte
+		taskSpec      *tasks.TaskSpec
+		generatedKeys *ssh.PrivateAndPublicKeys
 
 		// preemption represents the preemption state of the current allocated task.
 		// If there is no current task, or it is unallocated, it is nil.
@@ -282,8 +255,7 @@ func newTrial(
 		containerSockets:     make(map[cproto.ID]*actor.Ref),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
 
-		agentUserGroup: exp.agentUserGroup,
-		taskSpec:       exp.taskSpec,
+		taskSpec: exp.taskSpec,
 
 		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
 	}
@@ -589,14 +561,13 @@ func (t *trial) processAllocated(
 
 	t.allocations = msg.Allocations
 
-	if len(t.privateKey) == 0 {
+	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
 			ctx.Respond(err)
 			return err
 		}
-		t.privateKey = generatedKeys.PrivateKey
-		t.publicKey = generatedKeys.PublicKey
+		t.generatedKeys = &generatedKeys
 	}
 	if !t.idSet {
 		modelTrial := model.NewTrial(
@@ -643,62 +614,28 @@ func (t *trial) processAllocated(
 
 	ctx.Log().Infof("starting trial container: %v", w)
 
-	additionalFiles := archive.Archive{
-		t.agentUserGroup.OwnedArchiveItem(
-			trialEntrypointFile,
-			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
-			trialEntrypointMode,
-			tar.TypeReg,
-		),
-
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
-		t.agentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
-			t.publicKey,
-			trialAuthorizedKeysMode,
-			tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			trialSSHDConfigMode,
-			tar.TypeReg,
-		),
-
-		archive.RootItem(
-			trialSSHConfigFile,
-			etc.MustStaticFile(etc.SSHConfigResource),
-			trialSSHConfigMode,
-			tar.TypeReg,
-		),
-	}
 	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
 	if err != nil {
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
 	t.preemption = newPreemption()
+
+	trialSpec := &tasks.TrialSpec{
+		Base: *t.taskSpec,
+
+		ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ModelDefinition:     t.modelDefinition,
+		HParams:             t.create.Hparams,
+		TrialSeed:           t.create.TrialSeed,
+		LatestCheckpoint:    t.sequencer.LatestCheckpoint,
+		InitialWorkload:     w,
+		WorkloadManagerType: t.sequencer.WorkloadManagerType(),
+		IsMultiAgent:        len(t.allocations) > 1,
+	}
+
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
-		taskSpec := *t.taskSpec
-		taskSpec.AgentUserGroup = t.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		taskSpec.SetInner(&tasks.StartTrial{
-			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
-			ModelDefinition:     t.modelDefinition,
-			HParams:             t.create.Hparams,
-			TrialSeed:           t.create.TrialSeed,
-			LatestCheckpoint:    t.sequencer.LatestCheckpoint,
-			InitialWorkload:     w,
-			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-			AdditionalFiles:     additionalFiles,
-			IsMultiAgent:        len(t.allocations) > 1,
-			Rank:                rank,
-		})
-		a.Start(ctx, taskSpec)
+		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
 	}
 
 	return nil

@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // ResourcePool manages the agent and task lifecycles.
@@ -366,7 +366,7 @@ func (c containerAllocation) Summary() sproto.ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
+func (c containerAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
@@ -380,7 +380,7 @@ func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 				State:   cproto.Assigned,
 				Devices: c.devices,
 			},
-			Spec: image.ToContainerSpec(spec),
+			Spec: spec.ToContainerSpec(),
 		},
 	})
 }
