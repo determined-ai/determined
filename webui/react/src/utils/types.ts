@@ -2,7 +2,7 @@ import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentHyperParams, ExperimentHyperParamType, ExperimentItem, MetricsWorkload,
+  CommandType, ExperimentItem, Hyperparameters, HyperparameterType, MetricsWorkload,
   RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RecordKey, ResourceState, RunState,
   SlotState, Workload,
 } from 'types';
@@ -200,11 +200,11 @@ export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): num
 /* Experiment Config */
 export const trialHParamsToExperimentHParams = (
   hParams: Record<string, unknown>,
-): ExperimentHyperParams => {
-  const experimentHParams: ExperimentHyperParams = {};
+): Hyperparameters => {
+  const experimentHParams: Hyperparameters = {};
   Object.entries(hParams).forEach(([ param, value ]) => {
     experimentHParams[param] = {
-      type: ExperimentHyperParamType.Constant,
+      type: HyperparameterType.Constant,
       val: value as number,
     };
   });
