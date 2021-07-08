@@ -13,6 +13,7 @@ type (
 		TaskActor *actor.Ref
 		Spec      tasks.TaskSpec
 		Slots     int
+		Rank      int
 	}
 	// KillTaskPod notifies the pods actor to kill a pod.
 	KillTaskPod struct {

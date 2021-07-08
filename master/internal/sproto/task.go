@@ -92,6 +92,6 @@ func NewTaskID() TaskID {
 // to start tasks on assigned resources.
 type Allocation interface {
 	Summary() ContainerSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec)
+	Start(ctx *actor.Context, spec tasks.TaskSpec, rank int)
 	Kill(ctx *actor.Context)
 }

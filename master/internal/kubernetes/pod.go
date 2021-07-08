@@ -102,7 +102,7 @@ func newPod(
 		ID:     container.ID(msg.Spec.ContainerID),
 		State:  container.Assigned,
 	}
-	uniqueName := configureUniqueName(msg.Spec)
+	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
 	// The lifecycle of the containers specified in this map will be monitored.
 	// As soon as one or more of them exits outs, the pod will be terminated.

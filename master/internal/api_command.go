@@ -145,6 +145,7 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 
 	params.FullConfig, params.TaskSpec, err = a.makeFullCommandSpec(
 		configBytes, &req.TemplateName, req.MustZeroSlot)
+	params.TaskSpec.AgentUserGroup = params.AgentUserGroup
 	if err != nil {
 		if err == errCommandUnfulfillable {
 			return nil, api.AsErrBadRequest(

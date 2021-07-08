@@ -139,7 +139,7 @@ func (t *tensorboardManager) processLaunchRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	if err := check.Validate(b.config); err != nil {
+	if err := check.Validate(b.Config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
 		return nil, http.StatusBadRequest, err
 	}
@@ -336,29 +336,31 @@ func (t *tensorboardManager) newTensorBoard(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
-		metadata: map[string]interface{}{
-			"experiment_ids": req.ExperimentIDs,
-			"trial_ids":      req.TrialIDs,
-		},
+		db: t.db,
 		readinessChecks: map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
-		serviceAddress: &serviceAddress,
-		assignedPort:   &port,
+
+		CommandSpec: tasks.CommandSpec{
+			Base:            *params.TaskSpec,
+			Config:          *config,
+			UserFiles:       params.UserFiles,
+			AdditionalFiles: additionalFiles,
+			Metadata: map[string]interface{}{
+				"experiment_ids": req.ExperimentIDs,
+				"trial_ids":      req.TrialIDs,
+			},
+		},
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
-		db: t.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}, nil
 }
 
