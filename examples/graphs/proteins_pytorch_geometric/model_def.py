@@ -1,58 +1,58 @@
 import tempfile
-from math import ceil
 
 import torch
 import torch.nn.functional as F
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
-from torch.nn import Linear
 from torch.utils.data import random_split
 from torch_geometric.data.dataloader import Collater
 from torch_geometric.datasets import TUDataset
-from torch_geometric.nn import DenseGraphConv, GCNConv, dense_mincut_pool
-from torch_geometric.utils import to_dense_adj, to_dense_batch
+from torch_geometric.nn import GraphConv, TopKPooling
+from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 
 
-# Ported from https://github.com/rusty1s/pytorch_geometric/blob/master/examples/proteins_mincut_pool.py
+# Ported from https://github.com/rusty1s/pytorch_geometric/blob/master/examples/proteins_topk_pool.py
 class Net(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, hidden_channels, average_nodes):
+    def __init__(self, in_channels, out_channels, topk_pooling_ratio=0.8, dropout=0.5):
         super(Net, self).__init__()
+        self.dropout = dropout
 
-        self.conv1 = GCNConv(in_channels, hidden_channels)
-        num_nodes = ceil(0.5 * average_nodes)
-        self.pool1 = Linear(hidden_channels, num_nodes)
+        self.conv1 = GraphConv(in_channels, 128)
+        self.pool1 = TopKPooling(128, ratio=topk_pooling_ratio)
+        self.conv2 = GraphConv(128, 128)
+        self.pool2 = TopKPooling(128, ratio=topk_pooling_ratio)
+        self.conv3 = GraphConv(128, 128)
+        self.pool3 = TopKPooling(128, ratio=topk_pooling_ratio)
 
-        self.conv2 = DenseGraphConv(hidden_channels, hidden_channels)
-        num_nodes = ceil(0.5 * num_nodes)
-        self.pool2 = Linear(hidden_channels, num_nodes)
+        self.lin1 = torch.nn.Linear(256, 128)
+        self.lin2 = torch.nn.Linear(128, 64)
+        self.lin3 = torch.nn.Linear(64, out_channels)
 
-        self.conv3 = DenseGraphConv(hidden_channels, hidden_channels)
+    def forward(self, data):
+        x, edge_index, batch = data.x, data.edge_index, data.batch
 
-        self.lin1 = Linear(hidden_channels, hidden_channels)
-        self.lin2 = Linear(hidden_channels, out_channels)
-
-    def forward(self, x, edge_index, batch):
         x = F.relu(self.conv1(x, edge_index))
+        x, edge_index, _, batch, _, _ = self.pool1(x, edge_index, None, batch)
+        x1 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
 
-        x, mask = to_dense_batch(x, batch)
-        adj = to_dense_adj(edge_index, batch)
+        x = F.relu(self.conv2(x, edge_index))
+        x, edge_index, _, batch, _, _ = self.pool2(x, edge_index, None, batch)
+        x2 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
 
-        s = self.pool1(x)
-        x, adj, mc1, o1 = dense_mincut_pool(x, adj, s, mask)
+        x = F.relu(self.conv3(x, edge_index))
+        x, edge_index, _, batch, _, _ = self.pool3(x, edge_index, None, batch)
+        x3 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
 
-        x = F.relu(self.conv2(x, adj))
-        s = self.pool2(x)
+        x = x1 + x2 + x3
 
-        x, adj, mc2, o2 = dense_mincut_pool(x, adj, s)
-
-        x = self.conv3(x, adj)
-
-        x = x.mean(dim=1)
         x = F.relu(self.lin1(x))
-        x = self.lin2(x)
-        return F.log_softmax(x, dim=-1), mc1 + mc2, o1 + o2
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.relu(self.lin2(x))
+        x = F.log_softmax(self.lin3(x), dim=-1)
+
+        return x
 
 
-class GCNTrial(PyTorchTrial):
+class GraphConvTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext):
         self.context = context
 
@@ -63,7 +63,6 @@ class GCNTrial(PyTorchTrial):
         self.dataset = TUDataset(
             root=download_directory,
             name=self.context.get_hparam("dataset"),
-            use_node_attr=True,
         )
 
         num_training = self.context.get_hparam("training_records")
@@ -74,14 +73,13 @@ class GCNTrial(PyTorchTrial):
 
         self.num_feature = self.dataset.num_features
         self.num_class = self.dataset.num_classes
-        average_nodes = int(self.dataset.data.x.size(0) / len(self.dataset))
 
         self.model = self.context.wrap_model(
             Net(
-                self.num_feature,
-                self.num_class,
-                self.context.get_hparam("hidden_channels"),
-                average_nodes,
+                self.dataset.num_features,
+                self.dataset.num_classes,
+                self.context.get_hparam("topk_pooling_ratio"),
+                self.context.get_hparam("dropout"),
             )
         )
 
@@ -89,39 +87,29 @@ class GCNTrial(PyTorchTrial):
             torch.optim.Adam(
                 self.model.parameters(),
                 lr=self.context.get_hparam("lr"),
-                weight_decay=self.context.get_hparam("weight_decay"),
             )
         )
 
     def train_batch(self, batch, epoch_idx: int, batch_idx: int):
         # NB: `batch` is `torch_geometric.data.batch.Batch` type
-        out, mc_loss, o_loss = self.model(batch.x, batch.edge_index, batch.batch)
-        nll_loss = F.nll_loss(out, batch.y.view(-1))
-        loss = nll_loss + mc_loss + o_loss
+        output = self.model(batch)
+        loss = F.nll_loss(output, batch.y)
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
-
-        pred = out.max(dim=1)[1]
-        correct = pred.eq(batch.y).sum().item() / len(batch.y)
         return {
-            "accuracy": correct,
-            "nll_loss": nll_loss,
-            "mc_loss": mc_loss,
-            "o_loss": o_loss,
             "loss": loss,
-            "batch_num_graphs": batch.num_graphs,
         }
 
     def evaluate_batch(self, batch):
         # NB: `batch` is `torch_geometric.data.batch.Batch` type
-        out, mc_loss, o_loss = self.model(batch.x, batch.edge_index, batch.batch)
-        loss = F.nll_loss(out, batch.y.view(-1)) + mc_loss + o_loss
+        output = self.model(batch)
+        loss = F.nll_loss(output, batch.y)
 
-        pred = out.max(dim=1)[1]
-        correct = pred.eq(batch.y).sum().item() / len(batch.y)
+        pred = output.max(dim=1)[1]
+        accuracy = pred.eq(batch.y).sum().item() / len(batch.y)
         return {
-            "accuracy": correct,
+            "accuracy": accuracy,
             "validation_loss": loss,
         }
 
