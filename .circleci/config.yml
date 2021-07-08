@@ -1900,7 +1900,6 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
 
       - test-e2e-aws:
           name: test-e2e-gpu-single
@@ -1915,7 +1914,6 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               enable-tls: [true]
               mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
 
       - request-model-hub-tests:
           type: approval
