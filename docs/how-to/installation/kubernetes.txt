@@ -151,8 +151,7 @@ want to use finer-grained ``slotResourceRequests.cpu: 15``, set
 ``maxSlotsPerPod: 2``.
 
 When using CPU-only training, avoid setting the ``defaultScheduler``
-field. CPU training has not been validated with these scheduler options
-and may cause instability the deployment.
+field. CPU training is not supported for these options yet.
 
 Checkpoint Storage
 ==================
@@ -322,9 +321,9 @@ set ``defaultScheduler`` to ``preemption``.
 
    defaultScheduler: preemption
 
-If you are using cpu training with Kubernetes, avoid setting the
-``defaultScheduler`` field. Cpu training has not yet been validated for
-these scheduling options.
+If you are using CPU-only training with Kubernetes, avoid setting the
+``defaultScheduler`` field. CPU training is not supported for these
+scheduling options yet.
 
 ***********************
  Installing Determined
