@@ -32,7 +32,7 @@ func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 
 	res.TaskToken = taskToken
 
-	res.Archives = g.Base.makeArchives([]container.RunArchive{
+	res.Archives = res.makeArchives([]container.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem(
@@ -87,7 +87,7 @@ func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
 
-	res.EnvVars = g.Base.makeEnvVars(nil)
+	res.EnvVars = res.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
