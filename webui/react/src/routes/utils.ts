@@ -3,7 +3,7 @@ import React, { MouseEventHandler } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
-import { CommandTask } from 'types';
+import { CommandTask, RawJson } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -18,6 +18,30 @@ export const serverAddress = (path = ''): string => {
     || process.env.SERVER_ADDRESS as string;
 
   return (customServer || reactHostAddress()) + path;
+};
+
+// checks to see if the provided address resolves to a live Determeind server or not.
+export const checkServerAlive = async (address?: string): Promise<boolean> => {
+  address = address || serverAddress();
+  try {
+    const response = await Promise.race([
+      fetch(address + '/api/v1/master'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 1000)),
+    ]) as globalThis.Response;
+    const data = await response.json() as RawJson;
+    const attrs = [ 'version', 'masterId', 'clusterId' ];
+    attrs.forEach(att => {
+      if (!(att in data)) {
+        // the server doesn't look like a determined server
+        return false;
+      }
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+
 };
 
 // Returns the address to the server hosting react assets
