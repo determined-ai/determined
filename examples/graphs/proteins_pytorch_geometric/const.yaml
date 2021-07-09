@@ -1,6 +1,6 @@
 name: proteins_pytorch_geometric
 hyperparameters:
-  global_batch_size: 64
+  global_batch_size: 20
   dataset: PROTEINS
   lr: 5.e-4
   weight_decay: 1.e-4
