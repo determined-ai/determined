@@ -103,7 +103,7 @@ const HpTrialTable: React.FC<Props> = ({
         if (isNumber(value) && isValidType) {
           return <HumanReadableFloat num={value} />;
         }
-        return record.hparams[key];
+        return value + '';
       };
     };
     const hpColumnSorter = (key: string) => {
