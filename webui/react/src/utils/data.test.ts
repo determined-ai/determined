@@ -227,10 +227,10 @@ describe('data utility', () => {
     { type: Type.Primitive, value: undefined },
     { type: Type.Object, value: {} },
     { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
-    { type: [ Type.Set, Type.Object ], value: new Set() },
-    { type: [ Type.Set, Type.Object ], value: new Set([ 'abc', 'def', 'ghi' ]) },
+    { type: [ Type.Set ], value: new Set() },
+    { type: [ Type.Set ], value: new Set([ 'abc', 'def', 'ghi' ]) },
     {
-      type: [ Type.Set, Type.Object ],
+      type: [ Type.Set ],
       value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]),
     },
   ];
