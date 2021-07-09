@@ -23,7 +23,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.16.2rc4
+    default: 0.16.2rc5
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
