@@ -180,7 +180,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self._stop_requested = stop_requested
 
     def get_initial_batch(self) -> int:
-        return self.env.initial_workload.total_batches_processed
+        return self.env.latest_batch
 
 
 class TrialContext(_TrainContext):

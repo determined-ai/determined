@@ -103,9 +103,7 @@ class DeterminedControlHook(estimator.RunHook):
     ) -> tf.estimator.SessionRunArgs:
         # On resuming from checkpoint, _current_global_step is None for one batch
         if self._current_global_step is None:
-            self.prof.update_batch_idx(
-                self.estimator_trial_controller.env.initial_workload.total_batches_processed
-            )
+            self.prof.update_batch_idx(self.estimator_trial_controller.env.latest_batch)
         else:
             self.prof.update_batch_idx(self._current_global_step)
         return tf.estimator.SessionRunArgs(

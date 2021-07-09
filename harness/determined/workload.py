@@ -3,7 +3,6 @@ from enum import Enum, unique
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
 from determined.common import check
-from determined.common.types import ExperimentID, StepID, TrialID
 
 
 class Workload:
@@ -17,9 +16,9 @@ class Workload:
     def __init__(
         self,
         kind: Kind,
-        e_id: ExperimentID,
-        t_id: TrialID,
-        s_id: StepID,
+        e_id: int,
+        t_id: int,
+        s_id: int,
         num_batches: int,
         total_batches_processed: int,
     ) -> None:
@@ -180,9 +179,9 @@ def train_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.RUN_STEP,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         num_batches,
         total_batches_processed,
     )
@@ -196,9 +195,9 @@ def validation_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.COMPUTE_VALIDATION_METRICS,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         0,
         total_batches_processed,
     )
@@ -209,9 +208,9 @@ def checkpoint_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.CHECKPOINT_MODEL,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         0,
         total_batches_processed,
     )
@@ -220,9 +219,9 @@ def checkpoint_workload(
 def terminate_workload(step_id: int = 1, exp_id: int = 1, trial_id: int = 1) -> Workload:
     return Workload(
         Workload.Kind.TERMINATE,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         0,
         0,
     )

@@ -4,22 +4,13 @@ from typing import Any, Dict
 import pytest
 
 import determined as det
-from determined import constants, horovod, workload
-from determined.common.types import ExperimentID, StepID, TrialID
+from determined import constants, horovod
 
 
 def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvContext:
     det_trial_runner_network_interface = constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE
     return det.EnvContext(
         experiment_config=experiment_config,
-        initial_workload=workload.Workload(
-            workload.Workload.Kind.RUN_STEP,
-            ExperimentID(1),
-            TrialID(1),
-            StepID(1),
-            det.ExperimentConfig(experiment_config).scheduling_unit(),
-            0,
-        ),
         master_addr="",
         master_port=0,
         use_tls=False,
@@ -28,20 +19,22 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         container_id="",
         hparams={"global_batch_size": 32},
         latest_checkpoint=None,
+        latest_batch=0,
         use_gpu=False,
         container_gpus=[],
         slot_ids=[],
         debug=False,
-        workload_manager_type="",
         det_rendezvous_port="",
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=det_trial_runner_network_interface,
         det_trial_id="1",
         det_agent_id="1",
         det_experiment_id="1",
-        det_task_token="",
+        det_allocation_token="",
         det_cluster_id="uuid-123",
         trial_seed=0,
+        trial_run_id=1,
+        allocation_id="",
         managed_training=True,
         test_mode=False,
         on_cluster=False,

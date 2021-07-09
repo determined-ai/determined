@@ -25,6 +25,7 @@ class TestLightningAdapter:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=la_model.OneVarTrial,
@@ -33,6 +34,7 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -54,6 +56,7 @@ class TestLightningAdapter:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
@@ -63,6 +66,7 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -80,6 +84,7 @@ class TestLightningAdapter:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
@@ -89,6 +94,7 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         with pytest.raises(AssertionError):
@@ -103,6 +109,7 @@ class TestLightningAdapter:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
 
             return utils.make_trial_controller_from_trial_implementation(
@@ -112,6 +119,7 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.train_and_validate(make_trial_controller_fn)
@@ -128,6 +136,7 @@ class TestLightningAdapter:
             workloads: workload.Stream,
             checkpoint_dir: typing.Optional[str] = None,
             latest_checkpoint: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
 
             updated_params = {
@@ -141,6 +150,7 @@ class TestLightningAdapter:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.train_and_validate(make_trial_controller_fn)

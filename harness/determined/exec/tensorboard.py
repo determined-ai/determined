@@ -123,7 +123,12 @@ def get_tensorboard_args(args: List[str]) -> List[str]:
     # legacy logdir_spec behavior is not supported by many tensorboard plugins
     logdir = args.pop(0)
 
-    tensorboard_args = ["tensorboard", f"--port={port}", f"--path_prefix=/proxy/{task_id}", *args]
+    tensorboard_args = [
+        "tensorboard",
+        f"--port={port}",
+        f"--path_prefix=/proxy/{task_id}",
+        *args,
+    ]
 
     major, minor = get_tensorboard_version(version)
 

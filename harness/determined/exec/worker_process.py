@@ -30,7 +30,7 @@ def main() -> None:
     config_logging(worker_process_env)
 
     # API code expects credential to be available as an environment variable
-    os.environ["DET_TASK_TOKEN"] = worker_process_env.env.det_task_token
+    os.environ["DET_ALLOCATION_SESSION_TOKEN"] = worker_process_env.env.det_allocation_token
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     master_url = (

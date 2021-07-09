@@ -14,8 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 import numpy as np
 import simplejson
 
-import determined as det
-from determined import constants
+from determined import constants, workload
 from determined.common import check, util
 
 
@@ -130,16 +129,16 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
 
 
 def wrap_metrics(
-    metrics: det.workload.Response,
+    metrics: workload.Response,
     stop_requested: bool,
     invalid_hp: bool,
     init_invalid_hp: bool,
-) -> det.workload.Response:
+) -> workload.Response:
     """
     Make workload response with metrics, stop_requested, invalid_hp, and init_invalid_hp flags.
     Skipped if not chief.
     """
-    if isinstance(metrics, det.workload.Skipped):
+    if isinstance(metrics, workload.Skipped):
         return metrics
     else:
         return {

@@ -52,9 +52,9 @@ def add_token_to_headers(
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}
 
-    task_token = authentication.get_task_token()
-    if task_token:
-        return {**headers, "Grpc-Metadata-x-task-token": "Bearer {}".format(task_token)}
+    allocation_token = authentication.get_allocation_token()
+    if allocation_token:
+        return {**headers, "Grpc-Metadata-x-allocation-token": "Bearer {}".format(allocation_token)}
 
     return headers
 
