@@ -44,3 +44,5 @@ configuration file in place of `const.yaml`.
 ## Results
 The trial will achieve ~75% accuracy after training for 50 epochs, and will approach ~80% accuracy
 by epoch 300 in a few minutes of runtime on NVIDIA K80.
+
+NOTE: this example may have convergence issues with the default hyperparameters.
