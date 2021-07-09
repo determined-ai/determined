@@ -1,5 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp';
-import React, { MouseEventHandler } from 'react';
+import React from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
@@ -77,16 +77,29 @@ export const openBlank = (url: string): void => {
   window.open(url, '_blank', windowOpenFeatures.join(','));
 };
 
+export type AnyMouseEvent = MouseEvent | React.MouseEvent;
+export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;
+export const isMouseEvent = (
+  ev: AnyMouseEvent | React.KeyboardEvent,
+): ev is AnyMouseEvent => {
+  return 'button' in ev;
+};
+export const isNewTabClickEvent = (event: AnyMouseEvent): boolean => {
+  return event.button === 1 || event.metaKey || event.ctrlKey;
+};
+
 export const handlePath = (
-  event: React.MouseEvent,
+  event: AnyMouseEvent,
   options: {
     external?: boolean,
-    onClick?: MouseEventHandler,
+    onClick?: AnyMouseEventHandler,
     path?: string,
     popout?: boolean,
   } = {},
 ): void => {
-  event.persist();
+  // FIXME As of v17, e.persist() doesn’t do anything because the SyntheticEvent is no longer
+  // pooled.
+  // event.persist();
   event.preventDefault();
 
   const href = options.path ? linkPath(options.path, options.external) : undefined;
@@ -100,10 +113,6 @@ export const handlePath = (
       routeAll(href);
     }
   }
-};
-
-export const isNewTabClickEvent = (event: MouseEvent|React.MouseEvent): boolean => {
-  return event.button === 1 || event.metaKey || event.ctrlKey;
 };
 
 // remove host and public_url.
