@@ -214,8 +214,8 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	resources := p.taskSpec.ResourcesConfig
-	minAvailable := 0
+	resources := p.taskSpec.ResourcesConfig()
+	var minAvailable int
 
 	if p.taskSpec.Description == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
@@ -226,9 +226,8 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-	}
-
-	if p.slotType == device.GPU {
+		minAvailable = 0
+	} else {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
