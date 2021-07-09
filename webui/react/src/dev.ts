@@ -6,7 +6,7 @@ import { updateDetApi } from 'services/apiConfig';
 
 const onServerAddressChange = () => {
   updateDetApi({ basePath: serverAddress() });
-  routeToReactUrl(paths.login());
+  routeToReactUrl(paths.logout());
 };
 
 export const setServerAddress = (address: string): void => {

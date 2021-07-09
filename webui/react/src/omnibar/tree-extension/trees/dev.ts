@@ -1,5 +1,4 @@
-import { setServerAddress } from 'dev';
-import { globalStorage } from 'globalStorage';
+import { resetServerAddress, setServerAddress } from 'dev';
 import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
@@ -32,7 +31,7 @@ const dev: TreeNode[] = [
         title: 'set',
       },
       {
-        onAction: () => globalStorage.removeServerAddress(),
+        onAction: () => resetServerAddress(),
         title: 'reset',
       },
     ],
