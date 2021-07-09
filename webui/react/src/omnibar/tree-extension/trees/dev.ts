@@ -3,7 +3,7 @@ import { globalStorage } from 'globalStorage';
 import { userPreferencesStorage } from 'hooks/useStorage';
 import { alertAction } from 'omnibar/tree-extension/trees/actions';
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
-import { checkServerAlive, paths, routeToReactUrl, serverAddress } from 'routes/utils';
+import { checkServerAlive, serverAddress } from 'routes/utils';
 
 const dev: TreeNode[] = [
   {
@@ -22,7 +22,6 @@ const dev: TreeNode[] = [
               const isAlive = await checkServerAlive(inp);
               if (isAlive) {
                 setServerAddress(inp);
-                routeToReactUrl(paths.login());
               } else {
                 alertAction(`Could not find a valid server at ${inp}`)();
               }
