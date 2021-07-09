@@ -14,9 +14,12 @@
   publish = "build/"
 
   # Default build command.
-  command = "make get-deps build"
+  command = "npm run build"
 
   environment = { PUBLIC_URL = "", SERVER_ADDRESS = "https://detai.ml/dynamic/http/ec2-35-155-201-6.us-west-2.compute.amazonaws.com:8080" }
+
+  # Ignore allows for returning early from a build.
+  # ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
 
 # Redirects and headers are GLOBAL for all builds – they do not get scoped to
 # contexts no matter where you define them in the file.
