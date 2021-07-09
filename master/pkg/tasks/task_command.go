@@ -47,7 +47,7 @@ func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string
 		}...)
 	}
 
-	res.Archives = s.Base.makeArchives([]container.RunArchive{
+	res.Archives = res.makeArchives([]container.RunArchive{
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
 	})
@@ -58,7 +58,7 @@ func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string
 
 	res.Environment = s.Config.Environment.ToExpconf()
 
-	res.EnvVars = s.Base.makeEnvVars(nil)
+	res.EnvVars = res.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
 

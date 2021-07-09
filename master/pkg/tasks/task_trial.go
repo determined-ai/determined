@@ -73,7 +73,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		),
 	}
 
-	res.Archives = s.Base.makeArchives([]container.RunArchive{
+	res.Archives = res.makeArchives([]container.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
@@ -128,7 +128,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
-	res.EnvVars = s.Base.makeEnvVars(envVars)
+	res.EnvVars = res.makeEnvVars(envVars)
 
 	res.LoggingFields = map[string]string{
 		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),
