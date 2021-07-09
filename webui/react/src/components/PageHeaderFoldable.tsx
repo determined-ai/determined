@@ -2,6 +2,7 @@ import { Button, Dropdown, Menu, Tooltip } from 'antd';
 import React, { CSSProperties, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { isMouseEvent } from 'routes/utils';
 
 import css from './PageHeaderFoldable.module.scss';
 
@@ -46,7 +47,7 @@ const PageHeaderFoldable: React.FC<Props> = (
             className={css.optionsDropdownItem}
             disabled={!opt.onClick}
             key={opt.key}
-            onClick={(e) => opt.onClick && opt.onClick(e.domEvent)}
+            onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}
           >{renderOptionLabel(opt)}</Menu.Item>
         ))}
       </Menu>
