@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
@@ -13,6 +14,8 @@ type commandManager struct {
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+
 	case *apiv1.GetCommandsRequest:
 		resp := &apiv1.GetCommandsResponse{}
 		users := make(map[string]bool)
@@ -26,8 +29,11 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case GenericCommandReq:
+	case tasks.GenericCommandSpec:
 		return createGenericCommandActor(ctx, c.db, msg, nil)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }

@@ -4,13 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
@@ -30,6 +30,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
+	case actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}
 		users := make(map[string]bool)
@@ -64,12 +66,15 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 
-	case GenericCommandReq:
+	case tasks.GenericCommandSpec:
 		return createGenericCommandActor(ctx, t.db, msg, map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		})
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil

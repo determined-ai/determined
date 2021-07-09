@@ -31,9 +31,9 @@ const (
 
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
-	// Archives returns the files to include in the container for this task (apart from the base files
-	// put into in all containers).
-	Archives []container.RunArchive
+	// ExtraArchives returns the files to include in the container for this task
+	// (apart from the base files put into in all containers).
+	ExtraArchives []container.RunArchive
 	// Description returns a brief description of this task.
 	Description string
 	// Entrypoint returns the command and arguments to run in the container for this task.
@@ -57,10 +57,12 @@ type TaskSpec struct {
 	//ResourcesConfig returns the resources config of the model
 	ResourcesConfig expconf.ResourcesConfig
 
-	TaskID         string
-	TaskToken      string
-	ContainerID    string
-	Devices        []device.Device
+	TaskID      string
+	TaskToken   string
+	ContainerID string
+	Devices     []device.Device
+
+	Owner          *model.User
 	AgentUserGroup *model.AgentUserGroup
 
 	ClusterID             string
@@ -70,14 +72,14 @@ type TaskSpec struct {
 }
 
 // Archives returns all the archives.
-func (t *TaskSpec) makeArchives(extraArchives []container.RunArchive) []container.RunArchive {
+func (t *TaskSpec) Archives() []container.RunArchive {
 	res := []container.RunArchive{
 		workDirArchive(t.AgentUserGroup),
 		injectUserArchive(t.AgentUserGroup),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
 	}
-	res = append(res, extraArchives...)
+	res = append(res, t.ExtraArchives...)
 	return res
 }
 
@@ -174,7 +176,7 @@ func (t *TaskSpec) ToContainerSpec() container.Spec {
 					Devices: devices,
 				},
 			},
-			Archives:         t.Archives,
+			Archives:         t.Archives(),
 			UseFluentLogging: t.UseFluentLogging,
 		},
 	}

@@ -11,18 +11,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
-
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -92,7 +89,7 @@ func (a *apiServer) NotebookLogs(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -104,7 +101,7 @@ func (a *apiServer) LaunchNotebook(
 	if req.Preview {
 		return &apiv1.LaunchNotebookResponse{
 			Notebook: &notebookv1.Notebook{},
-			Config:   protoutils.ToStruct(*params.FullConfig),
+			Config:   protoutils.ToStruct(spec.Config),
 		}, nil
 	}
 
@@ -123,7 +120,7 @@ func (a *apiServer) LaunchNotebook(
 		notebookEntrypoint = []string{jupyterEntrypoint}
 	)
 
-	config := params.FullConfig
+	config := &spec.Config
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
 
@@ -142,8 +139,6 @@ func (a *apiServer) LaunchNotebook(
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
-
 	if config.Description == "" {
 		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
 		config.Description = fmt.Sprintf("Notebook (%s)", petName)
@@ -154,34 +149,26 @@ func (a *apiServer) LaunchNotebook(
 			http.StatusBadRequest, errors.Wrap(err, "failed to launch notebook").Error())
 	}
 
-	notebookLaunchReq := command.GenericCommandReq{
-		GenericCommandSpec: tasks.GenericCommandSpec{
-			Base:      *params.TaskSpec,
-			Config:    *params.FullConfig,
-			UserFiles: params.UserFiles,
-			AdditionalFiles: archive.Archive{
-				params.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
-				params.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-				params.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-				params.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
-				params.AgentUserGroup.OwnedArchiveItem(
-					jupyterEntrypoint,
-					etc.MustStaticFile(etc.NotebookEntrypointResource),
-					0700,
-					tar.TypeReg,
-				),
-				params.AgentUserGroup.OwnedArchiveItem(
-					notebookDefaultPage,
-					etc.MustStaticFile(etc.NotebookTemplateResource),
-					0644,
-					tar.TypeReg,
-				),
-			},
-		},
-		User: params.User,
-		Port: &port,
+	spec.AdditionalFiles = archive.Archive{
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterEntrypoint,
+			etc.MustStaticFile(etc.NotebookEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			notebookDefaultPage,
+			etc.MustStaticFile(etc.NotebookTemplateResource),
+			0644,
+			tar.TypeReg,
+		),
 	}
-	notebookIDFut := a.m.system.AskAt(notebooksAddr, notebookLaunchReq)
+	spec.Port = &port
+	notebookIDFut := a.m.system.AskAt(notebooksAddr, *spec)
 	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
 		return nil, err
 	}
@@ -194,6 +181,6 @@ func (a *apiServer) LaunchNotebook(
 
 	return &apiv1.LaunchNotebookResponse{
 		Notebook: notebook.Get().(*notebookv1.Notebook),
-		Config:   protoutils.ToStruct(*params.FullConfig),
+		Config:   protoutils.ToStruct(spec.Config),
 	}, nil
 }

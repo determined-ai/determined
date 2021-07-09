@@ -404,7 +404,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 	// Merge the appropriate TaskContainerDefaults into the config.
 	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
 	taskSpec := m.makeTaskSpec(resources.ResourcePool(), resources.SlotsPerTrial())
-	taskSpec.TaskContainerDefaults.MergeIntoConfig(&config)
+	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(

@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -37,23 +38,7 @@ func getPort(min, max int) int {
 	return rand.Intn(max-min) + min
 }
 
-func setPodSpec(
-	config *model.CommandConfig,
-	taskContainerDefaults model.TaskContainerDefaultsConfig,
-) {
-	if config.Environment.PodSpec != nil {
-		return
-	}
-
-	if config.Resources.Slots == 0 {
-		config.Environment.PodSpec = taskContainerDefaults.CPUPodSpec
-	} else {
-		config.Environment.PodSpec = taskContainerDefaults.GPUPodSpec
-	}
-}
-
 var commandsAddr = actor.Addr("commands")
-var errCommandUnfulfillable = errors.New("resource request unfulfillable")
 
 type protoCommandParams struct {
 	TemplateName string
@@ -63,19 +48,54 @@ type protoCommandParams struct {
 	MustZeroSlot bool
 }
 
-func (a *apiServer) makeFullCommandSpec(
-	configBytes []byte, templateName *string, mustBeZeroSlot bool,
-) (*model.CommandConfig, *tasks.TaskSpec, error) {
+func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
+	*tasks.GenericCommandSpec, error,
+) {
+	var err error
+
+	// Must get the user and the agent user group
+	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to get the user: %s", err)
+	}
+	agentUserGroup, err := a.m.db.AgentUserGroup(user.ID)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"cannot find user and group information for user %s: %s",
+			user.Username,
+			err,
+		)
+	}
+	if agentUserGroup == nil {
+		agentUserGroup = &a.m.config.Security.DefaultTask
+	}
+
+	// Get the full configuration.
+	var configBytes []byte
+	if req.Config != nil {
+		configBytes, err = protojson.Marshal(req.Config)
+		if err != nil {
+			return nil, status.Errorf(
+				codes.Internal, "failed to parse config %s: %s", configBytes, err)
+		}
+	}
+
 	resources := model.ParseJustResources(configBytes)
 	taskSpec := a.m.makeTaskSpec(resources.ResourcePool, resources.Slots)
+	taskSpec.AgentUserGroup = agentUserGroup
+	taskSpec.Owner = user
+
 	config := command.DefaultConfig(&taskSpec.TaskContainerDefaults)
-	if templateName != nil && *templateName != "" {
-		template, err := a.m.db.TemplateByName(*templateName)
+	if req.TemplateName != "" {
+		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err, "failed to find template: %s", *templateName)
+			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
+				errors.Wrapf(err, "failed to find template: %s", req.TemplateName))
 		}
 		if err := yaml.Unmarshal(template.Config, &config); err != nil {
-			return nil, nil, errors.Wrapf(err, "failed to unmarshal template: %s", *templateName)
+			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
+				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName))
 		}
 	}
 
@@ -84,11 +104,12 @@ func (a *apiServer) makeFullCommandSpec(
 		dec.DisallowUnknownFields()
 
 		if err := dec.Decode(&config); err != nil {
-			return nil, nil, errors.Wrapf(
-				err,
-				"unable to parse the config in the parameters: %s",
-				string(configBytes),
-			)
+			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
+				errors.Wrapf(
+					err,
+					"unable to parse the config in the parameters: %s",
+					string(configBytes),
+				))
 		}
 	}
 
@@ -99,14 +120,13 @@ func (a *apiServer) makeFullCommandSpec(
 	// the DefaultConfig will set slots=1. We need to correct that before attempting to fill
 	// in the default resource pool as otherwise we will mistakenly route this CPU task to the
 	// default GPU pool.
-	if mustBeZeroSlot {
+	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}
 
 	if err := sproto.ValidateRP(a.m.system, config.Resources.ResourcePool); err != nil {
-		return nil, nil, errors.Wrapf(
-			err, "resource pool does not exist: %s", config.Resources.ResourcePool,
-		)
+		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
+			errors.Wrapf(err, "resource pool does not exist: %s", config.Resources.ResourcePool))
 	}
 
 	// If the resource pool isn't set, fill in the default at creation time.
@@ -122,76 +142,33 @@ func (a *apiServer) makeFullCommandSpec(
 		fillable, err := sproto.ValidateRPResources(
 			a.m.system, config.Resources.ResourcePool, config.Resources.Slots)
 		if err != nil {
-			return nil, nil, errors.Wrapf(
-				err, "failed to check resource pool resources: ")
+			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", errors.Wrapf(
+				err, "failed to check resource pool resources: "))
 		}
 		if !fillable {
-			return nil, nil, errCommandUnfulfillable
-		}
-	}
-
-	return &config, &taskSpec, nil
-}
-
-// prepareLaunchParams prepares launch parameters for Commands, Notebooks, Shells, and TensorBoards.
-func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*command.CommandParams, error,
-) {
-	params := command.CommandParams{}
-	var err error
-
-	// Must get the user and the agent user group
-	params.User, _, err = grpcutil.GetUser(ctx, a.m.db)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to get the user: %s", err)
-	}
-	params.AgentUserGroup, err = a.m.db.AgentUserGroup(params.User.ID)
-	if err != nil {
-		return nil, status.Errorf(
-			codes.InvalidArgument,
-			"cannot find user and group information for user %s: %s",
-			params.User.Username,
-			err,
-		)
-	}
-	if params.AgentUserGroup == nil {
-		params.AgentUserGroup = &a.m.config.Security.DefaultTask
-	}
-
-	// Get the full configuration.
-	var configBytes []byte
-	if req.Config != nil {
-		configBytes, err = protojson.Marshal(req.Config)
-		if err != nil {
-			return nil, status.Errorf(
-				codes.Internal, "failed to parse config %s: %s", configBytes, err)
-		}
-	}
-
-	params.FullConfig, params.TaskSpec, err = a.makeFullCommandSpec(
-		configBytes, &req.TemplateName, req.MustZeroSlot)
-	params.TaskSpec.AgentUserGroup = params.AgentUserGroup
-	if err != nil {
-		if err == errCommandUnfulfillable {
 			return nil, api.AsErrBadRequest(
 				"resource request unfulfillable, please try requesting less slots")
 		}
-		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", err)
 	}
 
-	if len(req.Files) > 0 {
-		params.UserFiles = filesToArchive(req.Files)
-	}
-
-	if len(req.Data) > 0 {
-		var data map[string]interface{}
-		if err = json.Unmarshal(req.Data, &data); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse data %s: %s", req.Data, err)
+	if config.Environment.PodSpec == nil {
+		if config.Resources.Slots == 0 {
+			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec
+		} else {
+			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.GPUPodSpec
 		}
-		params.Data = data
 	}
 
-	return &params, nil
+	var userFiles archive.Archive
+	if len(req.Files) > 0 {
+		userFiles = filesToArchive(req.Files)
+	}
+
+	return &tasks.GenericCommandSpec{
+		Base:      taskSpec,
+		Config:    config,
+		UserFiles: userFiles,
+	}, nil
 }
 
 func (a *apiServer) GetCommands(
@@ -218,7 +195,7 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
-	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -229,38 +206,30 @@ func (a *apiServer) LaunchCommand(
 	}
 
 	// Postprocess the config.
-	if params.FullConfig.Description == "" {
-		params.FullConfig.Description = fmt.Sprintf(
+	if spec.Config.Description == "" {
+		spec.Config.Description = fmt.Sprintf(
 			"Command (%s)",
 			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
 		)
 	}
-	if len(params.FullConfig.Entrypoint) == 1 {
+	if len(spec.Config.Entrypoint) == 1 {
 		// If an entrypoint is specified as a singleton string, Determined will follow the "shell form"
 		// convention of Docker that executes the Command with "/bin/sh -c" prepended.
 		//
 		// https://docs.docker.com/engine/reference/builder/#shell-form-entrypoint-example
 		var shellFormEntrypoint = []string{"/bin/sh", "-c"}
 
-		params.FullConfig.Entrypoint = append(shellFormEntrypoint, params.FullConfig.Entrypoint...)
+		spec.Config.Entrypoint = append(shellFormEntrypoint, spec.Config.Entrypoint...)
 	}
-	setPodSpec(params.FullConfig, params.TaskSpec.TaskContainerDefaults)
-	if err = check.Validate(*params.FullConfig); err != nil {
+
+	if err = check.Validate(spec.Config); err != nil {
 		return nil, echo.NewHTTPError(
 			http.StatusBadRequest,
 			errors.Wrap(err, "failed to launch command").Error(),
 		)
 	}
 
-	commandLaunchReq := command.GenericCommandReq{
-		GenericCommandSpec: tasks.GenericCommandSpec{
-			Base:      *params.TaskSpec,
-			Config:    *params.FullConfig,
-			UserFiles: params.UserFiles,
-		},
-		User: params.User,
-	}
-	commandIDFut := a.m.system.AskAt(commandsAddr, commandLaunchReq)
+	commandIDFut := a.m.system.AskAt(commandsAddr, *spec)
 	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err
 	}
@@ -273,6 +242,6 @@ func (a *apiServer) LaunchCommand(
 
 	return &apiv1.LaunchCommandResponse{
 		Command: command.Get().(*commandv1.Command),
-		Config:  protoutils.ToStruct(*params.FullConfig),
+		Config:  protoutils.ToStruct(spec.Config),
 	}, nil
 }

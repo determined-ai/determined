@@ -3,15 +3,18 @@ package internal
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -20,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ssh"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
@@ -51,7 +53,7 @@ func (a *apiServer) KillShell(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -69,18 +71,25 @@ func (a *apiServer) LaunchShell(
 		maxSshdPort = minSshdPort + 299
 	)
 
-	var passphrase *string
-	if pwd, ok := params.Data["passphrase"]; ok {
-		if typed, typedOK := pwd.(string); typedOK {
-			passphrase = &typed
+	var keys ssh.PrivateAndPublicKeys
+	if len(req.Data) > 0 {
+		var data map[string]interface{}
+		if err = json.Unmarshal(req.Data, &data); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to parse data %s: %s", req.Data, err)
+		}
+		var passphrase *string
+		if pwd, ok := data["passphrase"]; ok {
+			if typed, typedOK := pwd.(string); typedOK {
+				passphrase = &typed
+			}
+		}
+		keys, err = ssh.GenerateKey(passphrase)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err)
 		}
 	}
-	keys, err := ssh.GenerateKey(passphrase)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, err)
-	}
 
-	config := params.FullConfig
+	config := &spec.Config
 
 	// Postprocess the config.
 	if config.Description == "" {
@@ -100,36 +109,26 @@ func (a *apiServer) LaunchShell(
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
-
 	if err = check.Validate(config); err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	shellLaunchReq := command.GenericCommandReq{
-		GenericCommandSpec: tasks.GenericCommandSpec{
-			Base:      *params.TaskSpec,
-			Config:    *params.FullConfig,
-			UserFiles: params.UserFiles,
-			AdditionalFiles: archive.Archive{
-				params.AgentUserGroup.OwnedArchiveItem(
-					shellEntrypointScript,
-					etc.MustStaticFile(etc.ShellEntrypointResource),
-					0700,
-					tar.TypeReg,
-				),
-			},
-			Metadata: map[string]interface{}{
-				"privateKey": string(keys.PrivateKey),
-				"publicKey":  string(keys.PublicKey),
-			},
-		},
-		User:     params.User,
-		Port:     &port,
-		Keys:     &keys,
-		ProxyTCP: true,
+	spec.AdditionalFiles = archive.Archive{
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			shellEntrypointScript,
+			etc.MustStaticFile(etc.ShellEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
 	}
-	shellIDFut := a.m.system.AskAt(shellsAddr, shellLaunchReq)
+	spec.Metadata = map[string]interface{}{
+		"privateKey": string(keys.PrivateKey),
+		"publicKey":  string(keys.PublicKey),
+	}
+	spec.Port = &port
+	spec.Keys = &keys
+	spec.ProxyTCP = true
+	shellIDFut := a.m.system.AskAt(shellsAddr, *spec)
 	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err
 	}
@@ -142,6 +141,6 @@ func (a *apiServer) LaunchShell(
 
 	return &apiv1.LaunchShellResponse{
 		Shell:  shell.Get().(*shellv1.Shell),
-		Config: protoutils.ToStruct(*params.FullConfig),
+		Config: protoutils.ToStruct(spec.Config),
 	}, nil
 }

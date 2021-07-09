@@ -6,6 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
@@ -16,6 +17,8 @@ type shellManager struct {
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
 		users := make(map[string]bool)
@@ -29,12 +32,15 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case GenericCommandReq:
+	case tasks.GenericCommandSpec:
 		return createGenericCommandActor(ctx, s.db, msg, map[string]readinessCheck{
 			"shell": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "Server listening on")
 			},
 		})
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }

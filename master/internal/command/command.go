@@ -21,7 +21,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -42,21 +41,6 @@ type readinessCheck func(sproto.ContainerLog) bool
 // should stop and garbage collect its state.
 type terminateForGC struct{}
 
-// commandOwner describes the owner of a command.
-type commandOwner struct {
-	ID       model.UserID `json:"id"`
-	Username string       `json:"username"`
-}
-
-// GenericCommandReq is the request to launch a generic command actor.
-type GenericCommandReq struct {
-	GenericCommandSpec tasks.GenericCommandSpec
-	User               *model.User
-	Port               *int
-	Keys               *ssh.PrivateAndPublicKeys
-	ProxyTCP           bool
-}
-
 func generateServiceAddress(taskID string) string {
 	return fmt.Sprintf("/proxy/%s/", taskID)
 }
@@ -64,7 +48,7 @@ func generateServiceAddress(taskID string) string {
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
-	msg GenericCommandReq,
+	spec tasks.GenericCommandSpec,
 	readinessCheck map[string]readinessCheck,
 ) error {
 	taskID := sproto.NewTaskID()
@@ -75,17 +59,10 @@ func createGenericCommandActor(
 		db:              db,
 		readinessChecks: readinessCheck,
 
-		GenericCommandSpec: msg.GenericCommandSpec,
-		owner: commandOwner{
-			ID:       msg.User.ID,
-			Username: msg.User.Username,
-		},
+		GenericCommandSpec: spec,
 
 		taskID:         taskID,
 		serviceAddress: &serviceAddress,
-		assignedPort:   msg.Port,
-		generatedKeys:  msg.Keys,
-		proxyTCP:       msg.ProxyTCP,
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
@@ -121,15 +98,11 @@ type command struct {
 	eventStream *actor.Ref
 
 	readinessChecks map[string]readinessCheck
-	proxyTCP        bool
 
-	generatedKeys *ssh.PrivateAndPublicKeys
 	tasks.GenericCommandSpec
-	owner commandOwner
 
 	taskID         sproto.TaskID
 	serviceAddress *string
-	assignedPort   *int
 
 	readinessMessageSent bool
 	registeredTime       time.Time
@@ -179,7 +152,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
-		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
+		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))
 		}
 
@@ -259,7 +232,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		switch {
 		case msg.Container.State == container.Running:
 			c.addresses = msg.ContainerStarted.Addresses
-
+			assignedPort := c.GenericCommandSpec.Port
 			// TODO(DET-5682): refactor this logic and the rendezvous info logic that does the same
 			// thing into a helper function.
 			var names []string
@@ -268,7 +241,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				// additional addresses will appear her, but currently we only proxy one uuid to one
 				// port, so it doesn't make sense to send multiple proxy.Register messages for a
 				// single ServiceID (only the last one would work).
-				if c.assignedPort == nil || address.ContainerPort != *c.assignedPort {
+				if assignedPort == nil || address.ContainerPort != *assignedPort {
 					continue
 				}
 
@@ -281,11 +254,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 						Scheme: "http",
 						Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 					},
-					ProxyTCP: c.proxyTCP,
+					ProxyTCP: c.GenericCommandSpec.ProxyTCP,
 				})
 				names = append(names, string(c.taskID))
 			}
-			if c.assignedPort == nil && len(names) > 0 {
+			if assignedPort == nil && len(names) > 0 {
 				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
 			} else if len(names) != 1 {
 				ctx.Log().Errorf(
@@ -347,7 +320,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.allocation = msg.Allocations[0]
 
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.generatedKeys, taskToken), 0)
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, taskToken), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -449,7 +422,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		Container:      c.container.Proto(),
 		ServiceAddress: serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:       c.owner.Username,
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 	}, nil
@@ -467,7 +440,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Description:  c.Config.Description,
 		Container:    c.container.Proto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:     c.owner.Username,
+		Username:     c.Base.Owner.Username,
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   exitStatus,
 	}
@@ -492,7 +465,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Container:      c.container.Proto(),
 		PrivateKey:     c.Metadata["privateKey"].(string),
 		PublicKey:      c.Metadata["publicKey"].(string),
-		Username:       c.owner.Username,
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
@@ -523,7 +496,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ServiceAddress: fmt.Sprintf(*c.serviceAddress, c.taskID),
 		ExperimentIds:  eids,
 		TrialIds:       tids,
-		Username:       c.owner.Username,
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 	}

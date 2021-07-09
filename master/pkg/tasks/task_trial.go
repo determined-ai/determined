@@ -72,7 +72,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		),
 	}
 
-	res.Archives = res.makeArchives([]container.RunArchive{
+	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
@@ -94,7 +94,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		),
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), modelCopy),
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), ContainerWorkDir),
-	})
+	}
 
 	res.Description = fmt.Sprintf(
 		"exp-%d-trial-%d",

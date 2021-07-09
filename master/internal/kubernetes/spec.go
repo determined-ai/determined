@@ -324,7 +324,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	spec := p.taskSpec
 
-	runArchives := spec.Archives
+	runArchives := spec.Archives()
 
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, spec.Mounts, runArchives,

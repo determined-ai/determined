@@ -16,7 +16,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -28,7 +27,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
@@ -79,7 +77,7 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {
-	params, err := a.prepareLaunchParams(ctx, &protoCommandParams{
+	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -115,7 +113,7 @@ func (a *apiServer) LaunchTensorboard(
 	var logDirs []string
 
 	additionalFiles := archive.Archive{
-		params.AgentUserGroup.OwnedArchiveItem(
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
@@ -125,7 +123,7 @@ func (a *apiServer) LaunchTensorboard(
 	uniqMounts := map[string]model.BindMount{}
 	uniqEnvVars := map[string]string{}
 
-	config := params.FullConfig
+	config := &spec.Config
 
 	uniqEnvVars["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
@@ -199,14 +197,14 @@ func (a *apiServer) LaunchTensorboard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID)
+				logBasePath, spec.Base.ClusterID, exp.ExperimentID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/trial/%d/",
-				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
+				logBasePath, spec.Base.ClusterID, exp.ExperimentID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -227,7 +225,7 @@ func (a *apiServer) LaunchTensorboard(
 	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
 
 	additionalFiles = append(additionalFiles,
-		params.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
+		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
@@ -270,30 +268,19 @@ func (a *apiServer) LaunchTensorboard(
 
 	config.BindMounts = append(config.BindMounts, bindMounts...)
 
-	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
-
 	// Finish creating.
-
 	if err = check.Validate(req.Config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	tensorboardLaunchReq := command.GenericCommandReq{
-		GenericCommandSpec: tasks.GenericCommandSpec{
-			Base:            *params.TaskSpec,
-			Config:          *config,
-			UserFiles:       params.UserFiles,
-			AdditionalFiles: additionalFiles,
-			Metadata: map[string]interface{}{
-				"experiment_ids": req.ExperimentIds,
-				"trial_ids":      req.TrialIds,
-			},
-		},
-		User: params.User,
-		Port: &port,
+	spec.AdditionalFiles = additionalFiles
+	spec.Metadata = map[string]interface{}{
+		"experiment_ids": req.ExperimentIds,
+		"trial_ids":      req.TrialIds,
 	}
-	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, tensorboardLaunchReq)
+	spec.Port = &port
+	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, *spec)
 	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
 		return nil, err
 	}
@@ -309,7 +296,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	return &apiv1.LaunchTensorboardResponse{
 		Tensorboard: tensorboard.Get().(*tensorboardv1.Tensorboard),
-		Config:      protoutils.ToStruct(*params.FullConfig),
+		Config:      protoutils.ToStruct(spec.Config),
 	}, err
 }
 
@@ -387,12 +374,4 @@ type tensorboardConfig struct {
 	Config       expconf.LegacyConfig
 	ExperimentID int32
 	TrialIDs     []int32
-}
-
-// TensorboardRequest describes a request for a new Tensorboard.
-type TensorboardRequest struct {
-	CommandParams *command.CommandParams
-
-	ExperimentIDs []int `json:"experiment_ids"`
-	TrialIDs      []int `json:"trial_ids"`
 }

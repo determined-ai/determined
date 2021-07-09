@@ -18,6 +18,11 @@ type GenericCommandSpec struct {
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
 	Metadata        map[string]interface{}
+
+	Keys *ssh.PrivateAndPublicKeys
+
+	Port     *int
+	ProxyTCP bool
 }
 
 // ToTaskSpec generates a TaskSpec.
@@ -47,10 +52,10 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken
 		}...)
 	}
 
-	res.Archives = res.makeArchives([]container.RunArchive{
+	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
-	})
+	}
 
 	res.Description = "cmd"
 

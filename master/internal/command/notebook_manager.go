@@ -6,6 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
@@ -18,6 +19,8 @@ type notebookManager struct {
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+
 	case *apiv1.GetNotebooksRequest:
 		resp := &apiv1.GetNotebooksResponse{}
 		users := make(map[string]bool)
@@ -31,12 +34,15 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case GenericCommandReq:
+	case tasks.GenericCommandSpec:
 		return createGenericCommandActor(ctx, n.db, msg, map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
 				return jupyterReadyPattern.MatchString(log.String())
 			},
 		})
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
