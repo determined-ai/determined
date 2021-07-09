@@ -106,7 +106,7 @@ class PyTorchTrialController(det.TrialController):
         return util.is_overridden(self.trial.evaluate_full_dataset, PyTorchTrial)
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.env.initial_workload.total_batches_processed
+        skip_batches = self.env.latest_batch
 
         nreplicas = hvd.size() if self.hvd_config.use else 1
         rank = hvd.rank() if self.hvd_config.use else 0

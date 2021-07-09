@@ -59,7 +59,7 @@ class _CacheableDecorator:
             return
 
         batch_size = self._per_slot_batch_size
-        self._offset = self._env.initial_workload.total_batches_processed * batch_size
+        self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
         if not self._hvd_config.use:

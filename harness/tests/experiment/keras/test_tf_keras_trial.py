@@ -51,6 +51,7 @@ def xor_trial_controller(request):
         trial_seed: int = 0,
         checkpoint_dir: Optional[str] = None,
         latest_checkpoint: Optional[Dict[str, Any]] = None,
+        latest_batch: int = 0,
     ) -> det.TrialController:
         return utils.make_trial_controller_from_trial_implementation(
             request.param,
@@ -60,6 +61,7 @@ def xor_trial_controller(request):
             trial_seed=trial_seed,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
+            latest_batch=latest_batch,
         )
 
     return _xor_trial_controller
@@ -110,6 +112,7 @@ class TestKerasTrial:
     def test_one_var_training(self, test_checkpointing, tmp_path):
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
+        latest_batch = 0
 
         # In the test_checkpointing case, we will call make_workloads() twice but batches and w
         # will persist across both calls.
@@ -136,11 +139,13 @@ class TestKerasTrial:
                 w = w - hparams["learning_rate"] * trial_class.calc_gradient(w, batch)
 
                 if test_checkpointing and idx == 3:
-                    # Checkpoint and let the next TrialController finish the work.l
+                    # Checkpoint and let the next TrialController finish the work.
                     interceptor = workload.WorkloadResponseInterceptor()
                     yield from interceptor.send(workload.checkpoint_workload())
-                    nonlocal latest_checkpoint
+                    nonlocal latest_checkpoint, latest_batch
                     latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+                    # latest_batch is unused, but can't be 0.
+                    latest_batch = 1
                     break
 
             yield workload.terminate_workload(), workload.ignore_workload_response
@@ -170,6 +175,7 @@ class TestKerasTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
             controller.run()
 
@@ -207,6 +213,7 @@ class TestKerasTrial:
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
+        latest_batch = 0
         old_loss = -1
 
         def make_workloads_1() -> workload.Stream:
@@ -220,8 +227,9 @@ class TestKerasTrial:
 
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint
+            nonlocal latest_checkpoint, latest_batch
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_batch = trainer.get_latest_batch()
 
             yield workload.terminate_workload(), workload.ignore_workload_response
 
@@ -253,6 +261,7 @@ class TestKerasTrial:
             trial_seed=self.trial_seed,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
+            latest_batch=latest_batch,
         )
         controller.run()
 
@@ -261,6 +270,7 @@ class TestKerasTrial:
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
             latest_checkpoint: Optional[Dict[str, Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
             return xor_trial_controller(
                 self.hparams,
@@ -269,6 +279,7 @@ class TestKerasTrial:
                 trial_seed=self.trial_seed,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)

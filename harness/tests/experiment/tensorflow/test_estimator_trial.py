@@ -34,6 +34,7 @@ def xor_trial_controller(request):
         exp_config: Optional[Dict] = None,
         checkpoint_dir: Optional[str] = None,
         latest_checkpoint: Optional[Dict[str, Any]] = None,
+        latest_batch: int = 0,
     ) -> det.TrialController:
         return utils.make_trial_controller_from_trial_implementation(
             trial_class=request.param,
@@ -44,6 +45,7 @@ def xor_trial_controller(request):
             trial_seed=325,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
+            latest_batch=latest_batch,
         )
 
     return _xor_trial_controller
@@ -99,6 +101,7 @@ class TestXORTrial:
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
+        latest_batch = 0
         old_loss = -1
 
         def make_workloads_1() -> workload.Stream:
@@ -112,8 +115,9 @@ class TestXORTrial:
 
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint
+            nonlocal latest_checkpoint, latest_batch
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_batch = trainer.get_latest_batch()
 
             yield workload.terminate_workload(), workload.ignore_workload_response
 
@@ -145,6 +149,7 @@ class TestXORTrial:
             scheduling_unit=10,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
+            latest_batch=latest_batch,
         )
         controller.run()
 
@@ -194,6 +199,7 @@ class TestXORTrial:
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
             latest_checkpoint: Optional[Dict[str, Any]] = None,
+            latest_batch: int = 0,
         ) -> det.TrialController:
             hparams = {**self.hparams, "optimizer": "adam"}
             return xor_trial_controller(
@@ -201,6 +207,7 @@ class TestXORTrial:
                 workloads,
                 checkpoint_dir=checkpoint_dir,
                 latest_checkpoint=latest_checkpoint,
+                latest_batch=latest_batch,
             )
 
         utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
@@ -240,6 +247,7 @@ class TestXORTrial:
     def test_custom_hook(self, tmp_path: Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
+        latest_batch = 0
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
@@ -248,8 +256,9 @@ class TestXORTrial:
 
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
-            nonlocal latest_checkpoint
+            nonlocal latest_checkpoint, latest_batch
             latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_batch = trainer.get_latest_batch()
 
             yield workload.terminate_workload(), workload.ignore_workload_response
 
@@ -274,6 +283,7 @@ class TestXORTrial:
             scheduling_unit=5,
             checkpoint_dir=checkpoint_dir,
             latest_checkpoint=latest_checkpoint,
+            latest_batch=latest_batch,
         )
         controller.run()
         verify_callback(os.path.join(checkpoint_dir, latest_checkpoint["uuid"]), checkpoint_num=2)

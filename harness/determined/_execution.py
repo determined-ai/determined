@@ -6,7 +6,7 @@ import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import determined as det
-from determined import constants, gpu, horovod, util, workload
+from determined import constants, gpu, horovod, util
 from determined.common import api
 
 
@@ -123,22 +123,23 @@ def _make_local_execution_env(
         container_id="",
         experiment_config=config,
         hparams=hparams,
-        initial_workload=workload.train_workload(1, 1, 1, config.scheduling_unit()),
         latest_checkpoint=None,
+        latest_batch=0,
         use_gpu=use_gpu,
         container_gpus=container_gpus,
         slot_ids=slot_ids,
         debug=config.debug_enabled(),
-        workload_manager_type="",
         det_rendezvous_port=str(constants.LOCAL_RENDEZVOUS_PORT),
         det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="",
         det_agent_id="",
         det_experiment_id="",
-        det_task_token="",
+        det_allocation_token="",
         det_cluster_id="",
         trial_seed=config.experiment_seed(),
+        trial_run_id=1,
+        allocation_id="",
         managed_training=managed_training,
         test_mode=test_mode,
         on_cluster=False,

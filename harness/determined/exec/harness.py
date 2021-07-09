@@ -50,12 +50,10 @@ ENVIRONMENT_VARIABLE_KEYS = {
     "DET_TRIAL_SEED",
     "DET_EXPERIMENT_CONFIG",
     "DET_HPARAMS",
-    "DET_INITIAL_WORKLOAD",
     "DET_LATEST_CHECKPOINT",
-    "DET_WORKLOAD_MANAGER_TYPE",
     "DET_RENDEZVOUS_PORT",
     "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
-    "DET_TASK_TOKEN",
+    "DET_ALLOCATION_SESSION_TOKEN",
 }
 
 
@@ -110,7 +108,6 @@ def main() -> None:
     agent_id = os.environ["DET_AGENT_ID"]
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
-    initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(
@@ -122,7 +119,6 @@ def main() -> None:
 
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
     slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
-    workload_manager_type = os.environ["DET_WORKLOAD_MANAGER_TYPE"]
     det_rendezvous_port = os.environ["DET_RENDEZVOUS_PORT"]
     det_trial_unique_port_offset = int(os.environ["DET_TRIAL_UNIQUE_PORT_OFFSET"])
     det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]
@@ -130,7 +126,7 @@ def main() -> None:
     det_experiment_id = os.environ["DET_EXPERIMENT_ID"]
     det_agent_id = os.environ["DET_AGENT_ID"]
     det_cluster_id = os.environ["DET_CLUSTER_ID"]
-    det_task_token = os.environ["DET_TASK_TOKEN"]
+    det_allocation_token = os.environ["DET_ALLOCATION_SESSION_TOKEN"]
     trial_seed = int(os.environ["DET_TRIAL_SEED"])
 
     gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
@@ -144,13 +140,11 @@ def main() -> None:
         container_id,
         experiment_config,
         hparams,
-        initial_work,
         latest_checkpoint,
         use_gpu,
         gpu_uuids,
         slot_ids,
         debug,
-        workload_manager_type,
         det_rendezvous_port,
         det_trial_unique_port_offset,
         det_trial_runner_network_interface,
@@ -158,7 +152,7 @@ def main() -> None:
         det_experiment_id,
         det_agent_id,
         det_cluster_id,
-        det_task_token,
+        det_allocation_token,
         trial_seed,
         managed_training=True,
         test_mode=False,

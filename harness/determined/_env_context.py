@@ -2,8 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import determined as det
-from determined import workload
-from determined.common import check, types
+from determined.common import check
 
 
 class EnvContext:
@@ -17,13 +16,12 @@ class EnvContext:
         container_id: str,
         experiment_config: Dict[str, Any],
         hparams: Dict[str, Any],
-        initial_workload: workload.Workload,
         latest_checkpoint: Optional[Dict[str, Any]],
+        latest_batch: int,
         use_gpu: bool,
         container_gpus: List[str],
         slot_ids: List[int],
         debug: bool,
-        workload_manager_type: str,
         det_rendezvous_port: str,
         det_trial_unique_port_offset: int,
         det_trial_runner_network_interface: str,
@@ -31,8 +29,10 @@ class EnvContext:
         det_experiment_id: str,
         det_agent_id: str,
         det_cluster_id: str,
-        det_task_token: str,
+        det_allocation_token: str,
         trial_seed: int,
+        trial_run_id: int,
+        allocation_id: str,
         managed_training: bool,
         test_mode: bool,
         on_cluster: bool,
@@ -45,13 +45,12 @@ class EnvContext:
         self.container_id = container_id
         self.experiment_config = det.ExperimentConfig(experiment_config)
         self.hparams = hparams
-        self.initial_workload = initial_workload
         self.latest_checkpoint = latest_checkpoint
+        self.latest_batch = latest_batch
         self.use_gpu = use_gpu
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids
         self.debug = debug
-        self.workload_manager_type = workload_manager_type
         self.det_rendezvous_port = det_rendezvous_port
         self.det_trial_unique_port_offset = det_trial_unique_port_offset
         self.det_trial_runner_network_interface = det_trial_runner_network_interface
@@ -59,16 +58,15 @@ class EnvContext:
         self.det_experiment_id = det_experiment_id
         self.det_agent_id = det_agent_id
         self.det_cluster_id = det_cluster_id
-        self.det_task_token = det_task_token
+        self.det_allocation_token = det_allocation_token
         self.trial_seed = trial_seed
+        self.trial_run_id = trial_run_id
+        self.allocation_id = allocation_id
         self.managed_training = managed_training
         self.test_mode = test_mode
         self.on_cluster = on_cluster
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
-
-    def first_step(self) -> types.StepID:
-        return self.initial_workload.step_id
 
     def rendezvous_port(self) -> int:
         return int(self.det_rendezvous_port)
