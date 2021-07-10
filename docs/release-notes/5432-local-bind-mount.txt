@@ -1,7 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Add a flag `det deploy local --auto-bind-mount="path"` to mount the
-   specified directory (default to the user's home directory) into the
-   cluster's task containers and add a flag to disable this feature.
