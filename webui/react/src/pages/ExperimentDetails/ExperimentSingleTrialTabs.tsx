@@ -5,6 +5,7 @@ import { useHistory, useParams } from 'react-router';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
+import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { ExperimentBase, RunState, TrialDetails } from 'types';
@@ -49,6 +50,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   { experiment, trialId }: Props,
 ) => {
   const history = useHistory();
+  const prevTrialId = usePrevious(trialId, undefined);
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
@@ -109,6 +111,14 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       stopPolling();
     };
   }, [ canceler, stopPolling ]);
+
+  /*
+   * Immediately attempt to fetch trial details instead of waiting for the
+   * next polling cycle when trial Id goes from undefined to defined.
+   */
+  useEffect(() => {
+    if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
+  }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
   if (!hasLoaded) return <Spinner />;
 

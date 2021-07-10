@@ -1,0 +1,6 @@
+:orphan:
+
+**BUG FIXES**
+
+-  WebUI: Avoid waiting for an extra polling cycle to load trial data
+   when loading single trial experiments.
