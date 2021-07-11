@@ -479,14 +479,6 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		exitStatus = *c.exitStatus
 	}
 
-	var eids []int32
-	for _, id := range c.Metadata["experiment_ids"].([]int) {
-		eids = append(eids, int32(id))
-	}
-	var tids []int32
-	for _, id := range c.Metadata["trial_ids"].([]int) {
-		tids = append(tids, int32(id))
-	}
 	return &tensorboardv1.Tensorboard{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
@@ -494,8 +486,8 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
 		ServiceAddress: fmt.Sprintf(*c.serviceAddress, c.taskID),
-		ExperimentIds:  eids,
-		TrialIds:       tids,
+		ExperimentIds:  c.Metadata["experiment_ids"].([]int32),
+		TrialIds:       c.Metadata["trial_ids"].([]int32),
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,

@@ -282,7 +282,7 @@ func (a *apiServer) LaunchTensorboard(
 	spec.Port = &port
 	tensorboardIDFut := a.m.system.AskAt(tensorboardsAddr, *spec)
 	if err = api.ProcessActorResponseError(&tensorboardIDFut); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot find Tensorboard manager actor")
 	}
 
 	tensorboardID := tensorboardIDFut.Get().(sproto.TaskID)
@@ -291,7 +291,7 @@ func (a *apiServer) LaunchTensorboard(
 		&tensorboardv1.Tensorboard{},
 	)
 	if err = api.ProcessActorResponseError(&tensorboard); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot find created TensorBoard actor")
 	}
 
 	return &apiv1.LaunchTensorboardResponse{

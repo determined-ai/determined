@@ -27,7 +27,7 @@ func ProcessActorResponseError(resp *actor.Response) error {
 		src := (*resp).Source()
 		msg := "actor not found"
 		if src != nil {
-			msg = fmt.Sprintf("/api/v1%s not found", src.Address().String())
+			msg = fmt.Sprintf("actor not found: /api/v1%s", src.Address().String())
 		}
 		return status.Error(codes.NotFound, msg)
 	}
