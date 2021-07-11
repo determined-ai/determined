@@ -164,9 +164,8 @@ def kill(args: Namespace) -> None:
 
 @authentication.required
 def config(args: Namespace) -> None:
-    name = RemoteTaskName[args._command]
     api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], args.id)
-    res_json = api.get(args.master, api_full_path).json()[name]
+    res_json = api.get(args.master, api_full_path).json()
     print(render.format_object_as_yaml(res_json["config"]))
 
 
