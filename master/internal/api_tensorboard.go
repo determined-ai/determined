@@ -238,7 +238,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	refineArgs(spec.Config.TensorBoardArgs)
 
-	spec.Base.Entrypoint = append(
+	spec.Config.Entrypoint = append(
 		[]string{tensorboardEntrypointFile, strings.Join(logDirs, ",")},
 		spec.Config.TensorBoardArgs...)
 
