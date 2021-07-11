@@ -31,32 +31,34 @@ const (
 
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
-	// Fields set fully by users.
-	MasterCert            *tls.Certificate
+	// Fields that are only for task logics.
+	Description string
+	// LoggingFields are fields to include in each record of structured (i.e., Fluent Bit) logging.
+	LoggingFields map[string]string
+	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to native logging).
+	UseFluentLogging bool
+
+	// Fields that are set on the cluster level.
+	ClusterID   string
+	HarnessPath string
+	MasterCert  *tls.Certificate
+
+	// Fields that are set on the per-request basis.
 	TaskContainerDefaults model.TaskContainerDefaultsConfig
 	Environment           expconf.EnvironmentConfig
 	ResourcesConfig       expconf.ResourcesConfig
 	Owner                 *model.User
 	AgentUserGroup        *model.AgentUserGroup
-	ShmSize               int64
-
-	// Fields set by tasks with user configuration.
-	ExtraArchives []container.RunArchive
-	ExtraEnvVars  map[string]string
-	Entrypoint    []string
-	Mounts        []mount.Mount
-
-	HarnessPath string
-	// LoggingFields are fields to include in each record of structured (i.e., Fluent Bit) logging.
-	LoggingFields map[string]string
-	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to native logging).
-	UseFluentLogging bool
+	ExtraArchives         []container.RunArchive
+	ExtraEnvVars          map[string]string
+	Entrypoint            []string
+	Mounts                []mount.Mount
 	// UseHostMode is whether host mode networking would be desirable for this task.
 	// This is used by Docker only.
 	UseHostMode bool
-	Description string
+	ShmSize     int64
 
-	ClusterID   string
+	// Fields that are set on the per-allocation basis.
 	TaskID      string
 	TaskToken   string
 	ContainerID string

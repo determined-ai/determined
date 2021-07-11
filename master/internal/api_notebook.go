@@ -4,11 +4,13 @@ import (
 	"archive/tar"
 	"context"
 	"fmt"
-	"net/http"
+	"strconv"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -24,6 +26,18 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+)
+
+const (
+	jupyterDir        = "/run/determined/jupyter/"
+	jupyterConfigDir  = "/run/determined/jupyter/config"
+	jupyterDataDir    = "/run/determined/jupyter/data"
+	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+	minNotebookPort     = 2900
+	maxNotebookPort     = minNotebookPort + 299
+	notebookDefaultPage = "/run/determined/workdir/test.ipynb"
 )
 
 var notebooksAddr = actor.Addr("notebooks")
@@ -98,6 +112,12 @@ func (a *apiServer) LaunchNotebook(
 		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
+	// Postprocess the spec.
+	if spec.Config.Description == "" {
+		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
+		spec.Config.Description = fmt.Sprintf("Notebook (%s)", petName)
+	}
+
 	if req.Preview {
 		return &apiv1.LaunchNotebookResponse{
 			Notebook: &notebookv1.Notebook{},
@@ -105,48 +125,19 @@ func (a *apiServer) LaunchNotebook(
 		}, nil
 	}
 
-	const (
-		jupyterDir        = "/run/determined/jupyter/"
-		jupyterConfigDir  = "/run/determined/jupyter/config"
-		jupyterDataDir    = "/run/determined/jupyter/data"
-		jupyterRuntimeDir = "/run/determined/jupyter/runtime"
-		jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
-		// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
-		minNotebookPort     = 2900
-		maxNotebookPort     = minNotebookPort + 299
-		notebookDefaultPage = "/run/determined/workdir/test.ipynb"
-	)
-	var (
-		notebookEntrypoint = []string{jupyterEntrypoint}
-	)
-
-	config := &spec.Config
-
-	// Postprocess the config. Add Jupyter and configuration to the container.
-
-	// Select a random port from the range to assign to the notebook. In host
-	// mode, this mitigates the risk of multiple notebook processes binding
-	// the same port on an agent.
-	port := getPort(minNotebookPort, maxNotebookPort)
-	notebookPorts := map[string]int{"notebook": port}
-	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
-
-	config.Environment.Ports = notebookPorts
-	config.Environment.EnvironmentVariables.CPU = append(
-		config.Environment.EnvironmentVariables.CPU, portVar)
-	config.Environment.EnvironmentVariables.GPU = append(
-		config.Environment.EnvironmentVariables.GPU, portVar)
-
-	config.Entrypoint = notebookEntrypoint
-
-	if config.Description == "" {
-		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
-		config.Description = fmt.Sprintf("Notebook (%s)", petName)
+	// Selecting a random port mitigates the risk of multiple processes binding
+	// the same port on an agent in host mode.
+	port := getRandomPort(minNotebookPort, maxNotebookPort)
+	spec.Base.ExtraEnvVars = map[string]string{
+		"NOTEBOOK_PORT": strconv.Itoa(port),
 	}
+	spec.Port = &port
+	spec.Config.Environment.Ports = map[string]int{"notebook": port}
 
-	if err = check.Validate(config); err != nil {
-		return nil, echo.NewHTTPError(
-			http.StatusBadRequest, errors.Wrap(err, "failed to launch notebook").Error())
+	spec.Config.Entrypoint = []string{jupyterEntrypoint}
+
+	if err = check.Validate(spec.Config); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid notebook config: %s", err.Error())
 	}
 
 	spec.AdditionalFiles = archive.Archive{
@@ -167,7 +158,8 @@ func (a *apiServer) LaunchNotebook(
 			tar.TypeReg,
 		),
 	}
-	spec.Port = &port
+
+	// Launch a Notebook actor.
 	notebookIDFut := a.m.system.AskAt(notebooksAddr, *spec)
 	if err = api.ProcessActorResponseError(&notebookIDFut); err != nil {
 		return nil, err

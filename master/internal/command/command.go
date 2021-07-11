@@ -2,11 +2,8 @@ package command
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
-
-	"github.com/labstack/echo/v4"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 
@@ -68,9 +65,7 @@ func createGenericCommandActor(
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
-		ctx.Respond(echo.NewHTTPError(
-			http.StatusInternalServerError,
-			errors.Wrap(err, "failed to create generic command").Error()))
+		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
 		return nil
 	}
 	summary := summaryFut.Get().(summary)

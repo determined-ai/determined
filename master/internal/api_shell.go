@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
+
+	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/pkg/errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -25,6 +24,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
+)
+
+const (
+	shellSSHDConfigFile   = "/run/determined/ssh/sshd_config"
+	shellEntrypointScript = "/run/determined/ssh/shell-entrypoint.sh"
+	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+	minSshdPort = 3200
+	maxSshdPort = minSshdPort + 299
 )
 
 var shellsAddr = actor.Addr("shells")
@@ -57,19 +64,41 @@ func (a *apiServer) LaunchShell(
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
-		Data:         req.Data,
 	})
 	if err != nil {
-		return nil, api.APIErr2GRPC(err)
+		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
-	const (
-		shellSSHDConfigFile   = "/run/determined/ssh/sshd_config"
-		shellEntrypointScript = "/run/determined/ssh/shell-entrypoint.sh"
-		// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
-		minSshdPort = 3200
-		maxSshdPort = minSshdPort + 299
-	)
+	// Postprocess the spec.
+	if spec.Config.Description == "" {
+		spec.Config.Description = fmt.Sprintf(
+			"Shell (%s)",
+			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
+		)
+	}
+
+	// Selecting a random port mitigates the risk of multiple processes binding
+	// the same port on an agent in host mode.
+	port := getRandomPort(minSshdPort, maxSshdPort)
+	spec.Port = &port
+	spec.Config.Environment.Ports = map[string]int{"shell": port}
+
+	spec.Config.Entrypoint = []string{
+		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
+	}
+
+	if err = check.Validate(spec.Config); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	spec.AdditionalFiles = archive.Archive{
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			shellEntrypointScript,
+			etc.MustStaticFile(etc.ShellEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
+	}
 
 	var keys ssh.PrivateAndPublicKeys
 	if len(req.Data) > 0 {
@@ -85,49 +114,18 @@ func (a *apiServer) LaunchShell(
 		}
 		keys, err = ssh.GenerateKey(passphrase)
 		if err != nil {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, err)
+			return nil, status.Error(codes.Internal, err.Error())
 		}
-	}
-
-	config := &spec.Config
-
-	// Postprocess the config.
-	if config.Description == "" {
-		config.Description = fmt.Sprintf(
-			"Shell (%s)",
-			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
-		)
-	}
-
-	// Select a random port from the range to assign to sshd. In host
-	// mode, this mitigates the risk of multiple sshd processes binding
-	// the same port on an agent.
-	port := getPort(minSshdPort, maxSshdPort)
-
-	config.Environment.Ports = map[string]int{"shell": port}
-	config.Entrypoint = []string{
-		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
-	}
-
-	if err = check.Validate(config); err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	spec.AdditionalFiles = archive.Archive{
-		spec.Base.AgentUserGroup.OwnedArchiveItem(
-			shellEntrypointScript,
-			etc.MustStaticFile(etc.ShellEntrypointResource),
-			0700,
-			tar.TypeReg,
-		),
 	}
 	spec.Metadata = map[string]interface{}{
 		"privateKey": string(keys.PrivateKey),
 		"publicKey":  string(keys.PublicKey),
 	}
-	spec.Port = &port
 	spec.Keys = &keys
+
 	spec.ProxyTCP = true
+
+	// Launch a Shell actor.
 	shellIDFut := a.m.system.AskAt(shellsAddr, *spec)
 	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err

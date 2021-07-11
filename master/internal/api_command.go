@@ -6,11 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/labstack/echo/v4"
-
 	"github.com/ghodss/yaml"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -34,17 +31,16 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
 )
 
-func getPort(min, max int) int {
+var commandsAddr = actor.Addr("commands")
+
+func getRandomPort(min, max int) int {
 	return rand.Intn(max-min) + min
 }
-
-var commandsAddr = actor.Addr("commands")
 
 type protoCommandParams struct {
 	TemplateName string
 	Config       *pstruct.Struct
 	Files        []*utilv1.File
-	Data         []byte
 	MustZeroSlot bool
 }
 
@@ -170,13 +166,12 @@ func (a *apiServer) LaunchCommand(
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
-		Data:         req.Data,
 	})
 	if err != nil {
 		return nil, api.APIErr2GRPC(err)
 	}
 
-	// Postprocess the config.
+	// Postprocess the spec.
 	if spec.Config.Description == "" {
 		spec.Config.Description = fmt.Sprintf(
 			"Command (%s)",
@@ -192,27 +187,27 @@ func (a *apiServer) LaunchCommand(
 
 		spec.Config.Entrypoint = append(shellFormEntrypoint, spec.Config.Entrypoint...)
 	}
-
 	if err = check.Validate(spec.Config); err != nil {
-		return nil, echo.NewHTTPError(
-			http.StatusBadRequest,
-			errors.Wrap(err, "failed to launch command").Error(),
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid command config: %s",
+			err.Error(),
 		)
 	}
 
+	// Launch a command actor.
 	commandIDFut := a.m.system.AskAt(commandsAddr, *spec)
 	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err
 	}
-
-	commandID := commandIDFut.Get().(sproto.TaskID)
-	command := a.m.system.AskAt(commandsAddr.Child(commandID), &commandv1.Command{})
-	if err = api.ProcessActorResponseError(&command); err != nil {
+	cmdID := commandIDFut.Get().(sproto.TaskID)
+	cmd := a.m.system.AskAt(commandsAddr.Child(cmdID), &commandv1.Command{})
+	if err = api.ProcessActorResponseError(&cmd); err != nil {
 		return nil, err
 	}
 
 	return &apiv1.LaunchCommandResponse{
-		Command: command.Get().(*commandv1.Command),
+		Command: cmd.Get().(*commandv1.Command),
 		Config:  protoutils.ToStruct(spec.Config),
 	}, nil
 }
