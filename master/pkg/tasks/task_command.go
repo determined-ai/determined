@@ -63,8 +63,6 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken
 
 	res.Environment = s.Config.Environment.ToExpconf()
 
-	res.EnvVars = res.makeEnvVars(nil)
-
 	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
 
 	if shm := s.Config.Resources.ShmSize; shm != nil {

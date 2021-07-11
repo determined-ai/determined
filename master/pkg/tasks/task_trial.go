@@ -127,7 +127,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
-	res.EnvVars = res.makeEnvVars(envVars)
+	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{
 		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),

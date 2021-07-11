@@ -31,44 +31,36 @@ const (
 
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
-	// ExtraArchives returns the files to include in the container for this task
-	// (apart from the base files put into in all containers).
-	ExtraArchives []container.RunArchive
-	// Description returns a brief description of this task.
-	Description string
-	// Entrypoint returns the command and arguments to run in the container for this task.
-	Entrypoint []string
-	// Environment returns the container environment for this task.
-	Environment expconf.EnvironmentConfig
-	// EnvVars returns the environment variables to set for this task (apart from the base ones set for
-	// all containers).
-	EnvVars map[string]string
-	// LoggingFields returns fields to include in each record of structured (i.e., Fluent Bit) logging.
-	LoggingFields map[string]string
-	// Mounts returns the list of Docker mounts to use for this task.
-	Mounts []mount.Mount
-	// ShmSize specifies the shared memory size to allocate to this task's container in bytes (0 for
-	// default behavior).
-	ShmSize int64
-	// UseFluentLogging specifies whether to use Fluent Bit logging (as opposed to native logging).
-	UseFluentLogging bool
-	// UseHostMode indicates whether host mode networking would be desirable for this task.
-	UseHostMode bool
-	//ResourcesConfig returns the resources config of the model
-	ResourcesConfig expconf.ResourcesConfig
+	// Fields set fully by users.
+	MasterCert            *tls.Certificate
+	TaskContainerDefaults model.TaskContainerDefaultsConfig
+	Environment           expconf.EnvironmentConfig
+	ResourcesConfig       expconf.ResourcesConfig
+	Owner                 *model.User
+	AgentUserGroup        *model.AgentUserGroup
+	ShmSize               int64
 
+	// Fields set by tasks with user configuration.
+	ExtraArchives []container.RunArchive
+	ExtraEnvVars  map[string]string
+	Entrypoint    []string
+	Mounts        []mount.Mount
+
+	HarnessPath string
+	// LoggingFields are fields to include in each record of structured (i.e., Fluent Bit) logging.
+	LoggingFields map[string]string
+	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to native logging).
+	UseFluentLogging bool
+	// UseHostMode is whether host mode networking would be desirable for this task.
+	// This is used by Docker only.
+	UseHostMode bool
+	Description string
+
+	ClusterID   string
 	TaskID      string
 	TaskToken   string
 	ContainerID string
 	Devices     []device.Device
-
-	Owner          *model.User
-	AgentUserGroup *model.AgentUserGroup
-
-	ClusterID             string
-	HarnessPath           string
-	TaskContainerDefaults model.TaskContainerDefaultsConfig
-	MasterCert            *tls.Certificate
 }
 
 // Archives returns all the archives.
@@ -84,7 +76,7 @@ func (t *TaskSpec) Archives() []container.RunArchive {
 }
 
 // EnvVars returns all the environment variables.
-func (t TaskSpec) makeEnvVars(extraEnvVars map[string]string) map[string]string {
+func (t TaskSpec) EnvVars() map[string]string {
 	e := map[string]string{
 		// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 		// the user inside the container.
@@ -110,16 +102,16 @@ func (t TaskSpec) makeEnvVars(extraEnvVars map[string]string) map[string]string 
 		e["DET_MASTER_CERT_FILE"] = certPath
 	}
 
-	for k, v := range extraEnvVars {
+	for k, v := range t.ExtraEnvVars {
 		e[k] = v
 	}
 	return e
 }
 
-// ToContainerSpec converts a task spec to a docker container spec.
-func (t *TaskSpec) ToContainerSpec() container.Spec {
+// ToDockerSpec converts a task spec to a docker container spec.
+func (t *TaskSpec) ToDockerSpec() container.Spec {
 	var envVars []string
-	for k, v := range t.EnvVars {
+	for k, v := range t.EnvVars() {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
 	}
 
