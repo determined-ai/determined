@@ -401,9 +401,16 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams) (
 		config = schemas.Merge(config, tc).(expconf.ExperimentConfig)
 	}
 
-	// Merge the appropriate TaskContainerDefaults into the config.
 	resources := schemas.WithDefaults(config).(expconf.ExperimentConfig).Resources()
-	taskSpec := m.makeTaskSpec(resources.ResourcePool(), resources.SlotsPerTrial())
+	poolName, err := sproto.GetResourcePool(
+		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
+	if err != nil {
+		return nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
+	}
+
+	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
+	taskSpec := *m.taskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 	// Merge in the master's checkpoint storage into the config.

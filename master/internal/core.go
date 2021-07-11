@@ -97,21 +97,12 @@ func (m *Master) getConfig(echo.Context) (interface{}, error) {
 	return m.config.Printable()
 }
 
-// makeTaskSpec is the master method that we will pass around as a tasks.MakeTaskSpecFn.  It's
-// behavior is deterministic for the lifetime of the master process.
-func (m *Master) makeTaskSpec(poolName string, numSlots int) tasks.TaskSpec {
+func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDefaultsConfig {
 	// Always fall back to the top-level TaskContainerDefaults
 	taskContainerDefaults := m.config.TaskContainerDefaults
 
 	// Only look for pool settings with Agent resource managers.
 	if m.config.ResourceManager.AgentRM != nil {
-		if poolName == "" {
-			if numSlots == 0 {
-				poolName = m.config.ResourceManager.AgentRM.DefaultAuxResourcePool
-			} else {
-				poolName = m.config.ResourceManager.AgentRM.DefaultComputeResourcePool
-			}
-		}
 		// Iterate through configured pools looking for a TaskContainerDefaults setting.
 		for _, pool := range m.config.ResourcePools {
 			if poolName == pool.PoolName {
@@ -122,12 +113,7 @@ func (m *Master) makeTaskSpec(poolName string, numSlots int) tasks.TaskSpec {
 			}
 		}
 	}
-
-	// Not a deep copy, but deep enough not to overwrite the master's TaskContainerDefaults.
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
-
-	return taskSpec
+	return taskContainerDefaults
 }
 
 // Info returns this master's information.

@@ -65,7 +65,7 @@ func (a *agents) createAgentActor(
 		ctx.Log().Info("resource pool is empty; using default resource pool: default")
 		resourcePool = "default"
 	}
-	if err := sproto.ValidateRP(ctx.Self().System(), resourcePool); err != nil {
+	if err := sproto.ValidateResourcePool(ctx.Self().System(), resourcePool); err != nil {
 		return nil, errors.Wrapf(err, "cannot find specified resource pool for agent %s", id)
 	}
 	ref, ok := ctx.ActorOf(id, &agent{

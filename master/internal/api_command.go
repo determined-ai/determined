@@ -53,10 +53,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 ) {
 	var err error
 
-	// Must get the user and the agent user group
+	// Validate the user and get the agent user group.
 	user, _, err := grpcutil.GetUser(ctx, a.m.db)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to get the user: %s", err)
+		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
 	agentUserGroup, err := a.m.db.AgentUserGroup(user.ID)
 	if err != nil {
@@ -71,86 +71,57 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		agentUserGroup = &a.m.config.Security.DefaultTask
 	}
 
-	// Get the full configuration.
 	var configBytes []byte
 	if req.Config != nil {
 		configBytes, err = protojson.Marshal(req.Config)
 		if err != nil {
 			return nil, status.Errorf(
-				codes.Internal, "failed to parse config %s: %s", configBytes, err)
+				codes.InvalidArgument, "failed to parse config %s: %s", configBytes, err)
 		}
 	}
 
+	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
-	taskSpec := a.m.makeTaskSpec(resources.ResourcePool, resources.Slots)
+	poolName, err := sproto.GetResourcePool(
+		a.m.system, resources.ResourcePool, resources.Slots, true)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	// Get the base TaskSpec.
+	taskContainerDefaults := a.m.getTaskContainerDefaults(poolName)
+	taskSpec := *a.m.taskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
 	taskSpec.Owner = user
 
+	// Get the full configuration.
 	config := command.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
-				errors.Wrapf(err, "failed to find template: %s", req.TemplateName))
+			return nil, status.Errorf(codes.InvalidArgument,
+				errors.Wrapf(err, "failed to find template: %s", req.TemplateName).Error())
 		}
 		if err := yaml.Unmarshal(template.Config, &config); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
-				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName))
+			return nil, status.Errorf(codes.InvalidArgument,
+				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName).Error())
 		}
 	}
-
 	if len(configBytes) != 0 {
 		dec := json.NewDecoder(bytes.NewBuffer(configBytes))
 		dec.DisallowUnknownFields()
 
 		if err := dec.Decode(&config); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
-				errors.Wrapf(
-					err,
-					"unable to parse the config in the parameters: %s",
-					string(configBytes),
-				))
+			return nil, status.Errorf(codes.InvalidArgument,
+				errors.Wrapf(err,
+					"unable to decode the merged config: %s", string(configBytes)).Error())
 		}
 	}
-
-	// mustBeZeroSlot indicates that this type of command may never use more than
-	// zero slots (as of Jan 2021, this is only Tensorboards). This is important
-	// when building up the config, so that we can route the command to the
-	// correct default resource pool. If the user didn't explicitly set the 'slots' field,
-	// the DefaultConfig will set slots=1. We need to correct that before attempting to fill
-	// in the default resource pool as otherwise we will mistakenly route this CPU task to the
-	// default GPU pool.
+	config.Resources.ResourcePool = poolName
 	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}
-
-	if err := sproto.ValidateRP(a.m.system, config.Resources.ResourcePool); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s",
-			errors.Wrapf(err, "resource pool does not exist: %s", config.Resources.ResourcePool))
-	}
-
-	// If the resource pool isn't set, fill in the default at creation time.
-	if config.Resources.ResourcePool == "" {
-		if config.Resources.Slots == 0 {
-			config.Resources.ResourcePool = sproto.GetDefaultAuxResourcePool(a.m.system)
-		} else {
-			config.Resources.ResourcePool = sproto.GetDefaultComputeResourcePool(a.m.system)
-		}
-	}
-
-	if config.Resources.Slots > 0 {
-		fillable, err := sproto.ValidateRPResources(
-			a.m.system, config.Resources.ResourcePool, config.Resources.Slots)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", errors.Wrapf(
-				err, "failed to check resource pool resources: "))
-		}
-		if !fillable {
-			return nil, api.AsErrBadRequest(
-				"resource request unfulfillable, please try requesting less slots")
-		}
-	}
-
 	if config.Environment.PodSpec == nil {
 		if config.Resources.Slots == 0 {
 			config.Environment.PodSpec = taskSpec.TaskContainerDefaults.CPUPodSpec

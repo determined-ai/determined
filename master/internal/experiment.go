@@ -112,20 +112,14 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	conf := &expModel.Config
 
 	resources := conf.Resources()
-	poolName := resources.ResourcePool()
-	if err := sproto.ValidateRP(master.system, poolName); err != nil {
-		return nil, err
+	poolName, err := sproto.GetResourcePool(
+		master.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot create an experiment")
 	}
-	// If the resource pool isn't set, fill in the default.
-	if poolName == "" {
-		if resources.SlotsPerTrial() == 0 {
-			poolName = sproto.GetDefaultAuxResourcePool(master.system)
-		} else {
-			poolName = sproto.GetDefaultComputeResourcePool(master.system)
-		}
-		resources.SetResourcePool(poolName)
-		conf.SetResources(resources)
-	}
+
+	resources.SetResourcePool(poolName)
+	conf.SetResources(resources)
 
 	method := searcher.NewSearchMethod(conf.Searcher())
 	search := searcher.NewSearcher(
@@ -136,7 +130,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	// will be sent back to their respective trials in experiment prestart. This allows them to
 	// be discarded if we Restore from a snapshot (since they will already exist in the snapshot
 	// and have been accounted for).
-	if _, err := search.InitialOperations(); err != nil {
+	if _, err = search.InitialOperations(); err != nil {
 		return nil, errors.Wrap(err, "failed to generate initial operations")
 	}
 
