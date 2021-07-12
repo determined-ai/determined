@@ -232,6 +232,13 @@ export type Hyperparameters = {
   [keys: string]: Hyperparameters | HyperparameterBase;
 };
 
+/*
+ * Flattened type for nested hyperparameters for easier WebUI usage and consumption.
+ * The nested hyperparameters config currently come through as an implicit nested
+ * dictionary and the way to distinguish a categorical type from a nested hp is the
+ * detected of the property type. Where type is undefined for an implicit dictionary,
+ * otherwise it is a terminal property where it has hp config info.
+ */
 export type HyperparametersFlattened = {
   [keys: string]: Hyperparameter;
 };

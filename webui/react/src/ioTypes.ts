@@ -146,6 +146,12 @@ const ioExpHParam = io.type({
 
 export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
 
+/*
+ * We are unable to create a recursive dictionary type in io-ts,
+ * so until we have JavaScript JSON schema support:
+ *   - temporarily changing to an unknown record
+ *   - use a custom decoder instead of relying on io-ts to decode hp
+ */
 export const ioHyperparameters = io.UnknownRecord;
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
