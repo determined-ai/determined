@@ -38,7 +38,8 @@ html {
   /* Dropdown */
 
   .ant-dropdown-menu {
-    border: solid var(--theme-sizes-border-width)
+    border:
+      solid var(--theme-sizes-border-width)
       var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);
     box-shadow: var(--theme-shadow);
@@ -124,7 +125,8 @@ html {
     width: 0;
   }
   .ant-select-dropdown {
-    border: solid var(--theme-sizes-border-width)
+    border:
+      solid var(--theme-sizes-border-width)
       var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);
     box-shadow: var(--theme-shadow);
@@ -132,8 +134,7 @@ html {
   .ant-select:not(.ant-select-customize-input) .ant-select-selector {
     border-radius: var(--theme-sizes-border-radius);
   }
-  .ant-select-focused.ant-select:not(.ant-select-customize-input)
-    .ant-select-selector {
+  .ant-select-focused.ant-select:not(.ant-select-customize-input) .ant-select-selector {
     box-shadow: var(--theme-focus-shadow);
   }
   .ant-select-multiple {
@@ -141,9 +142,7 @@ html {
       color: rgba(0, 0, 0, 0.65);
       opacity: 1;
     }
-    .ant-select-selector
-      .ant-select-selection-search:first-child
-      .ant-select-selection-search-input {
+    .ant-select-selector .ant-select-selection-search:first-child .ant-select-selection-search-input {
       margin-left: 0;
     }
   }
@@ -182,7 +181,8 @@ html {
   .ant-table-thead > tr > th {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
-    border-width: var(--theme-sizes-border-width)
+    border-width:
+      var(--theme-sizes-border-width)
       var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
     white-space: nowrap;
   }
@@ -190,34 +190,26 @@ html {
     border-left-width: var(--theme-sizes-border-width);
   }
   .ant-table-thead > tr > th:last-child {
-    border-width: var(--theme-sizes-border-width)
+    border-width:
+      var(--theme-sizes-border-width)
       var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
   }
   .ant-table-thead > tr > th:only-child {
     border-width: var(--theme-sizes-border-width);
   }
-  .ant-table-thead
-    > tr
-    > th:hover
-    > .ant-table-filter-column
-    > .ant-table-filter-trigger-container {
+  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
     background-color: var(--theme-colors-monochrome-13);
   }
-  .ant-table-thead
-    > tr
-    > th
-    > .ant-table-filter-column
-    > .ant-table-filter-trigger-container
-    > .ant-table-filter-trigger {
+  .ant-table-thead > tr > th > .ant-table-filter-column > .ant-table-filter-trigger-container > .ant-table-filter-trigger {
     align-items: center;
     display: flex;
     justify-content: center;
   }
-  .ant-table-tbody > tr [class*="tagPlus"] {
+  .ant-table-tbody > tr [class*='tagPlus'] {
     opacity: 0;
     user-select: none;
   }
-  .ant-table-tbody > tr:hover [class*="tagPlus"] {
+  .ant-table-tbody > tr:hover [class*='tagPlus'] {
     opacity: 1;
     user-select: auto;
   }
@@ -228,11 +220,13 @@ html {
     border-width: var(--theme-sizes-border-width) 0;
   }
   .ant-table-tbody > tr > td:first-child {
-    border-width: var(--theme-sizes-border-width) 0
+    border-width:
+      var(--theme-sizes-border-width) 0
       var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   }
   .ant-table-tbody > tr > td:last-child {
-    border-width: var(--theme-sizes-border-width)
+    border-width:
+      var(--theme-sizes-border-width)
       var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
   }
   .ant-table-tbody > tr > td:only-child {
@@ -317,7 +311,8 @@ html {
     background-color: var(--theme-colors-monochrome-17);
     border-color: var(--theme-colors-monochrome-12);
     border-style: solid;
-    border-width: 0 var(--theme-sizes-border-width)
+    border-width:
+      0 var(--theme-sizes-border-width)
       var(--theme-sizes-border-width) var(--theme-sizes-border-width);
   }
   .ant-tabs-card > .ant-tabs-content-holder > .ant-tabs-content {
