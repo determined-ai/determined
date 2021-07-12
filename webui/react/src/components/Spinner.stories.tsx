@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Page from './Page';
-import Spinner from './Spinner';
+import Spinner, { IndicatorUnpositioned } from './Spinner';
 
 export default {
   component: Spinner,
@@ -9,6 +9,11 @@ export default {
 };
 
 export const Default = (): React.ReactNode => <Spinner />;
+
+export const WithTip = (): React.ReactNode => <Spinner
+  indicator={<IndicatorUnpositioned />}
+  tip="Fetching trials."
+/>;
 
 export const FullPageSpinner = (): React.ReactNode => (
   <Spinner spinning={true}>
