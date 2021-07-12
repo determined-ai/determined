@@ -54,4 +54,8 @@ export const columns: ColumnType<TrialItem>[] = [
     key: 'checkpoint',
     title: 'Checkpoint',
   },
+  {
+    key: 'logs',
+    title: 'Logs',
+  },
 ];

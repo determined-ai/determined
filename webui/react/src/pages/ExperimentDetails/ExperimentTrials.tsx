@@ -159,6 +159,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       );
     };
 
+    const logsRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      return <Link
+        external={false}
+        path={paths.trialLogs(record.id, experiment.id)}>Logs</Link>;
+    };
+
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
@@ -169,6 +175,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         column.render = validationRenderer('bestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
         column.render = validationRenderer('latestValidationMetric');
+      } else if (column.key === 'logs') {
+        column.render = logsRenderer;
       }
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
