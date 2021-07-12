@@ -114,6 +114,7 @@ insert the cluster name and S3 bucket name.
            - "autoscaling:DescribeTags"
            - "autoscaling:SetDesiredCapacity"
            - "autoscaling:TerminateInstanceInAutoScalingGroup"
+           - "ec2:DescribeLaunchTemplateVersions"
            Resource: '*'
 
    managedNodeGroups:
