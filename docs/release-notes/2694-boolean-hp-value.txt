@@ -1,6 +1,0 @@
-:orphan:
-
-**Fix**
-
--  Fix an issue with boolean hyperparameter values not being rendered in
-   learning curve table.
