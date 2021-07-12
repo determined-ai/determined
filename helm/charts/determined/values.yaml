@@ -90,7 +90,6 @@ checkpointStorage:
 maxSlotsPerPod:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
-## Do NOT specify a defaultScheduler if using CPU-only clusters.
 # slotType: cpu
 # slotResourceRequests:
   ## Number of cpu units requested for compute slots. Note: since kubernetes may schedule some
