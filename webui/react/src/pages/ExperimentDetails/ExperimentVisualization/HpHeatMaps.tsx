@@ -207,7 +207,7 @@ const HpHeatMaps: React.FC<Props> = ({
     return isExperimentTerminal ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (
-      <div className={css.waiting}>
+      <div>
         <Alert
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot." />
