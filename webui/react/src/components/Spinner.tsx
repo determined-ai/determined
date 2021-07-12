@@ -29,7 +29,8 @@ export const Indicator: React.FC = () => {
 };
 
 const Spinner: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  return <Spin indicator={<Indicator />} {...props}>{props.children}</Spin>;
+  const inidicator = props.tip === undefined ? <Indicator /> : <IndicatorUnpositioned />;
+  return <Spin indicator={inidicator} {...props}>{props.children}</Spin>;
 };
 
 export default Spinner;
