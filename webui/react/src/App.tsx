@@ -18,7 +18,7 @@ import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-import { paths } from './routes/utils';
+import { checkServerAlive, paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -88,6 +88,20 @@ const AppView: React.FC = () => {
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
+
+  useEffect(() => {
+    checkServerAlive().then(isAlive => {
+      if (!isAlive) {
+        notification.warn({
+          btn: <Button type="primary" onClick={refreshPage}>Retry</Button>,
+          description: `We cannot communicate with the server at "${serverAddress()}".
+          Please check firewall or server settings.`,
+          duration: 0,
+          message: 'Server Unreachable',
+        });
+      }
+    });
+  }, []);
 
   return (
     <div className={css.base}>
