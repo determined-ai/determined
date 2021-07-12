@@ -1,24 +1,36 @@
-name: proteins_pytorch_geometric_distributed
+name: proteins_pytorch_geometric_adaptive
 hyperparameters:
-  global_batch_size: 60
+  global_batch_size:
+    type: int
+    minval: 16
+    maxval: 128
   dataset: PROTEINS
-  lr: 0.0005
-  topk_pooling_ratio: 0.8
-  dropout: 0.5
+  lr:
+    type: log
+    base: 10.0
+    minval: -6
+    maxval: -1
+  topk_pooling_ratio:
+    type: double
+    minval: 0.1
+    maxval: 0.9
+  dropout:
+    type: double
+    minval: 0.2
+    maxval: 0.8
   training_records: 890
 records_per_epoch: 890
 min_validation_period:
   epochs: 1
 searcher:
-  name: single
+  name: adaptive_asha
   metric: validation_loss
   max_length:
     epochs: 200
   smaller_is_better: true
+  max_trials: 1000
 entrypoint: model_def:GraphConvTrial
 environment:
   image:
     cpu: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-b06dafb
     gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-b06dafb
-resources:
-  slots_per_trial: 4
