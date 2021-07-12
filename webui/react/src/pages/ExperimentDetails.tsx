@@ -148,7 +148,7 @@ const ExperimentDetails: React.FC = () => {
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!experiment) {
-    return <Spinner />;
+    return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
 
   return (

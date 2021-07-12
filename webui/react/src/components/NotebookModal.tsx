@@ -181,7 +181,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
         Read about notebook settings
         </Link>
       </div>
-      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+      <React.Suspense
+        fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
         <Item
           name="config"
           rules={[

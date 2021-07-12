@@ -137,7 +137,8 @@ const CreateExperimentModal: React.FC<Props> = ({
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
-      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+      <React.Suspense
+        fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
         <MonacoEditor
           height="40vh"
           language="yaml"

@@ -29,7 +29,7 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
   );
 
   if (systemMetrics.isLoading) {
-    return <Spinner spinning={systemMetrics.isLoading} />;
+    return <Spinner spinning={systemMetrics.isLoading} tip="Fetching system metrics..." />;
   } else if (systemMetrics.isEmpty) {
     return <Alert message="No data available." type="warning" />;
   }
