@@ -2,7 +2,7 @@ name: proteins_pytorch_geometric_distributed
 hyperparameters:
   global_batch_size: 60
   dataset: PROTEINS
-  lr: 1.e-3
+  lr: 0.0005
   topk_pooling_ratio: 0.8
   dropout: 0.5
   training_records: 890

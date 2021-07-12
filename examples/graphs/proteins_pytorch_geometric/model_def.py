@@ -6,7 +6,6 @@ from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 from torch.utils.data import random_split
 from torch_geometric.data.dataloader import Collater
 from torch_geometric.datasets import TUDataset
-from torch_geometric.nn import GraphConv, TopKPooling
 from torch_geometric.nn import (
     GraphConv,
     TopKPooling,
