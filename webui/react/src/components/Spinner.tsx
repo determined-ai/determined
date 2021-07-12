@@ -29,8 +29,10 @@ export const Indicator: React.FC = () => {
 };
 
 const Spinner: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  const inidicator = props.tip === undefined ? <Indicator /> : <IndicatorUnpositioned />;
-  return <Spin indicator={inidicator} {...props}>{props.children}</Spin>;
+  // CHECK ME does it affect places where we were using the UnpositionedProps?
+  return <div className={css['center-container']}>
+    <Spin indicator={<IndicatorUnpositioned />} {...props}>{props.children}</Spin>;
+  </div>;
 };
 
 export default Spinner;
