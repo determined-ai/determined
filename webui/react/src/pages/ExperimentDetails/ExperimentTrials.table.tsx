@@ -15,8 +15,10 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'ID',
   },
   {
+    dataIndex: 'state',
     key: V1GetExperimentTrialsRequestSortBy.STATE,
     render: stateRenderer,
+    sorter: true,
     title: 'State',
   },
   {
