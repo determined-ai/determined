@@ -1,27 +1,35 @@
 import { Button, Tooltip } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
+import tableCss from 'components/ResponsiveTable.module.scss';
 import Section from 'components/Section';
 import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { Renderer } from 'components/Table';
+import TableFilterDropdown from 'components/TableFilterDropdown';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import { paths } from 'routes/utils';
 import { getExpTrials } from 'services/api';
-import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
+import {
+  Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
+} from 'services/api-ts-sdk';
+import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
-import { validateDetApiEnum } from 'services/utils';
-import { CheckpointWorkloadExtended, ExperimentBase, Pagination, TrialItem } from 'types';
+import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
+import {
+  CheckpointWorkloadExtended, ExperimentBase, Pagination, RunState, TrialFilters, TrialItem,
+} from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
 
 import { columns as defaultColumns } from './ExperimentTrials.table';
@@ -33,6 +41,9 @@ interface Props {
 const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
+const STORAGE_FILTERS_KEY = 'filters';
+
+const defaultFilters: TrialFilters = { states: undefined };
 
 const defaultSorter: ApiSorter<V1GetExperimentTrialsRequestSortBy> = {
   descend: true,
@@ -42,7 +53,9 @@ const defaultSorter: ApiSorter<V1GetExperimentTrialsRequestSortBy> = {
 const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
+  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ filters, setFilters ] = useState<TrialFilters>(initFilters);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
@@ -125,6 +138,29 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     setSorter(sorter);
   }, [ isUrlParsed, pagination, sorter ]);
 
+  const handleFilterChange = useCallback((filters: TrialFilters): void => {
+    storage.set(STORAGE_FILTERS_KEY, filters);
+    setFilters(filters);
+    setPagination(prev => ({ ...prev, offset: 0 }));
+  }, [ setFilters, storage ]);
+
+  const handleStateFilterApply = useCallback((states: string[]) => {
+    handleFilterChange({ ...filters, states: states.length !== 0 ? states : undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const handleStateFilterReset = useCallback(() => {
+    handleFilterChange({ ...filters, states: undefined });
+  }, [ handleFilterChange, filters ]);
+
+  const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      values={filters.states}
+      onFilter={handleStateFilterApply}
+      onReset={handleStateFilterReset} />
+  ), [ filters.states, handleStateFilterApply, handleStateFilterReset ]);
+
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
 
@@ -169,6 +205,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         column.render = validationRenderer('bestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
         column.render = validationRenderer('latestValidationMetric');
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
+        column.filterDropdown = stateFilterDropdown;
+        column.onHeaderCell = () => filters.states ? { className: tableCss.headerFilterOn } : {},
+        column.filters = ([ 'ACTIVE', 'CANCELED', 'COMPLETED', 'ERROR' ] as RunState[])
+          .map((value) => ({
+            text: <Badge state={value} type={BadgeType.State} />,
+            value,
+          }));
       }
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';
@@ -177,7 +221,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     });
 
     return newColumns;
-  }, [ experiment.config, experiment.id, sorter ]);
+  }, [ experiment.config, experiment.id, sorter, stateFilterDropdown, filters ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
@@ -212,6 +256,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
   const fetchExperimentTrials = useCallback(async () => {
     try {
+      const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
+      console.log(states);
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -219,6 +265,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           offset: pagination.offset,
           orderBy: sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, sorter.key),
+          states: validateDetApiEnumList(Determinedexperimentv1State, states),
         },
         { signal: canceler.signal },
       );
@@ -226,6 +273,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       setTrials(experimentTrials);
       setIsLoading(false);
     } catch (e) {
+      console.error(e);
       handleError({
         message: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
@@ -233,15 +281,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [ experiment.id, canceler, pagination, sorter ]);
+  }, [ experiment.id, canceler, pagination, sorter, filters ]);
 
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
-  // Get new trials based on changes to the pagination and sorter.
+  // Get new trials based on changes to the pagination, sorter and filters.
   useEffect(() => {
     fetchExperimentTrials();
     setIsLoading(true);
-  }, [ fetchExperimentTrials ]);
+  }, [ fetchExperimentTrials, filters, pagination, sorter ]);
 
   useEffect(() => {
     if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
