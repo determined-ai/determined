@@ -15,6 +15,7 @@ import { Renderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { parseUrl } from 'routes/utils';
 import { paths } from 'routes/utils';
 import { getExpTrials } from 'services/api';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
@@ -42,6 +43,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ sorter, setSorter ] = useState(initSorter);
@@ -50,6 +52,78 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
+
+  /*
+   * When filters changes update the page URL.
+   */
+  useEffect(() => {
+    if (!isUrlParsed) return;
+
+    const searchParams = new URLSearchParams;
+    const url = parseUrl(window.location.href);
+
+    // limit
+    searchParams.append('limit', pagination.limit.toString());
+
+    // offset
+    searchParams.append('offset', pagination.offset.toString());
+
+    // sortDesc
+    searchParams.append('sortDesc', sorter.descend ? '1' : '0');
+
+    // sortKey
+    searchParams.append('sortKey', (sorter.key || '') as string);
+
+    window.history.pushState(
+      {},
+      '',
+      url.origin + url.pathname + '?' + searchParams.toString(),
+    );
+  }, [ isUrlParsed, pagination, sorter ]);
+
+  /*
+   * On first load: if filters are specified in URL, override default.
+   */
+  useEffect(() => {
+    if (isUrlParsed) return;
+
+    // If search params are not set, we default to user preferences
+    const url = parseUrl(window.location.href);
+    if (url.search === '') {
+      setIsUrlParsed(true);
+      return;
+    }
+
+    const urlSearchParams = url.searchParams;
+
+    // limit
+    const limit = urlSearchParams.get('limit');
+    if (limit != null && !isNaN(parseInt(limit))) {
+      pagination.limit = parseInt(limit);
+    }
+
+    // offset
+    const offset = urlSearchParams.get('offset');
+    if (offset != null && !isNaN(parseInt(offset))) {
+      pagination.offset = parseInt(offset);
+    }
+
+    // sortDesc
+    const sortDesc = urlSearchParams.get('sortDesc');
+    if (sortDesc != null) {
+      sorter.descend = (sortDesc === '1');
+    }
+
+    // sortKey
+    const sortKey = urlSearchParams.get('sortKey');
+    if (sortKey != null &&
+      Object.values(V1GetExperimentTrialsRequestSortBy).includes(sortKey)) {
+      sorter.key = sortKey as unknown as V1GetExperimentTrialsRequestSortBy;
+    }
+    setIsUrlParsed(true);
+    setPagination(pagination);
+    setSorter(sorter);
+  }, [ isUrlParsed, pagination, sorter ]);
 
   const columns = useMemo(() => {
     const { metric } = experiment.config?.searcher || {};
