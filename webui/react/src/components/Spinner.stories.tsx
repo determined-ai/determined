@@ -10,6 +10,10 @@ export default {
 
 export const Default = (): React.ReactNode => <Spinner />;
 
+export const WithTip = (): React.ReactNode => <Spinner
+  tip="Fetching trials."
+/>;
+
 export const FullPageSpinner = (): React.ReactNode => (
   <Spinner spinning={true}>
     <Page title="Page Title">
