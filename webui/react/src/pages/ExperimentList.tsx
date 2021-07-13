@@ -139,7 +139,7 @@ const ExperimentList: React.FC = () => {
       searchParams.append('user', URL_ALL);
     }
 
-    window.history.pushState(
+    window.history.replaceState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),

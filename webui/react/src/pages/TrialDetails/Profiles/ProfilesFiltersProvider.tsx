@@ -94,7 +94,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
       searchParams.append('gpuUuid', filters.gpuUuid);
     }
 
-    window.history.pushState(
+    window.history.replaceState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
