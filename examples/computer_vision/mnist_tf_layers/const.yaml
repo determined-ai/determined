@@ -1,6 +1,6 @@
 name: mnist_tf_core_to_estimator
 hyperparameters:
-  learning_rate: 1e-3
+  learning_rate: 1.0e-3
   global_batch_size: 64
   n_filters_1: 10
   n_filters_2: 40

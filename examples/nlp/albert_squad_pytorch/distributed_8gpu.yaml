@@ -2,10 +2,10 @@
 name: ALBert_SQuAD_PyTorch_8gpu
 hyperparameters:
     global_batch_size: 16
-    learning_rate: 5e-5
+    learning_rate: 5.0e-5
     model_type: 'albert'
     do_lower_case: true
-    adam_epsilon: 1e-8
+    adam_epsilon: 1.0e-8
     weight_decay: 0
     num_warmup_steps: 1620
     max_seq_length: 384

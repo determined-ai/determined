@@ -1,6 +1,6 @@
 name: deformabledetr_coco_finetune
 hyperparameters:
-    lr: 1e-4
+    lr: 1.0e-4
     lr_backbone_names:
         - backbone.0
     lr_backbone: 0
@@ -9,7 +9,7 @@ hyperparameters:
         - sampling_offsets
     lr_linear_proj_mult: 0.1
     global_batch_size: 2
-    weight_decay: 1e-4
+    weight_decay: 1.0e-4
     lr_drop: 4
     clip_max_norm: 0.1
 

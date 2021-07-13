@@ -4,8 +4,8 @@ data:
   data_file: mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_128_no_top.h5
 
 hyperparameters:
-  learning_rate: 1e-4
-  learning_rate_decay: 1e-6
+  learning_rate: 1.0e-4
+  learning_rate_decay: 1.0e-6
   layer1_dense_size: 16
   global_batch_size: 64
   OUTPUT_CHANNELS: 3

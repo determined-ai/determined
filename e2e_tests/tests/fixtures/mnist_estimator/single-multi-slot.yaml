@@ -1,6 +1,6 @@
 description: mnist-estimator-single
 hyperparameters:
-  learning_rate: 1e-3
+  learning_rate: 1.0e-3
   global_batch_size: 64
   hidden_layer_1: 2500
   hidden_layer_2: 1000
