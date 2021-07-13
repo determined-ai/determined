@@ -9,7 +9,9 @@ The examples here mirror the [question answering examples](https://github.com/hu
 
 ### Configuration Files
 * **squad.yaml**: Experiment configuration for finetuning on SQuAD.
+* **squad_distributed.yaml**: Experiment configuration for finetuning on SQuAD with 8 GPUs.
 * **squad_v2.yaml**: Experiment configuration for finetuning on SQuAD version 2.
+* **squad_v2_albert.yaml**: Experiment configuration for finetuning on SQuAD version 2 with ALBERT.
 * **squad_beam_search.yaml**: Experiment configuration for finetuning on SQuAD with beam search.
 * **squad_v2_beam_search.yaml**: Experiment configuration for finetuning on SQuAD version 2 with beam search.
 
@@ -43,8 +45,12 @@ Mix precision training with Apex Amp can be enabled by setting `use_apex_amp` to
 ## Results
 * Using the provided experiment config `squad.yaml` should yield an F1 score >88 on SQuAD.
 ![SQuAD results](./figures/squad.png)
+* Using the provided experiment config `squad_distributed.yaml` should yield an F1 score ~93 on SQuAD.
+![SQuAD distributed results](./figures/squad_distributed.png)
 * Using the provided experiment config `squad_v2.yaml` should yield an F1 score ~77 on SQuAD version 2.
 ![SQuAD version 2 results](./figures/squad_v2.png)
+* Using the provided experiment config `squad_v2_albert.yaml` should yield an F1 score ~88.3 on SQuAD version 2.
+![SQuAD version 2 ALBERT results](./figures/squad_v2_albert.png)
 * Using the provided experiment config `squad_beam_search.yaml` should yield an F1 score ~92.7 on SQuAD.
 ![SQuAD with beam search results](./figures/squad_beam_search.png)
 * Using the provided experiment config `squad_v2_beam_search.yaml` should yield an F1 score >83 on SQuAD version 2.

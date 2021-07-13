@@ -9,7 +9,7 @@ min_validation_period:
 hyperparameters:
   learning_rate: 0.025
   momentum: 0.9
-  weight_decay: 3e-4
+  weight_decay: 3.0e-4
   train_epochs: 300
   global_batch_size: 96
   init_channels: 36

@@ -24,11 +24,11 @@ from typing import Dict, Union
 
 import data
 import datasets
+import qa_utils
 import transformers
 
 import determined.pytorch as det_torch
 import model_hub.huggingface as hf
-import model_hub.utils as utils
 
 
 class QATrial(hf.BaseTransformerTrial):
@@ -93,29 +93,19 @@ class QATrial(hf.BaseTransformerTrial):
             "squad_v2" if self.data_config.version_2_with_negative else "squad"
         )
 
-        def compute_metrics(predictions):
-            predictions = zip(*predictions)
-            predictions = [utils.expand_like(p) for p in predictions]
-            # We need to add back in columns needed for validation.
-            self.tokenized_datasets["validation"].set_format(
-                type=self.tokenized_datasets["validation"].format["type"],
-                columns=list(self.tokenized_datasets["validation"].features.keys()),
-            )
-            output = self.data_processors.post_processing_function(
-                examples=self.raw_datasets["validation"],
-                features=self.tokenized_datasets["validation"],
-                predictions=predictions,
-                data_args=self.data_config,
-                column_names=self.column_names,
-                prefix="eval",
-                model=self.model,
-            )
-            result = metric.compute(predictions=output.predictions, references=output.label_ids)
-            # Then remove them again so that data collation doesn't break.
-            hf.remove_unused_columns(self.model, self.tokenized_datasets["validation"])
-            return result
-
-        self.reducer = context.experimental.wrap_reducer(compute_metrics, for_training=False)
+        self.reducer = context.experimental.wrap_reducer(
+            functools.partial(
+                qa_utils.compute_metrics,
+                self.data_config,
+                self.column_names,
+                self.data_processors.post_processing_function,
+                self.raw_datasets,
+                self.tokenized_datasets,
+                self.model,
+                metric,
+            ),
+            for_training=False,
+        )
 
     def build_datasets(self) -> Dict[str, Union[datasets.Dataset, datasets.DatasetDict]]:
         tokenized_datasets = {}
@@ -151,13 +141,17 @@ class QATrial(hf.BaseTransformerTrial):
         )
 
     def build_validation_data_loader(self) -> det_torch.DataLoader:
+        # Determined's distributed batch sampler interleaves shards on each GPU slot so
+        # sample i goes to worker with rank i % world_size.  Therefore, we need to re-sort
+        # all the samples once we gather the predictions before computing the validation metric.
         return det_torch.DataLoader(
-            self.tokenized_datasets["validation"],
+            qa_utils.DatasetWithIndex(self.tokenized_datasets["validation"]),
             batch_size=self.context.get_per_slot_batch_size(),
             collate_fn=self.collator,
         )
 
     def evaluate_batch(self, batch: det_torch.TorchData, batch_idx: int) -> Dict:
+        ind = batch.pop("ind")
         outputs = self.model(**batch)
         if isinstance(outputs, dict):
             predictions = tuple(
@@ -166,7 +160,7 @@ class QATrial(hf.BaseTransformerTrial):
         else:
             predictions = outputs[1:].detach().cpu().numpy()
 
-        self.reducer.update(predictions)
+        self.reducer.update((ind.detach().cpu().numpy(), predictions))
         # Although we are returning the empty dictionary below, we will still get the metrics from
         # custom reducer that we passed to the context during initialization.
         return {}

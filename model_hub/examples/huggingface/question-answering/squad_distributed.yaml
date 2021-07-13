@@ -1,44 +1,51 @@
-name: huggingface_clm_trial
+name: huggingface_squad_distributed
 hyperparameters:
-  pretrained_model_name_or_path: gpt2
-  model_mode: causal-lm
+  pretrained_model_name_or_path: bert-large-uncased-whole-word-masking
+  model_mode: question-answering
   use_pretrained_weights: true
   use_apex_amp: false
   cache_dir: null
   # Training Args
-  global_batch_size: 8
-  learning_rate: 5.0e-5
-  adam_epsilon: 1.0e-8
+  global_batch_size: 24
+  learning_rate: 3e-5
+  adam_epsilon: 1e-8
   weight_decay: 0
   lr_scheduler_type: linear
   num_warmup_steps: 0
 data:
-  dataset_name: wikitext
-  dataset_config_name: wikitext-2-raw-v1
+  dataset_name: squad
   train_file: null
   validation_file: null
-  max_seq_length: null
   overwrite_cache: false
-  validation_split_percentage: 5
   preprocessing_num_workers: null
+  max_seq_length: 384
+  pad_to_max_length: true
+  version_2_with_negative: false
+  null_score_diff_threshold: 0
+  doc_stride: 128
+  n_best_size: 20
+  max_answer_length: 30
+  output_dir: /tmp
 # Number of records per epoch differs based on max_seq_length.
-records_per_epoch: 2318
+records_per_epoch: 88524
 min_validation_period:
-  batches: 500
+  batches: 5000
 searcher:
   name: single
-  metric: perplexity
+  metric: f1
   max_length:
-    epochs: 3
-  smaller_is_better: true
+    epochs: 2
+  smaller_is_better: false
 environment:
   image: 
     gpu: determinedai/model-hub-transformers:0.16.3.dev0
 resources:
-  slots_per_trial: 4
+  slots_per_trial: 8
 # We add a bind_mount here so that cached data, tokenized data, and models will be saved to the
 # host_path on the agent instance disk for reuse if the same experiment is run on this instance.
 bind_mounts:
   - host_path: /tmp
     container_path: /root/.cache
-entrypoint: clm_trial:CLMTrial
+  - host_path: /tmp
+    container_path: /tmp
+entrypoint: qa_trial:QATrial

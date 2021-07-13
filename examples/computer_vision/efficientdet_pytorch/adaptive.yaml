@@ -55,7 +55,7 @@ hyperparameters:
   lr_cycle_mul: 1.0
   lr_cycle_limit: 1
   warmup_lr: 0.0001
-  min_lr: 1e-5
+  min_lr: 1.0e-5
   start_epoch: None
   decay_epochs: 30
   warmup_epochs: 5

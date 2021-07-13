@@ -5,7 +5,7 @@ hyperparameters:
     minval: -5.0
     maxval: 1.0
     base: 10.0
-  learning_rate_decay: 1e-6
+  learning_rate_decay: 1.0e-6
   layer1_dropout:
     type: double
     minval: 0.2

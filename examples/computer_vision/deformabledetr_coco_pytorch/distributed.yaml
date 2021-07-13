@@ -2,16 +2,16 @@ name: deformabledetr_coco_distributed
 hyperparameters:
     # These settings match those used in this experiment from the original repo:
     #   https://github.com/fundamentalvision/Deformable-DETR/blob/main/configs/r50_deformable_detr.sh
-    lr: 2e-4
+    lr: 2.0e-4
     lr_backbone_names:
         - backbone.0
-    lr_backbone: 2e-5
+    lr_backbone: 2.0e-5
     lr_linear_proj_names:
         - reference_points
         - sampling_offsets
     lr_linear_proj_mult: 0.1
     global_batch_size: 32
-    weight_decay: 1e-4
+    weight_decay: 1.0e-4
     lr_drop: 40
     clip_max_norm: 0.1
 

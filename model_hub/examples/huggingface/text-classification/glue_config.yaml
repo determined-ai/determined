@@ -18,8 +18,8 @@ hyperparameters:
   use_apex_amp: true
   # Training Args
   global_batch_size: 32
-  learning_rate: 3e-5
-  adam_epsilon: 1e-8
+  learning_rate: 3.0e-5
+  adam_epsilon: 1.0e-8
   weight_decay: 0
   lr_scheduler_type: linear
   num_warmup_steps: 0
@@ -44,7 +44,8 @@ searcher:
     epochs: 3
   smaller_is_better: false
 environment:
-  image: determinedai/model-hub-transformers:0.16.2.dev0
+  image: 
+    gpu: determinedai/model-hub-transformers:0.16.3.dev0
 resources:
   slots_per_trial: 1
 # We add a bind_mount here so that cached data, tokenized data, and models will be saved to the

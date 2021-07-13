@@ -189,14 +189,14 @@ notebook:
 
    $ cat > config.yaml << EOL
    bind_mounts:
-       - host_path: /shared/home/jimmy
-         container_path: /shared/home/jimmy
+     - host_path: /shared/home/jimmy
+       container_path: /shared/home/jimmy
    EOL
    $ det notebook start --config-file config.yaml
 
-To launch a notebook with `det deploy local cluster-up`, a user can add
-the `--auto-bind-mount` flag which mounts the user's home directory into
-the task containers by default:
+To launch a notebook with ``det deploy local cluster-up``, a user can
+add the ``--auto-bind-mount`` flag, which mounts the user's home
+directory into the task containers by default:
 
 .. code::
 

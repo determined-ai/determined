@@ -14,8 +14,8 @@ import {
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName,
-  ExperimentVisualizationType, HpImportanceMap, HpImportanceMetricMap, MetricName, MetricType,
+  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName, ExperimentVisualizationType,
+  HpImportanceMap, HpImportanceMetricMap, MetricName, MetricType, RunState,
 } from 'types';
 import { hasObjectKeys } from 'utils/data';
 import { alphanumericSorter, hpImportanceSorter } from 'utils/sort';
@@ -287,7 +287,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   } else if (!hasLoaded) {
     return <Spinner />;
   } else if (!hasData) {
-    return isExperimentTerminal ? (
+    return (isExperimentTerminal || experiment.state === RunState.Paused) ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (
       <div className={css.waiting}>

@@ -2,10 +2,10 @@
 name: Bert_SQuAD_PyTorch_distributed
 hyperparameters:
     global_batch_size: 96  # per slot batch size = 12
-    learning_rate: 3e-5
+    learning_rate: 3.0e-5
     lr_scheduler_epoch_freq: 1
     model_type: 'bert'
-    adam_epsilon: 1e-8
+    adam_epsilon: 1.0e-8
     weight_decay: 0
     num_warmup_steps: 0
     max_seq_length: 384

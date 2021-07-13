@@ -1,6 +1,3 @@
-{{- if .Values.defaultScheduler}}
-{{- $schedulerType := .Values.defaultScheduler | trim}}
-{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
@@ -10,6 +7,9 @@ preemptionPolicy: Never
 globalDefault: false
 description: "This priority class should be used for Determined system pods only."
 ---
+{{- if .Values.defaultScheduler}}
+{{- $schedulerType := .Values.defaultScheduler | trim}}
+{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:

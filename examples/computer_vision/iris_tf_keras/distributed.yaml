@@ -3,8 +3,8 @@ data:
   train_url: http://download.tensorflow.org/data/iris_training.csv
   test_url: http://download.tensorflow.org/data/iris_test.csv
 hyperparameters:
-  learning_rate: 1e-4
-  learning_rate_decay: 1e-6
+  learning_rate: 1.0e-4
+  learning_rate_decay: 1.0e-6
   layer1_dense_size: 16
   global_batch_size: 30
 resources:

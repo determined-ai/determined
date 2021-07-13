@@ -82,7 +82,7 @@ const TaskList: React.FC = () => {
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ canceler ] = useState(new AbortController());
-  const [ tasks, setTasks ] = useState<CommandTask[]>([]);
+  const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ pagination, setPagination ] = useState<Pagination>(
@@ -95,9 +95,7 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = tasks.map(commandToTask);
-
-  const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
+  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
 
   /*
    * When filters changes update the page URL.
@@ -599,8 +597,8 @@ const TaskList: React.FC = () => {
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
-          loading={!hasLoaded}
           pagination={getFullPaginationConfig(pagination, filteredTasks.length)}
+          loading={tasks === undefined}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
