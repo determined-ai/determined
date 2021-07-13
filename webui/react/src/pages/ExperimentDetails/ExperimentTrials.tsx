@@ -82,8 +82,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   }, [ isUrlParsed, pagination, sorter ]);
 
   /*
-     * On first load: if filters are specified in URL, override default.
-     */
+   * On first load: if filters are specified in URL, override default.
+   */
   useEffect(() => {
     if (isUrlParsed) return;
 

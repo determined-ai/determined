@@ -152,8 +152,8 @@ const TaskList: React.FC = () => {
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
   /*
-     * On first load: if filters are specified in URL, override default.
-     */
+   * On first load: if filters are specified in URL, override default.
+   */
   useEffect(() => {
     if (isUrlParsed) return;
 

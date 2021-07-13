@@ -115,8 +115,8 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
   }, [ isUrlParsed, metrics, pagination, showFilter, sorter ]);
 
   /*
-       * On first load: if filters are specified in URL, override default.
-       */
+   * On first load: if filters are specified in URL, override default.
+   */
   useEffect(() => {
     if (isUrlParsed) return;
 
