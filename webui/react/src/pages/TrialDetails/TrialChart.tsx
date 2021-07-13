@@ -24,6 +24,12 @@ interface Props {
 
 const STORAGE_PATH = 'trial-detail';
 
+const getChartMetricLabel = (metric: MetricName): string => {
+  if (metric.type === 'training') return `[T] ${metric.name}`;
+  if (metric.type === 'validation') return `[V] ${metric.name}`;
+  return metric.name;
+};
+
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
   metricNames,
@@ -75,7 +81,7 @@ const TrialChart: React.FC<Props> = ({
     return {
       axes: [
         { label: 'Batches' },
-        { label: 'Metric Value' },
+        { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
       legend: { show: false },
@@ -86,8 +92,8 @@ const TrialChart: React.FC<Props> = ({
       },
       series: [
         { label: 'Batch' },
-        ...metrics.map((metricName, index) => ({
-          label: metricName.name,
+        ...metrics.map((metric, index) => ({
+          label: getChartMetricLabel(metric),
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,
