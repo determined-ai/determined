@@ -190,16 +190,16 @@ generated for the validation dataset.
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
    :language: python
-   :lines: 91-118
+   :lines: 91-108
 
 We use the metric function associated with the SQuAD dataset from
-`huggingface datasets`_ and apply it to post-processed data in the
-``compute_metrics`` function.
+`huggingface datasets`_ and apply it after post-processing the
+predictions in the ``qa_utils.compute_metrics`` function.
 
 Determined supports parallel evaluation via :ref:`custom reducers
-<pytorch-custom-reducers>`. The ``reducer`` we create in the last line
-will aggregate predictions across all GPUs then apply the
-``compute_metrics`` function to the result.
+<pytorch-custom-reducers>`. The ``reducer`` we created above will
+aggregate predictions across all GPUs then apply the
+``qa_utils.compute_metrics`` function to the result.
 
 *************************************
  Filling in the Rest of PyTorchTrial
@@ -218,7 +218,7 @@ used for training and validation.
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
    :language: python
-   :lines: 146-158
+   :lines: 136-151
 
 There are two things to note:
 
@@ -249,7 +249,7 @@ Finally, we can define the evaluation routine for this example.
 
 .. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/qa_trial.py
    :language: python
-   :lines: 160-172
+   :lines: 153-166
 
 After passing the batch through the model and doing some processing to
 get the predictions, we pass the predictions to ``reducer.update`` to
@@ -268,25 +268,17 @@ docker image with all the necessary dependencies for **transformers**
 with **model-hub**. All provided examples already have this docker image
 specified:
 
-.. code::
+.. literalinclude:: ../../../model_hub/examples/huggingface/question-answering/squad.yaml
+   :language: yaml
+   :lines: 39-40
 
-   environment:
-     image: determined-ai/model-hub-transformers:0.15.2
-
-The docker image is built with the following version of Huggingface
-**transformers** and **datasets**:
-
--  `transformers==4.4.2`
--  `datasets==1.5.0`
-
-We will periodically bump these libraries up to more recent versions and
-create new associated images.
-
-That said, once you create a trial definition using a particular docker
-image, you will not need to upgrade to a new docker image for your code
-to continue working with **model-hub**. Additionally, your code will
-continue to work with that image even if you use it with a more recent
-version of the Determined cluster.
+We periodically bump these libraries up to more recent versions of
+`transformers` and `datasets` so you can access the latest upstream
+features. That said, once you create a trial definition using a
+particular docker image, you will not need to upgrade to a new docker
+image for your code to continue working with **model-hub**.
+Additionally, your code will continue to work with that image even if
+you use it with a more recent version of the Determined cluster.
 
 ************
  Next Steps
