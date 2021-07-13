@@ -78,7 +78,7 @@ const TaskList: React.FC = () => {
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ canceler ] = useState(new AbortController());
-  const [ tasks, setTasks ] = useState<CommandTask[]>([]);
+  const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
@@ -88,9 +88,7 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = tasks.map(commandToTask);
-
-  const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
+  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks(loadedTasks, filters, users || [], search);
@@ -460,7 +458,7 @@ const TaskList: React.FC = () => {
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
-          loading={!hasLoaded}
+          loading={tasks === undefined}
           pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
