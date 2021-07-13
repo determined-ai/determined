@@ -403,8 +403,6 @@ func (c *command) State() State {
 }
 
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
-	serviceAddress := generateServiceAddress(string(c.taskID))
-
 	exitStatus := protoutils.DefaultStringValue
 	if c.exitStatus != nil {
 		exitStatus = *c.exitStatus
@@ -415,7 +413,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		State:          c.State().Proto(),
 		Description:    c.Config.Description,
 		Container:      c.container.Proto(),
-		ServiceAddress: serviceAddress,
+		ServiceAddress: *c.serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
@@ -480,7 +478,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
-		ServiceAddress: fmt.Sprintf(*c.serviceAddress, c.taskID),
+		ServiceAddress: *c.serviceAddress,
 		ExperimentIds:  c.Metadata["experiment_ids"].([]int32),
 		TrialIds:       c.Metadata["trial_ids"].([]int32),
 		Username:       c.Base.Owner.Username,

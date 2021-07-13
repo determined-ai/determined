@@ -78,6 +78,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Validate the resource configuration.
 	resources := model.ParseJustResources(configBytes)
+	if req.MustZeroSlot {
+		resources.Slots = 0
+	}
 	poolName, err := sproto.GetResourcePool(
 		a.m.system, resources.ResourcePool, resources.Slots, true)
 	if err != nil {
