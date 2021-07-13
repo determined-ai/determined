@@ -50,6 +50,7 @@ var (
 
 	trialLogsBatchWaitTime     = 100 * time.Millisecond
 	trialLogsBatchMissWaitTime = time.Second
+	trialLogsTerminationDelay  = 20 * time.Second
 
 	distinctFieldBatchWaitTime = 5 * time.Second
 
@@ -135,7 +136,8 @@ func (a *apiServer) TrialLogs(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
 		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), 20*time.Second),
+		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		false,
 		trialLogsBatchWaitTime,
 		trialLogsBatchMissWaitTime,
 	).Run(resp.Context())
@@ -224,7 +226,8 @@ func (a *apiServer) TrialLogsFields(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
 		onBatch,
-		nil,
+		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		true,
 		distinctFieldBatchWaitTime,
 		distinctFieldBatchWaitTime,
 	).Run(resp.Context())
@@ -459,6 +462,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
+		false,
 		trialProfilerMetricsBatchWaitTime,
 		trialProfilerMetricsBatchMissWaitTime,
 	).Run(resp.Context())
@@ -493,7 +497,8 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
 		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), 10),
+		a.isTrialTerminalFunc(int(req.TrialId), -1),
+		true,
 		TrialAvailableSeriesBatchWaitTime,
 		TrialAvailableSeriesBatchWaitTime,
 	).Run(resp.Context())
@@ -783,7 +788,7 @@ func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.T
 	return func() (bool, error) {
 		state, endTime, err := a.m.db.TrialStatus(trialID)
 		if err != nil ||
-			(model.TerminalStates[state] && endTime.Before(time.Now().Add(-buffer))) {
+			(model.TerminalStates[state] && endTime.Add(buffer).Before(time.Now().UTC())) {
 			return true, err
 		}
 		return false, nil

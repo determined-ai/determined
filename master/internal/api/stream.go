@@ -61,12 +61,13 @@ type TerminationCheckFn func() (bool, error)
 // The type of batches produced by the FetchBatchFn must match those handled by the
 // OnBatchFn or the actor will panic.
 type BatchStreamProcessor struct {
-	req               BatchRequest
-	fetcher           FetchBatchFn
-	process           OnBatchFn
-	terminateCheck    TerminationCheckFn
-	batchWaitTime     time.Duration
-	batchMissWaitTime time.Duration
+	req                    BatchRequest
+	fetcher                FetchBatchFn
+	process                OnBatchFn
+	terminateCheck         TerminationCheckFn
+	alwaysCheckTermination bool
+	batchWaitTime          time.Duration
+	batchMissWaitTime      time.Duration
 }
 
 // NewBatchStreamProcessor creates a new BatchStreamProcessor.
@@ -75,16 +76,18 @@ func NewBatchStreamProcessor(
 	fetcher FetchBatchFn,
 	process OnBatchFn,
 	terminateCheck TerminationCheckFn,
+	alwaysCheckTermination bool,
 	batchWaitTime time.Duration,
 	batchMissWaitTime time.Duration,
 ) *BatchStreamProcessor {
 	return &BatchStreamProcessor{
-		req:               req,
-		fetcher:           fetcher,
-		process:           process,
-		terminateCheck:    terminateCheck,
-		batchWaitTime:     batchWaitTime,
-		batchMissWaitTime: batchMissWaitTime,
+		req:                    req,
+		fetcher:                fetcher,
+		process:                process,
+		terminateCheck:         terminateCheck,
+		alwaysCheckTermination: alwaysCheckTermination,
+		batchWaitTime:          batchWaitTime,
+		batchMissWaitTime:      batchMissWaitTime,
 	}
 }
 
@@ -101,17 +104,6 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			if !p.req.Follow {
 				return nil
 			}
-
-			if p.terminateCheck != nil {
-				terminate, err := p.terminateCheck()
-				switch {
-				case err != nil:
-					return errors.Wrap(err, "failed to check the termination status")
-				case terminate:
-					return nil
-				}
-			}
-
 			t.Reset(p.batchMissWaitTime)
 			miss = true
 		default:
@@ -126,6 +118,15 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			case err != nil:
 				return fmt.Errorf("failed while processing batch: %w", err)
 			case !p.req.Follow && p.req.Limit <= 0:
+				return nil
+			}
+		}
+
+		if (miss || p.alwaysCheckTermination) && p.terminateCheck != nil {
+			switch terminate, err := p.terminateCheck(); {
+			case err != nil:
+				return errors.Wrap(err, "failed to check the termination status")
+			case terminate:
 				return nil
 			}
 		}
