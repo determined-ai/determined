@@ -257,7 +257,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const fetchExperimentTrials = useCallback(async () => {
     try {
       const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
-      console.log(states);
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -273,7 +272,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       setTrials(experimentTrials);
       setIsLoading(false);
     } catch (e) {
-      console.error(e);
       handleError({
         message: `Unable to fetch experiments ${experiment.id} trials.`,
         silent: true,
