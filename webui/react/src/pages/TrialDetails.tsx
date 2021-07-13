@@ -215,7 +215,7 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   if (!trial || !experiment) {
-    return <Spinner />;
+    return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
   return (
