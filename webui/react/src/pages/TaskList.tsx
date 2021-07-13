@@ -597,8 +597,8 @@ const TaskList: React.FC = () => {
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
-          pagination={getFullPaginationConfig(pagination, filteredTasks.length)}
           loading={tasks === undefined}
+          pagination={getFullPaginationConfig(pagination, filteredTasks.length)}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
