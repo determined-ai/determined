@@ -2,10 +2,10 @@ name: detr_coco_distributed
 hyperparameters:
     # These settings match that for the 150 epoch run provided in the original repo:
     #   https://github.com/facebookresearch/detr
-    lr: 1e-4
-    lr_backbone: 1e-5
+    lr: 1.0e-4
+    lr_backbone: 1.0e-5
     global_batch_size: 16
-    weight_decay: 1e-4
+    weight_decay: 1.0e-4
     lr_drop: 100
     clip_max_norm: 0.1
 

@@ -3,11 +3,11 @@ hyperparameters:
     # We will tune learning rate and gradient clipping.
     lr: 
         type: double
-        minval: 1e-5
-        maxval: 1e-4
+        minval: 1.0e-5
+        maxval: 1.0e-4
     lr_backbone: 0
     global_batch_size: 4
-    weight_decay: 1e-4
+    weight_decay: 1.0e-4
     lr_drop: 4
     clip_max_norm: 
         type: double

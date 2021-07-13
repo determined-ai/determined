@@ -46,7 +46,7 @@ hyperparameters:
   clip_gradients_l2_norm: 5
   learning_rate: 0.5
   momentum: 0.9
-  weight_decay: 3e-5
+  weight_decay: 3.0e-5
   # Choices include linear, efficientnet, and cosine
   lr_scheduler: linear
   lr_epochs: 300

@@ -5,7 +5,7 @@ hyperparameters:
     learning_rate: 0.0002
     model_type: 'albert'
     do_lower_case: true
-    adam_epsilon: 1e-8
+    adam_epsilon: 1.0e-8
     weight_decay: 0
     num_warmup_steps: 206
     max_seq_length: 384
