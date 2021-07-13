@@ -203,6 +203,14 @@ variable "port" {
   default = 8080
 }
 
+data "local_file" "master_config_template_default" {
+    filename = "${path.module}/master.yaml.tmpl"
+}
+
+variable "master_config_template" {
+  type = string
+  default = ""
+}
 
 /******************************************
 	Database

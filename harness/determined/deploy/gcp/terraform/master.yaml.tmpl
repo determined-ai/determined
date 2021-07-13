@@ -1,0 +1,54 @@
+checkpoint_storage:
+  type: gcs
+  bucket: {{ .checkpoint_storage.bucket }}
+  save_experiment_best: 0
+  save_trial_best: 1
+  save_trial_latest: 1
+
+db:
+  user: "{{ .db.user }}"
+  password: "{{ .db.password }}"
+  host: "{{ .db.host }}"
+  port: {{ .db.port }}
+  name: "{{ .db.name }}"
+  ssl_mode: "{{ .db.ssl_mode }}"
+  ssl_root_cert: "{{ .db.ssl_root_cert }}"
+
+resource_manager:
+  type: agent
+  default_aux_resource_pool: aux-pool
+  default_compute_resource_pool: compute-pool
+  scheduler:
+    type: {{ .resource_manager.scheduler.type }}
+    {{- if eq .resource_manager.scheduler.type "priority" }}
+    preemption: {{ .resource_manager.scheduler.preemption_enabled }}
+    {{- end }}
+
+resource_pools:
+  - pool_name: aux-pool
+    max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+    provider:
+      instance_type:
+        {{- toYaml .resource_pools.pools.aux_pool.instance_type | nindent 8 }}
+      {{- toYaml .resource_pools.gcp | nindent 6}}
+
+  - pool_name: compute-pool
+    max_aux_containers_per_agent: 0
+    provider:
+      instance_type:
+        {{- toYaml .resource_pools.pools.compute_pool.instance_type | nindent 8 }}
+      cpu_slots_allowed: true
+      {{- toYaml .resource_pools.gcp | nindent 6}}
+
+{{ if or (or .cpu_env_image .gpu_env_image) .bind_mounts }}
+task_container_defaults:
+  {{- if .bind_mounts }}
+  bind_mounts:
+    {{- toYaml .bind_mounts | nindent 4}}
+  {{- end }}
+  {{- if or .cpu_env_image .gpu_env_image }}
+  image:
+    cpu: {{ .cpu_env_image }}
+    gpu: {{ .gpu_env_image }}
+  {{- end }}
+{{ end }}

@@ -171,6 +171,75 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+  MasterConfigTemplate:
+    Type: String
+    Description: Master config template
+    Default:
+### INJECT CODE: MasterConfigTemplate
+      |
+      checkpoint_storage:
+        type: s3
+        bucket: {{ .checkpoint_storage.bucket }}
+        save_experiment_best: 0
+        save_trial_best: 1
+        save_trial_latest: 1
+
+      db:
+        user: postgres
+        password: "{{ .db.password }}"
+        host: "{{ .db.host }}"
+        port: 5432
+        name: determined
+        ssl_mode: verify-ca
+        ssl_root_cert: /etc/determined/db_ssl_root_cert.pem
+
+      enable_cors: {{ .enable_cors }}
+
+      resource_manager:
+        type: agent
+        default_aux_resource_pool: aux-pool
+        default_compute_resource_pool: compute-pool
+        scheduler:
+          type: {{ .resource_manager.scheduler.type }}
+          {{- if eq .resource_manager.scheduler.type "priority" }}
+          preemption: {{ .resource_manager.scheduler.preemption_enabled }}
+          {{- end }}
+
+      resource_pools:
+        - pool_name: aux-pool
+          max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+          provider:
+            instance_type: {{ .resource_pools.pools.aux_pool.instance_type }}
+            {{- toYaml .resource_pools.aws | nindent 6}}
+
+        - pool_name: compute-pool
+          max_aux_containers_per_agent: 0
+          provider:
+            instance_type: {{ .resource_pools.pools.compute_pool.instance_type }}
+            cpu_slots_allowed: true
+            {{- toYaml .resource_pools.aws | nindent 6}}
+
+      {{ if eq .scheme "https" }}
+      security:
+        tls:
+          cert: /etc/determined/master.crt
+          key: /etc/determined/master.key
+      {{ end }}
+
+      {{ if or (or .cpu_env_image .gpu_env_image) .bind_mounts }}
+      task_container_defaults:
+        {{- if .bind_mounts }}
+        bind_mounts:
+          {{- toYaml .bind_mounts | nindent 4}}
+        {{- end }}
+        {{- if or .cpu_env_image .gpu_env_image }}
+        image:
+          cpu: {{ .cpu_env_image }}
+          gpu: {{ .gpu_env_image }}
+        {{- end }}
+      {{ end }}
+### END INJECT CODE
+
 Conditions:
   UseTLS: !And
     - !Not [!Equals [!Ref MasterTLSCert, ""]]
@@ -661,150 +730,74 @@ Resources:
               base64 -d <<<"${MasterTLSKey}" | tee /usr/local/determined/etc/master.key
             fi
 
-            cat << EOF > /usr/local/determined/etc/master.yaml
+            cat << 'EOF' > /usr/local/determined/etc/master.yaml.tmpl
+            ${MasterConfigTemplate}
+            EOF
+
+            cat << EOF > /usr/local/determined/etc/master.yaml.context
             checkpoint_storage:
-              type: s3
               bucket: ${CheckpointBucket}
-              save_experiment_best: 0
-              save_trial_best: 1
-              save_trial_latest: 1
 
             db:
-              user: postgres
               password: "${DBPassword}"
               host: "${Database.Endpoint.Address}"
-              port: 5432
-              name: determined
-              ssl_mode: verify-ca
-              ssl_root_cert: /etc/determined/etc/db_ssl_root_cert.pem
 
             enable_cors: ${EnableCORS}
 
             resource_manager:
-              type: agent
-              default_aux_resource_pool: aux-pool
-              default_compute_resource_pool: compute-pool
               scheduler:
                 type: ${SchedulerType}
-            EOF
-
-            if [ "${SchedulerType}" = "priority" ]; then
-              cat << EOF >> /usr/local/determined/etc/master.yaml
                 preemption: ${PreemptionEnabled}
 
-            EOF
-            fi
-
-            cat << EOF >> /usr/local/determined/etc/master.yaml
             resource_pools:
-              - pool_name: aux-pool
-                max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
-                provider:
-                  master_cert_name: ${MasterCertName}
-                  iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-                  image_id: ${AgentAmi}
-                  agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
-                  instance_name: determined-agent-${AWS::StackName}
+              pools:
+                aux_pool:
+                  max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                   instance_type: ${AuxAgentInstanceType}
-                  log_group: ${LogGroup}
-                  log_stream: determined-agent
-                  master_url: $scheme://local-ipv4:$port
-                  max_idle_agent_period: ${MaxIdleAgentPeriod}
-                  max_agent_starting_period: ${MaxAgentStartingPeriod}
-                  min_instances: ${MinDynamicAgents}
-                  max_instances: ${MaxDynamicAgents}
-                  spot: ${SpotEnabled}
-                  spot_max_price: "${SpotMaxPrice}"
-                  network_interface:
-                    public_ip: true
-                    security_group_id: ${AgentSecurityGroup.GroupId}
-                    subnet_id: ${Subnet1}
-                  type: aws
-                  root_volume_size: 200
-                  ssh_key_name: ${Keypair}
-                  tag_key: det-${AWS::StackName}
-                  tag_value: det-agent-${AWS::StackName}
-                  startup_script: |
-                    apt-get update
-                    apt-get -y install binutils
-                    git clone https://github.com/aws/efs-utils
-                    cd efs-utils
-                    ./build-deb.sh
-                    apt-get -y install ./build/amazon-efs-utils*deb
-                    mkdir -p /mnt/efs
-                    mount -t efs ${EFS}:/ /mnt/efs
-
-              - pool_name: compute-pool
-                max_aux_containers_per_agent: 0
-                provider:
-                  master_cert_name: ${MasterCertName}
-                  iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-                  image_id: ${AgentAmi}
-                  agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
-                  instance_name: determined-agent-${AWS::StackName}
+                compute_pool:
                   instance_type: ${ComputeAgentInstanceType}
-                  log_group: ${LogGroup}
-                  log_stream: determined-agent
-                  master_url: $scheme://local-ipv4:$port
-                  max_idle_agent_period: ${MaxIdleAgentPeriod}
-                  max_agent_starting_period: ${MaxAgentStartingPeriod}
-                  min_instances: ${MinDynamicAgents}
-                  max_instances: ${MaxDynamicAgents}
-                  spot: ${SpotEnabled}
-                  spot_max_price: "${SpotMaxPrice}"
-                  network_interface:
-                    public_ip: true
-                    security_group_id: ${AgentSecurityGroup.GroupId}
-                    subnet_id: ${Subnet1}
-                  type: aws
-                  root_volume_size: 200
-                  ssh_key_name: ${Keypair}
-                  tag_key: det-${AWS::StackName}
-                  tag_value: det-agent-${AWS::StackName}
-                  cpu_slots_allowed: true
-                  startup_script: |
-                    apt-get update
-                    apt-get -y install binutils
-                    git clone https://github.com/aws/efs-utils
-                    cd efs-utils
-                    ./build-deb.sh
-                    apt-get -y install ./build/amazon-efs-utils*deb
-                    mkdir -p /mnt/efs
-                    mount -t efs ${EFS}:/ /mnt/efs
-            EOF
+              aws:
+                master_cert_name: ${MasterCertName}
+                iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+                image_id: ${AgentAmi}
+                agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
+                instance_name: determined-agent-${AWS::StackName}
+                log_group: /${LogGroupPrefix}/${AWS::StackName}
+                log_stream: determined-agent
+                master_url: $scheme://local-ipv4:$port
+                max_idle_agent_period: ${MaxIdleAgentPeriod}
+                max_agent_starting_period: ${MaxAgentStartingPeriod}
+                min_instances: ${MinDynamicAgents}
+                max_instances: ${MaxDynamicAgents}
+                spot: ${SpotEnabled}
+                spot_max_price: "${SpotMaxPrice}"
+                network_interface:
+                  public_ip: true
+                  security_group_id: ${AgentSecurityGroup.GroupId}
+                  subnet_id: ${Subnet1}
+                type: aws
+                root_volume_size: 200
+                ssh_key_name: ${Keypair}
+                tag_key: det-${AWS::StackName}
+                tag_value: det-agent-${AWS::StackName}
+                startup_script: |
+                  apt-get update
+                  apt-get -y install binutils
+                  git clone https://github.com/aws/efs-utils
+                  cd efs-utils
+                  ./build-deb.sh
+                  apt-get -y install ./build/amazon-efs-utils*deb
+                  mkdir -p /mnt/efs
+                  mount -t efs ${EFS}:/ /mnt/efs
 
-            if [ "$scheme" = https ]; then
-              cat << EOF >> /usr/local/determined/etc/master.yaml
+            scheme: $scheme
+            cpu_env_image: ${CpuEnvImage}
+            gpu_env_image: ${GpuEnvImage}
 
-            security:
-              tls:
-                cert: /etc/determined/master.crt
-                key: /etc/determined/master.key
+            bind_mounts:
+              - host_path: /mnt/efs
+                container_path: /run/determined/workdir/shared_fs
             EOF
-            fi
-
-            cat << EOF >> /usr/local/determined/etc/master.yaml
-            task_container_defaults:
-              bind_mounts:
-                - host_path: /mnt/efs
-                  container_path: /run/determined/workdir/shared_fs
-            EOF
-
-            if [ -n "${CpuEnvImage}" ] || [ -n "${GpuEnvImage}" ]; then
-              cat << EOF >> /usr/local/determined/etc/master.yaml
-              image:
-            EOF
-              if [ -n "${CpuEnvImage}" ]; then
-                cat << EOF >> /usr/local/determined/etc/master.yaml
-                cpu: ${CpuEnvImage}
-            EOF
-              fi
-              if [ -n "${GpuEnvImage}" ]; then
-                cat << EOF >> /usr/local/determined/etc/master.yaml
-                gpu: ${GpuEnvImage}
-            EOF
-              fi
-            fi
 
             apt-get remove docker docker-engine docker.io containerd runc
             apt-get update
@@ -823,12 +816,22 @@ Resources:
             apt-get install -y docker-ce docker-ce-cli containerd.io
 
             curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
-              /usr/local/determined/etc/AmazonRootCA1.pem
+              /usr/local/determined/etc/db_ssl_root_cert.pem
 
             docker network create determined
 
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
+
+            touch /usr/local/determined/etc/master.yaml
+            docker run \
+                --name determined-master-configurator \
+                --rm \
+                -v /usr/local/determined/etc/:/etc/determined/ \
+                --entrypoint /bin/bash \
+                ${ImageRepoPrefix}/determined-master:${Version} \
+                -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
+            test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
 
             docker run \
                 --name determined-master \
@@ -838,10 +841,7 @@ Resources:
                 --log-opt awslogs-group=${LogGroup} \
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
-                -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
-                -v /usr/local/determined/etc/master.crt:/etc/determined/master.crt \
-                -v /usr/local/determined/etc/master.key:/etc/determined/master.key \
-                -v /usr/local/determined/etc/AmazonRootCA1.pem:/etc/determined/etc/db_ssl_root_cert.pem \
+                -v /usr/local/determined/etc/:/etc/determined/ \
                 ${ImageRepoPrefix}/determined-master:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]

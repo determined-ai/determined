@@ -1,0 +1,12 @@
+:orphan:
+
+**New Features**
+
+-  Add the ability to use customizable master configuration templates in ``det deploy aws|gcp``.
+
+-  **Breaking Change:** This version of ``det deploy`` will not be able to deploy previous versions
+   of Determined. If you need to deploy an older version, please use a matching version of
+   `determined` package.
+
+-  **Breaking Change:** ``det master config`` will now output yaml by default instead of json. To
+   preserve the old behaviour, use ``det master config -o json`` instead.
