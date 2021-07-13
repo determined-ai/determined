@@ -29,7 +29,7 @@ export const Indicator: React.FC = () => {
 };
 
 const Spinner: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  return <div className={css['center-container']}>
+  return <div className={css.centerContainer}>
     <Spin
       indicator={props.tip ? <IndicatorUnpositioned /> : <Indicator />}
       {...props}>{props.children}</Spin>
