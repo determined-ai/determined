@@ -1816,7 +1816,7 @@ workflows:
           filters:
             branches:
               only:
-                - non-existing-branch-zxcv7 # to be reverted back to "master"
+                - master
           requires:
             - package-and-push-system-dev
           max-dynamic-agents: 1
