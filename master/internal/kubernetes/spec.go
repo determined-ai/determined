@@ -36,13 +36,28 @@ const (
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
-	return k8sV1.ResourceRequirements{
-		Limits: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
-		Requests: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
+	switch p.slotType {
+	case device.CPU:
+		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
+		return k8sV1.ResourceRequirements{
+			Limits: map[k8sV1.ResourceName]resource.Quantity{
+				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
+			},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{
+				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
+			},
+		}
+	case device.GPU: // default to CUDA-backed slots.
+		fallthrough
+	default:
+		return k8sV1.ResourceRequirements{
+			Limits: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
+		}
 	}
 }
 
@@ -60,7 +75,7 @@ func (p *pod) configureEnvVars(
 	}
 
 	var slotIds []string
-	for i := 0; i < p.gpus; i++ {
+	for i := 0; i < p.slots; i++ {
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
@@ -72,7 +87,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
+	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == device.GPU)
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
@@ -164,7 +179,7 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
 	volumes = append(volumes, hostVolumes...)
 
-	shmSize := p.taskSpec.ShmSize()
+	shmSize := p.taskSpec.ShmSize
 	if shmSize == 0 {
 		shmSize = p.taskSpec.TaskContainerDefaults.ShmSizeBytes
 	}
@@ -182,7 +197,7 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if p.taskSpec.Description() == cmdTask {
+	if p.taskSpec.Description == cmdTask {
 		return
 	}
 
@@ -199,10 +214,10 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	resources := p.taskSpec.ResourcesConfig()
-	var minAvailable int
+	resources := p.taskSpec.ResourcesConfig
+	minAvailable := 0
 
-	if p.taskSpec.Description() == gcTask {
+	if p.taskSpec.Description == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -211,9 +226,12 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
+	}
+
+	if p.slotType != device.GPU {
 		minAvailable = 0
 	} else {
-		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.gpus)))
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
 	if newPod.Spec.PriorityClassName == "" {
@@ -299,26 +317,26 @@ func (p *pod) configurePodSpec(
 }
 
 func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
+	deviceType := p.slotType
+	if deviceType == device.ZeroSlot {
+		deviceType = device.CPU
 	}
 
 	spec := p.taskSpec
 
-	runArchives := spec.Archives()
+	runArchives := spec.Archives
 
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
-		ctx, spec.Mounts(), runArchives,
+		ctx, spec.Mounts, runArchives,
 	)
 
-	env := spec.Environment()
+	env := spec.Environment
 
 	for _, port := range env.Ports() {
 		p.ports = append(p.ports, port)
 	}
 
-	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
+	envVars, err := p.configureEnvVars(spec.EnvVars, env, deviceType)
 	if err != nil {
 		return err
 	}
@@ -333,7 +351,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	var sidecars []k8sV1.Container
 	var fluentFiles map[string][]byte
 
-	if spec.UseFluentLogging() {
+	if spec.UseFluentLogging {
 		p.containerNames[model.DeterminedK8FluentContainerName] = true
 		envVars = append(envVars, k8sV1.EnvVar{Name: "DET_K8S_LOG_TO_FILE", Value: "true"})
 
@@ -349,7 +367,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			{"Add", "agent_id k8agent"},
 			{"Add", "container_id " + string(p.container.ID)},
 		}
-		for k, v := range spec.LoggingFields() {
+		for k, v := range spec.LoggingFields {
 			modifyConfig = append(modifyConfig, fluent.ConfigItem{Name: "Add", Value: k + " " + v})
 		}
 
@@ -399,7 +417,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			Name:            model.DeterminedK8FluentContainerName,
 			Command:         fluentArgs,
 			Image:           "fluent/fluent-bit:1.6",
-			ImagePullPolicy: configureImagePullPolicy(spec.Environment()),
+			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
 			SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 			VolumeMounts:    loggingMounts,
 			WorkingDir:      fluentBaseDir,
@@ -408,7 +426,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
-		Command:         spec.Entrypoint(),
+		Command:         spec.Entrypoint,
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
@@ -428,8 +446,9 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 	return nil
 }
 
-func configureUniqueName(t tasks.TaskSpec) string {
-	return fmt.Sprintf("%s-%s-%s", t.Description(), t.TaskID, petName.Generate(2, "-"))
+func configureUniqueName(t tasks.TaskSpec, rank int) string {
+	return fmt.Sprintf("%s-%d-%s-%s",
+		t.Description, rank, t.TaskID, petName.Generate(2, "-"))
 }
 
 func trialNameFromPod(podName string) string {

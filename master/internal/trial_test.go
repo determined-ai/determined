@@ -37,17 +37,14 @@ type mockAllocation struct {
 func (mockAllocation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{}
 }
-func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec) {}
-func (mockAllocation) Kill(ctx *actor.Context)                       {}
+func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {}
+func (mockAllocation) Kill(ctx *actor.Context)                                 {}
 
 func TestRendezvousInfo(t *testing.T) {
 	addresses := [][]cproto.Address{
 		{
 			{
 				ContainerPort: 1,
-			},
-			{
-				ContainerPort: MinLocalRendezvousPort + 1,
 			},
 			{
 				ContainerPort: 10,
@@ -62,9 +59,6 @@ func TestRendezvousInfo(t *testing.T) {
 		{
 			{
 				ContainerPort: 200,
-			},
-			{
-				ContainerPort: MinLocalRendezvousPort,
 			},
 			{
 				ContainerPort: 20,
@@ -187,4 +181,62 @@ func TestRendezvousInfo(t *testing.T) {
 			assert.DeepEqual(t, rep, rmsgs[idx])
 		}
 	})
+}
+
+func TestPreemption(t *testing.T) {
+	// Initialize a nil preemption.
+	var p *preemption
+
+	// Watch nil should not panic and return an error.
+	id := uuid.New()
+	_, err := p.watch(watchPreemption{id: id})
+	assert.Error(t, err, "no preemption status available nil preemption")
+
+	// All method on nil should not panic.
+	p.unwatch(unwatchPreemption{id: id})
+	p.preempt()
+	p.close()
+
+	// "task" is allocated.
+	p = newPreemption()
+
+	// real watcher connects
+	id = uuid.New()
+	w, err := p.watch(watchPreemption{id: id})
+	assert.NilError(t, err)
+
+	// should immediately receive initial status.
+	select {
+	case <-w.C:
+		t.Fatal("received preemption but should not have")
+	default:
+	}
+
+	// on preemption, it should also receive status.
+	p.preempt()
+
+	// should receive updated preemption status.
+	select {
+	case <-w.C:
+	default:
+		t.Fatal("did not receive preemption")
+	}
+
+	// preempted preemption unwatching should work.
+	p.unwatch(unwatchPreemption{id})
+
+	// new post-preemption watch connects
+	id = uuid.New()
+	w, err = p.watch(watchPreemption{id: id})
+	assert.NilError(t, err)
+
+	// should immediately receive initial status and initial status should be preemption.
+	select {
+	case <-w.C:
+	default:
+		t.Fatal("preemptionWatcher.C was empty channel (should come with initial status when preempted)")
+	}
+
+	// preempted preemption unwatching should work.
+	p.unwatch(unwatchPreemption{id})
 }

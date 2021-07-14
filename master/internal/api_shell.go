@@ -46,7 +46,7 @@ func (a *apiServer) LaunchShell(
 		Data:         req.Data,
 	})
 	if err != nil {
-		return nil, err
+		return nil, api.APIErr2GRPC(err)
 	}
 
 	shellLaunchReq := command.ShellLaunchRequest{CommandParams: params}

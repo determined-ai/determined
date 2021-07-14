@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 )
 
@@ -122,6 +123,11 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot apply backwards compatibility")
 	}
 
+	configMap, err = applyBindMount(configMap)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid bind mount location")
+	}
+
 	config := internal.DefaultConfig()
 	bs, err := json.Marshal(configMap)
 	if err != nil {
@@ -137,6 +143,47 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 	return config, nil
 }
 
+func applyBindMount(configMap map[string]interface{}) (map[string]interface{}, error) {
+	bindMountField, fieldExists := configMap["auto_bind_mount"]
+	if !fieldExists {
+		return configMap, nil
+	}
+	vBindMount, ok := bindMountField.(string)
+	if !ok {
+		return nil, errors.New("wrong type for bind mount field")
+	}
+
+	if vBindMount != "" {
+		tcd, tcdExisted := configMap["task_container_defaults"]
+		if !tcdExisted {
+			newTCD := make(map[string]interface{})
+			bindMounts := []model.BindMount{
+				{
+					HostPath:      vBindMount,
+					ContainerPath: "/run/determined/workdir/shared_fs",
+				},
+			}
+			newTCD["bind_mounts"] = bindMounts
+			configMap["task_container_defaults"] = newTCD
+		} else {
+			vTCD, ok := tcd.(map[string]interface{})
+			if !ok {
+				return nil, errors.New("wrong type for task_container_defaults field")
+			}
+
+			vTCD["bind_mounts"] = append(
+				vTCD["bind_mounts"].([]model.BindMount),
+				model.BindMount{
+					HostPath:      vBindMount,
+					ContainerPath: "/run/determined/workdir/shared_fs",
+				},
+			)
+		}
+	}
+	delete(configMap, "auto_bind_mount")
+	return configMap, nil
+}
+
 func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {
 	const (
 		defaultVal    = "default"
@@ -146,7 +193,7 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 
 	_, rmExisted := configMap["resource_manager"]
 	_, rpsExisted := configMap["resource_pools"]
-	vSchduler, schedulerExisted := configMap["scheduler"]
+	vScheduler, schedulerExisted := configMap["scheduler"]
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
 	// Ensure we use either the old schema or the new one.
@@ -168,7 +215,7 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 		"type": agentVal,
 	}
 	if schedulerExisted {
-		schedulerMap, ok := vSchduler.(map[string]interface{})
+		schedulerMap, ok := vScheduler.(map[string]interface{})
 		if !ok {
 			return nil, errors.New("wrong type for scheduler field")
 		}

@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // ResourcePool manages the agent and task lifecycles.
@@ -188,7 +188,7 @@ func (rp *ResourcePool) notifyOnStop(
 
 func (rp *ResourcePool) updateScalingInfo() bool {
 	desiredInstanceNum := calculateDesiredNewAgentNum(
-		rp.taskList, rp.slotsPerInstance, rp.config.MaxCPUContainersPerAgent,
+		rp.taskList, rp.slotsPerInstance, rp.config.MaxAuxContainersPerAgent,
 	)
 	agents := make(map[string]sproto.AgentSummary)
 	for _, agentState := range rp.agents {
@@ -269,6 +269,13 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
+	case sproto.ValidateCommandResourcesRequest:
+		fulfillable := true // Default to "true" when unknown.
+		if rp.slotsPerInstance > 0 {
+			fulfillable = rp.slotsPerInstance >= msg.Slots
+		}
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
+
 	default:
 		reschedule = false
 		return actor.ErrUnexpectedMessage(ctx)
@@ -280,7 +287,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
-		rp.agents[msg.Agent] = newAgentState(msg, rp.config.MaxCPUContainersPerAgent)
+		rp.agents[msg.Agent] = newAgentState(msg, rp.config.MaxAuxContainersPerAgent)
 
 	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s on %s", msg.Device.String(), msg.Agent.Address().Local())
@@ -359,7 +366,7 @@ func (c containerAllocation) Summary() sproto.ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
+func (c containerAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
@@ -373,7 +380,7 @@ func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 				State:   cproto.Assigned,
 				Devices: c.devices,
 			},
-			Spec: image.ToContainerSpec(spec),
+			Spec: spec.ToContainerSpec(),
 		},
 	})
 }

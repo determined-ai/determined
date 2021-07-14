@@ -6,12 +6,11 @@ import React, { Dispatch, useCallback, useEffect, useReducer, useState } from 'r
 
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import { NotebookConfig, RawJson, ResourcePool, ResourceType, Template } from 'types';
+import { NotebookConfig, RawJson, ResourcePool, Template } from 'types';
 import { launchNotebook, previewNotebook } from 'utils/task';
 
 import Link from './Link';
 import css from './NotebookModal.module.scss';
-import RadioGroup from './RadioGroup';
 import Spinner from './Spinner';
 
 const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
@@ -21,6 +20,7 @@ const { Item } = Form;
 
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
+const DEFAULT_SLOT_COUNT = 1;
 
 type DispatchFunction =
   (Dispatch<{
@@ -39,14 +39,8 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   const storage = useStorage(STORAGE_PATH);
   const [ state, dispatch ] = useReducer(
     reducer,
-    storage.getWithDefault(STORAGE_KEY, { slots: 1 }),
+    storage.getWithDefault(STORAGE_KEY, { slots: DEFAULT_SLOT_COUNT }),
   );
-
-  useEffect(() => {
-    if (state.type === ResourceType.GPU && (state.slots === undefined || state.slots < 1)) {
-      state.slots = 1;
-    }
-  }, [ state ]);
 
   const storeConfig = useCallback((values: NotebookConfig) => {
     const { name, ...storedValues } = values;
@@ -78,9 +72,9 @@ interface FullConfigProps {
 }
 
 interface ResourceInfo {
-  hasCPU: boolean;
-  hasGPU: boolean;
-  showResourceType: boolean;
+  hasAux: boolean;
+  hasCompute: boolean;
+  maxSlots: number | undefined;
 }
 
 const NotebookModal: React.FC<NotebookModalProps> = (
@@ -187,7 +181,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
         Read about notebook settings
         </Link>
       </div>
-      <React.Suspense fallback={<div className={css.loading}><Spinner /></div>}>
+      <React.Suspense
+        fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
         <Item
           name="config"
           rules={[
@@ -240,27 +235,27 @@ const NotebookForm:React.FC<FormProps> = (
   const [ templates, setTemplates ] = useState<Template[]>([]);
   const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
   const [ resourceInfo, setResourceInfo ] = useState<ResourceInfo>(
-    { hasCPU: false, hasGPU: true, showResourceType: true },
+    { hasAux: false, hasCompute: true, maxSlots: DEFAULT_SLOT_COUNT },
   );
 
   const calculateResourceInfo = useCallback((selectedPoolName: string | undefined) => {
     const selectedPool = resourcePools.find(pool => pool.name === selectedPoolName);
     if (!selectedPool) {
-      return { hasCPU: false, hasGPU: false, showResourceType: true };
+      return { hasAux: false, hasCompute: false, maxSlots: 0 };
     }
-    const hasCPUCapacity = selectedPool.cpuContainerCapacityPerAgent > 0;
-    const hasGPUCapacity = selectedPool.slotsAvailable > 0
+    const hasAuxCapacity = selectedPool.auxContainerCapacityPerAgent > 0;
+    const hasComputeCapacity = selectedPool.slotsAvailable > 0
       || (!!selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0);
-    if (hasCPUCapacity && !hasGPUCapacity) {
-      onChange({ key: 'type', value: ResourceType.CPU });
+    const maxSlots = hasComputeCapacity ?
+      (selectedPool.slotsPerAgent && selectedPool.slotsPerAgent > 0 ?
+        selectedPool.slotsPerAgent : undefined) : 0;
+    if (hasAuxCapacity && !hasComputeCapacity) {
       onChange({ key: 'slots', value: 0 });
-    } else if (!hasCPUCapacity && hasGPUCapacity) {
-      onChange({ key: 'type', value: ResourceType.GPU });
     }
     return {
-      hasCPU: hasCPUCapacity,
-      hasGPU: hasGPUCapacity,
-      showResourceType: hasCPUCapacity && hasGPUCapacity,
+      hasAux: hasAuxCapacity,
+      hasCompute: hasComputeCapacity,
+      maxSlots: maxSlots,
     };
   }, [ onChange, resourcePools ]);
 
@@ -319,27 +314,16 @@ const NotebookForm:React.FC<FormProps> = (
               <Option key={pool.name} value={pool.name}>{pool.name}</Option>)}
           </Select>}
         label="Resource Pool" />
-      {resourceInfo.showResourceType &&
-    <LabelledLine
-      content = {
-        <RadioGroup
-          options={[ { id: ResourceType.CPU, label: ResourceType.CPU },
-            { id: ResourceType.GPU, label: ResourceType.GPU } ]}
-          value={fields.type}
-          onChange={(value) => {
-            onChange({ key: 'type', value: value });
-            onChange({ key: 'slots', value: value === ResourceType.CPU? 0: fields.slots });
-          }} />}
-      label="Type" />}
-      {fields.type === ResourceType.GPU &&
-    <LabelledLine
-      content = {
-        <InputNumber
-          defaultValue={fields.slots || 1}
-          min={1}
-          value={fields.slots}
-          onChange={(value) => onChange({ key: 'slots', value: value })} />}
-      label="Slots" />
+      {resourceInfo.hasCompute &&
+        <LabelledLine
+          content = {
+            <InputNumber
+              defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
+              max={resourceInfo.maxSlots}
+              min={resourceInfo.hasAux ? 0 : 1}
+              value={fields.slots}
+              onChange={(value) => onChange({ key: 'slots', value: value })} />}
+          label="Slots" />
       }
     </div>
   );

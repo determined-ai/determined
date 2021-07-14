@@ -43,7 +43,7 @@ hyperparameters:
   num_classes: 1000
   learning_rate: 0.5
   momentum: 0.9
-  weight_decay: 3e-5
+  weight_decay: 3.0e-5
   drop_path_prob: 0.0
   drop_prob: 0.0
   label_smoothing_rate: 0.1

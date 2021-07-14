@@ -25,12 +25,8 @@ import (
 )
 
 const (
-	shellSSHDir             = "/run/determined/ssh"
-	shellAuthorizedKeysFile = "/run/determined/ssh/authorized_keys_unmodified"
-	shellSSHDConfigFile     = "/run/determined/ssh/sshd_config"
-	shellHostPrivKeyFile    = "/run/determined/ssh/id_rsa"
-	shellHostPubKeyFile     = "/run/determined/ssh/id_rsa.pub"
-	shellEntrypointScript   = "/run/determined/ssh/shell-entrypoint.sh"
+	shellSSHDConfigFile   = "/run/determined/ssh/sshd_config"
+	shellEntrypointScript = "/run/determined/ssh/shell-entrypoint.sh"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minSshdPort = 3200
 	maxSshdPort = minSshdPort + 299
@@ -93,8 +89,8 @@ func (s *shellManager) processLaunchRequest(
 
 	ctx.Log().Info("creating shell")
 
-	shell := s.newShell(params, keys)
-	if err = check.Validate(shell.config); err != nil {
+	shell := s.newShell(params, &keys)
+	if err = check.Validate(shell.Config); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
@@ -110,7 +106,7 @@ func (s *shellManager) processLaunchRequest(
 
 func (s *shellManager) newShell(
 	params *CommandParams,
-	keyPair ssh.PrivateAndPublicKeys,
+	keyPair *ssh.PrivateAndPublicKeys,
 ) *command {
 	config := params.FullConfig
 
@@ -137,56 +133,40 @@ func (s *shellManager) newShell(
 
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
-	additionalFiles := archive.Archive{
-		params.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			0644,
-			tar.TypeReg,
-		),
-		params.AgentUserGroup.OwnedArchiveItem(
-			shellEntrypointScript,
-			etc.MustStaticFile(etc.ShellEntrypointResource),
-			0700,
-			tar.TypeReg,
-		),
-	}
-
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
-		metadata: map[string]interface{}{
-			"privateKey": string(keyPair.PrivateKey),
-			"publicKey":  string(keyPair.PublicKey),
-		},
+		db: s.db,
 		readinessChecks: map[string]readinessCheck{
 			"shell": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "Server listening on")
 			},
 		},
+		proxyTCP: true,
 
-		serviceAddress: &serviceAddress,
+		generatedKeys: keyPair,
+		CommandSpec: tasks.CommandSpec{
+			Base:      *params.TaskSpec,
+			Config:    *config,
+			UserFiles: params.UserFiles,
+			AdditionalFiles: archive.Archive{
+				params.AgentUserGroup.OwnedArchiveItem(
+					shellEntrypointScript,
+					etc.MustStaticFile(etc.ShellEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+			},
+			Metadata: map[string]interface{}{
+				"privateKey": string(keyPair.PrivateKey),
+				"publicKey":  string(keyPair.PublicKey),
+			},
+		},
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
-		proxyTCP: true,
-
-		db: s.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}
 }

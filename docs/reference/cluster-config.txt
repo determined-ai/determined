@@ -269,9 +269,9 @@ The master supports the following configuration settings:
       specifying a dict with two keys, ``cpu`` and ``gpu``. Default
       values:
 
-      -  ``determinedai/environments:py-3.7-pytorch-1.7-lightning-1.2-tf-2.4-cpu-0.16.0``
+      -  ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2``
          for CPU agents
-      -  ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0``
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``
          for GPU agents.
 
    -  ``force_pull_image``: Defines the default policy for forcibly
@@ -308,7 +308,7 @@ The master supports the following configuration settings:
       daemon. Ignored by resource managers of type ``kubernetes``. See
       :ref:`resources.devices <exp-resources-devices>` for more details.
 
-   -  `bind_mounts`: The default bind mounts to pass to the Docker
+   -  ``bind_mounts``: The default bind mounts to pass to the Docker
       container. Ignored by resource managers of type ``kubernetes``.
       See :ref:`resources.devices <exp-bind-mounts>` for more details.
 
@@ -377,13 +377,17 @@ The master supports the following configuration settings:
             -  ``worst``: The worst-fit policy ensures that tasks will
                be placed on under-utilized agents.
 
-      -  ``default_cpu_resource_pool``: The default resource pool to use
-         for tasks that do not need GPUs. Defaults to ``default`` if no
-         resource pool is specified.
+      -  ``default_aux_resource_pool``: The default resource pool to use
+         for tasks that do not need dedicated compute resources,
+         auxiliary, or systems tasks. Defaults to ``default`` if no
+         resource pool is specified. Prior to 0.16.1, this field was
+         called ``default_cpu_resource_pool``.
 
-      -  ``default_gpu_resource_pool``: The default resource pool to use
-         for tasks that need GPUs. Defaults to ``default`` if no
-         resource pool is specified.
+      -  ``default_compute_resource_pool``: The default resource pool to
+         use for tasks that require compute resources, e.g. GPUs or
+         dedicated CPUs. Defaults to ``default`` if no resource pool is
+         specified. Prior to 0.16.1, this field was called
+         ``default_gpu_resource_pool``.
 
    -  ``type: kubernetes``: The ``kubernetes`` resource manager launches
       tasks on a Kubernetes cluster. The Determined master must be
@@ -396,10 +400,10 @@ The master supports the following configuration settings:
       -  ``namespace``: The namespace where Determined will deploy Pods
          and ConfigMaps.
 
-      -  ``max_slots_per_pod``: Each multi-GPU (distributed training)
+      -  ``max_slots_per_pod``: Each multi-slot (distributed training)
          task will be scheduled as a set of ``slots_per_task /
          max_slots_per_pod`` separate pods, with each pod assigned up to
-         ``max_slots_per_pod`` GPUs. Distributed tasks with sizes that
+         ``max_slots_per_pod`` slots. Distributed tasks with sizes that
          are not divisible by ``max_slots_per_pod`` are never scheduled.
          If you have a cluster of different size nodes, set
          ``max_slots_per_pod`` to the greatest common divisor of all the
@@ -407,6 +411,19 @@ The master supports the following configuration settings:
          other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so
          that all distributed experiments will launch with 4 GPUs per
          pod (with two pods on 8-GPU nodes).
+
+      -  ``slot_type``: Resource type used for compute tasks. Defaults
+         to ``gpu``.
+
+         -  ``slot_type: gpu``: One NVIDIA GPU will be requested per
+            compute slot.
+
+         -  ``slot_type: cpu``: CPU resources will be requested for each
+            compute slot. ``slot_resource_requests.cpu`` option is
+            required to specify the specific amount of the resources.
+
+      -  ``slot_resource_requests``: - ``cpu``: number of kubernetes
+         CPUs to request per compute slot.
 
       -  ``master_service_name``: The service account Determined uses to
          interact with the Kubernetes API.
@@ -422,8 +439,10 @@ The master supports the following configuration settings:
 
    -  ``description``: The description of the resource pool.
 
-   -  ``max_cpu_containers_per_agent``: The maximum number of CPU-only
-      containers that can be scheduled on each agent in this pool.
+   -  ``max_aux_containers_per_agent``: The maximum number of auxiliary
+      or system containers that can be scheduled on each agent in this
+      pool. Prior to 0.16.1, this field was called
+      ``max_cpu_containers_per_agent``.
 
    -  ``task_container_defaults``: Each resource pool may specify a
       ``task_container_defaults`` that overrides the :ref:`top-level
@@ -623,6 +642,12 @@ The master supports the following configuration settings:
             allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
             variants). Defaults to ``p3.8xlarge``.
 
+         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU
+            instance types. When ``true``, and if the instance type
+            doesn't have any GPUs, each instance will provide a single
+            CPU-based compute slot; if it has any GPUs, they'll be used
+            for compute slots instead. Defaults to ``false``.
+
          -  ``spot``: Whether to use spot instances. Defaults to
             ``false``. See :ref:`aws-spot` for more details.
 
@@ -732,6 +757,12 @@ The master supports the following configuration settings:
 
             -  ``preemptible``: Whether to use preemptible dynamic agent
                instances. Defaults to ``false``.
+
+         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU
+            instance types. When ``true``, and if the instance type
+            doesn't have any GPUs, each instance will provide a single
+            CPU-based compute slot; if it has any GPUs, they'll be used
+            for compute slots instead. Defaults to ``false``.
 
          -  ``operation_timeout_period``: The timeout period for
             tracking a GCP operation. This string is a sequence of
@@ -959,8 +990,9 @@ The master supports the following configuration settings:
    NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
 
 -  ``slot_type``: The slot type that should be exposed. Dynamic agents
-   having GPUs will be configured to ``gpu`` while those agents having
-   no GPUs will be configured to ``none``. For static agents this field
+   having GPUs will be configured to ``gpu``, agents without GPUs with
+   ``cpu_slots_allowed: true`` provisioner option will be configured to
+   ``cpu``, and ``none`` otherwise. For static agents this field
    defaults to ``auto``.
 
    -  ``auto``: Automatically detects the slot type. The agent will
@@ -971,6 +1003,8 @@ The master supports the following configuration settings:
       devices.
 
    -  ``gpu``: The agent will map each detected GPU to a slot.
+
+   -  ``cpu``: Map all the CPUs to a slot, even when GPUs are present.
 
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
 

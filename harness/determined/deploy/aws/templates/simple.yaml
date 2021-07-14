@@ -4,36 +4,36 @@ Description: Determined Template
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-09ff2b6ef00accc2e
-      Agent: ami-0efeca825a571ae06
+      Master: ami-0827d8ed0295e3feb
+      Agent: ami-0a5666e5badd0077f
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0b329fb1f17558744
-    #   Agent: ami-0d7f0c8fb6e66cb82
+    #   Master: ami-00bbba67d13faed04
+    #   Agent: ami-036d136ef074d733c
     # ap-southeast-1:
-    #   Master: ami-048b4b1ddefe6759f
-    #   Agent: ami-00245a72bd4a858b3
+    #   Master: ami-0f6565c3d5328c913
+    #   Agent: ami-027eca300b800ddd4
     # ap-southeast-2:
-    #   Master: ami-052a251c7ca533c26
-    #   Agent: ami-07ed444fc10e23a2f
+    #   Master: ami-0a1002150df471b2b
+    #   Agent: ami-0fa75036939155792
     eu-central-1:
-      Master: ami-0d3905203a039e3b0
-      Agent: ami-031db13a810aaedee
+      Master: ami-0bdbe51a2e8070ff2
+      Agent: ami-007c306facb6bf4f4
     eu-west-1:
-      Master: ami-0b7fd7bc9c6fb1c78
-      Agent: ami-069b5f5168bc2188e
+      Master: ami-03caf24deed650e2c
+      Agent: ami-03d9920ed19325433
     # eu-west-2:
-    #   Master: ami-02ead6ecbd926d792
-    #   Agent: ami-0f7b252df6407ea23
+    #   Master: ami-093d303510c432519
+    #   Agent: ami-005b149621ce3dbe9
     us-east-1:
-      Master: ami-04cc2b0ad9e30a9c8
-      Agent: ami-0038750f34e275214
+      Master: ami-0dd76f917833aac4b
+      Agent: ami-0e07a509dbfbd738f
     us-east-2:
-      Master: ami-02fc6052104add5ae
-      Agent: ami-0e8f77ea3a8f326c5
+      Master: ami-0b29b6e62f2343b46
+      Agent: ami-0f0683c726e626465
     us-west-2:
-      Master: ami-0a62a78cfedc09d76
-      Agent: ami-059f637cdef525077
+      Master: ami-01773ce53581acf22
+      Agent: ami-00118c4b9f4d3c23d
 
 Parameters:
   Keypair:
@@ -45,12 +45,12 @@ Parameters:
     Description: Instance Type of Master
     Default: m5.large
 
-  CPUAgentInstanceType:
+  AuxAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the CPU resource pool
     Default: t2.xlarge
 
-  GPUAgentInstanceType:
+  ComputeAgentInstanceType:
     Type: String
     Description: Instance Type of Agent in the GPU resource pool
     Default: p2.8xlarge
@@ -73,14 +73,14 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.16.1.dev0
+    Default: 0.16.3.dev0
 
   DBPassword:
     Type: String
     Description: Password for database (eg. "postgres")
     NoEcho: true
 
-  MaxCPUContainersPerAgent:
+  MaxAuxContainersPerAgent:
     Type: Number
     Description: Maximum number of CPU containers to keep running on agents in the CPU resource pool
     Default: 100
@@ -541,8 +541,8 @@ Resources:
 
             resource_manager:
               type: agent
-              default_cpu_resource_pool: cpu-pool
-              default_gpu_resource_pool: gpu-pool
+              default_aux_resource_pool: aux-pool
+              default_compute_resource_pool: compute-pool
               scheduler:
                 type: ${SchedulerType}
             EOF
@@ -556,15 +556,15 @@ Resources:
 
             cat << EOF >> /usr/local/determined/etc/master.yaml
             resource_pools:
-              - pool_name: cpu-pool
-                max_cpu_containers_per_agent: ${MaxCPUContainersPerAgent}
+              - pool_name: aux-pool
+                max_aux_containers_per_agent: ${MaxAuxContainersPerAgent}
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${CPUAgentInstanceType}
+                  instance_type: ${AuxAgentInstanceType}
                   log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
@@ -584,15 +584,15 @@ Resources:
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
 
-              - pool_name: gpu-pool
-                max_cpu_containers_per_agent: 0
+              - pool_name: compute-pool
+                max_aux_containers_per_agent: 0
                 provider:
                   master_cert_name: ${MasterCertName}
                   iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                   image_id: ${AgentAmi}
                   agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
                   instance_name: determined-agent-${AWS::StackName}
-                  instance_type: ${GPUAgentInstanceType}
+                  instance_type: ${ComputeAgentInstanceType}
                   log_group: /${LogGroupPrefix}/${AWS::StackName}
                   log_stream: determined-agent
                   master_url: $scheme://local-ipv4:$port
@@ -611,6 +611,7 @@ Resources:
                   ssh_key_name: ${Keypair}
                   tag_key: det-${AWS::StackName}
                   tag_value: det-agent-${AWS::StackName}
+                  cpu_slots_allowed: true
             EOF
 
             if [ "$scheme" = https ]; then

@@ -19,6 +19,7 @@ export interface Props {
   resourceStates: ResourceState[];
   showLegends?: boolean;
   size?: ShirtSize;
+  title?: string;
   totalSlots: number;
 }
 
@@ -57,6 +58,7 @@ const SlotAllocationBar: React.FC<Props> = ({
   showLegends,
   className,
   hideHeader,
+  title,
   ...barProps
 }: Props) => {
 
@@ -125,7 +127,7 @@ const SlotAllocationBar: React.FC<Props> = ({
     <div className={classes.join(' ')}>
       {!hideHeader &&
         <div className={css.header}>
-          <header>GPU Slots Allocated</header>
+          <header>{title || 'Compute'} Slots Allocated</header>
           {totalSlots === 0 ? <span>0/0</span> :
             <span>
               {resourceStates.length}/{totalSlots}

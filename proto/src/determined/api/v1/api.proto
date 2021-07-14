@@ -381,6 +381,16 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the best searcher validation for an experiment by the given metric.
+  rpc GetBestSearcherValidationMetric(GetBestSearcherValidationMetricRequest)
+      returns (GetBestSearcherValidationMetricResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/searcher/best_searcher_validation_metric"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 
   // Get a list of checkpoints for an experiment.
   rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest)
@@ -494,13 +504,12 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Stream preemption signals for the given trial. Upon connection a signal is
-  // sent immediately, for synchronization purposes. If it is to preempt, that
-  // will be the only signal and the trial should preempt. Otherwise, the trial
-  // should continue to listen. The only signal ever sent after this will be to
-  // preempt.
+  // Long poll preemption signals for the given trial. If the trial's current
+  // task has been preempted when called, it will return so immediately.
+  // Otherwise, the connection will be kept open until the timeout is reached or
+  // the task is preempted.
   rpc TrialPreemptionSignal(TrialPreemptionSignalRequest)
-      returns (stream TrialPreemptionSignalResponse) {
+      returns (TrialPreemptionSignalResponse) {
     option (google.api.http) = {
       get: "/api/v1/trials/{trial_id}/signals/preemption"
     };
@@ -583,6 +592,17 @@ service Determined {
     option (google.api.http) = {
       post: "/api/v1/trials/{checkpoint_metadata.trial_id}/checkpoint_metadata"
       body: "checkpoint_metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Gather a trial's rendezvous info. Blocks until all trial containers connect
+  // to gather their rendezvous information and responds to them all at once.
+  rpc GetTrialRendezvousInfo(GetTrialRendezvousInfoRequest)
+      returns (GetTrialRendezvousInfoResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{trial_id}/rendezvous_info/{container_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

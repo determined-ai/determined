@@ -17,7 +17,9 @@ spec:
     metadata:
       labels:
         app: determined-db-{{ .Release.Name }}
+        determined-system: db
     spec:
+      priorityClassName: determined-system-priority
       containers:
       - name: determined-db-{{ .Release.Name }}
         image: postgres:10.14

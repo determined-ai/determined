@@ -139,7 +139,7 @@ func (t *tensorboardManager) processLaunchRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	if err := check.Validate(b.config); err != nil {
+	if err := check.Validate(b.Config); err != nil {
 		err = errors.Wrap(err, "failed to validate tensorboard config")
 		return nil, http.StatusBadRequest, err
 	}
@@ -232,6 +232,9 @@ func (t *tensorboardManager) newTensorBoard(
 
 			logBasePath = "s3://" + c.Bucket()
 
+		case expconf.AzureConfig:
+			logBasePath = "azure://" + c.Container()
+
 		case expconf.GCSConfig:
 			logBasePath = "gs://" + c.Bucket()
 
@@ -260,15 +263,15 @@ func (t *tensorboardManager) newTensorBoard(
 		}
 
 		for _, id := range exp.TrialIDs {
-			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
+			trialDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/trial/%d/",
+				logBasePath, params.TaskSpec.ClusterID, exp.ExperimentID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
 	}
 
 	// Get the most recent experiment config as raw json and add it to the container. This
-	// is used to determine if the experiment is backed by S3.
+	// is used for automatically configuring checkpoint storage, registry auth, etc.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
 	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
 	if err != nil {
@@ -317,6 +320,10 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.Environment.Image = model.RuntimeItem{CPU: expConf.Environment().Image().CPU(),
 		GPU: expConf.Environment().Image().GPU()}
+	// Prefer RegistryAuth already present over the one from inferred from the experiment.
+	if config.Environment.RegistryAuth == nil {
+		config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+	}
 
 	var bindMounts []model.BindMount
 
@@ -329,28 +336,31 @@ func (t *tensorboardManager) newTensorBoard(
 	setPodSpec(config, params.TaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:          taskID,
-		config:          *config,
-		userFiles:       params.UserFiles,
-		additionalFiles: additionalFiles,
-		metadata: map[string]interface{}{
-			"experiment_ids": req.ExperimentIDs,
-			"trial_ids":      req.TrialIDs,
-		},
+		db: t.db,
 		readinessChecks: map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
-		serviceAddress: &serviceAddress,
+
+		CommandSpec: tasks.CommandSpec{
+			Base:            *params.TaskSpec,
+			Config:          *config,
+			UserFiles:       params.UserFiles,
+			AdditionalFiles: additionalFiles,
+			Metadata: map[string]interface{}{
+				"experiment_ids": req.ExperimentIDs,
+				"trial_ids":      req.TrialIDs,
+			},
+		},
 		owner: commandOwner{
 			ID:       params.User.ID,
 			Username: params.User.Username,
 		},
-		agentUserGroup: params.AgentUserGroup,
-		taskSpec:       params.TaskSpec,
 
-		db: t.db,
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+		assignedPort:   &port,
 	}, nil
 }
 

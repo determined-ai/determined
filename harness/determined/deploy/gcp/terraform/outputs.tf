@@ -19,11 +19,11 @@ output "B2--Master-Instance-Type" {
 }
 
 output "B3--CPU-Agent-Instance-Type" {
-  value = "               ${var.cpu_agent_instance_type}"
+  value = "           ${var.aux_agent_instance_type}"
 }
 
 output "B3--GPU-Agent-Instance-Type" {
-  value = "               ${var.gpu_agent_instance_type}"
+  value = "           ${var.compute_agent_instance_type}"
 }
 
 output "B4--Min-Number-of-Dynamic-Agents" {
@@ -40,6 +40,14 @@ output "B4--Number-of-Static-Agents" {
 
 output "B5--GPUs-per-Agent" {
   value = "                    ${var.gpu_num}\n"
+}
+
+output "C1--GCS-bucket" {
+  value = "${var.gcs_bucket}"
+}
+
+output "C2--Filestore-address" {
+  value = "${local.filestore_address}\n"
 }
 
 output "NOTE" {

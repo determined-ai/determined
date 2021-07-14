@@ -109,6 +109,8 @@ def master_up(
     db_password: str,
     delete_db: bool,
     autorestart: bool,
+    auto_bind_mount: Optional[str],
+    no_auto_bind_mount: bool,
     cluster_name: str,
 ) -> None:
     command = ["up", "-d"]
@@ -121,6 +123,12 @@ def master_up(
         restart_policy = "unless-stopped"
     else:
         restart_policy = "no"
+    if auto_bind_mount:
+        bind_mount = auto_bind_mount
+    else:
+        bind_mount = str(Path.home())
+    if no_auto_bind_mount:
+        bind_mount = ""
 
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
@@ -129,6 +137,7 @@ def master_up(
         "IMAGE_REPO_PREFIX": image_repo_prefix,
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
+        "DET_AUTO_BIND_MOUNT": bind_mount,
     }
 
     # When master config yaml is provided, we don't provide our own storage path
@@ -170,6 +179,8 @@ def cluster_up(
     delete_db: bool,
     gpu: bool,
     autorestart: bool,
+    auto_bind_mount: Optional[str],
+    no_auto_bind_mount: bool,
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
@@ -182,6 +193,8 @@ def cluster_up(
         db_password=db_password,
         delete_db=delete_db,
         autorestart=autorestart,
+        auto_bind_mount=auto_bind_mount,
+        no_auto_bind_mount=no_auto_bind_mount,
         cluster_name=cluster_name,
     )
     for agent_number in range(num_agents):

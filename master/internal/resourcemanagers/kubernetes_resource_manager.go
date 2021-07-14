@@ -11,7 +11,7 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	image "github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -78,11 +78,16 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.loggingConfig,
 			k.config.LeaveKubernetesResources,
 			k.config.DefaultScheduler,
+			k.config.SlotType,
+			kubernetes.PodSlotResourceRequests{CPU: k.config.SlotResourceRequests.CPU},
 		)
 		k.agent = &agentState{
 			handler:            podsActor,
 			devices:            make(map[device.Device]*cproto.ID),
 			zeroSlotContainers: make(map[cproto.ID]bool),
+			// Expose a fake number here just to signal to the UI
+			// that this RP does support the aux containers.
+			maxZeroSlotContainers: 1,
 		}
 
 	case
@@ -112,11 +117,15 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case sproto.GetDefaultGPUResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: ""})
+	case sproto.GetDefaultComputeResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{PoolName: ""})
 
-	case sproto.GetDefaultCPUResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: ""})
+	case sproto.GetDefaultAuxResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: ""})
+
+	case sproto.ValidateCommandResourcesRequest:
+		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
 	case schedulerTick:
 		if k.reschedule {
@@ -142,22 +151,24 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
+
 	return &resourcepoolv1.ResourcePool{
 		Name:                         kubernetesDummyResourcePool,
 		Description:                  "Kubernetes-managed pool of resources",
 		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
 		NumAgents:                    1,
+		SlotType:                     k.config.SlotType.Proto(),
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
-		CpuContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		CpuContainersRunning:         int32(k.agent.numZeroSlotContainers()),
-		DefaultGpuPool:               true,
-		DefaultCpuPool:               true,
+		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
+		AuxContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		DefaultComputePool:           true,
+		DefaultAuxPool:               true,
 		Preemptible:                  false,
 		MinAgents:                    0,
 		MaxAgents:                    0,
 		SlotsPerAgent:                int32(k.config.MaxSlotsPerPod),
-		CpuContainerCapacityPerAgent: 0,
+		AuxContainerCapacityPerAgent: int32(k.agent.maxZeroSlotContainers),
 		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
 		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
 		Location:                     "kubernetes",
@@ -334,7 +345,7 @@ func (p podAllocation) Summary() sproto.ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
+func (p podAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
@@ -342,6 +353,7 @@ func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
+		Rank:      rank,
 	})
 }
 

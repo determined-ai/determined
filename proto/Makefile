@@ -14,6 +14,11 @@ swagger_in := $(src_path)/api/v1/api.proto
 swagger_out := build/swagger/determined/api/v1/api.swagger.json
 swagger_patch := patches/api.json
 
+go_src_path := ../master/internal
+echo_swagger_source_files := $(shell find $(go_src_path) -type f -name 'core*.go')
+echo_swagger_patch_dir := build/echo-swagger
+echo_swagger_patch := $(echo_swagger_patch_dir)/swagger.json
+
 # Buf image binary
 buf_image := buf.image.bin
 
@@ -30,6 +35,7 @@ get-deps:
 	go install google.golang.org/grpc
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+	go get github.com/swaggo/swag/cmd/swag
 
 build/proto.stamp: $(source_files)
 	rm -rf build/proto pkg
@@ -41,12 +47,21 @@ build/proto.stamp: $(source_files)
 	mv $(build_path) pkg
 	touch $@
 
+$(echo_swagger_patch_dir):
+	mkdir -p $(echo_swagger_patch_dir)
+
+$(echo_swagger_patch): $(echo_swagger_patch_dir) $(echo_swagger_source_files)
+	swag init -g ../master/cmd/determined-master/main.go -d ../master/. -o $(echo_swagger_patch_dir)
+	jq 'del(.swagger, .info)' $(echo_swagger_patch) > $(echo_swagger_patch).tmp
+	mv $(echo_swagger_patch).tmp $(echo_swagger_patch)
+
 build/swagger:
 	mkdir -p build/swagger
 
-$(swagger_out): $(source_files) build/swagger
+$(swagger_out): $(source_files) build/swagger $(echo_swagger_patch)
 	protoc -I src $(swagger_in) --swagger_out=logtostderr=true,json_names_for_fields=true:build/swagger
 	python3 scripts/swagger.py $@ $(swagger_patch)
+	python3 scripts/swagger.py $@ $(echo_swagger_patch)
 
 # Update buf image for breaking change check.
 .PHONY: gen-buf-image
@@ -59,6 +74,8 @@ gen-buf-image:
 check: check-fmt
 	buf lint
 	buf breaking --against $(buf_image)
+	go mod tidy
+	git diff --quiet go.mod go.sum
 
 .PHONY: check-fmt
 check-fmt:

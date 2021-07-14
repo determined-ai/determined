@@ -89,6 +89,14 @@ checkpointStorage:
 # the greatest common divisor of all the sizes (4, in that case).
 maxSlotsPerPod:
 
+## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
+# slotType: cpu
+# slotResourceRequests:
+  ## Number of cpu units requested for compute slots. Note: since kubernetes may schedule some
+  ## system tasks on the nodes which take up some resources, 8-core node may not always fit
+  ## a `cpu: 8` task container.
+  # cpu: 7
+
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
 masterCpuRequest: 2
 masterMemRequest: 8Gi
@@ -158,7 +166,7 @@ telemetry:
       ## directly or using `helm install --set-file logging.security.tls.certificate=<path>`.
       # certificate: <certificate contents>
 
-## Configure the default Determined scheduler 
+## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
 ## scheduling with preemption
 # defaultScheduler: preemption

@@ -2,6 +2,13 @@ from typing import List
 
 
 class RendezvousInfo:
+    """
+    RendezvousInfo was machine identity information that is:
+     - configured as an environment variable in the rendezvous layer
+     - independent of the launch layer
+     - consumed by the launch layer
+    """
+
     def __init__(self, addrs: List[str], rank: int):
         self.addrs = addrs
         self.rank = rank

@@ -94,8 +94,7 @@ type (
 		searcher            *searcher.Searcher
 		warmStartCheckpoint *model.Checkpoint
 
-		agentUserGroup *model.AgentUserGroup
-		taskSpec       *tasks.TaskSpec
+		taskSpec *tasks.TaskSpec
 
 		TrialCurrentOperation map[model.RequestID]searcher.ValidateAfter
 
@@ -120,9 +119,9 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	// If the resource pool isn't set, fill in the default.
 	if poolName == "" {
 		if resources.SlotsPerTrial() == 0 {
-			poolName = sproto.GetDefaultCPUResourcePool(master.system)
+			poolName = sproto.GetDefaultAuxResourcePool(master.system)
 		} else {
-			poolName = sproto.GetDefaultGPUResourcePool(master.system)
+			poolName = sproto.GetDefaultComputeResourcePool(master.system)
 		}
 		resources.SetResourcePool(poolName)
 		conf.SetResources(resources)
@@ -168,6 +167,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	if agentUserGroup == nil {
 		agentUserGroup = &master.config.Security.DefaultTask
 	}
+	taskSpec.AgentUserGroup = agentUserGroup
 
 	return &experiment{
 		Experiment:          expModel,
@@ -179,8 +179,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
-		agentUserGroup: agentUserGroup,
-		taskSpec:       taskSpec,
+		taskSpec: taskSpec,
 
 		TrialCurrentOperation: map[model.RequestID]searcher.ValidateAfter{},
 
@@ -320,16 +319,30 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		ctx.Log().Infof("experiment state changed to %s", e.State)
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
+
+		checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
+			e.Experiment.ID,
+			e.Config.CheckpointStorage().SaveExperimentBest(),
+			e.Config.CheckpointStorage().SaveTrialBest(),
+			e.Config.CheckpointStorage().SaveTrialLatest(),
+			true,
+		)
+		if err != nil {
+			ctx.Log().WithError(err).Error("")
+		}
+
+		taskSpec := *e.taskSpec
+
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			agentUserGroup:     e.agentUserGroup,
-			taskSpec:           e.taskSpec,
-			rm:                 e.rm,
-			db:                 e.db,
-			experiment:         e.Experiment,
-			legacyConfig:       e.Config.AsLegacy(),
-			keepExperimentBest: e.Config.CheckpointStorage().SaveExperimentBest(),
-			keepTrialBest:      e.Config.CheckpointStorage().SaveTrialBest(),
-			keepTrialLatest:    e.Config.CheckpointStorage().SaveTrialLatest(),
+			GCCkptSpec: tasks.GCCkptSpec{
+				Base:         taskSpec,
+				ExperimentID: e.Experiment.ID,
+				LegacyConfig: e.Config.AsLegacy(),
+				ToDelete:     checkpoints,
+			},
+
+			rm: e.rm,
+			db: e.db,
 		})
 
 		if e.State == model.CompletedState {

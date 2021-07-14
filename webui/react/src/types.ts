@@ -52,10 +52,7 @@ export enum ResourceType {
   UNSPECIFIED = 'UNSPECIFIED',
 }
 
-export const resourceTypes: ResourceType[] = [
-  ResourceType.CPU,
-  ResourceType.GPU,
-];
+export const deviceTypes = new Set([ ResourceType.CPU, ResourceType.GPU ]);
 
 export enum ResourceState { // This is almost CommandState
   Unspecified = 'UNSPECIFIED',
@@ -177,7 +174,6 @@ export interface NotebookConfig {
   pool?: string;
   slots?: number;
   template?: string;
-  type?: ResourceType.CPU | ResourceType.GPU
 }
 
 export enum CheckpointStorageType {
@@ -185,6 +181,7 @@ export enum CheckpointStorageType {
   GCS = 'gcs',
   HDFS = 'hdfs',
   S3 = 's3',
+  AZURE = 'azure',
   SharedFS = 'shared_fs',
 }
 
@@ -252,6 +249,7 @@ export interface ExperimentConfig {
     maxSlots?: number;
   };
   searcher: {
+    max_trials?: number;
     metric: string;
     name: ExperimentSearcherName;
     smallerIsBetter: boolean;
@@ -521,11 +519,11 @@ export interface Template {
 }
 
 export interface ResourcePool {
-  cpuContainerCapacity: number;
-  cpuContainerCapacityPerAgent: number;
-  cpuContainersRunning: number;
-  defaultCpuPool: boolean;
-  defaultGpuPool?: boolean;
+  auxContainerCapacity: number;
+  auxContainerCapacityPerAgent: number;
+  auxContainersRunning: number;
+  defaultAuxPool: boolean;
+  defaultComputePool?: boolean;
   description: string;
   details: RPDetails;
   imageId: string;
@@ -538,6 +536,7 @@ export interface ResourcePool {
   preemptible: boolean;
   schedulerFittingPolicy: V1FittingPolicy;
   schedulerType: V1SchedulerType;
+  slotType: ResourceType;
   slotsAvailable: number;
   slotsPerAgent?: number;
   slotsUsed: number;

@@ -1,11 +1,14 @@
 package internal
 
 import (
-	"archive/tar"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/hashicorp/go-multierror"
+
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
@@ -18,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/workload"
 
+	apiutils "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -26,7 +30,6 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/ssh"
@@ -49,28 +52,7 @@ const (
 	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
 
-	trialEntrypointFile = "/run/determined/train/entrypoint.sh"
-	trialEntrypointMode = 0744
-
-	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
-	// important that we don't overwrite the user's host $HOME/.ssh/id_rsa, if the user happens to
-	// mount their host $HOME into the container's $HOME. Since we control the invocation of sshd,
-	// we can keep our sshd_config in a location not likely to be mounted by users.
-	trialAuthorizedKeysFile = "/run/determined/ssh/authorized_keys"
-	trialAuthorizedKeysMode = 0600
-	trialRSAPublicKeyFile   = "/run/determined/ssh/id_rsa.pub"
-	trialRSAPublicKeyMode   = 0600
-	trialRSAPrivateKeyFile  = "/run/determined/ssh/id_rsa"
-	trialRSAPrivateKeyMode  = 0600
-	trialSSHDConfigFile     = "/run/determined/ssh/sshd_config"
-	trialSSHDConfigMode     = 0600
-	trialSSHDir             = "/run/determined/ssh"
-	trialSSHDirMode         = 0700
-
-	// horovodrun controls how ssh is invoked, and we are force to overwrite a default ssh
-	// configuration file.
-	trialSSHConfigFile = "/etc/ssh/ssh_config"
-	trialSSHConfigMode = 0644
+	pushArchitectureEnabled = false
 )
 
 // Trial-specific actor messages.
@@ -105,12 +87,18 @@ type (
 		socket      *websocket.Conn
 	}
 
-	// trialWatchPreemption begins watching if the trial has been preempted.
-	// The trial responds to this message with a channel of bools, where sends of true
-	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
-	// block until you receive _something_ but not until the first preemption).
-	trialWatchPreemption   struct{ id uuid.UUID }
-	trialUnwatchPreemption struct{ id uuid.UUID }
+	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
+	// When all the containers are ready, the trial will send all the
+	// peer addresses on the channel in the response.
+	watchRendezvousInfo   struct{ containerID cproto.ID }
+	rendezvousInfoOrError struct {
+		info *trialv1.RendezvousInfo
+		err  error
+	}
+	rendezvousWatcher struct {
+		C <-chan rendezvousInfoOrError
+	}
+	unwatchRendezvousInfo struct{ containerID cproto.ID }
 )
 
 // Trial-specific external messages.
@@ -206,7 +194,9 @@ type (
 		sequencer *trialWorkloadSequencer
 
 		// The following fields tracks the interaction with the resource providers.
-		task        *sproto.AllocateRequest
+		// The existence of task signifies the trial has requested to be allocated.
+		task *sproto.AllocateRequest
+		// The existence of allocations signifies the trial has been allocated.
 		allocations []sproto.Allocation
 
 		// The following fields tracks containers and their states.
@@ -220,12 +210,14 @@ type (
 		// tracks if allReady check has passed successfully.
 		allReadySucceeded bool
 
-		agentUserGroup *model.AgentUserGroup
-		taskSpec       *tasks.TaskSpec
-		privateKey     []byte
-		publicKey      []byte
+		taskSpec      *tasks.TaskSpec
+		generatedKeys *ssh.PrivateAndPublicKeys
 
-		preemptionWatchers map[uuid.UUID]chan<- bool
+		// preemption represents the preemption state of the current allocated task.
+		// If there is no current task, or it is unallocated, it is nil.
+		preemption *preemption
+		// Map of container ID to watcher ID a rendezvous info listener.
+		rendezvousWatchers map[cproto.ID]chan<- rendezvousInfoOrError
 	}
 )
 
@@ -263,10 +255,9 @@ func newTrial(
 		containerSockets:     make(map[cproto.ID]*actor.Ref),
 		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
 
-		agentUserGroup: exp.agentUserGroup,
-		taskSpec:       exp.taskSpec,
+		taskSpec: exp.taskSpec,
 
-		preemptionWatchers: make(map[uuid.UUID]chan<- bool),
+		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
 	}
 }
 
@@ -298,20 +289,23 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		// the code below this switch statement to handle releasing resources in
 		// the scheduler. This should be refactored into the terminating logic.
 
-	case trialWatchPreemption:
-		// Size 2; at most 2 messages can be sent and we don't want to block or lose them.
-		w := make(chan bool, 2)
-		if t.PendingGracefulTermination || t.experimentState != model.ActiveState {
-			w <- true
-			close(w)
-			ctx.Respond((<-chan bool)(w))
+	case watchPreemption:
+		if resp, err := t.preemption.watch(msg); err != nil {
+			ctx.Respond(err)
 		} else {
-			t.preemptionWatchers[msg.id] = w
-			w <- false
-			ctx.Respond((<-chan bool)(w))
+			ctx.Respond(resp)
 		}
-	case trialUnwatchPreemption:
-		delete(t.preemptionWatchers, msg.id)
+	case unwatchPreemption:
+		t.preemption.unwatch(msg)
+
+	case watchRendezvousInfo:
+		if resp, err := t.registerRendezvousWatcher(ctx, msg); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(resp)
+		}
+	case unwatchRendezvousInfo:
+		delete(t.rendezvousWatchers, msg.containerID)
 
 	case actor.PostStop:
 		if !t.idSet {
@@ -338,7 +332,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if err := t.db.UpdateTrial(t.id, endState); err != nil {
 			ctx.Log().Error(err)
 		}
-		t.preemptWatchers()
 		return nil
 	default:
 		if t.task != nil {
@@ -394,6 +387,35 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func (t *trial) registerRendezvousWatcher(
+	ctx *actor.Context, msg watchRendezvousInfo,
+) (rendezvousWatcher, error) {
+	// Validate this watch request is unique and not stale.
+	if _, ok := t.containerRanks[msg.containerID]; !ok {
+		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
+			"rendezvous request from stale container: %s", msg.containerID,
+		)
+	} else if _, ok := t.rendezvousWatchers[msg.containerID]; ok {
+		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
+			"rendezvous request from already connected container: %s", msg.containerID,
+		)
+	}
+
+	// Channel is size 1 since rendezvous info will only ever be sent once.
+	w := make(chan rendezvousInfoOrError, 1)
+	t.rendezvousWatchers[msg.containerID] = w
+
+	t.lastContainerConnectedTime = time.Now()
+	if !t.allReady() {
+		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
+		ctx.Log().Info("found not all containers are connected")
+	} else {
+		t.pushRendezvous(ctx)
+	}
+
+	return rendezvousWatcher{C: w}, nil
+}
+
 func (t *trial) processOperations(ops []searcher.Operation) {
 	for _, op := range ops {
 		switch op := op.(type) {
@@ -429,12 +451,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 	case actor.ChildFailed:
 		ctx.Log().Info("found child actor failed, terminating forcibly")
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 
 	case killTrial, *apiv1.KillTrialRequest:
 		ctx.Log().Info("received API request to kill trial")
 		t.Killed = true
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 		if ctx.ExpectingResponse() {
 			ctx.Respond(&apiv1.KillTrialResponse{})
 		}
@@ -454,7 +476,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case terminateTimeout:
 		if msg.runID == t.RunID {
 			ctx.Log().Info("forcibly terminating unresponsive trial after timeout expired")
-			t.terminate(ctx, true)
+			t.terminate(ctx)
 		}
 
 	case actor.ChildStopped:
@@ -484,11 +506,11 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 }
 
 func (t *trial) releaseResource(ctx *actor.Context) error {
-	if !t.allReady(ctx) {
+	if !t.allReady() {
 		t.CancelUnready = true
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 	} else {
-		t.terminate(ctx, false)
+		t.preempt(ctx)
 	}
 	return nil
 }
@@ -539,14 +561,13 @@ func (t *trial) processAllocated(
 
 	t.allocations = msg.Allocations
 
-	if len(t.privateKey) == 0 {
+	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
 			ctx.Respond(err)
 			return err
 		}
-		t.privateKey = generatedKeys.PrivateKey
-		t.publicKey = generatedKeys.PublicKey
+		t.generatedKeys = &generatedKeys
 	}
 	if !t.idSet {
 		modelTrial := model.NewTrial(
@@ -557,7 +578,7 @@ func (t *trial) processAllocated(
 			int64(t.create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
-			t.terminate(ctx, true)
+			t.terminate(ctx)
 			return err
 		}
 		t.processID(modelTrial.ID)
@@ -565,7 +586,7 @@ func (t *trial) processAllocated(
 		if t.config.PerformInitialValidation() {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
-				t.terminate(ctx, true)
+				t.terminate(ctx)
 				return err
 			}
 		}
@@ -593,61 +614,28 @@ func (t *trial) processAllocated(
 
 	ctx.Log().Infof("starting trial container: %v", w)
 
-	additionalFiles := archive.Archive{
-		t.agentUserGroup.OwnedArchiveItem(
-			trialEntrypointFile,
-			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
-			trialEntrypointMode,
-			tar.TypeReg,
-		),
-
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
-		t.agentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
-			t.publicKey,
-			trialAuthorizedKeysMode,
-			tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(
-			trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg,
-		),
-		t.agentUserGroup.OwnedArchiveItem(trialSSHDConfigFile,
-			etc.MustStaticFile(etc.SSHDConfigResource),
-			trialSSHDConfigMode,
-			tar.TypeReg,
-		),
-
-		archive.RootItem(
-			trialSSHConfigFile,
-			etc.MustStaticFile(etc.SSHConfigResource),
-			trialSSHConfigMode,
-			tar.TypeReg,
-		),
-	}
 	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
 	if err != nil {
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
+	t.preemption = newPreemption()
+
+	trialSpec := &tasks.TrialSpec{
+		Base: *t.taskSpec,
+
+		ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ModelDefinition:     t.modelDefinition,
+		HParams:             t.create.Hparams,
+		TrialSeed:           t.create.TrialSeed,
+		LatestCheckpoint:    t.sequencer.LatestCheckpoint,
+		InitialWorkload:     w,
+		WorkloadManagerType: t.sequencer.WorkloadManagerType(),
+		IsMultiAgent:        len(t.allocations) > 1,
+	}
+
 	for rank, a := range msg.Allocations {
 		t.containerRanks[a.Summary().ID] = rank
-		taskSpec := *t.taskSpec
-		taskSpec.AgentUserGroup = t.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		taskSpec.SetInner(&tasks.StartTrial{
-			ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
-			ModelDefinition:     t.modelDefinition,
-			HParams:             t.create.Hparams,
-			TrialSeed:           t.create.TrialSeed,
-			LatestCheckpoint:    t.sequencer.LatestCheckpoint,
-			InitialWorkload:     w,
-			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-			AdditionalFiles:     additionalFiles,
-			IsMultiAgent:        len(t.allocations) > 1,
-			Rank:                rank,
-		})
-		a.Start(ctx, taskSpec)
+		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
 	}
 
 	return nil
@@ -751,7 +739,7 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 	default:
 		ctx.Log().Info("terminating gracefully because there are no more workloads")
 		terminateNow = true
-		t.terminate(ctx, false)
+		t.preempt(ctx)
 	}
 
 	// Command the trial runner to do the thing we decided on (if this is not a replay).
@@ -785,11 +773,6 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 }
 
 func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConnected) error {
-	t.lastContainerConnectedTime = time.Now()
-	if len(t.containers) < len(t.allocations) {
-		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
-	}
-
 	// Check to make sure this is not a connection from a stale container.
 	if _, ok := t.containerRanks[msg.ContainerID]; !ok {
 		ctx.Respond(errors.Errorf("socket connection from stale container: %s", msg.ContainerID))
@@ -801,10 +784,13 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	t.containerSockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
 
-	if err := t.pushRendezvous(ctx); err != nil {
-		return errors.Wrap(err, "failed to push rendezvous to trial containers")
+	t.lastContainerConnectedTime = time.Now()
+	if !t.allReady() {
+		ctx.Log().Info("found not all sockets are connected")
+		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
+	} else {
+		t.pushRendezvous(ctx)
 	}
-
 	return nil
 }
 
@@ -829,50 +815,88 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 // message. The two messages are not guaranteed to come in-order. During each run of the
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
-func (t *trial) allReady(ctx *actor.Context) bool {
+func (t *trial) allReady() bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all terminated.
 	if t.allReadySucceeded {
 		return true
 	}
 
-	// Ensure all ContainerStarted messages have arrived.
-	if len(t.containers) < len(t.allocations) {
-		return false
-	}
+	if pushArchitectureEnabled {
+		allAddressesArrived := len(t.containerAddresses) == len(t.allocations)
+		allWaiting := len(t.rendezvousWatchers) == len(t.allocations)
 
-	// Finally, ensure all sockets have connected.
-	t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
+		t.allReadySucceeded = allAddressesArrived && allWaiting
+	} else {
+		// Ensure all ContainerStarted messages have arrived.
+		if len(t.containers) < len(t.allocations) {
+			return false
+		}
+		// Finally, ensure all sockets have connected.
+		t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
+	}
 	return t.allReadySucceeded
 }
 
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (t *trial) pushRendezvous(ctx *actor.Context) error {
-	if !t.allReady(ctx) {
-		ctx.Log().Info("found not all containers are connected")
-		return nil
+func (t *trial) pushRendezvous(ctx *actor.Context) {
+	caddrs, raddrs, err := t.rendezvousInfo(ctx)
+	for _, caddr := range caddrs {
+		c := caddr.container
+		if pushArchitectureEnabled {
+			t.rendezvousWatchers[c.ID] <- rendezvousInfoOrError{
+				info: &trialv1.RendezvousInfo{
+					Addresses: raddrs,
+					Rank:      int32(t.containerRanks[c.ID]),
+				},
+				err: err,
+			}
+			close(t.rendezvousWatchers[c.ID])
+			delete(t.rendezvousWatchers, c.ID)
+		} else {
+			socket := t.containerSockets[c.ID]
+			if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
+				RendezvousInfo: &rendezvousInfoMessage{
+					Addrs: raddrs,
+					Rank:  caddr.ordinal,
+				},
+			}); err != nil {
+				ctx.Log().WithError(err).Error("cannot write to socket")
+			}
+		}
 	}
+}
+
+func (t *trial) closeRendezvous() {
+	for cID, w := range t.rendezvousWatchers {
+		w <- rendezvousInfoOrError{err: errors.New("task terminated")}
+		close(w)
+		delete(t.rendezvousWatchers, cID)
+	}
+}
+
+type cAddress struct {
+	container cproto.Container
+	addresses []cproto.Address
+	ordinal   int
+}
+
+func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error) {
 	ctx.Log().Info("found all containers are connected successfully")
 
-	type CAddress struct {
-		Container cproto.Container
-		Addresses []cproto.Address
-		Ordinal   int
-	}
-
-	var caddrs []CAddress
+	var caddrs []cAddress
 	for k, v := range t.containers {
-		caddr := CAddress{
-			Container: v,
-			Addresses: t.containerAddresses[k],
-			Ordinal:   t.containerRanks[k],
+		caddr := cAddress{
+			container: v,
+			addresses: t.containerAddresses[k],
+			ordinal:   t.containerRanks[k],
 		}
 		caddrs = append(caddrs, caddr)
 
-		sort.Slice(caddr.Addresses, func(i, j int) bool {
-			a := caddr.Addresses[i]
-			b := caddr.Addresses[j]
+		sort.Slice(caddr.addresses, func(i, j int) bool {
+			a := caddr.addresses[i]
+			b := caddr.addresses[j]
 
 			return a.ContainerPort < b.ContainerPort
 		})
@@ -882,49 +906,35 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		a := caddrs[i]
 		b := caddrs[j]
 		switch {
-		case a.Ordinal == 0 && b.Ordinal != 0:
+		case a.ordinal == 0 && b.ordinal != 0:
 			return true
-		case a.Ordinal != 0 && b.Ordinal == 0:
+		case a.ordinal != 0 && b.ordinal == 0:
 			return false
 		default:
-			return a.Container.ID < b.Container.ID
+			return a.container.ID < b.container.ID
 		}
 	})
 
 	var raddrs []string
+	var err *multierror.Error
 	for _, caddr := range caddrs {
 		var addrs []cproto.Address
-		for _, addr := range caddr.Addresses {
+		for _, addr := range caddr.addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort &&
 				addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
 			}
 		}
 
-		if numAddrs := len(addrs); numAddrs == 1 {
+		if len(addrs) == 1 {
 			raddrs = append(raddrs, formatAddress(addrs[0]))
 		} else {
-			ctx.Log().Errorf(
+			err = multierror.Append(err, fmt.Errorf(
 				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
-				numAddrs, caddr.Container.ID, addrs)
+				len(addrs), caddr.container.ID, addrs))
 		}
 	}
-
-	for _, caddr := range caddrs {
-		c := caddr.Container
-		socket := t.containerSockets[c.ID]
-
-		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
-			RendezvousInfo: &rendezvousInfoMessage{
-				Addrs: raddrs,
-				Rank:  caddr.Ordinal,
-			},
-		}); err != nil {
-			ctx.Log().WithError(err).Error("cannot write to socket")
-		}
-	}
-
-	return nil
+	return caddrs, raddrs, err.ErrorOrNil()
 }
 
 func (t *trial) processContainerRunning(
@@ -935,8 +945,10 @@ func (t *trial) processContainerRunning(
 
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	if err := t.pushRendezvous(ctx); err != nil {
-		return errors.Wrap(err, "failed to push rendezvous to trial containers")
+	if !t.allReady() {
+		ctx.Log().Info("found not all containers are connected")
+	} else {
+		t.pushRendezvous(ctx)
 	}
 	return nil
 }
@@ -965,7 +977,7 @@ func (t *trial) processContainerTerminated(
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
 	if !ok || t.containerRanks[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
-		t.terminate(ctx, true)
+		t.terminate(ctx)
 	}
 
 	// If all containers are terminated, the trial is considered terminated.
@@ -1043,22 +1055,32 @@ func (t *trial) trialClosing() bool {
 		model.StoppingStates[t.experimentState]
 }
 
-func (t *trial) terminate(ctx *actor.Context, kill bool) {
+func (t *trial) terminate(ctx *actor.Context) {
 	switch {
 	case len(t.allocations) == 0:
-		ctx.Log().Info("aborting trial before resources are allocated")
+		ctx.Log().Info("aborting trial before resources are allocated in response to kill")
 		t.terminated(ctx)
 		ctx.Tell(ctx.Self(), trialAborted{})
-	case kill:
+	default:
 		ctx.Log().Info("forcibly terminating trial")
 		if t.task != nil && t.allocations != nil {
 			for _, allocation := range t.allocations {
 				allocation.Kill(ctx)
 			}
 		}
+	}
+}
+
+func (t *trial) preempt(ctx *actor.Context) {
+	switch {
+	case len(t.allocations) == 0:
+		ctx.Log().Info("aborting trial before resources are allocated in response to preemption")
+		t.terminated(ctx)
+		ctx.Tell(ctx.Self(), trialAborted{})
 	case !t.PendingGracefulTermination:
 		ctx.Log().Info("gracefully terminating trial")
-		t.MarkPendingGracefulTermination()
+		t.PendingGracefulTermination = true
+		t.preemption.preempt()
 	}
 }
 
@@ -1094,6 +1116,10 @@ func (t *trial) terminated(ctx *actor.Context) {
 			ctx.Log().WithError(err).Error("error delete task session for a trial")
 		}
 	}
+
+	t.preemption.close()
+	t.closeRendezvous()
+
 	t.task = nil
 	t.allocations = nil
 	t.containerRanks = make(map[cproto.ID]int)
@@ -1180,19 +1206,6 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 }
 
-func (t *trial) MarkPendingGracefulTermination() {
-	t.PendingGracefulTermination = true
-	t.preemptWatchers()
-}
-
-func (t *trial) preemptWatchers() {
-	for id, w := range t.preemptionWatchers {
-		w <- true
-		close(w)
-		delete(t.preemptionWatchers, id)
-	}
-}
-
 func (t *trial) Snapshot() (json.RawMessage, error) {
 	sequencerSnapshot, err := t.sequencer.Snapshot()
 	if err != nil {
@@ -1229,4 +1242,76 @@ func (t *trial) tellWithSnapshot(
 		snapshot:  ss,
 	}))
 	return nil
+}
+
+type (
+	// watchPreemption begins watching if the task has been preempted.
+	// The task responds to this message with a channel of bools, where sends of true
+	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
+	// block until you receive _something_ but not until the first preemption).
+	watchPreemption   struct{ id uuid.UUID }
+	preemptionWatcher struct{ C <-chan struct{} }
+	unwatchPreemption struct{ id uuid.UUID }
+
+	// preemption represents the preemption status of a task. A task is assumed to be preempted
+	// exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
+	// preemption. This is nice until we move to trial has many task actors / generic task actor,
+	// where the lifetime of a "preemption" is equivalent to the lifetime of task and they can be
+	// initialized together.
+	preemption struct {
+		preempted bool
+		// Map of watcher ID to a bool indicating if the trial should preempt.
+		watchers map[uuid.UUID]chan<- struct{}
+	}
+)
+
+func newPreemption() *preemption {
+	return &preemption{
+		preempted: false,
+		watchers:  map[uuid.UUID]chan<- struct{}{},
+	}
+}
+
+func (p *preemption) watch(msg watchPreemption) (preemptionWatcher, error) {
+	if p == nil {
+		return preemptionWatcher{}, errors.New("no preemption status available nil preemption")
+	}
+
+	// Size 1; at most a single message can be sent and we don't want to block.
+	w := make(chan struct{}, 1)
+	p.watchers[msg.id] = w
+
+	if p.preempted {
+		w <- struct{}{}
+		close(w)
+		delete(p.watchers, msg.id)
+	}
+
+	return preemptionWatcher{C: w}, nil
+}
+
+func (p *preemption) unwatch(msg unwatchPreemption) {
+	if p == nil {
+		return
+	}
+	delete(p.watchers, msg.id)
+}
+
+func (p *preemption) preempt() {
+	if p == nil {
+		return
+	}
+	p.preempted = true
+	for id, w := range p.watchers {
+		w <- struct{}{}
+		close(w)
+		delete(p.watchers, id)
+	}
+}
+
+func (p *preemption) close() {
+	if p == nil {
+		return
+	}
+	p.preempt()
 }

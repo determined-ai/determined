@@ -93,6 +93,11 @@ Periphery Resources
    for the master; otherwise an ephemeral IP is automatically generated
    by GCP.
 
+-  **Google Filestore**: The Determined cluster can leverage an existing
+   GCS Filestore (assuming it has the correct associated permissions),
+   or the Terraform script can create a Filestore instance with the
+   cluster.
+
 -  **Google Cloud Storage (GCS) bucket**: The Determined cluster can
    leverage an existing GCS bucket (assuming it has the correct
    associated permissions), or the Terraform script can create a bucket

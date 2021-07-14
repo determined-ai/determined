@@ -24,6 +24,7 @@ type CheckpointStorageConfigV0 struct {
 	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config       *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig      *GCSConfigV0      `union:"type,gcs" json:"-"`
+	RawAzureConfig    *AzureConfigV0    `union:"type,azure" json:"-"`
 
 	RawSaveExperimentBest *int `json:"save_experiment_best"`
 	RawSaveTrialBest      *int `json:"save_trial_best"`
@@ -71,6 +72,7 @@ type TensorboardStorageConfigV0 struct {
 	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
 	RawS3Config         *S3ConfigV0       `union:"type,s3" json:"-"`
 	RawGCSConfig        *GCSConfigV0      `union:"type,gcs" json:"-"`
+	RawAzureConfig      *AzureConfigV0    `union:"type,azure" json:"-"`
 }
 
 // Merge implements schemas.Mergeable.
@@ -135,4 +137,30 @@ type S3ConfigV0 struct {
 // GCSConfigV0 configures storing checkpoints on GCS.
 type GCSConfigV0 struct {
 	RawBucket *string `json:"bucket"`
+}
+
+//go:generate ../gen.sh
+// AzureConfigV0 configures storing checkpoints on Azure.
+type AzureConfigV0 struct {
+	RawContainer        *string `json:"container"`
+	RawConnectionString *string `json:"connection_string,omitempty"`
+	RawAccountURL       *string `json:"account_url,omitempty"`
+	RawCredential       *string `json:"credential,omitempty"`
+}
+
+// Merge implements schemas.Mergeable.
+func (a AzureConfigV0) Merge(other interface{}) interface{} {
+	out := AzureConfigV0{}
+	otherConfig := other.(AzureConfigV0)
+	out.RawContainer = schemas.Merge(a.RawContainer, otherConfig.RawContainer).(*string)
+	var credSource AzureConfigV0
+	if a.RawConnectionString != nil || a.RawAccountURL != nil {
+		credSource = a
+	} else {
+		credSource = otherConfig
+	}
+	out.RawConnectionString = schemas.Copy(credSource.RawConnectionString).(*string)
+	out.RawAccountURL = schemas.Copy(credSource.RawAccountURL).(*string)
+	out.RawCredential = schemas.Copy(credSource.RawCredential).(*string)
+	return out
 }

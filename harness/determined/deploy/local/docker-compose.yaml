@@ -25,6 +25,7 @@ services:
       DET_LOG_LEVEL: ${INTEGRATIONS_LOG_LEVEL:-info}
       DET_MASTER_HTTP_PORT: ${INTEGRATIONS_HOST_PORT:-8080}
       DET_DB_PASSWORD: ${DET_DB_PASSWORD}
+      DET_AUTO_BIND_MOUNT: ${DET_AUTO_BIND_MOUNT}
 
 volumes:
   determined-db-volume: {}

@@ -41,3 +41,7 @@ export const roundToPrecision = (n: number, precision = 6): number => {
   const factor = 10 ** precision;
   return Math.round((n + Number.EPSILON) * factor) / factor;
 };
+
+export const clamp = (val: number, min: number, max: number):number => {
+  return Math.max(Math.min(val, max), min);
+};

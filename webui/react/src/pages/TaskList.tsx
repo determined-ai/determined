@@ -4,6 +4,7 @@ import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/int
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
@@ -11,7 +12,7 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import tableCss from 'components/ResponsiveTable.module.scss';
 import {
-  defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE, relativeTimeRenderer,
+  defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE, relativeTimeRenderer,
   stateRenderer, taskIdRenderer, taskNameRenderer, taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
@@ -25,10 +26,11 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { paths } from 'routes/utils';
+import { parseUrl } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ApiSorter } from 'services/types';
 import { ShirtSize } from 'themes';
-import { CommandState, CommandTask, CommandType, TaskFilters } from 'types';
+import { CommandState, CommandTask, CommandType, Pagination, TaskFilters } from 'types';
 import { isEqual } from 'utils/data';
 import {
   alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
@@ -68,6 +70,8 @@ const defaultSorter: ApiSorter = {
   key: 'startTime',
 };
 
+const URL_ALL = 'all';
+
 const STORAGE_PATH = 'task-list';
 const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_SORTER_KEY = 'sorter';
@@ -76,10 +80,14 @@ const TaskList: React.FC = () => {
   const { users } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
+  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ canceler ] = useState(new AbortController());
-  const [ tasks, setTasks ] = useState<CommandTask[]>([]);
+  const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ pagination, setPagination ] = useState<Pagination>(
+    { limit: initFilters.limit, offset: 0 },
+  );
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
@@ -87,9 +95,135 @@ const TaskList: React.FC = () => {
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = tasks.map(commandToTask);
+  const loadedTasks = useMemo(() => tasks?.map(commandToTask) || [], [ tasks ]);
 
-  const hasLoaded = tasks.reduce((acc, src) => acc && !!src, true);
+  /*
+   * When filters changes update the page URL.
+   */
+  useEffect(() => {
+    if (!isUrlParsed) return;
+
+    const searchParams = new URLSearchParams;
+    const url = parseUrl(window.location.href);
+
+    // limit
+    searchParams.append('limit', pagination.limit.toString());
+
+    // offset
+    searchParams.append('offset', pagination.offset.toString());
+
+    // search
+    searchParams.append('search', search);
+
+    // sortDesc
+    searchParams.append('sortDesc', sorter.descend ? '1' : '0');
+
+    // sortKey
+    searchParams.append('sortKey', (sorter.key || '') as string);
+
+    // type
+    if (filters.types && filters.types.length > 0) {
+      filters.types.forEach(type => searchParams.append('type', type));
+    } else {
+      searchParams.append('type', URL_ALL);
+    }
+
+    // states
+    if (filters.states && filters.states.length > 0) {
+      filters.states.forEach(state => searchParams.append('state', state));
+    } else {
+      searchParams.append('state', URL_ALL);
+    }
+
+    // users
+    if (filters.users && filters.users.length > 0) {
+      filters.users.forEach(user => searchParams.append('user', user));
+    } else {
+      searchParams.append('user', URL_ALL);
+    }
+
+    window.history.pushState(
+      {},
+      '',
+      url.origin + url.pathname + '?' + searchParams.toString(),
+    );
+  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+
+  /*
+   * On first load: if filters are specified in URL, override default.
+   */
+  useEffect(() => {
+    if (isUrlParsed) return;
+
+    // If search params are not set, we default to user preferences
+    const url = parseUrl(window.location.href);
+    if (url.search === '') {
+      setIsUrlParsed(true);
+      return;
+    }
+
+    const urlSearchParams = url.searchParams;
+
+    // limit
+    const limit = urlSearchParams.get('limit');
+    if (limit != null && !isNaN(parseInt(limit))) {
+      pagination.limit = parseInt(limit);
+    }
+
+    // offset
+    const offset = urlSearchParams.get('offset');
+    if (offset != null && !isNaN(parseInt(offset))) {
+      pagination.offset = parseInt(offset);
+    }
+
+    // search
+    const search = urlSearchParams.get('search');
+    if (search != null) {
+      setSearch(search);
+    }
+
+    // sortDesc
+    const sortDesc = urlSearchParams.get('sortDesc');
+    if (sortDesc != null) {
+      sorter.descend = (sortDesc === '1');
+    }
+
+    // sortKey
+    const sortKey = urlSearchParams.get('sortKey');
+    if (sortKey != null &&
+      [ 'id', 'type', 'name', 'startTime', 'state', 'resourcePool', 'username' ]
+        .includes(sortKey)) {
+      sorter.key = sortKey as keyof CommandTask;
+    }
+
+    // types
+    const type = urlSearchParams.getAll('type');
+    if (type != null) {
+      filters.types = (type.includes(URL_ALL) ? undefined : type as CommandType[]);
+    }
+
+    // states
+    const state = urlSearchParams.getAll('state');
+    if (state != null) {
+      filters.states = (state.includes(URL_ALL) ? undefined : state);
+    }
+
+    // users
+    const user = urlSearchParams.getAll('user');
+    if (user != null) {
+      filters.users = (user.includes(URL_ALL) ? undefined : user);
+    }
+
+    setFilters(filters);
+    setIsUrlParsed(true);
+    setPagination(pagination);
+    setSorter(sorter);
+  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+
+  useEffect(() => {
+    const limit = pagination.limit;
+    setFilters(filters => { return { ...filters, limit }; });
+  }, [ pagination.limit ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks(loadedTasks, filters, users || [], search);
@@ -173,6 +307,21 @@ const TaskList: React.FC = () => {
   const handleTypeFilterReset = useCallback(() => {
     updateFilters({ ...filters, types: undefined });
   }, [ filters, updateFilters ]);
+
+  const resetFilters = useCallback(() => {
+    updateFilters({ ...defaultFilters, limit: filters.limit });
+  }, [ updateFilters, filters ]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    const filtersToIgnore = new Set([ 'limit' ]);
+    const isInactive = (x: unknown) => x === undefined;
+    Object.entries(filters).forEach(([ key, value ]) => {
+      if (filtersToIgnore.has(key)) return;
+      if (!isInactive(value)) count++;
+    });
+    return count;
+  }, [ filters ]);
 
   const typeFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterDropdown
@@ -415,7 +564,11 @@ const TaskList: React.FC = () => {
     storage.set(STORAGE_SORTER_KEY, updatedSorter);
     setSorter(updatedSorter);
 
-    const updatedFilters = { ...filters, limit: tablePagination.pageSize };
+    const updatedFilters = {
+      ...filters,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
     storage.set(STORAGE_FILTERS_KEY, updatedFilters);
     setFilters(updatedFilters);
   }, [ columns, filters, setSorter, storage ]);
@@ -429,7 +582,10 @@ const TaskList: React.FC = () => {
   }, [ canceler ]);
 
   return (
-    <Page id="tasks" title="Tasks">
+    <Page
+      id="tasks"
+      options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} /> }
+      title="Tasks">
       <div className={css.base}>
         <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button
@@ -441,8 +597,8 @@ const TaskList: React.FC = () => {
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}
-          loading={!hasLoaded}
-          pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
+          loading={tasks === undefined}
+          pagination={getFullPaginationConfig(pagination, filteredTasks.length)}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}

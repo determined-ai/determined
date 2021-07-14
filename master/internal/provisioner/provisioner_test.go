@@ -107,6 +107,10 @@ func (c *mockProvider) instanceType() instanceType {
 	return c.mockInstanceType
 }
 
+func (c *mockProvider) slotsPerInstance() int {
+	return c.mockInstanceType.Slots()
+}
+
 func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
 	instances := make([]*Instance, 0, len(c.instances))

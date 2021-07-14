@@ -18,7 +18,7 @@ hyperparameters:
     momentum: 0.9
     min_learning_rate: 0
     scheduler_epochs: 50
-    weight_decay: 3e-4
+    weight_decay: 3.0e-4
     arch_learning_rate: 0.1
     init_channels: 16
     layers: 8

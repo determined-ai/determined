@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import random
+import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -307,10 +308,12 @@ class PyTorchTrialController(det.LoopTrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
+            batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next"):
                 batch = next(self.training_iterator)
-            num_inputs += pytorch.data_length(batch)
+            batch_inputs = self.trial.get_batch_length(batch)
+            num_inputs += batch_inputs
 
             with self.prof.record_timing("to_device"):
                 batch = self.context.to_device(batch)
@@ -323,12 +326,22 @@ class PyTorchTrialController(det.LoopTrialController):
                     ):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
+
             with self.prof.record_timing("train_batch"):
-                tr_metrics = self.trial.train_batch(
-                    batch=batch,
-                    epoch_idx=self.get_epoch_idx(batch_idx),
-                    batch_idx=batch_idx,
-                )
+                if self.context.profiler:
+                    with self.context.profiler as torch_profiler:
+                        tr_metrics = self.trial.train_batch(
+                            batch=batch,
+                            epoch_idx=self.get_epoch_idx(batch_idx),
+                            batch_idx=batch_idx,
+                        )
+                        torch_profiler.step()
+                else:
+                    tr_metrics = self.trial.train_batch(
+                        batch=batch,
+                        epoch_idx=self.get_epoch_idx(batch_idx),
+                        batch_idx=batch_idx,
+                    )
             if self._should_update_scaler():
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
@@ -354,6 +367,9 @@ class PyTorchTrialController(det.LoopTrialController):
                         metric = metric.cpu().detach().numpy()
                     tr_metrics[name] = metric
 
+            batch_dur = time.time() - batch_start_time
+            samples_per_second = batch_inputs / batch_dur
+            self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
@@ -418,7 +434,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 callback.on_validation_epoch_start()
             for idx, batch in enumerate(self.validation_loader):
                 batch = self.context.to_device(batch)
-                num_inputs += pytorch.data_length(batch)
+                num_inputs += self.trial.get_batch_length(batch)
 
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):
                     vld_metrics = self.trial.evaluate_batch(batch=batch, batch_idx=idx)
@@ -963,6 +979,36 @@ class PyTorchTrial(det.Trial):
             data_loader (torch.utils.data.DataLoader): data loader for evaluating.
         """
         pass
+
+    def get_batch_length(self, batch: Any) -> int:
+        """Count the number of records in a given batch.
+
+        Override this method when you are using custom batch types, as produced
+        when iterating over the `DataLoader`.
+        For example, when using `pytorch_geometric`:
+
+        .. code-block:: python
+
+            # Extra imports:
+            from determined.pytorch import DataLoader
+            from torch_geometric.data.dataloader import Collater
+
+            # Trial methods:
+            def build_training_data_loader(self):
+                return DataLoader(
+                    self.train_subset,
+                    batch_size=self.context.get_per_slot_batch_size(),
+                    collate_fn=Collater([], []),
+                )
+
+            def get_batch_length(self, batch):
+                # `batch` is `torch_geometric.data.batch.Batch`.
+                return batch.num_graphs
+
+        Arguments:
+            batch (Any): input training or validation data batch object.
+        """
+        return pytorch.data_length(batch)
 
 
 def reset_parameters(model: torch.nn.Module) -> None:

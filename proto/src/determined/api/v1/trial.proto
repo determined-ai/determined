@@ -273,7 +273,7 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
-// Stream updates to the preemption status for a trial.
+// Long poll for updates to the preemption status for a trial.
 message TrialPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id" ] }
@@ -376,3 +376,22 @@ message ReportTrialCheckpointMetadataRequest {
 }
 // Response to ReportTrialCheckpointMetadataRequest
 message ReportTrialCheckpointMetadataResponse {}
+
+// Gathers the rendezvous info for the trial.
+message GetTrialRendezvousInfoRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "container_id" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The id of the container. Used to verify all containers are connected.
+  string container_id = 2;
+}
+// Response to GetTrialRendezvousInfoRequest
+message GetTrialRendezvousInfoResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "rendezvous_info" ] }
+  };
+  // The rendezvous information.
+  determined.trial.v1.RendezvousInfo rendezvous_info = 1;
+}

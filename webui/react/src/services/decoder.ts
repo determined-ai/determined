@@ -32,7 +32,7 @@ export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.Deter
 export const mapV1ResourcePool = (
   data: Sdk.V1ResourcePool,
 ): types.ResourcePool => {
-  return { ...data };
+  return { ...data, slotType: mapV1DeviceType(data.slotType) };
 };
 
 export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
@@ -60,10 +60,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
 
       let resourceType = types.ResourceType.UNSPECIFIED;
       if (slot.device?.type) {
-        resourceType = types.ResourceType[
-          slot.device.type.toString().toUpperCase()
-            .replace('TYPE_', '') as keyof typeof types.ResourceType
-        ];
+        resourceType = mapV1DeviceType(slot.device.type);
       }
 
       return {
@@ -479,4 +476,11 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
         time: log.time,
       };
     });
+};
+
+export const mapV1DeviceType = (data: Sdk.Devicev1Type): types.ResourceType => {
+  return types.ResourceType[
+    data.toString().toUpperCase()
+      .replace('TYPE_', '') as keyof typeof types.ResourceType
+  ];
 };

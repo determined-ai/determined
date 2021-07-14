@@ -600,3 +600,30 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 	}
 	return ids, hpis, nil
 }
+
+// ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
+func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
+	conf, err := db.ExperimentConfig(id)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to get experiment config")
+	}
+
+	metricName := conf.Searcher().Metric()
+	metricOrdering := desc
+	if conf.Searcher().SmallerIsBetter() {
+		metricOrdering = asc
+	}
+
+	var metric float32
+	if err := db.sql.QueryRowx(fmt.Sprintf(`
+SELECT (v.metrics->'validation_metrics'->>$2)::float8
+FROM validations v, trials t
+WHERE v.trial_id = t.id
+  AND t.experiment_id = $1
+  AND v.state = 'COMPLETED'
+ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s 
+LIMIT 1`, metricOrdering), id, metricName).Scan(&metric); err != nil {
+		return 0, errors.Wrap(err, "querying best experiment validation")
+	}
+	return metric, nil
+}

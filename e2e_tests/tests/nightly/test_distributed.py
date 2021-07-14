@@ -29,6 +29,7 @@ def test_cifar10_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 def test_mmdetection_pytorch_distributed() -> None:
     config = conf.load_config(
         conf.cv_examples_path("mmdetection_pytorch/distributed_fake_data.yaml")
@@ -63,6 +64,7 @@ def test_iris_tf_keras_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 def test_unets_tf_keras_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -79,10 +81,12 @@ def test_bert_glue_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 def test_gaea_pytorch_distributed() -> None:
     config = conf.load_config(
         conf.nas_examples_path("gaea_pytorch/eval/distributed_no_data_download.yaml")
     )
+    config = conf.set_global_batch_size(config, 256)
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch/eval"), 1)
@@ -97,6 +101,7 @@ def test_gan_mnist_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 def test_detr_coco_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("detr_coco_pytorch/const_fake.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -106,6 +111,7 @@ def test_detr_coco_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed  # type: ignore
+@pytest.mark.gpu_required  # type: ignore
 def test_deformabledetr_coco_pytorch_distributed() -> None:
     config = conf.load_config(conf.cv_examples_path("deformabledetr_coco_pytorch/const_fake.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

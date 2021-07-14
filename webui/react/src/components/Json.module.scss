@@ -3,15 +3,25 @@
 }
 .item {
   align-items: center;
+  border-color: var(--theme-colors-monochrome-14);
+  border-style: dashed;
+  border-width: 0 0 1px 0;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   list-style-type: none;
+  margin-bottom: var(--theme-sizes-layout-micro);
+  padding-bottom: var(--theme-sizes-layout-micro);
   width: 100%;
 
   span {
     display: block;
   }
+}
+.item:last-child {
+  border: 0;
+  margin: 0;
+  padding: 0;
 }
 .label {
   color: var(--theme-colors-monochrome-7);

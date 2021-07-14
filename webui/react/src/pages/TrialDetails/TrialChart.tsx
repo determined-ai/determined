@@ -9,10 +9,9 @@ import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlotChart/trackAxis';
 import useStorage from 'hooks/useStorage';
+import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 import { glasbeyColor } from 'utils/color';
-
-import css from '../ExperimentDetails/ExperimentChart.module.scss';
 
 interface Props {
   defaultMetricNames: MetricName[];
@@ -24,6 +23,12 @@ interface Props {
 }
 
 const STORAGE_PATH = 'trial-detail';
+
+const getChartMetricLabel = (metric: MetricName): string => {
+  if (metric.type === 'training') return `[T] ${metric.name}`;
+  if (metric.type === 'validation') return `[V] ${metric.name}`;
+  return metric.name;
+};
 
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
@@ -49,10 +54,10 @@ const TrialChart: React.FC<Props> = ({
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number>> = {};
-    metricNames.forEach((metric, index) => yValues[index] = {});
+    metrics.forEach((metric, index) => yValues[index] = {});
 
     (workloads || []).forEach(wlWrapper => {
-      metricNames.forEach((metric, index) => {
+      metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
         if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
@@ -71,12 +76,12 @@ const TrialChart: React.FC<Props> = ({
     });
 
     return [ xValues, ...yValuesArray ];
-  }, [ metricNames, workloads ]);
+  }, [ metrics, workloads ]);
   const chartOptions: Options = useMemo(() => {
     return {
       axes: [
         { label: 'Batches' },
-        { label: 'Metric Value' },
+        { label: metrics.length === 1 ? getChartMetricLabel(metrics[0]) : 'Metric Value' },
       ],
       height: 400,
       legend: { show: false },
@@ -87,18 +92,15 @@ const TrialChart: React.FC<Props> = ({
       },
       series: [
         { label: 'Batch' },
-        ...metricNames.map((metricName, index) => ({
-          label: metricName.name,
-          show: (metrics.find(metric => (
-            metricName.name === metric.name && metricName.type === metric.type
-          ))) != null,
+        ...metrics.map((metric, index) => ({
+          label: getChartMetricLabel(metric),
           spanGaps: true,
           stroke: glasbeyColor(index),
           width: 2,
         })),
       ],
     };
-  }, [ metricNames, metrics, scale ]);
+  }, [ metrics, scale ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);

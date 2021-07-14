@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 const spotPriceNotSetPlaceholder = "OnDemand"
@@ -38,19 +39,21 @@ type AWSClusterConfig struct {
 	SpotMaxPrice string `json:"spot_max_price"`
 
 	CustomTags []*ec2Tag `json:"custom_tags"`
+
+	CPUSlotsAllowed bool `json:"cpu_slots_allowed"`
 }
 
 var defaultAWSImageID = map[string]string{
-	"ap-northeast-1": "ami-0efeca825a571ae06",
-	"ap-northeast-2": "ami-0d7f0c8fb6e66cb82",
-	"ap-southeast-1": "ami-00245a72bd4a858b3",
-	"ap-southeast-2": "ami-07ed444fc10e23a2f",
-	"us-east-2":      "ami-0e8f77ea3a8f326c5",
-	"us-east-1":      "ami-0038750f34e275214",
-	"us-west-2":      "ami-059f637cdef525077",
-	"eu-central-1":   "ami-031db13a810aaedee",
-	"eu-west-2":      "ami-0f7b252df6407ea23",
-	"eu-west-1":      "ami-069b5f5168bc2188e",
+	"ap-northeast-1": "ami-0a5666e5badd0077f",
+	"ap-northeast-2": "ami-036d136ef074d733c",
+	"ap-southeast-1": "ami-027eca300b800ddd4",
+	"ap-southeast-2": "ami-0fa75036939155792",
+	"us-east-2":      "ami-0f0683c726e626465",
+	"us-east-1":      "ami-0e07a509dbfbd738f",
+	"us-west-2":      "ami-00118c4b9f4d3c23d",
+	"eu-central-1":   "ami-007c306facb6bf4f4",
+	"eu-west-2":      "ami-005b149621ce3dbe9",
+	"eu-west-1":      "ami-03d9920ed19325433",
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -60,8 +63,9 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
-	InstanceType: "p3.8xlarge",
-	SpotEnabled:  false,
+	InstanceType:    "p3.8xlarge",
+	SpotEnabled:     false,
+	CPUSlotsAllowed: false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {
@@ -131,6 +135,28 @@ func (c AWSClusterConfig) Validate() []error {
 		check.GreaterThanOrEqualTo(c.RootVolumeSize, 100, "ec2 root volume size must be >= 100"),
 		spotPriceIsNotValidNumberErr,
 	}
+}
+
+// SlotsPerInstance returns the number of slots per instance.
+func (c AWSClusterConfig) SlotsPerInstance() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlotsAllowed {
+		slots = 1
+	}
+
+	return slots
+}
+
+// SlotType returns the type of the slot.
+func (c AWSClusterConfig) SlotType() device.Type {
+	slots := c.InstanceType.Slots()
+	if slots > 0 {
+		return device.GPU
+	}
+	if c.CPUSlotsAllowed {
+		return device.CPU
+	}
+	return device.ZeroSlot
 }
 
 func validateMaxSpotPrice(spotMaxPriceInput string) error {

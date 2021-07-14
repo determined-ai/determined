@@ -211,12 +211,6 @@ class TFKerasTrialController(det.LoopTrialController):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
     ) -> None:
-        context.model = keras._get_multi_gpu_model_if_using_native_parallel(
-            pre_compiled_model=context.model,
-            env=env,
-            hvd_config=hvd_config,
-        )
-
         if "optimizer" in compile_args.arguments:
             # For backwards compatibility we check if an optimizer is passed as part
             # of the compile call. If `wrap_optimizer()` is used, we will ignore this
@@ -224,6 +218,10 @@ class TFKerasTrialController(det.LoopTrialController):
             compile_args.arguments["optimizer"] = context._process_optimizer_from_compile(
                 compile_args.arguments["optimizer"]
             )
+
+        # context.model is Optional[Model]. This assert signals to mypy it can't
+        # be none because we check that in `from_trial`.
+        assert context.model is not None
 
         if hvd_config.use and version.parse("2.0.0") <= version.parse(
             tf.__version__
@@ -454,7 +452,12 @@ class TFKerasTrialController(det.LoopTrialController):
             # Our implementation of verbose=True.
             callbacks = [keras.callbacks._DeterminedProgress()] + callbacks
 
-        callbacks = callbacks + [keras.callbacks._DeterminedProfiler(self.prof)]
+        profiler = keras.callbacks._DeterminedProfiler(
+            self.prof,
+            self.context.get_global_batch_size(),
+        )
+
+        callbacks = callbacks + [profiler]
 
         # Calculate batches per epoch.  We can only handle batches per epoch, not records per epoch,
         # because we would have to communicate after every batch to know how many records were in
@@ -932,7 +935,7 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-11.0-pytorch-1.7-lightning-1.2-tf-2.4-gpu-0.16.0``).
+    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

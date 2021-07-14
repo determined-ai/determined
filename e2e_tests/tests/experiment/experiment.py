@@ -91,7 +91,7 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def change_experiment_state(experiment_id: int, new_state: str) -> None:
-    # TODO: refactor tests to not use cli singleton auth.
+    # TODO(DET-5678): refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.patch(
@@ -163,6 +163,8 @@ def wait_for_experiment_state(
 
 
 def experiment_has_active_workload(experiment_id: int) -> bool:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
     r = api.get(conf.make_master_url(), "tasks").json()
     for task in r.values():
         if "Experiment {}".format(experiment_id) in task["name"] and len(task["containers"]) > 0:

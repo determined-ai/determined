@@ -8,6 +8,69 @@
  Version 0.16
 **************
 
+Version 0.16.2
+==============
+
+**Release Date:** July 9, 2021
+
+**New Features**
+
+-  Make ``det deploy aws up`` automatically bind-mount FSx and EFS
+   directories into task containers when available.
+
+-  Make ``det deploy local`` bind-mount the user's home directory into
+   task containers. The mounted directory can be changed with the
+   ``--auto-bind-mount=<path>`` option and mounting can be disabled
+   entirely with ``--no-auto-bind-mount``. See
+   :ref:`install-using-deploy` for details.
+
+**Improvements**
+
+-  PyTorchTrial: Improve support for custom batches in PyTorch, e.g., as
+   used in ``pytorch_geometric``. See
+   :meth:`~determined.pytorch.PyTorchTrial.get_batch_length` or
+   ``examples/graphs/proteins_pytorch_geometric`` for further details.
+
+**Bug Fixes**
+
+-  WebUI: Avoid waiting for an extra polling cycle to load trial data
+   when loading single-trial experiments.
+-  WebUI: Fix an issue with boolean hyperparameter values not being
+   rendered in learning curve tables.
+
+Version 0.16.1
+==============
+
+**Release Date:** June 28, 2021
+
+**New Features**
+
+-  Add support for CPU-based training. This makes it possible to run
+   Determined on clusters without GPUs, including on-prem, AWS, GCP, and
+   Kubernetes-based (default scheduler only) configurations.
+
+-  Support spinning up and down a Filestore instance when running ``det
+   deploy gcp up/down``. The Filestore instance will automatically be
+   mounted to agents and bind-mounted into task containers. You can also
+   use a pre-existing Filestore instance.
+
+**Improvements**
+
+-  **Breaking Change:** REST API: Rename ``gpu`` and ``cpu`` fields in
+   ``ResourcePool`` object to ``compute`` and ``aux``.
+
+-  **Breaking Change:** Deploy: In ``det deploy gcp`` and ``det deploy
+   aws``, rename the default compute pool from ``gpu-pool`` to
+   ``compute-pool``. When upgrading a cluster from a previous version,
+   existing pending experiments may error out and need to be
+   resubmitted.
+
+**Bug Fixes**
+
+-  Support using Docker images with ``EXPOSE`` commands as images for
+   notebooks/shells/TensorBoards. Previously, the ``EXPOSE`` command
+   could break proxying through the Determined master.
+
 Version 0.16.0
 ==============
 

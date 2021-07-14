@@ -14,6 +14,31 @@ const GlobalBatchSize = "global_batch_size"
 // HyperparametersV0 is a versioned hyperparameters config.
 type HyperparametersV0 map[string]HyperparameterV0
 
+// FlattenHPs returns a flat dictionary with keys representing nested structure.
+// For example, {"optimizer": {"learning_rate": 0.01}} will be flattened to
+// {"optimizer.learning_rate": 0.01}.
+func FlattenHPs(h HyperparametersV0) HyperparametersV0 {
+	flatHPs := make(HyperparametersV0)
+	for key, val := range h {
+		if val.RawNestedHyperparameter != nil {
+			flattenNestedHP(val, key+".", &flatHPs)
+		} else {
+			flatHPs[key] = val
+		}
+	}
+	return flatHPs
+}
+
+func flattenNestedHP(h HyperparameterV0, prefix string, target *HyperparametersV0) {
+	for key, val := range *h.RawNestedHyperparameter {
+		if val.RawNestedHyperparameter != nil {
+			flattenNestedHP(val, prefix+key+".", target)
+		} else {
+			(*target)[prefix+key] = val
+		}
+	}
+}
+
 //go:generate ../gen.sh
 // HyperparameterV0 is a sum type for hyperparameters.
 type HyperparameterV0 struct {
@@ -22,11 +47,51 @@ type HyperparameterV0 struct {
 	RawDoubleHyperparameter      *DoubleHyperparameterV0      `union:"type,double" json:"-"`
 	RawLogHyperparameter         *LogHyperparameterV0         `union:"type,log" json:"-"`
 	RawCategoricalHyperparameter *CategoricalHyperparameterV0 `union:"type,categorical" json:"-"`
+	// RawNestedHyperparameter is added as a union type to more closely reflect the underlying
+	// schema definition. Doing so also means that we can detect a nested hyperparameter from
+	// a call to the automatically generated HyperparameterV0.GetUnionMember function.
+	//
+	// However, this type does not actually go through union marshaling and unmarshaling logic
+	// so that we can support implicit nesting as follows:
+	// optimizer:
+	//   learning_rate: 0.01
+	//   momentum: 0.9
+	// This means that we do NOT support explicit nesting as we would normally with a union
+	// on type:
+	// optimizer:
+	//   type: object
+	//   vals:
+	//     learning_rate: 0.01
+	//     momentum: 0.9
+	// The former is more user friendly so we will escape the union unmarshaling logic
+	// in its favor. We can add the later behavior in the future if needed.
+	RawNestedHyperparameter *map[string]HyperparameterV0 `union:"type,object" json:"-"`
 }
 
-// Merge prevents recursive merging of hyperparameters.
+// Merge prevents recursive merging of hyperparameters unless h
+// is a nested hyperparameter.  When h is a nested hyperparameter,
+// we merge fields of h and other into a single map.
+// A new HyperparameterV0 instance is returned.
 func (h HyperparameterV0) Merge(other interface{}) interface{} {
-	// Never merge partial hyperparameters.
+	// Only merge nested hyperparameters.
+	if h.RawNestedHyperparameter != nil && other.(HyperparameterV0).RawNestedHyperparameter != nil {
+		newNestedHP := make(map[string]HyperparameterV0)
+		target := *h.RawNestedHyperparameter
+		source := *other.(HyperparameterV0).RawNestedHyperparameter
+		for key, val := range target {
+			if sourceVal, inSource := source[key]; inSource {
+				newNestedHP[key] = val.Merge(sourceVal).(HyperparameterV0)
+			} else {
+				newNestedHP[key] = val
+			}
+		}
+		for key, val := range source {
+			if _, inTarget := target[key]; !inTarget {
+				newNestedHP[key] = val
+			}
+		}
+		return HyperparameterV0{RawNestedHyperparameter: &newNestedHP}
+	}
 	return h
 }
 
@@ -36,7 +101,14 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		return err
 	}
-	if _, ok := parsed.(map[string]interface{}); ok {
+	if parsedMap, ok := parsed.(map[string]interface{}); ok {
+		_, hasType := parsedMap["type"]
+		// If "type" not in map, then we have a nested hp, which
+		// we will unmarshal into map[string]HyperparameterV0 instead
+		// of using the union unmarshaling logic.
+		if !hasType {
+			return json.Unmarshal(data, &h.RawNestedHyperparameter)
+		}
 		return union.Unmarshal(data, h)
 	}
 	h.RawConstHyperparameter = &ConstHyperparameterV0{RawVal: parsed}
@@ -45,6 +117,11 @@ func (h *HyperparameterV0) UnmarshalJSON(data []byte) error {
 
 // MarshalJSON implements the json.Marshaler interface.
 func (h HyperparameterV0) MarshalJSON() ([]byte, error) {
+	// Intercept union marshaling logic for nested hps and directly
+	// marshal the underlying map[string]HyperparameterV0.
+	if h.RawNestedHyperparameter != nil {
+		return json.Marshal(*h.RawNestedHyperparameter)
+	}
 	return union.MarshalEx(h, true)
 }
 

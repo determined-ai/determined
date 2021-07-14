@@ -245,7 +245,10 @@ def create_experiment(
 def generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
     def generate_random_value(hparam: Any) -> Any:
         if isinstance(hparam, Dict):
-            if hparam["type"] == "const":
+            if "type" not in hparam:
+                # In this case we have a dictionary of nested hyperparameters.
+                return generate_random_hparam_values(hparam)
+            elif hparam["type"] == "const":
                 return hparam["val"]
             elif hparam["type"] == "int":
                 return random.randint(hparam["minval"], hparam["maxval"])

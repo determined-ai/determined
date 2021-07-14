@@ -66,15 +66,35 @@ class _PolyHorovod:
         check.is_not_none(self._poly_hvd_module, "Horovod could not be imported in this process.")
         return getattr(self._poly_hvd_module, attr)
 
+    def cross_rank(self) -> Any:
+        """
+        Horovod versions <= v0.21.3 accidentally did not expose cross_rank or cross_size for keras.
+
+        See https://github.com/horovod/horovod/pull/3008.
+        """
+        if self._poly_hvd_type == "tensorflow.keras":
+            # The horovod.tensorflow module ultimately provides size/local_size/cross_size.
+            import horovod.tensorflow
+
+            return horovod.tensorflow.cross_rank()
+        return self._poly_hvd_module.cross_rank()
+
+    def cross_size(self) -> Any:
+        if self._poly_hvd_type == "tensorflow.keras":
+            import horovod.tensorflow
+
+            return horovod.tensorflow.cross_size()
+        return self._poly_hvd_module.cross_size()
+
 
 hvd = _PolyHorovod()
 
 
-def create_hostlist_arg(num_gpus_per_machine: int, ip_addresses: List[str]) -> str:
+def create_hostlist_arg(num_proc_per_machine: int, ip_addresses: List[str]) -> str:
     trial_runner_hosts = ip_addresses.copy()
     # Horovodrun does not interpret "0.0.0.0" correctly.
     trial_runner_hosts[0] = "localhost"
-    return ",".join([f"{host}:{num_gpus_per_machine}" for host in trial_runner_hosts])
+    return ",".join([f"{host}:{num_proc_per_machine}" for host in trial_runner_hosts])
 
 
 def create_network_interface_arg_if_specified(env: det.EnvContext, num_machines: int) -> List[str]:
@@ -122,7 +142,7 @@ def create_performance_args(env: det.EnvContext) -> List[str]:
 
 
 def create_run_command(
-    num_gpus_per_machine: int,
+    num_proc_per_machine: int,
     ip_addresses: List[str],
     env: det.EnvContext,
     debug: bool,
@@ -130,17 +150,17 @@ def create_run_command(
     worker_process_env_path: pathlib.Path,
 ) -> List[str]:
     num_machines = len(ip_addresses)
-    num_gpus_total = num_gpus_per_machine * num_machines
+    num_proc_total = num_proc_per_machine * num_machines
 
     # Construct the horovodrun command.
     horovod_process_cmd = [
         "horovodrun",
         "-np",
-        str(num_gpus_total),
+        str(num_proc_total),
         "-p",
         str(constants.HOROVOD_SSH_PORT),
         "-H",
-        create_hostlist_arg(num_gpus_per_machine, ip_addresses),
+        create_hostlist_arg(num_proc_per_machine, ip_addresses),
         "--start-timeout",
         str(constants.HOROVOD_STARTUP_TIMEOUT_SECONDS),
         "--gloo-timeout-seconds",

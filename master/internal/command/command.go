@@ -15,11 +15,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -61,33 +61,29 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
-	config model.CommandConfig
-
-	owner          commandOwner
-	agentUserGroup *model.AgentUserGroup
-	taskSpec       *tasks.TaskSpec
-
-	taskID               sproto.TaskID
-	userFiles            archive.Archive
-	additionalFiles      archive.Archive
-	readinessChecks      map[string]readinessCheck
-	readinessMessageSent bool
-	metadata             map[string]interface{}
-	serviceAddress       *string
-
-	registeredTime time.Time
-	task           *sproto.AllocateRequest
-	container      *container.Container
-	allocation     sproto.Allocation
-	proxyNames     []string
-	exitStatus     *string
-	addresses      []container.Address
-
 	db          *db.PgDB
 	proxy       *actor.Ref
 	eventStream *actor.Ref
 
-	proxyTCP bool
+	readinessChecks map[string]readinessCheck
+	proxyTCP        bool
+
+	generatedKeys *ssh.PrivateAndPublicKeys
+	tasks.CommandSpec
+	owner commandOwner
+
+	taskID         sproto.TaskID
+	serviceAddress *string
+	assignedPort   *int
+
+	readinessMessageSent bool
+	registeredTime       time.Time
+	task                 *sproto.AllocateRequest
+	container            *container.Container
+	allocation           sproto.Allocation
+	proxyNames           []string
+	exitStatus           *string
+	addresses            []container.Address
 }
 
 // Receive implements the actor.Actor interface.
@@ -102,10 +98,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		c.task = &sproto.AllocateRequest{
 			ID:             c.taskID,
-			Name:           c.config.Description,
-			SlotsNeeded:    c.config.Resources.Slots,
-			Label:          c.config.Resources.AgentLabel,
-			ResourcePool:   c.config.Resources.ResourcePool,
+			Name:           c.Config.Description,
+			SlotsNeeded:    c.Config.Resources.Slots,
+			Label:          c.Config.Resources.AgentLabel,
+			ResourcePool:   c.Config.Resources.ResourcePool,
 			NonPreemptible: true,
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
@@ -116,7 +112,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return err
 		}
 		ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
-			Priority: c.config.Resources.Priority,
+			Priority: c.Config.Resources.Priority,
 			Handler:  ctx.Self(),
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
@@ -149,7 +145,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		default:
 			ctx.Respond(&apiv1.GetNotebookResponse{
 				Notebook: notebook,
-				Config:   protoutils.ToStruct(c.config),
+				Config:   protoutils.ToStruct(c.Config),
 			})
 		}
 
@@ -169,7 +165,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.GetCommandRequest:
 		ctx.Respond(&apiv1.GetCommandResponse{
 			Command: c.toCommand(ctx),
-			Config:  protoutils.ToStruct(c.config),
+			Config:  protoutils.ToStruct(c.Config),
 		})
 
 	case *apiv1.KillCommandRequest:
@@ -182,7 +178,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.GetShellRequest:
 		ctx.Respond(&apiv1.GetShellResponse{
 			Shell:  c.toShell(ctx),
-			Config: protoutils.ToStruct(c.config),
+			Config: protoutils.ToStruct(c.Config),
 		})
 
 	case *apiv1.KillShellRequest:
@@ -193,7 +189,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.toTensorboard(ctx))
 
 	case *apiv1.GetTensorboardRequest:
-		ctx.Respond(&apiv1.GetTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+		ctx.Respond(&apiv1.GetTensorboardResponse{
+			Tensorboard: c.toTensorboard(ctx),
+			Config:      protoutils.ToStruct(c.Config),
+		})
 
 	case *apiv1.KillTensorboardRequest:
 		c.terminate(ctx)
@@ -206,8 +205,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 		case msg.Container.State == container.Running:
 			c.addresses = msg.ContainerStarted.Addresses
 
-			names := make([]string, 0, len(c.addresses))
+			// TODO(DET-5682): refactor this logic and the rendezvous info logic that does the same
+			// thing into a helper function.
+			var names []string
 			for _, address := range c.addresses {
+				// Only proxy the port we expect to proxy.  If a dockerfile uses an EXPOSE command,
+				// additional addresses will appear her, but currently we only proxy one uuid to one
+				// port, so it doesn't make sense to send multiple proxy.Register messages for a
+				// single ServiceID (only the last one would work).
+				if c.assignedPort == nil || address.ContainerPort != *c.assignedPort {
+					continue
+				}
+
 				// We are keying on task ID instead of container ID. Revisit this when we need to
 				// proxy multi-container tasks or when containers are created prior to being
 				// assigned to an agent.
@@ -220,6 +229,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 					ProxyTCP: c.proxyTCP,
 				})
 				names = append(names, string(c.taskID))
+			}
+			if c.assignedPort == nil && len(names) > 0 {
+				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
+			} else if len(names) != 1 {
+				ctx.Log().Errorf(
+					"expected to proxy exactly 1 port but proxied %v instead", len(names),
+				)
 			}
 			c.proxyNames = names
 			ctx.Tell(c.eventStream, event{
@@ -276,23 +292,15 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.allocation = msg.Allocations[0]
 
-		taskSpec := *c.taskSpec
-		taskSpec.AgentUserGroup = c.agentUserGroup
-		taskSpec.TaskToken = taskToken
-		taskSpec.SetInner(&tasks.StartCommand{
-			Config:          c.config,
-			UserFiles:       c.userFiles,
-			AdditionalFiles: c.additionalFiles,
-		})
-		msg.Allocations[0].Start(ctx, taskSpec)
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.generatedKeys, taskToken), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
 		// Evict the context from memory after starting the command as it is no longer needed. We
 		// evict as soon as possible to prevent the master from hitting an OOM.
 		// TODO: Consider not storing the userFiles in memory at all.
-		c.userFiles = nil
-		c.additionalFiles = nil
+		c.UserFiles = nil
+		c.AdditionalFiles = nil
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -385,12 +393,12 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 	return &notebookv1.Notebook{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
-		Description:    c.config.Description,
+		Description:    c.Config.Description,
 		Container:      c.container.Proto(),
 		ServiceAddress: serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.owner.Username,
-		ResourcePool:   c.config.Resources.ResourcePool,
+		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 	}, nil
 }
@@ -404,11 +412,11 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 	return &commandv1.Command{
 		Id:           ctx.Self().Address().Local(),
 		State:        c.State().Proto(),
-		Description:  c.config.Description,
+		Description:  c.Config.Description,
 		Container:    c.container.Proto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.owner.Username,
-		ResourcePool: c.config.Resources.ResourcePool,
+		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   exitStatus,
 	}
 }
@@ -427,16 +435,16 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 	return &shellv1.Shell{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
-		Description:    c.config.Description,
+		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
-		PrivateKey:     c.metadata["privateKey"].(string),
-		PublicKey:      c.metadata["publicKey"].(string),
+		PrivateKey:     c.Metadata["privateKey"].(string),
+		PublicKey:      c.Metadata["publicKey"].(string),
 		Username:       c.owner.Username,
-		ResourcePool:   c.config.Resources.ResourcePool,
+		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
-		AgentUserGroup: protoutils.ToStruct(c.agentUserGroup),
+		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 	}
 }
 
@@ -447,24 +455,24 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 	}
 
 	var eids []int32
-	for _, id := range c.metadata["experiment_ids"].([]int) {
+	for _, id := range c.Metadata["experiment_ids"].([]int) {
 		eids = append(eids, int32(id))
 	}
 	var tids []int32
-	for _, id := range c.metadata["trial_ids"].([]int) {
+	for _, id := range c.Metadata["trial_ids"].([]int) {
 		tids = append(tids, int32(id))
 	}
 	return &tensorboardv1.Tensorboard{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
-		Description:    c.config.Description,
+		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
 		ServiceAddress: fmt.Sprintf(tensorboardServiceAddress, c.taskID),
 		ExperimentIds:  eids,
 		TrialIds:       tids,
 		Username:       c.owner.Username,
-		ResourcePool:   c.config.Resources.ResourcePool,
+		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 	}
 }

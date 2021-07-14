@@ -1,31 +1,29 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useHistory, useParams } from 'react-router';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
-import Page, { BreadCrumbRoute } from 'components/Page';
+import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
-import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
+import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
-import { paths, routeAll } from 'routes/utils';
+import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
+import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment, getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
 import { clone } from 'utils/data';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { terminalRunStates, trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
-
-const maxBreadcrumbDescLength = 30;
 
 const { TabPane } = Tabs;
 
@@ -71,13 +69,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ isContModalVisible, setIsContModalVisible ] = useState(false);
   const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
-  const location = useLocation();
   const routeParams = useParams<Params>();
-
-  const isShowNewHeader: boolean = useMemo(() => {
-    const search = new URLSearchParams(location.search);
-    return search.get('header') === 'new';
-  }, [ location.search ]);
 
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
@@ -146,7 +138,7 @@ const TrialDetailsComp: React.FC = () => {
     setIsContModalVisible(true);
   }, [ experiment?.configRaw, trial ]);
 
-  const handleActionClick = useCallback((action: TrialAction) => (): void => {
+  const handleActionClick = useCallback((action: TrialAction) => {
     switch (action) {
       case TrialAction.Continue:
         showContModal();
@@ -167,7 +159,7 @@ const TrialDetailsComp: React.FC = () => {
         parentId: trial.experimentId,
       });
       setIsContModalVisible(false);
-      routeAll(paths.experimentDetails(newExperimentId));
+      routeToReactUrl(paths.experimentDetails(newExperimentId));
     } catch (e) {
       handleError({
         error: e,
@@ -223,54 +215,18 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   if (!trial || !experiment) {
-    return <Spinner />;
-  }
-
-  let expBreadcrumbName = `Experiment ${experiment.id}`;
-  if (experiment.config.name) {
-    if (experiment.config.name.length > maxBreadcrumbDescLength) {
-      let truncatedDesc = experiment.config.name.slice(0, maxBreadcrumbDescLength);
-
-      // Don't add ellipsis after underscore, it looks wrong
-      while (truncatedDesc.endsWith('_')){
-        truncatedDesc = truncatedDesc.slice(0, -1);
-      }
-      expBreadcrumbName = expBreadcrumbName.concat(` (${truncatedDesc}…)`);
-    } else {
-      expBreadcrumbName = expBreadcrumbName.concat(` (${experiment.config.name})`);
-    }
-  }
-
-  const expBreadcrumbRoute : BreadCrumbRoute = {
-    breadcrumbName: expBreadcrumbName,
-    path: paths.experimentDetails(experiment.id),
-  };
-  if (experiment.config.name.length > maxBreadcrumbDescLength) {
-    expBreadcrumbRoute.breadcrumbTooltip = experiment.config.name;
+    return <Spinner tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
   }
 
   return (
     <Page
-      breadcrumb={[
-        expBreadcrumbRoute,
-        {
-          breadcrumbName: `Trial ${trialId}`,
-          path: paths.trialDetails(trialId, experiment.id),
-        },
-      ]}
-      headerComponent={isShowNewHeader && <TrialDetailsHeader
+      headerComponent={<TrialDetailsHeader
+        experiment={experiment}
         fetchTrialDetails={fetchTrialDetails}
         handleActionClick={handleActionClick}
         trial={trial}
       />}
-      options={
-        <TrialActions
-          trial={trial}
-          onClick={handleActionClick}
-          onSettled={fetchTrialDetails} />
-      }
       stickyHeader
-      subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}
     >
       <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
@@ -278,7 +234,11 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          <TrialDetailsHyperparameters experiment={experiment} trial={trial} />
+          {
+            isSingleTrialExperiment(experiment) ?
+              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          }
         </TabPane>
         <TabPane key={TabType.Workloads} tab="Workloads">
           <TrialDetailsWorkloads experiment={experiment} trial={trial} />

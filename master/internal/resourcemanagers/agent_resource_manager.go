@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -49,9 +50,9 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 		// them and so we need to handle that case gracefully.
 		if len(msg.ResourcePool) == 0 {
 			if msg.SlotsNeeded == 0 {
-				msg.ResourcePool = a.config.DefaultCPUResourcePool
+				msg.ResourcePool = a.config.DefaultAuxResourcePool
 			} else {
-				msg.ResourcePool = a.config.DefaultGPUResourcePool
+				msg.ResourcePool = a.config.DefaultComputeResourcePool
 			}
 		}
 		a.forwardToPool(ctx, msg.ResourcePool, msg)
@@ -73,11 +74,16 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.SetTaskName:
 		a.forwardToAllPools(ctx, msg)
 
-	case sproto.GetDefaultGPUResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultGPUResourcePoolResponse{PoolName: a.config.DefaultGPUResourcePool})
+	case sproto.GetDefaultComputeResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
+			PoolName: a.config.DefaultComputeResourcePool,
+		})
 
-	case sproto.GetDefaultCPUResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultCPUResourcePoolResponse{PoolName: a.config.DefaultCPUResourcePool})
+	case sproto.GetDefaultAuxResourcePoolRequest:
+		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: a.config.DefaultAuxResourcePool})
+
+	case sproto.ValidateCommandResourcesRequest:
+		a.forwardToPool(ctx, msg.ResourcePool, msg)
 
 	case *apiv1.GetResourcePoolsRequest:
 		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(a.poolsConfig))
@@ -133,8 +139,12 @@ func (a *agentResourceManager) forwardToPool(
 	ctx *actor.Context, resourcePool string, msg actor.Message,
 ) {
 	if a.pools[resourcePool] == nil {
+		sender := "unknown"
+		if ctx.Sender() != nil {
+			sender = ctx.Sender().Address().String()
+		}
 		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
-			resourcePool, ctx.Message(), ctx.Sender().Address().String())
+			resourcePool, ctx.Message(), sender)
 		ctx.Log().WithError(err).Error("")
 		if ctx.ExpectingResponse() {
 			ctx.Respond(err)
@@ -211,6 +221,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	imageID := ""
 	instanceType := ""
 	slotsPerAgent := -1
+	slotType := device.ZeroSlot
 
 	if pool.Provider != nil {
 		if pool.Provider.AWS != nil {
@@ -219,14 +230,16 @@ func (a *agentResourceManager) createResourcePoolSummary(
 			location = pool.Provider.AWS.Region
 			imageID = pool.Provider.AWS.ImageID
 			instanceType = string(pool.Provider.AWS.InstanceType)
-			slotsPerAgent = pool.Provider.AWS.InstanceType.Slots()
+			slotsPerAgent = pool.Provider.AWS.SlotsPerInstance()
+			slotType = pool.Provider.AWS.SlotType()
 		}
 		if pool.Provider.GCP != nil {
 			poolType = resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_GCP
 			preemptible = pool.Provider.GCP.InstanceType.Preemptible
 			location = pool.Provider.GCP.Zone
 			imageID = pool.Provider.GCP.BootDiskSourceImage
-			slotsPerAgent = pool.Provider.GCP.InstanceType.GPUNum
+			slotsPerAgent = pool.Provider.GCP.SlotsPerInstance()
+			slotType = pool.Provider.GCP.SlotType()
 			if pool.Provider.GCP.InstanceType.GPUNum == 0 {
 				instanceType = pool.Provider.GCP.InstanceType.MachineType
 			} else {
@@ -263,16 +276,17 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		Name:                         pool.PoolName,
 		Description:                  pool.Description,
 		Type:                         poolType,
-		DefaultCpuPool:               a.config.DefaultCPUResourcePool == poolName,
-		DefaultGpuPool:               a.config.DefaultGPUResourcePool == poolName,
+		DefaultAuxPool:               a.config.DefaultAuxResourcePool == poolName,
+		DefaultComputePool:           a.config.DefaultComputeResourcePool == poolName,
 		Preemptible:                  preemptible,
 		SlotsPerAgent:                int32(slotsPerAgent),
-		CpuContainerCapacityPerAgent: int32(pool.MaxCPUContainersPerAgent),
+		AuxContainerCapacityPerAgent: int32(pool.MaxAuxContainersPerAgent),
 		SchedulerType:                schedulerType,
 		Location:                     location,
 		ImageId:                      imageID,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
+		SlotType:                     slotType.Proto(),
 	}
 	if pool.Provider != nil {
 		resp.MinAgents = int32(pool.Provider.MinInstances)
@@ -366,8 +380,11 @@ func (a *agentResourceManager) createResourcePoolSummary(
 	resp.NumAgents = int32(resourceSummary.numAgents)
 	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
 	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
-	resp.CpuContainerCapacity = int32(resourceSummary.maxNumCPUContainers)
-	resp.CpuContainersRunning = int32(resourceSummary.numActiveCPUContainers)
+	resp.AuxContainerCapacity = int32(resourceSummary.maxNumAuxContainers)
+	resp.AuxContainersRunning = int32(resourceSummary.numActiveAuxContainers)
+	if pool.Provider == nil && resp.NumAgents > 0 {
+		resp.SlotType = resourceSummary.slotType.Proto()
+	}
 
 	return resp, nil
 }

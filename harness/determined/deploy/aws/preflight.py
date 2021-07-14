@@ -90,7 +90,7 @@ def check_quotas(det_config: Dict[str, Any], deployment_object: DeterminedDeploy
     try:
         boto_session: boto3.session.Session = det_config[constants.cloudformation.BOTO3_SESSION]
         gpu_instance_type = get_cf_parameter(
-            det_config, deployment_object, constants.cloudformation.GPU_AGENT_INSTANCE_TYPE
+            det_config, deployment_object, constants.cloudformation.COMPUTE_AGENT_INSTANCE_TYPE
         )
         max_agents = get_cf_parameter(
             det_config, deployment_object, constants.cloudformation.MAX_DYNAMIC_AGENTS

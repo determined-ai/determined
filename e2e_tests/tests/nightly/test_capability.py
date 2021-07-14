@@ -23,6 +23,7 @@ def test_bert_glue_const() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_gaea_pytorch_const() -> None:
     config = conf.load_config(conf.nas_examples_path("gaea_pytorch/eval/const.yaml"))
+    config = conf.set_global_batch_size(config, 32)
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.nas_examples_path("gaea_pytorch/eval"), 1)
@@ -42,6 +43,14 @@ def test_detr_coco_pytorch_const() -> None:
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("detr_coco_pytorch"), 1)
+
+
+@pytest.mark.nightly  # type: ignore
+def test_efficientdet_coco_pytorch_const() -> None:
+    config = conf.load_config(conf.cv_examples_path("efficientdet_pytorch/const_fake.yaml"))
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(config, conf.cv_examples_path("efficientdet_pytorch"), 1)
 
 
 @pytest.mark.nightly  # type: ignore
@@ -73,3 +82,12 @@ def test_word_language_lstm_const() -> None:
     config["hyperparameters"]["tied"] = False
 
     exp.run_basic_test_with_temp_config(config, conf.nlp_examples_path("word_language_model"), 1)
+
+
+@pytest.mark.nightly  # type: ignore
+def test_protein_pytorch_geometric() -> None:
+    config = conf.load_config(conf.graphs_examples_path("proteins_pytorch_geometric/const.yaml"))
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.graphs_examples_path("proteins_pytorch_geometric"), 1
+    )

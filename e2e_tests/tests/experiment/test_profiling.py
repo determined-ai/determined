@@ -46,13 +46,16 @@ def test_streaming_observability_metrics_apis(
     trials = exp.experiment_trials(experiment_id)
     trial_id = trials[0]["id"]
 
-    request_profiling_metric_labels(trial_id, framework_timings_enabled)
-    request_profiling_system_metrics(trial_id, "gpu_util")
+    gpu_enabled = conf.GPU_ENABLED
+
+    request_profiling_metric_labels(trial_id, framework_timings_enabled, gpu_enabled)
+    if gpu_enabled:
+        request_profiling_system_metrics(trial_id, "gpu_util")
     if framework_timings_enabled:
         request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
 
 
-def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> None:
+def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_enabled: bool) -> None:
     def validate_labels(labels: Sequence[Dict[str, Any]]) -> None:
         # Check some labels against the expected labels. Return the missing labels.
         expected = {
@@ -69,9 +72,15 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool) -> None
             "step_lr_schedulers": PROFILER_METRIC_TYPE_TIMING,
             "to_device": PROFILER_METRIC_TYPE_TIMING,
             "train_batch": PROFILER_METRIC_TYPE_TIMING,
-            "gpu_free_memory": PROFILER_METRIC_TYPE_SYSTEM,
-            "gpu_util": PROFILER_METRIC_TYPE_SYSTEM,
         }
+
+        if gpu_enabled:
+            expected.update(
+                {
+                    "gpu_free_memory": PROFILER_METRIC_TYPE_SYSTEM,
+                    "gpu_util": PROFILER_METRIC_TYPE_SYSTEM,
+                }
+            )
         if not timing_enabled:
             expected = {k: v for k, v in expected.items() if v != PROFILER_METRIC_TYPE_TIMING}
         for label in labels:

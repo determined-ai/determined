@@ -28,6 +28,7 @@ import (
 )
 
 var commandsAddr = actor.Addr("commands")
+var errCommandUnfulfillable = errors.New("resource request unfulfillable")
 
 type protoCommandParams struct {
 	TemplateName string
@@ -86,9 +87,21 @@ func (a *apiServer) makeFullCommandSpec(
 	// If the resource pool isn't set, fill in the default at creation time.
 	if config.Resources.ResourcePool == "" {
 		if config.Resources.Slots == 0 {
-			config.Resources.ResourcePool = sproto.GetDefaultCPUResourcePool(a.m.system)
+			config.Resources.ResourcePool = sproto.GetDefaultAuxResourcePool(a.m.system)
 		} else {
-			config.Resources.ResourcePool = sproto.GetDefaultGPUResourcePool(a.m.system)
+			config.Resources.ResourcePool = sproto.GetDefaultComputeResourcePool(a.m.system)
+		}
+	}
+
+	if config.Resources.Slots > 0 {
+		fillable, err := sproto.ValidateRPResources(
+			a.m.system, config.Resources.ResourcePool, config.Resources.Slots)
+		if err != nil {
+			return nil, nil, errors.Wrapf(
+				err, "failed to check resource pool resources: ")
+		}
+		if !fillable {
+			return nil, nil, errCommandUnfulfillable
 		}
 	}
 
@@ -132,7 +145,12 @@ func (a *apiServer) prepareLaunchParams(ctx context.Context, req *protoCommandPa
 
 	params.FullConfig, params.TaskSpec, err = a.makeFullCommandSpec(
 		configBytes, &req.TemplateName, req.MustZeroSlot)
+	params.TaskSpec.AgentUserGroup = params.AgentUserGroup
 	if err != nil {
+		if err == errCommandUnfulfillable {
+			return nil, api.AsErrBadRequest(
+				"resource request unfulfillable, please try requesting less slots")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to make command spec: %s", err)
 	}
 
@@ -182,7 +200,7 @@ func (a *apiServer) LaunchCommand(
 		Data:         req.Data,
 	})
 	if err != nil {
-		return nil, err
+		return nil, api.APIErr2GRPC(err)
 	}
 
 	commandLaunchReq := command.CommandLaunchRequest{CommandParams: params}

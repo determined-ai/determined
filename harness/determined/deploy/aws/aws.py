@@ -12,6 +12,15 @@ from determined.deploy.aws import constants
 # will not fail CI.
 NUM_WAITS = 5
 
+DELETE_MASTER_IGNORE_ERRORS = (
+    "IncorrectInstanceState",
+    "InvalidInstanceID.NotFound",
+)
+
+
+class NoStackOutputError(Exception):
+    pass
+
 
 def get_user(boto3_session: boto3.session.Session) -> str:
     sts = boto3_session.client("sts")
@@ -21,10 +30,23 @@ def get_user(boto3_session: boto3.session.Session) -> str:
     return arn.split("/")[-1]
 
 
-def stop_master(master_id: str, boto3_session: boto3.session.Session) -> None:
+def stop_master(master_id: str, boto3_session: boto3.session.Session, delete: bool = False) -> None:
     ec2 = boto3_session.client("ec2")
     waiter = ec2.get_waiter("instance_stopped")
-    ec2.stop_instances(InstanceIds=[master_id])
+    try:
+        ec2.stop_instances(InstanceIds=[master_id])
+    except ClientError as ex:
+        if delete:
+            error_code = ex.response.get("Error", {}).get("Code")
+            if error_code in DELETE_MASTER_IGNORE_ERRORS:
+                print(
+                    f"Failed to stop Master Instance: {error_code}. "
+                    "This error is ignored as the instance is going to be deleted."
+                )
+                return
+
+        raise
+
     ec2.modify_instance_attribute(
         Attribute="disableApiTermination", Value="false", InstanceId=master_id
     )
@@ -44,8 +66,19 @@ def stop_master(master_id: str, boto3_session: boto3.session.Session) -> None:
 def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
 
+    # Check if we have stack outputs containing ec2 instance and
+    # bucket information, if not, just remove the stack.
+    try:
+        stack_output = get_output(stack_name, boto3_session)
+    except NoStackOutputError:
+        print(
+            f"Stack {stack_name} is in inconsistent state. "
+            "This error is ignored as stack is going to be deleted."
+        )
+        delete_stack(stack_name, boto3_session)
+        return
+
     # First, shut down the master so no new agents are started.
-    stack_output = get_output(stack_name, boto3_session)
     master_id = stack_output[constants.cloudformation.MASTER_ID]
     describe_instance_response = ec2.describe_instances(
         Filters=[{"Name": "instance-id", "Values": [master_id]}],
@@ -53,7 +86,7 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
 
     if describe_instance_response["Reservations"]:
         print("Stopping Master Instance")
-        stop_master(master_id, boto3_session)
+        stop_master(master_id, boto3_session, delete=True)
 
     # Second, terminate the agents so nothing can write to the checkpoint bucket. We create agent
     # instances outside of cloudformation, so we have to manually terminate them.
@@ -226,7 +259,15 @@ def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[st
     response = cfn.describe_stacks(StackName=stack_name)
     response_dict = {}
 
-    for output in response["Stacks"][0]["Outputs"]:
+    try:
+        stack_outputs = response["Stacks"][0]["Outputs"]
+    except (KeyError, IndexError):
+        raise NoStackOutputError(
+            f"Stack {stack_name} is in an inconsistent state. "
+            "Manual cleanup from the CloudFormation console may be needed."
+        )
+
+    for output in stack_outputs:
         k, v = output["OutputKey"], output["OutputValue"]
         response_dict[k] = v
     return response_dict

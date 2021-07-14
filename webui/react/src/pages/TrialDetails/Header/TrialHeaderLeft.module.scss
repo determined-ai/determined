@@ -1,7 +1,19 @@
 .experiment {
+  align-items: center;
   color: var(--theme-colors-monochrome-17);
+  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: opacity 0.3s;
+  width: 100%;
 
+  span {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   i {
     margin-left: var(--theme-sizes-layout-medium);
   }
@@ -21,13 +33,17 @@
   margin-right: var(--theme-sizes-layout-medium);
   padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
   text-transform: uppercase;
+  vertical-align: top;
 }
 
 @media only screen and (min-width: $breakpoint-tablet) {
   .experiment {
+    font-size: var(--theme-sizes-font-medium);
     margin-right: var(--theme-sizes-layout-medium);
+    width: auto;
   }
   .trial {
+    font-size: var(--theme-sizes-font-medium);
     margin-top: 0;
   }
 }

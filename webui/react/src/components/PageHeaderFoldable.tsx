@@ -2,6 +2,7 @@ import { Button, Dropdown, Menu, Tooltip } from 'antd';
 import React, { CSSProperties, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { isMouseEvent } from 'routes/utils';
 
 import css from './PageHeaderFoldable.module.scss';
 
@@ -38,6 +39,7 @@ const PageHeaderFoldable: React.FC<Props> = (
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
+    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
     dropdownOptions = (
       <Menu>
         {options.map(opt => (
@@ -45,7 +47,7 @@ const PageHeaderFoldable: React.FC<Props> = (
             className={css.optionsDropdownItem}
             disabled={!opt.onClick}
             key={opt.key}
-            onClick={(e) => opt.onClick && opt.onClick(e.domEvent)}
+            onClick={(e) => isMouseEvent(e.domEvent) && opt.onClick && opt.onClick(e.domEvent)}
           >{renderOptionLabel(opt)}</Menu.Item>
         ))}
       </Menu>
@@ -67,7 +69,7 @@ const PageHeaderFoldable: React.FC<Props> = (
         )}
 
         <div className={css.options}>
-          {options && options.slice(0, 2).map((opt, i) => (
+          {options && options.slice(0, 3).map((opt, i) => (
             <Button
               className={css.optionsMainButton}
               disabled={!opt.onClick}

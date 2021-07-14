@@ -8,6 +8,7 @@ import determined as det
 from determined import pytorch
 from determined.common import check
 from determined.horovod import hvd
+from determined.tensorboard import get_base_path
 
 # Apex is included only for GPU trials.
 try:
@@ -59,6 +60,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
+        self.profiler = None
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -254,6 +256,17 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # don't care about.
         return lr_scheduler
 
+    def set_profiler(self, *args: List[str], **kwargs: Any) -> None:
+        """
+        Sets a torch profiler instance on the trial context to be called in _pytorch_trial
+        when training.
+        """
+        self.profiler = torch.profiler.profile(
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
+            *args,
+            **kwargs,
+        )
+
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
@@ -266,11 +279,13 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
     def _init_device(self) -> None:
         self.n_gpus = len(self.env.container_gpus)
         if self.hvd_config.use:
-            check.gt(self.n_gpus, 0)
-            # We launch a horovod process per GPU. Each process
-            # needs to bind to a unique GPU.
-            self.device = torch.device(hvd.local_rank())
-            torch.cuda.set_device(self.device)
+            if self.n_gpus > 0:
+                # We launch a horovod process per GPU. Each process
+                # needs to bind to a unique GPU.
+                self.device = torch.device("cuda", hvd.local_rank())
+                torch.cuda.set_device(self.device)
+            else:
+                self.device = torch.device("cpu")
         elif self.n_gpus > 0:
             self.device = torch.device("cuda", 0)
         else:
