@@ -21,13 +21,12 @@ export enum Action {
 
 interface Props {
   experimentId: number;
-  onComplete?: (action?: Action) => void;
   trial: TrialItem;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId, onComplete }: Props) => {
+const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId }: Props) => {
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
@@ -35,11 +34,9 @@ const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId, onComplete 
       switch (action) { // Cases should match menu items.
         case Action.Logs:
           routeToReactUrl(paths.trialLogs(trial.id, experimentId));
-          if (onComplete) onComplete(action);
           break;
         case Action.Tensorboard:
           openCommand(await openOrCreateTensorboard({ trialIds: [ trial.id ] }));
-          if (onComplete) onComplete(action);
           break;
       }
     } catch (e) {
