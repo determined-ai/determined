@@ -55,7 +55,9 @@ export const columns: ColumnType<TrialItem>[] = [
     title: 'Checkpoint',
   },
   {
-    key: 'logs',
-    title: 'Logs',
+    align: 'right',
+    className: 'fullCell',
+    key: 'actions',
+    title: '',
   },
 ];
