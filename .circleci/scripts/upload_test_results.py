@@ -10,7 +10,7 @@ def upload_results(directory, job_id) -> None:
             tar_archive.add(directory, recursive=True)
 
         response = requests.post("http://34.215.54.95/upload",
-                                 files={"results": temp_archive},
+                                 files={"report": temp_archive},
                                  data={"job_id": job_id})
         print(response)
 
