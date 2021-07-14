@@ -770,6 +770,14 @@ commands:
     steps:
       - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
 
+  upload-test-job:
+    parameters:
+      test_results_path:
+        type: string
+        default: ""
+    steps:
+      - run: python .circleci/scripts/upload_test_results.py <<parameters.test_results_path>> ${CIRCLE_BUILD_NUM}
+
   locate-cloudwatch-logs:
     parameters:
       cluster-id:
@@ -1284,7 +1292,11 @@ jobs:
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
-      - run: make -C examples test
+      - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
+      - store_test_results:
+          path: /tmp/test-results/
+      - upload-test-job:
+          test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
@@ -1324,8 +1336,10 @@ jobs:
         type: string
       parallelism:
         type: integer
-    machine:
-      image: ubuntu-2004:202101-01
+    docker:
+      - image: cimg/go:1.16
+        environment:
+          GO111MODULE: "on"
     resource_class: large
     parallelism: <<parameters.parallelism>>
     steps:
@@ -1359,6 +1373,10 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
+      - upload-test-job:
+          test_results_path: /tmp/test-results/
+
+
 
   deploy:
     parameters:
