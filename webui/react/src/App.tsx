@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
+import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
@@ -89,20 +90,6 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
-  useEffect(() => {
-    checkServerAlive().then(isAlive => {
-      if (!isAlive) {
-        notification.warn({
-          btn: <Button type="primary" onClick={refreshPage}>Retry</Button>,
-          description: `We cannot communicate with the server at "${serverAddress()}".
-          Please check firewall or server settings.`,
-          duration: 0,
-          message: 'Server Unreachable',
-        });
-      }
-    });
-  }, []);
-
   return (
     <div className={css.base}>
       <Navigation>
@@ -116,10 +103,35 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [ isAlive, setIsAlive ] = useState<boolean>(true);
+
+  useEffect(() => {
+    checkServerAlive().then(aIsAlive => {
+      if (!aIsAlive) {
+        setIsAlive(false);
+        // notification.warn({
+        //   btn: <Button type="primary" onClick={refreshPage}>Retry</Button>,
+        //   description: `We cannot communicate with the server at "${serverAddress()}".
+        //   Please check firewall or server settings.`,
+        //   duration: 0,
+        //   message: 'Server Unreachable',
+        // });
+      }
+    });
+  }, []);
+
+  const message = `We cannot communicate with the server at "${serverAddress()}".
+          Please check firewall or server settings.`;
+
+  const UnreachableServerMessage = (
+    <PageMessage message={message} title="Server Unreachable" />
+  );
+
   return (
     <HelmetProvider>
       <StoreProvider>
-        <AppView />
+        {isAlive ?
+          <AppView /> : UnreachableServerMessage}
       </StoreProvider>
     </HelmetProvider>
   );
