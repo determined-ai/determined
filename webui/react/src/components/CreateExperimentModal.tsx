@@ -137,6 +137,8 @@ const CreateExperimentModal: React.FC<Props> = ({
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
+      {error && <Alert className={css.error} message={error} type="error" />}
+      {configError && <Alert className={css.error} message={configError} type="error" />}
       <React.Suspense
         fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
         <MonacoEditor
@@ -152,11 +154,10 @@ const CreateExperimentModal: React.FC<Props> = ({
           onChange={handleEditorChange}
         />
       </React.Suspense>
-      {configError && <Alert className={css.error} message={configError} type="error" />}
-      {error && <Alert className={css.error} message={error} type="error" />}
     </Modal>
   ) : (
     <Modal
+      bodyStyle={{ padding: 0 }}
       footer={<>
         <Button onClick={handleShowEditor}>Show Full Config</Button>
         <Button type="primary" onClick={handleOk}>{type}</Button>
@@ -165,7 +166,9 @@ const CreateExperimentModal: React.FC<Props> = ({
       title={props.title}
       visible={props.visible}
       onCancel={handleCancel}>
+      {error && <Alert className={css.error} message={error} type="error" />}
       <Form
+        className={css.form}
         form={form}
         initialValues={{
           maxLength: !isFork ? maxLengthValue : undefined,
