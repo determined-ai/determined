@@ -139,7 +139,7 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
     });
 };
 
-const routeToExternalUrl = (path: string): void => {
+export const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {

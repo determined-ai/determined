@@ -7,10 +7,10 @@
 
   .content {
     align-items: center;
-    text-align: center;
     display: flex;
     flex-direction: column;
     max-width: 30vw;
+    text-align: center;
 
     & > * {
       margin-bottom: var(--theme-sizes-layout-enormous);

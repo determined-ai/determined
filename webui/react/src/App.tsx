@@ -90,48 +90,44 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
-  return (
-    <div className={css.base}>
-      <Navigation>
-        <main>
-          <Router routes={appRoutes} />
-          {ui.omnibar.isShowing && <Omnibar />}
-        </main>
-      </Navigation>
-    </div>
-  );
-};
-
-const App: React.FC = () => {
   const [ isAlive, setIsAlive ] = useState<boolean>(true);
 
   useEffect(() => {
     checkServerAlive().then(aIsAlive => {
       if (!aIsAlive) {
         setIsAlive(false);
-        // notification.warn({
-        //   btn: <Button type="primary" onClick={refreshPage}>Retry</Button>,
-        //   description: `We cannot communicate with the server at "${serverAddress()}".
-        //   Please check firewall or server settings.`,
-        //   duration: 0,
-        //   message: 'Server Unreachable',
-        // });
       }
     });
   }, []);
 
-  const message = `We cannot communicate with the server at "${serverAddress()}".
-          Please check firewall or server settings.`;
-
   const UnreachableServerMessage = (
-    <PageMessage message={message} title="Server Unreachable" />
+    <PageMessage title="Server Unreachable">
+      <p>We cannot communicate with the server at {'"'}{serverAddress()}{'"'}.
+      Please check firewall or server settings.</p>
+      <Button onClick={refreshPage}>Retry</Button>
+    </PageMessage>
   );
+
+  return (
+    <div className={css.base}>
+      {isAlive ?
+        <Navigation>
+          <main>
+            <Router routes={appRoutes} />
+          </main>
+        </Navigation>
+        : UnreachableServerMessage }
+      {ui.omnibar.isShowing && <Omnibar />}
+    </div>
+  );
+};
+
+const App: React.FC = () => {
 
   return (
     <HelmetProvider>
       <StoreProvider>
-        {isAlive ?
-          <AppView /> : UnreachableServerMessage}
+        <AppView />
       </StoreProvider>
     </HelmetProvider>
   );

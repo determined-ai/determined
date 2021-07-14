@@ -1,22 +1,21 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
 
 import css from './PageMessage.module.scss';
 
-interface Props {
-  message?: string;
+interface Props extends PropsWithChildren<unknown> {
   title: string;
 }
 
-const PageMessage: React.FC<Props> = ({ message, title }: Props) => {
+const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
   return(
     <Page docTitle={title}>
       <div className={css.base}>
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
-          <p>{message}</p>
+          {children}
         </div>
       </div>
     </Page>
