@@ -8,10 +8,10 @@ def upload_results(directory, job_id) -> None:
     with tempfile.TemporaryFile(suffix=".tar.gz") as temp_archive:
         with tarfile.open(fileobj=temp_archive, mode="w:gz") as tar_archive:
             tar_archive.add(directory, recursive=True)
-        response = requests.post("http://34.215.54.95/upload",
-                                 files={"results": tar_archive},
-                                 data={"job_id": job_id})
-        print(response)
+            response = requests.post("http://34.215.54.95/upload",
+                                     files={"results": tar_archive},
+                                     data={"job_id": job_id})
+            print(response)
 
 
 def main() -> None:
