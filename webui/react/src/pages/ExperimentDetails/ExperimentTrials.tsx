@@ -38,6 +38,8 @@ interface Props {
   experiment: ExperimentBase;
 }
 
+const URL_ALL = 'all';
+
 const STORAGE_PATH = 'experiment-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
@@ -87,12 +89,19 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     // sortKey
     searchParams.append('sortKey', (sorter.key || '') as string);
 
+    // states
+    if (filters.states && filters.states.length > 0) {
+      filters.states.forEach(state => searchParams.append('state', state));
+    } else {
+      searchParams.append('state', URL_ALL);
+    }
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ isUrlParsed, pagination, sorter ]);
+  }, [ filters, isUrlParsed, pagination, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -133,10 +142,18 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       Object.values(V1GetExperimentTrialsRequestSortBy).includes(sortKey)) {
       sorter.key = sortKey as unknown as V1GetExperimentTrialsRequestSortBy;
     }
+
+    // states
+    const state = urlSearchParams.getAll('state');
+    if (state != null) {
+      filters.states = (state.includes(URL_ALL) ? undefined : state);
+    }
+
+    setFilters(filters);
     setIsUrlParsed(true);
     setPagination(pagination);
     setSorter(sorter);
-  }, [ isUrlParsed, pagination, sorter ]);
+  }, [ filters, isUrlParsed, pagination, sorter ]);
 
   const handleFilterChange = useCallback((filters: TrialFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
