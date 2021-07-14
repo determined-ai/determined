@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
+import { ContinueTrialHandles } from 'components/ContinueTrial';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
@@ -37,6 +38,7 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
   const [ isSingleTrial, setIsSingleTrial ] = useState(false);
+  const continueTrialRef = useRef<ContinueTrialHandles>(null);
 
   const id = parseInt(experimentId);
 
@@ -154,14 +156,20 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       headerComponent={<ExperimentDetailsHeader
+        continueTrialRef={continueTrialRef}
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
+        isSingleTrial={isSingleTrial}
         showForkModal={showForkModal}
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
-        <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />
+        <ExperimentSingleTrialTabs
+          continueTrialRef={continueTrialRef}
+          experiment={experiment}
+          trialId={firstTrialId}
+        />
       ) : (
         <ExperimentMultiTrialTabs experiment={experiment} />
       )}

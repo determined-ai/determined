@@ -2,6 +2,7 @@ import { Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
+import { ContinueTrialHandles } from 'components/ContinueTrial';
 import Icon from 'components/Icon';
 import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -23,14 +24,20 @@ import { openCommand } from 'wait';
 import css from './ExperimentDetailsHeader.module.scss';
 
 interface Props {
+  continueTrialRef: React.RefObject<ContinueTrialHandles>;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
+  isSingleTrial: boolean;
   showForkModal: () => void;
 }
 
-const ExperimentDetailsHeader: React.FC<Props> = (
-  { experiment, fetchExperimentDetails, showForkModal }: Props,
-) => {
+const ExperimentDetailsHeader: React.FC<Props> = ({
+  continueTrialRef,
+  experiment,
+  fetchExperimentDetails,
+  isSingleTrial,
+  showForkModal,
+}: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
@@ -59,37 +66,51 @@ const ExperimentDetailsHeader: React.FC<Props> = (
   }, [ experiment.id, fetchExperimentDetails ]);
 
   const headerOptions = useMemo<Option[]>(() => {
-    const options: Option[] = [
-      {
-        icon: <Icon name="fork" size="small" />,
-        key: 'fork',
-        label: 'Fork',
-        onClick: showForkModal,
+    const continueTrial: Option = {
+      key: 'continue-trial',
+      label: 'Continue Trial',
+      onClick: () => continueTrialRef.current?.show(),
+    };
+    const downloadModel: Option = {
+      icon: <Icon name="download" size="small" />,
+      key: 'download-model',
+      label: 'Download Model',
+      onClick: (e) => {
+        handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
       },
-      {
-        icon: <Icon name="tensorboard" size="small" />,
-        isLoading: isRunningTensorboard,
-        key: 'tensorboard',
-        label: 'TensorBoard',
-        onClick: async () => {
-          setIsRunningTensorboard(true);
-          try {
-            const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
-            openCommand(tensorboard);
-            setIsRunningTensorboard(false);
-          } catch (e) {
-            setIsRunningTensorboard(false);
-          }
-        },
+    };
+    const fork: Option = {
+      icon: <Icon name="fork" size="small" />,
+      key: 'fork',
+      label: 'Fork',
+      onClick: showForkModal,
+    };
+    const tensorboard: Option = {
+      icon: <Icon name="tensorboard" size="small" />,
+      isLoading: isRunningTensorboard,
+      key: 'tensorboard',
+      label: 'TensorBoard',
+      onClick: async () => {
+        setIsRunningTensorboard(true);
+        try {
+          const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
+          openCommand(tensorboard);
+          setIsRunningTensorboard(false);
+        } catch (e) {
+          setIsRunningTensorboard(false);
+        }
       },
-      {
-        icon: <Icon name="download" size="small" />,
-        key: 'download-model',
-        label: 'Download Model',
-        onClick: (e) => {
-          handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
-        },
-      },
+    };
+
+    const options: Option[] = isSingleTrial ? [
+      tensorboard,
+      downloadModel,
+      fork,
+      continueTrial,
+    ] : [
+      fork,
+      tensorboard,
+      downloadModel,
     ];
 
     if (terminalRunStates.has(experiment.state)) {
@@ -128,6 +149,7 @@ const ExperimentDetailsHeader: React.FC<Props> = (
 
     return options;
   }, [
+    continueTrialRef,
     experiment.archived,
     experiment.id,
     experiment.state,
@@ -135,6 +157,7 @@ const ExperimentDetailsHeader: React.FC<Props> = (
     isRunningArchive,
     isRunningTensorboard,
     isRunningUnarchive,
+    isSingleTrial,
     showForkModal,
   ]);
 
