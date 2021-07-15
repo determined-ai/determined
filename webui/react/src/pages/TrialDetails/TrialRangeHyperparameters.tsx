@@ -25,12 +25,6 @@ interface HyperParameter {
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
   const hyperparameters: HyperParameter[] = useMemo(() => {
-    // const config = Object.entries(experiment.hyperparameters).map(([ name, value ]) => {
-    //   return { name, value };
-    // });
-    // const value = Object.entries(trial.hyperparameters).map(([ name, value ]) => {
-    //   return { name, value };
-    // });
     return Object.entries(experiment.hyperparameters).map(([ name, value ]) => {
       return {
         name: name,
