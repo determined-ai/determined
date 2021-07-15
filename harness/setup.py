@@ -28,7 +28,7 @@ setup(
         "backoff",
         "certifi",
         "filelock",
-        "google-cloud-storage>=1.20.0",
+        "google-cloud-storage>=1.20.0,<=1.40.0",
         # google-cloud-core 1.4.2 breaks our windows cli tests for python 3.5.
         "google-cloud-core<1.4.2",
         "hdfs>=2.2.2",
