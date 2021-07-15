@@ -315,7 +315,12 @@ const ExperimentVisualization: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <Tabs activeKey={typeKey} className={css.base} type="card" onChange={handleTabChange}>
+      <Tabs
+        activeKey={typeKey}
+        className={css.base}
+        destroyInactiveTabPane
+        type="card"
+        onChange={handleTabChange}>
         <Tabs.TabPane
           key={ExperimentVisualizationType.LearningCurve}
           tab="Learning Curve">
