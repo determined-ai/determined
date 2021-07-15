@@ -3,7 +3,7 @@ import {
   Hyperparameters, HyperparametersFlattened,
 } from 'types';
 
-export const flattenHyperParams = (
+export const flattenHyperparameters = (
   hyperparams: Hyperparameters,
   keys: string[] = [],
 ): HyperparametersFlattened => {
@@ -13,7 +13,7 @@ export const flattenHyperParams = (
     if (hp.type) {
       acc[keyPath] = hp as Hyperparameter;
     } else {
-      acc = { ...acc, ...flattenHyperParams(hp as Hyperparameters, [ ...keys, key ]) };
+      acc = { ...acc, ...flattenHyperparameters(hp as Hyperparameters, [ ...keys, key ]) };
     }
     return acc;
   }, {} as HyperparametersFlattened);

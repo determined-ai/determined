@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
 import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
-import { flattenHyperParams } from 'utils/experiment';
+import { flattenHyperparameters } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -265,7 +265,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
-  const hyperparameters = flattenHyperParams(
+  const hyperparameters = flattenHyperparameters(
     ioConfig.hyperparameters as types.Hyperparameters,
   );
   return {

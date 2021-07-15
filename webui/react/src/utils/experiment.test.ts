@@ -2,9 +2,9 @@ import {
   ExperimentBase, ExperimentSearcherName, Hyperparameters, UnknownRecord,
 } from 'types';
 
-import { flattenHyperParams, isSingleTrialExperiment } from './experiment';
+import { flattenHyperparameters, isSingleTrialExperiment } from './experiment';
 
-describe('flattenHyperParams', () => {
+describe('flattenHyperparameters', () => {
   const tests: UnknownRecord[] = [
     {
       input: {
@@ -33,7 +33,7 @@ describe('flattenHyperParams', () => {
   ];
   it('should flatten hyperparameter config', () => {
     tests.forEach(test => {
-      expect(flattenHyperParams(test.input as Hyperparameters)).toStrictEqual(test.output);
+      expect(flattenHyperparameters(test.input as Hyperparameters)).toStrictEqual(test.output);
     });
   });
 });
