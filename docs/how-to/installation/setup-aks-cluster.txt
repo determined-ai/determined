@@ -46,7 +46,7 @@ installed on their local machine.
 
    # Launch the AKS cluster that will contain a single non-GPU node.
    az aks create --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME} \
-    --node-count 1  --generate-ssh-keys --vm-set-type VirtualMachineScaleSets \
+    --node-count 1 --generate-ssh-keys --vm-set-type VirtualMachineScaleSets \
     --load-balancer-sku standard --node-vm-size Standard_D8_v3
 
    # Create a node pool. This will not launch any nodes immediately but will
