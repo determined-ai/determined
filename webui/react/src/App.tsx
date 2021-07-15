@@ -102,9 +102,9 @@ const AppView: React.FC = () => {
 
   const UnreachableServerMessage = (
     <PageMessage title="Server Unreachable">
-      <p>We cannot communicate with the server at {'"'}{serverAddress()}{'"'}.
+      <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
       Please check the firewall and cluster settings.</p>
-      <Button onClick={refreshPage}>Retry</Button>
+      <Button onClick={refreshPage}>Try Again</Button>
     </PageMessage>
   );
 
