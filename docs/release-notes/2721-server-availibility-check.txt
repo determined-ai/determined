@@ -1,0 +1,5 @@
+:orphan:
+
+**New Features**
+
+-  Add a server availability check on WebUI load.

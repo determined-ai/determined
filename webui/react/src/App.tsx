@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { setupAnalytics } from 'Analytics';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
+import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
@@ -18,7 +19,7 @@ import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-import { paths } from './routes/utils';
+import { checkServerAlive, paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -89,19 +90,40 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
+  const [ isAlive, setIsAlive ] = useState<boolean>(true);
+
+  useEffect(() => {
+    checkServerAlive().then(aIsAlive => {
+      if (!aIsAlive) {
+        setIsAlive(false);
+      }
+    });
+  }, []);
+
+  const UnreachableServerMessage = (
+    <PageMessage title="Server Unreachable">
+      <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
+      Please check the firewall and cluster settings.</p>
+      <Button onClick={refreshPage}>Try Again</Button>
+    </PageMessage>
+  );
+
   return (
     <div className={css.base}>
-      <Navigation>
-        <main>
-          <Router routes={appRoutes} />
-          {ui.omnibar.isShowing && <Omnibar />}
-        </main>
-      </Navigation>
+      {isAlive ?
+        <Navigation>
+          <main>
+            <Router routes={appRoutes} />
+          </main>
+        </Navigation>
+        : UnreachableServerMessage }
+      {ui.omnibar.isShowing && <Omnibar />}
     </div>
   );
 };
 
 const App: React.FC = () => {
+
   return (
     <HelmetProvider>
       <StoreProvider>
