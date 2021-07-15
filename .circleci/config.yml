@@ -1367,7 +1367,7 @@ jobs:
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
-          master-host: localhostf
+          master-host: localhost
 
 
 
