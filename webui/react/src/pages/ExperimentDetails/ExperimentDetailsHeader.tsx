@@ -2,7 +2,6 @@ import { Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
-import { ContinueTrialHandles } from 'components/ContinueTrial';
 import Icon from 'components/Icon';
 import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -24,15 +23,15 @@ import { openCommand } from 'wait';
 import css from './ExperimentDetailsHeader.module.scss';
 
 interface Props {
-  continueTrialRef: React.RefObject<ContinueTrialHandles>;
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
   isSingleTrial: boolean;
+  showContinueTrial: () => void;
   showForkModal: () => void;
 }
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
-  continueTrialRef,
+  showContinueTrial,
   experiment,
   fetchExperimentDetails,
   isSingleTrial,
@@ -69,7 +68,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     const continueTrial: Option = {
       key: 'continue-trial',
       label: 'Continue Trial',
-      onClick: () => continueTrialRef.current?.show(),
+      onClick: showContinueTrial,
     };
     const downloadModel: Option = {
       icon: <Icon name="download" size="small" />,
@@ -149,7 +148,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
     return options;
   }, [
-    continueTrialRef,
     experiment.archived,
     experiment.id,
     experiment.state,
@@ -158,6 +156,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningTensorboard,
     isRunningUnarchive,
     isSingleTrial,
+    showContinueTrial,
     showForkModal,
   ]);
 

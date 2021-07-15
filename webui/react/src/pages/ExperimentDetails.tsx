@@ -95,6 +95,10 @@ const ExperimentDetails: React.FC = () => {
     setIsForkModalVisible(true);
   }, [ experiment?.configRaw ]);
 
+  const showContinueTrial = useCallback((): void => {
+    continueTrialRef.current?.show();
+  }, [ continueTrialRef ]);
+
   const handleForkModalCancel = useCallback(() => {
     setIsForkModalVisible(false);
   }, []);
@@ -156,10 +160,10 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       headerComponent={<ExperimentDetailsHeader
-        continueTrialRef={continueTrialRef}
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
         isSingleTrial={isSingleTrial}
+        showContinueTrial={showContinueTrial}
         showForkModal={showForkModal}
       />}
       stickyHeader
