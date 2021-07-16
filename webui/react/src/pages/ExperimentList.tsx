@@ -1,7 +1,9 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
@@ -25,7 +27,7 @@ import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
-import { parseUrl } from 'routes/utils';
+import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
@@ -55,8 +57,20 @@ enum Action {
   Unarchive = 'Unarchive',
 }
 
-const URL_ALL = 'all';
+interface QueryParams {
+  archived: ArchiveFilter | 'all';
+  label: string | string[];
+  limit: string;
+  offset: string;
+  search: string;
+  sortDesc: '0' | '1';
+  sortKey: string;
+  state: string | string[];
+  user: string | string[];
+}
 
+const BASE_PATH = paths.experimentList();
+const URL_ALL = 'all';
 const STORAGE_PATH = 'experiment-list';
 const STORAGE_FILTERS_KEY = 'filters';
 const STORAGE_LIMIT_KEY = 'limit';
@@ -75,151 +89,70 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 
 const ExperimentList: React.FC = () => {
   const { users } = useStore();
+  const history = useHistory();
+  const location = useLocation();
   const storage = useStorage(STORAGE_PATH);
-  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
-  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
-  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
-  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
-  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
-  const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
-  const [ sorter, setSorter ] = useState(initSorter);
   const [ total, setTotal ] = useState(0);
 
   /*
-   * When filters changes update the page URL.
+   * Determine filters, paginations, search and sorter from the listed
+   * sources in the the following order:
+   * - URL query parameter (Highest Priority)
+   * - user preferences
+   * - default preferences
    */
-  useEffect(() => {
-    if (!isUrlParsed) return;
+  const { filters, pagination, search, sorter } = useMemo(() => {
+    const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
+    const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
+    const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+    const filters = initFilters;
+    const pagination: Pagination = { limit: initLimit, offset: 0 };
+    const sorter = initSorter;
+    const {
+      archived, label, limit, offset, search: querySearch,
+      sortDesc, sortKey, state, user,
+    } = queryString.parse(location.search);
+    let search = '';
 
-    const searchParams = new URLSearchParams;
-    const url = parseUrl(window.location.href);
-
-    // archived
-    searchParams.append('archived', filters.archived ? filters.archived : URL_ALL);
-
-    // labels
-    if (filters.labels && filters.labels.length > 0) {
-      filters.labels.forEach(label => searchParams.append('label', label));
-    } else {
-      searchParams.append('label', URL_ALL);
-    }
-
-    // limit
-    searchParams.append('limit', pagination.limit.toString());
-
-    // offset
-    searchParams.append('offset', pagination.offset.toString());
-
-    // search
-    searchParams.append('search', search);
-
-    // sortDesc
-    searchParams.append('sortDesc', sorter.descend ? '1' : '0');
-
-    // sortKey
-    searchParams.append('sortKey', (sorter.key || '') as string);
-
-    // states
-    if (filters.states && filters.states.length > 0) {
-      filters.states.forEach(state => searchParams.append('state', state));
-    } else {
-      searchParams.append('state', URL_ALL);
-    }
-
-    // users
-    if (filters.users && filters.users.length > 0) {
-      filters.users.forEach(user => searchParams.append('user', user));
-    } else {
-      searchParams.append('user', URL_ALL);
-    }
-
-    window.history.pushState(
-      {},
-      '',
-      url.origin + url.pathname + '?' + searchParams.toString(),
-    );
-  }, [ filters, isUrlParsed, pagination, search, sorter ]);
-
-  /*
-   * On first load: if filters are specified in URL, override default.
-   */
-  useEffect(() => {
-    if (isUrlParsed) return;
-
-    // If search params are not set, we default to user preferences
-    const url = parseUrl(window.location.href);
-    if (url.search === '') {
-      setIsUrlParsed(true);
-      return;
-    }
-
-    const urlSearchParams = url.searchParams;
-
-    // archived
-    const archived = urlSearchParams.get('archived');
     if (archived != null) {
       filters.archived = archived === URL_ALL ? undefined : archived as ArchiveFilter;
     }
-
-    // labels
-    const label = urlSearchParams.getAll('label');
-    if (label!= null) {
+    if (label != null && Array.isArray(label)) {
       filters.labels = (label.includes(URL_ALL) ? undefined : label);
     }
-
-    // limit
-    const limit = urlSearchParams.get('limit');
-    if (limit != null && !isNaN(parseInt(limit))) {
-      pagination.limit = parseInt(limit);
-    }
-
-    // offset
-    const offset = urlSearchParams.get('offset');
-    if (offset != null && !isNaN(parseInt(offset))) {
-      pagination.offset = parseInt(offset);
-    }
-
-    // search
-    const search = urlSearchParams.get('search');
-    if (search != null) {
-      setSearch(search);
-    }
-
-    // sortDesc
-    const sortDesc = urlSearchParams.get('sortDesc');
-    if (sortDesc != null) {
-      sorter.descend = (sortDesc === '1');
-    }
-
-    // sortKey
-    const sortKey = urlSearchParams.get('sortKey');
-    if (sortKey != null && Object.values(V1GetExperimentsRequestSortBy).includes(sortKey)) {
-      sorter.key = sortKey as unknown as V1GetExperimentsRequestSortBy;
-    }
-
-    // states
-    const state = urlSearchParams.getAll('state');
-    if (state != null) {
+    if (state != null && Array.isArray(state)) {
       filters.states = (state.includes(URL_ALL) ? undefined : state);
     }
-
-    // users
-    const user = urlSearchParams.getAll('user');
-    if (user != null) {
+    if (user != null && Array.isArray(user)) {
       filters.users = (user.includes(URL_ALL) ? undefined : user);
     }
 
-    setFilters(filters);
-    setIsUrlParsed(true);
-    setPagination(pagination);
-    setSorter(sorter);
-  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+    if (limit != null && !isNaN(parseInt(limit as string))) {
+      pagination.limit = parseInt(limit as string);
+    }
+    if (offset != null && !isNaN(parseInt(offset as string))) {
+      pagination.offset = parseInt(offset as string);
+    }
+
+    if (querySearch != null && !Array.isArray(search)) {
+      search = querySearch as string;
+    }
+
+    if (sortDesc != null) {
+      sorter.descend = (sortDesc === '1');
+    }
+    if (sortKey != null &&
+        Object.values(V1GetExperimentsRequestSortBy).includes(sortKey as string)) {
+      sorter.key = sortKey as unknown as V1GetExperimentsRequestSortBy;
+    }
+
+    return { filters, pagination, search, sorter };
+  }, [ location.search, storage ]);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -264,6 +197,20 @@ const ExperimentList: React.FC = () => {
     }
     return tracker;
   }, [ selectedExperiments ]);
+
+  const stateToQueryParams = useCallback((): QueryParams => {
+    return {
+      archived: filters.archived || URL_ALL,
+      label: filters.labels || URL_ALL,
+      limit: pagination.limit.toString(),
+      offset: pagination.offset.toString(),
+      search: search || '',
+      sortDesc: sorter.descend ? '1' : '0',
+      sortKey: sorter.key as unknown as string || '',
+      state: filters.states || URL_ALL,
+      user: filters.users || URL_ALL,
+    };
+  }, [ filters, pagination, search, sorter ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -316,12 +263,26 @@ const ExperimentList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
+  const updateQueryParams = useCallback((queryParams: Partial<QueryParams>) => {
+    const newQueryParams = {
+      ...stateToQueryParams(),
+      ...queryParams,
+    };
+    const path = BASE_PATH + '?' + queryString.stringify(newQueryParams);
+    history.push(path);
+  }, [ history, stateToQueryParams ]);
+
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setSelectedRowKeys([]);
-    setFilters(filters);
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, [ setFilters, storage ]);
+    updateQueryParams({
+      archived: filters.archived || URL_ALL,
+      label: filters.labels || URL_ALL,
+      offset: '0',
+      state: filters.states || URL_ALL,
+      user: filters.users || URL_ALL,
+    });
+  }, [ storage, updateQueryParams ]);
 
   const handleArchiveFilterApply = useCallback((archived: string[]) => {
     const archivedFilter = archived.length === 1 ? archived[0] as ArchiveFilter : undefined;
@@ -344,13 +305,12 @@ const ExperimentList: React.FC = () => {
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
   const handleNameSearchApply = useCallback((newSearch: string) => {
-    setSearch(newSearch);
-    setPagination(prev => ({ ...prev, offset: 0 }));
-  }, []);
+    updateQueryParams({ offset: '0', search: newSearch });
+  }, [ updateQueryParams ]);
 
   const handleNameSearchReset = useCallback(() => {
-    setSearch('');
-  }, []);
+    updateQueryParams({ offset: '0', search: '' });
+  }, [ updateQueryParams ]);
 
   const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterSearch
@@ -632,26 +592,36 @@ const ExperimentList: React.FC = () => {
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
-    setSorter({ descend: order === 'descend', key: columnKey as V1GetExperimentsRequestSortBy });
-
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
-    setPagination(prev => ({
-      ...prev,
-      limit: tablePagination.pageSize,
-      offset: (tablePagination.current - 1) * tablePagination.pageSize,
-    }));
+
+    updateQueryParams({
+      limit: String(tablePagination.pageSize),
+      offset: String(((tablePagination.current - 1) * tablePagination.pageSize)),
+      sortDesc: order === 'descend' ? '1' : '0',
+      sortKey: columnKey as string,
+    });
     setSelectedRowKeys([]);
-  }, [ columns, setSorter, storage ]);
+  }, [ columns, storage, updateQueryParams ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  /*
+   * Set default URL query params if they are not set.
+   */
+  useEffect(() => {
+    if (location.search !== '') return;
+    const currentQueryParams = stateToQueryParams();
+    const path = BASE_PATH + '?' + queryString.stringify(currentQueryParams);
+    history.replace(path);
+  }, [ history, location.search, stateToQueryParams ]);
 
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
    */
   useEffect(() => {
-    fetchExperiments();
     setIsLoading(true);
+    fetchExperiments();
   }, [ fetchExperiments, filters, pagination, search, sorter ]);
 
   useEffect(() => {
@@ -659,9 +629,8 @@ const ExperimentList: React.FC = () => {
   }, [ canceler ]);
 
   const resetFilters = useCallback(() => {
-    setFilters(defaultFilters);
     handleFilterChange(defaultFilters);
-  }, [ setFilters, handleFilterChange ]);
+  }, [ handleFilterChange ]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
