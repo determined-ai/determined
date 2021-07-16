@@ -9,6 +9,7 @@ def upload_results(directory, job_id, access_key) -> None:
         with tarfile.open(fileobj=temp_archive, mode="w:gz") as tar_archive:
             tar_archive.add(directory, recursive=True)
 
+
         # Flush write data and reset pointer
         temp_archive.flush()
         temp_archive.seek(0)
