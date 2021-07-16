@@ -90,24 +90,12 @@ message Trial {
 // TrialProfilerMetricSummary is a summary of a single metric.
 message TrialProfilerMetricSummary {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "float", "labels" ] }
+    json_schema: { required: [ "average", "stable" ] }
   };
   // The average of the metric, over the last 10 minutes of its collection.
   float average = 1;
   // A bool describing if the metric can be considered stable or not.
   bool stable = 2;
-  // The labels for this series.
-  TrialProfilerMetricLabels labels = 3;
-}
-
-// TrialProfilerSummary is a summary of the information gather about the trial
-// during profiling.
-message TrialProfilerSummary {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "name" ] }
-  };
-  // A list of metric summaries.
-  repeated TrialProfilerMetricSummary metric_summaries = 1;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

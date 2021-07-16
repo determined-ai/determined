@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
 
 import pytest
+import requests
 import simplejson
 import yaml
 
@@ -50,10 +51,20 @@ def test_streaming_observability_metrics_apis(
     gpu_enabled = conf.GPU_ENABLED
 
     request_profiling_metric_labels(trial_id, framework_timings_enabled, gpu_enabled)
+    request_profiling_metrics(trial_id, "samples_per_second", metric_type=PROFILER_METRIC_TYPE_MISC)
+    request_profiling_metrics_summary(trial_id)
     if gpu_enabled:
-        request_profiling_system_metrics(trial_id, "gpu_util")
+        request_profiling_metrics(trial_id, "gpu_util", metric_type=PROFILER_METRIC_TYPE_SYSTEM)
+    else:
+        request_profiling_metrics(trial_id, "cpu_util", metric_type=PROFILER_METRIC_TYPE_SYSTEM)
+
     if framework_timings_enabled:
         request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
+
+
+PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
+PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
+PROFILER_METRIC_TYPE_MISC = "PROFILER_METRIC_TYPE_MISC"
 
 
 def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_enabled: bool) -> None:
@@ -73,6 +84,7 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_ena
             "step_lr_schedulers": PROFILER_METRIC_TYPE_TIMING,
             "to_device": PROFILER_METRIC_TYPE_TIMING,
             "train_batch": PROFILER_METRIC_TYPE_TIMING,
+            "samples_per_second": PROFILER_METRIC_TYPE_MISC,
         }
 
         if gpu_enabled:
@@ -107,8 +119,17 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_ena
             return
 
 
-def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
-    def validate_gpu_metric_batch(batch: Dict[str, Any]) -> None:
+def request_profiling_metrics_summary(trial_id: int) -> None:
+    r = api.get(
+        conf.make_master_url(),
+        f"api/v1/trials/{trial_id}/profiler/metrics/summary",
+    )
+    if r.status_code != requests.codes.ok:
+        pytest.fail(f"couldn't retreive metrics summary {r.text}")
+
+
+def request_profiling_metrics(trial_id: int, metric_name: str, metric_type: str) -> None:
+    def validate_metric_batch(batch: Dict[str, Any]) -> None:
         num_values = len(batch["values"])
         num_batch_indexes = len(batch["batches"])
         num_timestamps = len(batch["timestamps"])
@@ -124,13 +145,13 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
         conf.make_master_url(),
         "api/v1/trials/{}/profiler/metrics?{}".format(
             trial_id,
-            to_query_params(PROFILER_METRIC_TYPE_SYSTEM, metric_name),
+            to_query_params(metric_type, metric_name),
         ),
         stream=True,
     ) as r:
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
-            validate_gpu_metric_batch(batch)
+            validate_metric_batch(batch)
 
 
 def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) -> None:
@@ -171,10 +192,6 @@ def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) ->
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
             batch_idx = validate_timing_batch(batch, batch_idx)
-
-
-PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
-PROFILER_METRIC_TYPE_TIMING = "PROFILER_METRIC_TYPE_TIMING"
 
 
 def to_query_params(metric_type: str, metric_name: Optional[str] = None) -> str:

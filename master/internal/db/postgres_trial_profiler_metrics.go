@@ -63,17 +63,15 @@ const summaryWindowSeconds = 10 * 60
 
 // GetTrialProfilerMetricSummary gets a summary of profiler metrics.
 func (db *PgDB) GetTrialProfilerMetricSummary(
-	ctx context.Context, labels *trialv1.TrialProfilerMetricLabels,
+	ctx context.Context, labels *trialv1.TrialProfilerMetricLabels, // nolint:interfacer
 ) (*trialv1.TrialProfilerMetricSummary, error) {
 	labelsJSON, err := protojson.Marshal(labels)
 	if err != nil {
 		return nil, errors.Wrap(err, "marshaling labels")
 	}
 
-	summary := trialv1.TrialProfilerMetricSummary{
-		Labels: labels,
-	}
-
+	var average float32
+	var stable bool
 	if err := db.sql.QueryRowxContext(ctx, fmt.Sprintf(`
 WITH latest AS (
 	SELECT upper(m.ts_range) AS ts
@@ -91,9 +89,12 @@ FROM (
   FROM trial_profiler_metrics m, latest
   WHERE m.labels @> $1::jsonb
     AND m.ts_range && tstzrange(latest.ts - interval '%d seconds', latest.ts, '[]')
-) q`, summaryWindowSeconds), labelsJSON).Scan(&summary.Average, &summary.Stable); err != nil {
+) q`, summaryWindowSeconds), labelsJSON).Scan(&average, &stable); err != nil {
 		return nil, errors.Wrapf(err, "querying summary data for %s", labelsJSON)
 	}
 
-	return &summary, nil
+	return &trialv1.TrialProfilerMetricSummary{
+		Average: average,
+		Stable:  stable,
+	}, nil
 }

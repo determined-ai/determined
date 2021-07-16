@@ -460,7 +460,7 @@ service Determined {
       get: "/api/v1/trials/{trial_id}/profiler/summary"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Unimplemented" ]
+      tags: [ "Profiler" ]
     };
   }
   // Stream trial profiler metrics.

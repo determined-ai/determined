@@ -430,29 +430,23 @@ func (a *apiServer) GetTrialProfilerSummary(
 		return nil, err
 	}
 
-	var summaries []*trialv1.TrialProfilerMetricSummary
-	for _, labels := range []*trialv1.TrialProfilerMetricLabels{
-		{
+	resp := &apiv1.GetTrialProfilerSummaryResponse{}
+
+	switch summary, err := a.m.db.GetTrialProfilerMetricSummary(ctx,
+		&trialv1.TrialProfilerMetricLabels{
 			TrialId:    req.TrialId,
 			Name:       "samples_per_second",
 			MetricType: trialv1.TrialProfilerMetricLabels_PROFILER_METRIC_TYPE_MISC,
-		},
-	} {
-		switch summary, err := a.m.db.GetTrialProfilerMetricSummary(ctx, labels); {
-		case err != nil:
-			return nil, err
-		case ctx.Err() != nil:
-			return nil, ctx.Err()
-		default:
-			summaries = append(summaries, summary)
-		}
+		}); {
+	case err != nil:
+		return nil, err
+	case ctx.Err() != nil:
+		return nil, ctx.Err()
+	default:
+		resp.Throughput = summary
 	}
 
-	return &apiv1.GetTrialProfilerSummaryResponse{
-		Summary: &trialv1.TrialProfilerSummary{
-			MetricSummaries: summaries,
-		},
-	}, nil
+	return resp, nil
 }
 
 func (a *apiServer) GetTrialProfilerMetrics(

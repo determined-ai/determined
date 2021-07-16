@@ -236,10 +236,10 @@ message GetTrialProfilerSummaryRequest {
 // Response to TrialLogFieldsRequest.
 message GetTrialProfilerSummaryResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "summary" ] }
+    json_schema: { required: [ "throughput" ] }
   };
   // The labels for the series requested.
-  determined.trial.v1.TrialProfilerSummary summary = 1;
+  determined.trial.v1.TrialProfilerMetricSummary throughput = 1;
 }
 
 // Stream trial profiler metrics.
