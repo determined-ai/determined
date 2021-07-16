@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -69,11 +70,19 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		)
 	}
 
-	// Get the TaskSpec for this experiment.
-	taskSpec := m.makeTaskSpec(
+	poolName, err := sproto.GetResourcePool(
+		m.system,
 		expModel.Config.Resources().ResourcePool(),
 		expModel.Config.Resources().SlotsPerTrial(),
+		false,
 	)
+	if err != nil {
+		return errors.Wrap(err, "invalid resource configuration")
+	}
+
+	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
+	taskSpec := *m.taskSpec
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
 
 	log.WithField("experiment", expModel.ID).Info("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)

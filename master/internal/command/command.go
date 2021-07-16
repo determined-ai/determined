@@ -2,7 +2,6 @@ package command
 
 import (
 	"fmt"
-	"math/rand"
 	"net/url"
 	"time"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
-	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
@@ -40,10 +38,35 @@ type readinessCheck func(sproto.ContainerLog) bool
 // should stop and garbage collect its state.
 type terminateForGC struct{}
 
-// commandOwner describes the owner of a command.
-type commandOwner struct {
-	ID       model.UserID `json:"id"`
-	Username string       `json:"username"`
+func createGenericCommandActor(
+	ctx *actor.Context,
+	db *db.PgDB,
+	spec tasks.GenericCommandSpec,
+	readinessCheck map[string]readinessCheck,
+) error {
+	taskID := sproto.NewTaskID()
+
+	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
+
+	cmd := &command{
+		db:              db,
+		readinessChecks: readinessCheck,
+
+		GenericCommandSpec: spec,
+
+		taskID:         taskID,
+		serviceAddress: &serviceAddress,
+	}
+
+	a, _ := ctx.ActorOf(cmd.taskID, cmd)
+	summaryFut := ctx.Ask(a, getSummary{})
+	if err := summaryFut.Error(); err != nil {
+		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
+		return nil
+	}
+	summary := summaryFut.Get().(summary)
+	ctx.Respond(summary.ID)
+	return nil
 }
 
 // DefaultConfig is the default configuration used by all
@@ -66,15 +89,11 @@ type command struct {
 	eventStream *actor.Ref
 
 	readinessChecks map[string]readinessCheck
-	proxyTCP        bool
 
-	generatedKeys *ssh.PrivateAndPublicKeys
-	tasks.CommandSpec
-	owner commandOwner
+	tasks.GenericCommandSpec
 
 	taskID         sproto.TaskID
 	serviceAddress *string
-	assignedPort   *int
 
 	readinessMessageSent bool
 	registeredTime       time.Time
@@ -124,7 +143,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
-		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
+		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))
 		}
 
@@ -204,7 +223,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		switch {
 		case msg.Container.State == container.Running:
 			c.addresses = msg.ContainerStarted.Addresses
-
+			assignedPort := c.GenericCommandSpec.Port
 			// TODO(DET-5682): refactor this logic and the rendezvous info logic that does the same
 			// thing into a helper function.
 			var names []string
@@ -213,7 +232,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				// additional addresses will appear her, but currently we only proxy one uuid to one
 				// port, so it doesn't make sense to send multiple proxy.Register messages for a
 				// single ServiceID (only the last one would work).
-				if c.assignedPort == nil || address.ContainerPort != *c.assignedPort {
+				if assignedPort == nil || address.ContainerPort != *assignedPort {
 					continue
 				}
 
@@ -226,11 +245,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 						Scheme: "http",
 						Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 					},
-					ProxyTCP: c.proxyTCP,
+					ProxyTCP: c.GenericCommandSpec.ProxyTCP,
 				})
 				names = append(names, string(c.taskID))
 			}
-			if c.assignedPort == nil && len(names) > 0 {
+			if assignedPort == nil && len(names) > 0 {
 				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
 			} else if len(names) != 1 {
 				ctx.Log().Errorf(
@@ -292,7 +311,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.allocation = msg.Allocations[0]
 
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.generatedKeys, taskToken), 0)
+		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, taskToken), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -380,11 +399,6 @@ func (c *command) State() State {
 }
 
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
-	serviceAddress, err := generateServiceAddress(string(c.taskID))
-	if err != nil {
-		return nil, errors.Wrapf(err, "generating service address for %s", c.taskID)
-	}
-
 	exitStatus := protoutils.DefaultStringValue
 	if c.exitStatus != nil {
 		exitStatus = *c.exitStatus
@@ -395,9 +409,9 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		State:          c.State().Proto(),
 		Description:    c.Config.Description,
 		Container:      c.container.Proto(),
-		ServiceAddress: serviceAddress,
+		ServiceAddress: *c.serviceAddress,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:       c.owner.Username,
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 	}, nil
@@ -415,7 +429,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Description:  c.Config.Description,
 		Container:    c.container.Proto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:     c.owner.Username,
+		Username:     c.Base.Owner.Username,
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   exitStatus,
 	}
@@ -440,7 +454,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Container:      c.container.Proto(),
 		PrivateKey:     c.Metadata["privateKey"].(string),
 		PublicKey:      c.Metadata["publicKey"].(string),
-		Username:       c.owner.Username,
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
 		Addresses:      addresses,
@@ -454,44 +468,17 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		exitStatus = *c.exitStatus
 	}
 
-	var eids []int32
-	for _, id := range c.Metadata["experiment_ids"].([]int) {
-		eids = append(eids, int32(id))
-	}
-	var tids []int32
-	for _, id := range c.Metadata["trial_ids"].([]int) {
-		tids = append(tids, int32(id))
-	}
 	return &tensorboardv1.Tensorboard{
 		Id:             ctx.Self().Address().Local(),
 		State:          c.State().Proto(),
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Container:      c.container.Proto(),
-		ServiceAddress: fmt.Sprintf(tensorboardServiceAddress, c.taskID),
-		ExperimentIds:  eids,
-		TrialIds:       tids,
-		Username:       c.owner.Username,
+		ServiceAddress: *c.serviceAddress,
+		ExperimentIds:  c.Metadata["experiment_ids"].([]int32),
+		TrialIds:       c.Metadata["trial_ids"].([]int32),
+		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
-	}
-}
-
-func getPort(min, max int) int {
-	return rand.Intn(max-min) + min
-}
-
-func setPodSpec(
-	config *model.CommandConfig,
-	taskContainerDefaults model.TaskContainerDefaultsConfig,
-) {
-	if config.Environment.PodSpec != nil {
-		return
-	}
-
-	if config.Resources.Slots == 0 {
-		config.Environment.PodSpec = taskContainerDefaults.CPUPodSpec
-	} else {
-		config.Environment.PodSpec = taskContainerDefaults.GPUPodSpec
 	}
 }
