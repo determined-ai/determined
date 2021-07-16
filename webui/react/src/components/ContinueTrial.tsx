@@ -1,7 +1,6 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
