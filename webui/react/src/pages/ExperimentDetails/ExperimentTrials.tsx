@@ -15,6 +15,7 @@ import {
 } from 'components/Table';
 import { Renderer } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import TrialActionDropdown from 'components/TrialActionDropdown';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
@@ -212,6 +213,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       );
     };
 
+    const actionRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      return <TrialActionDropdown experimentId={experiment.id} trial={record} />;
+    };
+
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === 'checkpoint') {
@@ -230,6 +235,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
+      } else if (column.key === 'actions') {
+        column.render = actionRenderer;
       }
       if (column.key === sorter.key) {
         column.sortOrder = sorter.descend ? 'descend' : 'ascend';

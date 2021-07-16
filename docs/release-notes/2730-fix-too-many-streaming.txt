@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Fix the issue of hp-viz getting stuck showing an infinite
+   spinner after clicking through all the different tabs.

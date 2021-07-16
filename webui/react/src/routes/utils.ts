@@ -3,7 +3,8 @@ import React from 'react';
 
 import { globalStorage } from 'globalStorage';
 import history from 'routes/history';
-import { CommandTask, RawJson } from 'types';
+import { ClusterApi, Configuration } from 'services/api-ts-sdk';
+import { CommandTask } from 'types';
 import { clone } from 'utils/data';
 
 import routes from './routes';
@@ -24,19 +25,13 @@ export const serverAddress = (path = ''): string => {
 export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {
-    const response = await Promise.race([
-      fetch(address + '/api/v1/master'),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), 1000)),
-    ]) as globalThis.Response;
-    const data = await response.json() as RawJson;
+    const clusterApi = new ClusterApi(new Configuration({ basePath: address }));
+    const data = await clusterApi.determinedGetMaster();
     const attrs = [ 'version', 'masterId', 'clusterId' ];
-    attrs.forEach(att => {
-      if (!(att in data)) {
-        // the server doesn't look like a determined server
-        return false;
-      }
-    });
+    for (const attr of attrs) {
+      // The server doesn't look like a determined server.
+      if (!(attr in data)) return false;
+    }
     return true;
   } catch (_) {
     return false;
@@ -144,7 +139,7 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
     });
 };
 
-const routeToExternalUrl = (path: string): void => {
+export const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {

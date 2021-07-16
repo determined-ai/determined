@@ -54,4 +54,12 @@ export const columns: ColumnType<TrialItem>[] = [
     key: 'checkpoint',
     title: 'Checkpoint',
   },
+  {
+    align: 'right',
+    className: 'fullCell',
+    fixed: 'right',
+    key: 'actions',
+    title: '',
+    width: 40,
+  },
 ];
