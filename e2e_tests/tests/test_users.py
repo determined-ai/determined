@@ -665,9 +665,16 @@ def test_experiment_delete() -> None:
         child.wait()
         assert child.exitstatus == 0
 
-        # "det experiment describe" call should fail, because the
-        # experiment is no longer in the database.
-        child = det_spawn(["experiment", "describe", str(experiment_id)])
-        child.read()
-        child.wait()
-        assert child.exitstatus > 0
+        EXPERIMENT_DELETE_TIMEOUT = 5 * 60
+        start = time.time()
+        while 1:
+            child = det_spawn(["experiment", "describe", str(experiment_id)])
+            child.read()
+            child.wait()
+            # "det experiment describe" call should fail, because the
+            # experiment is no longer in the database.
+            if child.exitstatus > 0:
+                return
+            elif time.time() - start > EXPERIMENT_DELETE_TIMEOUT:
+                pytest.fail("experiment didn't delete after timeout")
+                return
