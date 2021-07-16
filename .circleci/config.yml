@@ -324,8 +324,6 @@ commands:
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
             $(< /tmp/tests-to-run)
-      - upload-test-job:
-          test_results_path: <<parameters.junit-path>>
 
 
   run-det-deploy-tests:
@@ -1483,7 +1481,7 @@ jobs:
       - store_test_results:
           path: /tmp/test-results/
       - upload-test-job:
-          test_results_path: /tmp/test-results/
+          test_results_path: <<parameters.junit-path>>
       - slack/status:
           fail_only: True
           only_for_branches: master
@@ -1568,6 +1566,8 @@ jobs:
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>
+      - upload-test-job:
+          test_results_path: <<parameters.junit-path>>
       - slack/status:
           fail_only: True
           only_for_branches: master
@@ -1651,6 +1651,8 @@ jobs:
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
           region: <<parameters.region>>
+      - upload-test-job:
+          test_results_path: <<parameters.junit-path>>
       - slack/status:
           fail_only: True
           only_for_branches: master
