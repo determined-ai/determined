@@ -35,7 +35,7 @@ type TaskSpec struct {
 	Description string
 	// LoggingFields are fields to include in each record of structured (i.e., Fluent Bit) logging.
 	LoggingFields map[string]string
-	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to native logging).
+	// UseFluentLogging is whether to use Fluent Bit logging (as opposed to directly streaming).
 	UseFluentLogging bool
 
 	// Fields that are set on the cluster level.

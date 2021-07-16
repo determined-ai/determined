@@ -38,10 +38,6 @@ type readinessCheck func(sproto.ContainerLog) bool
 // should stop and garbage collect its state.
 type terminateForGC struct{}
 
-func generateServiceAddress(taskID string) string {
-	return fmt.Sprintf("/proxy/%s/", taskID)
-}
-
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
@@ -50,7 +46,7 @@ func createGenericCommandActor(
 ) error {
 	taskID := sproto.NewTaskID()
 
-	serviceAddress := generateServiceAddress(string(taskID))
+	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	cmd := &command{
 		db:              db,
