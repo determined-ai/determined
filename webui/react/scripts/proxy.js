@@ -22,7 +22,7 @@ const proxyTo = (targetServer) => {
     res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.setHeader('Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,PATCH,POST,PUT');
     res.setHeader(
       'Access-Control-Allow-Headers',
       'authorization, Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type,'
