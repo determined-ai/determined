@@ -324,6 +324,9 @@ commands:
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
             $(< /tmp/tests-to-run)
+      - upload-test-job:
+          test_results_path: /tmp/test-results/examples.xml
+
 
   run-det-deploy-tests:
     parameters:
