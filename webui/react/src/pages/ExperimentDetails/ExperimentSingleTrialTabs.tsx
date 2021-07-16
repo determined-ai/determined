@@ -2,6 +2,7 @@ import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -40,6 +41,7 @@ const ExperimentConfiguration = React.lazy(() => {
 });
 
 export interface Props {
+  continueTrialRef: React.Ref<ContinueTrialHandles>;
   experiment: ExperimentBase;
   trialId?: number;
 }
@@ -47,7 +49,7 @@ export interface Props {
 const NoDataAlert = <Alert message="No data available." type="warning" />;
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { experiment, trialId }: Props,
+  { continueTrialRef, experiment, trialId }: Props,
 ) => {
   const history = useHistory();
   const prevTrialId = usePrevious(trialId, undefined);
@@ -123,38 +125,43 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   if (!hasLoaded) return <Spinner tip={`Fetching trial ${trialId} details...`} />;
 
   return (
-    <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
-      <TabPane key="overview" tab="Overview">
-        {trialDetails
-          ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
-          : NoDataAlert}
-      </TabPane>
-      <TabPane key="hyperparameters" tab="Hyperparameters">
-        {trialDetails
-          ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
-          : NoDataAlert}
-      </TabPane>
-      <TabPane key="workloads" tab="Workloads">
-        {trialDetails
-          ? <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
-          : NoDataAlert}
-      </TabPane>
-      <TabPane key="configuration" tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading experiment configuration editor..." />}>
-          <ExperimentConfiguration experiment={experiment} />
-        </React.Suspense>
-      </TabPane>
-      <TabPane key="profiler" tab="Profiler">
-        {trialDetails
-          ? <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
-          : NoDataAlert}
-      </TabPane>
-      <TabPane key="logs" tab="Logs">
-        {trialDetails
-          ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
-          : NoDataAlert}
-      </TabPane>
-    </Tabs>
+    <>
+      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
+        <TabPane key="overview" tab="Overview">
+          {trialDetails
+            ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+            : NoDataAlert}
+        </TabPane>
+        <TabPane key="hyperparameters" tab="Hyperparameters">
+          {trialDetails
+            ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
+            : NoDataAlert}
+        </TabPane>
+        <TabPane key="workloads" tab="Workloads">
+          {trialDetails
+            ? <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
+            : NoDataAlert}
+        </TabPane>
+        <TabPane key="configuration" tab="Configuration">
+          <React.Suspense fallback={<Spinner tip="Loading experiment configuration editor..." />}>
+            <ExperimentConfiguration experiment={experiment} />
+          </React.Suspense>
+        </TabPane>
+        <TabPane key="profiler" tab="Profiler">
+          {trialDetails
+            ? <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
+            : NoDataAlert}
+        </TabPane>
+        <TabPane key="logs" tab="Logs">
+          {trialDetails
+            ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
+            : NoDataAlert}
+        </TabPane>
+      </Tabs>
+      {trialDetails && (
+        <ContinueTrial experiment={experiment} ref={continueTrialRef} trial={trialDetails} />
+      )}
+    </>
   );
 };
 

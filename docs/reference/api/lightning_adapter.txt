@@ -95,7 +95,7 @@ not supported. Read about those here:
 In addition, we also patched some ``LightningModule`` methods to make
 porting your code easier:
 
--  `log` and `log_dict` are patched to always log ship their values to
+-  ``log`` and ``log_dict`` are patched to always ship their values to
    Tensorboard. In the current version only the first two arguments in
    ``log``: ``key`` and ``value``, and the first argument in
    ``log_dict`` are supported.

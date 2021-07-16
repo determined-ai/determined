@@ -111,8 +111,8 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 	return errs
 }
 
-// MergeIntoConfig sets any unset ExperimentConfig values that are defined by TaskContainerDefaults.
-func (c *TaskContainerDefaultsConfig) MergeIntoConfig(config *expconf.ExperimentConfig) {
+// MergeIntoExpConfig sets any unset ExperimentConfig values from TaskContainerDefaults.
+func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.ExperimentConfig) {
 	if c == nil {
 		return
 	}
