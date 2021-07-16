@@ -59,7 +59,7 @@ OFFSET $2 LIMIT $3`, labelsJSON, offset, limit)
 	return pBatches, nil
 }
 
-const summaryWindowSeconds = 10 * 60
+const summaryWindowSeconds = 3 * 60
 
 // GetTrialProfilerMetricSummary gets a summary of profiler metrics.
 func (db *PgDB) GetTrialProfilerMetricSummary(
@@ -81,11 +81,16 @@ WITH latest AS (
 	LIMIT 1
 )
 SELECT
-  avg(q.v) AS avg,
-  -- classic signal-to-noise ratio
-  (avg(q.v) ^ 2.0) / (stddev(q.v) ^ 2.0) > 5.0 AS stable
+  coalesce(avg(q.v), 0) AS avg,
+  -- classic signal-to-noise ratio + is obviously increasing/decreasing
+  coalesce((
+		((avg(q.v) ^ 2.0) / (stddev(q.v) ^ 2.0) > 5.0)
+		AND (regr_slope(q.v, rn) < 0.5)
+	), false) AS stable
 FROM (
-  SELECT unnest(m.values) AS v
+  SELECT
+    row_number() OVER () as rn,
+    unnest(m.values) AS v
   FROM trial_profiler_metrics m, latest
   WHERE m.labels @> $1::jsonb
     AND m.ts_range && tstzrange(latest.ts - interval '%d seconds', latest.ts, '[]')
