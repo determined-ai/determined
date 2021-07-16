@@ -263,13 +263,13 @@ const ExperimentList: React.FC = () => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
-  const updateQueryParams = useCallback((queryParams: Partial<QueryParams>) => {
+  const updateQueryParams = useCallback((queryParams: Partial<QueryParams>, push = false) => {
     const newQueryParams = {
       ...stateToQueryParams(),
       ...queryParams,
     };
     const path = BASE_PATH + '?' + queryString.stringify(newQueryParams);
-    history.push(path);
+    push ? history.push(path) : history.replace(path);
   }, [ history, stateToQueryParams ]);
 
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
@@ -594,14 +594,16 @@ const ExperimentList: React.FC = () => {
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
 
+    const offset = (tablePagination.current - 1) * tablePagination.pageSize;
+    const shouldPush = offset !== pagination.offset;
     updateQueryParams({
       limit: String(tablePagination.pageSize),
-      offset: String(((tablePagination.current - 1) * tablePagination.pageSize)),
+      offset: String(offset),
       sortDesc: order === 'descend' ? '1' : '0',
       sortKey: columnKey as string,
-    });
+    }, shouldPush);
     setSelectedRowKeys([]);
-  }, [ columns, storage, updateQueryParams ]);
+  }, [ columns, pagination, storage, updateQueryParams ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
