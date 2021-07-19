@@ -395,3 +395,16 @@ message GetTrialRendezvousInfoResponse {
   // The rendezvous information.
   determined.trial.v1.RendezvousInfo rendezvous_info = 1;
 }
+
+// Partially update the trial metadata.
+message PostTrialRunnerMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "metadata" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The state for the trial runner.
+  determined.trial.v1.TrialRunnerMetadata metadata = 2;
+}
+// Response to PatchTrialMetadataRequest
+message PostTrialRunnerMetadataResponse {}

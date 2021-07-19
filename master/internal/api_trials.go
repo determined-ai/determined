@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 
@@ -741,15 +742,18 @@ func (a *apiServer) GetTrialRendezvousInfo(
 	}
 }
 
-func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(trialID)
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return actor.Address{}, trialNotFound
-	case err != nil:
-		return actor.Address{}, err
+func (a *apiServer) PostTrialRunnerMetadata(
+	_ context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
+) (*apiv1.PostTrialRunnerMetadataResponse, error) {
+	if err := a.checkTrialExists(int(req.TrialId)); err != nil {
+		return nil, err
 	}
-	return actor.Addr("experiments", eID, rID), nil
+
+	if err := a.m.db.UpdateTrialRunnerMetadata(int(req.TrialId), req.Metadata); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.PostTrialRunnerMetadataResponse{}, nil
 }
 
 func (a *apiServer) taskHandlerByID(id sproto.TaskID) (*actor.Ref, error) {

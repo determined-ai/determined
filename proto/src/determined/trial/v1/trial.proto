@@ -85,6 +85,8 @@ message Trial {
   MetricsWorkload latest_validation = 9;
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
+  // The last reported state of the trial runner (harness code).
+  string runner_state = 11;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
@@ -246,4 +248,13 @@ message RendezvousInfo {
   repeated string addresses = 1;
   // The container rank.
   int32 rank = 2;
+}
+
+// The metadata pertaining to the current running task for a trial.
+message TrialRunnerMetadata {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "state" ] }
+  };
+  // The state of the trial runner.
+  string state = 1;
 }
