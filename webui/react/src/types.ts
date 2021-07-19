@@ -476,6 +476,10 @@ export interface ExperimentFilters {
   users?: string[];
 }
 
+export interface TrialFilters {
+  states?: string[];
+}
+
 export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
   states?: string[];

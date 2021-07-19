@@ -317,8 +317,7 @@ export const getExpTrials: DetApi<
       params.orderBy,
       params.offset,
       params.limit,
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      params.states?.map(state => `STATE_${state.toString()}` as any),
+      params.states,
       options,
     );
   },
