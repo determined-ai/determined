@@ -395,8 +395,11 @@ export const decodeTrialResponseToTrialDetails = (
     }));
   }
 
+  const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
+
   return {
     ...trialItem,
+    runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
     workloads: workloads || [],
   };
 };
