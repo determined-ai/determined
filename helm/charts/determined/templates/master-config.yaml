@@ -20,10 +20,10 @@ data:
       secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
       endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
       {{- else if eq .Values.checkpointStorage.type "azure" }}
-      {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url}}
+      {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url }}
       {{ required "Exactly one of .Values.checkpointStorage.connection_string or .Values.checkpointStorage.account_url must be specified!" "" }}
-      {{- else if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.credential}}
-      {{ required "Both .Values.checkpointStorage.connection_string and .Values.checkpointStorage.credential cannot be specified!" "" }}
+      {{- else if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.credential }}
+      {{ required ".Values.checkpointStorage.connection_string and .Values.checkpointStorage.credential must not both be specified!" "" }}
       {{- else }}
       container: {{ required "A valid Values.checkpointStorage.container entry is required!" .Values.checkpointStorage.container }}
       connection_string: {{ .Values.checkpointStorage.connection_string }}
