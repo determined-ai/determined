@@ -155,7 +155,7 @@ class Model:
         """
         resp = self._session.post(
             "/api/v1/models/{}/versions".format(self.name),
-            body={"checkpoint_uuid": checkpoint_uuid},
+            json={"checkpoint_uuid": checkpoint_uuid},
         )
 
         data = resp.json()
@@ -183,7 +183,7 @@ class Model:
 
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            body={"model": {"metadata": self.metadata, "description": self.description}},
+            json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
     def remove_metadata(self, keys: List[str]) -> None:
@@ -200,7 +200,7 @@ class Model:
 
         self._session.patch(
             "/api/v1/models/{}".format(self.name),
-            body={"model": {"metadata": self.metadata, "description": self.description}},
+            json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
     def to_json(self) -> Dict[str, Any]:

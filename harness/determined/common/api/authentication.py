@@ -124,7 +124,7 @@ def do_login(
     r = api.post(
         master_address,
         "login",
-        body={"username": username, "password": password},
+        json={"username": username, "password": password},
         authenticated=False,
         cert=cert,
     )

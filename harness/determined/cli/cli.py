@@ -55,7 +55,7 @@ def preview_search(args: Namespace) -> None:
     if "searcher" not in experiment_config:
         print("Experiment configuration must have 'searcher' section")
         sys.exit(1)
-    r = api.post(args.master, "searcher/preview", body=experiment_config)
+    r = api.post(args.master, "searcher/preview", json=experiment_config)
     j = r.json()
 
     def to_full_name(kind: str) -> str:
