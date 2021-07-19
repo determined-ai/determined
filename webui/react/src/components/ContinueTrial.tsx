@@ -1,7 +1,6 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
-import handleError, { ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
@@ -69,18 +68,16 @@ const ContinueTrial: React.FC<Props> = forwardRef(function ContinueTrial(
       setIsVisible(false);
       routeToReactUrl(paths.experimentDetails(newExperimentId));
     } catch (e) {
-      handleError({
-        error: e,
-        message: 'Failed to continue trial',
-        publicMessage: [
-          'Check the experiment config.',
-          'If the problem persists please contact support.',
-        ].join(' '),
-        publicSubject: 'Failed to continue trial',
-        silent: false,
-        type: ErrorType.Api,
-      });
-      setContModalError(e.response?.data?.message || e.message);
+      let errorMessage = 'Unable to continue trial with the provided config.';
+      if (e.name === 'YAMLException') {
+        errorMessage = e.message;
+      } else if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e.json) {
+        const errorJSON = await e.json();
+        errorMessage = errorJSON.error?.error;
+      }
+      setContModalError(errorMessage);
     }
   }, [ trial ]);
 
