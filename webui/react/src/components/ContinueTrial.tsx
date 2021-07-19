@@ -4,7 +4,7 @@ import CreateExperimentModal, { CreateExperimentType } from 'components/CreateEx
 import handleError, { ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
-import { ExperimentBase, RawJson, TrialDetails, TrialHyperParameters } from 'types';
+import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -20,7 +20,7 @@ interface Props {
 
 const trialContinueConfig = (
   experimentConfig: RawJson,
-  trialHparams: TrialHyperParameters,
+  trialHparams: TrialHyperparameters,
   trialId: number,
 ): RawJson => {
   return {
@@ -45,7 +45,11 @@ const ContinueTrial: React.FC<Props> = forwardRef(function ContinueTrial(
   const [ isVisible, setIsVisible ] = useState(false);
 
   const show = useCallback(() => {
-    const rawConfig = trialContinueConfig(clone(experiment.configRaw), trial.hparams, trial.id);
+    const rawConfig = trialContinueConfig(
+      clone(experiment.configRaw),
+      trial.hyperparameters,
+      trial.id,
+    );
     let newDescription = `Continuation of trial ${trial.id}, experiment ${trial.experimentId}`;
     if (rawConfig.description) newDescription += ` (${rawConfig.description})`;
     rawConfig.description = newDescription;
