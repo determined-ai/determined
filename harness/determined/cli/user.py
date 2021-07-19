@@ -38,12 +38,12 @@ def update_user(
     if agent_user_group is not None:
         request["agent_user_group"] = agent_user_group
 
-    return api.patch(master_address, "users/{}".format(username), body=request)
+    return api.patch(master_address, "users/{}".format(username), json=request)
 
 
 def update_username(current_username: str, master_address: str, new_username: str) -> Response:
     request = {"username": new_username}
-    return api.patch(master_address, "users/{}/username".format(current_username), body=request)
+    return api.patch(master_address, "users/{}/username".format(current_username), json=request)
 
 
 @authentication.required
@@ -169,7 +169,7 @@ def create_user(parsed_args: Namespace) -> None:
     admin = bool(parsed_args.admin)
 
     request = {"username": username, "admin": admin, "active": True}
-    api.post(parsed_args.master, "users", body=request)
+    api.post(parsed_args.master, "users", json=request)
 
 
 @authentication.required

@@ -98,7 +98,7 @@ def change_experiment_state(experiment_id: int, new_state: str) -> None:
         conf.make_master_url(),
         "experiments/{}".format(experiment_id),
         headers={"Content-Type": "application/merge-patch+json"},
-        body={"state": new_state},
+        json={"state": new_state},
     )
     assert r.status_code == requests.codes.no_content, r.text
 

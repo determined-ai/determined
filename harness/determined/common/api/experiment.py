@@ -17,13 +17,13 @@ from determined.common.api import request as req
 def patch_experiment_v1(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
     path = "/api/v1/experiments/{}".format(exp_id)
     headers = {"Content-Type": "application/merge-patch+json"}
-    req.patch(master_url, path, body=patch_doc, headers=headers)
+    req.patch(master_url, path, json=patch_doc, headers=headers)
 
 
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
     path = "experiments/{}".format(exp_id)
     headers = {"Content-Type": "application/merge-patch+json"}
-    req.patch(master_url, path, body=patch_doc, headers=headers)
+    req.patch(master_url, path, json=patch_doc, headers=headers)
 
 
 def activate_experiment(master_url: str, exp_id: int) -> None:
@@ -226,7 +226,7 @@ def create_experiment(
     if additional_body_fields:
         body.update(additional_body_fields)
 
-    r = req.post(master_url, "experiments", body=body)
+    r = req.post(master_url, "experiments", json=body)
     if not hasattr(r, "headers"):
         raise Exception(r)
 

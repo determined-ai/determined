@@ -129,7 +129,7 @@ def register_version(args: Namespace) -> None:
         resp = api.post(
             args.master,
             "/api/v1/models/{}/versions".format(args.name),
-            body={"checkpoint_uuid": args.uuid},
+            json={"checkpoint_uuid": args.uuid},
         )
 
         print(json.dumps(resp.json(), indent=2))
