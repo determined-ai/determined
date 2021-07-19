@@ -286,7 +286,6 @@ Listing Clusters
       -  AWS profile used for deploying cluster resources.
       -  default
 
-
 .. _aws-modifying-deployment:
 
 ************************
@@ -295,19 +294,28 @@ Listing Clusters
 
 To modify an already deployed cluster you have a few options:
 
-1. If what you'd like to change is provided as a ``det deploy`` CLI option, you can re-deploy the cluster using ``det deploy``.
-Simply provide the updated option while keeping the ``cluster-id`` the same. The cli would then find the existing cluster, take it down and spin up a new one with the updated options.
-2. If you want maximum control over the different Determined configuration files while minimizing the downtime, you'll want to SSH into the master using the private key from the keypair that was used to provision the cluster.
-Once you're successfully connected, you can locate and modify different configuration files under ``/usr/local/determined/etc``.
-In order for your changes to take effect restart the master docker container:
+1. If what you'd like to change is provided as a ``det deploy`` CLI
+option, you can re-deploy the cluster using ``det deploy``. Simply
+provide the updated option while keeping the ``cluster-id`` the same.
+The cli would then find the existing cluster, take it down and spin up a
+new one with the updated options.
+
+2. If you want maximum control over the different Determined
+configuration files while minimizing the downtime, you'll want to SSH
+into the master using the private key from the keypair that was used to
+provision the cluster. Once you're successfully connected, you can
+locate and modify different configuration files under
+``/usr/local/determined/etc``. In order for your changes to take effect
+restart the master docker container:
 
 .. code:: bash
 
    sudo sh -c 'docker stop determined-master && docker start determined-master'
 
-
-For example, if you wanted to add or modify resource pools you can edit the master configuration file at ``/usr/local/determined/etc/master.yaml`` and add a new resource pool entry.
-
+For example, if you wanted to add or modify resource pools you can edit
+the master configuration file at
+``/usr/local/determined/etc/master.yaml`` and add a new resource pool
+entry.
 
 .. _aws-manual-deployment:
 
