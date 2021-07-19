@@ -65,7 +65,7 @@ func TestGrid(t *testing.T) {
 		"2": expconf.Hyperparameter{RawIntHyperparameter: iParam2},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": 0, "2": 0},
 		{"1": 0, "2": 5},
 		{"1": 0, "2": 10},
@@ -91,7 +91,7 @@ func TestNestedGrid(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": 0, "2": map[string]interface{}{"3": 0}},
 		{"1": 0, "2": map[string]interface{}{"3": 5}},
 		{"1": 0, "2": map[string]interface{}{"3": 10}},
@@ -114,7 +114,7 @@ func TestGridIntCount(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": 0},
 		{"1": 1},
 		{"1": 2},
@@ -133,7 +133,7 @@ func TestGridIntCountNegative(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": -4},
 		{"1": -3},
 		{"1": -2},

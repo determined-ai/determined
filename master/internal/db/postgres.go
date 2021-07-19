@@ -8,6 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
 	"github.com/golang-migrate/migrate"
 	postgresM "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file" // Load migrations from files.
@@ -1442,35 +1446,70 @@ VALUES (
 	return nil
 }
 
-// AddTrialRun saves a new run for the trial.
-func (db *PgDB) AddTrialRun(trialID, runID int) error {
+// AddTask persists a task.
+func (db *PgDB) AddTask(jobType model.JobType, jobTypeFkID int, taskID sproto.TaskID) error {
 	_, err := db.sql.Exec(`
-INSERT INTO runs (run_type, run_type_fk, id)
-VALUES ('TRIAL', $1, $2)
-ON CONFLICT (run_type, run_type_fk, id)
-DO UPDATE SET start_time = now()`, trialID, runID)
+INSERT INTO tasks (job_type, job_type_fk_id, task_id)
+VALUES ($1, $2, $3)
+ON CONFLICT (job_type, job_type_fk_id, task_id)
+DO UPDATE SET start_time = now()`, jobType, jobTypeFkID, taskID)
 	return err
 }
 
-// CompleteTrialRun the given run.
-func (db *PgDB) CompleteTrialRun(trialID, runID int) error {
+// CompleteTask completes a previously persisted task.
+func (db *PgDB) CompleteTask(jobType model.JobType, jobTypeFkID int, taskID sproto.TaskID) error {
 	_, err := db.sql.Exec(`
-UPDATE runs
+UPDATE tasks
 SET end_time = now()
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1 AND id = $2`, trialID, runID)
+WHERE job_type = $1
+  AND job_type_fk_id = $2
+  AND task_id = $3`, jobType, jobTypeFkID, taskID)
 	return err
 }
 
-// EndTrialRuns sets the end time on all open runs to now.
-func (db *PgDB) EndTrialRuns(trialID int) error {
+// EndTasks completes all previously persisted tasks for a job.
+func (db *PgDB) EndTasks(jobType model.JobType, jobTypeFkID int) error {
 	_, err := db.sql.Exec(`
-UPDATE runs
+UPDATE tasks
 SET end_time = now()
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1
-  AND end_time IS NULL`, trialID)
+WHERE job_type = $1
+  AND job_type_fk_id = $2
+  AND end_time IS NULL`, jobType, jobTypeFkID)
 	return err
+}
+
+// TrialRunIDAndRestarts returns the run ID and restart count for a trial.
+func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
+	var runID, restart int
+	if err := db.sql.QueryRowx(`
+SELECT run_id, restarts
+FROM trials
+WHERE id = $1`, trialID).Scan(&runID, &restart); err != nil {
+		return 0, 0, errors.Wrap(err, "failed to scan trial restart count")
+	}
+	return runID, restart, nil
+}
+
+// UpdateTrialRunID sets the trial's run ID.
+func (db *PgDB) UpdateTrialRunID(id, runID int) error {
+	if _, err := db.sql.Exec(`
+UPDATE trials
+SET run_id = $2 
+WHERE id = $1`, id, runID); err != nil {
+		return errors.Wrap(err, "updating trial run id")
+	}
+	return nil
+}
+
+// UpdateTrialRestarts sets the trial's restart count.
+func (db *PgDB) UpdateTrialRestarts(id, restartCount int) error {
+	if _, err := db.sql.Exec(`
+UPDATE trials
+SET restarts = $2
+WHERE id = $1`, id, restartCount); err != nil {
+		return errors.Wrap(err, "updating trial restarts")
+	}
+	return nil
 }
 
 // StepByTotalBatches looks up a step by (TrialID, TotalBatches) pair,
@@ -1603,6 +1642,13 @@ WHERE trial_id = $1
 			return err
 		}
 
+		if err := db.ensureStep(
+			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.TotalBatches),
+			int(m.TotalRecords), m.TotalEpochs, startTime,
+		); err != nil {
+			return err
+		}
+
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
 	(trial_id, trial_run_id, state, start_time, end_time,
@@ -1628,6 +1674,49 @@ VALUES
 	})
 }
 
+// ensureStep inserts a noop step if no step exists at the batch index of the validation.
+// TODO(XXX): We should remove this and everything that relies on it.
+func (db *PgDB) ensureStep(
+	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID,
+	totalBatches, totalRecords int, totalEpochs float32, startTime time.Time,
+) error {
+	var id int
+	if err := tx.QueryRowxContext(ctx, `
+SELECT coalesce(max(id), 0) + 1
+FROM raw_steps
+WHERE trial_id = $1`, trialID).Scan(&id); err != nil {
+		return errors.Wrap(err, "querying next step id")
+	}
+
+	if _, err := tx.NamedExecContext(ctx, `
+INSERT INTO raw_steps
+	(trial_id, id, trial_run_id, state, start_time,
+	 end_time, metrics, total_batches, total_records, total_epochs)
+VALUES
+	(:trial_id, :id, :trial_run_id, :state, :start_time,
+	 :end_time, :metrics, :total_batches, :total_records, :total_epochs)
+ON CONFLICT (trial_id, trial_run_id, total_batches)
+DO NOTHING
+`, model.Step{
+		TrialID:    trialID,
+		ID:         id,
+		TrialRunID: trialRunID,
+		State:      model.CompletedState,
+		StartTime:  startTime,
+		EndTime:    ptrs.TimePtr(startTime),
+		Metrics: map[string]interface{}{
+			"avg_metrics":   struct{}{},
+			"batch_metrics": []struct{}{},
+		},
+		TotalBatches: totalBatches,
+		TotalRecords: totalRecords,
+		TotalEpochs:  totalEpochs,
+	}); err != nil {
+		return errors.Wrap(err, "inserting training metrics")
+	}
+	return nil
+}
+
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.
 func (db *PgDB) AddCheckpointMetadata(
 	ctx context.Context, m *trialv1.CheckpointMetadata,
@@ -1648,6 +1737,13 @@ WHERE trial_id = $1
 
 		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
 		if err != nil {
+			return err
+		}
+
+		if err := db.ensureStep(
+			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.TotalBatches),
+			int(m.TotalRecords), m.TotalEpochs, startTime,
+		); err != nil {
 			return err
 		}
 
@@ -1690,12 +1786,12 @@ SELECT coalesce(greatest(
 	(SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
 	(SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
 	(
-	    SELECT coalesce(r.start_time, t.start_time)
-		FROM trials t
-		LEFT JOIN runs r ON t.id = r.run_type_fk
+	    SELECT coalesce(tsk.start_time, t.start_time)
+		FROM trials t, tasks tsk
 		WHERE t.id = $1
-	      AND r.run_type = 'TRIAL'
-	    ORDER BY r.id DESC
+	      AND tsk.job_type = 'TRIAL'
+		  AND tsk.job_type_fk_id = t.id
+	    ORDER BY tsk.start_time DESC
 	    LIMIT 1
 	)), now())
 `, trialID).Scan(&endTime); err != nil {
@@ -1707,15 +1803,14 @@ SELECT coalesce(greatest(
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
 	var cRunID int
 	switch err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(max(id), 0)
-FROM runs
-WHERE run_type = 'TRIAL'
-  AND run_type_fk = $1
+SELECT run_id
+FROM trials
+WHERE id = $1
 `, trialID).Scan(&cRunID); {
 	case err != nil:
 		return errors.Wrap(err, "querying current run")
 	case int(runID) != cRunID:
-		return api.AsErrBadRequest("invalid run id, %d != %d", runID, cRunID)
+		return api.AsValidationError("invalid run id, %d (reported) != %d (expected)", runID, cRunID)
 	default:
 		return nil
 	}
@@ -1915,7 +2010,9 @@ WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
+SELECT
+	id, trial_id, state, start_time, end_time, uuid, resources, metadata, format,
+	framework, determined_version, total_batches, total_records, total_epochs, trial_run_id
 FROM checkpoints
 WHERE trial_id = $1 AND state = 'COMPLETED'
 ORDER BY total_batches DESC

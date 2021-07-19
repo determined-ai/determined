@@ -40,6 +40,23 @@ func testBestValidationCase(t *testing.T, smallerIsBetter bool, metrics []metric
 	}
 }
 
+func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
+	metricName := e.Config.Searcher().Metric()
+	validation, err := metrics.Metric(metricName)
+	if err != nil {
+		// TODO: Better error handling here.
+		return false
+	}
+	smallerIsBetter := e.Config.Searcher().SmallerIsBetter()
+	isBest := (e.BestValidation == nil) ||
+		(smallerIsBetter && validation <= *e.BestValidation) ||
+		(!smallerIsBetter && validation >= *e.BestValidation)
+	if isBest {
+		e.BestValidation = &validation
+	}
+	return isBest
+}
+
 func TestBestValidation(t *testing.T) {
 	testBestValidationCase(
 		t,

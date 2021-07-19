@@ -1258,7 +1258,10 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	}
 
 	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
-	if err != nil {
+	switch {
+	case errors.Cause(err) == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "no validations for experiment")
+	case err != nil:
 		return nil, err
 	}
 

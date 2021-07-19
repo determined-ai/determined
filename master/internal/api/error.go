@@ -40,17 +40,17 @@ func JSONErrorHandler(err error, c echo.Context) {
 }
 
 var (
-	// ErrBadRequest is the inner error for errors that convert to a 400. Currently
+	// ErrInvalid is the inner error for errors that convert to a 400. Currently
 	// only apiServer.askAtDefaultSystem respects this.
-	ErrBadRequest = errors.New("bad request")
+	ErrInvalid = errors.New("bad request")
 	// ErrNotFound is the inner error for errors that convert to a 404.
 	ErrNotFound = errors.New("not found")
 )
 
-// AsErrBadRequest returns an error that wraps ErrBadRequest, so that errors.Is can identify it.
-func AsErrBadRequest(msg string, args ...interface{}) error {
+// AsValidationError returns an error that wraps ErrInvalid, so that errors.Is can identify it.
+func AsValidationError(msg string, args ...interface{}) error {
 	return errors.Wrapf(
-		ErrBadRequest,
+		ErrInvalid,
 		msg,
 		args...,
 	)
@@ -68,7 +68,7 @@ func AsErrNotFound(msg string, args ...interface{}) error {
 // APIErr2GRPC converts internal api error categories into grpc status.Errors.
 func APIErr2GRPC(err error) error {
 	switch {
-	case errors.Is(err, ErrBadRequest):
+	case errors.Is(err, ErrInvalid):
 		return status.Errorf(
 			codes.InvalidArgument,
 			err.Error(),

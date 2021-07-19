@@ -307,8 +307,13 @@ func NewTrial(
 	requestID RequestID,
 	experimentID int,
 	hparams JSONObj,
-	warmStartCheckpointID *int,
-	trialSeed int64) *Trial {
+	warmStartCheckpoint *Checkpoint,
+	trialSeed int64,
+) *Trial {
+	var warmStartCheckpointID *int
+	if warmStartCheckpoint != nil {
+		warmStartCheckpointID = &warmStartCheckpoint.ID
+	}
 	return &Trial{
 		RequestID:             &requestID,
 		ExperimentID:          experimentID,

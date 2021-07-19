@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
@@ -274,18 +275,30 @@ message PostTrialProfilerMetricsBatchRequest {
 message PostTrialProfilerMetricsBatchResponse {}
 
 // Long poll for updates to the preemption status for a trial.
-message TrialPreemptionSignalRequest {
+message TaskPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema: { required: [ "task_id" ] }
   };
-  // The requested trial's id.
-  int32 trial_id = 1;
+  // The id of the task.
+  string task_id = 1;
+  // The timeout in seconds.
+  int32 timeout_seconds = 2;
 }
-// Response to TrialPreemptionSignalRequest.
-message TrialPreemptionSignalResponse {
+// Response to TaskPreemptionSignalRequest.
+message TaskPreemptionSignalResponse {
   // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }
+// Acknowledge the receipt of some stop signal.
+message AckTaskPreemptionSignalRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The task that is acknowledging the request.
+  string task_id = 1;
+}
+// Response to AckTaskPreemptionSignalRequest.
+message AckTaskPreemptionSignalResponse {}
 
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
@@ -299,6 +312,8 @@ message GetCurrentTrialSearcherOperationRequest {
 message GetCurrentTrialSearcherOperationResponse {
   // The current searcher operation.
   determined.experiment.v1.SearcherOperation op = 1;
+  // The status of the searcher operation.
+  bool completed = 2;
 }
 
 // Reports to the searcher that the trial has completed the current requested
@@ -316,7 +331,7 @@ message CompleteTrialSearcherValidationRequest {
 // Response to CompleteTrialSearcherValidationRequest
 message CompleteTrialSearcherValidationResponse {}
 
-// Report a voluntary early exit to the searcher.
+// Report a voluntary, permanent early exit to the searcher.
 message ReportTrialSearcherEarlyExitRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id", "reason" ] }
@@ -377,18 +392,18 @@ message ReportTrialCheckpointMetadataRequest {
 // Response to ReportTrialCheckpointMetadataRequest
 message ReportTrialCheckpointMetadataResponse {}
 
-// Gathers the rendezvous info for the trial.
-message GetTrialRendezvousInfoRequest {
+// Gathers the rendezvous info for the task.
+message TaskRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "container_id" ] }
+    json_schema: { required: [ "task_id", "container_id" ] }
   };
-  // The id of the trial.
-  int32 trial_id = 1;
-  // The id of the container. Used to verify all containers are connected.
+  // The id of the task.
+  string task_id = 1;
+  // The id of the allocation. Used to verify all allocations are connected.
   string container_id = 2;
 }
-// Response to GetTrialRendezvousInfoRequest
-message GetTrialRendezvousInfoResponse {
+// Response to TaskRendezvousInfoRequest
+message TaskRendezvousInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "rendezvous_info" ] }
   };

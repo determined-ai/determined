@@ -161,10 +161,8 @@ func (a *apiServer) actorRequest(addr actor.Address, req actor.Message, v interf
 	return nil
 }
 
-// askAtDefaultSystem asks addr the req and puts the response into what v points at.
-func (a *apiServer) askAtDefaultSystem(
-	addr actor.Address, req interface{}, v interface{},
-) error {
+// ask asks addr the req and puts the response into what v points at.
+func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) error {
 	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
 		return status.Errorf(
 			codes.Internal,
@@ -185,7 +183,7 @@ func (a *apiServer) askAtDefaultSystem(
 		)
 	case resp.Error() != nil:
 		switch {
-		case errors.Is(resp.Error(), api.ErrBadRequest):
+		case errors.Is(resp.Error(), api.ErrInvalid):
 			return status.Errorf(
 				codes.InvalidArgument,
 				resp.Error().Error(),

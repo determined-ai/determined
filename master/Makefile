@@ -15,8 +15,13 @@ ungen:
 	rm -f $(GENERATED)
 	rm -f `find ./pkg/schemas/ -name 'zgen_*.go'` build/schema_gen.stamp
 
+.PHONY: gen-mocks
+gen-mocks:
+	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
+	mockery --name=Allocation --dir=internal/sproto --output internal/mocks --filename allocation.go
+
 .PHONY: gen
-gen: $(GENERATED) build/schema_gen.stamp
+gen: $(GENERATED) build/schema_gen.stamp gen-mocks
 
 .PHONY: force-gen
 force-gen:
@@ -41,6 +46,7 @@ get-deps:
 	# For hyperparameter importance computation
 	go get github.com/ryanbressler/CloudForest
 	go install github.com/ryanbressler/CloudForest/growforest
+	go get github.com/vektra/mockery/v2/.../
 
 .PHONY: build
 build: gen

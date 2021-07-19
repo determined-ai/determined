@@ -211,6 +211,7 @@ message CheckpointMetadata {
         "trial_id",
         "trial_run_id",
         "uuid",
+        "resources",
         "framework",
         "format",
         "determined_version"
@@ -219,7 +220,7 @@ message CheckpointMetadata {
   };
   // The ID of the trial associated with the checkpoint.
   int32 trial_id = 1;
-  // The run of the trial assocaited with the checkpoint.
+  // The run of the trial associated with the checkpoint.
   int32 trial_run_id = 2;
   // UUID of the checkpoint.
   string uuid = 3;

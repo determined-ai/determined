@@ -1,46 +1,657 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
+
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
 	"github.com/google/uuid"
 
-	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+// trial is an actor which is responsible for handling:
+//  - messages from the scheduler,
+//  - messages from the experiment,
+//  - messages from the trial container(s), and
+//  - keeping the trial table of the database up-to-date.
+type trial struct {
+	id           int
+	idSet        bool
+	experimentID int
+
+	// System dependencies.
+	rm     *actor.Ref
+	logger *actor.Ref
+	db     db.DB
+
+	// Fields that are essentially configuration for the trial.
+	config              expconf.ExperimentConfig
+	taskSpec            *tasks.TaskSpec
+	modelDefinition     archive.Archive
+	warmStartCheckpoint *model.Checkpoint
+	generatedKeys       *ssh.PrivateAndPublicKeys
+
+	// targetState is the state we're aiming for. It's patched by experiment changes and kill trial.
+	targetState model.State
+	// searcher encapsulates the searcher state of the trial.
+	searcher TrialSearcherState
+	// restarts is a failure count, it increments when the trial fails and we retry it.
+	restarts int
+	// runID is a count of how many times the task container(s) have stopped and restarted, which
+	// could be due to a failure or due to normal pausing and continuing. When RunID increments,
+	// it effectively invalidates many outstanding messages associated with the previous run.
+	runID int
+	// stopped marks that ctx.Self().Stop() has been called and we are in the process
+	// of stopping the trial. This is helpful to guarantee the condition to reschedule
+	// a task is mutually exclusive with the trial closing.
+	stopped bool
+	// finalState records the termination state of a closing trial.
+	finalState model.State
+
+	// The following fields tracks the interaction with the resource providers.
+	// The existence of task signifies the trial has requested to be allocated.
+	task *sproto.AllocateRequest
+	// The existence of allocations signifies the trial has been allocated.
+	allocations map[cproto.ID]sproto.Allocation
+	// The following fields tracks containers and their states.
+	containers           map[cproto.ID]cproto.Container
+	terminatedFirst      *cproto.ID
+	terminatedContainers map[cproto.ID]sproto.TaskContainerStopped
+	// preemption encapsulates the preemption state of the currently allocated task.
+	// If there is no current task, or it is unallocated, it is nil.
+	preemption *preemption
+	// rendezvous encapsulates logic of rendezvousing containers of the currently
+	// allocated task. If there is no current task, or it is unallocated, it is nil.
+	rendezvous *rendezvous
+	// we send a kill when we terminate a task forcibly. we terminate forcibly when a container
+	// exits non zero. we don't need to send all these kills, so this exists.
+	killCooldown *time.Time
+}
+
+const killCooldown = 30 * time.Second
+
+// newTrial creates a trial which will try to schedule itself after it receives its first workload.
+func newTrial(
+	experimentID int,
+	initialState model.State,
+	searcher TrialSearcherState,
+	rm, logger *actor.Ref,
+	db db.DB,
+	config expconf.ExperimentConfig,
+	warmStartCheckpoint *model.Checkpoint,
+	taskSpec *tasks.TaskSpec,
+	modelDefinition archive.Archive,
+) *trial {
+	return &trial{
+		experimentID: experimentID,
+		targetState:  initialState,
+		searcher:     searcher,
+
+		rm:     rm,
+		logger: logger,
+		db:     db,
+
+		config:              config,
+		taskSpec:            taskSpec,
+		modelDefinition:     modelDefinition,
+		warmStartCheckpoint: warmStartCheckpoint,
+
+		containers:           make(map[cproto.ID]cproto.Container),
+		terminatedContainers: make(map[cproto.ID]sproto.TaskContainerStopped),
+	}
+}
+
+func (t *trial) Receive(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		return t.prestart(ctx)
+	case actor.PostStop:
+		return t.close()
+
+	case model.State:
+		t.targetState = msg
+		switch {
+		case t.targetState == model.ActiveState:
+			return t.maybeAllocate(ctx)
+		case t.targetState == model.PausedState:
+			return t.terminate(ctx, preempt)
+		case model.StoppingStates[t.targetState]:
+			return t.terminate(ctx, kill)
+		}
+	case TrialSearcherState:
+		t.searcher = msg
+		switch {
+		case !t.searcher.Complete:
+			return t.maybeAllocate(ctx)
+		case t.searcher.Finished():
+			return t.terminate(ctx, noop)
+		}
+
+	case sproto.ResourcesAllocated, sproto.TaskContainerStateChanged,
+		sproto.ReleaseResources, sproto.ContainerLog:
+		return t.processTask(ctx)
+	case watchRendezvousInfo, unwatchRendezvousInfo, rendezvousTimeout:
+		return t.processRendezvous(ctx)
+	case watchPreemption, unwatchPreemption, preemptionTimeout, ackPreemption:
+		return t.processPreemption(ctx)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+
+	return nil
+}
+
+func (t *trial) prestart(ctx *actor.Context) error {
+	ctx.AddLabel("experiment-id", t.experimentID)
+	if t.idSet {
+		ctx.AddLabel("trial-id", t.id)
+		if err := t.recover(); err != nil {
+			return err
+		}
+		ctx.AddLabel("task-run-id", t.runID)
+	}
+	return nil
+}
+
+func (t *trial) processTask(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case sproto.ResourcesAllocated:
+		return t.processAllocated(ctx, msg)
+	case sproto.TaskContainerStateChanged:
+		return t.processContainerMessage(ctx, msg)
+	case sproto.ReleaseResources:
+		return t.terminate(ctx, preempt)
+	case sproto.ContainerLog:
+		t.insertLog(ctx, &msg.Container.ID, msg.Message())
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (t *trial) processRendezvous(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case watchRendezvousInfo:
+		if w, err := t.rendezvous.watch(msg.taskID, msg.id); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(w)
+		}
+	case unwatchRendezvousInfo:
+		t.rendezvous.unwatch(msg.id)
+	case rendezvousTimeout:
+		if err := t.rendezvous.checkTimeout(msg.taskID); err != nil {
+			ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: err.Error()})
+		}
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (t *trial) processPreemption(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case watchPreemption:
+		if w, err := t.preemption.watch(msg.taskID, msg.id); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(w)
+		}
+	case unwatchPreemption:
+		t.preemption.unwatch(msg.id)
+	case preemptionTimeout:
+		if err := t.preemption.checkTimeout(msg.taskID); err != nil {
+			ctx.Log().WithError(err).Info("forcibly terminating trial")
+			return t.terminate(ctx, kill)
+		}
+	case ackPreemption:
+		if err := t.preemption.acknowledge(msg.taskID); err != nil {
+			if ctx.ExpectingResponse() {
+				ctx.Respond(err)
+			}
+		}
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (t *trial) processContainerMessage(
+	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
+) error {
+	if _, ok := t.allocations[msg.Container.ID]; !ok {
+		return errStaleContainer{id: msg.Container.ID}
+	}
+
+	t.containers[msg.Container.ID] = msg.Container
+	rank := t.rendezvous.rank(msg.Container.ID)
+	ctx.Log().Infof("container %s (rank %d) is %s", msg.Container.ID, rank, msg.Container.State)
+	switch msg.Container.State {
+	case cproto.Running:
+		t.processContainerRunning(ctx, msg)
+	case cproto.Terminated:
+		return t.processContainerTerminated(ctx, msg)
+	}
+	return nil
+}
+
+func (t *trial) maybeAllocate(ctx *actor.Context) error {
+	if !(t.task == nil &&
+		!t.searcher.Complete &&
+		t.targetState == model.ActiveState &&
+		!t.stopped) {
+		return nil
+	}
+
+	var name string
+	if t.idSet {
+		name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
+	} else {
+		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
+	}
+
+	t.task = &sproto.AllocateRequest{
+		ID:             sproto.NewTaskID(),
+		Name:           name,
+		Group:          ctx.Self().Parent(),
+		SlotsNeeded:    t.config.Resources().SlotsPerTrial(),
+		NonPreemptible: false,
+		Label:          t.config.Resources().AgentLabel(),
+		ResourcePool:   t.config.Resources().ResourcePool(),
+		FittingRequirements: sproto.FittingRequirements{
+			SingleAgent: false,
+		},
+		TaskActor: ctx.Self(),
+	}
+	if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
+		return errors.Wrap(err, "failed to request allocation")
+	}
+	return nil
+}
+
+func (t *trial) recover() error {
+	runID, restarts, err := t.db.TrialRunIDAndRestarts(t.id)
+	if err != nil {
+		return errors.Wrap(err, "restoring old trial state")
+	}
+	t.runID = runID + 1
+	t.restarts = restarts
+	return nil
+}
+
+func (t *trial) close() error {
+	if !t.idSet {
+		return nil
+	}
+
+	if !t.stopped {
+		t.finalState = model.ErrorState
+	}
+
+	if err := t.db.EndTasks(model.JobTypeTrial, t.id); err != nil {
+		return errors.Wrap(err, "ensuring all trial tasks final on exit")
+	}
+
+	if err := t.db.UpdateTrial(t.id, t.finalState); err != nil {
+		return errors.Wrap(err, "updating trial with end state")
+	}
+
+	return nil
+}
+
+func (t *trial) setID(id int) {
+	t.id = id
+	t.idSet = true
+}
+
+func (t *trial) processAllocated(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
+	// Ignore this message if it is from the last run of the trial.
+	if t.task == nil || msg.ID != t.task.ID {
+		ctx.Log().Infof("ignoring and stale allocation %v (task = %v)", msg, t.task)
+		return nil
+	}
+
+	t.allocations = map[cproto.ID]sproto.Allocation{}
+	for _, a := range msg.Allocations {
+		t.allocations[a.Summary().ID] = a
+	}
+
+	if t.generatedKeys == nil {
+		generatedKeys, err := ssh.GenerateKey(nil)
+		if err != nil {
+			return errors.Wrap(err, "failed to generate keys for trial")
+		}
+		t.generatedKeys = &generatedKeys
+	}
+
+	if !t.idSet {
+		modelTrial := model.NewTrial(
+			t.searcher.Create.RequestID,
+			t.experimentID,
+			model.JSONObj(t.searcher.Create.Hparams),
+			t.warmStartCheckpoint,
+			int64(t.searcher.Create.TrialSeed))
+		if err := t.db.AddTrial(modelTrial); err != nil {
+			return errors.Wrap(err, "failed to save trial to database")
+		}
+		t.setID(modelTrial.ID)
+		ctx.AddLabel("trial-id", t.id)
+		ctx.Tell(t.rm, sproto.SetTaskName{
+			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
+			TaskHandler: ctx.Self(),
+		})
+		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID, trialID: t.id})
+	}
+
+	t.runID++
+	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
+		return errors.Wrap(err, "failed to save trial run ID")
+	}
+	ctx.AddLabel("trial-run-id", t.runID)
+
+	if err := t.db.AddTask(model.JobTypeTrial, t.id, t.task.ID); err != nil {
+		return errors.Wrap(err, "failed to save trial task")
+	}
+
+	ctx.Log().Infof("starting trial container")
+
+	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
+	if err != nil {
+		return errors.Wrap(err, "cannot start a new task session for a trial")
+	}
+	t.preemption = newPreemption(t.task.ID)
+	t.rendezvous = newRendezvous(t.task.ID, ranksFromAllocations(msg.Allocations))
+	actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{taskID: t.task.ID})
+
+	var latestBatch int
+	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
+	switch {
+	case err != nil:
+		return errors.Wrapf(err, "failed to query latest checkpoint for trial")
+	case latestCheckpoint == nil:
+		latestCheckpoint = t.warmStartCheckpoint
+	default:
+		latestBatch = latestCheckpoint.TotalBatches
+	}
+
+	trialSpec := &tasks.TrialSpec{
+		Base: *t.taskSpec,
+
+		ExperimentID:     t.experimentID,
+		TrialID:          t.id,
+		TrialRunID:       t.runID,
+		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ModelDefinition:  t.modelDefinition,
+		HParams:          t.searcher.Create.Hparams,
+		TrialSeed:        t.searcher.Create.TrialSeed,
+		LatestBatch:      latestBatch,
+		LatestCheckpoint: latestCheckpoint,
+		IsMultiAgent:     len(t.allocations) > 1,
+	}
+
+	for rank, a := range msg.Allocations {
+		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
+	}
+
+	return nil
+}
+
+func (t *trial) processContainerRunning(ctx *actor.Context, msg sproto.TaskContainerStateChanged) {
+	t.rendezvous.containerStarted(msg.Container.ID, msg.ContainerStarted.Addresses)
+	if t.rendezvous.ready() {
+		ctx.Log().Info("all containers are connected successfully (task container state changed)")
+	}
+}
+
+func (t *trial) processContainerTerminated(
+	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
+) error {
+	t.insertLog(ctx, &msg.Container.ID, msg.ContainerStopped.String())
+
+	t.terminatedContainers[msg.Container.ID] = *msg.ContainerStopped
+	t.rendezvous.containerTerminated(msg.Container.ID)
+	if t.terminatedFirst == nil {
+		t.terminatedFirst = &msg.Container.ID
+	}
+
+	switch {
+	case msg.ContainerStopped.Failure != nil:
+		return t.terminate(ctx, kill)
+	default:
+		return t.terminate(ctx, noop)
+	}
+}
+
+type terminationType string
+
 const (
-	allReadyTimeoutPeriod  = 10 * time.Minute
-	terminateTimeoutPeriod = time.Minute
+	// kill is used to forcibly halt a trial. calling this will kill existing allocations
+	// and exit. terminate is re-entered after a kill when all containers have stopped.
+	kill terminationType = "kill"
+	// preempt is used to gracefully halt a trial. calling this will (usually, with the exception
+	// of unready trials) send a preemption signal to all watchers and begin a timeout after which
+	// we forcibly kill the trial.
+	preempt terminationType = "preempt"
+	// noop is used to try to move a trial to a terminal state while taking no direct action on it.
+	// e.g., if the searcher tells us it's done, we either should exit right away if we're unallocated,
+	// or just chill and wait for the active task to exit.
+	noop terminationType = "noop"
 )
+
+// terminate encapsulates all termination logic for the trial. All _controlled_ termination paths
+// MUST go through this function, though exception paths (panics, DB errors, network calls, etc)
+// can terminate by just returning an error and letting the resource manager cleanup after the actor
+// dies.
+//
+// It just exists to translate caller desires "kill this trial, preempt this trial" to the
+// corresponding action to actually take based on our state, instead of each caller needing
+// to be aware of how to take certain actions in certain states.
+func (t *trial) terminate(ctx *actor.Context, tt terminationType) error {
+	switch {
+	case t.task == nil:
+		ctx.Log().Info("terminating trial before resources are requested")
+		return t.terminated(ctx)
+	case len(t.allocations) == 0:
+		ctx.Log().Info("terminating trial before resources are allocated")
+		return t.terminated(ctx)
+	case len(t.allocations) == len(t.terminatedContainers):
+		ctx.Log().Info("terminating trial because all containers have exited")
+		return t.terminated(ctx)
+	case tt == noop, tt == preempt && len(t.terminatedContainers) > 0:
+		// Working on it.
+	case tt == preempt && t.rendezvous.ready():
+		ctx.Log().Info("gracefully terminating trial")
+		t.preemption.preempt()
+		ctx.Tell(ctx.Self(), preemptionTimeout{t.task.ID})
+	case tt == preempt:
+		t.preemption.markUnacknowledgeable()
+		fallthrough
+	default:
+		if t.killCooldown != nil && time.Now().UTC().Before(*t.killCooldown) {
+			ctx.Log().Debug("still inside of kill cooldown")
+			return nil
+		}
+
+		ctx.Log().Info("forcibly terminating trial")
+		t.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
+		for _, allocation := range t.allocations {
+			allocation.Kill(ctx)
+		}
+	}
+	return nil
+}
+
+// terminated decides what action to take to close or restart a trial. This is only
+// called once the current task is cleaned up and we're ready to move on.
+func (t *trial) terminated(ctx *actor.Context) error {
+	switch status := t.taskExitStatus(); {
+	case t.searcher.Finished():
+		t.stop(ctx, model.CompletedState)
+	case model.StoppingStates[t.targetState]:
+		t.stop(ctx, model.StoppingToTerminalStates[t.targetState])
+	case status.Failure != nil:
+		switch status.Failure.FailureType {
+		case aproto.ContainerFailed, aproto.TaskError:
+			ctx.Log().
+				WithError(status.Failure).
+				Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
+			t.restarts++
+			if err := t.db.UpdateTrialRestarts(t.id, t.restarts); err != nil {
+				return errors.Wrap(err, "saving restart count")
+			}
+			if t.restarts > t.config.MaxRestarts() {
+				t.stop(ctx, model.ErrorState)
+				ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+					trialID: t.id,
+					reason:  workload.Errored,
+				})
+			}
+		case aproto.AgentError, aproto.AgentFailed:
+			// Questionable, could be considered failures.
+		case aproto.TaskAborted:
+			// Definitely not a failure.
+		}
+	case t.preemption.acknowledged(), t.preemption.unacknowledgeable():
+	default:
+		t.stop(ctx, model.CompletedState)
+		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+			trialID: t.id,
+			reason:  workload.UserCanceled,
+		})
+	}
+	ctx.Log().
+		WithField("search_finished", t.searcher.Finished()).
+		WithField("state", t.targetState).
+		WithField("preempted", t.preemption.acknowledged() || t.preemption.unacknowledgeable()).
+		Info("trial terminated")
+
+	if err := t.resetTask(ctx); err != nil {
+		return errors.Wrap(err, "failed to reset task")
+	}
+	if err := t.maybeAllocate(ctx); err != nil {
+		return errors.Wrap(err, "failed to reschedule trial")
+	}
+	return nil
+}
+
+func (t *trial) stop(ctx *actor.Context, state model.State) {
+	if t.stopped {
+		return
+	}
+
+	t.stopped = true
+	t.finalState = state
+	ctx.Self().Stop()
+}
+
+func (t *trial) resetTask(ctx *actor.Context) error {
+	var mErr *multierror.Error
+
+	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
+
+	if t.task != nil {
+		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+			mErr = multierror.Append(mErr, errors.Wrap(err, "error delete task session for a trial"))
+		}
+	}
+
+	if t.task != nil && len(t.allocations) != 0 {
+		if err := t.db.CompleteTask(model.JobTypeTrial, t.id, t.task.ID); err != nil {
+			mErr = multierror.Append(mErr, errors.Wrap(err, "failed to mark trial run completed"))
+		}
+	}
+
+	t.preemption.close()
+	t.preemption = nil
+	t.rendezvous.close()
+	t.rendezvous = nil
+	t.task = nil
+	t.allocations = nil
+	t.terminatedFirst = nil
+	t.terminatedContainers = make(map[cproto.ID]sproto.TaskContainerStopped)
+	t.killCooldown = nil
+
+	return mErr.ErrorOrNil()
+}
+
+func (t *trial) taskExitStatus() aproto.ContainerStopped {
+	anyStarted := func(cs map[cproto.ID]cproto.Container) bool {
+		for _, c := range cs {
+			if c.State != cproto.Assigned {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !anyStarted(t.containers) {
+		return aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
+	}
+	if t.terminatedFirst != nil {
+		return t.terminatedContainers[*t.terminatedFirst].ContainerStopped
+	}
+	return aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
+}
+
+func (t *trial) insertLog(ctx *actor.Context, cID *cproto.ID, msg string) {
+	// Log messages should never come in before the trial ID is set, since no trial runners are
+	// launched until after the trial ID is set. But for futureproofing, we will log an error while
+	// we protect the database.
+	if !t.idSet {
+		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
+		return
+	}
+
+	if t.logger == nil {
+		// A trial created for a unit test does not have a logger.
+		return
+	}
+
+	var cIDStr string
+	if cID != nil {
+		cIDStr = string(*cID)
+	}
+	now := time.Now()
+	msg += "\n"
+	level := "INFO"
+	source := "master"
+	stdType := "stdout"
+	ctx.Tell(t.logger, model.TrialLog{
+		TrialID: t.id,
+		Log:     &msg,
+
+		ContainerID: &cIDStr,
+		Timestamp:   &now,
+		Level:       &level,
+		Source:      &source,
+		StdType:     &stdType,
+	})
+}
 
 const (
 	// MinLocalRendezvousPort is the smallest port to use (from the container's point of view;
@@ -51,46 +662,18 @@ const (
 	// Each distributed trial can take up to 2 host based ports and we assume a maximum.
 	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
-
-	pushArchitectureEnabled = false
 )
 
-// Trial-specific actor messages.
+var rendezvousTimeoutDuration = 10 * time.Minute
+
 type (
-	killTrial    struct{}
-	trialAborted struct{}
-
-	// This message is used to synchronize the trial workload sequencer with the searcher. It allows
-	// the searcher to get more operations to the trial workload sequencer as a result of the trial
-	// completing a searcher operation before the trial decides to tell the scheduler it is
-	// done, since stopping and restarting trials has relatively high overhead.
-	sendNextWorkload struct {
-		runID int
-	}
-
-	// It is possible that it takes very long for all containers to be connected after the first
-	// container is connected. This might happen when the k8s cluster waits for new instances
-	// to spin up, which might not happen at all. At the same time, taking up part of all
-	// the resources and waiting is wasteful. So we need to detect this situation.
-	allReadyTimeout struct {
-		runID int
-	}
-
-	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
-	// of the number of RunID that the trial had at the time we issued the TERMINATE. If we
-	// receive the terminateTimeout message and t.RunID has not changed, we forcibly kill the
-	// running containers.
-	terminateTimeout struct{ runID int }
-
-	containerConnected struct {
-		ContainerID cproto.ID
-		socket      *websocket.Conn
-	}
-
-	// trialWatchRendezvousInfoReq begins watching for rendezvous info.
+	// watchRendezvousInfo begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
-	watchRendezvousInfo   struct{ containerID cproto.ID }
+	watchRendezvousInfo struct {
+		taskID sproto.TaskID
+		id     cproto.ID
+	}
 	rendezvousInfoOrError struct {
 		info *trialv1.RendezvousInfo
 		err  error
@@ -98,806 +681,173 @@ type (
 	rendezvousWatcher struct {
 		C <-chan rendezvousInfoOrError
 	}
-	unwatchRendezvousInfo struct{ containerID cproto.ID }
-)
+	unwatchRendezvousInfo struct{ id cproto.ID }
 
-// Trial-specific external messages.
-type trialMessage struct {
-	RendezvousInfo *rendezvousInfoMessage `union:"type,RENDEZVOUS_INFO" json:"-"`
-	RunWorkload    *runWorkload           `union:"type,RUN_WORKLOAD" json:"-"`
-}
+	// It is possible that it takes very long for all containers to be connected after the first
+	// container is connected. This might happen when the k8s cluster waits for new instances
+	// to spin up, which might not happen at all. At the same time, taking up part of all
+	// the resources and waiting is wasteful. So we need to detect this situation.
+	rendezvousTimeout struct{ taskID sproto.TaskID }
 
-func (m trialMessage) MarshalJSON() ([]byte, error) {
-	return union.Marshal(m)
-}
-
-func (m *trialMessage) UnmarshalJSON(data []byte) error {
-	if err := union.Unmarshal(data, m); err != nil {
-		return err
-	}
-
-	type DefaultParser *trialMessage
-
-	return errors.Wrap(json.Unmarshal(data, DefaultParser(m)), "failed to parse trial message")
-}
-
-type rendezvousInfoMessage struct {
-	Addrs []string `json:"addrs"`
-	Rank  int      `json:"rank"`
-}
-
-type runWorkload struct {
-	Workload workload.Workload `json:"workload"`
-}
-
-// terminatedContainerWithState records the terminatedContainer message with some state about the
-// trial at the time termination was received. That information is analyzed when determining if a
-// trial should be considered to have errored or not.
-type terminatedContainerWithState struct {
-	exitStatus                 sproto.TaskContainerStopped
-	isLeader                   bool
-	pendingGracefulTermination bool
-	needsCheckpoint            bool
-}
-
-type (
-	// trialState keeps all the state of the trial that we persist between failures.
-	trialState struct {
-		TrialWorkloadSequencerState json.RawMessage `json:"trial_workload_sequencer_state"`
-
-		// restarts is essentially a failure count, it increments when the trial fails and we retry it.
-		Restarts int `json:"restarts"`
-
-		// RunID is a count of how many times the task container(s) have stopped and restarted, which
-		// could be due to a failure or due to normal pausing and continuing. When RunID increments,
-		// it effectively invalidates any outstanding terminateTimeout messages so that we don't
-		// accidentally kill a fresh container due to the terminateTimeout message from an older
-		// container.
-		RunID int `json:"run_id"`
-
-		// The following fields tracks the reasons for termination.
-		PendingGracefulTermination bool `json:"pending_graceful_termination"`
-		TerminateNoCheckpoint      bool `json:"terminate_no_checkpoint"`
-		TerminationSent            bool `json:"termination_sent"`
-		CancelUnready              bool `json:"cancel_unready"`
-		Killed                     bool `json:"killed"`
-	}
-
-	// trial is an actor which is responsible for handling:
-	//  - messages from the scheduler,
-	//  - messages from the experiment,
-	//  - messages from the trial container(s), and
-	//  - keeping the trial table of the database up-to-date.
-	//
-	// It is not responsible for maintaining the current state of the task running in the trial
-	// container, or the desired state as described by searcher operations; that is offloaded onto the
-	// workloadSequencer.
-	trial struct {
-		trialState
-		id           int
-		idSet        bool
-		replayCreate bool
-
-		rm              *actor.Ref
-		logger          *actor.Ref
-		db              *db.PgDB
-		experimentState model.State
-		experiment      *model.Experiment
-		config          expconf.ExperimentConfig
-		modelDefinition archive.Archive
-
-		warmStartCheckpointID *int
-
-		create searcher.Create
-		close  *searcher.Close
-
-		sequencer *trialWorkloadSequencer
-
-		// The following fields tracks the interaction with the resource providers.
-		// The existence of task signifies the trial has requested to be allocated.
-		task *sproto.AllocateRequest
-		// The existence of allocations signifies the trial has been allocated.
-		allocations []sproto.Allocation
-
-		// The following fields tracks containers and their states.
-		lastContainerConnectedTime time.Time
-		startedContainers          map[cproto.ID]bool
-		containers                 map[cproto.ID]cproto.Container // only for running containers.
-		containerRanks             map[cproto.ID]int              // only for launched containers.
-		containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
-		containerSockets           map[cproto.ID]*actor.Ref       // only for running containers.
-		terminatedContainers       map[cproto.ID]terminatedContainerWithState
-		// tracks if allReady check has passed successfully.
+	// rendezvous encapsulates the rendezvous state of a trial.
+	rendezvous struct {
+		taskID            sproto.TaskID
+		watchers          map[cproto.ID]chan<- rendezvousInfoOrError
+		ranks             map[cproto.ID]int
+		addresses         map[cproto.ID][]cproto.Address
+		lastWatchTime     time.Time
 		allReadySucceeded bool
-
-		taskSpec      *tasks.TaskSpec
-		generatedKeys *ssh.PrivateAndPublicKeys
-
-		// preemption represents the preemption state of the current allocated task.
-		// If there is no current task, or it is unallocated, it is nil.
-		preemption *preemption
-		// Map of container ID to watcher ID a rendezvous info listener.
-		rendezvousWatchers map[cproto.ID]chan<- rendezvousInfoOrError
 	}
 )
 
-// newTrial creates a trial which will try to schedule itself after it receives its first workload.
-// It must only error when a snapshot is passed.
-func newTrial(
-	exp *experiment,
-	config expconf.ExperimentConfig,
-	create searcher.Create,
-	firstCheckpoint *model.Checkpoint,
-) *trial {
-	var warmStartCheckpointID *int
-	if firstCheckpoint != nil {
-		checkpointID := firstCheckpoint.ID
-		warmStartCheckpointID = &checkpointID
-	}
-	return &trial{
-		rm:                    exp.rm,
-		logger:                exp.trialLogger,
-		db:                    exp.db,
-		experimentState:       exp.State,
-		experiment:            exp.Experiment,
-		config:                config,
-		modelDefinition:       exp.modelDefinition,
-		warmStartCheckpointID: warmStartCheckpointID,
-
-		sequencer: newTrialWorkloadSequencer(exp.Experiment.ID, config, create, firstCheckpoint),
-
-		create: create,
-
-		startedContainers:    make(map[cproto.ID]bool),
-		containers:           make(map[cproto.ID]cproto.Container),
-		containerRanks:       make(map[cproto.ID]int),
-		containerAddresses:   make(map[cproto.ID][]cproto.Address),
-		containerSockets:     make(map[cproto.ID]*actor.Ref),
-		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
-
-		taskSpec: exp.taskSpec,
-
-		rendezvousWatchers: make(map[cproto.ID]chan<- rendezvousInfoOrError),
+func newRendezvous(taskID sproto.TaskID, ranks map[cproto.ID]int) *rendezvous {
+	return &rendezvous{
+		taskID:    taskID,
+		ranks:     ranks,
+		addresses: map[cproto.ID][]cproto.Address{},
+		watchers:  map[cproto.ID]chan<- rendezvousInfoOrError{},
 	}
 }
 
-func (t *trial) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.AddLabel("experiment-id", t.experiment.ID)
-		if t.idSet {
-			ctx.AddLabel("trial-id", t.id)
-		}
-		if t.replayCreate {
-			if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-				return trialCreated{create: t.create, trialSnapshot: s}
-			}); err != nil {
-				ctx.Log().WithError(err).Warn("failed to snapshot replay create (trial may fail to restore)")
-			}
-		}
-
-	case model.State:
-		t.experimentState = msg
-	case []searcher.Operation:
-		t.processOperations(msg)
-
-	case sproto.ContainerLog:
-		t.insertLog(ctx, msg.Container, msg.Message())
-
-	case trialAborted:
-		// This is to handle trial being aborted. It does nothing here but requires
-		// the code below this switch statement to handle releasing resources in
-		// the scheduler. This should be refactored into the terminating logic.
-
-	case watchPreemption:
-		if resp, err := t.preemption.watch(msg); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(resp)
-		}
-	case unwatchPreemption:
-		t.preemption.unwatch(msg)
-
-	case watchRendezvousInfo:
-		if resp, err := t.registerRendezvousWatcher(ctx, msg); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(resp)
-		}
-	case unwatchRendezvousInfo:
-		delete(t.rendezvousWatchers, msg.containerID)
-
-	case actor.PostStop:
-		if !t.idSet {
-			return nil
-		}
-
-		if err := t.db.EndTrialRuns(t.id); err != nil {
-			ctx.Log().WithError(err).Error(`
-				failed to close trial runs on exit, if this was an unexpected exit
-				then manual intervention may be needed to correct resource allocation accounting`)
-		}
-
-		if t.Restarts > t.config.MaxRestarts() {
-			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
-				ctx.Log().Error(err)
-			}
-			return errors.Errorf("trial %d failed and reached maximum number of restarts", t.id)
-		}
-		ctx.Log().Info("trial stopped successfully")
-		endState := model.CompletedState
-		if t.experimentState == model.StoppingCanceledState || t.Killed {
-			endState = model.CanceledState
-		}
-		if err := t.db.UpdateTrial(t.id, endState); err != nil {
-			ctx.Log().Error(err)
-		}
-		return nil
-	default:
-		if t.task != nil {
-			if err := t.runningReceive(ctx); err != nil {
-				return err
-			}
-		}
+func ranksFromAllocations(allocations []sproto.Allocation) map[cproto.ID]int {
+	ranks := map[cproto.ID]int{}
+	for rank, a := range allocations {
+		ranks[a.Summary().ID] = rank
 	}
-
-	if t.task == nil {
-		if t.trialClosing() {
-			ctx.Self().Stop()
-		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState {
-			slotsNeeded := t.config.Resources().SlotsPerTrial()
-			label := t.config.Resources().AgentLabel()
-			resourcePool := t.config.Resources().ResourcePool()
-			var name string
-			if t.idSet {
-				name = fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)
-			} else {
-				name = fmt.Sprintf("Trial (Experiment %d)", t.experiment.ID)
-			}
-
-			// TODO(brad): When we support tracking runs for more than trials, this logic should
-			// likely be generalized by moving it rather than duplicating it for all task types.
-			t.RunID++
-			if err := t.db.AddTrialRun(t.id, t.RunID); err != nil {
-				return errors.Wrap(err, "failed to save trial run")
-			}
-
-			t.task = &sproto.AllocateRequest{
-				ID:             sproto.NewTaskID(),
-				Name:           name,
-				Group:          ctx.Self().Parent(),
-				SlotsNeeded:    slotsNeeded,
-				NonPreemptible: false,
-				Label:          label,
-				ResourcePool:   resourcePool,
-				FittingRequirements: sproto.FittingRequirements{
-					SingleAgent: false,
-				},
-				TaskActor: ctx.Self(),
-			}
-			if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
-				ctx.Log().Error(err)
-				t.terminated(ctx)
-			}
-		}
-	} else if t.experimentState != model.ActiveState {
-		_ = t.releaseResource(ctx)
-	}
-
-	return nil
+	return ranks
 }
 
-func (t *trial) registerRendezvousWatcher(
-	ctx *actor.Context, msg watchRendezvousInfo,
-) (rendezvousWatcher, error) {
-	// Validate this watch request is unique and not stale.
-	if _, ok := t.containerRanks[msg.containerID]; !ok {
-		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
-			"rendezvous request from stale container: %s", msg.containerID,
-		)
-	} else if _, ok := t.rendezvousWatchers[msg.containerID]; ok {
-		return rendezvousWatcher{}, apiutils.AsErrBadRequest(
-			"rendezvous request from already connected container: %s", msg.containerID,
+func (r *rendezvous) watch(taskID sproto.TaskID, id cproto.ID) (rendezvousWatcher, error) {
+	if r == nil {
+		err := errNoTask{action: "watch rendezvous"}
+		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+	} else if r.taskID != taskID {
+		err := errStaleTask{received: taskID, actual: r.taskID}
+		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+	} else if _, ok := r.ranks[id]; !ok {
+		err := errStaleContainer{id: id}
+		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+	} else if _, ok := r.watchers[id]; ok {
+		return rendezvousWatcher{}, apiutils.AsValidationError(
+			"rendezvous request from already connected container: %s", id,
 		)
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
 	w := make(chan rendezvousInfoOrError, 1)
-	t.rendezvousWatchers[msg.containerID] = w
-
-	t.lastContainerConnectedTime = time.Now()
-	if !t.allReady() {
-		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
-		ctx.Log().Info("found not all containers are connected")
-	} else {
-		t.pushRendezvous(ctx)
+	r.watchers[id] = w
+	r.lastWatchTime = time.Now()
+	if r.ready() {
+		r.push()
 	}
-
 	return rendezvousWatcher{C: w}, nil
 }
 
-func (t *trial) processOperations(ops []searcher.Operation) {
-	for _, op := range ops {
-		switch op := op.(type) {
-		case searcher.ValidateAfter:
-			t.sequencer.OperationRequested(op)
-		case searcher.Close:
-			t.close = &op
-		}
+func (r *rendezvous) unwatch(id cproto.ID) {
+	if r == nil {
+		return
+	}
+	delete(r.watchers, id)
+}
+
+func (r *rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
+	r.addresses[id] = addresses
+	if r.ready() {
+		r.push()
 	}
 }
 
-func (t *trial) runningReceive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case sproto.ResourcesAllocated, sproto.ReleaseResources:
-		return t.processSchedulerMsg(ctx)
-
-	case containerConnected, sproto.TaskContainerStateChanged:
-		return t.processContainerMsg(ctx)
-
-	case workload.CompletedMessage:
-		if err := t.processCompletedWorkload(ctx, msg); err != nil {
-			return err
-		}
-
-	case sendNextWorkload:
-		if msg.runID != t.RunID {
-			ctx.Log().Warnf("ignoring sendNextWorkload with stale RunID %d", msg.runID)
-			return nil
-		}
-		if err := t.sendNextWorkload(ctx); err != nil {
-			return err
-		}
-
-	case actor.ChildFailed:
-		ctx.Log().Info("found child actor failed, terminating forcibly")
-		t.terminate(ctx)
-
-	case killTrial, *apiv1.KillTrialRequest:
-		ctx.Log().Info("received API request to kill trial")
-		t.Killed = true
-		t.terminate(ctx)
-		if ctx.ExpectingResponse() {
-			ctx.Respond(&apiv1.KillTrialResponse{})
-		}
-
-	case allReadyTimeout:
-		if msg.runID == t.RunID &&
-			time.Now().After(t.lastContainerConnectedTime.Add(allReadyTimeoutPeriod)) {
-			ctx.Tell(t.logger, model.TrialLog{
-				TrialID: t.id, Message: "some containers are taking a long time to " +
-					"connect to master; when running on kubernetes this may happen " +
-					"because only some of the pods have been scheduled; it is possible " +
-					"that some pods will never be scheduled without adding compute " +
-					"resources or pausing / killing other experiments in the cluster",
-			})
-		}
-
-	case terminateTimeout:
-		if msg.runID == t.RunID {
-			ctx.Log().Info("forcibly terminating unresponsive trial after timeout expired")
-			t.terminate(ctx)
-		}
-
-	case actor.ChildStopped:
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-
-	return nil
+func (r *rendezvous) containerTerminated(id cproto.ID) {
+	delete(r.addresses, id)
 }
 
-func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case sproto.ResourcesAllocated:
-		if err := t.processAllocated(ctx, msg); err != nil {
-			return err
-		}
-
-	case sproto.ReleaseResources:
-		ctx.Log().Info("releasing resources because of being preempted")
-		return t.releaseResource(ctx)
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
+func (r rendezvous) rank(id cproto.ID) int {
+	return r.ranks[id]
 }
 
-func (t *trial) releaseResource(ctx *actor.Context) error {
-	if !t.allReady() {
-		t.CancelUnready = true
-		t.terminate(ctx)
-	} else {
-		t.preempt(ctx)
-	}
-	return nil
-}
-
-func (t *trial) processContainerMsg(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case containerConnected:
-		if err := t.processContainerConnected(ctx, msg); err != nil {
-			return err
-		}
-
-	case sproto.TaskContainerStateChanged:
-		if msg.Container.State != cproto.Assigned {
-			t.startedContainers[msg.Container.ID] = true
-		}
-
-		switch msg.Container.State {
-		case cproto.Running:
-			return t.processContainerRunning(ctx, msg)
-		case cproto.Terminated:
-			t.processContainerTerminated(ctx, msg)
-		}
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func (t *trial) processID(id int) {
-	t.id = id
-	t.idSet = true
-	t.sequencer.SetTrialID(id)
-}
-
-func (t *trial) processAllocated(
-	ctx *actor.Context, msg sproto.ResourcesAllocated,
-) error {
-	// Ignore this message if the resources are already released or
-	// it is from the last run of the trial.
-	if t.task == nil {
-		ctx.Log().Info("ignoring resource allocation since the resources are already released.")
-		return nil
-	} else if msg.ID != t.task.ID {
-		ctx.Log().Info("ignoring resource allocation since it is from the last run of the trial.")
-		return nil
-	}
-
-	t.allocations = msg.Allocations
-
-	if t.generatedKeys == nil {
-		generatedKeys, err := ssh.GenerateKey(nil)
-		if err != nil {
-			ctx.Respond(err)
-			return err
-		}
-		t.generatedKeys = &generatedKeys
-	}
-	if !t.idSet {
-		modelTrial := model.NewTrial(
-			t.create.RequestID,
-			t.experiment.ID,
-			model.JSONObj(t.create.Hparams),
-			t.warmStartCheckpointID,
-			int64(t.create.TrialSeed))
-		if err := t.db.AddTrial(modelTrial); err != nil {
-			ctx.Log().WithError(err).Error("failed to save trial to database")
-			t.terminate(ctx)
-			return err
-		}
-		t.processID(modelTrial.ID)
-		ctx.AddLabel("trial-id", t.id)
-		if t.config.PerformInitialValidation() {
-			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
-				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
-				t.terminate(ctx)
-				return err
-			}
-		}
-		ctx.Tell(t.rm, sproto.SetTaskName{
-			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
-			TaskHandler: ctx.Self(),
-		})
-		// We snapshot here to shorten the window where a trial can exist without the
-		// searcher snapshotting the trialCreated message.
-		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialCreated{create: t.create, trialSnapshot: s}
-		}); err != nil {
-			return errors.Wrap(err, "failed to snapshot trial after creation")
-		}
-	}
-
-	w, err := t.sequencer.Workload()
-	if err != nil {
-		return errors.Wrap(err, "failed to get workload from sequencer after allocation")
-	}
-
-	if err = saveWorkload(t.db, w); err != nil {
-		ctx.Log().WithError(err).Error("failed to save workload to the database after allocation")
-	}
-
-	ctx.Log().Infof("starting trial container: %v", w)
-
-	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
-	if err != nil {
-		return errors.Wrap(err, "cannot start a new task session for a trial")
-	}
-	t.preemption = newPreemption()
-
-	trialSpec := &tasks.TrialSpec{
-		Base: *t.taskSpec,
-
-		ExperimentConfig:    schemas.Copy(t.config).(expconf.ExperimentConfig),
-		ModelDefinition:     t.modelDefinition,
-		HParams:             t.create.Hparams,
-		TrialSeed:           t.create.TrialSeed,
-		LatestCheckpoint:    t.sequencer.LatestCheckpoint,
-		InitialWorkload:     w,
-		WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-		IsMultiAgent:        len(t.allocations) > 1,
-	}
-
-	for rank, a := range msg.Allocations {
-		t.containerRanks[a.Summary().ID] = rank
-		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
-	}
-
-	return nil
-}
-
-func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
-	defer ctx.Tell(ctx.Self().Parent(), trialReportProgress{
-		requestID: t.create.RequestID,
-		progress:  t.sequencer.Progress(),
-	})
-
-	if msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled ||
-		*msg.ExitedReason == workload.InvalidHP || *msg.ExitedReason == workload.InitInvalidHP {
-		if err := markWorkloadCompleted(t.db, msg); err != nil {
-			ctx.Log().Error(err)
-		}
-	}
-
-	if msg.ExitedReason != nil {
-		reason := *msg.ExitedReason
-		ctx.Log().Infof("exiting trial early from %v with reason %v", msg.Workload, reason)
-
-		if reason == workload.InitInvalidHP {
-			t.TerminateNoCheckpoint = true
-		}
-
-		immediateExit, err := t.sequencer.WorkloadFailed(msg, reason)
-		if err != nil {
-			return fmt.Errorf("failed to report workload failed: %w", err)
-		}
-
-		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialReportEarlyExit{reason: *msg.ExitedReason, trialSnapshot: s}
-		}); err != nil {
-			return fmt.Errorf("failed to report early exit with snapshot: %w", err)
-		}
-
-		if immediateExit {
-			return nil
-		}
-		return t.sendNextWorkload(ctx)
-	}
-
-	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
-
-	isBestValidationFunc := func() bool {
-		return ctx.Ask(ctx.Self().Parent(), trialQueryIsBestValidation{
-			validationMetrics: *msg.ValidationMetrics,
-		}).Get().(bool)
-	}
-	op, err := t.sequencer.WorkloadCompleted(msg, isBestValidationFunc)
-	switch {
-	case err != nil:
-		return errors.Wrap(err, "failed to pass completed message to sequencer")
-	case op != nil:
-		m, err := msg.ValidationMetrics.Metric(t.config.Searcher().Metric())
-		if err != nil {
-			return err
-		}
-		if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-			return trialCompleteOperation{
-				op:            *op,
-				metric:        m,
-				trialSnapshot: s,
-			}
-		}); err != nil {
-			return errors.Wrap(err, "failed to report validation with snapshot")
-		}
-		// If we talked to the searcher, fully synchronize with the it to allow it to relay any
-		// new operations to the trial.
-		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{runID: t.RunID})
-		return nil
-	default:
-		if msg.CheckpointMetrics != nil {
-			if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
-				return s
-			}); err != nil {
-				return errors.Wrap(err, "failed to report snapshot")
-			}
-		}
-		return t.sendNextWorkload(ctx)
-	}
-}
-
-func (t *trial) sendNextWorkload(ctx *actor.Context) error {
-	terminateNow := false
-	var w workload.Workload
-	var err error
-	switch {
-	// We have another workload to run.
-	case !t.PendingGracefulTermination && !t.sequencer.UpToDate():
-		w, err = t.sequencer.Workload()
-		if err != nil {
-			return errors.Wrap(err, "failed to get next workload from sequencer")
-		}
-		ctx.Log().Infof("continuing trial: %v", w)
-
-	// We have no workloads, but the current step needs to be checkpointed before we can terminate.
-	case t.sequencer.PrecloseCheckpointWorkload() != nil:
-		w = *t.sequencer.PrecloseCheckpointWorkload()
-		if w.Kind != workload.CheckpointModel {
-			return errors.New(
-				"sequencer.PrecloseCheckpointWorkload() returned a non-checkpoint workload")
-		}
-		ctx.Log().Infof("checkpointing trial before terminating trial runner: %v", w)
-
-	// We have nothing at all to do, so terminate now.
-	default:
-		ctx.Log().Info("terminating gracefully because there are no more workloads")
-		terminateNow = true
-		t.preempt(ctx)
-	}
-
-	// Command the trial runner to do the thing we decided on (if this is not a replay).
-	var msg interface{}
-	if terminateNow {
-		w = *t.sequencer.TerminateWorkload()
-		msg = &trialMessage{
-			RunWorkload: &runWorkload{
-				Workload: w,
-			},
-		}
-
-		t.TerminationSent = true
-		actors.NotifyAfter(ctx, terminateTimeoutPeriod, terminateTimeout{runID: t.RunID})
-	} else {
-		if err := saveWorkload(t.db, w); err != nil {
-			ctx.Log().WithError(err).Error("failed to save workload to the database")
-		}
-		msg = &trialMessage{
-			RunWorkload: &runWorkload{
-				Workload: w,
-			},
-		}
-	}
-	for _, socket := range t.containerSockets {
-		if err := api.WriteSocketJSON(ctx, socket, msg); err != nil {
-			ctx.Log().WithError(err).Error("cannot write to websocket")
-		}
-	}
-	return nil
-}
-
-func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConnected) error {
-	// Check to make sure this is not a connection from a stale container.
-	if _, ok := t.containerRanks[msg.ContainerID]; !ok {
-		ctx.Respond(errors.Errorf("socket connection from stale container: %s", msg.ContainerID))
-		return nil
-	}
-
-	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
-	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
-	t.containerSockets[msg.ContainerID] = ref
-	ctx.Respond(ref)
-
-	t.lastContainerConnectedTime = time.Now()
-	if !t.allReady() {
-		ctx.Log().Info("found not all sockets are connected")
-		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.RunID})
-	} else {
-		t.pushRendezvous(ctx)
-	}
-	return nil
-}
-
-func formatAddress(p cproto.Address) string {
-	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
-}
-
-func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
-	if skt, ok := t.containerSockets[id]; ok {
-		addr := skt.Address().Local()
-		if ref := ctx.Child(addr); ref != nil {
-			if ok := ctx.Kill(addr); !ok {
-				ctx.Log().Warnf("failed to kill container socket: %s", id)
-			}
-		}
-		delete(t.containerSockets, id)
-	}
-}
-
-// allReady returns true if and only if all the containers are reported to be started with the
+// ready returns true if and only if all the containers are reported to be started with the
 // ContainerStarted message and their sockets to be connected with the containerConnected
 // message. The two messages are not guaranteed to come in-order. During each run of the
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
-func (t *trial) allReady() bool {
+func (r *rendezvous) ready() bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all terminated.
-	if t.allReadySucceeded {
+	if r.allReadySucceeded {
 		return true
 	}
 
-	if pushArchitectureEnabled {
-		allAddressesArrived := len(t.containerAddresses) == len(t.allocations)
-		allWaiting := len(t.rendezvousWatchers) == len(t.allocations)
+	allAddressesArrived := len(r.addresses) == len(r.ranks)
+	allWaiting := len(r.watchers) == len(r.ranks)
 
-		t.allReadySucceeded = allAddressesArrived && allWaiting
-	} else {
-		// Ensure all ContainerStarted messages have arrived.
-		if len(t.containers) < len(t.allocations) {
-			return false
-		}
-		// Finally, ensure all sockets have connected.
-		t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
-	}
-	return t.allReadySucceeded
+	r.allReadySucceeded = allAddressesArrived && allWaiting
+	return r.allReadySucceeded
 }
 
-// pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
+// push gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (t *trial) pushRendezvous(ctx *actor.Context) {
-	caddrs, raddrs, err := t.rendezvousInfo(ctx)
-	for _, caddr := range caddrs {
-		c := caddr.container
-		if pushArchitectureEnabled {
-			t.rendezvousWatchers[c.ID] <- rendezvousInfoOrError{
-				info: &trialv1.RendezvousInfo{
-					Addresses: raddrs,
-					Rank:      int32(t.containerRanks[c.ID]),
-				},
-				err: err,
-			}
-			close(t.rendezvousWatchers[c.ID])
-			delete(t.rendezvousWatchers, c.ID)
-		} else {
-			socket := t.containerSockets[c.ID]
-			if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
-				RendezvousInfo: &rendezvousInfoMessage{
-					Addrs: raddrs,
-					Rank:  caddr.ordinal,
-				},
-			}); err != nil {
-				ctx.Log().WithError(err).Error("cannot write to socket")
-			}
-		}
+func (r rendezvous) push() bool {
+	if !r.ready() {
+		return false
 	}
+	caddrs, raddrs, err := r.info()
+	for _, caddr := range caddrs {
+		w := r.watchers[caddr.id]
+		w <- rendezvousInfoOrError{
+			info: &trialv1.RendezvousInfo{
+				Addresses: raddrs,
+				Rank:      int32(r.ranks[caddr.id]),
+			},
+			err: err,
+		}
+		close(w)
+		delete(r.watchers, caddr.id)
+	}
+	return true
 }
 
-func (t *trial) closeRendezvous() {
-	for cID, w := range t.rendezvousWatchers {
+// checkTimeout checks if the task should timeout waiting for rendezvous.
+func (r *rendezvous) checkTimeout(taskID sproto.TaskID) error {
+	if r == nil {
+		return nil
+	}
+
+	if r.taskID == taskID && time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration)) {
+		return errors.New("some containers are taking a long time to " +
+			"connect to master; when running on kubernetes this may happen " +
+			"because only some of the pods have been scheduled; it is possible " +
+			"that some pods will never be scheduled without adding compute " +
+			"resources or pausing / killing other experiments in the cluster",
+		)
+	}
+	return nil
+}
+
+func (r *rendezvous) close() {
+	if r == nil {
+		return
+	}
+
+	for cID, w := range r.watchers {
 		w <- rendezvousInfoOrError{err: errors.New("task terminated")}
 		close(w)
-		delete(t.rendezvousWatchers, cID)
+		delete(r.watchers, cID)
 	}
 }
 
 type cAddress struct {
-	container cproto.Container
+	id        cproto.ID
 	addresses []cproto.Address
 	ordinal   int
 }
 
-func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error) {
-	ctx.Log().Info("found all containers are connected successfully")
-
+func (r *rendezvous) info() ([]cAddress, []string, error) {
 	var caddrs []cAddress
-	for k, v := range t.containers {
+	for id, rank := range r.ranks {
 		caddr := cAddress{
-			container: v,
-			addresses: t.containerAddresses[k],
-			ordinal:   t.containerRanks[k],
+			id:        id,
+			addresses: r.addresses[id],
+			ordinal:   rank,
 		}
 		caddrs = append(caddrs, caddr)
 
@@ -918,7 +868,7 @@ func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error)
 		case a.ordinal != 0 && b.ordinal == 0:
 			return false
 		default:
-			return a.container.ID < b.container.ID
+			return a.id < b.id
 		}
 	})
 
@@ -938,327 +888,36 @@ func (t *trial) rendezvousInfo(ctx *actor.Context) ([]cAddress, []string, error)
 		} else {
 			err = multierror.Append(err, fmt.Errorf(
 				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
-				len(addrs), caddr.container.ID, addrs))
+				len(addrs), caddr.id, addrs))
 		}
 	}
 	return caddrs, raddrs, err.ErrorOrNil()
 }
 
-func (t *trial) processContainerRunning(
-	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
-) error {
-	ctx.Log().Infof("found container running: %s (rank %d)",
-		msg.Container.ID, t.containerRanks[msg.Container.ID])
-
-	t.containers[msg.Container.ID] = msg.Container
-	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	if !t.allReady() {
-		ctx.Log().Info("found not all containers are connected")
-	} else {
-		t.pushRendezvous(ctx)
-	}
-	return nil
+func formatAddress(p cproto.Address) string {
+	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
 }
 
-func (t *trial) processContainerTerminated(
-	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
-) {
-	ctx.Log().Infof("found container terminated: %s", msg.Container.ID)
-	t.terminatedContainers[msg.Container.ID] = terminatedContainerWithState{
-		exitStatus:                 *msg.ContainerStopped,
-		isLeader:                   t.containerRanks[msg.Container.ID] == 0,
-		pendingGracefulTermination: t.PendingGracefulTermination,
-		needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
-	}
-
-	_, ok := t.containers[msg.Container.ID]
-	delete(t.containers, msg.Container.ID)
-	delete(t.containerAddresses, msg.Container.ID)
-
-	t.killAndRemoveSocket(ctx, msg.Container.ID)
-
-	exitMsg := msg.ContainerStopped.String()
-	t.insertLog(ctx, msg.Container, exitMsg)
-
-	// Terminate the task if the container never started (since this prevents the gang
-	// from ever being able to start), if the leader of the gang has exited out, or if
-	// one of the containers exited with a failure.
-	if !ok || t.containerRanks[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
-		t.terminate(ctx)
-	}
-
-	// If all containers are terminated, the trial is considered terminated.
-	if len(t.terminatedContainers) == len(t.allocations) {
-		t.terminated(ctx)
-	}
-}
-
-func (t *trial) canLog(ctx *actor.Context, msg string) bool {
-	// Log messages should never come in before the trial ID is set, since no trial runners are
-	// launched until after the trial ID is set. But for futureproofing, we will log an error while
-	// we protect the database.
-	if !t.idSet {
-		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
-		return false
-	}
-
-	if t.logger == nil {
-		// A trial created for a unit test does not have a logger.
-		return false
-	}
-	return true
-}
-
-func (t *trial) insertLog(ctx *actor.Context, container cproto.Container, msg string) {
-	if !t.canLog(ctx, msg) {
-		return
-	}
-
-	cid := string(container.ID)
-	now := time.Now()
-	msg += "\n"
-	level := "INFO"
-	source := "master"
-	stdType := "stdout"
-	ctx.Tell(t.logger, model.TrialLog{
-		TrialID: t.id,
-		Log:     &msg,
-
-		ContainerID: &cid,
-		Timestamp:   &now,
-		Level:       &level,
-		Source:      &source,
-		StdType:     &stdType,
-	})
-}
-
-func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {
-	switch status := state.exitStatus; {
-	case status.Failure != nil && status.Failure.FailureType != aproto.TaskAborted:
-		return status.ContainerStopped
-	case !state.pendingGracefulTermination || state.needsCheckpoint:
-		return aproto.ContainerError(aproto.AgentError, errors.New(
-			"container exited when it wasn't supposed to"))
-	default:
-		return status.ContainerStopped
-	}
-}
-
-func (t *trial) reset() error {
-	totalBatches, err := t.sequencer.RollBackSequencer()
-	if err != nil {
-		return errors.Wrap(err, "failed to rollback trial sequencer in reset")
-	}
-	err = t.db.RollBackTrial(t.id, totalBatches)
-	if err != nil {
-		return errors.Wrap(err, "failed to rollback trial in reset")
-	}
-	return nil
-}
-
-func (t *trial) trialClosing() bool {
-	return t.sequencer.ExitingEarly || t.Killed || t.Restarts > t.config.MaxRestarts() ||
-		(t.close != nil && t.sequencer.UpToDate()) ||
-		model.StoppingStates[t.experimentState]
-}
-
-func (t *trial) terminate(ctx *actor.Context) {
-	switch {
-	case len(t.allocations) == 0:
-		ctx.Log().Info("aborting trial before resources are allocated in response to kill")
-		t.terminated(ctx)
-		ctx.Tell(ctx.Self(), trialAborted{})
-	default:
-		ctx.Log().Info("forcibly terminating trial")
-		if t.task != nil && t.allocations != nil {
-			for _, allocation := range t.allocations {
-				allocation.Kill(ctx)
-			}
-		}
-	}
-}
-
-func (t *trial) preempt(ctx *actor.Context) {
-	switch {
-	case len(t.allocations) == 0:
-		ctx.Log().Info("aborting trial before resources are allocated in response to preemption")
-		t.terminated(ctx)
-		ctx.Tell(ctx.Self(), trialAborted{})
-	case !t.PendingGracefulTermination:
-		ctx.Log().Info("gracefully terminating trial")
-		t.PendingGracefulTermination = true
-		t.preemption.preempt()
-	}
-}
-
-// terminated handles errors and restarting for trials when they are failed, paused, canceled,
-// or killed.
-func (t *trial) terminated(ctx *actor.Context) {
-	// Collect container terminated states.
-	getLeaderState := func() (terminatedContainerWithState, bool) {
-		for _, c := range t.terminatedContainers {
-			if c.isLeader {
-				return c, true
-			}
-		}
-		return terminatedContainerWithState{}, false
-	}
-	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
-	if len(t.startedContainers) == 0 {
-		// If there are no containers started executing, consider as aborted.
-		// The trial state will be restart.
-		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
-	} else if leaderState, ok := getLeaderState(); ok {
-		status = classifyStatus(leaderState)
-	}
-
-	terminationSent := t.TerminationSent
-
-	if err := t.db.CompleteTrialRun(t.id, t.RunID); err != nil {
-		ctx.Log().WithError(err).Error("failed to mark trial run completed")
-	}
-
-	if t.task != nil {
-		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
-			ctx.Log().WithError(err).Error("error delete task session for a trial")
-		}
-	}
-
-	t.preemption.close()
-	t.closeRendezvous()
-
-	t.task = nil
-	t.allocations = nil
-	t.containerRanks = make(map[cproto.ID]int)
-	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
-
-	t.allReadySucceeded = false
-	t.PendingGracefulTermination = false
-	t.TerminationSent = false
-	t.terminatedContainers = make(map[cproto.ID]terminatedContainerWithState)
-	t.startedContainers = make(map[cproto.ID]bool)
-
-	switch {
-	case status.Failure == nil:
-		ctx.Log().Info("trial runner stopped successfully")
-		return
-	case terminationSent:
-		ctx.Log().WithField("failure", status.Failure).Info(
-			"ignoring trial runner failure since termination was requested",
-		)
-		return
-	case t.CancelUnready:
-		ctx.Log().WithField("failure", status.Failure).Info(
-			"ignoring trial runner failure since it was canceled or paused " +
-				"before all containers are connected",
-		)
-		return
-	case t.TerminateNoCheckpoint:
-		ctx.Log().Info("Invalid hyperparameter in trial __init__()")
-		return
-	case t.Killed:
-		ctx.Log().WithField("failure", status.Failure).Info(
-			"ignoring trial runner failure since it was killed",
-		)
-		return
-	case status.Failure.FailureType == aproto.TaskAborted:
-		ctx.Log().Info("trial runner is aborted successfully")
-		return
-	}
-
-	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
-		t.Restarts, t.config.MaxRestarts(), status)
-	t.Restarts++
-	if t.Restarts <= t.config.MaxRestarts() {
-		ctx.Log().Infof("resetting trial %d", t.id)
-		if err := t.reset(); err != nil {
-			ctx.Log().Warn("failed to reset trial", err)
-		}
-		ctx.Tell(ctx.Self().Parent(), trialReportProgress{
-			requestID: t.create.RequestID,
-			progress:  t.sequencer.Progress(),
-		})
-		return
-	}
-
-	var w workload.Workload
-	var err error
-	switch {
-	case !t.sequencer.UpToDate():
-		w, err = t.sequencer.Workload()
-		if err != nil {
-			panic(err)
-		}
-	case t.sequencer.PrecloseCheckpointWorkload() != nil:
-		w = *t.sequencer.PrecloseCheckpointWorkload()
-	default:
-		panic("trial terminated due to failure but had nothing to fail")
-	}
-
-	if err := markWorkloadErrored(t.db, w); err != nil {
-		ctx.Log().
-			WithError(err).
-			Error("failed to mark workload errored when terminated")
-	}
-
-	e := workload.Errored
-	erroredMessage := workload.CompletedMessage{
-		Workload:     w,
-		ExitedReason: &e,
-	}
-	if err := t.processCompletedWorkload(ctx, erroredMessage); err != nil {
-		ctx.Log().
-			WithError(err).
-			Error("failed to process errored message")
-	}
-}
-
-func (t *trial) Snapshot() (json.RawMessage, error) {
-	sequencerSnapshot, err := t.sequencer.Snapshot()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to snapshot trial workload sequencer")
-	}
-	t.TrialWorkloadSequencerState = sequencerSnapshot
-	trialSnapshot, err := json.Marshal(t.trialState)
-	return trialSnapshot, errors.Wrap(err, "failed to snapshot trial")
-}
-
-func (t *trial) Restore(snapshot json.RawMessage) error {
-	if err := json.Unmarshal(snapshot, &t.trialState); err != nil {
-		return errors.Wrap(err, "failed to unmarshal trial snapshot")
-	}
-	if err := t.sequencer.Restore(t.TrialWorkloadSequencerState); err != nil {
-		return errors.Wrap(err, "failed to restore trial workload sequencer state")
-	}
-	if err := t.reset(); err != nil {
-		return errors.Wrap(err, "failed to reset trial")
-	}
-	return nil
-}
-
-func (t *trial) tellWithSnapshot(
-	ctx *actor.Context, ref *actor.Ref, withSnapshot func(s trialSnapshot) interface{},
-) error {
-	ss, err := t.Snapshot()
-	if err != nil {
-		return errors.Wrap(err, "failed to snapshot trial for early exit")
-	}
-	ctx.Tell(ref, withSnapshot(trialSnapshot{
-		requestID: t.create.RequestID,
-		trialID:   t.id,
-		snapshot:  ss,
-	}))
-	return nil
-}
+var (
+	preemptionTimeoutDuration = time.Hour
+	errNoPreemptionStatus     = errors.New("no preemption status available for unallocated task")
+)
 
 type (
 	// watchPreemption begins watching if the task has been preempted.
 	// The task responds to this message with a channel of bools, where sends of true
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
-	watchPreemption   struct{ id uuid.UUID }
+	watchPreemption struct {
+		taskID sproto.TaskID
+		id     uuid.UUID
+	}
 	preemptionWatcher struct{ C <-chan struct{} }
 	unwatchPreemption struct{ id uuid.UUID }
+	ackPreemption     struct{ taskID sproto.TaskID }
+	// preemptionTimeout is the time after which we forcibly terminate a trial that has no
+	// preempted.
+	preemptionTimeout struct{ taskID sproto.TaskID }
 
 	// preemption represents the preemption status of a task. A task is assumed to be preempted
 	// exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
@@ -1266,42 +925,51 @@ type (
 	// where the lifetime of a "preemption" is equivalent to the lifetime of task and they can be
 	// initialized together.
 	preemption struct {
-		preempted bool
+		taskID      sproto.TaskID
+		preempted   bool
+		acked       bool
+		unackable   bool
+		preemptedAt time.Time
 		// Map of watcher ID to a bool indicating if the trial should preempt.
 		watchers map[uuid.UUID]chan<- struct{}
 	}
 )
 
-func newPreemption() *preemption {
+func newPreemption(taskID sproto.TaskID) *preemption {
 	return &preemption{
+		taskID:    taskID,
 		preempted: false,
+		acked:     false,
 		watchers:  map[uuid.UUID]chan<- struct{}{},
 	}
 }
 
-func (p *preemption) watch(msg watchPreemption) (preemptionWatcher, error) {
+func (p *preemption) watch(taskID sproto.TaskID, id uuid.UUID) (preemptionWatcher, error) {
 	if p == nil {
-		return preemptionWatcher{}, errors.New("no preemption status available nil preemption")
+		return preemptionWatcher{}, errNoPreemptionStatus
+	}
+	if p.taskID != taskID {
+		return preemptionWatcher{}, errStaleTask{received: taskID, actual: p.taskID}
 	}
 
 	// Size 1; at most a single message can be sent and we don't want to block.
 	w := make(chan struct{}, 1)
-	p.watchers[msg.id] = w
+	p.watchers[id] = w
 
 	if p.preempted {
 		w <- struct{}{}
 		close(w)
-		delete(p.watchers, msg.id)
+		delete(p.watchers, id)
 	}
 
 	return preemptionWatcher{C: w}, nil
 }
 
-func (p *preemption) unwatch(msg unwatchPreemption) {
+func (p *preemption) unwatch(id uuid.UUID) {
 	if p == nil {
 		return
 	}
-	delete(p.watchers, msg.id)
+	delete(p.watchers, id)
 }
 
 func (p *preemption) preempt() {
@@ -1309,6 +977,7 @@ func (p *preemption) preempt() {
 		return
 	}
 	p.preempted = true
+	p.preemptedAt = time.Now()
 	for id, w := range p.watchers {
 		w <- struct{}{}
 		close(w)
@@ -1316,9 +985,85 @@ func (p *preemption) preempt() {
 	}
 }
 
+func (p *preemption) acknowledge(taskID sproto.TaskID) error {
+	if p == nil {
+		return errNoPreemptionStatus
+	}
+	if p.taskID != taskID {
+		return errStaleTask{received: taskID, actual: p.taskID}
+	}
+
+	p.acked = true
+	return nil
+}
+
+func (p *preemption) acknowledged() bool {
+	if p == nil {
+		return false
+	}
+
+	return p.acked
+}
+
+// markUnacknowledgeable marks that we _were_ going to preempt a trial but
+// decided instead to kill it, so it's all gravy if it throws some errors.
+func (p *preemption) markUnacknowledgeable() bool {
+	if p == nil {
+		return false
+	}
+
+	return p.unackable
+}
+
+func (p *preemption) unacknowledgeable() bool {
+	if p == nil {
+		return false
+	}
+
+	return p.unackable
+}
+
+func (p *preemption) checkTimeout(taskID sproto.TaskID) error {
+	if p == nil {
+		return nil
+	}
+	if p.taskID != taskID {
+		return nil
+	}
+
+	if time.Now().After(p.preemptedAt.Add(preemptionTimeoutDuration)) {
+		return errors.New("preemption timeout out")
+	}
+	return nil
+}
+
 func (p *preemption) close() {
 	if p == nil {
 		return
 	}
 	p.preempt()
+}
+
+type errNoTask struct {
+	action string
+}
+
+func (e errNoTask) Error() string {
+	return fmt.Sprintf("%s not valid without active task", e.action)
+}
+
+type errStaleTask struct {
+	received, actual sproto.TaskID
+}
+
+func (e errStaleTask) Error() string {
+	return fmt.Sprintf("stale task %s != %s (received != actual)", e.received, e.actual)
+}
+
+type errStaleContainer struct {
+	id cproto.ID
+}
+
+func (e errStaleContainer) Error() string {
+	return fmt.Sprintf("stale container %s", e.id)
 }

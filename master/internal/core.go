@@ -802,9 +802,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.POST("/trial_logs", api.Route(m.postTrialLogs))
 
-	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
-		api.WebSocketRoute(m.trialWebSocket))
-
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 

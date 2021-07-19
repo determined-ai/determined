@@ -107,7 +107,7 @@ func Simulate(
 		case Create:
 			simulation.Results[requestID] = []ValidateAfter{}
 			trialIDs[requestID] = nextTrialID
-			ops, err := s.TrialCreated(operation, nextTrialID)
+			ops, err := s.TrialCreated(operation.RequestID, nextTrialID)
 			if err != nil {
 				return simulation, err
 			}

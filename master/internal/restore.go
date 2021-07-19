@@ -19,7 +19,7 @@ import (
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 3
+const experimentSnapshotVersion = 4
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -108,14 +108,14 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 // restoreTrial takes the a searcher.Create and attempts to restore the trial that would be
 // associated with it. On failure, the trial is just reset to the start and errors are logged.
 func (e *experiment) restoreTrial(
-	ctx *actor.Context, op searcher.Create, ckpt *model.Checkpoint, ops []searcher.Operation,
-) (terminal bool) {
-	l := ctx.Log().WithField("request-id", op.RequestID)
+	ctx *actor.Context, ckpt *model.Checkpoint, searcher TrialSearcherState,
+) {
+	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
 	l.Info("restoring trial")
 
 	var trialID *int
-	var snapshot []byte
-	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.RequestID); {
+	var terminal bool
+	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
 		l.Info("trial was never previously allocated")
 	case err != nil:
@@ -123,42 +123,43 @@ func (e *experiment) restoreTrial(
 		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
 		// new trial in the trials table with the same (experiment_id, request_id).
 		l.WithError(err).Error("failed to retrieve trial, aborting restore")
-		return true
+		terminal = true
 	default:
 		trialID = &trial.ID
 		l = l.WithField("trial-id", trial.ID)
-		if _, terminal = model.TerminalStates[trial.State]; terminal {
+		if model.TerminalStates[trial.State] {
 			l.Infof("trial was in terminal state in restore: %s", trial.State)
-			return true
-		} else if _, running := model.RunningStates[trial.State]; !running {
+			terminal = true
+		} else if !model.RunningStates[trial.State] {
 			l.Infof("cannot restore trial in state: %s", trial.State)
-			return true
-		}
-		if snapshot, err = e.retrieveTrialSnapshot(l, op); err != nil {
-			l.Warnf("failed to retrieve trial snapshot, restarting fresh: %s", err)
+			terminal = true
 		}
 	}
 
-	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
-	t := newTrial(e, config, op, ckpt)
-	if trialID != nil {
-		t.processID(*trialID)
+	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
+	if terminal {
+		if !e.searcher.TrialsClosed[searcher.Create.RequestID] {
+			ctx.Tell(ctx.Self(), trialClosed{requestID: searcher.Create.RequestID})
+		}
+		return
 	}
-	t.processOperations(ops)
-	if snapshot != nil {
-		if err := t.Restore(snapshot); err != nil {
-			l.WithError(err).Warn("failed to restore trial, restarting fresh")
-			// Just new up the trial again in case restore half-worked.
-			t = newTrial(e, config, op, ckpt)
-			if trialID != nil {
-				t.processID(*trialID)
-			}
+
+	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	t := newTrial(
+		e.ID, e.State, searcher, e.rm, e.trialLogger, e.db, config, ckpt,
+		e.taskSpec, e.modelDefinition,
+	)
+	if trialID != nil {
+		t.setID(*trialID)
+		if _, ok := e.searcher.TrialIDs[searcher.Create.RequestID]; !ok {
+			ctx.Tell(ctx.Self(), trialCreated{
+				trialID:   *trialID,
+				requestID: searcher.Create.RequestID,
+			})
 		}
 	}
-	t.replayCreate = trialID != nil && snapshot == nil
-	ctx.ActorOf(op.RequestID, t)
-	l.Infof("restored trial to the beginning of step %d", t.sequencer.CurStepID)
-	return false
+	ctx.ActorOf(searcher.Create.RequestID, t)
+	l.Infof("restored trial")
 }
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.
@@ -177,34 +178,14 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	}
 }
 
-func (e *experiment) retrieveTrialSnapshot(
-	l *log.Entry, create searcher.Create,
-) (snapshot []byte, err error) {
-	switch snapshot, version, err := e.db.TrialSnapshot(e.ID, create.RequestID); {
-	case snapshot == nil:
-		// This can only happen if the master dies between when the trial saves itself
-		// to the database and the trialCreated message is received and handled. If we're here, the
-		// easiest fix is to just replay the trial created message.
-		l.Info("trial was previously allocated but had no snapshot")
-		return nil, nil
-	case err != nil:
-		return nil, errors.Wrap(err, "failed to retrieve trial snapshot")
-	default:
-		if snapshot, err = shimTrialSnapshot(snapshot, version); err != nil {
-			return nil, errors.Wrap(err, "failed to shim trial snapshot")
-		}
-		return snapshot, nil
-	}
-}
-
-func (e *experiment) snapshotAndSave(ctx *actor.Context, ts trialSnapshot) {
+func (e *experiment) snapshotAndSave(ctx *actor.Context) {
 	es, err := e.Snapshot()
 	if err != nil {
 		e.faultToleranceEnabled = false
 		ctx.Log().WithError(err).Errorf("failed to snapshot experiment, fault tolerance is lost")
 		return
 	}
-	err = e.db.SaveSnapshot(e.ID, ts.trialID, ts.requestID, experimentSnapshotVersion, es, ts.snapshot)
+	err = e.db.SaveSnapshot(e.ID, experimentSnapshotVersion, es)
 	if err != nil {
 		e.faultToleranceEnabled = false
 		ctx.Log().WithError(err).Errorf("failed to persist experiment snapshot, fault tolerance is lost")
@@ -219,28 +200,11 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	2: shimExperimentSnapshotV2,
 }
 
-// trialSnapshotShims maps a version to the shim that bumps that version.
-var trialSnapshotShims = map[int]snapshotShimFunc{
-	0: shimTrialSnapshotV0,
-	1: noopShim,
-	2: shimTrialSnapshotV2,
-}
-
 // shimExperimentSnapshot shims a trial snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
 func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
 	return shimSnapshot(experimentSnapshotShims, snapshot, version)
-}
-
-// shimTrialSnapshot shims a trial snapshot to the version required by the master,
-// returning an error in the same cases as shimExperimentSnapshot.
-func shimTrialSnapshot(snapshot []byte, version int) ([]byte, error) {
-	return shimSnapshot(trialSnapshotShims, snapshot, version)
-}
-
-func noopShim(snapshot []byte) ([]byte, error) {
-	return snapshot, nil
 }
 
 func shimSnapshot(shims map[int]snapshotShimFunc, snapshot []byte, version int) ([]byte, error) {
@@ -310,25 +274,6 @@ func shimExperimentSnapshotV0(snapshot []byte) ([]byte, error) {
 	return json.Marshal(experimentSnapshotV0)
 }
 
-// shimTrialSnapshotV0 shims a v0 trial snapshot to a v1 trial snapshot.
-// From v0 to v1, the cached checkpoints were removed.
-func shimTrialSnapshotV0(snapshot []byte) ([]byte, error) {
-	var trialSnapshotV0 map[string]interface{}
-	if err := json.Unmarshal(snapshot, &trialSnapshotV0); err != nil {
-		return nil, err
-	}
-
-	// Remove instances of `cached_checkpoint`.
-	sequencerState := trialSnapshotV0["trial_workload_sequencer_state"].(map[string]interface{})
-	delete(sequencerState, "cached_checkpoint")
-	if sequencerState["latest_snapshot"] != nil {
-		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
-		delete(latestSnapshot, "cached_checkpoint")
-	}
-
-	return json.Marshal(trialSnapshotV0)
-}
-
 // Version 1 => 2 shims
 
 // shimExperimentSnapshotV1 shims a v1 snapshot to a v2 snapshot. From v1 to v2,
@@ -395,30 +340,4 @@ func shimExperimentSnapshotV2(snapshot []byte) ([]byte, error) {
 	searcherState["trial_operations"] = newOperationsList
 
 	return json.Marshal(experimentSnapshotV2)
-}
-
-// shimTrialSnapshotV2 shims a v2 trial snapshot to a v3 trial snapshot.
-// From v2 to v3, Train and Validate operations were replaced by ValidateAfter ops.
-func shimTrialSnapshotV2(snapshot []byte) ([]byte, error) {
-	var trialSnapshotV2 map[string]interface{}
-	if err := json.Unmarshal(snapshot, &trialSnapshotV2); err != nil {
-		return nil, err
-	}
-
-	// Remove instances of `cached_checkpoint`.
-	sequencerState := trialSnapshotV2["trial_workload_sequencer_state"].(map[string]interface{})
-
-	// Previously, operations were always issued in twos, now they are issued in ones.
-	// Being on the N or N + 1 opIdx previous, where N = 2k for some k is now equivalent
-	// to being on the N / 2 opIdx. Whether we were on the N or N + 1'th op is encoded in
-	// the BatchesTowardsCurrentOp == 0 && BatchesSinceLastVal != 0, so into a training op
-	// but not done.
-	sequencerState["cur_op_idx"] = int(sequencerState["cur_op_idx"].(float64)) / 2
-
-	if sequencerState["latest_snapshot"] != nil {
-		latestSnapshot := sequencerState["latest_snapshot"].(map[string]interface{})
-		latestSnapshot["cur_op_idx"] = int(latestSnapshot["cur_op_idx"].(float64)) / 2
-	}
-
-	return json.Marshal(trialSnapshotV2)
 }

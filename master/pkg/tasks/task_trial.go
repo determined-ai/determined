@@ -13,20 +13,21 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // TrialSpec is a description of a task for running a trial container.
 type TrialSpec struct {
 	Base TaskSpec
 
-	ExperimentConfig    expconf.ExperimentConfig
-	ModelDefinition     archive.Archive
-	HParams             map[string]interface{}
-	TrialSeed           uint32
-	LatestCheckpoint    *model.Checkpoint
-	InitialWorkload     workload.Workload
-	WorkloadManagerType model.WorkloadManagerType
+	ExperimentID     int
+	TrialID          int
+	TrialRunID       int
+	ExperimentConfig expconf.ExperimentConfig
+	ModelDefinition  archive.Archive
+	HParams          map[string]interface{}
+	TrialSeed        uint32
+	LatestCheckpoint *model.Checkpoint
+	LatestBatch      int
 
 	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
@@ -96,8 +97,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 
 	res.Description = fmt.Sprintf(
 		"exp-%d-trial-%d",
-		s.InitialWorkload.ExperimentID,
-		s.InitialWorkload.TrialID,
+		s.ExperimentID,
+		s.TrialID,
 	)
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
@@ -114,21 +115,21 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 	portOffset := trialUniquePortOffset(s.Base.Devices)
 	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
-		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
-		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.InitialWorkload.TrialID),
-		"DET_TRIAL_SEED":               fmt.Sprintf("%d", s.TrialSeed),
+		"DET_EXPERIMENT_ID":            strconv.Itoa(s.ExperimentID),
+		"DET_TRIAL_ID":                 strconv.Itoa(s.TrialID),
+		"DET_TRIAL_RUN_ID":             strconv.Itoa(s.TrialRunID),
+		"DET_TRIAL_SEED":               strconv.FormatUint(uint64(s.TrialSeed), 10),
 		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
 		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_INITIAL_WORKLOAD":         jsonify(s.InitialWorkload),
+		"DET_LATEST_BATCH":             strconv.Itoa(s.LatestBatch),
 		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
-		"DET_WORKLOAD_MANAGER_TYPE":    string(s.WorkloadManagerType),
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
 	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{
-		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),
+		"trial_id": strconv.Itoa(s.TrialID),
 	}
 
 	res.UseFluentLogging = true
