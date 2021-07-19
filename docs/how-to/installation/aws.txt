@@ -300,19 +300,18 @@ provide the updated option while keeping the ``cluster-id`` the same.
 The cli would then find the existing cluster, take it down and spin up a
 new one with the updated options.
 
-2. If you want maximum control over the different Determined
-configuration files while minimizing the downtime, you'll want to SSH
-into the master using the private key from the keypair that was used to
-provision the cluster. Once you're successfully connected, you can
-locate and modify different configuration files under
-``/usr/local/determined/etc``. In order for your changes to take effect
-restart the master docker container:
+2. If you want more control over the master configuration while
+minimizing the downtime, you can into the master instance using the
+private key from the keypair that was used to provision the cluster.
+Once you're successfully connected, you can modify ``master.yaml`` under
+``/usr/local/determined/etc`` and restart the master docker container
+for your changes to take effect :
 
 .. code:: bash
 
    sudo sh -c 'docker stop determined-master && docker start determined-master'
 
-For example, if you wanted to add or modify resource pools you can edit
+For example, if you want to add or modify resource pools you can edit
 the master configuration file at
 ``/usr/local/determined/etc/master.yaml`` and add a new resource pool
 entry.
