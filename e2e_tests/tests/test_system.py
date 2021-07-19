@@ -63,7 +63,6 @@ def test_metric_gathering() -> None:
     full_trial_metrics = exp.trial_metrics(trials[0]["id"])
     for step in full_trial_metrics["steps"]:
         metrics = step["metrics"]
-        assert metrics["num_inputs"] == scheduling_unit
 
         actual = metrics["batch_metrics"]
         assert len(actual) == scheduling_unit
