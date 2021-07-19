@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"strconv"
 	"strings"
 	"time"
@@ -749,6 +750,14 @@ func (a *apiServer) trialActorFromID(trialID int) (actor.Address, error) {
 		return actor.Address{}, err
 	}
 	return actor.Addr("experiments", eID, rID), nil
+}
+
+func (a *apiServer) taskHandlerByID(id sproto.TaskID) (*actor.Ref, error) {
+	var handler *actor.Ref
+	if err := a.askAtDefaultSystem(a.m.rm.Address(), sproto.GetTaskHandler{ID: id}, &handler); err != nil {
+		return nil, err
+	}
+	return handler, nil
 }
 
 func (a *apiServer) experimentActorFromTrialID(trialID int) (actor.Address, error) {

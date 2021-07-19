@@ -58,6 +58,16 @@ func newAgentSummary(state *agentState) sproto.AgentSummary {
 	}
 }
 
+func getTaskHandler(
+	reqList *taskList,
+	id sproto.TaskID,
+) *actor.Ref {
+	if req, ok := reqList.GetTaskByID(id); ok {
+		return req.TaskActor
+	}
+	return nil
+}
+
 func getTaskSummary(
 	reqList *taskList,
 	id sproto.TaskID,

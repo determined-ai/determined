@@ -101,6 +101,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
 
+	case sproto.GetTaskHandler:
+		reschedule = false
+		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
+
 	case sproto.GetTaskSummary:
 		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, kubernetesScheduler); resp != nil {
 			ctx.Respond(*resp)

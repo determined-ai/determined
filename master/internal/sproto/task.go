@@ -25,6 +25,8 @@ type (
 	ResourcesReleased struct {
 		TaskActor *actor.Ref
 	}
+	// GetTaskHandler returns a ref to the handler for the specified task.
+	GetTaskHandler struct{ ID TaskID }
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.

@@ -63,6 +63,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
 		a.forwardToAllPools(ctx, msg)
 
+	case sproto.GetTaskHandler:
+		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(handler)
+		}
+
 	case sproto.GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
 			ctx.Respond(summary)
@@ -167,6 +174,17 @@ func (a *agentResourceManager) forwardToAllPools(
 	}
 	ctx.TellAll(msg, ctx.Children()...)
 	return nil
+}
+
+func (a *agentResourceManager) aggregateTaskHandler(
+	resps map[*actor.Ref]actor.Message,
+) (*actor.Ref, error) {
+	for _, resp := range resps {
+		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
+			return typed, nil
+		}
+	}
+	return nil, errors.New("task handler not found on any resource pool")
 }
 
 func (a *agentResourceManager) aggregateTaskSummary(

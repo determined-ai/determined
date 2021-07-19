@@ -241,6 +241,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
+	case sproto.GetTaskHandler:
+		reschedule = false
+		ctx.Respond(getTaskHandler(rp.taskList, msg.ID))
+
 	case sproto.GetTaskSummary:
 		reschedule = false
 		if resp := getTaskSummary(
