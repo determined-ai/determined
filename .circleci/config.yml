@@ -787,7 +787,8 @@ commands:
             'success' \
             <<parameters.test_results_path>> \
             ${CIRCLE_BUILD_NUM} \
-            ${DET_CI_ACCESS_KEY}
+            ${DET_CI_ACCESS_KEY} \
+            ${DET_CI_URL}
           when: on_success
       - run:
           name: Test run failed -> uploading results to Determined CI
