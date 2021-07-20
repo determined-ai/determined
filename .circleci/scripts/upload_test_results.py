@@ -4,16 +4,15 @@ import tempfile
 import requests
 
 
-def upload_results(status, directory, job_id, access_key) -> None:
+def upload_results(status, directory, job_id, access_key, url) -> None:
     with tempfile.TemporaryFile(suffix=".tar.gz") as temp_archive:
         with tarfile.open(fileobj=temp_archive, mode="w:gz") as tar_archive:
             tar_archive.add(directory, recursive=True)
 
-
         # Flush write data and reset pointer
         temp_archive.flush()
         temp_archive.seek(0)
-        response = requests.post("http://34.215.54.95/upload",
+        response = requests.post(url,
                                  headers={"x-api-key": access_key},
                                  files={"report": temp_archive},
                                  data={"status": status,

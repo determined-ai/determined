@@ -796,7 +796,8 @@ commands:
             'failed' \
             <<parameters.test_results_path>> \
             ${CIRCLE_BUILD_NUM} \
-            ${DET_CI_ACCESS_KEY}
+            ${DET_CI_ACCESS_KEY} \
+            ${DET_CI_URL}
           when: on_fail
 
   locate-cloudwatch-logs:
