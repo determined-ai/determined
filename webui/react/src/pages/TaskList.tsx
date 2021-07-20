@@ -581,13 +581,17 @@ const TaskList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
+
   return (
     <Page
       id="tasks"
       options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} /> }
       title="Tasks">
       <div className={css.base}>
-        <TableBatch selectedRowCount={selectedRowKeys.length}>
+        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
           <Button
             danger
             disabled={!hasKillable}

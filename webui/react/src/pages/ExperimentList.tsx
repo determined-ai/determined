@@ -672,12 +672,16 @@ const ExperimentList: React.FC = () => {
     return count;
   }, [ filters ]);
 
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
+
   return (
     <Page
       id="experiments"
       options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} />}
       title="Experiments">
-      <TableBatch selectedRowCount={selectedRowKeys.length}>
+      <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
         <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
         </Button>
