@@ -28,7 +28,8 @@ class ContextItem:
     @property
     def size(self) -> int:
         if self.content:
-            return len(self.content)
+            # The content is already base64-encoded, and we want the real length.
+            return len(self.content) // 4 * 3
         return 0
 
     def dict(self) -> Dict[str, Any]:

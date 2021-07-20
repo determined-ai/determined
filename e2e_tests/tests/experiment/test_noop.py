@@ -1,4 +1,6 @@
 import copy
+import os
+import shutil
 import tempfile
 import time
 from typing import Union
@@ -251,6 +253,17 @@ def test_startup_hook() -> None:
         conf.fixtures_path("no_op"),
         1,
     )
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_large_model_def_experiment() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        shutil.copy(conf.fixtures_path("no_op/model_def.py"), td)
+        # Write a 94MB file into the directory.
+        with open(os.path.join(td, "junk.txt"), "w") as f:
+            f.write("x" * 94 * 1024 * 1024)
+
+        exp.run_basic_test(conf.fixtures_path("no_op/single-one-short-step.yaml"), td, 1)
 
 
 def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None) -> None:
