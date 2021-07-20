@@ -33,7 +33,7 @@ team.
   * 90% of searchers are single searchers, so most experiments are most often
     a single Work Unit.
   * can be preemptable or not
-  * The generic thing we proposed instead of Distributed Batch inference would
+  * The generic thing we proposed instead of Distributed Batch Inference would
     be a single Work Unit, with access to non-training parts of the Generic API
 
 * A "submission":
@@ -45,18 +45,61 @@ team.
   * note that an Experiment and a Command are not peers when considered from
     the allocation lifetime perspective
 
-* The thing that was dreamed up during Distributed Batch Inference was kind of
-  like a trial (restartable, checkpointable, persisted in the database), so it
-  should also consist of one or more Allocation Lifetimes.
+## Decisions after discussion:
 
-## Assigning names to things, Draft 4:
+* **???**: Allocation lifetime
+* **Task**: Work Unit
+* **Job**: Submission
+
+## Other Related Concepts:
+
+* **Workflow**: (or "pipelines"?) A collection of Jobs (or sub-workflows) which
+  are executed in a user-specified order, or user-specified conditions.
+  * (This doesn't exist in the system yet.)
+  * (let's punt on "workflow" vs "pipeline")
+  * Workflows could be nested; i.e. there's not a higher grouping.
+  * Eventually, an Experiment could be a special case of a Workflow:
+    * "Start these Trial (Work Units) Now"
+    * "Run this GC (Work Unit) after all Trial Jobs are done"
+
+* **Interactive Job**: A Job which the user plans on interact with right now;
+  the human who asked for it is likely blocked until it starts, and the Job is
+  really only meaningful while the user is interacting with it.
+
+* **Project**: (RIP sidney) A user-facing collection of Jobs, checkpoints, and
+  user-specified metadata.
+  * Semantic grouping of results from work
+  * Not a grouping of work itself
+  * This doesn't exist in the system yet, but model registry is close.
+  * Multiple teams might share a cluster, but each team want to only interact
+    with the Jobs/Workflow/CHeckpoints/metadata relevant to them.
+  * Could have fancy RBAC properties.
+
+## Vocab Links:
+  * k8s jobs: https://kubernetes.io/docs/concepts/workloads/controllers/job/
+  * slurm jobs: (not clear) https://researchcomputing.princeton.edu/learn/glossary
+    * they have "array jobs" which are like experiments, sort of?
+  * sigopt runs: https://app.sigopt.com/docs/runs/overview
+
+--------------------------------------------------
+
+## Out-of-date notes
+
+### (out-of-date) Assigning names to things, Draft 4
 
 * **Run**: Allocation Lifetime
   * Pros:
     * better proper noun than try, retry, restart, start, attempt, etc
   * Cons:
     * kinda sounds like a "full start-to-finish"
-    * "runs" in sigopt/w&b/grid.ai is more like a "trial"
+    * "runs" in sigopt/w&b/grid.ai is more like a "Trial"
+  * Alternates:
+    * Attempt?
+      * implies "trying" without any connotation of "completion"
+      * implies the only reason to run multiple is because you had a failure
+      * maybe needs an extra word?
+    * Generation/Era?
+    * Leg/Rebirth/Life?
 
 * **Job**: Work Unit
   * Pros:
@@ -72,7 +115,7 @@ A user submits an Experiment (which is only known as an "experiment"), which
 consists of multiple Trials (Jobs), each of which might complete over several
 Runs.
 
-## Assigning names to things, Draft 3:
+### (out-of-date) Assigning names to things, Draft 3
 
 * **Run**: Allocation Lifetime
 * **Task**: Work Unit
@@ -86,49 +129,3 @@ A user submits an Experiment (a type of Job), which consists of multiple Trials
 
 * Cons:
   * "Jobs" and "Tasks" in the same vocabulary is less-than-ideal
-
-
-## Other Related Concepts:
-
-* **Workflow**: (or "pipelines"?) A collection of Jobs (or sub-workflows) which
-  are executed in a user-specified order, or user-specified conditions.
-  * (This doesn't exist in the system yet.)
-  * (let's punt on "workflow" vs "pipeline")
-  * Workflows could be nested; i.e. there's not a higher grouping.
-  * Eventually, an Experiment could be a special case of a Workflow:
-    * "Start these Trial Jobs Now"
-    * "Run this GC Job after all Trial Jobs are done"
-
-* **Interactive Job**: A Job which the user plans on interact with right now;
-  the human who asked for it is likely blocked until it starts, and the Job is
-  really only meaningful while the user is interacting with it.
-
-* **Project**: (RIP sidney) A user-facing collection of Jobs, checkpoints, and
-  user-specified metadata.
-  * Semantic grouping of results from work
-  * Not a grouping of work itself
-  * This doesn't exist in the system yet, but model registry is close.
-  * Multiple teams might share a cluster, but each team want to only interact
-    with the Jobs/Workflow/CHeckpoints/metadata relevant to them.
-  * Could have fancy RBAC properties.
-
-## Names not assigned here:
-
-* Real name for a "submission"?
-
-* "Tasks" is not defined in this nomenclature... what do we do about that?
-  * What do we do with the things currently called tasks?
-  * (that's a different thing for webui vs cli)
-
-* Better name for NCST?
-
-* "Service": A Job which runs indefinitely.
-  * currently would apply to the same jobs as "Interactive Jobs", but
-    "Interactive" seems more relevant to the user
-
-
-Vocab Links:
-    k8s jobs: https://kubernetes.io/docs/concepts/workloads/controllers/job/
-    slurm jobs: (not clear) https://researchcomputing.princeton.edu/learn/glossary
-        they have "array jobs" which are like experiments, sort of?
-    sigopt runs: https://app.sigopt.com/docs/runs/overview
