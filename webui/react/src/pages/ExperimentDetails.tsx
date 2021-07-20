@@ -170,15 +170,15 @@ const ExperimentDetails: React.FC = () => {
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      {isSingleTrial ?
-        (<ExperimentSingleTrialTabs
+      {isSingleTrial ? (
+        <ExperimentSingleTrialTabs
           continueTrialRef={continueTrialRef}
           experiment={experiment}
           trialId={firstTrialId}
         />
-        ) : (
-          <ExperimentMultiTrialTabs experiment={experiment} />
-        )}
+      ) : (
+        <ExperimentMultiTrialTabs experiment={experiment} />
+      )}
       <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}
