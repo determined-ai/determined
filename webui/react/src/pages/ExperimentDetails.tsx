@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import { ContinueTrialHandles } from 'components/ContinueTrial';
@@ -148,19 +148,6 @@ const ExperimentDetails: React.FC = () => {
     return () => stopPollingFirstTrialId();
   }, [ firstTrialId, isSingleTrial, stopPollingFirstTrialId ]);
 
-  const ExperimentTabs = useMemo(() => {
-    if (!experiment) return null;
-    if (isSingleTrial) {
-      return <ExperimentSingleTrialTabs
-        continueTrialRef={continueTrialRef}
-        experiment={experiment}
-        trialId={firstTrialId}
-      />;
-    } else if (isSingleTrial === false) {
-      return <ExperimentMultiTrialTabs experiment={experiment} />;
-    } else return null;
-  }, [ experiment, firstTrialId, isSingleTrial ]);
-
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   } else if (pageError) {
@@ -168,7 +155,7 @@ const ExperimentDetails: React.FC = () => {
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!experiment) {
+  } else if (!experiment || isSingleTrial === undefined) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
 
@@ -177,13 +164,21 @@ const ExperimentDetails: React.FC = () => {
       headerComponent={<ExperimentDetailsHeader
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
-        isSingleTrial={isSingleTrial || false}
+        isSingleTrial={isSingleTrial}
         showContinueTrial={showContinueTrial}
         showForkModal={showForkModal}
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
-      {ExperimentTabs}
+      {isSingleTrial ?
+        (<ExperimentSingleTrialTabs
+          continueTrialRef={continueTrialRef}
+          experiment={experiment}
+          trialId={firstTrialId}
+        />
+        ) : (
+          <ExperimentMultiTrialTabs experiment={experiment} />
+        )}
       <CreateExperimentModal
         config={forkModalConfig}
         error={forkModalError}
