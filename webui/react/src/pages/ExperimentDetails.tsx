@@ -37,7 +37,7 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
-  const [ isSingleTrial, setIsSingleTrial ] = useState(false);
+  const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
   const continueTrialRef = useRef<ContinueTrialHandles>(null);
 
   const id = parseInt(experimentId);
@@ -144,7 +144,7 @@ const ExperimentDetails: React.FC = () => {
   }, [ canceler ]);
 
   useEffect(() => {
-    if (!isSingleTrial || firstTrialId != null) return;
+    if (isSingleTrial === false || firstTrialId != null) return;
     return () => stopPollingFirstTrialId();
   }, [ firstTrialId, isSingleTrial, stopPollingFirstTrialId ]);
 
@@ -155,7 +155,7 @@ const ExperimentDetails: React.FC = () => {
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!experiment) {
+  } else if (!experiment || isSingleTrial === undefined) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
 
