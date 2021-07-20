@@ -24,7 +24,7 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 	golang.org/x/tools v0.1.0
 	gotest.tools v2.2.0+incompatible
 )
