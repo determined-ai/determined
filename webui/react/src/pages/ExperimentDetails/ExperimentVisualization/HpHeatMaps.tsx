@@ -35,10 +35,12 @@ interface Props {
   selectedView: ViewType;
 }
 
+type HpValue = Record<string, (number | string)[]>;
+
 interface HpData {
   hpLogScales: Record<string, boolean>;
   hpMetrics: Record<string, number[]>;
-  hpValues: Record<string, (number | string)[]>;
+  hpValues: HpValue;
   metricRange: Range<number>;
   trialIds: number[];
 }
@@ -146,7 +148,7 @@ const HpHeatMaps: React.FC<Props> = ({
 
         const hpLogScaleMap: Record<string, boolean> = {};
         const hpMetrics: Record<string, number[]> = {};
-        const hpValues: Record<string, (number | string)[]> = {};
+        const hpValues: HpValue = {};
         const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
 
         event.trials.forEach(trial => {
