@@ -27,8 +27,9 @@ def main() -> None:
     parser.add_argument("filepath", help="Test results filepath")
     parser.add_argument("job_id", help="CircleCI job id")
     parser.add_argument("access_key", help="Determined CI API key")
+    parser.add_argument("url", help="Determined CI server URL")
     args = parser.parse_args()
-    upload_results(args.status, args.filepath, args.job_id, args.access_key)
+    upload_results(args.status, args.filepath, args.job_id, args.access_key, args.url)
 
 
 if __name__ == "__main__":
