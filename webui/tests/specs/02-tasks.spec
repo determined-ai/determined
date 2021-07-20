@@ -26,6 +26,11 @@ Specification to test the task list page.
   |-----------|-----|
   |Notebook   |2    |
   |Tensorboard|2    |
+
+* Filter tasks by type
+
+  |aria-label |count|
+  |-----------|-----|
   |Shell      |0    |
   |Command    |0    |
 
