@@ -14,10 +14,11 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, MetricName, MetricType, metricTypeParamMap, Range,
+  ExperimentBase, HyperparameterType, MetricName, MetricType,
+  metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { getColorScale } from 'utils/chart';
-import { isObject } from 'utils/data';
+import { flattenObject, isBoolean, isObject } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -34,10 +35,12 @@ interface Props {
   selectedView: ViewType;
 }
 
+type HpValue = Record<string, (number | string)[]>;
+
 interface HpData {
   hpLogScales: Record<string, boolean>;
   hpMetrics: Record<string, number[]>;
-  hpValues: Record<string, number[]>;
+  hpValues: HpValue;
   metricRange: Range<number>;
   trialIds: number[];
 }
@@ -126,7 +129,7 @@ const HpHeatMaps: React.FC<Props> = ({
     const canceler = new AbortController();
     const trialIds: number[] = [];
     const hpMetricMap: Record<number, Record<string, number>> = {};
-    const hpValueMap: Record<number, Record<string, number>> = {};
+    const hpValueMap: Record<number, Record<string, Primitive>> = {};
 
     setHasLoaded(false);
 
@@ -145,14 +148,15 @@ const HpHeatMaps: React.FC<Props> = ({
 
         const hpLogScaleMap: Record<string, boolean> = {};
         const hpMetrics: Record<string, number[]> = {};
-        const hpValues: Record<string, number[]> = {};
+        const hpValues: HpValue = {};
         const metricRange: Range<number> = [ Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY ];
 
         event.trials.forEach(trial => {
           if (!isObject(trial.hparams)) return;
 
           const trialId = trial.trialId;
-          const trialHParams = Object.keys(trial.hparams)
+          const flatHParams = flattenObject(trial.hparams);
+          const trialHParams = Object.keys(flatHParams)
             .filter(hParam => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));
 
@@ -160,7 +164,7 @@ const HpHeatMaps: React.FC<Props> = ({
           hpMetricMap[trialId] = hpMetricMap[trialId] || {};
           hpValueMap[trialId] = hpValueMap[trialId] || {};
           trialHParams.forEach(hParam1 => {
-            hpValueMap[trialId][hParam1] = trial.hparams[hParam1];
+            hpValueMap[trialId][hParam1] = flatHParams[hParam1];
             trialHParams.forEach(hParam2 => {
               const key = generateHpKey(hParam1, hParam2);
               hpMetricMap[trialId][key] = trial.metric;
@@ -172,10 +176,15 @@ const HpHeatMaps: React.FC<Props> = ({
         });
 
         fullHParams.forEach(hParam1 => {
-          const hp = (experiment.config.hyperparameters || {})[hParam1];
-          if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam1] = true;
+          const hp = (experiment.hyperparameters || {})[hParam1];
+          if (hp.type === HyperparameterType.Log) {
+            hpLogScaleMap[hParam1] = true;
+          }
 
-          hpValues[hParam1] = trialIds.map(trialId => hpValueMap[trialId][hParam1]);
+          hpValues[hParam1] = trialIds.map(trialId => {
+            const hpValue = hpValueMap[trialId][hParam1];
+            return isBoolean(hpValue) ? hpValue.toString() : hpValue;
+          });
           fullHParams.forEach(hParam2 => {
             const key = generateHpKey(hParam1, hParam2);
             hpMetrics[key] = trialIds.map(trialId => hpMetricMap[trialId][key]);

@@ -14,8 +14,8 @@ import {
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParamType, ExperimentSearcherName, ExperimentVisualizationType,
-  HpImportanceMap, HpImportanceMetricMap, MetricName, MetricType, RunState,
+  ExperimentBase, ExperimentSearcherName, ExperimentVisualizationType,
+  HpImportanceMap, HpImportanceMetricMap, HyperparameterType, MetricName, MetricType, RunState,
 } from 'types';
 import { hasObjectKeys } from 'utils/data';
 import { alphanumericSorter, hpImportanceSorter } from 'utils/sort';
@@ -81,10 +81,9 @@ const ExperimentVisualization: React.FC<Props> = ({
     type: MetricType.Validation,
   });
   const fullHParams = useRef<string[]>(
-    (Object.keys(experiment.config.hyperparameters || {}).filter(key => {
+    (Object.keys(experiment.hyperparameters || {}).filter(key => {
       // Constant hyperparameters are not useful for visualizations.
-      const hp = experiment.config.hyperparameters[key];
-      return hp.type !== ExperimentHyperParamType.Constant;
+      return experiment.hyperparameters[key].type !== HyperparameterType.Constant;
     })),
   );
   const defaultFilters: VisualizationFilters = {

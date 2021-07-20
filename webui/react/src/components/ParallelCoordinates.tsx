@@ -3,7 +3,7 @@ import { throttle } from 'throttle-debounce';
 
 import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import Plotly, { Layout, PlotData, PlotlyHTMLElement, PlotRestyleEvent } from 'Plotly';
-import { ExperimentHyperParamType, Primitive, Range } from 'types';
+import { HyperparameterType, Primitive, Range } from 'types';
 import { ColorScale } from 'utils/color';
 import { clone, isBoolean, isNumber } from 'utils/data';
 import { generateAlphaNumeric, truncate } from 'utils/string';
@@ -38,12 +38,12 @@ export interface Constraint {
   values?: Primitive[];
 }
 
-export const dimensionTypeMap: Record<ExperimentHyperParamType, DimensionType> = {
-  [ExperimentHyperParamType.Categorical]: DimensionType.Categorical,
-  [ExperimentHyperParamType.Constant]: DimensionType.Scalar,
-  [ExperimentHyperParamType.Double]: DimensionType.Scalar,
-  [ExperimentHyperParamType.Int]: DimensionType.Scalar,
-  [ExperimentHyperParamType.Log]: DimensionType.Scalar,
+export const dimensionTypeMap: Record<HyperparameterType, DimensionType> = {
+  [HyperparameterType.Categorical]: DimensionType.Categorical,
+  [HyperparameterType.Constant]: DimensionType.Scalar,
+  [HyperparameterType.Double]: DimensionType.Scalar,
+  [HyperparameterType.Int]: DimensionType.Scalar,
+  [HyperparameterType.Log]: DimensionType.Scalar,
 };
 
 const MAX_LABEL_LENGTH = 20;

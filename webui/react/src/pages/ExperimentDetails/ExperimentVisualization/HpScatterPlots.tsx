@@ -11,7 +11,10 @@ import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
-import { ExperimentBase, ExperimentHyperParamType, MetricName, metricTypeParamMap } from 'types';
+import {
+  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Primitive,
+} from 'types';
+import { flattenObject, isBoolean } from 'utils/data';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
 
@@ -29,7 +32,7 @@ interface Props {
 
 interface HpMetricData {
   hpLogScales: Record<string, boolean>;
-  hpValues: Record<string, number[]>;
+  hpValues: Record<string, (number | string)[]>;
   metricValues: Record<string, number[]>;
   trialIds: number[];
 }
@@ -80,7 +83,7 @@ const ScatterPlots: React.FC<Props> = ({
   useEffect(() => {
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpTrialMap: Record<string, Record<number, { hp: number, metric: number }>> = {};
+    const hpTrialMap: Record<string, Record<number, { hp: Primitive, metric: number }>> = {};
 
     setHasLoaded(false);
 
@@ -98,33 +101,34 @@ const ScatterPlots: React.FC<Props> = ({
         if (!event || !event.trials || !Array.isArray(event.trials)) return;
 
         const hpMetricMap: Record<string, number[]> = {};
-        const hpValueMap: Record<string, number[]> = {};
+        const hpValueMap: Record<string, (number | string)[]> = {};
         const hpLogScaleMap: Record<string, boolean> = {};
 
         event.trials.forEach(trial => {
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
+          const flatHParams = flattenObject(trial.hparams);
           fullHParams.forEach(hParam => {
             hpTrialMap[hParam] = hpTrialMap[hParam] || {};
             hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
             hpTrialMap[hParam][trialId] = {
-              hp: trial.hparams[hParam],
+              hp: flatHParams[hParam],
               metric: trial.metric,
             };
           });
         });
 
         fullHParams.forEach(hParam => {
-          const hp = (experiment.config.hyperparameters || {})[hParam];
-          if (hp.type === ExperimentHyperParamType.Log) hpLogScaleMap[hParam] = true;
+          const hp = (experiment.hyperparameters || {})[hParam];
+          if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam] = true;
 
           hpMetricMap[hParam] = [];
           hpValueMap[hParam] = [];
           trialIds.forEach(trialId => {
             const map = (hpTrialMap[hParam] || {})[trialId] || {};
             hpMetricMap[hParam].push(map.metric);
-            hpValueMap[hParam].push(map.hp);
+            hpValueMap[hParam].push(isBoolean(map.hp) ? map.hp.toString() : map.hp);
           });
         });
 

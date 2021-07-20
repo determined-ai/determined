@@ -7,6 +7,7 @@ interface WithPagination {
 }
 
 export type RecordKey = string | number | symbol;
+export type UnknownRecord = Record<RecordKey, unknown>;
 export type Primitive = boolean | number | string;
 export type Point = { x: number; y: number };
 export type Range<T = Primitive> = [ T, T ];
@@ -204,7 +205,7 @@ export type HpImportance = Record<string, number>;
 export type HpImportanceMetricMap = Record<string, HpImportance>;
 export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
 
-export enum ExperimentHyperParamType {
+export enum HyperparameterType {
   Categorical = 'categorical',
   Constant = 'const',
   Double = 'double',
@@ -212,17 +213,35 @@ export enum ExperimentHyperParamType {
   Log = 'log',
 }
 
-export interface ExperimentHyperParam {
+export interface HyperparameterBase {
   base?: number;
   count?: number;
   maxval?: number;
   minval?: number;
-  type: ExperimentHyperParamType;
-  val?: Primitive;
+  type?: HyperparameterType;
+  val?: Primitive | Hyperparameters;
   vals?: Primitive[];
 }
 
-export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
+export interface Hyperparameter extends Omit<HyperparameterBase, 'type' | 'val'> {
+  type: HyperparameterType;
+  val?: Primitive;
+}
+
+export type Hyperparameters = {
+  [keys: string]: Hyperparameters | HyperparameterBase;
+};
+
+/*
+ * Flattened type for nested hyperparameters for easier WebUI usage and consumption.
+ * The nested hyperparameters config currently come through as an implicit nested
+ * dictionary and the way to distinguish a categorical type from a nested hp is the
+ * detected of the property type. Where type is undefined for an implicit dictionary,
+ * otherwise it is a terminal property where it has hp config info.
+ */
+export type HyperparametersFlattened = {
+  [keys: string]: Hyperparameter;
+};
 
 export enum ExperimentSearcherName {
   AdaptiveAdvanced = 'adaptive',
@@ -239,7 +258,7 @@ export interface ExperimentConfig {
   checkpointStorage?: CheckpointStorage;
   dataLayer?: DataLayer;
   description?: string;
-  hyperparameters: ExperimentHyperParams;
+  hyperparameters: Hyperparameters;
   labels?: string[];
   name: string;
   profiling?: {
@@ -362,14 +381,14 @@ export interface TrialPagination extends WithPagination {
   trials: TrialDetails[];
 }
 
-type HpValue = number | string | boolean | RawJson
-export type TrialHyperParameters = Record<string, HpValue>
+type HpValue = Primitive | RawJson
+export type TrialHyperparameters = Record<string, HpValue>
 
 export interface TrialItem extends StartEndTimes {
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
   experimentId: number;
-  hparams: TrialHyperParameters;
+  hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
@@ -398,9 +417,10 @@ export interface ExperimentItem {
 export interface ExperimentBase {
   archived: boolean;
   config: ExperimentConfig;
-  configRaw: RawJson; // Readonly unparsed config object.
+  configRaw: RawJson;                                 // Readonly unparsed config object.
   description?: string;
   endTime?: string;
+  hyperparameters: HyperparametersFlattened;    // nested hp keys are flattened, eg) foo.bar
   id: number;
   name: string;
   progress?: number;

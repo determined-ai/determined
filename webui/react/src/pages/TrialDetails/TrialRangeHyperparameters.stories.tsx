@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import StoreDecorator from 'storybook/StoreDecorator';
-import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentHyperParamType,
-  ExperimentSearcherName,
+import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+  HyperparameterType,
   RunState, TrialDetails } from 'types';
 
 import TrialRangeHyperparameters from './TrialRangeHyperparameters';
@@ -32,22 +32,22 @@ const TrialRangeHyperparametersContainer = () => {
         categorical: {
           maxval: 64,
           minval: 8,
-          type: ExperimentHyperParamType.Categorical,
+          type: HyperparameterType.Categorical,
           vals: [ 8, 16, 32, 64 ],
         },
         constant: {
-          type: ExperimentHyperParamType.Constant,
+          type: HyperparameterType.Constant,
           val: 64,
         },
         double: {
           maxval: 0.8,
           minval: 0.2,
-          type: ExperimentHyperParamType.Double,
+          type: HyperparameterType.Double,
         },
         log: {
           maxval: 1,
           minval: 0.0001,
-          type: ExperimentHyperParamType.Log,
+          type: HyperparameterType.Log,
         },
       },
       labels: [],
@@ -181,6 +181,28 @@ const TrialRangeHyperparametersContainer = () => {
         stop_once: false,
       },
     },
+    hyperparameters: {
+      categorical: {
+        maxval: 64,
+        minval: 8,
+        type: HyperparameterType.Categorical,
+        vals: [ 8, 16, 32, 64 ],
+      },
+      constant: {
+        type: HyperparameterType.Constant,
+        val: 64,
+      },
+      double: {
+        maxval: 0.8,
+        minval: 0.2,
+        type: HyperparameterType.Double,
+      },
+      log: {
+        maxval: 1,
+        minval: 0.0001,
+        type: HyperparameterType.Log,
+      },
+    },
     id: 1,
     name: 'Sample Experiment',
     resourcePool: 'default',
@@ -191,7 +213,7 @@ const TrialRangeHyperparametersContainer = () => {
   const sampleTrial: TrialDetails = {
     endTime: '2021-06-09T15:35:27.464642Z',
     experimentId: 1,
-    hparams: {
+    hyperparameters: {
       categorical: 16,
       constant: 64,
       double: 0.675007115766233,

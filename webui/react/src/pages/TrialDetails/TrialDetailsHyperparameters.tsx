@@ -34,14 +34,14 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
   ], []);
 
   const dataSource: HyperParameter[] = useMemo(() => {
-    return Object.entries(trial.hparams).map(([ hyperparameter, value ]) => {
+    return Object.entries(trial.hyperparameters).map(([ hyperparameter, value ]) => {
       return {
         hyperparameter,
         key: hyperparameter,
         value: isObject(value) ? JSON.stringify(value, null, 2) : String(value),
       };
     });
-  }, [ trial.hparams ]);
+  }, [ trial.hyperparameters ]);
 
   return (
     <ResponsiveTable
