@@ -13,8 +13,6 @@ Specification to stop the running experiments to setup a controlled environment.
 
 ## Modify experiments
 
-* Toggle all table row selection
-* "Pause" all table rows
 * Sort table by column "ID"
 * "Kill" experiment row "1"
 * "Kill" experiment row "2"
