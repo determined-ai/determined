@@ -318,103 +318,33 @@ set ``defaultScheduler`` to ``preemption``.
 
    defaultScheduler: preemption
 
-Tainting Nodes
-==============
+.. _taints-on-kubernetes:
+
+Node Taints
+===========
+
 Tainting nodes is optional, but users may want to taint nodes to
-restrict which nodes a pod may be scheduled onto. A taint consists of a taint type, tag, and effect.
+restrict which nodes a pod may be scheduled onto. A taint consists of a
+taint type, tag, and effect.
 
-When using a managed kubernetes cluster (e.g. a GKE, AKS, or EKS cluster), it is possible to specify
-taints at cluster or nodepool creation using the specified CLIs. To add taints to an existing resource,
-it is necessary to use kubectl. Tolerations can be added to Pods by including the `tolerations` field
-in the Pod specification.
+When using a managed kubernetes cluster (e.g. a :ref:`GKE
+<setup-gke-cluster>`, :ref:`AKS <setup-aks-cluster>`, or :ref:`EKS
+<setup-eks-cluster>` cluster), it is possible to specify taints at
+cluster or nodepool creation using the specified CLIs. Please refer to
+the set up pages for each managed cluster service for instructions on
+how to do so. To add taints to an existing resource, it is necessary to
+use ``kubectl``. Tolerations can be added to Pods by including the
+``tolerations`` field in the Pod specification.
 
-Tainting with AKS or GKE
-------------------------
-To create a nodepool with a taint in GKE or AKS, use the `--node-taints` flag to specify the type, tag, and
-effect. GKE also allows taints to be applied to clusters. Tolerations can be applied via the kubectl CLI.
-
-AKS
-^^^
-.. code::
-
-   az aks nodepool add \
-      --resource-group ${AKS_RESOURCE_GROUP} \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --name ${AKS_NODE_POOL_NAME} \
-      --node-count 1 \
-      --node-taints ${TAINT_TYPE}=${TAINT_TAG}:{TAINT_EFFECT} \
-      --no-wait
-
-      az aks nodepool add \
-      --resource-group ${AKS_RESOURCE_GROUP} \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --name ${AKS_NODE_POOL_NAME} \
-      --node-count 1 \
-      --node-taints sku=gpu:NoSchedule \
-      --no-wait
-
-GKE
-^^^
-.. code::
-
-   gcloud container clusters create ${GKE_CLUSTER_NAME} \
-      --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
-
-   gcloud container clusters create ${GKE_CLUSTER_NAME} \
-      --node-taints dedicated=experimental:PreferNoSchedule
-   
-   gcloud container node-pools create ${GKE_NODE_POOL_NAME} \
-      --cluster ${GKE_CLUSTER_NAME} \
-      --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
-   
-   gcloud container node-pools create ${GKE_NODE_POOL_NAME} \
-      --cluster ${GKE_CLUSTER_NAME} \
-      --node-taints special=gpu:NoExecute
-
-Tainting with EKS
------------------
-To taint nodes, users
-will need to add a taint type and a tag to the node group specified in
-the cluster config from :ref:`cluster-creation`. An example of the
-modifications is shown for a p2.8xlarge node group:
-
-.. code:: yaml
-
-   - name: p2-8xlarge-us-west-2b
-     ...
-     taints:
-       p2.8xlarge-us-west-2b: "true:NoSchedule"
-     ...
-     tags:
-       ...
-       k8s.io/cluster-autoscaler/node-template/taint/p2.8xlarge-us-west-2b: "true:NoSchedule"
-
-Furthermore, tainting requires changes to be made to the GPU enabling
-DaemonSet and more additions to the experiment config. First, to change
-the DaemonSet, save a copy of the `official version
-<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_
-and make the following additions to its tolerations:
-
-.. code:: yaml
-
-   spec:
-     tolerations:
-     ...
-     - key: p2.8xlarge-us-west-2b
-       operator: Exists
-       effect: NoSchedule
-
-To modify the experiment config to run on tainted nodes, refer to the
-:ref:`changes-to-experiment-config` section.
-
-Taints and Tolerations with kubectl
------------------------------------
+Taints and Tolerations with ``kubectl``
+---------------------------------------
 
 Taints
 ^^^^^^
-To taint a node with kubectl, use `kubectl taint nodes`.
 
-.. code::
+To taint a node with kubectl, use ``kubectl taint nodes``.
+
+.. code:: bash
 
    kubectl taint nodes ${NODE_NAME} ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
@@ -422,7 +352,8 @@ To taint a node with kubectl, use `kubectl taint nodes`.
 
 Tolerations
 ^^^^^^^^^^^
-To specify a toleration, use the `toleration` field in the PodSpec.
+
+To specify a toleration, use the ``toleration`` field in the PodSpec.
 
 .. code:: YAML
 
@@ -431,7 +362,7 @@ To specify a toleration, use the `toleration` field in the PodSpec.
          operator: "Equal"
          value: "${TAINT_TAG}"
          effect: "${TAINT_EFFECT}"
-   
+
    tolerations:
       - key: "accelerator"
          operator: "Equal"

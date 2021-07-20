@@ -331,6 +331,57 @@ modifying the Helm chart to include S3, no keys or endpoint urls are
 needed. Additionally, if running on tainted nodes, be sure to add pod
 tolerations to the experiment spec to ensure they will get scheduled.
 
+#########################
+ Managing an EKS Cluster
+#########################
+
+*************
+ Node Taints
+*************
+
+For general instructions on adding taints and tolerations to nodes,
+please see the :ref:`Taints and Tolerations <taints-on-kubernetes>`
+section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
+There, you can find an explanation of taints and tolerations, as well as
+instructions for using ``kubectl`` to add them to existing clusters.
+
+It is important to note that if you use EKS to add taints to nodes, you
+must also add tolerations using ``kubectl``; otherwise, Kubernetes will
+be unable to schedule pods on the tainted node.
+
+To taint nodes, users will need to add a taint type and a tag to the
+node group specified in the cluster config from :ref:`cluster-creation`.
+An example of the modifications is shown for a p2.8xlarge node group:
+
+.. code:: yaml
+
+   - name: p2-8xlarge-us-west-2b
+     ...
+     taints:
+       p2.8xlarge-us-west-2b: "true:NoSchedule"
+     ...
+     tags:
+       ...
+       k8s.io/cluster-autoscaler/node-template/taint/p2.8xlarge-us-west-2b: "true:NoSchedule"
+
+Furthermore, tainting requires changes to be made to the GPU enabling
+DaemonSet and more additions to the experiment config. First, to change
+the DaemonSet, save a copy of the `official version
+<https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml>`_
+and make the following additions to its tolerations:
+
+.. code:: yaml
+
+   spec:
+     tolerations:
+     ...
+     - key: p2.8xlarge-us-west-2b
+       operator: Exists
+       effect: NoSchedule
+
+To modify the experiment config to run on tainted nodes, refer to the
+:ref:`changes-to-experiment-config` section.
+
 ************
  Next Steps
 ************
