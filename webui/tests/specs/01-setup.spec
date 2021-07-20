@@ -27,7 +27,3 @@ Specification to stop the running experiments to setup a controlled environment.
 
 * Launch cpu-only notebook
 * Launch notebook
-
-## Sign out
-
-* Sign out
