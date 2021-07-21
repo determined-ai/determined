@@ -109,6 +109,14 @@ def cancel_experiment(experiment_id: int) -> None:
     wait_for_experiment_state(experiment_id, "CANCELED")
 
 
+def cancel_experiment_v1(experiment_id: int) -> None:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    r = api.post(conf.make_master_url(), "/api/v1/experiments/{}/cancel".format(experiment_id))
+    r.raise_for_status()
+    wait_for_experiment_state(experiment_id, "CANCELED")
+
+
 def wait_for_experiment_state(
     experiment_id: int,
     target_state: str,
@@ -173,6 +181,17 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
     return False
 
 
+def experiment_has_completed_workload(experiment_id: int) -> bool:
+    certs.cli_cert = certs.default_load(conf.make_master_url())
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    trials = experiment_trials(experiment_id)
+
+    if not any(trials):
+        return False
+
+    return any(any(s["state"] == "COMPLETED" for s in t["steps"]) for t in trials)
+
+
 def experiment_json(experiment_id: int) -> Dict[str, Any]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
@@ -202,6 +221,17 @@ def num_experiments() -> int:
 
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
     cancel_experiment(experiment_id)
+
+    trials = experiment_trials(experiment_id)
+    if should_have_trial or len(trials) > 0:
+        assert len(trials) == 1
+
+        trial = trials[0]
+        assert trial["state"] == "CANCELED"
+
+
+def cancel_single_v1(experiment_id: int, should_have_trial: bool = False) -> None:
+    cancel_experiment_v1(experiment_id)
 
     trials = experiment_trials(experiment_id)
     if should_have_trial or len(trials) > 0:
@@ -294,6 +324,19 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     assert zeroth_step["id"] == 0
     assert zeroth_step["validation"] is not None
     assert zeroth_step["validation"]["state"] == "COMPLETED"
+
+
+def assert_performed_final_checkpoint(exp_id: int) -> None:
+    trials = experiment_trials(exp_id)
+
+    assert len(trials) > 0
+    steps = trials[0]["steps"]
+
+    assert len(steps) > 0
+    last_step = steps[-1]
+
+    assert last_step["checkpoint"] is not None
+    assert last_step["checkpoint"]["state"] == "COMPLETED"
 
 
 def run_describe_cli_tests(experiment_id: int) -> None:

@@ -188,7 +188,7 @@ def test_cancel_one_experiment() -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_cancel_one_active_experiment() -> None:
+def test_cancel_one_active_experiment_unready() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"),
         conf.fixtures_path("no_op"),
@@ -201,7 +201,24 @@ def test_cancel_one_active_experiment() -> None:
     else:
         raise AssertionError("no workload active after 15 seconds")
 
-    exp.cancel_single(experiment_id, should_have_trial=True)
+    exp.cancel_single_v1(experiment_id, should_have_trial=True)
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.timeout(3 * 60)  # type: ignore
+def test_cancel_one_active_experiment_ready() -> None:
+    experiment_id = exp.create_experiment(
+        conf.tutorials_path("mnist_pytorch/const.yaml"),
+        conf.tutorials_path("mnist_pytorch"),
+    )
+
+    while 1:
+        if exp.experiment_has_completed_workload(experiment_id):
+            break
+        time.sleep(1)
+
+    exp.cancel_single_v1(experiment_id, should_have_trial=True)
+    exp.assert_performed_final_checkpoint(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
