@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 
@@ -11,7 +13,7 @@ import (
 
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
-	ID             sproto.TaskID             `json:"id"`
+	ID             model.AllocationID        `json:"id"`
 	Name           string                    `json:"name"`
 	RegisteredTime time.Time                 `json:"registered_time"`
 	ResourcePool   string                    `json:"resource_pool"`
@@ -30,12 +32,12 @@ func newTaskSummary(
 	// Summary returns a new immutable view of the task state.
 	containerSummaries := make([]sproto.ContainerSummary, 0)
 	if allocated != nil {
-		for _, c := range allocated.Allocations {
+		for _, c := range allocated.Reservations {
 			containerSummaries = append(containerSummaries, c.Summary())
 		}
 	}
 	summary := TaskSummary{
-		ID:             request.ID,
+		ID:             request.AllocationID,
 		Name:           request.Name,
 		RegisteredTime: request.TaskActor.RegisteredTime(),
 		ResourcePool:   request.ResourcePool,
@@ -60,7 +62,7 @@ func newAgentSummary(state *agentState) sproto.AgentSummary {
 
 func getTaskHandler(
 	reqList *taskList,
-	id sproto.TaskID,
+	id model.AllocationID,
 ) *actor.Ref {
 	if req, ok := reqList.GetTaskByID(id); ok {
 		return req.TaskActor
@@ -70,7 +72,7 @@ func getTaskHandler(
 
 func getTaskSummary(
 	reqList *taskList,
-	id sproto.TaskID,
+	id model.AllocationID,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
 ) *TaskSummary {
@@ -85,11 +87,12 @@ func getTaskSummaries(
 	reqList *taskList,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
-) map[sproto.TaskID]TaskSummary {
-	ret := make(map[sproto.TaskID]TaskSummary)
+) map[model.AllocationID]TaskSummary {
+	ret := make(map[model.AllocationID]TaskSummary)
 	for it := reqList.iterator(); it.next(); {
 		req := it.value()
-		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)
+		ret[req.AllocationID] = newTaskSummary(
+			req, reqList.GetAllocations(req.TaskActor), groups, schedulerType)
 	}
 	return ret
 }

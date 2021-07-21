@@ -1,3 +1,9 @@
+TRUNCATE TABLE public.allocation_sessions;
+ALTER TABLE public.allocation_sessions DROP CONSTRAINT allocation_sessions_allocation_id_uniq;
+ALTER TABLE public.allocation_sessions ALTER COLUMN allocation_id TYPE text USING allocation_id::uuid;
+ALTER TABLE public.allocation_sessions RENAME COLUMN allocation_id TO task_id;
+ALTER TABLE public.allocation_sessions RENAME TO task_sessions;
+
 ALTER TYPE public.experiment_state RENAME TO _experiment_state;
 CREATE TYPE public.experiment_state AS ENUM (
     'ACTIVE',
@@ -20,7 +26,9 @@ ALTER TABLE public.trials
 
 DROP TABLE public.tasks;
 
-DROP TYPE public.job_type;
+DROP TABLE public.allocations;
+
+DROP TYPE public.task_type;
 
 CREATE TYPE public.run_type AS ENUM (
     'TRIAL'

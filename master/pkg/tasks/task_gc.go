@@ -30,7 +30,7 @@ type GCCkptSpec struct {
 func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 	res := g.Base
 
-	res.TaskToken = taskToken
+	res.AllocationSessionToken = taskToken
 
 	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(

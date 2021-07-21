@@ -40,6 +40,7 @@ import (
 //  - keeping the trial table of the database up-to-date.
 type trial struct {
 	id           int
+	taskID       model.TaskID
 	idSet        bool
 	experimentID int
 
@@ -69,14 +70,12 @@ type trial struct {
 	// of stopping the trial. This is helpful to guarantee the condition to reschedule
 	// a task is mutually exclusive with the trial closing.
 	stopped bool
-	// finalState records the termination state of a closing trial.
-	finalState model.State
 
 	// The following fields tracks the interaction with the resource providers.
 	// The existence of task signifies the trial has requested to be allocated.
-	task *sproto.AllocateRequest
+	req *sproto.AllocateRequest
 	// The existence of allocations signifies the trial has been allocated.
-	allocations map[cproto.ID]sproto.Allocation
+	allocations map[cproto.ID]sproto.Reservation
 	// The following fields tracks containers and their states.
 	containers           map[cproto.ID]cproto.Container
 	terminatedFirst      *cproto.ID
@@ -96,6 +95,7 @@ const killCooldown = 30 * time.Second
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
+	taskID model.TaskID,
 	experimentID int,
 	initialState model.State,
 	searcher TrialSearcherState,
@@ -107,6 +107,8 @@ func newTrial(
 	modelDefinition archive.Archive,
 ) *trial {
 	return &trial{
+		taskID: taskID,
+
 		experimentID: experimentID,
 		targetState:  initialState,
 		searcher:     searcher,
@@ -198,7 +200,7 @@ func (t *trial) processTask(ctx *actor.Context) error {
 func (t *trial) processRendezvous(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case watchRendezvousInfo:
-		if w, err := t.rendezvous.watch(msg.taskID, msg.id); err != nil {
+		if w, err := t.rendezvous.watch(msg.allocationID, msg.containerID); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(w)
@@ -218,7 +220,7 @@ func (t *trial) processRendezvous(ctx *actor.Context) error {
 func (t *trial) processPreemption(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case watchPreemption:
-		if w, err := t.preemption.watch(msg.taskID, msg.id); err != nil {
+		if w, err := t.preemption.watch(msg.allocationID, msg.id); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(w)
@@ -226,12 +228,12 @@ func (t *trial) processPreemption(ctx *actor.Context) error {
 	case unwatchPreemption:
 		t.preemption.unwatch(msg.id)
 	case preemptionTimeout:
-		if err := t.preemption.checkTimeout(msg.taskID); err != nil {
+		if err := t.preemption.checkTimeout(msg.allocationID); err != nil {
 			ctx.Log().WithError(err).Info("forcibly terminating trial")
 			return t.terminate(ctx, kill)
 		}
 	case ackPreemption:
-		if err := t.preemption.acknowledge(msg.taskID); err != nil {
+		if err := t.preemption.acknowledge(msg.allocationID); err != nil {
 			if ctx.ExpectingResponse() {
 				ctx.Respond(err)
 			}
@@ -262,7 +264,7 @@ func (t *trial) processContainerMessage(
 }
 
 func (t *trial) maybeAllocate(ctx *actor.Context) error {
-	if !(t.task == nil &&
+	if !(t.req == nil &&
 		!t.searcher.Complete &&
 		t.targetState == model.ActiveState &&
 		!t.stopped) {
@@ -276,8 +278,8 @@ func (t *trial) maybeAllocate(ctx *actor.Context) error {
 		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
 	}
 
-	t.task = &sproto.AllocateRequest{
-		ID:             sproto.NewTaskID(),
+	t.req = &sproto.AllocateRequest{
+		AllocationID:   model.NewAllocationID(fmt.Sprintf("%s-%d", t.taskID, t.runID)),
 		Name:           name,
 		Group:          ctx.Self().Parent(),
 		SlotsNeeded:    t.config.Resources().SlotsPerTrial(),
@@ -289,7 +291,7 @@ func (t *trial) maybeAllocate(ctx *actor.Context) error {
 		},
 		TaskActor: ctx.Self(),
 	}
-	if err := ctx.Ask(t.rm, *t.task).Error(); err != nil {
+	if err := ctx.Ask(t.rm, *t.req).Error(); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
 	return nil
@@ -311,14 +313,10 @@ func (t *trial) close() error {
 	}
 
 	if !t.stopped {
-		t.finalState = model.ErrorState
+		t.targetState = model.ErrorState
 	}
 
-	if err := t.db.EndTasks(model.JobTypeTrial, t.id); err != nil {
-		return errors.Wrap(err, "ensuring all trial tasks final on exit")
-	}
-
-	if err := t.db.UpdateTrial(t.id, t.finalState); err != nil {
+	if err := t.db.UpdateTrial(t.id, t.targetState); err != nil {
 		return errors.Wrap(err, "updating trial with end state")
 	}
 
@@ -332,13 +330,15 @@ func (t *trial) setID(id int) {
 
 func (t *trial) processAllocated(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
 	// Ignore this message if it is from the last run of the trial.
-	if t.task == nil || msg.ID != t.task.ID {
-		ctx.Log().Infof("ignoring and stale allocation %v (task = %v)", msg, t.task)
+	if t.req == nil || msg.ID != t.req.AllocationID {
+		ctx.Log().
+			WithField("allocation", t.req).
+			Infof("ignoring and stale allocation %v", msg)
 		return nil
 	}
 
-	t.allocations = map[cproto.ID]sproto.Allocation{}
-	for _, a := range msg.Allocations {
+	t.allocations = map[cproto.ID]sproto.Reservation{}
+	for _, a := range msg.Reservations {
 		t.allocations[a.Summary().ID] = a
 	}
 
@@ -352,6 +352,7 @@ func (t *trial) processAllocated(ctx *actor.Context, msg sproto.ResourcesAllocat
 
 	if !t.idSet {
 		modelTrial := model.NewTrial(
+			t.taskID,
 			t.searcher.Create.RequestID,
 			t.experimentID,
 			model.JSONObj(t.searcher.Create.Hparams),
@@ -371,23 +372,23 @@ func (t *trial) processAllocated(ctx *actor.Context, msg sproto.ResourcesAllocat
 
 	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return errors.Wrap(err, "failed to save trial run ID")
+		return errors.Wrap(err, "failed to save trial run AllocationID")
 	}
 	ctx.AddLabel("trial-run-id", t.runID)
 
-	if err := t.db.AddTask(model.JobTypeTrial, t.id, t.task.ID); err != nil {
-		return errors.Wrap(err, "failed to save trial task")
+	if err := t.db.AddAllocation(t.taskID, t.req.AllocationID, msg.ResourcePool); err != nil {
+		return errors.Wrap(err, "failed to save trial allocation")
 	}
 
 	ctx.Log().Infof("starting trial container")
 
-	taskToken, err := t.db.StartTaskSession(string(t.task.ID))
+	taskToken, err := t.db.StartAllocationSession(t.req.AllocationID)
 	if err != nil {
 		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
-	t.preemption = newPreemption(t.task.ID)
-	t.rendezvous = newRendezvous(t.task.ID, ranksFromAllocations(msg.Allocations))
-	actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{taskID: t.task.ID})
+	t.preemption = newPreemption(t.req.AllocationID)
+	t.rendezvous = newRendezvous(t.req.AllocationID, ranksFromAllocations(msg.Reservations))
+	actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{taskID: t.req.AllocationID})
 
 	var latestBatch int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
@@ -415,7 +416,7 @@ func (t *trial) processAllocated(ctx *actor.Context, msg sproto.ResourcesAllocat
 		IsMultiAgent:     len(t.allocations) > 1,
 	}
 
-	for rank, a := range msg.Allocations {
+	for rank, a := range msg.Reservations {
 		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
 	}
 
@@ -474,7 +475,7 @@ const (
 // to be aware of how to take certain actions in certain states.
 func (t *trial) terminate(ctx *actor.Context, tt terminationType) error {
 	switch {
-	case t.task == nil:
+	case t.req == nil:
 		ctx.Log().Info("terminating trial before resources are requested")
 		return t.terminated(ctx)
 	case len(t.allocations) == 0:
@@ -488,7 +489,7 @@ func (t *trial) terminate(ctx *actor.Context, tt terminationType) error {
 	case tt == preempt && t.rendezvous.ready():
 		ctx.Log().Info("gracefully terminating trial")
 		t.preemption.preempt()
-		ctx.Tell(ctx.Self(), preemptionTimeout{t.task.ID})
+		ctx.Tell(ctx.Self(), preemptionTimeout{t.req.AllocationID})
 	case tt == preempt:
 		t.preemption.markUnacknowledgeable()
 		fallthrough
@@ -548,7 +549,8 @@ func (t *trial) terminated(ctx *actor.Context) error {
 	ctx.Log().
 		WithField("search_finished", t.searcher.Finished()).
 		WithField("state", t.targetState).
-		WithField("preempted", t.preemption.acknowledged() || t.preemption.unacknowledgeable()).
+		WithField("preempt_ack", t.preemption.acknowledged()).
+		WithField("preempt_kill", t.preemption.unacknowledgeable()).
 		Info("trial terminated")
 
 	if err := t.resetTask(ctx); err != nil {
@@ -566,7 +568,7 @@ func (t *trial) stop(ctx *actor.Context, state model.State) {
 	}
 
 	t.stopped = true
-	t.finalState = state
+	t.targetState = state
 	ctx.Self().Stop()
 }
 
@@ -575,14 +577,14 @@ func (t *trial) resetTask(ctx *actor.Context) error {
 
 	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
-	if t.task != nil {
-		if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+	if t.req != nil {
+		if err := t.db.DeleteAllocationSession(t.req.AllocationID); err != nil {
 			mErr = multierror.Append(mErr, errors.Wrap(err, "error delete task session for a trial"))
 		}
 	}
 
-	if t.task != nil && len(t.allocations) != 0 {
-		if err := t.db.CompleteTask(model.JobTypeTrial, t.id, t.task.ID); err != nil {
+	if t.req != nil && len(t.allocations) != 0 {
+		if err := t.db.CompleteAllocation(t.req.AllocationID); err != nil {
 			mErr = multierror.Append(mErr, errors.Wrap(err, "failed to mark trial run completed"))
 		}
 	}
@@ -591,7 +593,7 @@ func (t *trial) resetTask(ctx *actor.Context) error {
 	t.preemption = nil
 	t.rendezvous.close()
 	t.rendezvous = nil
-	t.task = nil
+	t.req = nil
 	t.allocations = nil
 	t.terminatedFirst = nil
 	t.terminatedContainers = make(map[cproto.ID]sproto.TaskContainerStopped)
@@ -620,11 +622,11 @@ func (t *trial) taskExitStatus() aproto.ContainerStopped {
 }
 
 func (t *trial) insertLog(ctx *actor.Context, cID *cproto.ID, msg string) {
-	// Log messages should never come in before the trial ID is set, since no trial runners are
-	// launched until after the trial ID is set. But for futureproofing, we will log an error while
+	// Log messages should never come in before the trial id is set, since no trial runners are
+	// launched until after the trial id is set. But for futureproofing, we will log an error while
 	// we protect the database.
 	if !t.idSet {
-		ctx.Log().Warnf("not saving log message from container without a trial ID: %s", msg)
+		ctx.Log().Warnf("not saving log message from container without a trial id: %s", msg)
 		return
 	}
 
@@ -672,8 +674,8 @@ type (
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
 	watchRendezvousInfo struct {
-		taskID sproto.TaskID
-		id     cproto.ID
+		allocationID model.AllocationID
+		containerID  cproto.ID
 	}
 	rendezvousInfoOrError struct {
 		info *trialv1.RendezvousInfo
@@ -688,11 +690,11 @@ type (
 	// container is connected. This might happen when the k8s cluster waits for new instances
 	// to spin up, which might not happen at all. At the same time, taking up part of all
 	// the resources and waiting is wasteful. So we need to detect this situation.
-	rendezvousTimeout struct{ taskID sproto.TaskID }
+	rendezvousTimeout struct{ taskID model.AllocationID }
 
 	// rendezvous encapsulates the rendezvous state of a trial.
 	rendezvous struct {
-		taskID            sproto.TaskID
+		taskID            model.AllocationID
 		watchers          map[cproto.ID]chan<- rendezvousInfoOrError
 		ranks             map[cproto.ID]int
 		addresses         map[cproto.ID][]cproto.Address
@@ -701,7 +703,7 @@ type (
 	}
 )
 
-func newRendezvous(taskID sproto.TaskID, ranks map[cproto.ID]int) *rendezvous {
+func newRendezvous(taskID model.AllocationID, ranks map[cproto.ID]int) *rendezvous {
 	return &rendezvous{
 		taskID:    taskID,
 		ranks:     ranks,
@@ -710,7 +712,7 @@ func newRendezvous(taskID sproto.TaskID, ranks map[cproto.ID]int) *rendezvous {
 	}
 }
 
-func ranksFromAllocations(allocations []sproto.Allocation) map[cproto.ID]int {
+func ranksFromAllocations(allocations []sproto.Reservation) map[cproto.ID]int {
 	ranks := map[cproto.ID]int{}
 	for rank, a := range allocations {
 		ranks[a.Summary().ID] = rank
@@ -718,7 +720,7 @@ func ranksFromAllocations(allocations []sproto.Allocation) map[cproto.ID]int {
 	return ranks
 }
 
-func (r *rendezvous) watch(taskID sproto.TaskID, id cproto.ID) (rendezvousWatcher, error) {
+func (r *rendezvous) watch(taskID model.AllocationID, id cproto.ID) (rendezvousWatcher, error) {
 	if r == nil {
 		err := errNoTask{action: "watch rendezvous"}
 		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
@@ -808,7 +810,7 @@ func (r rendezvous) push() bool {
 }
 
 // checkTimeout checks if the task should timeout waiting for rendezvous.
-func (r *rendezvous) checkTimeout(taskID sproto.TaskID) error {
+func (r *rendezvous) checkTimeout(taskID model.AllocationID) error {
 	if r == nil {
 		return nil
 	}
@@ -910,15 +912,15 @@ type (
 	// indicate to preempt and sends of false are used to synchronize (e.g. you want to
 	// block until you receive _something_ but not until the first preemption).
 	watchPreemption struct {
-		taskID sproto.TaskID
-		id     uuid.UUID
+		allocationID model.AllocationID
+		id           uuid.UUID
 	}
 	preemptionWatcher struct{ C <-chan struct{} }
 	unwatchPreemption struct{ id uuid.UUID }
-	ackPreemption     struct{ taskID sproto.TaskID }
+	ackPreemption     struct{ allocationID model.AllocationID }
 	// preemptionTimeout is the time after which we forcibly terminate a trial that has no
 	// preempted.
-	preemptionTimeout struct{ taskID sproto.TaskID }
+	preemptionTimeout struct{ allocationID model.AllocationID }
 
 	// preemption represents the preemption status of a task. A task is assumed to be preempted
 	// exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
@@ -926,17 +928,17 @@ type (
 	// where the lifetime of a "preemption" is equivalent to the lifetime of task and they can be
 	// initialized together.
 	preemption struct {
-		taskID      sproto.TaskID
+		taskID      model.AllocationID
 		preempted   bool
 		acked       bool
 		unackable   bool
 		preemptedAt time.Time
-		// Map of watcher ID to a bool indicating if the trial should preempt.
+		// Map of watcher AllocationID to a bool indicating if the trial should preempt.
 		watchers map[uuid.UUID]chan<- struct{}
 	}
 )
 
-func newPreemption(taskID sproto.TaskID) *preemption {
+func newPreemption(taskID model.AllocationID) *preemption {
 	return &preemption{
 		taskID:    taskID,
 		preempted: false,
@@ -945,7 +947,7 @@ func newPreemption(taskID sproto.TaskID) *preemption {
 	}
 }
 
-func (p *preemption) watch(taskID sproto.TaskID, id uuid.UUID) (preemptionWatcher, error) {
+func (p *preemption) watch(taskID model.AllocationID, id uuid.UUID) (preemptionWatcher, error) {
 	if p == nil {
 		return preemptionWatcher{}, errNoPreemptionStatus
 	}
@@ -986,7 +988,7 @@ func (p *preemption) preempt() {
 	}
 }
 
-func (p *preemption) acknowledge(taskID sproto.TaskID) error {
+func (p *preemption) acknowledge(taskID model.AllocationID) error {
 	if p == nil {
 		return errNoPreemptionStatus
 	}
@@ -1024,7 +1026,7 @@ func (p *preemption) unacknowledgeable() bool {
 	return p.unackable
 }
 
-func (p *preemption) checkTimeout(taskID sproto.TaskID) error {
+func (p *preemption) checkTimeout(taskID model.AllocationID) error {
 	if p == nil {
 		return nil
 	}
@@ -1054,7 +1056,7 @@ func (e errNoTask) Error() string {
 }
 
 type errStaleTask struct {
-	received, actual sproto.TaskID
+	received, actual model.AllocationID
 }
 
 func (e errStaleTask) Error() string {

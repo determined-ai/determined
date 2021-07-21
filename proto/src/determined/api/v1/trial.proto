@@ -275,30 +275,30 @@ message PostTrialProfilerMetricsBatchRequest {
 message PostTrialProfilerMetricsBatchResponse {}
 
 // Long poll for updates to the preemption status for a trial.
-message TaskPreemptionSignalRequest {
+message AllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "task_id" ] }
+    json_schema: { required: [ "allocation_id" ] }
   };
-  // The id of the task.
-  string task_id = 1;
+  // The id of the allocation.
+  string allocation_id = 1;
   // The timeout in seconds.
   int32 timeout_seconds = 2;
 }
-// Response to TaskPreemptionSignalRequest.
-message TaskPreemptionSignalResponse {
+// Response to AllocationPreemptionSignalRequest.
+message AllocationPreemptionSignalResponse {
   // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }
 // Acknowledge the receipt of some stop signal.
-message AckTaskPreemptionSignalRequest {
+message AckAllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "task_id" ] }
+    json_schema: { required: [ "allocation_id" ] }
   };
-  // The task that is acknowledging the request.
-  string task_id = 1;
+  // The allocation that is acknowledging the request.
+  string allocation_id = 1;
 }
-// Response to AckTaskPreemptionSignalRequest.
-message AckTaskPreemptionSignalResponse {}
+// Response to AckAllocationPreemptionSignalRequest.
+message AckAllocationPreemptionSignalResponse {}
 
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
@@ -393,17 +393,17 @@ message ReportTrialCheckpointMetadataRequest {
 message ReportTrialCheckpointMetadataResponse {}
 
 // Gathers the rendezvous info for the task.
-message TaskRendezvousInfoRequest {
+message AllocationRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "task_id", "container_id" ] }
+    json_schema: { required: [ "allocation_id", "container_id" ] }
   };
-  // The id of the task.
-  string task_id = 1;
+  // The id of the allocation.
+  string allocation_id = 1;
   // The id of the allocation. Used to verify all allocations are connected.
   string container_id = 2;
 }
-// Response to TaskRendezvousInfoRequest
-message TaskRendezvousInfoResponse {
+// Response to AllocationRendezvousInfoRequest
+message AllocationRendezvousInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "rendezvous_info" ] }
   };

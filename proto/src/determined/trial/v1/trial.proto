@@ -176,10 +176,12 @@ message TrainingMetrics {
   int32 total_records = 4;
   // The number of epochs trained on when these metrics were reported.
   float total_epochs = 5;
+  // The number of records used to compute the given metrics.
+  int32 computed_records = 6;
   // The metrics for this bit of training (reduced over the reporting period).
-  google.protobuf.Struct metrics = 6;
+  google.protobuf.Struct metrics = 7;
   // The batch metrics for this bit of training.
-  repeated google.protobuf.Struct batch_metrics = 7;
+  repeated google.protobuf.Struct batch_metrics = 8;
 }
 
 // The validation metrics at some point of training.
@@ -199,8 +201,10 @@ message ValidationMetrics {
   int32 total_records = 4;
   // The number of epochs trained on when these metrics were reported.
   float total_epochs = 5;
+  // The number of records used to compute the given metrics.
+  int32 computed_records = 6;
   // The metrics.
-  google.protobuf.Struct metrics = 6;
+  google.protobuf.Struct metrics = 7;
 }
 
 // The checkpoint metadata for some trial checkpoint.

@@ -29,7 +29,7 @@ type GenericCommandSpec struct {
 func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
 	res := s.Base
 
-	res.TaskToken = taskToken
+	res.AllocationSessionToken = taskToken
 
 	if keys != nil {
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{

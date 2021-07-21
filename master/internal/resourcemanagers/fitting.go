@@ -139,7 +139,7 @@ func findDedicatedAgentFits(
 		log.Debugf("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
 			"in the current cluster configuration. When running on multiple agents, number of "+
 			"slots per trial must be either set to 1 or a multiple of the GPUs per agent.",
-			req.ID, req.SlotsNeeded,
+			req.AllocationID, req.SlotsNeeded,
 		)
 		return nil
 	}
@@ -198,5 +198,6 @@ func stringHashNumber(s string) uint64 {
 }
 
 func hashDistance(req *sproto.AllocateRequest, agent *agentState) uint64 {
-	return stringHashNumber(string(req.ID)) - stringHashNumber(agent.handler.Address().String())
+	return stringHashNumber(string(req.AllocationID)) -
+		stringHashNumber(agent.handler.Address().String())
 }

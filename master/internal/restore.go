@@ -145,9 +145,10 @@ func (e *experiment) restoreTrial(
 	}
 
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, searcher.Create.RequestID))
 	t := newTrial(
-		e.ID, e.State, searcher, e.rm, e.trialLogger, e.db, config, ckpt,
-		e.taskSpec, e.modelDefinition,
+		taskID, e.ID, e.State, searcher, e.rm, e.trialLogger, e.db,
+		config, ckpt, e.taskSpec, e.modelDefinition,
 	)
 	if trialID != nil {
 		t.setID(*trialID)

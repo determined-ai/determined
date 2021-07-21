@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -201,11 +203,11 @@ func (a *agentResourceManager) aggregateTaskSummary(
 
 func (a *agentResourceManager) aggregateTaskSummaries(
 	resps map[*actor.Ref]actor.Message,
-) map[sproto.TaskID]TaskSummary {
-	summaries := make(map[sproto.TaskID]TaskSummary)
+) map[model.AllocationID]TaskSummary {
+	summaries := make(map[model.AllocationID]TaskSummary)
 	for _, resp := range resps {
 		if resp != nil {
-			typed := resp.(map[sproto.TaskID]TaskSummary)
+			typed := resp.(map[model.AllocationID]TaskSummary)
 			for id, summary := range typed {
 				summaries[id] = summary
 			}

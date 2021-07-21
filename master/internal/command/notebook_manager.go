@@ -1,7 +1,10 @@
 package command
 
 import (
+	"fmt"
 	"regexp"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -14,7 +17,8 @@ import (
 var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
 
 type notebookManager struct {
-	db *db.PgDB
+	db         *db.PgDB
+	notebookID int
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -35,7 +39,9 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		return createGenericCommandActor(ctx, n.db, msg, map[string]readinessCheck{
+		n.notebookID++
+		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeNotebook, n.notebookID))
+		return createGenericCommandActor(ctx, n.db, taskID, msg, map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
 				return jupyterReadyPattern.MatchString(log.String())
 			},

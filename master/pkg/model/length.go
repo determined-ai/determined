@@ -24,27 +24,27 @@ const (
 )
 
 // ToProto converts the internal representation of a unit to protobuf.
-func (u Unit) ToProto() experimentv1.TrainingLength_Units {
+func (u Unit) ToProto() experimentv1.TrainingLength_Unit {
 	switch u {
 	case Records:
-		return experimentv1.TrainingLength_UNITS_RECORDS
+		return experimentv1.TrainingLength_UNIT_RECORDS
 	case Batches:
-		return experimentv1.TrainingLength_UNITS_BATCHES
+		return experimentv1.TrainingLength_UNIT_BATCHES
 	case Epochs:
-		return experimentv1.TrainingLength_UNITS_EPOCHS
+		return experimentv1.TrainingLength_UNIT_EPOCHS
 	default:
-		return experimentv1.TrainingLength_UNITS_UNSPECIFIED
+		return experimentv1.TrainingLength_UNIT_UNSPECIFIED
 	}
 }
 
 // UnitFromProto returns a model.Unit from its protobuf representation.
-func UnitFromProto(u experimentv1.TrainingLength_Units) Unit {
+func UnitFromProto(u experimentv1.TrainingLength_Unit) Unit {
 	switch u {
-	case experimentv1.TrainingLength_UNITS_RECORDS:
+	case experimentv1.TrainingLength_UNIT_RECORDS:
 		return Records
-	case experimentv1.TrainingLength_UNITS_BATCHES:
+	case experimentv1.TrainingLength_UNIT_BATCHES:
 		return Batches
-	case experimentv1.TrainingLength_UNITS_EPOCHS:
+	case experimentv1.TrainingLength_UNIT_EPOCHS:
 		return Epochs
 	default:
 		return Unspecified
@@ -122,7 +122,7 @@ func (l *Length) UnmarshalJSON(b []byte) error {
 // ToProto converts a model.Length to its protobuf representation.
 func (l Length) ToProto() *experimentv1.TrainingLength {
 	return &experimentv1.TrainingLength{
-		Units:  l.Unit.ToProto(),
+		Unit:   l.Unit.ToProto(),
 		Length: int32(l.Units),
 	}
 }
@@ -130,7 +130,7 @@ func (l Length) ToProto() *experimentv1.TrainingLength {
 // LengthFromProto returns a model.Length from its protobuf representation.
 func LengthFromProto(l *experimentv1.TrainingLength) Length {
 	return Length{
-		Unit:  UnitFromProto(l.Units),
+		Unit:  UnitFromProto(l.Unit),
 		Units: int(l.Length),
 	}
 }

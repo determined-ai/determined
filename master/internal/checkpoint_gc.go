@@ -3,6 +3,10 @@ package internal
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -26,9 +30,10 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		allocationID := fmt.Sprintf("%s-%d-%s", model.TaskTypeCheckpointGC, t.ExperimentID, uuid.New())
 		t.task = &sproto.AllocateRequest{
-			ID:   sproto.NewTaskID(),
-			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
+			AllocationID: model.NewAllocationID(allocationID),
+			Name:         fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
@@ -40,12 +45,12 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesAllocated:
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		taskToken, err := t.db.StartTaskSession(string(msg.ID))
+		taskToken, err := t.db.StartAllocationSession(msg.ID)
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
-		for rank, a := range msg.Allocations {
+		for rank, a := range msg.Reservations {
 			a.Start(ctx, t.ToTaskSpec(taskToken), rank)
 		}
 	case sproto.ReleaseResources:
@@ -72,7 +77,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 	case actor.PostStop:
 		if t.task != nil {
-			if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+			if err := t.db.DeleteAllocationSession(t.task.AllocationID); err != nil {
 				ctx.Log().WithError(err).Error("cannot delete task session for a GC task")
 			}
 		}

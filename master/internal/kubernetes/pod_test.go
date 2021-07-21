@@ -134,7 +134,7 @@ func createPodWithMockQueue() (
 ) {
 	commandSpec := tasks.GenericCommandSpec{
 		Base: tasks.TaskSpec{
-			TaskID:         "task",
+			AllocationID:   "task",
 			ContainerID:    "container",
 			ClusterID:      "cluster",
 			AgentUserGroup: createAgentUserGroup(),

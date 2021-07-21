@@ -75,7 +75,9 @@ func TestTrialMultiAlloc(t *testing.T) {
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
+	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	tr := newTrial(
+		taskID,
 		1,
 		model.PausedState,
 		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
@@ -108,37 +110,37 @@ func TestTrialMultiAlloc(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}).Error())
-	require.NotNil(t, tr.task)
-	require.Contains(t, rmImpl.messages, *tr.task)
+	require.NotNil(t, tr.req)
+	require.Contains(t, rmImpl.messages, *tr.req)
 
 	// Pre-allocated stage.
-	mockAlloc := func(cID cproto.ID, agentID string) sproto.Allocation {
+	mockAlloc := func(cID cproto.ID, agentID string) sproto.Reservation {
 		alloc := &mocks.Allocation{}
 		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
 		alloc.On("Summary").Return(sproto.ContainerSummary{
-			TaskID: tr.task.ID,
-			ID:     cID,
-			Agent:  agentID,
+			AllocationID: tr.req.AllocationID,
+			ID:           cID,
+			Agent:        agentID,
 		})
 		alloc.On("Kill", mock.Anything).Return()
 		return alloc
 	}
 
-	allocations := []sproto.Allocation{
+	allocations := []sproto.Reservation{
 		mockAlloc(cproto.NewID(), "agent-1"),
 		mockAlloc(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("AddTask", mock.Anything, 0, tr.task.ID).Return(nil)
-	db.On("StartTaskSession", string(tr.task.ID)).Return("", nil)
+	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(rm, forward{
 		to: self,
 		msg: sproto.ResourcesAllocated{
-			ID:           tr.task.ID,
+			ID:           tr.req.AllocationID,
 			ResourcePool: "default",
-			Allocations:  allocations,
+			Reservations: allocations,
 		},
 	}).Error())
 	require.NotEmpty(t, tr.allocations)
@@ -172,8 +174,8 @@ func TestTrialMultiAlloc(t *testing.T) {
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
 		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			taskID: tr.task.ID,
-			id:     a.Summary().ID,
+			allocationID: tr.req.AllocationID,
+			containerID:  a.Summary().ID,
 		}).Error())
 	}
 	require.True(t, tr.rendezvous.ready())
@@ -190,8 +192,8 @@ func TestTrialMultiAlloc(t *testing.T) {
 	}).Error())
 
 	// Terminating stage.
-	db.On("DeleteTaskSessionByTaskID", string(tr.task.ID)).Return(nil)
-	db.On("CompleteTask", mock.Anything, 0, tr.task.ID).Return(nil)
+	db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
+	db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
 	db.On("EndTasks", mock.Anything, 0).Return(nil)
 	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
 	for _, a := range allocations {
@@ -232,7 +234,9 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
+	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	tr := newTrial(
+		taskID,
 		1,
 		model.PausedState,
 		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
@@ -265,37 +269,37 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}).Error())
-	require.NotNil(t, tr.task)
-	require.Contains(t, rmImpl.messages, *tr.task)
+	require.NotNil(t, tr.req)
+	require.Contains(t, rmImpl.messages, *tr.req)
 
 	// Pre-allocated stage.
-	mockAlloc := func(cID cproto.ID, agentID string) sproto.Allocation {
+	mockAlloc := func(cID cproto.ID, agentID string) sproto.Reservation {
 		alloc := &mocks.Allocation{}
 		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
 		alloc.On("Summary").Return(sproto.ContainerSummary{
-			TaskID: tr.task.ID,
-			ID:     cID,
-			Agent:  agentID,
+			AllocationID: tr.req.AllocationID,
+			ID:           cID,
+			Agent:        agentID,
 		})
 		alloc.On("Kill", mock.Anything).Return()
 		return alloc
 	}
 
-	allocations := []sproto.Allocation{
+	allocations := []sproto.Reservation{
 		mockAlloc(cproto.NewID(), "agent-1"),
 		mockAlloc(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("AddTask", mock.Anything, 0, tr.task.ID).Return(nil)
-	db.On("StartTaskSession", string(tr.task.ID)).Return("", nil)
+	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(rm, forward{
 		to: self,
 		msg: sproto.ResourcesAllocated{
-			ID:           tr.task.ID,
+			ID:           tr.req.AllocationID,
 			ResourcePool: "default",
-			Allocations:  allocations,
+			Reservations: allocations,
 		},
 	}).Error())
 	require.NotEmpty(t, tr.allocations)
@@ -329,8 +333,8 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
 		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			taskID: tr.task.ID,
-			id:     a.Summary().ID,
+			allocationID: tr.req.AllocationID,
+			containerID:  a.Summary().ID,
 		}).Error())
 	}
 	require.True(t, tr.rendezvous.ready())
@@ -345,11 +349,11 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		Complete: true,
 		Closed:   false,
 	}).Error())
-	require.NoError(t, system.Ask(self, ackPreemption{taskID: tr.task.ID}).Error())
+	require.NoError(t, system.Ask(self, ackPreemption{allocationID: tr.req.AllocationID}).Error())
 
 	// Terminating stage.
-	db.On("DeleteTaskSessionByTaskID", string(tr.task.ID)).Return(nil)
-	db.On("CompleteTask", mock.Anything, 0, tr.task.ID).Return(nil)
+	db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
+	db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
 	db.On("UpdateTrialRunIDAndRestarts", 0, 1, 0).Return(nil)
 	for _, a := range allocations {
 		containerStateChanged := sproto.TaskContainerStateChanged{
@@ -402,7 +406,9 @@ func TestTrialRestarts(t *testing.T) {
 
 	// instantiate the trial
 	rID := model.NewRequestID(rand.Reader)
+	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	tr := newTrial(
+		taskID,
 		1,
 		model.PausedState,
 		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
@@ -436,30 +442,30 @@ func TestTrialRestarts(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}).Error())
-	require.NotNil(t, tr.task)
-	require.Contains(t, rmImpl.messages, *tr.task)
+	require.NotNil(t, tr.req)
+	require.Contains(t, rmImpl.messages, *tr.req)
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		// Pre-allocated stage.
 		cID := cproto.NewID()
 		alloc := &mocks.Allocation{}
 		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
 		alloc.On("Summary").Return(sproto.ContainerSummary{
-			TaskID: tr.task.ID,
-			ID:     cID,
-			Agent:  "agent-1",
+			AllocationID: tr.req.AllocationID,
+			ID:           cID,
+			Agent:        "agent-1",
 		})
 		alloc.On("Kill", mock.Anything).Return()
 		db.On("AddTrial", mock.Anything).Return(nil)
 		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
-		db.On("AddTask", mock.Anything, 0, tr.task.ID).Return(nil)
-		db.On("StartTaskSession", string(tr.task.ID)).Return("", nil)
+		db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+		db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 		require.NoError(t, system.Ask(rm, forward{
 			to: self,
 			msg: sproto.ResourcesAllocated{
-				ID:           tr.task.ID,
+				ID:           tr.req.AllocationID,
 				ResourcePool: "default",
-				Allocations:  []sproto.Allocation{alloc},
+				Reservations: []sproto.Reservation{alloc},
 			},
 		}).Error())
 		require.NotEmpty(t, tr.allocations)
@@ -492,16 +498,16 @@ func TestTrialRestarts(t *testing.T) {
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
 		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			taskID: tr.task.ID,
-			id:     cID,
+			allocationID: tr.req.AllocationID,
+			containerID:  cID,
 		}).Error())
 		require.True(t, tr.rendezvous.ready())
 
 		// Running stage.
 
 		// Terminating stage.
-		db.On("DeleteTaskSessionByTaskID", string(tr.task.ID)).Return(nil)
-		db.On("CompleteTask", mock.Anything, 0, tr.task.ID).Return(nil)
+		db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
+		db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
 		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
 		if i == tr.config.MaxRestarts() {
 			db.On("EndTasks", mock.Anything, 0).Return(nil)
@@ -533,7 +539,7 @@ func TestRendezvous(t *testing.T) {
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
 			// "task" with ranks is started.
-			t1 := sproto.NewTaskID()
+			t1 := model.NewAllocationID(uuid.New().String())
 			c1, c2 := cproto.NewID(), cproto.NewID()
 			ranks := map[cproto.ID]int{c1: 0, c2: 1}
 			r := newRendezvous(t1, ranks)
@@ -599,7 +605,7 @@ func TestRendezvousUninitialized(t *testing.T) {
 	var r *rendezvous
 
 	// All API-connected methods (so ones a user could call) should not panic the actor.
-	tID := sproto.NewTaskID()
+	tID := model.NewAllocationID(uuid.New().String())
 	cID := cproto.NewID()
 	_, err := r.watch(tID, cID)
 	assert.ErrorContains(t, err, "watch rendezvous not valid without active task")
@@ -607,7 +613,7 @@ func TestRendezvousUninitialized(t *testing.T) {
 }
 
 func TestRendezvousValidation(t *testing.T) {
-	t1 := sproto.NewTaskID()
+	t1 := model.NewAllocationID(uuid.New().String())
 	c1 := cproto.NewID()
 	r := newRendezvous(t1, map[cproto.ID]int{
 		c1: 0,
@@ -624,7 +630,7 @@ func TestRendezvousValidation(t *testing.T) {
 }
 
 func TestTerminationInRendezvous(t *testing.T) {
-	t1 := sproto.NewTaskID()
+	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
 	r := newRendezvous(t1, ranks)
@@ -642,7 +648,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 }
 
 func TestUnwatchInRendezvous(t *testing.T) {
-	t1 := sproto.NewTaskID()
+	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
 	r := newRendezvous(t1, ranks)
@@ -662,7 +668,7 @@ func TestUnwatchInRendezvous(t *testing.T) {
 func TestRendezvousTimeout(t *testing.T) {
 	rendezvousTimeoutDuration = 0
 
-	t1 := sproto.NewTaskID()
+	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
 	r := newRendezvous(t1, ranks)
@@ -692,7 +698,7 @@ func TestPreemption(t *testing.T) {
 
 	// Watch nil should not panic and return an error.
 	id := uuid.New()
-	_, err := p.watch(sproto.NewTaskID(), id)
+	_, err := p.watch(model.NewAllocationID(uuid.New().String()), id)
 	assert.ErrorContains(t, err, "no preemption status")
 
 	// All method on nil should not panic.
@@ -701,7 +707,7 @@ func TestPreemption(t *testing.T) {
 	p.close()
 
 	// "task" is allocated.
-	t1 := sproto.NewTaskID()
+	t1 := model.NewAllocationID(uuid.New().String())
 	p = newPreemption(t1)
 
 	// real watcher connects

@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -86,9 +84,8 @@ type DB interface {
 	TrialDetailsRaw(id int) ([]byte, error)
 	AddStep(step *model.Step) error
 	AddNoOpStep(step *model.Step) error
-	AddTask(jobType model.JobType, jobTypeFkID int, taskID sproto.TaskID) error
-	CompleteTask(jobType model.JobType, jobTypeFkID int, taskID sproto.TaskID) error
-	EndTasks(jobType model.JobType, jobTypeFkID int) error
+	AddAllocation(taskID model.TaskID, allocationID model.AllocationID, rp string) error
+	CompleteAllocation(allocationID model.AllocationID) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error
@@ -170,9 +167,9 @@ type DB interface {
 	SetHPImportance(experimentID int, value model.ExperimentHPImportance) error
 	GetPartialHPImportance() ([]int, []model.ExperimentHPImportance, error)
 	ExperimentBestSearcherValidation(id int) (float32, error)
-	StartTaskSession(taskID string) (string, error)
-	TaskSessionByToken(token string) (*model.TaskSession, error)
-	DeleteTaskSessionByTaskID(taskID string) error
+	StartAllocationSession(allocationID model.AllocationID) (string, error)
+	AllocationSessionByToken(token string) (*model.AllocationSession, error)
+	DeleteAllocationSession(allocationID model.AllocationID) error
 	ExperimentSnapshot(experimentID int) ([]byte, int, error)
 	SaveSnapshot(
 		experimentID int, version int, experimentSnapshot []byte,

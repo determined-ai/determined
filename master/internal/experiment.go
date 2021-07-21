@@ -120,14 +120,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
 	)
 
-	// Call InitialOperations which adds operations to the record in the Searcher. These
-	// will be sent back to their respective trials in experiment prestart. This allows them to
-	// be discarded if we Restore from a snapshot (since they will already exist in the snapshot
-	// and have been accounted for).
-	if _, err = search.InitialOperations(); err != nil {
-		return nil, errors.Wrap(err, "failed to generate initial operations")
-	}
-
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
 		master.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
@@ -461,9 +453,10 @@ func (e *experiment) processOperations(
 			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 			state := TrialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
+			taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, op.RequestID))
 			ctx.ActorOf(op.RequestID, newTrial(
-				e.ID, e.State, state, e.rm, e.trialLogger, e.db, config, checkpoint,
-				e.taskSpec, e.modelDefinition,
+				taskID, e.ID, e.State, state, e.rm, e.trialLogger, e.db, config,
+				checkpoint, e.taskSpec, e.modelDefinition,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

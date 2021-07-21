@@ -518,10 +518,10 @@ service Determined {
   // task has been preempted when called, it will return so immediately.
   // Otherwise, the connection will be kept open until the timeout is reached or
   // the task is preempted.
-  rpc TaskPreemptionSignal(TaskPreemptionSignalRequest)
-      returns (TaskPreemptionSignalResponse) {
+  rpc AllocationPreemptionSignal(AllocationPreemptionSignalRequest)
+      returns (AllocationPreemptionSignalResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks/{task_id}/signals/preemption"
+      get: "/api/v1/allocations/{allocation_id}/signals/preemption"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -531,10 +531,10 @@ service Determined {
   // This is used indicate and exit 0 isn't final. Used for HP search directed
   // early stops and preemption signals (not necessarily just scheduler
   // preemption).
-  rpc AckTaskPreemptionSignal(AckTaskPreemptionSignalRequest)
-      returns (AckTaskPreemptionSignalResponse) {
+  rpc AckAllocationPreemptionSignal(AckAllocationPreemptionSignalRequest)
+      returns (AckAllocationPreemptionSignalResponse) {
     option (google.api.http) = {
-      post: "/api/v1/tasks/{task_id}/signals/ack_preemption"
+      post: "/api/v1/allocations/{allocation_id}/signals/ack_preemption"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -634,10 +634,10 @@ service Determined {
   }
   // Gather a task's rendezvous info. Blocks until all trial containers connect
   // to gather their rendezvous information and responds to them all at once.
-  rpc TaskRendezvousInfo(TaskRendezvousInfoRequest)
-      returns (TaskRendezvousInfoResponse) {
+  rpc AllocationRendezvousInfo(AllocationRendezvousInfoRequest)
+      returns (AllocationRendezvousInfoResponse) {
     option (google.api.http) = {
-      get: "/api/v1/tasks/{task_id}/rendezvous_info/{container_id}"
+      get: "/api/v1/allocations/{allocation_id}/rendezvous_info/{container_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"

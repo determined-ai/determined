@@ -33,7 +33,7 @@ func Setup(opts *Config) (*PgDB, error) {
 	if err = db.initAuthKeys(); err != nil {
 		return nil, err
 	}
-	if err = db.initTaskSessions(); err != nil {
+	if err = db.initAllocationSessions(); err != nil {
 		return nil, err
 	}
 	return db, nil

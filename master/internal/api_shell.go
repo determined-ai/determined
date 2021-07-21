@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -137,7 +136,7 @@ func (a *apiServer) LaunchShell(
 		return nil, err
 	}
 
-	shellID := shellIDFut.Get().(sproto.TaskID)
+	shellID := shellIDFut.Get().(model.AllocationID)
 	shell := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
 	if err = api.ProcessActorResponseError(&shell); err != nil {
 		return nil, err

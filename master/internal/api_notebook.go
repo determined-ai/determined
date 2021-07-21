@@ -15,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -171,7 +170,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
-	notebookID := notebookIDFut.Get().(sproto.TaskID)
+	notebookID := notebookIDFut.Get().(model.AllocationID)
 	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
 	if err = api.ProcessActorResponseError(&notebook); err != nil {
 		return nil, err

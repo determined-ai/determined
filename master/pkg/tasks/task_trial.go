@@ -37,7 +37,7 @@ type TrialSpec struct {
 // ToTaskSpec generates a TaskSpec.
 func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
 	res := s.Base
-	res.TaskToken = taskToken
+	res.AllocationSessionToken = taskToken
 
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(

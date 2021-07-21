@@ -209,7 +209,7 @@ func (a *apiServer) LaunchCommand(
 	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err
 	}
-	cmdID := commandIDFut.Get().(sproto.TaskID)
+	cmdID := commandIDFut.Get().(model.AllocationID)
 	cmd := a.m.system.AskAt(commandsAddr.Child(cmdID), &commandv1.Command{})
 	if err = api.ProcessActorResponseError(&cmd); err != nil {
 		return nil, err

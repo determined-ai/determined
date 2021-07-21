@@ -554,19 +554,21 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-func (a *apiServer) TaskPreemptionSignal(
+func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
-	req *apiv1.TaskPreemptionSignalRequest,
-) (*apiv1.TaskPreemptionSignalResponse, error) {
-	taskID := sproto.TaskID(req.TaskId)
-	handler, err := a.taskHandlerByID(taskID)
+	req *apiv1.AllocationPreemptionSignalRequest,
+) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	allocationID := model.AllocationID(req.AllocationId)
+	handler, err := a.taskHandlerByAllocationID(allocationID)
 	if err != nil {
 		return nil, err
 	}
 
 	id := uuid.New()
 	var w preemptionWatcher
-	if err := a.ask(handler.Address(), watchPreemption{id: id, taskID: taskID}, &w); err != nil {
+	if err := a.ask(handler.Address(), watchPreemption{
+		id: id, allocationID: allocationID,
+	}, &w); err != nil {
 		return nil, err
 	}
 	defer a.m.system.TellAt(handler.Address(), unwatchPreemption{id: id})
@@ -575,26 +577,26 @@ func (a *apiServer) TaskPreemptionSignal(
 	defer cancel()
 	select {
 	case <-w.C:
-		return &apiv1.TaskPreemptionSignalResponse{Preempt: true}, nil
+		return &apiv1.AllocationPreemptionSignalResponse{Preempt: true}, nil
 	case <-ctx.Done():
-		return &apiv1.TaskPreemptionSignalResponse{Preempt: false}, nil
+		return &apiv1.AllocationPreemptionSignalResponse{Preempt: false}, nil
 	}
 }
 
-func (a *apiServer) AckTaskPreemptionSignal(
-	_ context.Context, req *apiv1.AckTaskPreemptionSignalRequest,
-) (*apiv1.AckTaskPreemptionSignalResponse, error) {
-	handler, err := a.taskHandlerByID(sproto.TaskID(req.TaskId))
+func (a *apiServer) AckAllocationPreemptionSignal(
+	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
+) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
+	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
 
 	if err := a.ask(handler.Address(), ackPreemption{
-		taskID: sproto.TaskID(req.TaskId),
+		allocationID: model.AllocationID(req.AllocationId),
 	}, nil); err != nil {
 		return nil, err
 	}
-	return &apiv1.AckTaskPreemptionSignalResponse{}, nil
+	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
 func (a *apiServer) GetCurrentTrialSearcherOperation(
@@ -722,22 +724,22 @@ func (a *apiServer) ReportTrialCheckpointMetadata(
 	return &apiv1.ReportTrialCheckpointMetadataResponse{}, nil
 }
 
-func (a *apiServer) TaskRendezvousInfo(
-	ctx context.Context, req *apiv1.TaskRendezvousInfoRequest,
-) (*apiv1.TaskRendezvousInfoResponse, error) {
-	if req.TaskId == "" {
-		return nil, status.Error(codes.InvalidArgument, "task ID missing")
+func (a *apiServer) AllocationRendezvousInfo(
+	ctx context.Context, req *apiv1.AllocationRendezvousInfoRequest,
+) (*apiv1.AllocationRendezvousInfoResponse, error) {
+	if req.AllocationId == "" {
+		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
 
-	handler, err := a.taskHandlerByID(sproto.TaskID(req.TaskId))
+	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
 
 	var w rendezvousWatcher
 	if err = a.ask(handler.Address(), watchRendezvousInfo{
-		taskID: sproto.TaskID(req.TaskId),
-		id:     cproto.ID(req.ContainerId),
+		allocationID: model.AllocationID(req.AllocationId),
+		containerID:  cproto.ID(req.ContainerId),
 	}, &w); err != nil {
 		return nil, err
 	}
@@ -748,13 +750,13 @@ func (a *apiServer) TaskRendezvousInfo(
 		if rsp.err != nil {
 			return nil, err
 		}
-		return &apiv1.TaskRendezvousInfoResponse{RendezvousInfo: rsp.info}, nil
+		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.info}, nil
 	case <-ctx.Done():
 		return nil, nil
 	}
 }
 
-func (a *apiServer) taskHandlerByID(id sproto.TaskID) (*actor.Ref, error) {
+func (a *apiServer) taskHandlerByAllocationID(id model.AllocationID) (*actor.Ref, error) {
 	var handler *actor.Ref
 	if err := a.ask(a.m.rm.Address(), sproto.GetTaskHandler{ID: id}, &handler); err != nil {
 		return nil, err

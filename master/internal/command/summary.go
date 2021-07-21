@@ -3,7 +3,6 @@ package command
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -26,7 +25,7 @@ type (
 	summary struct {
 		RegisteredTime time.Time              `json:"registered_time"`
 		Owner          commandOwner           `json:"owner"`
-		ID             sproto.TaskID          `json:"id"`
+		ID             model.TaskID           `json:"id"`
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`

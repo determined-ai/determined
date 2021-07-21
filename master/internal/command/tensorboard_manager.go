@@ -1,8 +1,11 @@
 package command
 
 import (
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
@@ -18,7 +21,8 @@ import (
 const tickInterval = 5 * time.Second
 
 type tensorboardManager struct {
-	db *db.PgDB
+	db            *db.PgDB
+	tensorboardID int
 
 	timeout  time.Duration
 	proxyRef *actor.Ref
@@ -67,7 +71,9 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 
 	case tasks.GenericCommandSpec:
-		return createGenericCommandActor(ctx, t.db, msg, map[string]readinessCheck{
+		t.tensorboardID++
+		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeShell, t.tensorboardID))
+		return createGenericCommandActor(ctx, t.db, taskID, msg, map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},

@@ -127,7 +127,7 @@ func (p *pod) configureConfigMapSpec(
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      p.configMapName,
 			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
+			Labels:    map[string]string{determinedLabel: p.taskSpec.AllocationID},
 		},
 		BinaryData: configMapData,
 	}, nil
@@ -275,7 +275,7 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.AllocationID
 
 	p.modifyPodSpec(podSpec, scheduler)
 
@@ -448,7 +448,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 func configureUniqueName(t tasks.TaskSpec, rank int) string {
 	return fmt.Sprintf("%s-%d-%s-%s",
-		t.Description, rank, t.TaskID, petName.Generate(2, "-"))
+		t.Description, rank, t.AllocationID, petName.Generate(2, "-"))
 }
 
 func trialNameFromPod(podName string) string {

@@ -18,7 +18,7 @@ ungen:
 .PHONY: gen-mocks
 gen-mocks:
 	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
-	mockery --name=Allocation --dir=internal/sproto --output internal/mocks --filename allocation.go
+	mockery --name=Reservation --dir=internal/sproto --output internal/mocks --filename reservation.go
 
 .PHONY: gen
 gen: $(GENERATED) build/schema_gen.stamp gen-mocks

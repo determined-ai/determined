@@ -20,7 +20,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -140,7 +139,7 @@ func (a *apiServer) LaunchTensorboard(
 	uniqMounts := map[string]model.BindMount{}
 
 	// Multiple experiments may have different s3 credentials. We sort the
-	// experiments in ascending experiment ID order and dedupicate the
+	// experiments in ascending experiment AllocationID order and dedupicate the
 	// environment variables by key name. This gives the behavior of selecting
 	// the most recent s3 credentials to start the tensorboard process with.
 	uniqEnvVars := map[string]string{
@@ -284,7 +283,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, errors.Wrapf(err, "cannot find Tensorboard manager actor")
 	}
 
-	tensorboardID := tensorboardIDFut.Get().(sproto.TaskID)
+	tensorboardID := tensorboardIDFut.Get().(model.AllocationID)
 	tensorboard := a.m.system.AskAt(
 		tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
 	if err = api.ProcessActorResponseError(&tensorboard); err != nil {

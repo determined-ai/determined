@@ -9,22 +9,22 @@ import "protoc-gen-swagger/options/annotations.proto";
 // The representation for an amount of training.
 message TrainingLength {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "units", "length" ] }
+    json_schema: { required: [ "unit", "length" ] }
   };
   // The units for the training length.
-  enum Units {
+  enum Unit {
     // Zero-value (not allowed).
-    UNITS_UNSPECIFIED = 0;
+    UNIT_UNSPECIFIED = 0;
     // Indicates a training length is specified in records, samples or another
     // synonymous unit.
-    UNITS_RECORDS = 1;
+    UNIT_RECORDS = 1;
     // Indicates a training length is specified in batches.
-    UNITS_BATCHES = 2;
+    UNIT_BATCHES = 2;
     // Indicates a training length is specified in epochs.
-    UNITS_EPOCHS = 3;
+    UNIT_EPOCHS = 3;
   }
   // The units the training length is in terms of.
-  Units units = 1;
+  Unit unit = 1;
   // The value for the training length.
   int32 length = 2;
 }
