@@ -81,15 +81,16 @@ checkpointStorage:
   # secretKey: <secret_key>
   # endpointUrl: <endpoint_url>
 
-  # The following checkpoint configurations are mutually exclusive.
-  # Please only specify one to use Azure Blob Storage.
 
   # For storing in Azure Blob Storage with a connection string.
+  # Do NOT use if already using Azure Blob Storage with account URL
   # type: azure
   # container: <container_name>
   # connection_string: <connection_string>
 
-  # For storing in Azure Blob Storage with an account URL. The `credential` field is optional.
+  # For storing in Azure Blob Storage with an account URL.
+  # Do NOT use if already using Azure Blob Storage with connection string.
+  # The `credential` field is optional.
   # type: azure
   # container: <container_name>
   # account_url: <account_url>
