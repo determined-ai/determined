@@ -122,7 +122,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
-  if (!hasLoaded) return <Spinner tip={`Fetching trial ${trialId} details...`} />;
+  if (!hasLoaded) return <Spinner tip={ trialId === undefined ?
+    'Waiting for the trial...' : `Fetching trial ${trialId} details...`
+  } />;
 
   return (
     <>
