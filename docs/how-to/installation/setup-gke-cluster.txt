@@ -89,9 +89,10 @@ section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
 There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
 
-It is important to note that if you use the GCP CLI to add taints to
-nodes, you must also add tolerations using ``kubectl``; otherwise,
-Kubernetes will be unable to schedule pods on the tainted node.
+It is important to note that if you use the ``gcloud`` CLI to create
+nodes with taints, you must also add tolerations using ``kubectl``;
+otherwise, Kubernetes will be unable to schedule pods on the tainted
+node.
 
 To create a nodepool or a cluster with a taint in GKE, use the
 `--node-taints` flag to specify the type, tag, and effect.
@@ -101,12 +102,26 @@ To create a nodepool or a cluster with a taint in GKE, use the
    gcloud container clusters create ${GKE_CLUSTER_NAME} \
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
+The following command is an example of using the ``gcloud`` CLI to make
+a cluster that with a taint with type ``dedicated`` equal to
+``experimental`` with the ``PreferNoSchedule`` effect.
+
+.. code:: bash
+
    gcloud container clusters create ${GKE_CLUSTER_NAME} \
       --node-taints dedicated=experimental:PreferNoSchedule
+
+.. code:: bash
 
    gcloud container node-pools create ${GKE_NODE_POOL_NAME} \
       --cluster ${GKE_CLUSTER_NAME} \
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
+
+The following CLI command is an example of using the ``gcloud`` CLI to
+make a node with a taint with type ``special`` equal to ``gpu`` with the
+``NoExecute`` effect.
+
+.. code:: bash
 
    gcloud container node-pools create ${GKE_NODE_POOL_NAME} \
       --cluster ${GKE_CLUSTER_NAME} \

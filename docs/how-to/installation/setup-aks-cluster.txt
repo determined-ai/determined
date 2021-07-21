@@ -91,6 +91,13 @@ tutorial.
 With this, the cluster is fully set up, and Determined can be deployed
 onto it.
 
+************
+ Next Steps
+************
+
+-  :ref:`install-on-kubernetes`
+-  :ref:`k8s-dev-guide`
+
 #########################
  Managing an AKS Cluster
 #########################
@@ -118,8 +125,8 @@ section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
 There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
 
-It is important to note that if you use the Azure CLI to add taints to
-nodes, you must also add tolerations using ``kubectl``; otherwise,
+It is important to note that if you use the Azure CLI to create nodes
+with taints, you must also add tolerations using ``kubectl``; otherwise,
 Kubernetes will be unable to schedule pods on the tainted node.
 
 To create a nodepool with a taint in AKS, use the `--node-taints` flag
@@ -135,13 +142,19 @@ to specify the type, tag, and effect:
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:{TAINT_EFFECT} \
       --no-wait
 
-      az aks nodepool add \
-      --resource-group ${AKS_RESOURCE_GROUP} \
-      --cluster-name ${AKS_CLUSTER_NAME} \
-      --name ${AKS_NODE_POOL_NAME} \
-      --node-count 1 \
-      --node-taints sku=gpu:NoSchedule \
-      --no-wait
+The following CLI command is an example of using the ``az`` CLI to make
+a node that is unschedulable unless a Pod has a toleration for a taint
+with type ``sku`` equal to ``gpu`` with the ``NoSchedule`` effect.
+
+.. code:: bash
+
+   az aks nodepool add \
+   --resource-group ${AKS_RESOURCE_GROUP} \
+   --cluster-name ${AKS_CLUSTER_NAME} \
+   --name ${AKS_NODE_POOL_NAME} \
+   --node-count 1 \
+   --node-taints sku=gpu:NoSchedule \
+   --no-wait
 
 **********************
  Deleting the Cluster
@@ -152,10 +165,3 @@ To delete the AKS cluster, please use the following Azure CLI command:
 .. code:: bash
 
    az aks delete --resource-group ${AKS_RESOURCE_GROUP} --name ${AKS_CLUSTER_NAME}
-
-************
- Next Steps
-************
-
--  :ref:`install-on-kubernetes`
--  :ref:`k8s-dev-guide`

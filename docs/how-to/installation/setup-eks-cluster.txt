@@ -345,9 +345,9 @@ section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
 There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
 
-It is important to note that if you use EKS to add taints to nodes, you
-must also add tolerations using ``kubectl``; otherwise, Kubernetes will
-be unable to schedule pods on the tainted node.
+It is important to note that if you use EKS to create nodes with taints,
+you must also add tolerations using ``kubectl``; otherwise, Kubernetes
+will be unable to schedule pods on the tainted node.
 
 To taint nodes, users will need to add a taint type and a tag to the
 node group specified in the cluster config from :ref:`cluster-creation`.

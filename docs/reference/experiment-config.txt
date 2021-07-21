@@ -177,11 +177,11 @@ an experiment is created with the Determined CLI. For example:
 
 The ``checkpoint_storage`` section defines how model checkpoints will be
 stored. A checkpoint contains the architecture and weights of the model
-being trained. Determined currently supports four kinds of checkpoint
-storage, ``gcs``, ``hdfs``, ``s3``, and ``shared_fs``, identified by the
-``type`` subfield. Additional fields may also be required, depending on
-the type of checkpoint storage in use. For example, to store checkpoints
-on Google Cloud Storage:
+being trained. Determined currently supports five kinds of checkpoint
+storage, ``gcs``, ``hdfs``, ``s3``, ``azure``, and ``shared_fs``,
+identified by the ``type`` subfield. Additional fields may also be
+required, depending on the type of checkpoint storage in use. For
+example, to store checkpoints on Google Cloud Storage:
 
 .. code:: yaml
 
@@ -272,6 +272,32 @@ an S3-compatible object store such as `MinIO <https://min.io/>`__.
 ``endpoint_url``
    The endpoint to use for S3 clones, e.g., ``http://127.0.0.1:8080/``.
    If not specified, Amazon S3 will be used.
+
+Microsoft Azure Blob Storage
+============================
+
+If ``type: azure`` is specified, checkpoints will be stored in
+Microsoft's Azure Blob Storage.
+
+Please only specify one of ``connection_string`` or the ``account_url``,
+``credential`` tuple.
+
+**Required Fields**
+
+``container``
+   The Azure Blob Storage container name to use.
+
+``connection_string``
+   The connection string for the Azure Blob Storage service account to
+   use.
+
+``account_url``
+   The account URL for the Azure Blob Storage service account to use.
+
+**Optional Fields**
+
+``credential``
+   The credential to use with the ``account_url``.
 
 Shared File System
 ==================
