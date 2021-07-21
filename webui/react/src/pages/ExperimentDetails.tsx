@@ -93,8 +93,9 @@ const ExperimentDetails: React.FC = () => {
       setIsForkModalVisible(false);
       setExperiment(undefined);
 
-      // Route to newly forked experiment.
-      routeToReactUrl(paths.experimentDetails(configId));
+      // Route to reload path to forcibly remount experiment page.
+      const newPath = paths.experimentDetails(configId);
+      routeToReactUrl(paths.reload(newPath));
 
       // Add a slight delay to allow polling function to update.
       setTimeout(() => startPolling(), 100);

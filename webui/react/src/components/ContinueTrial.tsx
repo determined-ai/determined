@@ -70,7 +70,10 @@ const ContinueTrial: React.FC<Props> = forwardRef(function ContinueTrial(
         parentId: trial.experimentId,
       });
       setIsVisible(false);
-      routeToReactUrl(paths.experimentDetails(newExperimentId));
+
+      // Route to reload path to forcibly remount experiment page.
+      const newPath = paths.experimentDetails(newExperimentId);
+      routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = 'Unable to continue trial with the provided config.';
       if (e.name === 'YAMLException') {
