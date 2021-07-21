@@ -69,7 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -105,12 +105,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       searchParams.append('state', URL_ALL);
     }
 
+    // selected rows
+    if (selectedRowKeys && selectedRowKeys.length > 0) {
+      selectedRowKeys.forEach(rowKey => searchParams.append('row', String(rowKey)));
+    }
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ filters, isUrlParsed, pagination, sorter ]);
+  }, [ filters, isUrlParsed, pagination, selectedRowKeys, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -156,6 +161,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     const state = urlSearchParams.getAll('state');
     if (state != null) {
       filters.states = (state.includes(URL_ALL) ? undefined : state);
+    }
+
+    // selected rows
+    const rows = urlSearchParams.getAll('row');
+    if (rows != null) {
+      setSelectedRowKeys(rows.map(row => parseInt(row)));
     }
 
     setFilters(filters);
