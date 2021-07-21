@@ -14,14 +14,15 @@ import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { Renderer } from 'components/Table';
+import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TrialActionDropdown from 'components/TrialActionDropdown';
-import handleError, { ErrorType } from 'ErrorHandler';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import { paths } from 'routes/utils';
-import { getExpTrials } from 'services/api';
+import { getExpTrials, openOrCreateTensorboard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
@@ -29,14 +30,20 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  CheckpointWorkloadExtended, ExperimentBase, Pagination, RunState, TrialFilters, TrialItem,
+  CheckpointWorkloadExtended, CommandTask, ExperimentBase,
+  Pagination, RunState, TrialFilters, TrialItem,
 } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
 
 import { columns as defaultColumns } from './ExperimentTrials.table';
 
 interface Props {
   experiment: ExperimentBase;
+}
+
+enum Action {
+  OpenTensorBoard = 'OpenTensorboard',
 }
 
 const URL_ALL = 'all';
@@ -156,6 +163,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     setPagination(pagination);
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, sorter ]);
+
+  const trialMap = useMemo(() => {
+    return (trials || []).reduce((acc, experiment) => {
+      acc[experiment.id] = experiment;
+      return acc;
+    }, {} as Record<string, TrialItem>);
+  }, [ trials ]);
+
+  const selectedTrials = useMemo(() => {
+    return selectedRowKeys.map(key => trialMap[key]);
+  }, [ trialMap, selectedRowKeys ]);
 
   const handleFilterChange = useCallback((filters: TrialFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
@@ -306,6 +324,50 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id, canceler, pagination, sorter, filters ]);
 
+  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+    if (action === Action.OpenTensorBoard) {
+      return openOrCreateTensorboard(
+        { trialIds: selectedTrials.map(trial => trial.id) },
+      );
+    }
+    return Promise.all(selectedTrials.map(() => Promise.resolve()));
+  }, [ selectedTrials ]);
+
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
+
+  const handleBatchAction = useCallback(async (action: Action) => {
+    try {
+      const result = await sendBatchActions(action);
+      if (action === Action.OpenTensorBoard && result) {
+        openCommand(result as CommandTask);
+      }
+
+      /*
+       * Deselect selected rows since their states may have changed where they
+       * are no longer part of the filter criteria.
+       */
+      clearSelected();
+
+      // Refetch experiment list to get updates based on batch action.
+      await fetchExperimentTrials();
+    } catch (e) {
+      const publicSubject = action === Action.OpenTensorBoard ?
+        'Unable to View TensorBoard for Selected Experiments' :
+        `Unable to ${action} Selected Experiments`;
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject,
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ clearSelected, fetchExperimentTrials, sendBatchActions ]);
+
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
   // Get new trials based on changes to the pagination, sorter and filters.
@@ -327,6 +389,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   return (
     <>
       <Section>
+        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+            View in TensorBoard
+          </Button>
+        </TableBatch>
         <ResponsiveTable
           columns={columns}
           dataSource={trials}
@@ -334,7 +401,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
-          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          rowSelection={{
+            onChange: handleTableRowSelect,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys,
+          }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange} />
