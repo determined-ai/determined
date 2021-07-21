@@ -81,6 +81,7 @@ const ExperimentList: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
+  const [ experimentMap, setExperimentMap ] = useState<Record<string, ExperimentItem>>({});
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
@@ -221,11 +222,13 @@ const ExperimentList: React.FC = () => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
-  const experimentMap = useMemo(() => {
-    return (experiments || []).reduce((acc, experiment) => {
-      acc[experiment.id] = experiment;
-      return acc;
-    }, {} as Record<string, ExperimentItem>);
+  useEffect(() => {
+    setExperimentMap(experimentMap => {
+      return (experiments || []).reduce((acc, experiment) => {
+        acc[experiment.id] = experiment;
+        return acc;
+      }, experimentMap);
+    });
   }, [ experiments ]);
 
   const selectedExperiments = useMemo(() => {
@@ -640,7 +643,6 @@ const ExperimentList: React.FC = () => {
       limit: tablePagination.pageSize,
       offset: (tablePagination.current - 1) * tablePagination.pageSize,
     }));
-    setSelectedRowKeys([]);
   }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
@@ -714,7 +716,11 @@ const ExperimentList: React.FC = () => {
         pagination={getFullPaginationConfig(pagination, total)}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
-        rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+        rowSelection={{
+          onChange: handleTableRowSelect,
+          preserveSelectedRowKeys: true,
+          selectedRowKeys,
+        }}
         showSorterTooltip={false}
         size="small"
         onChange={handleTableChange}
