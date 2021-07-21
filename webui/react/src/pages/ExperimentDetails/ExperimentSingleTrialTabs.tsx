@@ -122,7 +122,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
-  if (!hasLoaded) return <Spinner tip={`Fetching trial ${trialId} details...`} />;
+  if (!hasLoaded) return <Spinner tip={ trialId === undefined ?
+    'Waiting for trial...' : `Fetching trial ${trialId} details...`
+  } />;
 
   return (
     <>
@@ -143,7 +145,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             : NoDataAlert}
         </TabPane>
         <TabPane key="configuration" tab="Configuration">
-          <React.Suspense fallback={<Spinner tip="Loading experiment configuration editor..." />}>
+          <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
             <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
         </TabPane>

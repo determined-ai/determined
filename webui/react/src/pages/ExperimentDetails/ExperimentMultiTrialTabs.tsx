@@ -59,7 +59,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
   return (
     <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="visualization" tab="Visualization">
-        <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
           <ExperimentVisualization
             basePath={`${basePath}/${TabType.Visualization}`}
             experiment={experiment}
@@ -70,7 +70,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
         <ExperimentTrials experiment={experiment} />
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading experiment configuration editor..." />}>
+        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
           <ExperimentConfiguration experiment={experiment} />
         </React.Suspense>
       </TabPane>
