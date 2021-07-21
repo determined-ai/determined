@@ -28,6 +28,10 @@ enum State {
   STATE_ERROR = 8;
   // The experiment has been deleted.
   STATE_DELETED = 9;
+  // The experiment is deleting.
+  STATE_DELETING = 10;
+  // The experiment failed to delete.
+  STATE_DELETE_FAILED = 11;
 }
 
 // Experiment is a collection of one or more trials that are exploring a

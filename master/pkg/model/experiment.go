@@ -39,8 +39,6 @@ const (
 	CanceledState State = "CANCELED"
 	// CompletedState constant.
 	CompletedState State = "COMPLETED"
-	// DeletedState constant.
-	DeletedState State = "DELETED"
 	// ErrorState constant.
 	ErrorState State = "ERROR"
 	// PausedState constant.
@@ -51,6 +49,12 @@ const (
 	StoppingCompletedState State = "STOPPING_COMPLETED"
 	// StoppingErrorState constant.
 	StoppingErrorState State = "STOPPING_ERROR"
+	// DeletingState constant.
+	DeletingState State = "DELETING"
+	// DeleteFailedState constant.
+	DeleteFailedState State = "DELETE_ERROR"
+	// DeletedState constant.
+	DeletedState State = "DELETED"
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
@@ -118,9 +122,6 @@ var ExperimentTransitions = map[State]map[State]bool{
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
 	},
-	CanceledState:  {},
-	CompletedState: {},
-	ErrorState:     {},
 	PausedState: {
 		ActiveState:            true,
 		StoppingCanceledState:  true,
@@ -139,6 +140,23 @@ var ExperimentTransitions = map[State]map[State]bool{
 		ActiveState: true,
 		ErrorState:  true,
 	},
+	CanceledState: {
+		DeletingState: true,
+	},
+	CompletedState: {
+		DeletingState: true,
+	},
+	ErrorState: {
+		DeletingState: true,
+	},
+	DeletingState: {
+		DeletedState:      true,
+		DeleteFailedState: true,
+	},
+	DeleteFailedState: {
+		DeletedState: true,
+	},
+	DeletedState: {},
 }
 
 // ExperimentReverseTransitions lists possible ancestor states.
