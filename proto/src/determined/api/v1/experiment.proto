@@ -527,3 +527,18 @@ message GetHPImportanceResponse {
   // A map of validation metric names to their respective entries.
   map<string, MetricHPImportance> validation_metrics = 2;
 }
+
+// Request for an experiment model definition.
+message GetModelDefRequest {
+  // The id of the experiment.
+  int32 experiment_id = 1;
+}
+
+// Response to GetModelDefRequest.
+message GetModelDefResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "b64_tgz" ] }
+  };
+  // The base64-encoded, gzipped, tarball.
+  string b64_tgz = 1;
+}

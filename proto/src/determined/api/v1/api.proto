@@ -281,6 +281,15 @@ service Determined {
       tags: "Experiments"
     };
   }
+  // Get the model definition of an experiment.
+  rpc GetModelDef(GetModelDefRequest) returns (GetModelDefResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/model_def"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
   // Get a list of unique experiment labels (sorted by popularity).
   rpc GetExperimentLabels(GetExperimentLabelsRequest)
       returns (GetExperimentLabelsResponse) {

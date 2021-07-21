@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -1253,4 +1254,18 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	return &apiv1.GetBestSearcherValidationMetricResponse{
 		Metric: metric,
 	}, nil
+}
+
+func (a *apiServer) GetModelDef(
+	_ context.Context, req *apiv1.GetModelDefRequest,
+) (*apiv1.GetModelDefResponse, error) {
+	tgz, err := a.m.db.ExperimentModelDefinitionRaw(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching model definition from database: %d", req.ExperimentId)
+	}
+
+	b64Tgz := base64.StdEncoding.EncodeToString(tgz)
+
+	return &apiv1.GetModelDefResponse{B64Tgz: b64Tgz}, nil
 }

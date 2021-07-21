@@ -92,8 +92,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 			},
 			trainDir,
 		),
-		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), modelCopy),
-		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), ContainerWorkDir),
 	}
 
 	res.Description = fmt.Sprintf(
