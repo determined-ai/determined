@@ -137,11 +137,13 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		switch {
 		case t.targetState == model.ActiveState:
 			return t.maybeAllocate(ctx)
-		case t.targetState == model.PausedState:
+		case t.targetState == model.PausedState, t.targetState == model.StoppingCanceledState:
 			return t.terminate(ctx, preempt)
 		case model.StoppingStates[t.targetState]:
 			return t.terminate(ctx, kill)
 		}
+		return nil
+
 	case TrialSearcherState:
 		t.searcher = msg
 		switch {
@@ -150,6 +152,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		case t.searcher.Finished():
 			return t.terminate(ctx, noop)
 		}
+		return nil
 
 	case sproto.ResourcesAllocated, sproto.TaskContainerStateChanged,
 		sproto.ReleaseResources, sproto.ContainerLog:
@@ -162,8 +165,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
-
-	return nil
 }
 
 func (t *trial) prestart(ctx *actor.Context) error {

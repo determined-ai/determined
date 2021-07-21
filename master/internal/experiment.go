@@ -399,7 +399,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
-			if ok := e.updateState(ctx, model.StoppingCanceledState); !ok {
+			if ok := e.updateState(ctx, model.StoppingKilledState); !ok {
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,
 					"experiment in incompatible state %s", e.State,
 				))

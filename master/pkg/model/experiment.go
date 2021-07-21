@@ -43,6 +43,8 @@ const (
 	ErrorState State = "ERROR"
 	// PausedState constant.
 	PausedState State = "PAUSED"
+	// StoppingKilledState constant.
+	StoppingKilledState State = "STOPPING_KILLED"
 	// StoppingCanceledState constant.
 	StoppingCanceledState State = "STOPPING_CANCELED"
 	// StoppingCompletedState constant.
@@ -89,6 +91,7 @@ var RunningStates = map[State]bool{
 // StoppingStates are the valid stopping states.
 var StoppingStates = map[State]bool{
 	StoppingCanceledState:  true,
+	StoppingKilledState:    true,
 	StoppingCompletedState: true,
 	StoppingErrorState:     true,
 }
@@ -129,6 +132,11 @@ var ExperimentTransitions = map[State]map[State]bool{
 		StoppingErrorState:     true,
 	},
 	StoppingCanceledState: {
+		CanceledState:       true,
+		StoppingKilledState: true,
+		StoppingErrorState:  true,
+	},
+	StoppingKilledState: {
 		CanceledState:      true,
 		StoppingErrorState: true,
 	},
