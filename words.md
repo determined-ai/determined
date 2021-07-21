@@ -47,9 +47,25 @@ team.
 
 ## Decisions after discussion:
 
-* **???**: Allocation lifetime
+* **Allocation**: Allocation lifetime
+  * "Runs" is too overloaded in our industry, and could be interpreted as a
+    "full start-to-finish execution"
+  * "Attempts" implies that second attemps are due to failure.
+  * "Allocation" is quite literal, and is neutral as to why multiple of them
+    might occur in order to complete a single Task
+  * Most users are unlikely to encounter this word often, only in advanced
+    metrics APIs and possibly in log filtering.
+
 * **Task**: Work Unit
+  * Not ideal that "Task" is in the same vocab as "Job", but not world-ending
+  * Task definitely feels like something smaller than a "Job"
+
 * **Job**: Submission
+  * Feels very natural, "a user submits jobs, which might be of many kinds"
+  * Doesn't align perfectly with k8s "Jobs" but aligns better with slurm "Jobs"
+  * In some systems, "Job" means something that runs start-to-finish (not a
+    service, not interactive), but we decided that introducing a qualifer like
+    "Interactive Jobs" was an acceptable way to describe things like Notebooks.
 
 ## Other Related Concepts:
 
