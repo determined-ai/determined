@@ -177,7 +177,7 @@ an experiment is created with the Determined CLI. For example:
 
 The ``checkpoint_storage`` section defines how model checkpoints will be
 stored. A checkpoint contains the architecture and weights of the model
-being trained. Determined currently supports five kinds of checkpoint
+being trained. Determined currently supports several kinds of checkpoint
 storage, ``gcs``, ``hdfs``, ``s3``, ``azure``, and ``shared_fs``,
 identified by the ``type`` subfield. Additional fields may also be
 required, depending on the type of checkpoint storage in use. For

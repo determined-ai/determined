@@ -94,8 +94,9 @@ Helm Chart </helm/determined-0.5.0.tgz>`.
    stored. This can be overridden on a per-experiment basis in the
    :ref:`experiment-configuration`. A checkpoint contains the
    architecture and weights of the model being trained. Determined
-   currently supports four kinds of checkpoint storage, ``gcs``, ``s3``,
-   ``azure`` and ``shared_fs``, identified by the ``type`` subfield.
+   currently supports several kinds of checkpoint storage, ``gcs``,
+   ``s3``, ``azure`` and ``shared_fs``, identified by the ``type``
+   subfield.
 
    -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage
       (GCS). Authentication is done using GCP's "`Application Default

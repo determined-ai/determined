@@ -774,7 +774,7 @@ The master supports the following configuration settings:
    stored. This can be overridden on a per-experiment basis in the
    :ref:`experiment-configuration`. A checkpoint contains the
    architecture and weights of the model being trained. Determined
-   currently supports five kinds of checkpoint storage, ``gcs``,
+   currently supports several kinds of checkpoint storage, ``gcs``,
    ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
    ``type`` subfield.
 
