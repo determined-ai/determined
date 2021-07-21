@@ -2,7 +2,7 @@ import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
+  GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetNotebooksParams,
   GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
   GetTrialsParams, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
@@ -10,7 +10,8 @@ import {
 import { generateApi, generateDetApi } from 'services/utils';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo,
-  ExperimentBase, ExperimentPagination, Log, RawJson, ResourcePool, Telemetry, Template,
+  ExperimentBase, ExperimentItem, ExperimentPagination, Log,
+  RawJson, ResourcePool, Telemetry, Template,
   TrialDetails, TrialPagination, ValidationHistory,
 } from 'types';
 import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
@@ -76,6 +77,10 @@ export const getResourceAllocationAggregated = generateDetApi<
 export const getExperiments = generateDetApi<
   GetExperimentsParams, Api.V1GetExperimentsResponse, ExperimentPagination
 >(Config.getExperiments);
+
+export const getExperiment = generateDetApi<
+  GetExperimentParams, Api.V1GetExperimentResponse, ExperimentItem
+>(Config.getExperiment);
 
 export const getExperimentDetails = generateDetApi<
   ExperimentDetailsParams, Api.V1GetExperimentResponse, ExperimentBase

@@ -27,7 +27,8 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
+  activateExperiment, archiveExperiment, cancelExperiment,
+  getExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -88,9 +89,19 @@ const ExperimentList: React.FC = () => {
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ search, setSearch ] = useState('');
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ total, setTotal ] = useState(0);
+
+  const updateExperimentMap = useCallback((experiments) => {
+    setExperimentMap(experimentMap => {
+      return (experiments || []).reduce((acc: Record<string,
+        ExperimentItem>, experiment: ExperimentItem) => {
+        acc[experiment.id] = experiment;
+        return acc;
+      }, experimentMap);
+    });
+  }, []);
 
   /*
    * When filters changes update the page URL.
@@ -140,12 +151,17 @@ const ExperimentList: React.FC = () => {
       searchParams.append('user', URL_ALL);
     }
 
+    // selected rows
+    if (selectedRowKeys && selectedRowKeys.length > 0) {
+      selectedRowKeys.forEach(rowKey => searchParams.append('row', String(rowKey)));
+    }
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+  }, [ filters, isUrlParsed, pagination, search, selectedRowKeys, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -216,20 +232,26 @@ const ExperimentList: React.FC = () => {
       filters.users = (user.includes(URL_ALL) ? undefined : user);
     }
 
+    // selected rows
+    const rows = urlSearchParams.getAll('row');
+    if (rows != null) {
+      const rowKeys = rows.map(row => parseInt(row));
+      rowKeys.forEach(async row => {
+        const experiment = await getExperiment({ id: row });
+        updateExperimentMap([ experiment ]);
+      });
+      setSelectedRowKeys(rowKeys);
+    }
+
     setFilters(filters);
     setIsUrlParsed(true);
     setPagination(pagination);
     setSorter(sorter);
-  }, [ filters, isUrlParsed, pagination, search, sorter ]);
+  }, [ filters, isUrlParsed, pagination, search, sorter, updateExperimentMap ]);
 
   useEffect(() => {
-    setExperimentMap(experimentMap => {
-      return (experiments || []).reduce((acc, experiment) => {
-        acc[experiment.id] = experiment;
-        return acc;
-      }, experimentMap);
-    });
-  }, [ experiments ]);
+    updateExperimentMap(experiments);
+  }, [ experiments, updateExperimentMap ]);
 
   const selectedExperiments = useMemo(() => {
     return selectedRowKeys.map(key => experimentMap[key]);
@@ -253,6 +275,7 @@ const ExperimentList: React.FC = () => {
     };
     for (let i = 0; i < selectedExperiments.length; i++) {
       const experiment = selectedExperiments[i];
+      if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
       const isKillable = isTaskKillable(experiment);
