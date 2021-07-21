@@ -479,7 +479,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 				}
 
 				slotsSummary[strconv.Itoa(curSlot)] = model.SlotSummary{
-					ID:        strconv.Itoa(curSlot),
+					ID:        strconv.Itoa(i),
 					Device:    device.Device{Type: deviceType},
 					Enabled:   true,
 					Container: podInfo.container,
