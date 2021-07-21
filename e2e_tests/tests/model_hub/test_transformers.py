@@ -186,6 +186,81 @@ def test_text_classification_xnli_amp() -> None:
 
 
 @pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_marianmt() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "marianmt_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 16)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_marianmt_amp() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "marianmt_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 16)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_hparam(config, "use_apex_amp", True)
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_t5() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "t5_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 16)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_t5_amp() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "t5_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 16)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_hparam(config, "use_apex_amp", True)
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_mbart() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "mbart_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 8)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
+def test_translation_mbart_amp() -> None:
+    example_path = conf.model_hub_examples_path("huggingface/translation")
+    config = conf.load_config(os.path.join(example_path, "mbart_config.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_global_batch_size(config, 8)
+    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_hparam(config, "use_apex_amp", True)
+    config = set_docker_image(config)
+
+    exp.run_basic_test_with_temp_config(config, example_path, 1)
+
+
+@pytest.mark.model_hub_transformers  # type: ignore
 def test_squad() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad.yaml"))
