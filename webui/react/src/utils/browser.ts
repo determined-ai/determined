@@ -1,4 +1,4 @@
-import { parseUrl } from 'routes/utils';
+import { parseUrl, routeToExternalUrl } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -92,7 +92,7 @@ export const refreshPage = (): void => {
   const now = Date.now();
   const url = parseUrl(window.location.href);
   url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
-  window.location.href = url.toString();
+  routeToExternalUrl(url.toString());
 };
 
 /*

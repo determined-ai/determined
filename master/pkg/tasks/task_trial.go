@@ -27,7 +27,6 @@ type TrialSpec struct {
 	LatestCheckpoint    *model.Checkpoint
 	InitialWorkload     workload.Workload
 	WorkloadManagerType model.WorkloadManagerType
-	AdditionalFiles     archive.Archive
 
 	// This is used to hint the resource manager to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
@@ -73,7 +72,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		),
 	}
 
-	res.Archives = res.makeArchives([]container.RunArchive{
+	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				s.Base.AgentUserGroup.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
@@ -95,7 +94,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		),
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), modelCopy),
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.ModelDefinition), ContainerWorkDir),
-	})
+	}
 
 	res.Description = fmt.Sprintf(
 		"exp-%d-trial-%d",
@@ -128,7 +127,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
-	res.EnvVars = res.makeEnvVars(envVars)
+	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{
 		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),

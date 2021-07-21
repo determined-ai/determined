@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
+import { ContinueTrialHandles } from 'components/ContinueTrial';
 import CreateExperimentModal, { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
@@ -36,7 +37,8 @@ const ExperimentDetails: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
-  const [ isSingleTrial, setIsSingleTrial ] = useState(false);
+  const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
+  const continueTrialRef = useRef<ContinueTrialHandles>(null);
 
   const id = parseInt(experimentId);
 
@@ -93,6 +95,10 @@ const ExperimentDetails: React.FC = () => {
     setIsForkModalVisible(true);
   }, [ experiment?.configRaw ]);
 
+  const showContinueTrial = useCallback((): void => {
+    continueTrialRef.current?.show();
+  }, [ continueTrialRef ]);
+
   const handleForkModalCancel = useCallback(() => {
     setIsForkModalVisible(false);
   }, []);
@@ -114,12 +120,14 @@ const ExperimentDetails: React.FC = () => {
       // Add a slight delay to allow polling function to update.
       setTimeout(() => startPolling(), 100);
     } catch (e) {
-      setForkModalError(e.response?.data?.message || 'Unable to create experiment.');
       let errorMessage = 'Unable to fork experiment with the provided config.';
       if (e.name === 'YAMLException') {
         errorMessage = e.message;
       } else if (e.response?.data?.message) {
         errorMessage = e.response.data.message;
+      } else if (e.json) {
+        const errorJSON = await e.json();
+        errorMessage = errorJSON.error?.error;
       }
       setForkModalError(errorMessage);
     }
@@ -136,7 +144,7 @@ const ExperimentDetails: React.FC = () => {
   }, [ canceler ]);
 
   useEffect(() => {
-    if (!isSingleTrial || firstTrialId != null) return;
+    if (isSingleTrial === false || firstTrialId != null) return;
     return () => stopPollingFirstTrialId();
   }, [ firstTrialId, isSingleTrial, stopPollingFirstTrialId ]);
 
@@ -147,7 +155,7 @@ const ExperimentDetails: React.FC = () => {
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} type={MessageType.Warning} />;
-  } else if (!experiment) {
+  } else if (!experiment || isSingleTrial === undefined) {
     return <Spinner tip={`Loading experiment ${experimentId} details...`} />;
   }
 
@@ -156,12 +164,18 @@ const ExperimentDetails: React.FC = () => {
       headerComponent={<ExperimentDetailsHeader
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
+        isSingleTrial={isSingleTrial}
+        showContinueTrial={showContinueTrial}
         showForkModal={showForkModal}
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
-        <ExperimentSingleTrialTabs experiment={experiment} trialId={firstTrialId} />
+        <ExperimentSingleTrialTabs
+          continueTrialRef={continueTrialRef}
+          experiment={experiment}
+          trialId={firstTrialId}
+        />
       ) : (
         <ExperimentMultiTrialTabs experiment={experiment} />
       )}

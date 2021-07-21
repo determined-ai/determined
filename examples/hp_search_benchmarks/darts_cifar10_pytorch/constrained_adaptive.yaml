@@ -3,9 +3,6 @@ name: constrained_adaptive_darts_cnn_nas
 data:
   data_download_dir: /data
 
-min_validation_period:
-  batches: 500
-
 hyperparameters:
   use_constraints: true
   learning_rate: 0.025
@@ -125,24 +122,28 @@ resources:
 scheduling_unit: 100
 
 bind_mounts:
-    - host_path: /tmp
-      container_path: /data
-      read_only: false
+  - host_path: /tmp
+    container_path: /data
+    read_only: false
 
+records_per_epoch: 50000
+min_validation_period:
+  epochs: 1
+min_checkpoint_period:
+  epochs: 25
 
 searcher:
   name: adaptive_asha
   metric: top1_accuracy
   smaller_is_better: false
-  # 50k examples in train, 96 examples per batch, 100 batches per step -> 300 epochs ~ 1562 steps
   max_length:
     batches: 156200
-  max_trials: 10000
+  max_trials: 1000
   mode: aggressive
-  # A maximum of 4 rungs corresponds to a minimum training length of 1/divisor^(max_rungs - 1) = 1/64 * max_length 
+  # A maximum of 5 rungs corresponds to a minimum training length of 1/divisor^(max_rungs - 1) = 1/256 * max_length 
   # per trial.  Trials with higher validation accuracy will be trained for longer than this minimum will poor
   # trials will be stopped early.
-  max_rungs: 4
+  max_rungs: 5
   max_concurrent_trials: 16
 
 entrypoint: model_def:DARTSCNNTrial

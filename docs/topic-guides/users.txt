@@ -215,7 +215,7 @@ specified user and group.
    agent, tasks created by that user will run as the root user on the
    agent. This behavior may change in the future.
 
-   If the task does not use `bind_mount` option, the effect of running
+   If the task does not use ``bind_mount`` option, the effect of running
    as root will be limited to the task container and not intrude on the
    agent itself.
 

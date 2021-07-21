@@ -51,7 +51,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 		},
 	}
 	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
-	internal.DefaultConfig().TaskContainerDefaults.MergeIntoConfig(&config)
+	internal.DefaultConfig().TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 	e := &model.Experiment{
 		State:                model.ActiveState,

@@ -86,14 +86,13 @@ $line-height: 22px;
       overflow: auto;
       padding: $padding;
     }
-    .fade::after {
+    %fade {
       background:
         linear-gradient(
           to bottom,
           rgba(255, 255, 255, 0),
           rgba(255, 255, 255, 1) 50%
         );
-      bottom: 0;
       content: '';
       height: $line-height;
       left: 0;
@@ -101,17 +100,16 @@ $line-height: 22px;
       text-align: center;
       width: 90%;
     }
+    .fade::after {
+      bottom: 0;
+
+      @extend %fade;
+    }
     .fade::before {
-      background:
-        linear-gradient(
-          to top,
-          rgba(255, 255, 255, 0),
-          rgba(255, 255, 255, 1) 50%
-        );
       bottom: unset;
       top: 0;
 
-      @extend .fade::after;
+      @extend %fade;
     }
   }
   hr {

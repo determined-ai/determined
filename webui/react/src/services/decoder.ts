@@ -2,7 +2,8 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
-import { isNumber, isObject, isPrimitive } from 'utils/data';
+import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
+import { flattenHyperparameters } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -148,24 +149,24 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
 };
 
-const ioToExperimentHyperparameter = (
+const ioToHyperparametereter = (
   io: ioTypes.ioTypeHyperparameter,
-): types.ExperimentHyperParam => {
+): types.Hyperparameter => {
   return {
     base: io.base != null ? io.base : undefined,
     count: io.count != null ? io.count : undefined,
     maxval: io.maxval != null ? io.maxval : undefined,
     minval: io.minval != null ? io.minval : undefined,
-    type: io.type as types.ExperimentHyperParamType,
+    type: io.type as types.HyperparameterType,
     val: io.val != null ? io.val : undefined,
     vals: io.vals != null ? io.vals : undefined,
   };
 };
 
-const ioToExperimentHyperparameters = (
+const ioToHyperparametereters = (
   io: ioTypes.ioTypeHyperparameters,
-): types.ExperimentHyperParams => {
-  const hparams: Record<string, types.ExperimentHyperParam> = {};
+): types.Hyperparameters => {
+  const hparams: Record<string, unknown> = {};
   Object.keys(io).forEach(key => {
     /*
      * Keep only the hyperparameters which have a primitive `val` value or
@@ -173,16 +174,18 @@ const ioToExperimentHyperparameters = (
      * to be anything (map, list, etc). `vals` will either be undefined or
      * a list of anything (same value types as `val`).
      */
-    const ioHp = io[key];
-    const valIsNotPrimitive = ioHp.val != null && !isPrimitive(ioHp.val);
+    const ioHp = io[key] as ioTypes.ioTypeHyperparameter;
+    const valIsPrimitive = isPrimitive(ioHp.val);
     const valListIsPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
       return acc && (val != null && isPrimitive(val));
     }, true);
-    if (!valIsNotPrimitive || valListIsPrimitive) {
-      hparams[key] = ioToExperimentHyperparameter(ioHp);
+    if (!ioHp.type && isObject(ioHp)) {
+      hparams[key] = ioToHyperparametereters(ioHp as Record<string, unknown>);
+    } else if (valIsPrimitive || valListIsPrimitive) {
+      hparams[key] = ioToHyperparametereter(ioHp);
     }
   });
-  return hparams;
+  return hparams as types.Hyperparameters;
 };
 
 export const ioToExperimentConfig =
@@ -203,7 +206,7 @@ export const ioToExperimentConfig =
       type: io.data_layer.type,
     } : undefined,
     description: io.description || undefined,
-    hyperparameters: ioToExperimentHyperparameters(io.hyperparameters),
+    hyperparameters: ioToHyperparametereters(io.hyperparameters),
     labels: io.labels || undefined,
     name: io.name,
     profiling: { enabled: !!io.profiling?.enabled },
@@ -262,12 +265,16 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
+  const hyperparameters = flattenHyperparameters(
+    ioConfig.hyperparameters as types.Hyperparameters,
+  );
   return {
     archived: exp.archived,
     config: ioToExperimentConfig(ioConfig),
     configRaw: config,
     description: exp.description,
     endTime: exp.endTime as unknown as string,
+    hyperparameters,
     id: exp.id,
     // numTrials
     // labels
@@ -366,7 +373,7 @@ const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialItem => {
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
     endTime: data.endTime && data.endTime as unknown as string,
     experimentId: data.experimentId,
-    hparams: data.hparams,
+    hyperparameters: flattenObject(data.hparams),
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     startTime: data.startTime as unknown as string,

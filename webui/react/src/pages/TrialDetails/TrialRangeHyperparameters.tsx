@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Section from 'components/Section';
 import {
-  ExperimentBase, ExperimentHyperParamType, TrialDetails,
+  ExperimentBase, HyperparameterType, TrialDetails,
 } from 'types';
 import { clamp } from 'utils/number';
 
@@ -18,34 +18,26 @@ export interface Props {
 interface HyperParameter {
   name: string;
   range: [number, number];
-  type: ExperimentHyperParamType;
+  type: HyperparameterType;
   val: string;
   vals: string[];
 }
 
 const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props) => {
   const hyperparameters: HyperParameter[] = useMemo(() => {
-    const config = Object.entries(experiment.config.hyperparameters).map(([ name, value ]) => {
-      return { name, value };
+    return Object.entries(experiment.hyperparameters).map(([ name, value ]) => {
+      return {
+        name: name,
+        range: value.type === HyperparameterType.Log ?
+          [ 10**(value.minval || -5), 10**(value.maxval || 1) ] :
+          [ value.minval || 0, value.maxval || 1 ],
+        type: value.type,
+        val: String(trial.hyperparameters[name] || 0),
+        vals: value.vals?.map(val => String(val)) ||
+          [ String(value.minval || 0), String(value.maxval || 1) ],
+      };
     });
-    const value = Object.entries(trial.hparams).map(([ name, value ]) => {
-      return { name, value };
-    });
-    return config.map(hp => {
-      return (
-        {
-          name: hp.name,
-          range: hp.value.type === ExperimentHyperParamType.Log ?
-            [ 10**(hp.value.minval || -5), 10**(hp.value.maxval || 1) ] :
-            [ hp.value.minval || 0, hp.value.maxval || 1 ],
-          type: hp.value.type,
-          val: String(value.find(ob => ob.name === hp.name)?.value || 0),
-          vals: hp.value.vals?.map(val => String(val)) ||
-          [ String(hp.value.minval || 0), String(hp.value.maxval || 1) ],
-        }
-      );
-    });
-  }, [ experiment.config.hyperparameters, trial.hparams ]);
+  }, [ experiment.hyperparameters, trial.hyperparameters ]);
 
   return (
     <Section bodyBorder bodyScroll>
@@ -65,14 +57,14 @@ interface RangeProps {
 const HyperparameterRange:React.FC<RangeProps> = ({ hp }: RangeProps) => {
   const pointerPosition = useMemo(() => {
     switch (hp.type) {
-      case ExperimentHyperParamType.Constant:
+      case HyperparameterType.Constant:
         return 0.5;
-      case ExperimentHyperParamType.Categorical:
+      case HyperparameterType.Categorical:
       {
         const idx = hp.vals.indexOf(hp.val);
         return ((idx === -1 ? 0 : idx)/(hp.vals.length-1));
       }
-      case ExperimentHyperParamType.Log:
+      case HyperparameterType.Log:
         return clamp(1-Math.log(parseFloat(hp.val)/hp.range[0])/
             (Math.log(hp.range[1]/hp.range[0])), 0, 1);
       default:
@@ -103,14 +95,14 @@ interface TrackProps {
 
 const ValuesTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   switch(hp.type) {
-    case ExperimentHyperParamType.Constant:
+    case HyperparameterType.Constant:
       return <div className={css.valuesTrack} />;
-    case ExperimentHyperParamType.Categorical:
+    case HyperparameterType.Categorical:
       return <div className={css.valuesTrack}>
         {hp.vals.map(option =>
           <p className={css.text} key={option.toString()}>{option}</p>)}
       </div>;
-    case ExperimentHyperParamType.Log:
+    case HyperparameterType.Log:
       return <div className={css.valuesTrack}>
         {(new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1))).fill(null)
           .map((_, idx) =>
@@ -132,7 +124,7 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
   let trackType;
   let content;
   switch(hp.type) {
-    case ExperimentHyperParamType.Categorical:
+    case HyperparameterType.Categorical:
       trackType = css.grayTrack;
       content = hp.vals.map(option =>
         <div
@@ -140,13 +132,13 @@ const MainTrack: React.FC<TrackProps> = ({ hp }: TrackProps) => {
           key={option.toString()}
         />);
       break;
-    case ExperimentHyperParamType.Constant:
+    case HyperparameterType.Constant:
       trackType = css.constantTrack;
       content = <div
         className={css.trackOption}
       />;
       break;
-    case ExperimentHyperParamType.Log:
+    case HyperparameterType.Log:
       trackType = css.blueTrack;
       content = (new Array(Math.floor(Math.log10((hp.range[1])/(hp.range[0]))+1)))
         .fill(null)
@@ -173,19 +165,19 @@ interface PHRVProps {
 
 const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp }: PHRVProps) => {
   switch (hp.type) {
-    case ExperimentHyperParamType.Categorical:
+    case HyperparameterType.Categorical:
       return <p className={css.text}>{hp.val}</p>;
-    case ExperimentHyperParamType.Constant:
+    case HyperparameterType.Constant:
       return <p className={css.text}>{hp.val}</p>;
-    case ExperimentHyperParamType.Double:
+    case HyperparameterType.Double:
       return (
         <p className={css.text}>
           <HumanReadableFloat num={parseFloat(hp.val as string)} precision={3} />
         </p>
       );
-    case ExperimentHyperParamType.Int:
+    case HyperparameterType.Int:
       return <p className={css.text}>{parseInt(hp.val as string)}</p>;
-    case ExperimentHyperParamType.Log:
+    case HyperparameterType.Log:
       return (
         <Tooltip title={hp.val}>
           <p className={css.text}>{parseFloat(hp.val as string).toExponential(2)}</p>

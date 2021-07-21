@@ -6,21 +6,21 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import { paths } from 'routes/utils';
-import { ExperimentHyperParams, ExperimentHyperParamType, MetricName, Primitive } from 'types';
+import {
+  HyperparametersFlattened, HyperparameterType, MetricName, Primitive, RecordKey,
+} from 'types';
 import { ColorScale, glasbeyColor, rgba2str, rgbaFromGradient, str2rgba } from 'utils/color';
 import { isNumber } from 'utils/data';
 import { alphanumericSorter, numericSorter, primitiveSorter } from 'utils/sort';
 
 import css from './HpTrialTable.module.scss';
 
-type HParams = Record<string, Primitive>;
-
 interface Props {
   colorScale?: ColorScale[];
   experimentId: number;
   filteredTrialIdMap?: Record<number, boolean>;
   highlightedTrialId?: number;
-  hyperparameters: ExperimentHyperParams;
+  hyperparameters: HyperparametersFlattened;
   metric: MetricName;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
@@ -29,7 +29,7 @@ interface Props {
 }
 
 export interface TrialHParams {
-  hparams: HParams;
+  hparams: Record<RecordKey, Primitive>;
   id: number;
   metric: number | null;
 }
@@ -95,10 +95,10 @@ const HpTrialTable: React.FC<Props> = ({
         const value = record.hparams[key];
         const type = hyperparameters[key].type;
         const isValidType = [
-          ExperimentHyperParamType.Constant,
-          ExperimentHyperParamType.Double,
-          ExperimentHyperParamType.Int,
-          ExperimentHyperParamType.Log,
+          HyperparameterType.Constant,
+          HyperparameterType.Double,
+          HyperparameterType.Int,
+          HyperparameterType.Log,
         ].includes(type);
         if (isNumber(value) && isValidType) {
           return <HumanReadableFloat num={value} />;
@@ -108,8 +108,8 @@ const HpTrialTable: React.FC<Props> = ({
     };
     const hpColumnSorter = (key: string) => {
       return (recordA: TrialHParams, recordB: TrialHParams): number => {
-        const a = recordA.hparams[key];
-        const b = recordB.hparams[key];
+        const a = recordA.hparams[key] as Primitive;
+        const b = recordB.hparams[key] as Primitive;
         return primitiveSorter(a, b);
       };
     };
