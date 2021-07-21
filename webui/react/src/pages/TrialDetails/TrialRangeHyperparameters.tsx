@@ -29,7 +29,7 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
       return {
         name: name,
         range: value.type === HyperparameterType.Log ?
-          [ 10**(value.minval || -5), 10**(value.maxval || 1) ] :
+          [ (value.base || 10)**(value.minval || -5), (value.base || 10)**(value.maxval || 1) ] :
           [ value.minval || 0, value.maxval || 1 ],
         type: value.type,
         val: String(trial.hyperparameters[name] || 0),
