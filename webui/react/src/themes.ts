@@ -221,6 +221,8 @@ const stateColorMapping = {
   [RunState.Canceled]: 'inactive',
   [RunState.Completed]: 'success',
   [RunState.Deleted]: 'failed',
+  [RunState.Deleting]: 'failed',
+  [RunState.DeleteFailed]: 'failed',
   [RunState.Errored]: 'failed',
   [RunState.Paused]: 'suspended',
   [RunState.StoppingCanceled]: 'inactive',

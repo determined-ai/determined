@@ -75,7 +75,7 @@ const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
 };
 
 const ExperimentList: React.FC = () => {
-  const { users } = useStore();
+  const { users, auth: { user } } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
@@ -451,7 +451,10 @@ const ExperimentList: React.FC = () => {
     );
 
     const actionRenderer: ExperimentRenderer = (_, record) => (
-      <TaskActionDropdown task={experimentToTask(record)} onComplete={handleActionComplete} />
+      <TaskActionDropdown
+        curUser={user}
+        task={experimentToTask(record)}
+        onComplete={handleActionComplete} />
     );
 
     const tableColumns: ColumnsType<ExperimentItem> = [
@@ -565,6 +568,7 @@ const ExperimentList: React.FC = () => {
       return column;
     });
   }, [
+    user,
     archiveFilterDropdown,
     handleActionComplete,
     experimentTags,

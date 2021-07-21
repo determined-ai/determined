@@ -291,6 +291,8 @@ export enum RunState {
   StoppingError = 'STOPPING_ERROR',
   Errored = 'ERROR',
   Deleted = 'DELETED',
+  Deleting = 'DELETING',
+  DeleteFailed = 'DELETE_FAILED',
   Unspecified = 'UNSPECIFIED',
 }
 

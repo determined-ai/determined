@@ -6,14 +6,16 @@ import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { RecentCommandTask, RecentTask } from 'types';
+import { AnyTask, DetailedUser, RecentCommandTask, RecentEvent } from 'types';
 import { percent } from 'utils/number';
 import { canBeOpened, isExperimentTask } from 'utils/task';
 import { openCommand } from 'wait';
 
 import css from './TaskCard.module.scss';
 
-const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
+type Props = AnyTask & RecentEvent & {curUser?: DetailedUser}
+
+const TaskCard: React.FC<Props> = (props: Props) => {
   let [ hasProgress, isComplete ] = [ false, false ];
   if (isExperimentTask(props)) {
     hasProgress = !!props.progress;
@@ -53,7 +55,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
             {isExperimentTask(props) && hasProgress && !isComplete
                 && <div className={css.percent}>{`${percent(props.progress || 0)}%`}</div>}
           </div>
-          <TaskActionDropdown task={props} />
+          <TaskActionDropdown curUser={props.curUser} task={props} />
         </div>
       </Link>
     </div>

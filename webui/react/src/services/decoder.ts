@@ -240,6 +240,8 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
   [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Errored,
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
+  [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
+  [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
 };
 
 export const decodeCheckpointState = (
