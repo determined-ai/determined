@@ -87,7 +87,7 @@ func newGRPCGatewayMux() *runtime.ServeMux {
 func RegisterHTTPProxy(ctx context.Context, e *echo.Echo, port int, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	opts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1 << 26)),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1 << 27)),
 		grpc.WithNoProxy(),
 	}
 	if cert == nil {
