@@ -62,6 +62,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -321,6 +322,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
   return (
     <>
       <Section>
@@ -331,6 +334,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
+          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange} />
