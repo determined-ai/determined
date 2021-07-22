@@ -130,8 +130,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   }, [ trialDetails, stopPolling ]);
 
   useEffect(() => {
-    if (trialId === undefined && wontHaveTrials === false) return;
-    stopPollingFirstTrialId();
+    if (wontHaveTrials || trialId !== undefined) stopPollingFirstTrialId();
   }, [ trialId, stopPollingFirstTrialId, wontHaveTrials ]);
 
   useEffect(() => {
