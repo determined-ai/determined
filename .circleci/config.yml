@@ -324,6 +324,10 @@ commands:
             -o junit_family=xunit1 \
             --junit-xml="<<parameters.junit-path>>" \
             $(< /tmp/tests-to-run)
+      - upload-test-job:
+          test_results_path: <<parameters.junit-path>>
+
+
 
   run-det-deploy-tests:
     parameters:
@@ -769,6 +773,33 @@ commands:
         default: "8080"
     steps:
       - run: python .circleci/scripts/wait_for_master.py <<parameters.scheme>>://<<parameters.host>>:<<parameters.port>>
+
+  upload-test-job:
+    parameters:
+      test_results_path:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: Test run success -> uploading results to Determined CI
+          command: |
+            python .circleci/scripts/upload_test_results.py \
+            'success' \
+            <<parameters.test_results_path>> \
+            ${CIRCLE_BUILD_NUM} \
+            ${DET_CI_ACCESS_KEY} \
+            ${DET_CI_URL}
+          when: on_success
+      - run:
+          name: Test run failed -> uploading results to Determined CI
+          command: |
+            python .circleci/scripts/upload_test_results.py \
+            'failed' \
+            <<parameters.test_results_path>> \
+            ${CIRCLE_BUILD_NUM} \
+            ${DET_CI_ACCESS_KEY} \
+            ${DET_CI_URL}
+          when: on_fail
 
   locate-cloudwatch-logs:
     parameters:
@@ -1284,7 +1315,9 @@ jobs:
           determined: true
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
-      - run: make -C examples test
+      - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
+      - upload-test-job:
+          test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
@@ -1357,8 +1390,6 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
 
-      - store_test_results:
-          path: /tmp/test-results/
 
   deploy:
     parameters:
@@ -1476,6 +1507,7 @@ jobs:
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
+
 
   test-e2e-gke:
     parameters:
