@@ -93,7 +93,7 @@ const ExperimentDetails: React.FC = () => {
       setIsForkModalVisible(false);
       setExperiment(undefined);
 
-      // Route to newly forkex experiment.
+      // Route to newly forked experiment.
       routeToReactUrl(paths.experimentDetails(configId));
 
       // Add a slight delay to allow polling function to update.
