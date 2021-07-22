@@ -6,15 +6,17 @@ import { ExperimentBase, TrialDetails } from 'types';
 interface ModalProps {
   experiment: ExperimentBase;
   trials: TrialDetails[];
+  visible: boolean;
 }
 
 interface TableProps {
   trials: TrialDetails[];
 }
 
-const TrialsComparisonModal: React.FC<ModalProps> = ({ experiment, trials }: ModalProps) => {
+const TrialsComparisonModal: React.FC<ModalProps> =
+({ experiment, trials, visible }: ModalProps) => {
   return (
-    <Modal title={`Experiment ${experiment.id} Trial Comparison`}>
+    <Modal title={`Experiment ${experiment.id} Trial Comparison`} visible={visible}>
       <TrialsComparisonTable trials={trials} />
     </Modal>
   );
