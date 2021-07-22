@@ -4,14 +4,12 @@
  Install Determined Using Linux Packages
 #########################################
 
-Determined releases Debian and RPM packages for installing the
-Determined master and agent as systemd services on machines running
-Linux.
+Determined releases Debian and RPM packages for installing the Determined master and agent as
+systemd services on machines running Linux.
 
-We support installing the Determined master and agent using Debian
-packages on Ubuntu 16.04 or 18.04, or using RPM packages on Red Hat
-7-based Linux distributions (e.g., Red Hat Enterprise Linux, CentOS,
-Oracle Linux, and Scientific Linux).
+We support installing the Determined master and agent using Debian packages on Ubuntu 16.04 or
+18.04, or using RPM packages on Red Hat 7-based Linux distributions (e.g., Red Hat Enterprise Linux,
+CentOS, Oracle Linux, and Scientific Linux).
 
 *******************
  Preliminary Setup
@@ -20,26 +18,23 @@ Oracle Linux, and Scientific Linux).
 PostgreSQL
 ==========
 
-Determined uses a PostgreSQL database to store experiment and trial
-metadata. You may either use a Docker container or your Linux
-distribution's package and service.
+Determined uses a PostgreSQL database to store experiment and trial metadata. You may either use a
+Docker container or your Linux distribution's package and service.
 
-If you are using an existing PostgreSQL installation, we recommend
-confirming that ``max_connections`` is at least 96, which is sufficient
-for Determined.
+If you are using an existing PostgreSQL installation, we recommend confirming that
+``max_connections`` is at least 96, which is sufficient for Determined.
 
 Running PostgreSQL in Docker
 ----------------------------
 
-#. Pull the official Docker image for PostgreSQL. We recommend using the
-   version listed below.
+#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
 
    .. code::
 
       docker pull postgres:10
 
-   This image is not provided by Determined AI; please see `its Docker
-   Hub page <https://hub.docker.com/_/postgres>`_ for more information.
+   This image is not provided by Determined AI; please see `its Docker Hub page
+   <https://hub.docker.com/_/postgres>`_ for more information.
 
 #. Start PostgreSQL as follows:
 
@@ -55,12 +50,10 @@ Running PostgreSQL in Docker
           -e POSTGRES_PASSWORD=<Database password> \
           postgres:10
 
-   If the master will connect to PostgreSQL via Docker networking,
-   exposing port 5432 via the ``-p`` argument isn't necessary; however,
-   you may still want to expose it for administrative or debugging
-   purposes. In order to expose the port only on the master machine's
-   loopback network interface, pass ``-p 127.0.0.1:5432:5432`` instead
-   of ``-p 5432:5432``.
+   If the master will connect to PostgreSQL via Docker networking, exposing port 5432 via the ``-p``
+   argument isn't necessary; however, you may still want to expose it for administrative or
+   debugging purposes. In order to expose the port only on the master machine's loopback network
+   interface, pass ``-p 127.0.0.1:5432:5432`` instead of ``-p 5432:5432``.
 
 Installing PostgreSQL via ``apt`` or ``yum``
 --------------------------------------------
@@ -73,10 +66,8 @@ Installing PostgreSQL via ``apt`` or ``yum``
 
       sudo apt install postgresql-10
 
-   On Red Hat distributions, first configure the PostgreSQL yum
-   repository as described `here
-   <https://www.postgresql.org/download/linux/redhat>`_ in order to then
-   install version 10:
+   On Red Hat distributions, first configure the PostgreSQL yum repository as described `here
+   <https://www.postgresql.org/download/linux/redhat>`_ in order to then install version 10:
 
    .. code::
 
@@ -85,9 +76,8 @@ Installing PostgreSQL via ``apt`` or ``yum``
       sudo systemctl start postgresql.service
       sudo systemctl enable postgresql.service
 
-#. Configure a system account that Determined will use to connect to
-   PostgreSQL. For example, to use the default ``postgres`` user but
-   update its password:
+#. Configure a system account that Determined will use to connect to PostgreSQL. For example, to use
+   the default ``postgres`` user but update its password:
 
    .. code::
 
@@ -106,14 +96,13 @@ Master and Agent
 #. Go to `the webpage for the latest Determined release
    <https://github.com/determined-ai/determined/releases/latest>`_.
 
-#. Download the appropriate Debian or RPM package file, which will have
-   the name ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (with
-   ``VERSION`` replaced by an actual version, such as |version|). The
-   agent package is similarly named
+#. Download the appropriate Debian or RPM package file, which will have the name
+   ``determined-master_VERSION_linux_amd64.[deb|rpm]`` (with ``VERSION`` replaced by an actual
+   version, such as |version|). The agent package is similarly named
    ``determined-agent_VERSION_linux_amd64.[deb|rpm]``.
 
-#. Install the master package on one machine in your cluster, and the
-   agent package on each agent machine.
+#. Install the master package on one machine in your cluster, and the agent package on each agent
+   machine.
 
    On Debian distributions:
 
@@ -127,23 +116,21 @@ Master and Agent
 
          sudo rpm -i <path to downloaded package>
 
-   Before running the Determined agent, you will have to :ref:`install
-   Docker <install-docker>` on each agent machine and, if the machine
-   has GPUs, ensure that the :ref:`Nvidia Container Toolkit
+   Before running the Determined agent, you will have to :ref:`install Docker <install-docker>` on
+   each agent machine and, if the machine has GPUs, ensure that the :ref:`Nvidia Container Toolkit
    <validate-nvidia-container-toolkit>` is working as expected.
 
 **************************************
  Configuring and Starting the Cluster
 **************************************
 
-#. Ensure that an instance of PostgreSQL is running and accessible from
-   the machine where the master will be run.
+#. Ensure that an instance of PostgreSQL is running and accessible from the machine where the master
+   will be run.
 
-#. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at
-   ``/etc/determined/master.yaml`` (for the master) and
-   ``/etc/determined/agent.yaml`` (for each agent) as appropriate for
-   your setup. Ensure that the user, password, and database name
-   correspond to your PostgreSQL configuration.
+#. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at ``/etc/determined/master.yaml``
+   (for the master) and ``/etc/determined/agent.yaml`` (for each agent) as appropriate for your
+   setup. Ensure that the user, password, and database name correspond to your PostgreSQL
+   configuration.
 
    .. code::
 
@@ -160,10 +147,9 @@ Master and Agent
 
       sudo systemctl start determined-master
 
-   The master can also be run directly with the command
-   ``determined-master``, which may be helpful for experimenting with
-   Determined (e.g., testing different configuration options quickly
-   before writing them to the configuration file).
+   The master can also be run directly with the command ``determined-master``, which may be helpful
+   for experimenting with Determined (e.g., testing different configuration options quickly before
+   writing them to the configuration file).
 
 #. Optionally, configure the master to start on boot.
 
@@ -177,13 +163,11 @@ Master and Agent
 
       journalctl -u determined-master
 
-   You should see logging indicating that the master can successfully
-   connect to the database, and the last line should indicate ``http
-   server started`` on the configured WebUI port (8080 by default). You
-   can also validate that the WebUI is running by navigating to
-   ``http://<master>:8080`` with your web browser (or
-   ``https://<master>:8443`` if TLS is enabled). You should see ``No
-   Agents`` on the right-hand side of the top navigation bar.
+   You should see logging indicating that the master can successfully connect to the database, and
+   the last line should indicate ``http server started`` on the configured WebUI port (8080 by
+   default). You can also validate that the WebUI is running by navigating to
+   ``http://<master>:8080`` with your web browser (or ``https://<master>:8443`` if TLS is enabled).
+   You should see ``No Agents`` on the right-hand side of the top navigation bar.
 
 #. Start the agent on each agent machine.
 
@@ -191,8 +175,7 @@ Master and Agent
 
       sudo systemctl start determined-agent
 
-   Similarly, the agent can be run with the command
-   ``determined-agent``.
+   Similarly, the agent can be run with the command ``determined-agent``.
 
 #. Optionally, configure the agent to start on boot.
 
@@ -206,23 +189,20 @@ Master and Agent
 
       journalctl -u determined-agent
 
-   You should see logging indicating that the agent started
-   successfully, detected compute devices, and connected to the master.
-   On the Determined WebUI, you should now see slots available, both on
-   the right-hand side of the top navigation bar, and if you select the
-   ``Cluster`` view in the left-hand navigation panel.
+   You should see logging indicating that the agent started successfully, detected compute devices,
+   and connected to the master. On the Determined WebUI, you should now see slots available, both on
+   the right-hand side of the top navigation bar, and if you select the ``Cluster`` view in the
+   left-hand navigation panel.
 
 **********************
  Managing the Cluster
 **********************
 
-To configure a service to start running automatically when its machine
-boots up, run ``sudo systemctl enable <service>``, where the service is
-``determined-master`` or ``determined-agent``. You can also use ``sudo
-systemctl enable --now <service>`` to enable and immediately start a
-service in one command.
+To configure a service to start running automatically when its machine boots up, run ``sudo
+systemctl enable <service>``, where the service is ``determined-master`` or ``determined-agent``.
+You can also use ``sudo systemctl enable --now <service>`` to enable and immediately start a service
+in one command.
 
-To view the logging output of a service, run ``journalctl -u
-<service>``.
+To view the logging output of a service, run ``journalctl -u <service>``.
 
 To manually stop a service, run ``sudo systemctl stop <service>``.

@@ -8,61 +8,49 @@
  Overall Vision
 ****************
 
-Deep learning practitioners come from a variety of disciplines.
-Depending on their background, some practitioners have strong
-foundations in engineering, while others focus on statistics and domain
-expertise. Determined AI is a deep learning training platform that
-simplifies infrastructure management for domain experts while enabling
-configuration-based deep learning functionality that is generally
-inconvenient to implement for engineering-oriented practitioners.
+Deep learning practitioners come from a variety of disciplines. Depending on their background, some
+practitioners have strong foundations in engineering, while others focus on statistics and domain
+expertise. Determined AI is a deep learning training platform that simplifies infrastructure
+management for domain experts while enabling configuration-based deep learning functionality that is
+generally inconvenient to implement for engineering-oriented practitioners.
 
 *****************
  Core Components
 *****************
 
-Many current systems are point solutions for specific problems in deep
-learning, so combining the systems is tough and inefficient.
-Determined's cohesive end-to-end training platform provides
-best-in-class functionality for deep learning model training, with a
-suite of benefits, including:
+Many current systems are point solutions for specific problems in deep learning, so combining the
+systems is tough and inefficient. Determined's cohesive end-to-end training platform provides
+best-in-class functionality for deep learning model training, with a suite of benefits, including:
 
--  **Cluster management**: Automatically manage accelerators (e.g.,
-   GPUs) on-premise or in cloud VMs, using your own environment that
-   automatically scales for your on-demand workloads. Determined runs in
-   either AWS or GCP, so you can switch easily as your needs require.
+-  **Cluster management**: Automatically manage accelerators (e.g., GPUs) on-premise or in cloud
+   VMs, using your own environment that automatically scales for your on-demand workloads.
+   Determined runs in either AWS or GCP, so you can switch easily as your needs require.
 
--  **Containerization**: Develop and train models in customizable
-   containers, which enable simple and consistent dependency management
-   throughout the model development lifecycle.
+-  **Containerization**: Develop and train models in customizable containers, which enable simple
+   and consistent dependency management throughout the model development lifecycle.
 
--  **Cluster-backed notebooks**: Experiment directly in a cluster-backed
-   Jupyter notebook, so you can leverage your shared cluster
-   accelerators in a more versatile notebook environment.
+-  **Cluster-backed notebooks**: Experiment directly in a cluster-backed Jupyter notebook, so you
+   can leverage your shared cluster accelerators in a more versatile notebook environment.
 
--  **Experiment collaboration**: Automatically track the configuration
-   and environment for each of your experiments, facilitating
-   reproducibility and collaboration among teams.
+-  **Experiment collaboration**: Automatically track the configuration and environment for each of
+   your experiments, facilitating reproducibility and collaboration among teams.
 
--  **Fault tolerance**: Models are checkpointed throughout the training
-   process and can be restarted from the latest checkpoint automatically
-   if there are any hardware or system issues in the cluster.
+-  **Fault tolerance**: Models are checkpointed throughout the training process and can be restarted
+   from the latest checkpoint automatically if there are any hardware or system issues in the
+   cluster.
 
--  **Automated model tuning**: Optimize models by searching through
-   conventional hyperparameters or macro-architectures, using a variety
-   of search algorithms including our adaptive search. Hyperparameter
-   searches are automatically parallelized across the accelerators in
-   your cluster.
+-  **Automated model tuning**: Optimize models by searching through conventional hyperparameters or
+   macro-architectures, using a variety of search algorithms including our adaptive search.
+   Hyperparameter searches are automatically parallelized across the accelerators in your cluster.
 
--  **Distributed training**: Easily distribute model training across
-   your cluster so you can experiment more efficiently and earlier in
-   your model development. Determined leverages synchronous,
-   data-parallel distributed training, with key performance
-   optimizations over other available options.
+-  **Distributed training**: Easily distribute model training across your cluster so you can
+   experiment more efficiently and earlier in your model development. Determined leverages
+   synchronous, data-parallel distributed training, with key performance optimizations over other
+   available options.
 
--  **Broad framework support**: Leverage these capabilities using any of
-   the leading machine learning frameworks without having to manage a
-   different cluster for each. Different frameworks for different models
-   can be used without worrying about future lock-in.
+-  **Broad framework support**: Leverage these capabilities using any of the leading machine
+   learning frameworks without having to manage a different cluster for each. Different frameworks
+   for different models can be used without worrying about future lock-in.
 
 ************
  Next Steps

@@ -4,18 +4,15 @@
  Cluster Configuration
 #######################
 
-The behavior of the master and agent can be controlled by setting
-configuration variables; this can be done using a configuration file,
-environment variables, or command-line options. Although values from
-different sources will be merged, we generally recommend sticking to a
-single source for each service to keep things simple.
+The behavior of the master and agent can be controlled by setting configuration variables; this can
+be done using a configuration file, environment variables, or command-line options. Although values
+from different sources will be merged, we generally recommend sticking to a single source for each
+service to keep things simple.
 
-The master and the agent both accept an optional ``--config-file``
-command-line option, which specifies the path of the configuration file
-to use. Note that when running the master or agent inside a container,
-you will need to make the configuration file accessible inside the
-container (e.g., via a bind mount). For example, this command starts the
-agent using a configuration file:
+The master and the agent both accept an optional ``--config-file`` command-line option, which
+specifies the path of the configuration file to use. Note that when running the master or agent
+inside a container, you will need to make the configuration file accessible inside the container
+(e.g., via a bind mount). For example, this command starts the agent using a configuration file:
 
 .. code::
 
@@ -31,22 +28,18 @@ The ``agent-config.yaml`` file might contain
    master_host: 127.0.0.1
    master_port: 8080
 
-to configure the address of the Determined master that the agent will
-attempt to connect to.
+to configure the address of the Determined master that the agent will attempt to connect to.
 
-Each option in the master or agent configuration file can also be
-specified as an environment variable or a command-line option. To
-configure the behavior of the master or agent using environment
-variables, specify an environment variable starting with ``DET_``
-followed by the name of the configuration variable. Underscores (``_``)
-should be used to indicate nested options: for example, the
-``logging.type`` master configuration option can be specified via an
-environment variable named ``DET_LOGGING_TYPE``.
+Each option in the master or agent configuration file can also be specified as an environment
+variable or a command-line option. To configure the behavior of the master or agent using
+environment variables, specify an environment variable starting with ``DET_`` followed by the name
+of the configuration variable. Underscores (``_``) should be used to indicate nested options: for
+example, the ``logging.type`` master configuration option can be specified via an environment
+variable named ``DET_LOGGING_TYPE``.
 
-The equivalent of the agent configuration file shown above can be
-specified by setting two environment variables, ``DET_MASTER_HOST`` and
-``DET_MASTER_PORT``. When starting the agent as a container, environment
-variables can be specified as part of ``docker run``:
+The equivalent of the agent configuration file shown above can be specified by setting two
+environment variables, ``DET_MASTER_HOST`` and ``DET_MASTER_PORT``. When starting the agent as a
+container, environment variables can be specified as part of ``docker run``:
 
 .. code::
 
@@ -61,23 +54,20 @@ The equivalent behavior can be achieved using command-line options:
 
    determined-agent run --master-host=127.0.0.1 --master-port=8080
 
-The same behavior applies to master configuration settings as well. For
-example, configuring the host where the Postgres database is running can
-be done via a configuration file containing:
+The same behavior applies to master configuration settings as well. For example, configuring the
+host where the Postgres database is running can be done via a configuration file containing:
 
 .. code:: yaml
 
    db:
      host: the-db-host
 
-Equivalent behavior can be achieved by setting the
-``DET_DB_HOST=the-db-host`` environment variable or ``--db-host
-the-db-host`` command-line option.
+Equivalent behavior can be achieved by setting the ``DET_DB_HOST=the-db-host`` environment variable
+or ``--db-host the-db-host`` command-line option.
 
-In the rest of this document, we will refer to options using their names
-in the configuration file. Periods (``.``) will be used to indicate
-nested options; for example, the option above would be indicated by
-``db.host``.
+In the rest of this document, we will refer to options using their names in the configuration file.
+Periods (``.``) will be used to indicate nested options; for example, the option above would be
+indicated by ``db.host``.
 
 ****************
  Common Options
@@ -86,8 +76,7 @@ nested options; for example, the option above would be indicated by
 Master Port
 ===========
 
-By default, the master listens on TCP port 8080. This can be configured
-via the ``port`` option.
+By default, the master listens on TCP port 8080. This can be configured via the ``port`` option.
 
 .. _security:
 
@@ -95,36 +84,31 @@ Security
 ========
 
 The master can secure all incoming connections using `TLS
-<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. That
-ability requires a TLS private key and certificate to be provided; set
-the options ``security.tls.cert`` and ``security.tls.key`` to paths to a
-PEM-encoded TLS certificate and private key, respectively, to do so. If
-TLS is enabled, the default port becomes 8443 rather than 8080. See
-:ref:`tls` for more information.
+<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. That ability requires a TLS private key
+and certificate to be provided; set the options ``security.tls.cert`` and ``security.tls.key`` to
+paths to a PEM-encoded TLS certificate and private key, respectively, to do so. If TLS is enabled,
+the default port becomes 8443 rather than 8080. See :ref:`tls` for more information.
 
 .. _agent-network-proxy:
 
 Configuring Trial Runner Networking
 ===================================
 
-The master is capable of selecting the network interface that trial
-runners will use to communicate when performing distributed
-(multi-machine) training. The network interface can be configured by
-editing ``task_container_defaults.dtrain_network_interface``. If left
-unspecified, which is the default setting, Determined will auto-discover
-a common network interface shared by the trial runners.
+The master is capable of selecting the network interface that trial runners will use to communicate
+when performing distributed (multi-machine) training. The network interface can be configured by
+editing ``task_container_defaults.dtrain_network_interface``. If left unspecified, which is the
+default setting, Determined will auto-discover a common network interface shared by the trial
+runners.
 
 .. note::
 
-   For :ref:`multi-gpu-training`, Determined automatically detects a
-   common network interface shared by the agent machines. If your
-   cluster has multiple common network interfaces, please specify the
+   For :ref:`multi-gpu-training`, Determined automatically detects a common network interface shared
+   by the agent machines. If your cluster has multiple common network interfaces, please specify the
    fastest one.
 
-Additionally, the ports used by the GLOO and NCCL libraries, which are
-used during distributed (multi-machine) training can be configured to
-fall within user-defined ranges. If left unspecified, ports will be
-chosen randomly from the unprivileged port range (1024-65535).
+Additionally, the ports used by the GLOO and NCCL libraries, which are used during distributed
+(multi-machine) training can be configured to fall within user-defined ranges. If left unspecified,
+ports will be chosen randomly from the unprivileged port range (1024-65535).
 
 Default Checkpoint Storage
 ==========================
@@ -136,18 +120,16 @@ See :ref:`checkpoint-storage-configuration` for details.
 Telemetry
 =========
 
-By default, the master and WebUI collect anonymous information about how
-Determined is being used. This usage information is collected so that we
-can improve the design of the product. Determined does not report
-information that can be used to identify individual users of the
-product, nor does it include model source code, model
-architecture/checkpoints, training datasets, training and validation
-metrics, logs, or hyperparameter values.
+By default, the master and WebUI collect anonymous information about how Determined is being used.
+This usage information is collected so that we can improve the design of the product. Determined
+does not report information that can be used to identify individual users of the product, nor does
+it include model source code, model architecture/checkpoints, training datasets, training and
+validation metrics, logs, or hyperparameter values.
 
 The information we collect from the master periodically includes:
 
--  a unique, randomly generated ID for the current database and for the
-   current instance of the master
+-  a unique, randomly generated ID for the current database and for the current instance of the
+   master
 -  the version of Determined
 -  the version of Go that was used to compile the master
 -  the number of registered :ref:`users <users>`
@@ -172,10 +154,8 @@ When an experiment is created, we report:
 When an experiment terminates, we report:
 
 -  the number of trials in the experiment
--  the total number of training workloads across all trials in the
-   experiment
--  the total elapsed time for all workloads across all trials in the
-   experiment
+-  the total number of training workloads across all trials in the experiment
+-  the total elapsed time for all workloads across all trials in the experiment
 
 The information we collect from the WebUI includes:
 
@@ -183,10 +163,9 @@ The information we collect from the WebUI includes:
 -  errors that occur (both network errors and uncaught exceptions)
 -  user-triggered actions
 
-To disable telemetry reporting in both the master and the WebUI, start
-the master with the ``--telemetry-enabled=false`` flag (this can also be
-done by editing the master config file or setting an environment
-variable, as with any other configuration option). Disabling telemetry
+To disable telemetry reporting in both the master and the WebUI, start the master with the
+``--telemetry-enabled=false`` flag (this can also be done by editing the master config file or
+setting an environment variable, as with any other configuration option). Disabling telemetry
 reporting will not affect the functionality of Determined in any way.
 
 .. _master-configuration:
@@ -195,337 +174,266 @@ reporting will not affect the functionality of Determined in any way.
  Master Configuration
 **********************
 
-The Determined master supports a range of configuration settings that
-can be set via a :ref:`YAML configuration file <topic-guides_yaml>`,
-environment variables, or command-line options. The configuration file
-is normally located at ``/etc/determined/master.yaml`` on the master and
-is read when the master starts.
+The Determined master supports a range of configuration settings that can be set via a :ref:`YAML
+configuration file <topic-guides_yaml>`, environment variables, or command-line options. The
+configuration file is normally located at ``/etc/determined/master.yaml`` on the master and is read
+when the master starts.
 
-The configuration of an active master can be examined using the
-Determined CLI with the command ``det master config``.
+The configuration of an active master can be examined using the Determined CLI with the command
+``det master config``.
 
 The master supports the following configuration settings:
 
--  ``config_file``: Path to the master configuration file. Normally this
-   should only be set via an environment variable or command-line
-   option. Defaults to ``/etc/determined/master.yaml``.
-
--  ``port``: The TCP port on which the master accepts all incoming
-   connections. Defaults to ``8080``.
+-  ``config_file``: Path to the master configuration file. Normally this should only be set via an
+   environment variable or command-line option. Defaults to ``/etc/determined/master.yaml``.
+-  ``port``: The TCP port on which the master accepts all incoming connections. Defaults to
+   ``8080``.
 
 .. _master-task-container-defaults:
 
--  ``task_container_defaults``: Specifies Docker defaults for all task
-   containers. A task represents a single schedulable unit, such as a
-   trial, command, or tensorboard.
+-  ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents
+   a single schedulable unit, such as a trial, command, or tensorboard.
 
-   -  ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for
-      Determined task containers. Defaults to ``4294967296``.
+   -  ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers.
+      Defaults to ``4294967296``.
 
-   -  ``network_mode``: The Docker network to use for the Determined
-      task containers. If this is set to ``host``, `Docker host-mode
-      networking <https://docs.docker.com/network/host/>`__ will be used
-      instead. Defaults to ``bridge``.
+   -  ``network_mode``: The Docker network to use for the Determined task containers. If this is set
+      to ``host``, `Docker host-mode networking <https://docs.docker.com/network/host/>`__ will be
+      used instead. Defaults to ``bridge``.
 
-   -  ``dtrain_network_interface``: The network interface to use during
-      :ref:`multi-gpu-training`. If not set, Determined automatically
-      determines the network interface to use.
+   -  ``dtrain_network_interface``: The network interface to use during :ref:`multi-gpu-training`.
+      If not set, Determined automatically determines the network interface to use.
 
-      When training a model with multiple machines, the host network
-      interface used by each machine must have the same interface name
-      across machines. The network interface to use can be determined
-      automatically, but there may be issues if there is an interface
-      name common to all machines but it is not routable between
-      machines. Determined already filters out common interfaces like
-      ``lo`` and ``docker0``, but agent machines may have others. If
-      interface detection is not finding the appropriate interface, the
-      ``dtrain_network_interface`` option can be used to set it
-      explicitly (e.g., ``eth11``).
+      When training a model with multiple machines, the host network interface used by each machine
+      must have the same interface name across machines. The network interface to use can be
+      determined automatically, but there may be issues if there is an interface name common to all
+      machines but it is not routable between machines. Determined already filters out common
+      interfaces like ``lo`` and ``docker0``, but agent machines may have others. If interface
+      detection is not finding the appropriate interface, the ``dtrain_network_interface`` option
+      can be used to set it explicitly (e.g., ``eth11``).
 
-   -  ``nccl_port_range``: The range of ports that NCCL is permitted to
-      use during distributed training. A valid port range is in the
-      format of ``MIN:MAX``. By default, no restrictions are placed on
-      the NCCL port range.
+   -  ``nccl_port_range``: The range of ports that NCCL is permitted to use during distributed
+      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
+      placed on the NCCL port range.
 
-   -  ``gloo_port_range``: The range of ports that Gloo is permitted to
-      use during distributed training. A valid port range is in the
-      format of ``MIN:MAX``. By default, no restrictions are placed on
-      the Gloo port range.
+   -  ``gloo_port_range``: The range of ports that Gloo is permitted to use during distributed
+      training. A valid port range is in the format of ``MIN:MAX``. By default, no restrictions are
+      placed on the Gloo port range.
 
-   -  ``cpu_pod_spec``: Defines the default pod spec which will be
-      applied to all CPU-only tasks when running on Kubernetes. See
-      :ref:`custom-pod-specs` for details.
+   -  ``cpu_pod_spec``: Defines the default pod spec which will be applied to all CPU-only tasks
+      when running on Kubernetes. See :ref:`custom-pod-specs` for details.
 
-   -  ``gpu_pod_spec``: Defines the default pod spec which will be
-      applied to all GPU tasks when running on Kubernetes. See
-      :ref:`custom-pod-specs` for details.
+   -  ``gpu_pod_spec``: Defines the default pod spec which will be applied to all GPU tasks when
+      running on Kubernetes. See :ref:`custom-pod-specs` for details.
 
-   -  ``image``: Defines the default docker image to use when executing
-      the workload. If a docker image is specified in the
-      :ref:`experiment config <exp-environment-image>` this default is
-      overriden. This image must be accessible via ``docker pull`` to
-      every Determined agent machine in the cluster. Users can use
-      different container images for GPU vs. CPU agents differently by
-      specifying a dict with two keys, ``cpu`` and ``gpu``. Default
-      values:
+   -  ``image``: Defines the default docker image to use when executing the workload. If a docker
+      image is specified in the :ref:`experiment config <exp-environment-image>` this default is
+      overriden. This image must be accessible via ``docker pull`` to every Determined agent machine
+      in the cluster. Users can use different container images for GPU vs. CPU agents differently by
+      specifying a dict with two keys, ``cpu`` and ``gpu``. Default values:
 
-      -  ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2``
-         for CPU agents
-      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``
-         for GPU agents.
+      -  ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2`` for CPU
+         agents
+      -  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2`` for GPU
+         agents.
 
-   -  ``force_pull_image``: Defines the default policy for forcibly
-      pulling images from the docker registry and bypassing the docker
-      cache. If a pull policy is specified in the :ref:`experiment
-      config <exp-environment-image>` this default value is overriden.
-      Please note that as of November 1st, 2020 unauthenticated users
-      will be `capped at 100 pulls from Docker per 6 hours
+   -  ``force_pull_image``: Defines the default policy for forcibly pulling images from the docker
+      registry and bypassing the docker cache. If a pull policy is specified in the :ref:`experiment
+      config <exp-environment-image>` this default value is overriden. Please note that as of
+      November 1st, 2020 unauthenticated users will be `capped at 100 pulls from Docker per 6 hours
       <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
       Defaults to ``false``.
 
-   -  ``registry_auth``: Defines the default `docker registry
-      credentials
-      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
-      to use when pulling a custom base docker image, if needed. If
-      credentials are specified is in the :ref:`experiment config
-      <exp-environment-image>` this default value is overriden.
-      Credentials are specified as the following nested fields:
+   -  ``registry_auth``: Defines the default `docker registry credentials
+      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a
+      custom base docker image, if needed. If credentials are specified is in the :ref:`experiment
+      config <exp-environment-image>` this default value is overriden. Credentials are specified as
+      the following nested fields:
 
       -  ``username`` (required)
       -  ``password`` (required)
       -  ``serveraddress`` (optional)
       -  ``email`` (optional)
 
-   -  ``add_capabilities``: The default list of Linux capabilities to
-      grant to task containers. Ignored by resource managers of type
-      ``kubernetes``. See :ref:`environment.add_capabilities
+   -  ``add_capabilities``: The default list of Linux capabilities to grant to task containers.
+      Ignored by resource managers of type ``kubernetes``. See :ref:`environment.add_capabilities
       <exp-environment-add-capapbilities>` for more details.
 
-   -  ``drop_capabilities``: Just like ``add_capabilities`` but for
-      dropping capabilities.
+   -  ``drop_capabilities``: Just like ``add_capabilities`` but for dropping capabilities.
 
-   -  ``devices``: The default list of devices to pass to the Docker
-      daemon. Ignored by resource managers of type ``kubernetes``. See
-      :ref:`resources.devices <exp-resources-devices>` for more details.
+   -  ``devices``: The default list of devices to pass to the Docker daemon. Ignored by resource
+      managers of type ``kubernetes``. See :ref:`resources.devices <exp-resources-devices>` for more
+      details.
 
-   -  ``bind_mounts``: The default bind mounts to pass to the Docker
-      container. Ignored by resource managers of type ``kubernetes``.
-      See :ref:`resources.devices <exp-bind-mounts>` for more details.
+   -  ``bind_mounts``: The default bind mounts to pass to the Docker container. Ignored by resource
+      managers of type ``kubernetes``. See :ref:`resources.devices <exp-bind-mounts>` for more
+      details.
 
--  ``root``: Specifies the root directory of the state files. Defaults
-   to ``/usr/share/determined/master``.
+-  ``root``: Specifies the root directory of the state files. Defaults to
+   ``/usr/share/determined/master``.
 
--  ``cluster_name`` (optional): Specify a human readable name for this
-   cluster.
+-  ``cluster_name`` (optional): Specify a human readable name for this cluster.
 
--  ``tensorboard_timeout``: Specifies the duration in seconds before
-   idle TensorBoard instances are automatically terminated. A
-   TensorBoard instance is considered to be idle if it does not receive
+-  ``tensorboard_timeout``: Specifies the duration in seconds before idle TensorBoard instances are
+   automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
--  ``resource_manager``: The resource manager to use to acquire
-   resources. Defaults to ``agent``.
+-  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
-   -  ``type: agent``: The agent resource manager includes static and
-      dynamic agents.
+   -  ``type: agent``: The agent resource manager includes static and dynamic agents.
 
-      -  ``scheduler``: Specifies how Determined schedules tasks to
-         agents on resource pools. If a resource pool is specified with
-         an individual scheduler configuration, that will override the
-         default scheduling behavior specified here. For more on
-         scheduling behavior in Determined, see :ref:`scheduling`.
+      -  ``scheduler``: Specifies how Determined schedules tasks to agents on resource pools. If a
+         resource pool is specified with an individual scheduler configuration, that will override
+         the default scheduling behavior specified here. For more on scheduling behavior in
+         Determined, see :ref:`scheduling`.
 
-         -  ``type``: The scheduling policy to use when allocating
-            resources between different tasks (experiments, notebooks,
-            etc.). Defaults to ``fair_share``.
+         -  ``type``: The scheduling policy to use when allocating resources between different tasks
+            (experiments, notebooks, etc.). Defaults to ``fair_share``.
 
-            -  ``fair_share``: Tasks receive a proportional amount of
-               the available resources depending on the resource they
-               require and their weight.
+            -  ``fair_share``: Tasks receive a proportional amount of the available resources
+               depending on the resource they require and their weight.
 
-            -  ``round_robin``: Tasks are scheduled in the order which
-               they arrive at the cluster.
+            -  ``round_robin``: Tasks are scheduled in the order which they arrive at the cluster.
 
-            -  ``priority``: Tasks are scheduled based on their
-               priority, which can range from the values 1 to 99
-               inclusive. Lower priority numbers indicate higher
-               priority tasks. A lower priority task will never be
-               scheduled while a higher priority task is pending.
-               Zero-slot tasks (e.g., CPU-only notebooks, tensorboards)
-               are prioritized separately from tasks requiring slots
-               (e.g., experiments running on GPUs). Task priority can be
-               assigned using the ``resources.priority`` field. If a
-               task does not specify a priority it is assigned the
-               ``default_priority``.
+            -  ``priority``: Tasks are scheduled based on their priority, which can range from the
+               values 1 to 99 inclusive. Lower priority numbers indicate higher priority tasks. A
+               lower priority task will never be scheduled while a higher priority task is pending.
+               Zero-slot tasks (e.g., CPU-only notebooks, tensorboards) are prioritized separately
+               from tasks requiring slots (e.g., experiments running on GPUs). Task priority can be
+               assigned using the ``resources.priority`` field. If a task does not specify a
+               priority it is assigned the ``default_priority``.
 
-               -  ``preemption``: Specifies whether lower priority tasks
-                  should be preempted to schedule higher priority tasks.
-                  Tasks are preempted in order of lowest priority first.
+               -  ``preemption``: Specifies whether lower priority tasks should be preempted to
+                  schedule higher priority tasks. Tasks are preempted in order of lowest priority
+                  first.
 
-               -  ``default_priority``: The priority that is assigned to
-                  tasks that do not specify a priority. Can be
-                  configured to 1 to 99 inclusively. Defaults to 42.
+               -  ``default_priority``: The priority that is assigned to tasks that do not specify a
+                  priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
 
-         -  ``fitting_policy``: The scheduling policy to use when
-            assigning tasks to agents in the cluster. Defaults to
-            ``best``.
+         -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
+            cluster. Defaults to ``best``.
 
-            -  ``best``: The best-fit policy ensures that tasks will be
-               preferentially "packed" together on the smallest number
-               of agents.
+            -  ``best``: The best-fit policy ensures that tasks will be preferentially "packed"
+               together on the smallest number of agents.
+            -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized
+               agents.
 
-            -  ``worst``: The worst-fit policy ensures that tasks will
-               be placed on under-utilized agents.
+      -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
+         dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
+         resource pool is specified. Prior to 0.16.1, this field was called
+         ``default_cpu_resource_pool``.
 
-      -  ``default_aux_resource_pool``: The default resource pool to use
-         for tasks that do not need dedicated compute resources,
-         auxiliary, or systems tasks. Defaults to ``default`` if no
-         resource pool is specified. Prior to 0.16.1, this field was
-         called ``default_cpu_resource_pool``.
+      -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
+         compute resources, e.g. GPUs or dedicated CPUs. Defaults to ``default`` if no resource pool
+         is specified. Prior to 0.16.1, this field was called ``default_gpu_resource_pool``.
 
-      -  ``default_compute_resource_pool``: The default resource pool to
-         use for tasks that require compute resources, e.g. GPUs or
-         dedicated CPUs. Defaults to ``default`` if no resource pool is
-         specified. Prior to 0.16.1, this field was called
-         ``default_gpu_resource_pool``.
+   -  ``type: kubernetes``: The ``kubernetes`` resource manager launches tasks on a Kubernetes
+      cluster. The Determined master must be running within the Kubernetes cluster. When using the
+      ``kubernetes`` resource provider, we recommend deploying Determined using the :ref:`Determined
+      Helm Chart <install-on-kubernetes>`. When installed via Helm, the configuration settings below
+      will be set automatically.
 
-   -  ``type: kubernetes``: The ``kubernetes`` resource manager launches
-      tasks on a Kubernetes cluster. The Determined master must be
-      running within the Kubernetes cluster. When using the
-      ``kubernetes`` resource provider, we recommend deploying
-      Determined using the :ref:`Determined Helm Chart
-      <install-on-kubernetes>`. When installed via Helm, the
-      configuration settings below will be set automatically.
+      -  ``namespace``: The namespace where Determined will deploy Pods and ConfigMaps.
 
-      -  ``namespace``: The namespace where Determined will deploy Pods
-         and ConfigMaps.
+      -  ``max_slots_per_pod``: Each multi-slot (distributed training) task will be scheduled as a
+         set of ``slots_per_task / max_slots_per_pod`` separate pods, with each pod assigned up to
+         ``max_slots_per_pod`` slots. Distributed tasks with sizes that are not divisible by
+         ``max_slots_per_pod`` are never scheduled. If you have a cluster of different size nodes,
+         set ``max_slots_per_pod`` to the greatest common divisor of all the sizes. For example, if
+         you have some nodes with 4 GPUs and other nodes with 8 GPUs, set ``maxSlotsPerPod`` to
+         ``4`` so that all distributed experiments will launch with 4 GPUs per pod (with two pods on
+         8-GPU nodes).
 
-      -  ``max_slots_per_pod``: Each multi-slot (distributed training)
-         task will be scheduled as a set of ``slots_per_task /
-         max_slots_per_pod`` separate pods, with each pod assigned up to
-         ``max_slots_per_pod`` slots. Distributed tasks with sizes that
-         are not divisible by ``max_slots_per_pod`` are never scheduled.
-         If you have a cluster of different size nodes, set
-         ``max_slots_per_pod`` to the greatest common divisor of all the
-         sizes. For example, if you have some nodes with 4 GPUs and
-         other nodes with 8 GPUs, set ``maxSlotsPerPod`` to ``4`` so
-         that all distributed experiments will launch with 4 GPUs per
-         pod (with two pods on 8-GPU nodes).
+      -  ``slot_type``: Resource type used for compute tasks. Defaults to ``gpu``.
 
-      -  ``slot_type``: Resource type used for compute tasks. Defaults
-         to ``gpu``.
+         -  ``slot_type: gpu``: One NVIDIA GPU will be requested per compute slot.
 
-         -  ``slot_type: gpu``: One NVIDIA GPU will be requested per
-            compute slot.
+         -  ``slot_type: cpu``: CPU resources will be requested for each compute slot.
+            ``slot_resource_requests.cpu`` option is required to specify the specific amount of the
+            resources.
 
-         -  ``slot_type: cpu``: CPU resources will be requested for each
-            compute slot. ``slot_resource_requests.cpu`` option is
-            required to specify the specific amount of the resources.
+      -  ``slot_resource_requests``: - ``cpu``: number of kubernetes CPUs to request per compute
+         slot.
 
-      -  ``slot_resource_requests``: - ``cpu``: number of kubernetes
-         CPUs to request per compute slot.
+      -  ``master_service_name``: The service account Determined uses to interact with the
+         Kubernetes API.
 
-      -  ``master_service_name``: The service account Determined uses to
-         interact with the Kubernetes API.
-
--  ``resource_pools``: A list of resource pools. A resource pool is a
-   collection of identical computational resources. Users can specify
-   which resource pool a job should be assigned to when the job is
-   submitted. Refer to the documentation on :ref:`resource-pools` for
-   more information. Defaults to a resource pool with a name
-   ``default``.
+-  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
+   computational resources. Users can specify which resource pool a job should be assigned to when
+   the job is submitted. Refer to the documentation on :ref:`resource-pools` for more information.
+   Defaults to a resource pool with a name ``default``.
 
    -  ``pool_name``: The name of the resource pool.
 
    -  ``description``: The description of the resource pool.
 
-   -  ``max_aux_containers_per_agent``: The maximum number of auxiliary
-      or system containers that can be scheduled on each agent in this
-      pool. Prior to 0.16.1, this field was called
+   -  ``max_aux_containers_per_agent``: The maximum number of auxiliary or system containers that
+      can be scheduled on each agent in this pool. Prior to 0.16.1, this field was called
       ``max_cpu_containers_per_agent``.
 
-   -  ``task_container_defaults``: Each resource pool may specify a
-      ``task_container_defaults`` that overrides the :ref:`top-level
-      setting <master-task-container-defaults>` for all tasks launched
-      in that resource pool. There is no merging behavior; when a
-      resource pool's ``task_container_defaults`` is set, tasks launched
-      in that pool will completely ignore the top-level setting.
+   -  ``task_container_defaults``: Each resource pool may specify a ``task_container_defaults`` that
+      overrides the :ref:`top-level setting <master-task-container-defaults>` for all tasks launched
+      in that resource pool. There is no merging behavior; when a resource pool's
+      ``task_container_defaults`` is set, tasks launched in that pool will completely ignore the
+      top-level setting.
 
-   -  ``scheduler``: Specifies how Determined schedules tasks to agents.
-      The scheduler configuration on each resource pool will override
-      the global one. For more on scheduling behavior in Determined, see
-      :ref:`scheduling`.
+   -  ``scheduler``: Specifies how Determined schedules tasks to agents. The scheduler configuration
+      on each resource pool will override the global one. For more on scheduling behavior in
+      Determined, see :ref:`scheduling`.
 
-      -  ``type``: The scheduling policy to use when allocating
-         resources between different tasks (experiments, notebooks,
-         etc.). Defaults to ``fair_share``.
+      -  ``type``: The scheduling policy to use when allocating resources between different tasks
+         (experiments, notebooks, etc.). Defaults to ``fair_share``.
 
-         -  ``fair_share``: Tasks receive a proportional amount of the
-            available resources depending on the resource they require
-            and their weight.
+         -  ``fair_share``: Tasks receive a proportional amount of the available resources depending
+            on the resource they require and their weight.
 
-         -  ``round_robin``: Tasks are scheduled in the order which they
-            arrive at the cluster.
+         -  ``round_robin``: Tasks are scheduled in the order which they arrive at the cluster.
 
-         -  ``priority``: Tasks are scheduled based on their priority,
-            which can range from the values 1 to 99 inclusive. Lower
-            priority numbers indicate higher priority tasks. A lower
-            priority task will never be scheduled while a higher
-            priority task is pending. Zero-slot tasks (e.g., CPU-only
-            notebooks, tensorboards) are prioritized separately from
-            tasks requiring slots (e.g., experiments running on GPUs).
-            Task priority can be assigned using the
-            ``resources.priority`` field. If a task does not specify a
-            priority it is assigned the ``default_priority``.
+         -  ``priority``: Tasks are scheduled based on their priority, which can range from the
+            values 1 to 99 inclusive. Lower priority numbers indicate higher priority tasks. A lower
+            priority task will never be scheduled while a higher priority task is pending. Zero-slot
+            tasks (e.g., CPU-only notebooks, tensorboards) are prioritized separately from tasks
+            requiring slots (e.g., experiments running on GPUs). Task priority can be assigned using
+            the ``resources.priority`` field. If a task does not specify a priority it is assigned
+            the ``default_priority``.
 
-            -  ``preemption``: Specifies whether lower priority tasks
-               should be preempted to schedule higher priority tasks.
-               Tasks are preempted in order of lowest priority first.
+            -  ``preemption``: Specifies whether lower priority tasks should be preempted to
+               schedule higher priority tasks. Tasks are preempted in order of lowest priority
+               first.
 
-            -  ``default_priority``: The priority that is assigned to
-               tasks that do not specify a priority. Can be configured
-               to 1 to 99 inclusively. Defaults to 42.
+            -  ``default_priority``: The priority that is assigned to tasks that do not specify a
+               priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
 
-      -  ``fitting_policy``: The scheduling policy to use when assigning
-         tasks to agents in the cluster. Defaults to ``best``.
+      -  ``fitting_policy``: The scheduling policy to use when assigning tasks to agents in the
+         cluster. Defaults to ``best``.
 
-         -  ``best``: The best-fit policy ensures that tasks will be
-            preferentially "packed" together on the smallest number of
+         -  ``best``: The best-fit policy ensures that tasks will be preferentially "packed"
+            together on the smallest number of agents.
+         -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized
             agents.
-
-         -  ``worst``: The worst-fit policy ensures that tasks will be
-            placed on under-utilized agents.
 
    -  ``provider``: Specifies the configuration of dynamic agents.
 
-      -  ``master_url``: The full URL of the master. A valid URL is in
-         the format of ``scheme://host:port``. The scheme must be either
-         ``http`` or ``https``. If the master is deployed on EC2, rather
-         than hardcoding the IP address, we advise you use one of the
-         following to set the host as an alias: ``local-ipv4``,
-         ``public-ipv4``, ``local-hostname``, or ``public-hostname``. If
-         the master is deployed on GCP, rather than hardcoding the IP
-         address, we advise you use one of the following to set the host
-         as an alias: ``internal-ip`` or ``external-ip``. Which one you
-         should select is based on your network configuration. On master
-         startup, we will replace the above alias host with its real
-         value. Defaults to ``http`` as scheme, local IP address as
-         host, and ``8080`` as port.
+      -  ``master_url``: The full URL of the master. A valid URL is in the format of
+         ``scheme://host:port``. The scheme must be either ``http`` or ``https``. If the master is
+         deployed on EC2, rather than hardcoding the IP address, we advise you use one of the
+         following to set the host as an alias: ``local-ipv4``, ``public-ipv4``, ``local-hostname``,
+         or ``public-hostname``. If the master is deployed on GCP, rather than hardcoding the IP
+         address, we advise you use one of the following to set the host as an alias:
+         ``internal-ip`` or ``external-ip``. Which one you should select is based on your network
+         configuration. On master startup, we will replace the above alias host with its real value.
+         Defaults to ``http`` as scheme, local IP address as host, and ``8080`` as port.
 
-      -  ``master_cert_name``: A hostname for which the master's TLS
-         certificate is valid, if the host specified by the
-         ``master_url`` option is an IP address or is not contained in
-         the certificate. See :ref:`tls` for more information.
+      -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
+         host specified by the ``master_url`` option is an IP address or is not contained in the
+         certificate. See :ref:`tls` for more information.
 
-      -  ``startup_script``: One or more shell commands that will be run
-         during agent instance start up. These commands are executed as
-         root as soon as the agent cloud instance has started and before
-         the Determined agent container on the instance is launched. For
-         example, this feature can be used to mount a distributed file
-         system or make changes to the agent instance's configuration.
-         The default value is the empty string. It may be helpful to use
-         the YAML ``|`` syntax to specify a multi-line string. For
-         example,
+      -  ``startup_script``: One or more shell commands that will be run during agent instance start
+         up. These commands are executed as root as soon as the agent cloud instance has started and
+         before the Determined agent container on the instance is launched. For example, this
+         feature can be used to mount a distributed file system or make changes to the agent
+         instance's configuration. The default value is the empty string. It may be helpful to use
+         the YAML ``|`` syntax to specify a multi-line string. For example,
 
          .. code::
 
@@ -533,373 +441,298 @@ The master supports the following configuration settings:
                             mkdir -p /mnt/disks/second
                             mount /dev/sdb1 /mnt/disks/second
 
-      -  ``container_startup_script``: One or more shell commands that
-         will be run when the Determined agent container is started.
-         These commands are executed inside the agent container but
-         before the Determined agent itself is launched. For example,
-         this feature can be used to configure Docker so that the agent
-         can pull task images from GCR securely (see :ref:`this example
-         <gcp-pull-gcr>` for more details). The default value is the
-         empty string.
+      -  ``container_startup_script``: One or more shell commands that will be run when the
+         Determined agent container is started. These commands are executed inside the agent
+         container but before the Determined agent itself is launched. For example, this feature can
+         be used to configure Docker so that the agent can pull task images from GCR securely (see
+         :ref:`this example <gcp-pull-gcr>` for more details). The default value is the empty
+         string.
 
-      -  ``agent_docker_image``: The Docker image to use for the
-         Determined agents. A valid form is ``<repository>:<tag>``.
-         Defaults to ``determinedai/determined-agent:<master version>``.
+      -  ``agent_docker_image``: The Docker image to use for the Determined agents. A valid form is
+         ``<repository>:<tag>``. Defaults to ``determinedai/determined-agent:<master version>``.
 
-      -  ``agent_docker_network``: The Docker network to use for the
-         Determined agent and task containers. If this is set to
-         ``host``, `Docker host-mode networking
-         <https://docs.docker.com/network/host/>`__ will be used
-         instead. The default value is ``determined``.
+      -  ``agent_docker_network``: The Docker network to use for the Determined agent and task
+         containers. If this is set to ``host``, `Docker host-mode networking
+         <https://docs.docker.com/network/host/>`__ will be used instead. The default value is
+         ``determined``.
 
-      -  ``agent_docker_runtime``: The Docker runtime to use for the
-         Determined agent and task containers. Defaults to ``runc``.
+      -  ``agent_docker_runtime``: The Docker runtime to use for the Determined agent and task
+         containers. Defaults to ``runc``.
 
-      -  ``max_idle_agent_period``: How long to wait before terminating
-         idle dynamic agents. This string is a sequence of decimal
-         numbers, each with optional fraction and a unit suffix, such as
-         "30s", "1h", or "1m30s". Valid time units are "s", "m", "h".
-         The default value is ``20m``.
+      -  ``max_idle_agent_period``: How long to wait before terminating idle dynamic agents. This
+         string is a sequence of decimal numbers, each with optional fraction and a unit suffix,
+         such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is
+         ``20m``.
 
-      -  ``max_agent_starting_period``: How long to wait for agents
-         starting before retrying. This string is a sequence of decimal
-         numbers, each with optional fraction and a unit suffix, such as
-         "30s", "1h", or "1m30s". Valid time units are "s", "m", "h".
-         The default value is ``20m``.
+      -  ``max_agent_starting_period``: How long to wait for agents starting before retrying. This
+         string is a sequence of decimal numbers, each with optional fraction and a unit suffix,
+         such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value is
+         ``20m``.
 
-      -  ``min_instances``: Min number of Determined agent instances.
-         Defaults to 0.
+      -  ``min_instances``: Min number of Determined agent instances. Defaults to 0.
 
-      -  ``max_instances``: Max number of Determined agent instances.
-         Defaults to 5.
+      -  ``max_instances``: Max number of Determined agent instances. Defaults to 5.
 
-      -  ``type: aws``: Specifies running dynamic agents on AWS.
-         (*Required*)
+      -  ``type: aws``: Specifies running dynamic agents on AWS. (*Required*)
 
-         -  ``region``: The region of the AWS resources used by
-            Determined. We advise setting this region to be the same
-            region as the Determined master for better network
-            performance. Defaults to the same region as the master.
+         -  ``region``: The region of the AWS resources used by Determined. We advise setting this
+            region to be the same region as the Determined master for better network performance.
+            Defaults to the same region as the master.
 
-         -  ``root_volume_size``: Size of the root volume of the
-            Determined agent in GB. We recommend at least 100GB.
-            Defaults to ``200``.
+         -  ``root_volume_size``: Size of the root volume of the Determined agent in GB. We
+            recommend at least 100GB. Defaults to ``200``.
 
-         -  ``image_id``: The AMI ID of the Determined agent. Defaults
-            to the latest GCP agent image. (*Optional*)
+         -  ``image_id``: The AMI ID of the Determined agent. Defaults to the latest GCP agent
+            image. (*Optional*)
 
-         -  ``tag_key``: Key for tagging the Determined agent instances.
-            Defaults to ``managed-by``.
+         -  ``tag_key``: Key for tagging the Determined agent instances. Defaults to ``managed-by``.
 
-         -  ``tag_value``: Value for tagging the Determined agent
-            instances. Defaults to the master instance ID if the master
-            is on EC2, otherwise ``determined-ai-determined``.
+         -  ``tag_value``: Value for tagging the Determined agent instances. Defaults to the master
+            instance ID if the master is on EC2, otherwise ``determined-ai-determined``.
 
-         -  ``custom_tags``: List of arbitrary user-defined tags that
-            are added to the Determined agent instances and do not
-            affect how Determined works. Each tag must specify ``key``
+         -  ``custom_tags``: List of arbitrary user-defined tags that are added to the Determined
+            agent instances and do not affect how Determined works. Each tag must specify ``key``
             and ``value`` fields. Defaults to empty list.
 
             -  ``key``: Key of custom tag.
             -  ``value``: value of custom tag.
 
-         -  ``instance_name``: Name to set for the Determined agent
-            instances. Defaults to ``determined-ai-agent``.
+         -  ``instance_name``: Name to set for the Determined agent instances. Defaults to
+            ``determined-ai-agent``.
 
-         -  ``ssh_key_name``: The name of the SSH key registered with
-            AWS for SSH key access to the agent instances. (*Required*)
+         -  ``ssh_key_name``: The name of the SSH key registered with AWS for SSH key access to the
+            agent instances. (*Required*)
 
-         -  ``iam_instance_profile_arn``: The Amazon Resource Name (ARN)
-            of the IAM instance profile to attach to the agent
-            instances.
+         -  ``iam_instance_profile_arn``: The Amazon Resource Name (ARN) of the IAM instance profile
+            to attach to the agent instances.
 
-         -  ``network_interface``: Network interface to set for the
-            Determined agent instances.
+         -  ``network_interface``: Network interface to set for the Determined agent instances.
 
-            -  ``public_ip``: Whether to use public IP addresses for the
-               Determined agents. See :ref:`aws-network-requirements`
-               for instructions on whether a public IP should be used.
-               Defaults to ``false``.
+            -  ``public_ip``: Whether to use public IP addresses for the Determined agents. See
+               :ref:`aws-network-requirements` for instructions on whether a public IP should be
+               used. Defaults to ``false``.
 
-            -  ``security_group_id``: The ID of the security group to
-               run the Determined agents as. This should be the security
-               group you identified or created in
-               :ref:`aws-network-requirements`. Defaults to the default
-               security group of the specified VPC.
+            -  ``security_group_id``: The ID of the security group to run the Determined agents as.
+               This should be the security group you identified or created in
+               :ref:`aws-network-requirements`. Defaults to the default security group of the
+               specified VPC.
 
-            -  ``subnet_id``: The ID of the subnet to run the Determined
-               agents in. Defaults to the default subnet of the default
-               VPC.
+            -  ``subnet_id``: The ID of the subnet to run the Determined agents in. Defaults to the
+               default subnet of the default VPC.
 
-         -  ``instance_type``: AWS instance type to use for dynamic
-            agents. For GPU instances, this must be one of the
-            following: ``g4dn.xlarge``, ``g4dn.2xlarge``,
-            ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
-            ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
-            ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
-            ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For
-            CPU instances, most general purpose instance types are
-            allowed (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
-            variants). Defaults to ``p3.8xlarge``.
+         -  ``instance_type``: AWS instance type to use for dynamic agents. For GPU instances, this
+            must be one of the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+            ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
+            ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or
+            ``p3dn.24xlarge``. For CPU instances, most general purpose instance types are allowed
+            (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants). Defaults to
+            ``p3.8xlarge``.
 
-         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU
-            instance types. When ``true``, and if the instance type
-            doesn't have any GPUs, each instance will provide a single
-            CPU-based compute slot; if it has any GPUs, they'll be used
-            for compute slots instead. Defaults to ``false``.
+         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU instance types. When ``true``,
+            and if the instance type doesn't have any GPUs, each instance will provide a single
+            CPU-based compute slot; if it has any GPUs, they'll be used for compute slots instead.
+            Defaults to ``false``.
 
-         -  ``spot``: Whether to use spot instances. Defaults to
-            ``false``. See :ref:`aws-spot` for more details.
+         -  ``spot``: Whether to use spot instances. Defaults to ``false``. See :ref:`aws-spot` for
+            more details.
 
-         -  ``spot_max_price``: Optional field indicating the maximum
-            price per hour that you are willing to pay for a spot
-            instance. The market price for a spot instance varies based
-            on supply and demand. If the market price exceeds the
-            ``spot_max_price``, Determined will not launch instances.
-            This field must be a string and must not include a currency
-            sign. For example, $2.50 should be represented as
-            ``"2.50"``. Defaults to the on-demand price for the given
-            instance type.
+         -  ``spot_max_price``: Optional field indicating the maximum price per hour that you are
+            willing to pay for a spot instance. The market price for a spot instance varies based on
+            supply and demand. If the market price exceeds the ``spot_max_price``, Determined will
+            not launch instances. This field must be a string and must not include a currency sign.
+            For example, $2.50 should be represented as ``"2.50"``. Defaults to the on-demand price
+            for the given instance type.
 
-      -  ``type: gcp``: Specifies running dynamic agents on GCP.
-         (*Required*)
+      -  ``type: gcp``: Specifies running dynamic agents on GCP. (*Required*)
 
-         -  ``base_config``: Instance resource base configuration that
-            will be merged with the fields below to construct GCP
-            inserting instance request. See `REST Resource: instances
-            <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__
-            for details.
+         -  ``base_config``: Instance resource base configuration that will be merged with the
+            fields below to construct GCP inserting instance request. See `REST Resource: instances
+            <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__ for
+            details.
 
-         -  ``project``: The project ID of the GCP resources used by
-            Determined. Defaults to the project of the master.
+         -  ``project``: The project ID of the GCP resources used by Determined. Defaults to the
+            project of the master.
 
-         -  ``zone``: The zone of the GCP resources used by Determined.
-            Defaults to the zone of the master.
+         -  ``zone``: The zone of the GCP resources used by Determined. Defaults to the zone of the
+            master.
 
-         -  ``boot_disk_size``: Size of the root volume of the
-            Determined agent in GB. We recommend at least 100GB.
-            Defaults to ``200``.
+         -  ``boot_disk_size``: Size of the root volume of the Determined agent in GB. We recommend
+            at least 100GB. Defaults to ``200``.
 
-         -  ``boot_disk_source_image``: The boot disk source image of
-            the Determined agent that was shared with you. To use a
-            specific version of the Determined agent image from a
-            specific project, it should be set in the format:
-            ``projects/<project-id>/global/images/<image-id>``. Defaults
-            to the latest GCP agent image. (*Optional*)
+         -  ``boot_disk_source_image``: The boot disk source image of the Determined agent that was
+            shared with you. To use a specific version of the Determined agent image from a specific
+            project, it should be set in the format:
+            ``projects/<project-id>/global/images/<image-id>``. Defaults to the latest GCP agent
+            image. (*Optional*)
 
-         -  ``label_key``: Key for labeling the Determined agent
-            instances. Defaults to ``managed-by``.
+         -  ``label_key``: Key for labeling the Determined agent instances. Defaults to
+            ``managed-by``.
 
-         -  ``label_value``: Value for labeling the Determined agent
-            instances. Defaults to the master instance name if the
-            master is on GCP, otherwise ``determined-ai-determined``.
+         -  ``label_value``: Value for labeling the Determined agent instances. Defaults to the
+            master instance name if the master is on GCP, otherwise ``determined-ai-determined``.
 
-         -  ``name_prefix``: Name prefix to set for the Determined agent
-            instances. The names of the Determined agent instances are a
-            concatenation of the name prefix and a pet name. Defaults to
-            the master instance name if the master is on GCP otherwise
+         -  ``name_prefix``: Name prefix to set for the Determined agent instances. The names of the
+            Determined agent instances are a concatenation of the name prefix and a pet name.
+            Defaults to the master instance name if the master is on GCP otherwise
             ``determined-ai-determined``.
 
-         -  ``network_interface``: Network configuration for the
-            Determined agent instances. See the :ref:`gcp-api-access`
-            section for the suggested configuration. (*Required*)
+         -  ``network_interface``: Network configuration for the Determined agent instances. See the
+            :ref:`gcp-api-access` section for the suggested configuration. (*Required*)
 
-            -  ``network``: Network resource for the Determined agent
-               instances. The network configuration should specify the
-               project ID of the network. It should be set in the
-               format: ``projects/<project>/global/networks/<network>``.
-               (*Required*)
+            -  ``network``: Network resource for the Determined agent instances. The network
+               configuration should specify the project ID of the network. It should be set in the
+               format: ``projects/<project>/global/networks/<network>``. (*Required*)
 
-            -  ``subnetwork``: Subnetwork resource for the Determined
-               agent instances. The subnet configuration should specify
-               the project ID and the region of the subnetwork. It
+            -  ``subnetwork``: Subnetwork resource for the Determined agent instances. The subnet
+               configuration should specify the project ID and the region of the subnetwork. It
                should be set in the format:
-               ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``.
-               (*Required*)
+               ``projects/<project>/regions/<region>/subnetworks/<subnetwork>``. (*Required*)
 
-            -  ``external_ip``: Whether to use external IP addresses for
-               the Determined agent instances. See
-               :ref:`gcp-network-requirements` for instructions on
-               whether an external IP should be set. Defaults to
+            -  ``external_ip``: Whether to use external IP addresses for the Determined agent
+               instances. See :ref:`gcp-network-requirements` for instructions on whether an
+               external IP should be set. Defaults to ``false``.
+
+         -  ``network_tags``: An array of network tags to set firewalls for the Determined agent
+            instances. This is the one you identified or created in :ref:`firewall-rules`. Defaults
+            to be an empty array.
+
+         -  ``service_account``: Service account for the Determined agent instances. See the
+            :ref:`gcp-api-access` section for suggested configuration.
+
+            -  ``email``: Email of the service account for the Determined agent instances. Defaults
+               to the empty string.
+
+            -  ``scopes``: List of scopes authorized for the Determined agent instances. As
+               suggested in :ref:`gcp-api-access`, we recommend you set the scopes to
+               ``["https://www.googleapis.com/auth/cloud-platform"]``. Defaults to
+               ``["https://www.googleapis.com/auth/cloud-platform"]``.
+
+         -  ``instance_type``: Type of instance for the Determined agents.
+
+            -  ``machine_type``: Type of machine for the Determined agents. Defaults to
+               ``n1-standard-32``.
+            -  ``gpu_type``: Type of GPU for the Determined agents. Set it to be an empty string to
+               not use any GPUs. Defaults to ``nvidia-tesla-v100``.
+            -  ``gpu_num``: Number of GPUs for the Determined agents. Defaults to 4.
+            -  ``preemptible``: Whether to use preemptible dynamic agent instances. Defaults to
                ``false``.
 
-         -  ``network_tags``: An array of network tags to set firewalls
-            for the Determined agent instances. This is the one you
-            identified or created in :ref:`firewall-rules`. Defaults to
-            be an empty array.
+         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU instance types. When ``true``,
+            and if the instance type doesn't have any GPUs, each instance will provide a single
+            CPU-based compute slot; if it has any GPUs, they'll be used for compute slots instead.
+            Defaults to ``false``.
 
-         -  ``service_account``: Service account for the Determined
-            agent instances. See the :ref:`gcp-api-access` section for
-            suggested configuration.
+         -  ``operation_timeout_period``: The timeout period for tracking a GCP operation. This
+            string is a sequence of decimal numbers, each with optional fraction and a unit suffix,
+            such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value
+            is ``5m``.
 
-            -  ``email``: Email of the service account for the
-               Determined agent instances. Defaults to the empty string.
-
-            -  ``scopes``: List of scopes authorized for the Determined
-               agent instances. As suggested in :ref:`gcp-api-access`,
-               we recommend you set the scopes to
-               ``["https://www.googleapis.com/auth/cloud-platform"]``.
-               Defaults to
-               ``["https://www.googleapis.com/auth/cloud-platform"]``.
-
-         -  ``instance_type``: Type of instance for the Determined
-            agents.
-
-            -  ``machine_type``: Type of machine for the Determined
-               agents. Defaults to ``n1-standard-32``.
-
-            -  ``gpu_type``: Type of GPU for the Determined agents. Set
-               it to be an empty string to not use any GPUs. Defaults to
-               ``nvidia-tesla-v100``.
-
-            -  ``gpu_num``: Number of GPUs for the Determined agents.
-               Defaults to 4.
-
-            -  ``preemptible``: Whether to use preemptible dynamic agent
-               instances. Defaults to ``false``.
-
-         -  ``cpu_slots_allowed``: Whether to allow slots on the CPU
-            instance types. When ``true``, and if the instance type
-            doesn't have any GPUs, each instance will provide a single
-            CPU-based compute slot; if it has any GPUs, they'll be used
-            for compute slots instead. Defaults to ``false``.
-
-         -  ``operation_timeout_period``: The timeout period for
-            tracking a GCP operation. This string is a sequence of
-            decimal numbers, each with optional fraction and a unit
-            suffix, such as "30s", "1h", or "1m30s". Valid time units
-            are "s", "m", "h". The default value is ``5m``.
-
--  ``checkpoint_storage``: Specifies where model checkpoints will be
-   stored. This can be overridden on a per-experiment basis in the
-   :ref:`experiment-configuration`. A checkpoint contains the
-   architecture and weights of the model being trained. Determined
-   currently supports several kinds of checkpoint storage, ``gcs``,
-   ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
+-  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
+   on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the
+   architecture and weights of the model being trained. Determined currently supports several kinds
+   of checkpoint storage, ``gcs``, ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
    ``type`` subfield.
 
-   -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage
-      (GCS). Authentication is done using GCP's "`Application Default
-      Credentials
-      <https://googleapis.dev/python/google-api-core/latest/auth.html>`__"
-      approach. When using Determined inside Google Compute Engine
-      (GCE), the simplest approach is to ensure that the VMs used by
-      Determined are running in a service account that has the "Storage
-      Object Admin" role on the GCS bucket being used for checkpoints.
-      As an alternative (or when running outside of GCE), you can add
-      the appropriate `service account credentials
+   -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage (GCS). Authentication is done
+      using GCP's "`Application Default Credentials
+      <https://googleapis.dev/python/google-api-core/latest/auth.html>`__" approach. When using
+      Determined inside Google Compute Engine (GCE), the simplest approach is to ensure that the VMs
+      used by Determined are running in a service account that has the "Storage Object Admin" role
+      on the GCS bucket being used for checkpoints. As an alternative (or when running outside of
+      GCE), you can add the appropriate `service account credentials
       <https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
       to your container (e.g., via a bind-mount), and then set the
-      ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable to the
-      container path where the credentials are located. See
-      :ref:`environment-variables` for more information on how to set
+      ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable to the container path where the
+      credentials are located. See :ref:`environment-variables` for more information on how to set
       environment variables in trial environments.
 
       -  ``bucket``: The GCS bucket name to use.
 
    -  ``type: hdfs``: Checkpoints are stored in HDFS using the `WebHDFS
-      <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__
-      API for reading and writing checkpoint resources.
+      <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__ API
+      for reading and writing checkpoint resources.
 
-      -  ``hdfs_url``: Hostname or IP address of HDFS namenode, prefixed
-         with protocol, followed by WebHDFS port on namenode. Multiple
-         namenodes are allowed as a semicolon-separated list (e.g.,
-         ``"http://namenode1:50070;http://namenode2:50070"``).
+      -  ``hdfs_url``: Hostname or IP address of HDFS namenode, prefixed with protocol, followed by
+         WebHDFS port on namenode. Multiple namenodes are allowed as a semicolon-separated list
+         (e.g., ``"http://namenode1:50070;http://namenode2:50070"``).
 
-      -  ``hdfs_path``: The prefix path where all checkpoints will be
-         written to and read from. The resources of each checkpoint will
-         be saved in a subdirectory of ``hdfs_path``, where the
+      -  ``hdfs_path``: The prefix path where all checkpoints will be written to and read from. The
+         resources of each checkpoint will be saved in a subdirectory of ``hdfs_path``, where the
          subdirectory name is the checkpoint's UUID.
 
-      -  ``user``: An optional string value that indicates the user to
-         use for all read and write requests. If left unspecified, the
-         default user of the trial runner container will be used.
+      -  ``user``: An optional string value that indicates the user to use for all read and write
+         requests. If left unspecified, the default user of the trial runner container will be used.
 
    -  ``type: s3``: Checkpoints are stored in Amazon S3.
 
       -  ``bucket``: The S3 bucket name to use.
       -  ``access_key``: The AWS access key to use.
       -  ``secret_key``: The AWS secret key to use.
-      -  ``endpoint_url``: The optional endpoint to use for S3 clones,
-         e.g., ``http://127.0.0.1:8080/``.
+      -  ``endpoint_url``: The optional endpoint to use for S3 clones, e.g.,
+         ``http://127.0.0.1:8080/``.
 
-   -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob
-      Storage. Authentication is performed by providing either a
-      connection string, or an account URL and an optional credential.
+   -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob Storage. Authentication is
+      performed by providing either a connection string, or an account URL and an optional
+      credential.
 
       -  ``container``: The Azure Blob Storage container name to use.
-      -  ``connection_string``: The connection string for the service
-         account to use.
-      -  ``account_url``: The account URL for the service account to
-         use.
-      -  ``credential``: The optional credential to use in conjunction
-         with the account URL.
+      -  ``connection_string``: The connection string for the service account to use.
+      -  ``account_url``: The account URL for the service account to use.
+      -  ``credential``: The optional credential to use in conjunction with the account URL.
 
-      Please only specify either ``connection_string`` or the
-      ``account_url`` and ``credential`` pair.
+      Please only specify either ``connection_string`` or the ``account_url`` and ``credential``
+      pair.
 
-   -  ``type: shared_fs``: Checkpoints are written to a directory on the
-      agent's file system. The assumption is that the system
-      administrator has arranged for the same directory to be mounted at
-      every agent host, and for the content of this directory to be the
-      same on all agent hosts (e.g., by using a distributed or network
-      file system such as GlusterFS or NFS).
+   -  ``type: shared_fs``: Checkpoints are written to a directory on the agent's file system. The
+      assumption is that the system administrator has arranged for the same directory to be mounted
+      at every agent host, and for the content of this directory to be the same on all agent hosts
+      (e.g., by using a distributed or network file system such as GlusterFS or NFS).
 
-      -  ``host_path``: The file system path on each agent to use. This
-         directory will be mounted to ``/determined_shared_fs`` inside
-         the trial container.
+      -  ``host_path``: The file system path on each agent to use. This directory will be mounted to
+         ``/determined_shared_fs`` inside the trial container.
 
-      -  ``storage_path``: The optional path where checkpoints will be
-         written to and read from. Must be a subdirectory of the
-         ``host_path`` or an absolute path containing the ``host_path``.
-         If unset, checkpoints are written to and read from the
-         ``host_path``.
+      -  ``storage_path``: The optional path where checkpoints will be written to and read from.
+         Must be a subdirectory of the ``host_path`` or an absolute path containing the
+         ``host_path``. If unset, checkpoints are written to and read from the ``host_path``.
 
-      -  ``propagation``: (Advanced users only) Optional `propagation
-         behavior
-         <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
-         for replicas of the bind-mount. Defaults to ``rprivate``.
+      -  ``propagation``: (Advanced users only) Optional `propagation behavior
+         <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas
+         of the bind-mount. Defaults to ``rprivate``.
 
-   -  When an experiment finishes, the system will optionally delete
-      some checkpoints to reclaim space. The ``save_experiment_best``,
-      ``save_trial_best`` and ``save_trial_latest`` parameters specify
-      which checkpoints to save. See
-      :ref:`checkpoint-garbage-collection` for more details.
+   -  When an experiment finishes, the system will optionally delete some checkpoints to reclaim
+      space. The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters
+      specify which checkpoints to save. See :ref:`checkpoint-garbage-collection` for more details.
 
 -  ``db``: Specifies the configuration of the database.
 
-   -  ``user``: The database user to use when logging in the database.
-      (*Required*)
-   -  ``password``: The password to use when logging in the database.
-      (*Required*)
+   -  ``user``: The database user to use when logging in the database. (*Required*)
+   -  ``password``: The password to use when logging in the database. (*Required*)
    -  ``host``: The database host to use. (*Required*)
    -  ``port``: The database port to use. (*Required*)
    -  ``name``: The database name to use. (*Required*)
 
 -  ``security``: Specifies security-related configuration settings.
 
-   -  ``tls``: Specifies configuration settings for :ref:`TLS <tls>`.
-      TLS is enabled if certificate and key files are both specified.
+   -  ``tls``: Specifies configuration settings for :ref:`TLS <tls>`. TLS is enabled if certificate
+      and key files are both specified.
 
       -  ``cert``: Certificate file to use for serving TLS.
       -  ``key``: Key file to use for serving TLS.
 
--  ``telemetry``: Specifies whether we collect and report anonymous
-   information about the usage of Determined. See :ref:`telemetry` for
-   details on what kinds of information are reported.
+-  ``telemetry``: Specifies whether we collect and report anonymous information about the usage of
+   Determined. See :ref:`telemetry` for details on what kinds of information are reported.
 
    -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
--  ``logging``: Specifies configuration settings for the logging backend
-   for trial logs.
+-  ``logging``: Specifies configuration settings for the logging backend for trial logs.
 
-   -  ``type: default``: Trial logs are shipped to the master and stored
-      in Postgres. If nothing is set, this is the default.
+   -  ``type: default``: Trial logs are shipped to the master and stored in Postgres. If nothing is
+      set, this is the default.
 
-   -  ``type: elastic``: Trial logs are shipped to the Elasticsearch
-      cluster described by the configuration settings in the section.
-      See :ref:`the topic guide <elasticsearch-logging-backend>` for a
-      more detailed explanation of how and when to use Elasticsearch.
+   -  ``type: elastic``: Trial logs are shipped to the Elasticsearch cluster described by the
+      configuration settings in the section. See :ref:`the topic guide
+      <elasticsearch-logging-backend>` for a more detailed explanation of how and when to use
+      Elasticsearch.
 
       -  ``host``: Hostname or IP address for the cluster.
 
@@ -917,47 +750,33 @@ The master supports the following configuration settings:
 
             -  ``skip_verify``: Skip server certificate verification.
 
-            -  ``certificate``: Path to a file containing the cluster's
-               TLS certificate. Only needed if the certificate is not
-               signed by a well-known CA; cannot be specified if
+            -  ``certificate``: Path to a file containing the cluster's TLS certificate. Only needed
+               if the certificate is not signed by a well-known CA; cannot be specified if
                ``skip_verify`` is enabled.
 
--  ``scim``: (EE-only) Specifies whether the SCIM service is enabled and
-   the credentials for clients to use it.
+-  ``scim``: (EE-only) Specifies whether the SCIM service is enabled and the credentials for clients
+   to use it.
 
    -  ``enabled``: Whether to enable SCIM. Defaults to ``false``.
 
    -  ``auth``: The configuration for authenticating SCIM requests.
 
-      -  ``type``: The authentication type to use. Either ``"basic"``
-         (for HTTP basic authentication) or ``"oauth"`` (for :ref:`OAuth
-         2.0 <oauth>`).
+      -  ``type``: The authentication type to use. Either ``"basic"`` (for HTTP basic
+         authentication) or ``"oauth"`` (for :ref:`OAuth 2.0 <oauth>`).
+      -  ``username``: The username for HTTP basic authentication (only allowed with ``type:
+         basic``).
+      -  ``password``: The password for HTTP basic authentication (only allowed with ``type:
+         basic``).
 
-      -  ``username``: The username for HTTP basic authentication (only
-         allowed with ``type: basic``).
-
-      -  ``password``: The password for HTTP basic authentication (only
-         allowed with ``type: basic``).
-
--  ``saml``: (EE-only) Specifies whether SAML SSO is enabled and the
-   configuration to use it.
+-  ``saml``: (EE-only) Specifies whether SAML SSO is enabled and the configuration to use it.
 
    -  ``enabled``: Whether to enable SAML SSO. Defaults to ``false``.
-
-   -  ``provider``: The name of the IdP. Currently (officially)
-      supported: "okta".
-
-   -  ``idp_recipient_url``: The URL your IdP will send SAML assertions
-      to.
-
+   -  ``provider``: The name of the IdP. Currently (officially) supported: "okta".
+   -  ``idp_recipient_url``: The URL your IdP will send SAML assertions to.
    -  ``idp_sso_url``: An IdP-provided URL to redirect SAML requests to.
-
-   -  ``idp_sso_descriptor_url``: An IdP-provided URL, also known as IdP
-      issuer. It is an identifier for the IdP that issues the SAML
-      requests and responses.
-
-   -  ``idp_cert_path``: The path to the IdP's certificate, used to
-      validate assertions.
+   -  ``idp_sso_descriptor_url``: An IdP-provided URL, also known as IdP issuer. It is an identifier
+      for the IdP that issues the SAML requests and responses.
+   -  ``idp_cert_path``: The path to the IdP's certificate, used to validate assertions.
 
 .. _agent-configuration:
 
@@ -965,60 +784,47 @@ The master supports the following configuration settings:
  Agent Configuration
 *********************
 
--  ``config_file``: Path to the agent configuration file. Normally this
-   should only be set via an environment variable or command-line
-   option. Defaults to ``/etc/determined/agent.yaml``.
+-  ``config_file``: Path to the agent configuration file. Normally this should only be set via an
+   environment variable or command-line option. Defaults to ``/etc/determined/agent.yaml``.
 
--  ``master_host`` (required): The hostname or IP address of the
-   Determined master.
+-  ``master_host`` (required): The hostname or IP address of the Determined master.
 
--  ``master_port``: The port of the Determined master. Defaults to
-   ``443`` if TLS is enabled and ``80`` otherwise.
+-  ``master_port``: The port of the Determined master. Defaults to ``443`` if TLS is enabled and
+   ``80`` otherwise.
 
--  ``agent_id``: The ID of this agent; defaults to the hostname of the
-   current machine. Agent IDs must be unique within a cluster.
+-  ``agent_id``: The ID of this agent; defaults to the hostname of the current machine. Agent IDs
+   must be unique within a cluster.
 
--  ``container-master-host``: Master hostname that containers started by
-   this agent will connect to. Defaults to the value of ``master_host``.
+-  ``container-master-host``: Master hostname that containers started by this agent will connect to.
+   Defaults to the value of ``master_host``.
 
--  ``container-master-port``: Master port that containers started by
-   this agent will connect to. Defaults to the value of ``master_port``.
+-  ``container-master-port``: Master port that containers started by this agent will connect to.
+   Defaults to the value of ``master_port``.
 
--  ``resource_pool``: Which resource pool the agent should join.
-   Defaults to the value of ``default``, which will work if and only if
-   there is a resource pool named ``default``. If you are using the old
-   version of the master configuration (which predates resource pools) a
-   resource pool named ``default`` is automatically created. If you are
-   using the new version of the master configuration and have specified
-   resource pools, this field will need to be set correctly for the
-   agent to join successfully. For more information please see
-   :ref:`resource-pools`.
+-  ``resource_pool``: Which resource pool the agent should join. Defaults to the value of
+   ``default``, which will work if and only if there is a resource pool named ``default``. If you
+   are using the old version of the master configuration (which predates resource pools) a resource
+   pool named ``default`` is automatically created. If you are using the new version of the master
+   configuration and have specified resource pools, this field will need to be set correctly for the
+   agent to join successfully. For more information please see :ref:`resource-pools`.
 
--  ``label``: The label to assign to this agent. An agent with a label
-   will only be assigned workloads that have been assigned the same
-   label (e.g., via the :ref:`agent_label <exp-config-agent_label>`
-   field in the experiment configuration).
+-  ``label``: The label to assign to this agent. An agent with a label will only be assigned
+   workloads that have been assigned the same label (e.g., via the :ref:`agent_label
+   <exp-config-agent_label>` field in the experiment configuration).
 
--  ``visible_gpus``: The GPUs that should be exposed as slots by the
-   agent. A comma-separated list of GPUs, each specified by a 0-based
-   index, UUID, PCI bus ID, or board serial number. The 0-based index of
-   NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
+-  ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A comma-separated list
+   of GPUs, each specified by a 0-based index, UUID, PCI bus ID, or board serial number. The 0-based
+   index of NVIDIA GPUs can be obtained via the ``nvidia-smi`` command.
 
--  ``slot_type``: The slot type that should be exposed. Dynamic agents
-   having GPUs will be configured to ``gpu``, agents without GPUs with
-   ``cpu_slots_allowed: true`` provisioner option will be configured to
-   ``cpu``, and ``none`` otherwise. For static agents this field
-   defaults to ``auto``.
+-  ``slot_type``: The slot type that should be exposed. Dynamic agents having GPUs will be
+   configured to ``gpu``, agents without GPUs with ``cpu_slots_allowed: true`` provisioner option
+   will be configured to ``cpu``, and ``none`` otherwise. For static agents this field defaults to
+   ``auto``.
 
-   -  ``auto``: Automatically detects the slot type. The agent will
-      detect if there are GPUs. If there are GPUs, it maps each GPU to
-      one slot. Otherwise, it maps all the CPUs to a slot.
-
-   -  ``none``: The agent will not create any slots for detected
-      devices.
-
+   -  ``auto``: Automatically detects the slot type. The agent will detect if there are GPUs. If
+      there are GPUs, it maps each GPU to one slot. Otherwise, it maps all the CPUs to a slot.
+   -  ``none``: The agent will not create any slots for detected devices.
    -  ``gpu``: The agent will map each detected GPU to a slot.
-
    -  ``cpu``: Map all the CPUs to a slot, even when GPUs are present.
 
 -  ``http_proxy``: The HTTP proxy address for the agent's containers.
@@ -1027,22 +833,19 @@ The master supports the following configuration settings:
 
 -  ``ftp_proxy``: The FTP proxy address for the agent's containers.
 
--  ``no_proxy``: The addresses that the agent's containers should not
-   proxy.
+-  ``no_proxy``: The addresses that the agent's containers should not proxy.
 
 -  ``security``: Security-related configuration settings.
 
    -  ``tls``: Configuration settings for :ref:`TLS <tls>`.
 
-      -  ``enabled``: Whether to use TLS to connect to the master.
-         Defaults to ``false``.
+      -  ``enabled``: Whether to use TLS to connect to the master. Defaults to ``false``.
 
-      -  ``skip_verify``: Skip verifying the master certificate when
-         using TLS. Defaults to ``false``. Enabling this setting will
-         reduce the security of your Determined cluster.
+      -  ``skip_verify``: Skip verifying the master certificate when using TLS. Defaults to
+         ``false``. Enabling this setting will reduce the security of your Determined cluster.
 
       -  ``master_cert``: CA cert file for the master when using TLS.
 
-      -  ``master_cert_name``: A hostname for which the master's TLS
-         certificate is valid, if the value of the ``master_host``
-         option is an IP address or is not contained in the certificate.
+      -  ``master_cert_name``: A hostname for which the master's TLS certificate is valid, if the
+         value of the ``master_host`` option is an IP address or is not contained in the
+         certificate.

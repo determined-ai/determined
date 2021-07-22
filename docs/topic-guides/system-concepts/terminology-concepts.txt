@@ -5,90 +5,76 @@
 ##########################
 
 agent
-   A machine, typically with GPUs, that is used for training models and
-   running other tasks, such as notebooks and TensorBoards. The master
-   handles provisioning and deprovisioning agent instances in cloud
-   settings. More information can be found at
-   :ref:`det-system-architecture`.
+   A machine, typically with GPUs, that is used for training models and running other tasks, such as
+   notebooks and TensorBoards. The master handles provisioning and deprovisioning agent instances in
+   cloud settings. More information can be found at :ref:`det-system-architecture`.
 
 command
-   A non-trial task that can be run on a Determined cluster. Instead of
-   running model code, the task executes a user-specified program on the
-   cluster. See :ref:`commands-and-shells` for more information.
+   A non-trial task that can be run on a Determined cluster. Instead of running model code, the task
+   executes a user-specified program on the cluster. See :ref:`commands-and-shells` for more
+   information.
 
 command-line interface (CLI)
-   A tool for interacting with Determined from a command line. The CLI
-   is installed with the command name ``det``. More information can be
-   found at :ref:`cli`.
+   A tool for interacting with Determined from a command line. The CLI is installed with the command
+   name ``det``. More information can be found at :ref:`cli`.
 
 configuration file
-   A :ref:`YAML <topic-guides_yaml>` file that contains options to pass
-   to Determined. For example, an experiment configuration file contains
-   information on the training length, data location, hyperparameters,
-   and other options for an experiment. More information can be found at
+   A :ref:`YAML <topic-guides_yaml>` file that contains options to pass to Determined. For example,
+   an experiment configuration file contains information on the training length, data location,
+   hyperparameters, and other options for an experiment. More information can be found at
    :ref:`experiment-configuration`, :ref:`cluster-configuration`, and
    :ref:`command-notebook-configuration`.
 
 context directory
-   The directory that is uploaded to the master when an experiment is
-   created. It must contain all code that is part of the model
-   definition.
+   The directory that is uploaded to the master when an experiment is created. It must contain all
+   code that is part of the model definition.
 
 distributed training
-   Using multiple GPUs to speed up the training of a single trial. In
-   Determined, these GPUs might all be on the same machine, or might be
-   spread across multiple machines --- note that we call both scenarios
-   "distributed training", which might differ from the terminology used
-   in other systems.
+   Using multiple GPUs to speed up the training of a single trial. In Determined, these GPUs might
+   all be on the same machine, or might be spread across multiple machines --- note that we call
+   both scenarios "distributed training", which might differ from the terminology used in other
+   systems.
 
 .. _concept-experiment:
 
 experiment
-   A collection of one or more trials that are exploring a user-defined
-   hyperparameter space. For example, during a learning rate
-   hyperparameter search, an experiment can consist of three trials with
-   learning rates of .001, .01, and .1. In Determined, experiments are
-   the main grouping mechanism for training tasks.
+   A collection of one or more trials that are exploring a user-defined hyperparameter space. For
+   example, during a learning rate hyperparameter search, an experiment can consist of three trials
+   with learning rates of .001, .01, and .1. In Determined, experiments are the main grouping
+   mechanism for training tasks.
 
 master
-   The central component of the Determined system. The master schedules
-   workloads onto agents, manages the provisioning and deprovisioning of
-   agents in cloud settings, and serves the frontend. More information
-   can be found at :ref:`det-system-architecture`.
+   The central component of the Determined system. The master schedules workloads onto agents,
+   manages the provisioning and deprovisioning of agents in cloud settings, and serves the frontend.
+   More information can be found at :ref:`det-system-architecture`.
 
 model definition
-   A specification of a deep learning model written in a supported deep
-   learning framework. The model definition contains training code that
-   inherits from a Python class provided by Determined
-   (:class:`~determined.keras.TFKerasTrial`,
-   :class:`~determined.pytorch.PyTorchTrial`, or
-   :class:`~determined.estimator.EstimatorTrial`). More information can
-   be found at :ref:`model-definitions`.
+   A specification of a deep learning model written in a supported deep learning framework. The
+   model definition contains training code that inherits from a Python class provided by Determined
+   (:class:`~determined.keras.TFKerasTrial`, :class:`~determined.pytorch.PyTorchTrial`, or
+   :class:`~determined.estimator.EstimatorTrial`). More information can be found at
+   :ref:`model-definitions`.
 
 searcher, search algorithm
-   A type of hyperparameter search to use. The search algorithm
-   determines how many trials will be run for a particular experiment
-   and how the hyperparameters will be set. More information can be
+   A type of hyperparameter search to use. The search algorithm determines how many trials will be
+   run for a particular experiment and how the hyperparameters will be set. More information can be
    found at :ref:`topic-guides_hp-tuning-det`.
 
 shell
-   A non-trial task that can be run on a Determined cluster. Instead of
-   running model code, the task starts an SSH server that allows
-   developers to use cluster resources interactively. See
+   A non-trial task that can be run on a Determined cluster. Instead of running model code, the task
+   starts an SSH server that allows developers to use cluster resources interactively. See
    :ref:`commands-and-shells` for more information.
 
 slot
-   A resource (GPU or CPU) that can be used for training. The maximum
-   number of slots that an experiment can use can be set in the
-   experiment configuration file or using the Determined CLI.
+   A resource (GPU or CPU) that can be used for training. The maximum number of slots that an
+   experiment can use can be set in the experiment configuration file or using the Determined CLI.
 
 .. _concept-trial:
 
 trial
-   A training task with a dataset, a deep learning model, and a defined
-   set of hyperparameters.
+   A training task with a dataset, a deep learning model, and a defined set of hyperparameters.
 
 workload
-   A discrete unit of work with one purpose related to training a model.
-   A workload will either train the model on a certain amount of data,
-   checkpoint the state, or validate the model's performance.
+   A discrete unit of work with one purpose related to training a model. A workload will either
+   train the model on a certain amount of data, checkpoint the state, or validate the model's
+   performance.

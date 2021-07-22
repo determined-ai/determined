@@ -4,11 +4,11 @@
  Notebooks Tutorial
 ####################
 
-To launch a notebook, start by installing the :ref:`Determined
-command-line interface <install-cli>` on a development machine.
+To launch a notebook, start by installing the :ref:`Determined command-line interface <install-cli>`
+on a development machine.
 
-Once the CLI is installed, try launching your first notebook with the
-``det notebook start`` command:
+Once the CLI is installed, try launching your first notebook with the ``det notebook start``
+command:
 
 .. code::
 
@@ -26,11 +26,9 @@ Once the CLI is installed, try launching your first notebook with the
    disconnecting websocket
    Jupyter Notebook is running at: http://localhost:8080/proxy/5b2a9ea4-a6bb-4d2b-b42b-25e4064a3220-notebook-0/lab/tree/Notebook.ipynb?reset
 
-After the notebook has been scheduled onto the cluster, the Determined
-CLI will open a web browser window pointed to that notebook's URL. Back
-in the terminal, you can use the ``det notebook list`` command to see
-that this notebook is one of those currently ``RUNNING`` on the
-Determined cluster:
+After the notebook has been scheduled onto the cluster, the Determined CLI will open a web browser
+window pointed to that notebook's URL. Back in the terminal, you can use the ``det notebook list``
+command to see that this notebook is one of those currently ``RUNNING`` on the Determined cluster:
 
 .. code::
 
@@ -41,10 +39,9 @@ Determined cluster:
     5b2a9ea4-a6bb-4d2b-b42b-25e4064a3220 | ['jupyter', 'notebook', '--config', '/etc/jupyter.py'] | 2019-04-04T17:53:20.387903Z  | RUNNING
     66da599e-62d2-4c2d-91c4-01a04045e4ab | ['jupyter', 'notebook', '--config', '/etc/jupyter.py'] | 2019-04-04T17:52:58.4573214Z | RUNNING
 
-Since the lifecycle management of Jupyter notebooks in Determined is
-left up to the user, this notebook will continue running until it is
-explicitly shut down. To terminate the notebook, you can use the ``det
-notebook kill`` command:
+Since the lifecycle management of Jupyter notebooks in Determined is left up to the user, this
+notebook will continue running until it is explicitly shut down. To terminate the notebook, you can
+use the ``det notebook kill`` command:
 
 .. code::
 
@@ -55,12 +52,10 @@ notebook kill`` command:
  Using the CLI in Notebooks
 ****************************
 
-The Determined CLI is installed into notebook containers by default.
-This allows users to interact with Determined from inside a
-notebook---e.g., to launch new deep learning workloads or examine the
-metrics from an active or historical Determined experiment. For example,
-to list Determined experiments from inside a notebook, run the notebook
-command ``!det experiment list``.
+The Determined CLI is installed into notebook containers by default. This allows users to interact
+with Determined from inside a notebook---e.g., to launch new deep learning workloads or examine the
+metrics from an active or historical Determined experiment. For example, to list Determined
+experiments from inside a notebook, run the notebook command ``!det experiment list``.
 
 ************
  Next Steps

@@ -4,71 +4,59 @@
  TensorFlow Keras Fashion MNIST Tutorial
 #########################################
 
-This tutorial describes how to port an existing ``tf.keras`` model to
-Determined. We will port a simple image classification model for the
-Fashion MNIST dataset. This tutorial is based on the official
-`TensorFlow Basic Image Classification Tutorial
+This tutorial describes how to port an existing ``tf.keras`` model to Determined. We will port a
+simple image classification model for the Fashion MNIST dataset. This tutorial is based on the
+official `TensorFlow Basic Image Classification Tutorial
 <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
 ***************
  Prerequisites
 ***************
 
--  Access to a Determined cluster. If you have not yet installed
-   Determined, refer to the :ref:`installation instructions
-   <install-cluster>`.
+-  Access to a Determined cluster. If you have not yet installed Determined, refer to the
+   :ref:`installation instructions <install-cluster>`.
 
--  The Determined CLI should be installed on your local machine. For
-   installation instructions, see :ref:`here <install-cli>`. After
-   installing the CLI, configure it to connect to your Determined
-   cluster by setting the ``DET_MASTER`` environment variable to the
-   hostname or IP address where Determined is running.
+-  The Determined CLI should be installed on your local machine. For installation instructions, see
+   :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined
+   cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where
+   Determined is running.
 
 **********
  Overview
 **********
 
-To use a TensorFlow model in Determined, you need to port the model to
-Determined's API. For most models, this porting process is
-straightforward, and once the model has been ported, all of the features
-of Determined will then be available: for example, you can do
-:ref:`distributed training <multi-gpu-training>` or :ref:`hyperparameter
-search <hyperparameter-tuning>` without changing your model code, and
-Determined will store and visualize your model metrics automatically.
+To use a TensorFlow model in Determined, you need to port the model to Determined's API. For most
+models, this porting process is straightforward, and once the model has been ported, all of the
+features of Determined will then be available: for example, you can do :ref:`distributed training
+<multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your
+model code, and Determined will store and visualize your model metrics automatically.
 
-When training a ``tf.keras`` model, Determined provides a built-in
-training loop that feeds batches of data into your model, performs
-backpropagation, and computes training metrics. Determined also handles
-evaluating your model on the validation set, as well as other details
-like checkpointing, log management, and device initialization. To plug
-your model code into the Determined training loop, you define methods to
-perform the following tasks:
+When training a ``tf.keras`` model, Determined provides a built-in training loop that feeds batches
+of data into your model, performs backpropagation, and computes training metrics. Determined also
+handles evaluating your model on the validation set, as well as other details like checkpointing,
+log management, and device initialization. To plug your model code into the Determined training
+loop, you define methods to perform the following tasks:
 
 -  initialization
 -  build the model graph
 -  load the training dataset
 -  load the validation dataset
 
-The Determined training loop will then invoke these functions
-automatically. These methods should be organized into a **trial class**,
-which is a user-defined Python class that inherits from
-:class:`determined.keras.TFKerasTrial`. The following sections walk
-through how to write your first trial class and then how to run a
-training job with Determined.
+The Determined training loop will then invoke these functions automatically. These methods should be
+organized into a **trial class**, which is a user-defined Python class that inherits from
+:class:`determined.keras.TFKerasTrial`. The following sections walk through how to write your first
+trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be downloaded here:
-:download:`fashion_mnist_tf_keras.tgz
-</examples/fashion_mnist_tf_keras.tgz>`. After downloading this file,
-open a terminal window, extract the file, and ``cd`` into the
-``fashion_mnist_tf_keras`` directory:
+The complete code for this tutorial can be downloaded here: :download:`fashion_mnist_tf_keras.tgz
+</examples/fashion_mnist_tf_keras.tgz>`. After downloading this file, open a terminal window,
+extract the file, and ``cd`` into the ``fashion_mnist_tf_keras`` directory:
 
 .. code::
 
    tar xzvf fashion_mnist_tf_keras.tgz
    cd fashion_mnist_tf_keras
 
-We suggest you follow along with the code as you read through this
-tutorial.
+We suggest you follow along with the code as you read through this tutorial.
 
 ************************
  Building a Trial Class
@@ -106,13 +94,11 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 ==============
 
-As with any Python class, the ``__init__`` method is invoked to
-construct our trial class. Determined passes this method a single
-parameter, :class:`~determined.TrialContext`. The trial context contains
-information about the trial, such as the values of the hyperparameters
-to use for training. For the time being, we don't need to access any
-properties from the trial context object, but we assign it to an
-instance variable so that we can use it later:
+As with any Python class, the ``__init__`` method is invoked to construct our trial class.
+Determined passes this method a single parameter, :class:`~determined.TrialContext`. The trial
+context contains information about the trial, such as the values of the hyperparameters to use for
+training. For the time being, we don't need to access any properties from the trial context object,
+but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
 
@@ -123,15 +109,12 @@ instance variable so that we can use it later:
 Building the Model
 ==================
 
-The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a
-compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses
-the Keras Sequential API and we can continue to use that API in our
-implementation of ``build_model``. The only minor differences are that
-the model needs to be wrapped by calling
-:func:`self.context.wrap_model()
-<determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled
-and the optimizer needs to be wrapped by calling
-:func:`self.context.wrap_optimizer()
+The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a compiled ``tf.keras.Model``
+object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that
+API in our implementation of ``build_model``. The only minor differences are that the model needs to
+be wrapped by calling :func:`self.context.wrap_model()
+<determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled and the optimizer needs to
+be wrapped by calling :func:`self.context.wrap_optimizer()
 <determined.keras.TFKerasTrialContext.wrap_optimizer>`.
 
 .. code:: python
@@ -164,17 +147,14 @@ Loading Data
 
 The last two methods we need to define are
 :meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and
-:meth:`~determined.keras.TFKerasTrial.build_validation_data_loader`.
-Determined uses these methods to load the training and validation
-datasets, respectively.
+:meth:`~determined.keras.TFKerasTrial.build_validation_data_loader`. Determined uses these methods
+to load the training and validation datasets, respectively.
 
-Determined supports three ways of loading data into a ``tf.keras``
-model: as a `tf.keras.utils.Sequence
-<https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__,
-a `tf.data.Dataset
-<https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__, or as a
-pair of NumPy arrays. Because the dataset is small, the Fashion MNIST
-model represents the data using NumPy arrays.
+Determined supports three ways of loading data into a ``tf.keras`` model: as a
+`tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__, a
+`tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__, or as a pair of
+NumPy arrays. Because the dataset is small, the Fashion MNIST model represents the data using NumPy
+arrays.
 
 .. code:: python
 
@@ -194,26 +174,22 @@ The implementation of ``build_validation_data_loader`` is similar:
 
        return test_images, test_labels
 
-For more information on loading data in Determined, refer to the
-tutorial on :ref:`data-access`.
+For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
 
 ********************
  Training the Model
 ********************
 
-Now that we have ported our model code to the trial API, we can use
-Determined to train a single instance of the model or to do a
-hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is
-a training task that consists of a dataset, a deep learning model, and
-values for all of the model's hyperparameters. An :ref:`experiment
-<concept-experiment>` is a collection of one or more trials: an
-experiment can either train a single model (with a single trial), or it
-can perform a search over a user-defined hyperparameter space.
+Now that we have ported our model code to the trial API, we can use Determined to train a single
+instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial
+<concept-trial>` is a training task that consists of a dataset, a deep learning model, and values
+for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of
+one or more trials: an experiment can either train a single model (with a single trial), or it can
+perform a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing a configuration file which
-defines the kind of experiment we want to run. In this case, we want to
-train a single model for five epochs, using fixed values for the model's
-hyperparameters:
+To create an experiment, we start by writing a configuration file which defines the kind of
+experiment we want to run. In this case, we want to train a single model for five epochs, using
+fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -229,37 +205,34 @@ hyperparameters:
          epochs: 5
    entrypoint: model_def:FashionMNISTTrial
 
-For this model, we have chosen two hyperparameters: the size of the
-``Dense`` layer and the batch size. Training the model for five epochs
-should reach about 85% accuracy on the validation set, which matches the
-original ``tf.keras`` implementation.
+For this model, we have chosen two hyperparameters: the size of the ``Dense`` layer and the batch
+size. Training the model for five epochs should reach about 85% accuracy on the validation set,
+which matches the original ``tf.keras`` implementation.
 
-The ``entrypoint`` specifies the name of the trial class to use. This is
-useful if the model code contains more than one trial class. In this
-case, we use an entrypoint of ``model_def:FashionMNISTTrial`` because
-our trial class is named ``FashionMNISTTrial`` and it is defined in a
-Python file named ``model_def.py``.
+The ``entrypoint`` specifies the name of the trial class to use. This is useful if the model code
+contains more than one trial class. In this case, we use an entrypoint of
+``model_def:FashionMNISTTrial`` because our trial class is named ``FashionMNISTTrial`` and it is
+defined in a Python file named ``model_def.py``.
 
-For more information on experiment configuration, see the
-:ref:`experiment configuration reference <experiment-configuration>`.
+For more information on experiment configuration, see the :ref:`experiment configuration reference
+<experiment-configuration>`.
 
 ***********************
  Running an Experiment
 ***********************
 
-The Determined CLI can be used to create a new experiment, which will
-immediately start running on the cluster. To do this, we run:
+The Determined CLI can be used to create a new experiment, which will immediately start running on
+the cluster. To do this, we run:
 
 .. code::
 
    det experiment create const.yaml .
 
-Here, the first argument (``const.yaml``) is the name of the experiment
-configuration file and the second argument (``.``) is the location of
-the directory that contains our model definition files. You may need to
-configure the CLI with the network address where the Determined master
-is running, via the ``-m`` flag or the ``DET_MASTER`` environment
-variable. For more information, see the :ref:`CLI reference page <cli>`.
+Here, the first argument (``const.yaml``) is the name of the experiment configuration file and the
+second argument (``.``) is the location of the directory that contains our model definition files.
+You may need to configure the CLI with the network address where the Determined master is running,
+via the ``-m`` flag or the ``DET_MASTER`` environment variable. For more information, see the
+:ref:`CLI reference page <cli>`.
 
 Once the experiment is started, you will see a notification:
 
@@ -272,13 +245,12 @@ Once the experiment is started, you will see a notification:
  Evaluating the Model
 **********************
 
-Model evaluation is done automatically for you by Determined. To access
-information on both training and validation performance, simply go to
-the WebUI by entering the address of the Determined master in your web
-browser.
+Model evaluation is done automatically for you by Determined. To access information on both training
+and validation performance, simply go to the WebUI by entering the address of the Determined master
+in your web browser.
 
-Once you are on the Determined landing page, you can find your
-experiment either via the experiment ID (xxx) or via its description.
+Once you are on the Determined landing page, you can find your experiment either via the experiment
+ID (xxx) or via its description.
 
 ************
  Next Steps

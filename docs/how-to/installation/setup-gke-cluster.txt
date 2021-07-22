@@ -4,18 +4,15 @@
  Setting up a Google Kubernetes Engine (GKE) Cluster
 #####################################################
 
-Determined can be installed on a cluster that is hosted on a managed
-Kubernetes service such as `GKE
-<https://cloud.google.com/kubernetes-engine>`_. This document describes
-how to set up a GKE cluster with GPU-enabled nodes. The recommended
-setup includes deploying a cluster with a single non-GPU node that will
-host the Determined master and database, and an autoscaling group of GPU
-nodes. After creating a suitable GKE cluster, you can then proceed with
-the standard :ref:`instructions for installing Determined on Kubernetes
-<install-on-kubernetes>`.
+Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `GKE
+<https://cloud.google.com/kubernetes-engine>`_. This document describes how to set up a GKE cluster
+with GPU-enabled nodes. The recommended setup includes deploying a cluster with a single non-GPU
+node that will host the Determined master and database, and an autoscaling group of GPU nodes. After
+creating a suitable GKE cluster, you can then proceed with the standard :ref:`instructions for
+installing Determined on Kubernetes <install-on-kubernetes>`.
 
-Determined requires the Kubernetes cluster to be running version >= 1.15
-and to have GPU-enabled nodes.
+Determined requires the Kubernetes cluster to be running version >= 1.15 and to have GPU-enabled
+nodes.
 
 ***************
  Prerequisites
@@ -23,8 +20,7 @@ and to have GPU-enabled nodes.
 
 Before setting up a GKE cluster, the user should have `Google Cloud SDK
 <https://cloud.google.com/sdk/docs/quickstarts/>`_ and `kubectl
-<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on
-their local machine.
+<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
 ************************
  Setting Up the Cluster
@@ -83,28 +79,25 @@ their local machine.
  Node Taints
 *************
 
-For general instructions on adding taints and tolerations to nodes,
-please see the :ref:`Taints and Tolerations <taints-on-kubernetes>`
-section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
-There, you can find an explanation of taints and tolerations, as well as
+For general instructions on adding taints and tolerations to nodes, please see the :ref:`Taints and
+Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
+<install-on-kubernetes>`. There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
 
-It is important to note that if you use the ``gcloud`` CLI to create
-nodes with taints, you must also add tolerations using ``kubectl``;
-otherwise, Kubernetes will be unable to schedule pods on the tainted
-node.
+It is important to note that if you use the ``gcloud`` CLI to create nodes with taints, you must
+also add tolerations using ``kubectl``; otherwise, Kubernetes will be unable to schedule pods on the
+tainted node.
 
-To create a nodepool or a cluster with a taint in GKE, use the
-`--node-taints` flag to specify the type, tag, and effect.
+To create a nodepool or a cluster with a taint in GKE, use the `--node-taints` flag to specify the
+type, tag, and effect.
 
 .. code:: bash
 
    gcloud container clusters create ${GKE_CLUSTER_NAME} \
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
-The following command is an example of using the ``gcloud`` CLI to make
-a cluster that with a taint with type ``dedicated`` equal to
-``experimental`` with the ``PreferNoSchedule`` effect.
+The following command is an example of using the ``gcloud`` CLI to make a cluster that with a taint
+with type ``dedicated`` equal to ``experimental`` with the ``PreferNoSchedule`` effect.
 
 .. code:: bash
 
@@ -117,9 +110,8 @@ a cluster that with a taint with type ``dedicated`` equal to
       --cluster ${GKE_CLUSTER_NAME} \
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
 
-The following CLI command is an example of using the ``gcloud`` CLI to
-make a node with a taint with type ``special`` equal to ``gpu`` with the
-``NoExecute`` effect.
+The following CLI command is an example of using the ``gcloud`` CLI to make a node with a taint with
+type ``special`` equal to ``gpu`` with the ``NoExecute`` effect.
 
 .. code:: bash
 

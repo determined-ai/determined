@@ -4,72 +4,59 @@
  PyTorch MNIST Tutorial
 ########################
 
-This tutorial describes how to port an existing PyTorch model to
-Determined. We will port a simple image classification model for the
-MNIST dataset. This tutorial is based on the official `PyTorch MNIST
-example
-<https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
+This tutorial describes how to port an existing PyTorch model to Determined. We will port a simple
+image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch
+MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
 
 ***************
  Prerequisites
 ***************
 
--  Access to a Determined cluster. If you have not yet installed
-   Determined, refer to the :ref:`installation instructions
-   <install-cluster>`.
+-  Access to a Determined cluster. If you have not yet installed Determined, refer to the
+   :ref:`installation instructions <install-cluster>`.
 
--  Access to the Determined CLI on your local machine. See :ref:`the
-   installation instructions <install-cli>` if you do not already have
-   it installed. After installing the CLI, configure it to connect to
-   your Determined cluster by setting the ``DET_MASTER`` environment
-   variable to the hostname or IP address where Determined is running.
+-  Access to the Determined CLI on your local machine. See :ref:`the installation instructions
+   <install-cli>` if you do not already have it installed. After installing the CLI, configure it to
+   connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the
+   hostname or IP address where Determined is running.
 
 **********
  Overview
 **********
 
-To use a PyTorch model in Determined, you need to port the model to
-Determined's API. For most models, this porting process is
-straightforward, and once the model has been ported, all of the features
-of Determined will then be available: for example, you can do
-:ref:`distributed training <multi-gpu-training>` or :ref:`hyperparameter
-search <hyperparameter-tuning>` without changing your model code, and
-Determined will store and visualize your model metrics automatically.
+To use a PyTorch model in Determined, you need to port the model to Determined's API. For most
+models, this porting process is straightforward, and once the model has been ported, all of the
+features of Determined will then be available: for example, you can do :ref:`distributed training
+<multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your
+model code, and Determined will store and visualize your model metrics automatically.
 
-When training a PyTorch model, Determined provides a built-in training
-loop that feeds each batch of training data into your ``train_batch``
-function, which should perform the forward pass, backpropagation, and
-compute training metrics for the batch. Determined also handles
-checkpointing, log management, and device initialization. To plug your
-model code into the Determined training loop, you define methods to
-perform the following tasks:
+When training a PyTorch model, Determined provides a built-in training loop that feeds each batch of
+training data into your ``train_batch`` function, which should perform the forward pass,
+backpropagation, and compute training metrics for the batch. Determined also handles checkpointing,
+log management, and device initialization. To plug your model code into the Determined training
+loop, you define methods to perform the following tasks:
 
 -  initialize the models, optimizers, and LR schedulers
 -  define the training function for forward and backward passes
--  define the evaluation function to compute the loss and other metrics
-   on the validation data set
+-  define the evaluation function to compute the loss and other metrics on the validation data set
 -  load the training data set
 -  load the validation data set
 
-The Determined training loop will then invoke these functions
-automatically. These methods should be organized into a **trial class**,
-which is a user-defined Python class that inherits from
-:class:`determined.pytorch.PyTorchTrial`. The following sections walk
-through how to write your first trial class and then how to run a
-training job with Determined.
+The Determined training loop will then invoke these functions automatically. These methods should be
+organized into a **trial class**, which is a user-defined Python class that inherits from
+:class:`determined.pytorch.PyTorchTrial`. The following sections walk through how to write your
+first trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be downloaded here:
-:download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. After
-downloading this file, open a terminal window, extract the file, and
-``cd`` into the ``mnist_pytorch`` directory:
+The complete code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz
+</examples/mnist_pytorch.tgz>`. After downloading this file, open a terminal window, extract the
+file, and ``cd`` into the ``mnist_pytorch`` directory:
 
 .. code::
 
    tar xzvf mnist_pytorch.tgz
    cd mnist_pytorch
 
-We suggest you follow along with the code as you read through this
-tutorial.
+We suggest you follow along with the code as you read through this tutorial.
 
 ***********************************
  Building a ``PyTorchTrial`` Class
@@ -112,19 +99,15 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 ==============
 
-As with any Python class, the ``__init__`` method is invoked to
-construct our trial class. Determined passes this method a single
-parameter, an instance of
+As with any Python class, the ``__init__`` method is invoked to construct our trial class.
+Determined passes this method a single parameter, an instance of
 :class:`~determined.pytorch.PyTorchTrialContext`, which inherits from
-:class:`~determined.TrialContext`. The trial context contains
-information about the trial, such as the values of the hyperparameters
-to use for training. All the models and optimizers must be wrapped with
-``wrap_model`` and ``wrap_optimizer`` respectively, which are provided
-by :class:`~determined.pytorch.PyTorchTrialContext`. In this MNIST
-example, the model code uses the Torch Sequential API and
-``torch.optim.Adadelta``. The current values of the model's
-hyperparameters can be accessed via the
-:func:`~determined.TrialContext.get_hparam` method of the trial context.
+:class:`~determined.TrialContext`. The trial context contains information about the trial, such as
+the values of the hyperparameters to use for training. All the models and optimizers must be wrapped
+with ``wrap_model`` and ``wrap_optimizer`` respectively, which are provided by
+:class:`~determined.pytorch.PyTorchTrialContext`. In this MNIST example, the model code uses the
+Torch Sequential API and ``torch.optim.Adadelta``. The current values of the model's hyperparameters
+can be accessed via the :func:`~determined.TrialContext.get_hparam` method of the trial context.
 
 .. code:: python
 
@@ -169,12 +152,10 @@ hyperparameters can be accessed via the
 Loading Data
 ============
 
-The next two methods we need to define are
-``build_training_data_loader`` and ``build_validation_data_loader``.
-Determined uses these methods to load the training and validation
-datasets, respectively. Both methods should return a
-:ref:`determined.pytorch.DataLoader <pytorch-data-loading>`, which is
-very similar to ``torch.utils.data.DataLoader``.
+The next two methods we need to define are ``build_training_data_loader`` and
+``build_validation_data_loader``. Determined uses these methods to load the training and validation
+datasets, respectively. Both methods should return a :ref:`determined.pytorch.DataLoader
+<pytorch-data-loading>`, which is very similar to ``torch.utils.data.DataLoader``.
 
 .. code:: python
 
@@ -203,20 +184,17 @@ very similar to ``torch.utils.data.DataLoader``.
            validation_data, batch_size=self.context.get_per_slot_batch_size()
        )
 
-For more information on loading data in Determined, refer to the
-tutorial on :ref:`data-access`.
+For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
 
 Defining ``train_batch``
 ========================
 
-The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is
-passed a single batch of data from the validation data set; it should
-run the forward passes on the models, the backward passes on the losses,
-and step the optimizers. This method should return a dictionary with
-user-defined training metrics; Determined will automatically average all
-the metrics across batches. If an optimizer is set to automatically
-handle zeroing out the gradients, ``step_optimizer`` will zero out the
-gradients and there will be no need to call ``optim.zero_grad()``.
+The :func:`~determined.pytorch.PyTorchTrial.train_batch` method is passed a single batch of data
+from the validation data set; it should run the forward passes on the models, the backward passes on
+the losses, and step the optimizers. This method should return a dictionary with user-defined
+training metrics; Determined will automatically average all the metrics across batches. If an
+optimizer is set to automatically handle zeroing out the gradients, ``step_optimizer`` will zero out
+the gradients and there will be no need to call ``optim.zero_grad()``.
 
 .. code:: python
 
@@ -237,13 +215,11 @@ gradients and there will be no need to call ``optim.zero_grad()``.
 Defining ``evaluate_batch``
 ===========================
 
-The :func:`~determined.pytorch.PyTorchTrial.evaluate_batch` method is
-passed a single batch of data from the validation data set; it should
-compute the user-defined validation metrics on that data, and return
-them as a dictionary that maps metric names to values. The metric values
-for each batch are reduced (aggregated) to produce a single value of
-each metric for the entire validation set. By default, metric values are
-averaged but this behavior can be customized by overridding
+The :func:`~determined.pytorch.PyTorchTrial.evaluate_batch` method is passed a single batch of data
+from the validation data set; it should compute the user-defined validation metrics on that data,
+and return them as a dictionary that maps metric names to values. The metric values for each batch
+are reduced (aggregated) to produce a single value of each metric for the entire validation set. By
+default, metric values are averaged but this behavior can be customized by overridding
 :func:`~determined.pytorch.PyTorchTrial.evaluation_reducer`.
 
 .. code:: python
@@ -264,19 +240,16 @@ averaged but this behavior can be customized by overridding
  Training the Model
 ********************
 
-Now that we have ported our model code to the trial API, we can use
-Determined to train a single instance of the model or to do a
-hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is
-a training task that consists of a dataset, a deep learning model, and
-values for all of the model's hyperparameters. An :ref:`experiment
-<concept-experiment>` is a collection of one or more trials: an
-experiment can either train a single model (with a single trial), or can
+Now that we have ported our model code to the trial API, we can use Determined to train a single
+instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial
+<concept-trial>` is a training task that consists of a dataset, a deep learning model, and values
+for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of
+one or more trials: an experiment can either train a single model (with a single trial), or can
 define a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing a configuration file that
-defines the kind of experiment we want to run. In this case, we want to
-train a single model for a single epoch, using fixed values for the
-model's hyperparameters:
+To create an experiment, we start by writing a configuration file that defines the kind of
+experiment we want to run. In this case, we want to train a single model for a single epoch, using
+fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -299,32 +272,30 @@ model's hyperparameters:
      smaller_is_better: true
    entrypoint: model_def:MNistTrial
 
-The ``entrypoint`` specifies the name of the trial class to use. This is
-useful if the model code contains more than one trial class. In this
-case, we use an entrypoint of ``model_def:MNistTrial`` because our trial
-class is named ``MNistTrial`` and it is defined in a Python file named
+The ``entrypoint`` specifies the name of the trial class to use. This is useful if the model code
+contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNistTrial``
+because our trial class is named ``MNistTrial`` and it is defined in a Python file named
 ``model_def.py``.
 
-For more information on experiment configuration, see the
-:ref:`experiment configuration reference <experiment-configuration>`.
+For more information on experiment configuration, see the :ref:`experiment configuration reference
+<experiment-configuration>`.
 
 ***********************
  Running an Experiment
 ***********************
 
-The Determined CLI can be used to create a new experiment, which will
-immediately start running on the cluster. To do this, we run:
+The Determined CLI can be used to create a new experiment, which will immediately start running on
+the cluster. To do this, we run:
 
 .. code::
 
    det experiment create const.yaml .
 
-Here, the first argument (``const.yaml``) is the name of the experiment
-configuration file and the second argument (``.``) is the location of
-the directory that contains our model definition files. You may need to
-configure the CLI with the network address where the Determined master
-is running, via the ``-m`` flag or the ``DET_MASTER`` environment
-variable. For more information, see the :ref:`CLI reference page <cli>`.
+Here, the first argument (``const.yaml``) is the name of the experiment configuration file and the
+second argument (``.``) is the location of the directory that contains our model definition files.
+You may need to configure the CLI with the network address where the Determined master is running,
+via the ``-m`` flag or the ``DET_MASTER`` environment variable. For more information, see the
+:ref:`CLI reference page <cli>`.
 
 Once the experiment is started, you will see a notification:
 
@@ -337,14 +308,12 @@ Once the experiment is started, you will see a notification:
  Evaluating the Model
 **********************
 
-Model evaluation is done automatically for you by Determined. To access
-information on both training and validation performance, simply go to
-the WebUI by entering the address of the Determined master in your web
-browser.
+Model evaluation is done automatically for you by Determined. To access information on both training
+and validation performance, simply go to the WebUI by entering the address of the Determined master
+in your web browser.
 
-Once you are on the Determined landing page, you can find your
-experiment using the experiment's ID (``xxx`` in the example above) or
-description.
+Once you are on the Determined landing page, you can find your experiment using the experiment's ID
+(``xxx`` in the example above) or description.
 
 ************
  Next Steps

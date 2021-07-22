@@ -2,9 +2,8 @@
  Reference
 ###########
 
-Reference guides are raw technical references for our product. They
-describe how to use Determined, with the assumption you understand key
-concepts of the product.
+Reference guides are raw technical references for our product. They describe how to use Determined,
+with the assumption you understand key concepts of the product.
 
 **Model Definitions**
 

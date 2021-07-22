@@ -21,10 +21,9 @@
  ``determined.estimator.EstimatorContext``
 *******************************************
 
-To use ``tf.estimator`` models with Determined, users need to wrap their
-optimizer and datasets using the following functions inherited from
-:class:`determined.estimator.EstimatorContext`. Note that the concrete
-context object where these functions will be found will be in
+To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
+using the following functions inherited from :class:`determined.estimator.EstimatorContext`. Note
+that the concrete context object where these functions will be found will be in
 :class:`determined.estimator.EstimatorTrialContext`.
 
 .. autoclass:: determined.estimator.EstimatorContext
@@ -32,15 +31,11 @@ context object where these functions will be found will be in
    :inherited-members:
    :member-order: bysource
 
-   EstimatorTrialContext always has a
-   :class:`~determined._train_context.DistributedContext` accessible via
-   ``context.distributed`` for information related to distributed
-   training.
+   EstimatorTrialContext always has a :class:`~determined._train_context.DistributedContext`
+   accessible via ``context.distributed`` for information related to distributed training.
 
-   EstimatorTrialContext always has a
-   :class:`~determined.estimator.EstimatorExperimentalContext`
-   accessible via ``context.experimental`` for information related to
-   experimental features.
+   EstimatorTrialContext always has a :class:`~determined.estimator.EstimatorExperimentalContext`
+   accessible via ``context.experimental`` for information related to experimental features.
 
 .. autoclass:: determined.estimator.EstimatorExperimentalContext
    :members: cache_train_dataset, cache_validation_dataset
@@ -51,14 +46,12 @@ context object where these functions will be found will be in
 Reducing Metrics
 ================
 
-Determined supports proper reduction of arbitrary validation metrics
-during distributed training by allowing users to define custom reducers
-for their metrics. Custom reducers can be either a function or an
-implementation of the :class:`determined.estimator.MetricReducer`
-interface.
+Determined supports proper reduction of arbitrary validation metrics during distributed training by
+allowing users to define custom reducers for their metrics. Custom reducers can be either a function
+or an implementation of the :class:`determined.estimator.MetricReducer` interface.
 
-See :func:`context.make_metric()
-<determined.estimator.EstimatorContext.make_metric>` for more details.
+See :func:`context.make_metric() <determined.estimator.EstimatorContext.make_metric>` for more
+details.
 
 .. autoclass:: determined.estimator.MetricReducer
    :members: accumulate, cross_slot_reduce
@@ -67,19 +60,16 @@ See :func:`context.make_metric()
 Callbacks
 =========
 
-To execute arbitrary Python code during the lifecycle of a
-``EstimatorTrial``, ``determined.estimator.RunHook`` extends
-`tf.estimator.SessionRunHook
-<https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_.
-When utilizing ``determined.estimator.RunHook``, users can use native
-estimator hooks such as ``before_run()`` and Determined hooks such as
-``on_checkpoint_end()``.
+To execute arbitrary Python code during the lifecycle of a ``EstimatorTrial``,
+``determined.estimator.RunHook`` extends `tf.estimator.SessionRunHook
+<https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_. When utilizing
+``determined.estimator.RunHook``, users can use native estimator hooks such as ``before_run()`` and
+Determined hooks such as ``on_checkpoint_end()``.
 
 .. autoclass:: determined.estimator.RunHook
    :members: on_checkpoint_load, on_checkpoint_end, on_trial_close
 
-Example usage of ``determined.estimator.RunHook`` which adds custom
-metadata checkpoints:
+Example usage of ``determined.estimator.RunHook`` which adds custom metadata checkpoints:
 
 .. code:: python
 

@@ -4,20 +4,18 @@
  How to Install Determined
 ###########################
 
-Two main components are required to use Determined: the :ref:`Determined
-CLI <install-cli>` and a :ref:`Determined cluster <install-cluster>`.
-All users should install the Determined CLI on their local development
-machine. The Determined cluster should be installed in your training
-environment, which might be your local development machine, an
-on-premise GPU cluster, or resources in the cloud.
+Two main components are required to use Determined: the :ref:`Determined CLI <install-cli>` and a
+:ref:`Determined cluster <install-cluster>`. All users should install the Determined CLI on their
+local development machine. The Determined cluster should be installed in your training environment,
+which might be your local development machine, an on-premise GPU cluster, or resources in the cloud.
 
 ****************************
  Install the Determined CLI
 ****************************
 
-The Determined CLI is a command line tool that allows you to launch new
-experiments and interact with a Determined cluster. To install the CLI,
-refer to the :ref:`installation instructions <install-cli>`.
+The Determined CLI is a command line tool that allows you to launch new experiments and interact
+with a Determined cluster. To install the CLI, refer to the :ref:`installation instructions
+<install-cli>`.
 
 .. _install-cluster:
 
@@ -25,30 +23,26 @@ refer to the :ref:`installation instructions <install-cli>`.
  Install a Determined Cluster
 ******************************
 
-A :ref:`Determined cluster <install-cluster>` comprises a :ref:`master
-and one or more agents <det-system-architecture>`. A Determined cluster
-can be installed on Amazon Web Services (AWS), Google Cloud Platform
-(GCP), an on-premise cluster, or on a local development machine.
+A :ref:`Determined cluster <install-cluster>` comprises a :ref:`master and one or more agents
+<det-system-architecture>`. A Determined cluster can be installed on Amazon Web Services (AWS),
+Google Cloud Platform (GCP), an on-premise cluster, or on a local development machine.
 
 On-premise Deployments
 ======================
 
-On-premise deployments are useful if you already have access to the
-machines that you would like to install Determined on, whether that
-means a single laptop for local development or a fleet of multi-GPU
-servers.
+On-premise deployments are useful if you already have access to the machines that you would like to
+install Determined on, whether that means a single laptop for local development or a fleet of
+multi-GPU servers.
 
-``det deploy`` is the most convenient on-premise option; once installed,
-it will allow you to start a cluster by running a single command on each
-machine. If you would like more control over the process, you can
-instead manually manage the Docker images that ``det deploy`` uses
-internally. If you are using Ubuntu, you also have the option of
-installing most components of Determined using Debian packages and
-running them as `systemd
-<https://freedesktop.org/wiki/Software/systemd/>`__ services.
+``det deploy`` is the most convenient on-premise option; once installed, it will allow you to start
+a cluster by running a single command on each machine. If you would like more control over the
+process, you can instead manually manage the Docker images that ``det deploy`` uses internally. If
+you are using Ubuntu, you also have the option of installing most components of Determined using
+Debian packages and running them as `systemd <https://freedesktop.org/wiki/Software/systemd/>`__
+services.
 
-To install Determined on-premise, first :ref:`install Docker
-<install-docker>`. Then install Determined by your preferred method:
+To install Determined on-premise, first :ref:`install Docker <install-docker>`. Then install
+Determined by your preferred method:
 
 .. toctree::
    :titlesonly:
@@ -60,14 +54,11 @@ To install Determined on-premise, first :ref:`install Docker
 Cloud Deployments
 =================
 
-Determined can also be deployed to instances running in public cloud
-providers such as AWS and GCP. Using Determined in the cloud allows you
-to access more computational resources than you might have local access
-to; Determined can also manage your cloud resources for you
-automatically.
+Determined can also be deployed to instances running in public cloud providers such as AWS and GCP.
+Using Determined in the cloud allows you to access more computational resources than you might have
+local access to; Determined can also manage your cloud resources for you automatically.
 
-To install on the cloud, please follow the instructions for your
-preferred cloud vendor:
+To install on the cloud, please follow the instructions for your preferred cloud vendor:
 
 .. toctree::
    :titlesonly:
@@ -78,9 +69,8 @@ preferred cloud vendor:
 Kubernetes
 ==========
 
-Determined can also be deployed onto Kubernetes clusters. To install on
-Kubernetes, please follow the :ref:`Determined on Kubernetes
-<install-on-kubernetes>` installation instructions.
+Determined can also be deployed onto Kubernetes clusters. To install on Kubernetes, please follow
+the :ref:`Determined on Kubernetes <install-on-kubernetes>` installation instructions.
 
 .. toctree::
    :titlesonly:
@@ -92,21 +82,16 @@ Kubernetes, please follow the :ref:`Determined on Kubernetes
 Notes
 =====
 
-You can control the behavior of the Determined master and agent by
-editing configuration files. See :ref:`cluster-configuration` for
-details.
+You can control the behavior of the Determined master and agent by editing configuration files. See
+:ref:`cluster-configuration` for details.
 
-Each Determined cluster requires access to a `PostgreSQL
-<https://www.postgresql.org/>`_ database. In addition, Determined can
-use `Docker <https://www.docker.com/>`_ to run the master and agents.
-Depending on your installation method, some of these services will be
-installed for you:
+Each Determined cluster requires access to a `PostgreSQL <https://www.postgresql.org/>`_ database.
+In addition, Determined can use `Docker <https://www.docker.com/>`_ to run the master and agents.
+Depending on your installation method, some of these services will be installed for you:
 
--  On a cloud provider using ``det deploy``, Docker and PostgreSQL will
-   be installed for you.
+-  On a cloud provider using ``det deploy``, Docker and PostgreSQL will be installed for you.
 -  On-premise using ``det deploy``, Docker will need to be installed.
--  When doing a manual installation, you will have to install Docker and
-   PostgreSQL yourself.
+-  When doing a manual installation, you will have to install Docker and PostgreSQL yourself.
 
 More information on a Determined cluster can be found:
 

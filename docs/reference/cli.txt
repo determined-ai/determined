@@ -4,17 +4,15 @@
  Command-line Interface
 ########################
 
-The Determined command-line interface (CLI) is installed under the name
-``det``. Most uses of it require arguments specifying a type of object
-to act on and the action to perform, followed by any additional
-arguments or options. For example,
+The Determined command-line interface (CLI) is installed under the name ``det``. Most uses of it
+require arguments specifying a type of object to act on and the action to perform, followed by any
+additional arguments or options. For example,
 
 .. code::
 
    det experiment config 17
 
-displays the configuration for experiment 17. Some commands have an
-additional level of nesting:
+displays the configuration for experiment 17. Some commands have an additional level of nesting:
 
 .. code::
 
@@ -22,9 +20,8 @@ additional level of nesting:
 
 adds the label "foobar" to experiment 17.
 
-The names of some objects, actions, and options may be abbreviated;
-alternative names are shown in the full reference in parentheses. For
-example, these two commands are equivalent:
+The names of some objects, actions, and options may be abbreviated; alternative names are shown in
+the full reference in parentheses. For example, these two commands are equivalent:
 
 .. code::
 
@@ -38,9 +35,8 @@ as are these two:
    det e config 17
    det experiment config 17
 
-Additionally, when ``list`` is a valid action, it is the default when no
-action is specified, so the following pairs of commands are also
-equivalent:
+Additionally, when ``list`` is a valid action, it is the default when no action is specified, so the
+following pairs of commands are also equivalent:
 
 .. code::
 
@@ -52,14 +48,12 @@ equivalent:
    det s
    det slot list
 
-Commands that launch Determined tasks can take :ref:`configuration
-options <command-notebook-configuration>` that change the behavior of
-the tasks. These configurations affect Determined notebooks, shells,
-commands, and TensorBoards.
+Commands that launch Determined tasks can take :ref:`configuration options
+<command-notebook-configuration>` that change the behavior of the tasks. These configurations affect
+Determined notebooks, shells, commands, and TensorBoards.
 
-Providing ``-h`` or ``--help`` as an argument anywhere will cause the
-CLI to exit after printing help text for the object or action specified
-up to that point.
+Providing ``-h`` or ``--help`` as an argument anywhere will cause the CLI to exit after printing
+help text for the object or action specified up to that point.
 
 **************
  Full Listing
@@ -74,39 +68,35 @@ up to that point.
  Environment Variables
 ***********************
 
--  ``DET_MASTER``: The network address of the master of the Determined
-   installation. The value can be overridden using the ``-m`` flag.
+-  ``DET_MASTER``: The network address of the master of the Determined installation. The value can
+   be overridden using the ``-m`` flag.
 
 **********
  Examples
 **********
 
--  ``det e``, ``det experiment``, ``det experiment list``: Show
-   information about experiments in the cluster.
+-  ``det e``, ``det experiment``, ``det experiment list``: Show information about experiments in the
+   cluster.
 
--  ``det -m 1.2.3.4 e``, ``DET_MASTER=1.2.3.4 det e``: Show information
-   about experiments in the cluster at the network address ``1.2.3.4``.
+-  ``det -m 1.2.3.4 e``, ``DET_MASTER=1.2.3.4 det e``: Show information about experiments in the
+   cluster at the network address ``1.2.3.4``.
 
--  ``det t logs -f 289``: Show the existing logs for trial 289 and
-   continue showing new logs as they come in.
+-  ``det t logs -f 289``: Show the existing logs for trial 289 and continue showing new logs as they
+   come in.
 
--  ``det e label add 17 foobar``: Add the label "foobar" to experiment
-   17.
+-  ``det e label add 17 foobar``: Add the label "foobar" to experiment 17.
 
--  ``det e describe 493 --metrics --csv``: Display information about
-   experiment 493, including full metrics information, in CSV format.
+-  ``det e describe 493 --metrics --csv``: Display information about experiment 493, including full
+   metrics information, in CSV format.
 
--  ``det e create -f --paused const.yaml .``: Create an experiment with
-   the configuration file ``const.yaml`` and the code contained in the
-   current directory. The experiment will be created in a paused state
-   (that is, it will not be scheduled on the cluster until it is
-   activated).
+-  ``det e create -f --paused const.yaml .``: Create an experiment with the configuration file
+   ``const.yaml`` and the code contained in the current directory. The experiment will be created in
+   a paused state (that is, it will not be scheduled on the cluster until it is activated).
 
--  ``det e set max-slots 85 4``: Ensure that experiment 85 does not take
-   up more than 4 slots in the cluster.
+-  ``det e set max-slots 85 4``: Ensure that experiment 85 does not take up more than 4 slots in the
+   cluster.
 
--  ``det u create --admin hoid``: Create a new user named "hoid" with
-   admin privileges.
+-  ``det u create --admin hoid``: Create a new user named "hoid" with admin privileges.
 
--  ``det version``: Show detailed information about the CLI and master.
-   Note that this command does not take both an object and an action.
+-  ``det version``: Show detailed information about the CLI and master. Note that this command does
+   not take both an object and an action.

@@ -4,117 +4,92 @@
  Data Layer
 ############
 
-The data layer in Determined enables high-performance data loading for
-deep learning training. Modern deep learning data-loading APIs do not
-always provide both a random-access layer and a sequential layer (see:
-`TF Dataset
-<https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`_). This
-makes them inefficient solutions for performing many common deep
-learning workflows including:
+The data layer in Determined enables high-performance data loading for deep learning training.
+Modern deep learning data-loading APIs do not always provide both a random-access layer and a
+sequential layer (see: `TF Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`_).
+This makes them inefficient solutions for performing many common deep learning workflows including:
 
 -  Resuming training mid-epoch
 -  :ref:`Hyperparameter Tuning <hyperparameter-tuning>`
 -  :ref:`Distributed Training <multi-gpu-training>`
 
-Determined integrates the `data layer` with `YogaDL
-<https://github.com/determined-ai/yogadl>`_ to provide a better approach
-to data-loading. The data layer enables efficient data access for common
-deep learning workflows such as hyperparameter tuning and distributed
-training. It also enables dataset versioning. This how-to guide covers:
+Determined integrates the `data layer` with `YogaDL <https://github.com/determined-ai/yogadl>`_ to
+provide a better approach to data-loading. The data layer enables efficient data access for common
+deep learning workflows such as hyperparameter tuning and distributed training. It also enables
+dataset versioning. This how-to guide covers:
 
 #. How the data layer works.
-
-#. How to configure a local file-system, `AWS S3
-   <https://aws.amazon.com/s3/>`_, or `GCS
+#. How to configure a local file-system, `AWS S3 <https://aws.amazon.com/s3/>`_, or `GCS
    <https://cloud.google.com/storage>`_ as the storage medium.
-
 #. How to use the data layer API in your code.
 
 .. note::
 
-   The data layer is an experimental feature and its API is not
-   considered stable. Currently it supports only ``tf.data.Dataset``
-   inputs, which can be used in :ref:`Keras <tf-keras-trial>` and
+   The data layer is an experimental feature and its API is not considered stable. Currently it
+   supports only ``tf.data.Dataset`` inputs, which can be used in :ref:`Keras <tf-keras-trial>` and
    :ref:`Estimators <estimator-trial>`.
 
 **************************
  How the Data Layer Works
 **************************
 
-The data layer in Determined enables a random-access layer by caching
-datasets. A dataset is cached by iterating over it before the start of
-training and storing the output to an `LMDB
-<http://www.lmdb.tech/doc/>`_ file. Using this random-access layer
-Determined efficiently accesses training and validation data, adapting
-to different experiment types. For example, during distributed training
-each GPU in Determined only needs access to a portion of the training
-data.
+The data layer in Determined enables a random-access layer by caching datasets. A dataset is cached
+by iterating over it before the start of training and storing the output to an `LMDB
+<http://www.lmdb.tech/doc/>`_ file. Using this random-access layer Determined efficiently accesses
+training and validation data, adapting to different experiment types. For example, during
+distributed training each GPU in Determined only needs access to a portion of the training data.
 
-The data layer in Determined uses ``name`` and ``version`` keys as
-unique identifiers for dataset caches. When a dataset cache with
-matching keys is found it's reused, allowing users to skip
+The data layer in Determined uses ``name`` and ``version`` keys as unique identifiers for dataset
+caches. When a dataset cache with matching keys is found it's reused, allowing users to skip
 pre-processing steps.
 
 ********************************
  Configuring Data Layer Storage
 ********************************
 
-The data layer can be configured to cache datasets in ``S3``, ``GCS``,
-or on the agent's file system. The storage medium can be configured in
-the :ref:`experiment config <data-layer_exp_config>`. For ``S3`` and
-``GCS``, the data layer maintains a cloud copy and a local copy of the
-cached dataset. If the timestamp of the local cache matches the
-timestamp of the one in the cloud, the local copy is used; otherwise,
-the local copy is overwritten.
+The data layer can be configured to cache datasets in ``S3``, ``GCS``, or on the agent's file
+system. The storage medium can be configured in the :ref:`experiment config
+<data-layer_exp_config>`. For ``S3`` and ``GCS``, the data layer maintains a cloud copy and a local
+copy of the cached dataset. If the timestamp of the local cache matches the timestamp of the one in
+the cloud, the local copy is used; otherwise, the local copy is overwritten.
 
-In order to reuse the locally cached datasets when using ``S3`` or
-``GCS`` across trials and experiments, users should configure
-``local_cache_host_path`` and ``local_cache_container_path``, which bind
-mounts the directories and reuses them across the containers running the
-different trials and experiments. When using ``shared_fs`` (a local
-filesystem) as the storage medium, users should configure
-``host_storage_path`` and ``container_storage_path`` to reuse cached
-datasets across trials and experiments.
+In order to reuse the locally cached datasets when using ``S3`` or ``GCS`` across trials and
+experiments, users should configure ``local_cache_host_path`` and ``local_cache_container_path``,
+which bind mounts the directories and reuses them across the containers running the different trials
+and experiments. When using ``shared_fs`` (a local filesystem) as the storage medium, users should
+configure ``host_storage_path`` and ``container_storage_path`` to reuse cached datasets across
+trials and experiments.
 
-Automatically deleting cached datasets is not currently supported in
-Determined. If users want to delete a cached dataset, they should do so
-manually. Dataset caches are located under:
+Automatically deleting cached datasets is not currently supported in Determined. If users want to
+delete a cached dataset, they should do so manually. Dataset caches are located under:
 
--  ``bucket/bucket_directory_path/dataset_id/dataset_version/`` on
-   ``S3`` and ``GCS``
--  ``local_cache_host_path/yogadl_local_cache/dataset_id/dataset_version/``
-   locally for ``S3`` and ``GCS``
--  ``host_storage_path/dataset_id/dataset_version/`` locally for
-   ``shared_fs``
+-  ``bucket/bucket_directory_path/dataset_id/dataset_version/`` on ``S3`` and ``GCS``
+-  ``local_cache_host_path/yogadl_local_cache/dataset_id/dataset_version/`` locally for ``S3`` and
+   ``GCS``
+-  ``host_storage_path/dataset_id/dataset_version/`` locally for ``shared_fs``
 
 .. warning::
 
-   Deleting a cache that is in use by an active experiment will result
-   in undefined behavior.
+   Deleting a cache that is in use by an active experiment will result in undefined behavior.
 
 **************************
  Using the Data Layer API
 **************************
 
-The data layer API requires users to place their dataset creation code
-within a function and to decorate that function with Determined-provided
-decorators that can be accessed via the :ref:`context object
-<trial-context>`:
+The data layer API requires users to place their dataset creation code within a function and to
+decorate that function with Determined-provided decorators that can be accessed via the
+:ref:`context object <trial-context>`:
 
--  ``self.context.experimental.cache_train_dataset(dataset_id: str,
-   dataset_version: str, shuffle: bool = False,
-   skip_shuffle_end_of_epoch: bool = False)`` for training data.
+-  ``self.context.experimental.cache_train_dataset(dataset_id: str, dataset_version: str, shuffle:
+   bool = False, skip_shuffle_end_of_epoch: bool = False)`` for training data.
+-  ``self.context.experimental.cache_validation_dataset(dataset_id: str, dataset_version: str,
+   shuffle: bool = False)`` for validation data.
 
--  ``self.context.experimental.cache_validation_dataset(dataset_id: str,
-   dataset_version: str, shuffle: bool = False)`` for validation data.
-
-If the ``dataset_id`` and ``dataset_version`` don't match an existing
-cached dataset, the dataset is written to a new cache. If there is a
-match, the caching process is skipped. Once the dataset is cached,
-Determined returns a ``tf.data.Dataset`` object containing the required
-data. By creating the ``tf.data.Dataset`` object from the cache,
-Determined is able to populate it with the appropriate data. For
-example, if resuming training mid-epoch, the dataset will start from the
+If the ``dataset_id`` and ``dataset_version`` don't match an existing cached dataset, the dataset is
+written to a new cache. If there is a match, the caching process is skipped. Once the dataset is
+cached, Determined returns a ``tf.data.Dataset`` object containing the required data. By creating
+the ``tf.data.Dataset`` object from the cache, Determined is able to populate it with the
+appropriate data. For example, if resuming training mid-epoch, the dataset will start from the
 appropriate offset.
 
 This is an example of how to use the data layer API:
@@ -135,26 +110,21 @@ This is an example of how to use the data layer API:
        dataset = dataset.map(lambda x: x + 1)
        return dataset
 
-The first time this code is executed, the dataset is cached. In
-subsequent experiments, as long as the cache for this dataset is still
-present, the decorated ``make_dataset()`` function will not be executed
-again. Instead, the dataset will be read directly from the cache.
+The first time this code is executed, the dataset is cached. In subsequent experiments, as long as
+the cache for this dataset is still present, the decorated ``make_dataset()`` function will not be
+executed again. Instead, the dataset will be read directly from the cache.
 
-Users are encouraged to place experiment-specific dataset operations,
-such as batching and runtime augmentation, outside the
-``make_dataset()`` function, as is done in the example above. This
-allows users to reuse the cached dataset across a wide range of
-examples. For example, using the example above, users can experiment
-with a wide range of batch sizes. If ``dataset.batch(32)`` were included
-in ``make_dataset()``, users would always have a batch size of 32 when
-reusing the cached dataset.
+Users are encouraged to place experiment-specific dataset operations, such as batching and runtime
+augmentation, outside the ``make_dataset()`` function, as is done in the example above. This allows
+users to reuse the cached dataset across a wide range of examples. For example, using the example
+above, users can experiment with a wide range of batch sizes. If ``dataset.batch(32)`` were included
+in ``make_dataset()``, users would always have a batch size of 32 when reusing the cached dataset.
 
 .. warning::
 
-   If ``dataset.repeat()`` is called within ``make_dataset()``, the data
-   layer will write records from the dataset until it fills up the
-   entire disk. In fact, users never need to call ``dataset.repeat()``
-   in Determined.
+   If ``dataset.repeat()`` is called within ``make_dataset()``, the data layer will write records
+   from the dataset until it fills up the entire disk. In fact, users never need to call
+   ``dataset.repeat()`` in Determined.
 
 ************
  Next Steps

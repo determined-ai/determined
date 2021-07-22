@@ -4,34 +4,28 @@
  System Architecture
 #####################
 
-Determined consists of a single **master** and one or more **agents**.
-There is typically one agent per compute server; a single machine can
-serve as both a master and an agent.
+Determined consists of a single **master** and one or more **agents**. There is typically one agent
+per compute server; a single machine can serve as both a master and an agent.
 
 The master is responsible for
 
 -  Storing experiment, trial, and workload metadata.
 -  Scheduling and dispatching work to agents.
--  Advancing the experiment, trial, and workload state machines over
-   time.
+-  Advancing the experiment, trial, and workload state machines over time.
 
-Each agent manages a number of **slots**, which represent computing
-devices, typically one slot per CPU or GPU. On startup the agent sends
-the master the devices it has available. It then waits for messages from
-the master and runs the requested workloads; agents have no state and
-otherwise do not communicate with the master.
+Each agent manages a number of **slots**, which represent computing devices, typically one slot per
+CPU or GPU. On startup the agent sends the master the devices it has available. It then waits for
+messages from the master and runs the requested workloads; agents have no state and otherwise do not
+communicate with the master.
 
-A slot executes its workload in a containerized environment called the
-**trial runner**. We provide standard Docker containers to run typical
-deep learning workloads; containers can be customized for specific
-needs. Trial runners are expected to have access to the training data.
+A slot executes its workload in a containerized environment called the **trial runner**. We provide
+standard Docker containers to run typical deep learning workloads; containers can be customized for
+specific needs. Trial runners are expected to have access to the training data.
 
-The trial runner runs **workloads**, which may be training a trial,
-evaluating a trial on a validation dataset, or other operations like
-checkpointing model state. The master may then send more workloads or
-terminate the trial runner (freeing the slot). When sending a workload
-to the trial runner, the master consults with the searcher to determine
-which workload to run next.
+The trial runner runs **workloads**, which may be training a trial, evaluating a trial on a
+validation dataset, or other operations like checkpointing model state. The master may then send
+more workloads or terminate the trial runner (freeing the slot). When sending a workload to the
+trial runner, the master consults with the searcher to determine which workload to run next.
 
 ************
  Next Steps
