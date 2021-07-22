@@ -6,12 +6,11 @@ import CreateExperimentModal, { CreateExperimentType } from 'components/CreateEx
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import { paths, routeToReactUrl } from 'routes/utils';
 import {
-  getExperimentDetails, getExpTrials, getExpValidationHistory, isNotFound,
+  getExperimentDetails, getExpValidationHistory, isNotFound,
 } from 'services/api';
 import { createExperiment } from 'services/api';
 import { isAborted } from 'services/utils';
@@ -33,7 +32,6 @@ const ExperimentDetails: React.FC = () => {
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ firstTrialId, setFirstTrialId ] = useState<number>();
   const [ forkModalConfig, setForkModalConfig ] = useState<RawJson>();
   const [ forkModalError, setForkModalError ] = useState<string>();
   const [ isForkModalVisible, setIsForkModalVisible ] = useState(false);
@@ -64,26 +62,7 @@ const ExperimentDetails: React.FC = () => {
     valHistory,
   ]);
 
-  const fetchFirstTrialId = useCallback(async () => {
-    try {
-      const expTrials = await getExpTrials({ id }, { signal: canceler.signal });
-      if (expTrials.trials[0]) {
-        setFirstTrialId(expTrials.trials[0].id);
-      }
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Failed to fetch experiment trials.',
-        silent: true,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ canceler, id ]);
-
   const { startPolling, stopPolling } = usePolling(fetchExperimentDetails);
-  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
   const showForkModal = useCallback((): void => {
     if (experiment?.configRaw) {
@@ -114,7 +93,7 @@ const ExperimentDetails: React.FC = () => {
       setIsForkModalVisible(false);
       setExperiment(undefined);
 
-      // Route to newly forkex experiment.
+      // Route to newly forked experiment.
       routeToReactUrl(paths.experimentDetails(configId));
 
       // Add a slight delay to allow polling function to update.
@@ -143,11 +122,6 @@ const ExperimentDetails: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
-  useEffect(() => {
-    if (isSingleTrial === false || firstTrialId != null) return;
-    return () => stopPollingFirstTrialId();
-  }, [ firstTrialId, isSingleTrial, stopPollingFirstTrialId ]);
-
   if (isNaN(id)) {
     return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   } else if (pageError) {
@@ -174,7 +148,6 @@ const ExperimentDetails: React.FC = () => {
         <ExperimentSingleTrialTabs
           continueTrialRef={continueTrialRef}
           experiment={experiment}
-          trialId={firstTrialId}
         />
       ) : (
         <ExperimentMultiTrialTabs experiment={experiment} />

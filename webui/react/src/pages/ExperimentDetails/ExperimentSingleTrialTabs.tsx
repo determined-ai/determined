@@ -8,7 +8,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
-import { getTrialDetails } from 'services/api';
+import { getExpTrials, getTrialDetails } from 'services/api';
 import { ExperimentBase, RunState, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -43,15 +43,15 @@ const ExperimentConfiguration = React.lazy(() => {
 export interface Props {
   continueTrialRef: React.Ref<ContinueTrialHandles>;
   experiment: ExperimentBase;
-  trialId?: number;
 }
 
 const NoDataAlert = <Alert message="No data available." type="warning" />;
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { continueTrialRef, experiment, trialId }: Props,
+  { continueTrialRef, experiment }: Props,
 ) => {
   const history = useHistory();
+  const [ trialId, setFirstTrialId ] = useState<number>();
   const prevTrialId = usePrevious(trialId, undefined);
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
@@ -75,6 +75,27 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ basePath, history, tab, tabKey ]);
 
+  const fetchFirstTrialId = useCallback(async () => {
+    try {
+      const expTrials = await getExpTrials(
+        { id: experiment.id, limit: 2 },
+        { signal: canceler.signal },
+      );
+      if (expTrials.trials[0]) {
+        setFirstTrialId(expTrials.trials[0].id);
+      }
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Failed to fetch experiment trials.',
+        silent: true,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ canceler, experiment.id ]);
+
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
 
@@ -95,12 +116,18 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   }, [ canceler, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
+  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
       stopPolling();
     }
   }, [ trialDetails, stopPolling ]);
+
+  useEffect(() => {
+    if (trialId != null) return;
+    return () => stopPollingFirstTrialId();
+  }, [ trialId, stopPollingFirstTrialId ]);
 
   useEffect(() => {
     const isPaused = experiment.state === RunState.Paused;
