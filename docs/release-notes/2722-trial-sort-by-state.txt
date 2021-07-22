@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Enable sorting trials by their state.
