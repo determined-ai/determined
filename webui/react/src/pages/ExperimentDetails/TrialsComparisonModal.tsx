@@ -1,4 +1,3 @@
-import { object } from '@storybook/addon-knobs';
 import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { TrialDetails, TrialItem } from 'types';
+import { CheckpointState, CheckpointWorkload, TrialDetails, TrialItem } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { trialDurations, TrialDurations } from 'utils/trial';
@@ -75,12 +74,24 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
   }, [ fetchTrialDetails, source, trials ]);
 
   const durations: Record<string, TrialDurations> = useMemo(
-    () => Object.values(trialsDetails)
-      .map(trial => ([ trial.data?.id || '', trialDurations(trial.data?.workloads || []) ]))
-      .reduce((obj, cur) => {
-        return { ...obj, [cur.first() as string]: cur.last() as TrialDurations };
-      }, {})
+    () => Object.fromEntries(Object.values(trialsDetails)
+      .map(trial => (trial.data ? [ trial.data.id, trialDurations(trial.data.workloads) ] : [])))
     , [ trialsDetails ],
+  );
+
+  const getCheckpointSize = useCallback((trial: TrialDetails) => {
+    const totalBytes = trial.workloads
+      .filter(step => step.checkpoint
+      && step.checkpoint.state === CheckpointState.Completed)
+      .map(step => checkpointSize(step.checkpoint as CheckpointWorkload))
+      .reduce((acc, cur) => acc + cur, 0);
+    return humanReadableBytes(totalBytes);
+  }, []);
+
+  const totalCheckpointsSizes: Record<string, string> = useMemo(
+    () => Object.fromEntries(Object.values(trialsDetails)
+      .map(trial => trial.data ? [ trial.data.id, getCheckpointSize(trial.data) ] : []))
+    , [ getCheckpointSize, trialsDetails ],
   );
 
   return (
@@ -110,7 +121,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       </div>
       <div className={css.row}>
         <h3>Total Checkpoint Size</h3>
-        {trials.map(trial => 'Need Workloads'+ trial.id)}
+        {trials.map(trial => totalCheckpointsSizes[trial.id])}
       </div>
       <div className={css.headerRow}><h2>Metrics</h2></div>
       {trials.map(trial => 'Need Workloads'+ trial.id)}
