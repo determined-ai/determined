@@ -131,7 +131,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
 
   useEffect(() => {
     const isPaused = experiment.state === RunState.Paused;
-    setHasLoaded(!!trialDetails || isPaused);
+    setHasLoaded(!!trialDetails || isPaused || terminalRunStates.has(experiment.state));
   }, [ experiment.state, trialDetails ]);
 
   useEffect(() => {
