@@ -372,9 +372,10 @@ def test_noop_experiment_config_override() -> None:
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(
-            tf.name, conf.fixtures_path("no_op"), [
-                "--config", "reproducibility.experiment_seed=8200"
-            ])
+            tf.name,
+            conf.fixtures_path("no_op"),
+            ["--config", "reproducibility.experiment_seed=8200"],
+        )
         exp_config = exp.experiment_json(experiment_id)["config"]
         assert exp_config["reproducibility"]["experiment_seed"] == 8200
         exp.cancel_single(experiment_id)
