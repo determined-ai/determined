@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { ContinueTrialHandles } from 'components/ContinueTrial';
 import { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
@@ -33,7 +32,6 @@ const ExperimentDetails: React.FC = () => {
   const [ valHistory, setValHistory ] = useState<ValidationHistory[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const [ isSingleTrial, setIsSingleTrial ] = useState<boolean>();
-  const continueTrialRef = useRef<ContinueTrialHandles>(null);
 
   const id = parseInt(experimentId);
 
@@ -109,11 +107,7 @@ const ExperimentDetails: React.FC = () => {
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
-        <ExperimentSingleTrialTabs
-          continueTrialRef={continueTrialRef}
-          experiment={experiment}
-          onTrialLoad={handleSingleTrialLoad}
-        />
+        <ExperimentSingleTrialTabs experiment={experiment} onTrialLoad={handleSingleTrialLoad} />
       ) : (
         <ExperimentMultiTrialTabs experiment={experiment} />
       )}

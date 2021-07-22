@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import { CreateExperimentType } from 'components/CreateExperimentModal';
@@ -48,7 +47,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ source ] = useState(axios.CancelToken.source());
-  const continueTrialRef = useRef<ContinueTrialHandles>(null);
   const history = useHistory();
   const routeParams = useParams<Params>();
 
@@ -196,7 +194,6 @@ const TrialDetailsComp: React.FC = () => {
         </TabPane>
       </Tabs>
       {createModal()}
-      <ContinueTrial experiment={experiment} ref={continueTrialRef} trial={trial} />
     </Page>
   );
 };

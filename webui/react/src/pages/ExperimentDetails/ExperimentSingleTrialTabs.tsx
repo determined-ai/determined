@@ -2,7 +2,6 @@ import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -41,16 +40,13 @@ const ExperimentConfiguration = React.lazy(() => {
 });
 
 export interface Props {
-  continueTrialRef: React.Ref<ContinueTrialHandles>;
   experiment: ExperimentBase;
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
 const NoDataAlert = <Alert message="No data available." type="warning" />;
 
-const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { continueTrialRef, experiment, onTrialLoad }: Props,
-) => {
+const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }: Props) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
@@ -195,9 +191,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             : NoDataAlert}
         </TabPane>
       </Tabs>
-      {trialDetails && (
-        <ContinueTrial experiment={experiment} ref={continueTrialRef} trial={trialDetails} />
-      )}
     </>
   );
 };
