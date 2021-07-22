@@ -175,22 +175,16 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, sorter ]);
 
-  const trialMap = useMemo(() => {
-    return (trials || []).reduce((acc, experiment) => {
-      acc[experiment.id] = experiment;
-      return acc;
-    }, {} as Record<string, TrialItem>);
-  }, [ trials ]);
-
-  const selectedTrials = useMemo(() => {
-    return selectedRowKeys.map(key => trialMap[key]);
-  }, [ trialMap, selectedRowKeys ]);
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
 
   const handleFilterChange = useCallback((filters: TrialFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
     setPagination(prev => ({ ...prev, offset: 0 }));
-  }, [ setFilters, storage ]);
+    clearSelected();
+  }, [ clearSelected, setFilters, storage ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
     handleFilterChange({ ...filters, states: states.length !== 0 ? states : undefined });
@@ -338,15 +332,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
       return openOrCreateTensorboard(
-        { trialIds: selectedTrials.map(trial => trial.id) },
+        { trialIds: selectedRowKeys },
       );
     }
-    return Promise.all(selectedTrials.map(() => Promise.resolve()));
-  }, [ selectedTrials ]);
-
-  const clearSelected = useCallback(() => {
-    setSelectedRowKeys([]);
-  }, []);
+    return Promise.all([]);
+  }, [ selectedRowKeys ]);
 
   const handleBatchAction = useCallback(async (action: Action) => {
     try {
@@ -355,18 +345,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         openCommand(result as CommandTask);
       }
 
-      /*
-       * Deselect selected rows since their states may have changed where they
-       * are no longer part of the filter criteria.
-       */
-      clearSelected();
-
       // Refetch experiment list to get updates based on batch action.
       await fetchExperimentTrials();
     } catch (e) {
       const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to View TensorBoard for Selected Experiments' :
-        `Unable to ${action} Selected Experiments`;
+        'Unable to View TensorBoard for Selected Trials' :
+        `Unable to ${action} Selected Trials`;
       handleError({
         error: e,
         level: ErrorLevel.Error,
@@ -377,7 +361,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         type: ErrorType.Server,
       });
     }
-  }, [ clearSelected, fetchExperimentTrials, sendBatchActions ]);
+  }, [ fetchExperimentTrials, sendBatchActions ]);
 
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
