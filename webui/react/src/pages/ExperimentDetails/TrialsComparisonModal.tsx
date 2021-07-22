@@ -1,16 +1,16 @@
 import Modal from 'antd/lib/modal/Modal';
 import React from 'react';
 
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, TrialItem } from 'types';
 
 interface ModalProps {
   experiment: ExperimentBase;
-  trials: TrialDetails[];
+  trials: TrialItem[];
   visible: boolean;
 }
 
 interface TableProps {
-  trials: TrialDetails[];
+  trials: TrialItem[];
 }
 
 const TrialsComparisonModal: React.FC<ModalProps> =
