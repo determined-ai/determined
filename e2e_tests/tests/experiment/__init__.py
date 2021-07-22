@@ -10,6 +10,7 @@ from .experiment import (
     create_native_experiment,
     experiment_has_active_workload,
     experiment_has_completed_workload,
+    experiment_json,
     experiment_state,
     experiment_trials,
     export_and_load_model,

@@ -190,17 +190,7 @@ def _set_nested_config(config: Dict[str, Any], key_path: List[str], value: Any) 
     return config
 
 
-def parse_config(
-    config_file: Optional[IO],
-    entrypoint: Optional[List[str]],
-    overrides: Iterable[str],
-    volumes: Iterable[str],
-) -> Dict[str, Any]:
-    config = {}  # type: Dict[str, Any]
-    if config_file:
-        with config_file:
-            config = util.safe_load_yaml_with_exceptions(config_file)
-
+def parse_config_overrides(config: Dict[str, Any], overrides: Iterable[str]) -> None:
     for config_arg in overrides:
         if "=" not in config_arg:
             raise ValueError(
@@ -225,6 +215,20 @@ def parse_config(
         # TODO(#2703): Consider using full JSONPath spec instead of dot
         # notation.
         config = _set_nested_config(config, key.split("."), value)
+
+
+def parse_config(
+    config_file: Optional[IO],
+    entrypoint: Optional[List[str]],
+    overrides: Iterable[str],
+    volumes: Iterable[str],
+) -> Dict[str, Any]:
+    config = {}  # type: Dict[str, Any]
+    if config_file:
+        with config_file:
+            config = util.safe_load_yaml_with_exceptions(config_file)
+
+    parse_config_overrides(config, overrides)
 
     for volume_arg in volumes:
         if ":" not in volume_arg:
