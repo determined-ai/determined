@@ -108,18 +108,22 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
     <div className={css.tableContainer}>
       <div className={css.headerRow}><div />{trials.map(trial => trial.id)}</div>
       <div className={css.row}><h3>State</h3>{trials.map(trial => trial.state)}</div>
-      <div className={css.row}><h3>Start Time</h3>{trials.map(trial => trial.startTime)}</div>
+      <div className={css.row}>
+        <h3>Start Time</h3>
+        {trials.map(trial =>
+          shortEnglishHumannizer(getDuration({ startTime: trial.startTime })) + ' ago')}
+      </div>
       <div className={css.row}>
         <h3>Training Time</h3>
-        {trials.map(trial => durations[trial.id].train)}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].train))}
       </div>
       <div className={css.row}>
         <h3>Validation Time</h3>
-        {trials.map(trial => durations[trial.id].validation)}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].validation))}
       </div>
       <div className={css.row}>
         <h3>Checkpoint Time</h3>
-        {trials.map(trial => durations[trial.id].checkpoint)}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].checkpoint))}
       </div>
       <div className={css.row}>
         <h3>Batches Processed</h3>
