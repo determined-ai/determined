@@ -62,7 +62,7 @@ const ExperimentDetails: React.FC = () => {
     valHistory,
   ]);
 
-  const { startPolling, stopPolling } = usePolling(fetchExperimentDetails);
+  const { stopPolling } = usePolling(fetchExperimentDetails);
 
   const showForkModal = useCallback((): void => {
     if (experiment?.configRaw) {
@@ -89,15 +89,11 @@ const ExperimentDetails: React.FC = () => {
         parentId: id,
       });
 
-      // Reset experiment state and start polling for newly forked experiment.
       setIsForkModalVisible(false);
-      setExperiment(undefined);
 
-      // Route to newly forked experiment.
-      routeToReactUrl(paths.experimentDetails(configId));
-
-      // Add a slight delay to allow polling function to update.
-      setTimeout(() => startPolling(), 100);
+      // Route to reload path to forcibly remount experiment page.
+      const newPath = paths.experimentDetails(configId);
+      routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = 'Unable to fork experiment with the provided config.';
       if (e.name === 'YAMLException') {
@@ -110,7 +106,7 @@ const ExperimentDetails: React.FC = () => {
       }
       setForkModalError(errorMessage);
     }
-  }, [ id, startPolling ]);
+  }, [ id ]);
 
   useEffect(() => {
     if (experiment && terminalRunStates.has(experiment.state)) {
