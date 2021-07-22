@@ -6,14 +6,16 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
-  ExperimentIdParams, GetCommandsParams, GetExperimentsParams, GetNotebooksParams,
+  CommandIdParams, CreateExperimentParams, DetApi, EmptyParams,
+  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams,
+  GetExperimentParams, GetExperimentsParams, GetNotebooksParams,
   GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
   GetTrialsParams, HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse,
   LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
   Agent, CommandTask, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
+  ExperimentItem,
   ExperimentPagination, Log, RawJson, ResourcePool, Telemetry, Template, TrialDetails,
   TrialPagination, ValidationHistory,
 } from 'types';
@@ -188,6 +190,17 @@ export const getExperiments: DetApi<
       params.users,
       options,
     );
+  },
+};
+
+export const getExperiment: DetApi<
+GetExperimentParams, Api.V1GetExperimentResponse, ExperimentItem
+> = {
+  name: 'getExperiment',
+  postProcess: (response: Api.V1GetExperimentResponse) =>
+    decoder.mapV1Experiment(response.experiment),
+  request: (params: GetExperimentParams) => {
+    return detApi.Experiments.determinedGetExperiment(params.id);
   },
 };
 

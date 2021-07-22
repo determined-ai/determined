@@ -14,14 +14,15 @@ import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { Renderer } from 'components/Table';
+import TableBatch from 'components/TableBatch';
 import TableFilterDropdown from 'components/TableFilterDropdown';
 import TrialActionDropdown from 'components/TrialActionDropdown';
-import handleError, { ErrorType } from 'ErrorHandler';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import { paths } from 'routes/utils';
-import { getExpTrials } from 'services/api';
+import { getExpTrials, openOrCreateTensorboard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
@@ -29,14 +30,20 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  CheckpointWorkloadExtended, ExperimentBase, Pagination, RunState, TrialFilters, TrialItem,
+  CheckpointWorkloadExtended, CommandTask, ExperimentBase,
+  Pagination, RunState, TrialFilters, TrialItem,
 } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
 
 import { columns as defaultColumns } from './ExperimentTrials.table';
 
 interface Props {
   experiment: ExperimentBase;
+}
+
+enum Action {
+  OpenTensorBoard = 'OpenTensorboard',
 }
 
 const URL_ALL = 'all';
@@ -62,6 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -97,12 +105,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       searchParams.append('state', URL_ALL);
     }
 
+    // selected rows
+    if (selectedRowKeys && selectedRowKeys.length > 0) {
+      selectedRowKeys.forEach(rowKey => searchParams.append('row', String(rowKey)));
+    }
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ filters, isUrlParsed, pagination, sorter ]);
+  }, [ filters, isUrlParsed, pagination, selectedRowKeys, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -150,17 +163,28 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       filters.states = (state.includes(URL_ALL) ? undefined : state);
     }
 
+    // selected rows
+    const rows = urlSearchParams.getAll('row');
+    if (rows != null) {
+      setSelectedRowKeys(rows.map(row => parseInt(row)));
+    }
+
     setFilters(filters);
     setIsUrlParsed(true);
     setPagination(pagination);
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, sorter ]);
 
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
+
   const handleFilterChange = useCallback((filters: TrialFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
     setPagination(prev => ({ ...prev, offset: 0 }));
-  }, [ setFilters, storage ]);
+    clearSelected();
+  }, [ clearSelected, setFilters, storage ]);
 
   const handleStateFilterApply = useCallback((states: string[]) => {
     handleFilterChange({ ...filters, states: states.length !== 0 ? states : undefined });
@@ -305,6 +329,40 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id, canceler, pagination, sorter, filters ]);
 
+  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+    if (action === Action.OpenTensorBoard) {
+      return openOrCreateTensorboard(
+        { trialIds: selectedRowKeys },
+      );
+    }
+    return Promise.all([]);
+  }, [ selectedRowKeys ]);
+
+  const handleBatchAction = useCallback(async (action: Action) => {
+    try {
+      const result = await sendBatchActions(action);
+      if (action === Action.OpenTensorBoard && result) {
+        openCommand(result as CommandTask);
+      }
+
+      // Refetch experiment list to get updates based on batch action.
+      await fetchExperimentTrials();
+    } catch (e) {
+      const publicSubject = action === Action.OpenTensorBoard ?
+        'Unable to View TensorBoard for Selected Trials' :
+        `Unable to ${action} Selected Trials`;
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject,
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ fetchExperimentTrials, sendBatchActions ]);
+
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
   // Get new trials based on changes to the pagination, sorter and filters.
@@ -321,9 +379,16 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
   return (
     <>
       <Section>
+        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+            View in TensorBoard
+          </Button>
+        </TableBatch>
         <ResponsiveTable
           columns={columns}
           dataSource={trials}
@@ -331,6 +396,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
+          rowSelection={{
+            onChange: handleTableRowSelect,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys,
+          }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange} />

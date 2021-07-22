@@ -287,7 +287,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
   };
 };
 
-const mapV1Experiment = (
+export const mapV1Experiment = (
   data: Sdk.V1Experiment,
 ): types.ExperimentItem => {
   return {

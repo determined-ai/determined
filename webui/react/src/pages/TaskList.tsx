@@ -74,11 +74,13 @@ const URL_ALL = 'all';
 
 const STORAGE_PATH = 'task-list';
 const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const TaskList: React.FC = () => {
   const { users } = useStore();
   const storage = useStorage(STORAGE_PATH);
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const [ canceler ] = useState(new AbortController());
@@ -86,7 +88,7 @@ const TaskList: React.FC = () => {
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ pagination, setPagination ] = useState<Pagination>(
-    { limit: initFilters.limit, offset: 0 },
+    { limit: initLimit, offset: 0 },
   );
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
   const [ search, setSearch ] = useState('');
@@ -564,14 +566,13 @@ const TaskList: React.FC = () => {
     storage.set(STORAGE_SORTER_KEY, updatedSorter);
     setSorter(updatedSorter);
 
-    const updatedFilters = {
-      ...filters,
+    const updatedPagination = {
       limit: tablePagination.pageSize,
       offset: (tablePagination.current - 1) * tablePagination.pageSize,
     };
-    storage.set(STORAGE_FILTERS_KEY, updatedFilters);
-    setFilters(updatedFilters);
-  }, [ columns, filters, setSorter, storage ]);
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
+    setPagination(updatedPagination);
+  }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
@@ -581,13 +582,17 @@ const TaskList: React.FC = () => {
     return () => canceler.abort();
   }, [ canceler ]);
 
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
+
   return (
     <Page
       id="tasks"
       options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} /> }
       title="Tasks">
       <div className={css.base}>
-        <TableBatch selectedRowCount={selectedRowKeys.length}>
+        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
           <Button
             danger
             disabled={!hasKillable}
@@ -601,7 +606,11 @@ const TaskList: React.FC = () => {
           pagination={getFullPaginationConfig(pagination, filteredTasks.length)}
           rowClassName={() => defaultRowClassName({ clickable: false })}
           rowKey="id"
-          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          rowSelection={{
+            onChange: handleTableRowSelect,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys,
+          }}
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange} />
