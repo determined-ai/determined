@@ -8,7 +8,7 @@ import { isAborted } from 'services/utils';
 import { CheckpointState, CheckpointWorkload, TrialDetails, TrialItem } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { trialDurations, TrialDurations } from 'utils/trial';
+import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -94,6 +94,16 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
     , [ getCheckpointSize, trialsDetails ],
   );
 
+  const metricNames = useMemo(() => extractMetricNames(
+    Object.values(trialsDetails).first().data?.workloads || [],
+  ), [ trialsDetails ]);
+
+  const hyperparameterNames = useMemo(
+    () =>
+      Object.keys(trials.first().hyperparameters),
+    [ trials ],
+  );
+
   return (
     <div className={css.tableContainer}>
       <div className={css.headerRow}><div />{trials.map(trial => trial.id)}</div>
@@ -124,9 +134,16 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
         {trials.map(trial => totalCheckpointsSizes[trial.id])}
       </div>
       <div className={css.headerRow}><h2>Metrics</h2></div>
-      {trials.map(trial => 'Need Workloads'+ trial.id)}
+      {metricNames.map(metric =>
+        <div className={css.row} key={metric.name}>
+          <h3>{metric.name}</h3>
+          {trials.map(trial => trialsDetails[trial.id].data?.workloads
+            .find(workload =>
+              Object.keys(workload.training?.metrics || {}).first() === metric.name ||
+              Object.keys(workload.validation?.metrics || {}).first() === metric.name))}
+        </div>)}
       <div className={css.headerRow}><h2>Hyperparameters</h2></div>
-      {Object.keys(trials.first().hyperparameters).map(hp =>
+      {hyperparameterNames.map(hp =>
         trials.map(trial => trial.hyperparameters[hp]))}
     </div>
   );
