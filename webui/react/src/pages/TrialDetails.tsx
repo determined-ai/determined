@@ -1,13 +1,15 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
+import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
+import { CreateExperimentType } from 'components/CreateExperimentModal';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateExperimentModal from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -62,6 +64,8 @@ const TrialDetailsComp: React.FC = () => {
 
   const trial = trialDetails.data;
 
+  const { createModal, showModal } = useCreateExperimentModal();
+
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
 
@@ -108,10 +112,14 @@ const TrialDetailsComp: React.FC = () => {
   const handleActionClick = useCallback((action: TrialAction) => {
     switch (action) {
       case TrialAction.Continue:
-        continueTrialRef.current?.show();
+        if (experiment && trial) showModal({
+          experiment,
+          trial,
+          type: CreateExperimentType.ContinueTrial,
+        });
         break;
     }
-  }, [ continueTrialRef ]);
+  }, [ experiment, showModal, trial ]);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -187,6 +195,7 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
+      {createModal()}
       <ContinueTrial experiment={experiment} ref={continueTrialRef} trial={trial} />
     </Page>
   );

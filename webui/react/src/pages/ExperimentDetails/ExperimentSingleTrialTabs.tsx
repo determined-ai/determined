@@ -43,12 +43,13 @@ const ExperimentConfiguration = React.lazy(() => {
 export interface Props {
   continueTrialRef: React.Ref<ContinueTrialHandles>;
   experiment: ExperimentBase;
+  onTrialLoad?: (trial: TrialDetails) => void;
 }
 
 const NoDataAlert = <Alert message="No data available." type="warning" />;
 
 const ExperimentSingleTrialTabs: React.FC<Props> = (
-  { continueTrialRef, experiment }: Props,
+  { continueTrialRef, experiment, onTrialLoad }: Props,
 ) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
@@ -84,8 +85,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         { id: experiment.id, limit: 2 },
         { signal: canceler.signal },
       );
-      if (expTrials.trials[0]) {
-        setFirstTrialId(expTrials.trials[0].id);
+      const firstTrial = expTrials.trials[0];
+      if (firstTrial) {
+        if (onTrialLoad) onTrialLoad(firstTrial);
+        setFirstTrialId(firstTrial.id);
       } else if (isTerminalExp) {
         setWontHaveTrials(true);
       }
@@ -99,7 +102,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, experiment.id, experiment.state ]);
+  }, [ canceler, experiment.id, experiment.state, onTrialLoad ]);
 
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;

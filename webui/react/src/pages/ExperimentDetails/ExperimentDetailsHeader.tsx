@@ -25,16 +25,14 @@ import css from './ExperimentDetailsHeader.module.scss';
 interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
-  isSingleTrial: boolean;
-  showContinueTrial: () => void;
+  showContinueTrial?: () => void;
   showForkModal: () => void;
 }
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
-  showContinueTrial,
   experiment,
   fetchExperimentDetails,
-  isSingleTrial,
+  showContinueTrial,
   showForkModal,
 }: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
@@ -101,16 +99,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const options: Option[] = isSingleTrial ? [
-      tensorboard,
-      downloadModel,
-      fork,
-      continueTrial,
-    ] : [
+    const options: Option[] = [
       fork,
       tensorboard,
       downloadModel,
     ];
+
+    if (continueTrial) options.splice(1, 0, continueTrial);
 
     if (terminalRunStates.has(experiment.state)) {
       if (experiment.archived) {
@@ -155,7 +150,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     isRunningArchive,
     isRunningTensorboard,
     isRunningUnarchive,
-    isSingleTrial,
     showContinueTrial,
     showForkModal,
   ]);
