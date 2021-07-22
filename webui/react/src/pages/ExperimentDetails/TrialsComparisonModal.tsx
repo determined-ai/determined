@@ -1,11 +1,16 @@
+import { object } from '@storybook/addon-knobs';
 import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { TrialDetails, TrialItem } from 'types';
+import { humanReadableBytes } from 'utils/string';
+import { getDuration, shortEnglishHumannizer } from 'utils/time';
+import { trialDurations, TrialDurations } from 'utils/trial';
+import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -69,6 +74,15 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
     trialIds.forEach(trialId => fetchTrialDetails(trialId));
   }, [ fetchTrialDetails, source, trials ]);
 
+  const durations: Record<string, TrialDurations> = useMemo(
+    () => Object.values(trialsDetails)
+      .map(trial => ([ trial.data?.id || '', trialDurations(trial.data?.workloads || []) ]))
+      .reduce((obj, cur) => {
+        return { ...obj, [cur.first() as string]: cur.last() as TrialDurations };
+      }, {})
+    , [ trialsDetails ],
+  );
+
   return (
     <div className={css.tableContainer}>
       <div className={css.headerRow}><div />{trials.map(trial => trial.id)}</div>
@@ -76,15 +90,15 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       <div className={css.row}><h3>Start Time</h3>{trials.map(trial => trial.startTime)}</div>
       <div className={css.row}>
         <h3>Training Time</h3>
-        {trials.map(trial => 'Need Workloads' + trial.id)}
+        {trials.map(trial => durations[trial.id].train)}
       </div>
       <div className={css.row}>
         <h3>Validation Time</h3>
-        {trials.map(trial => 'Need Workloads' + trial.id)}
+        {trials.map(trial => durations[trial.id].validation)}
       </div>
       <div className={css.row}>
         <h3>Checkpoint Time</h3>
-        {trials.map(trial => 'Need Workloads' + trial.id)}
+        {trials.map(trial => durations[trial.id].checkpoint)}
       </div>
       <div className={css.row}>
         <h3>Batches Processed</h3>

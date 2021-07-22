@@ -95,7 +95,7 @@ export const valueToMetricName = (value: string): MetricName | undefined => {
   return undefined;
 };
 
-interface TrialDurations {
+export interface TrialDurations {
   checkpoint: number;
   train: number;
   validation: number;
