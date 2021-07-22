@@ -80,18 +80,13 @@ type DB interface {
 	UpdateTrial(id int, newState model.State) error
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
-	RollBackTrial(id, totalBatches int) error
 	TrialDetailsRaw(id int) ([]byte, error)
-	AddStep(step *model.Step) error
-	AddNoOpStep(step *model.Step) error
 	AddAllocation(taskID model.TaskID, allocationID model.AllocationID, rp string) error
 	CompleteAllocation(allocationID model.AllocationID) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error
 	StepByTotalBatches(trialID, totalBatches int) (*model.Step, error)
-	UpdateStep(
-		trialID, totalBatches int, newState model.State, metrics model.JSONObj) error
 	AddTrainingMetrics(ctx context.Context, m *trialv1.TrainingMetrics) error
 	AddValidationMetrics(
 		ctx context.Context, m *trialv1.ValidationMetrics,
@@ -99,19 +94,10 @@ type DB interface {
 	AddCheckpointMetadata(
 		ctx context.Context, m *trialv1.CheckpointMetadata,
 	) error
-	AddValidation(validation *model.Validation) error
 	ValidationByTotalBatches(trialID, totalBatches int) (*model.Validation, error)
-	UpdateValidation(
-		trialID, totalBatches int, newState model.State, metrics model.JSONObj,
-	) error
-	AddCheckpoint(checkpoint *model.Checkpoint) error
 	CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error)
 	CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error)
 	LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
-	UpdateCheckpoint(
-		trialID, totalBatches int,
-		newCheckpoint model.Checkpoint,
-	) error
 	UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error
 	PeriodicTelemetryInfo() ([]byte, error)
 	AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error
@@ -122,7 +108,6 @@ type DB interface {
 	QueryF(
 		queryName string, args []interface{}, v interface{}, params ...interface{}) error
 	RawQuery(queryName string, params ...interface{}) ([]byte, error)
-	SetTrialBestValidation(id int) error
 	UpdateResourceAllocationAggregation() error
 	TemplateList() (values []model.Template, err error)
 	TemplateByName(name string) (value model.Template, err error)

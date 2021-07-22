@@ -56,20 +56,6 @@ func (_m *DB) AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error {
 	return r0
 }
 
-// AddCheckpoint provides a mock function with given fields: checkpoint
-func (_m *DB) AddCheckpoint(checkpoint *model.Checkpoint) error {
-	ret := _m.Called(checkpoint)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Checkpoint) error); ok {
-		r0 = rf(checkpoint)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AddCheckpointMetadata provides a mock function with given fields: ctx, m
 func (_m *DB) AddCheckpointMetadata(ctx context.Context, m *trialv1.CheckpointMetadata) error {
 	ret := _m.Called(ctx, m)
@@ -91,34 +77,6 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.Experiment) error); ok {
 		r0 = rf(experiment)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AddNoOpStep provides a mock function with given fields: step
-func (_m *DB) AddNoOpStep(step *model.Step) error {
-	ret := _m.Called(step)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Step) error); ok {
-		r0 = rf(step)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AddStep provides a mock function with given fields: step
-func (_m *DB) AddStep(step *model.Step) error {
-	ret := _m.Called(step)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Step) error); ok {
-		r0 = rf(step)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -175,20 +133,6 @@ func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.User, *model.AgentUserGroup) error); ok {
 		r0 = rf(user, ug)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// AddValidation provides a mock function with given fields: validation
-func (_m *DB) AddValidation(validation *model.Validation) error {
-	ret := _m.Called(validation)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*model.Validation) error); ok {
-		r0 = rf(validation)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1467,20 +1411,6 @@ func (_m *DB) RawQuery(queryName string, params ...interface{}) ([]byte, error) 
 	return r0, r1
 }
 
-// RollBackTrial provides a mock function with given fields: id, totalBatches
-func (_m *DB) RollBackTrial(id int, totalBatches int) error {
-	ret := _m.Called(id, totalBatches)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, int) error); ok {
-		r0 = rf(id, totalBatches)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // SaveExperimentArchiveStatus provides a mock function with given fields: experiment
 func (_m *DB) SaveExperimentArchiveStatus(experiment *model.Experiment) error {
 	ret := _m.Called(experiment)
@@ -1558,20 +1488,6 @@ func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportan
 	var r0 error
 	if rf, ok := ret.Get(0).(func(int, model.ExperimentHPImportance) error); ok {
 		r0 = rf(experimentID, value)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetTrialBestValidation provides a mock function with given fields: id
-func (_m *DB) SetTrialBestValidation(id int) error {
-	ret := _m.Called(id)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int) error); ok {
-		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2092,20 +2008,6 @@ func (_m *DB) TrialStatus(trialID int) (model.State, *time.Time, error) {
 	return r0, r1, r2
 }
 
-// UpdateCheckpoint provides a mock function with given fields: trialID, totalBatches, newCheckpoint
-func (_m *DB) UpdateCheckpoint(trialID int, totalBatches int, newCheckpoint model.Checkpoint) error {
-	ret := _m.Called(trialID, totalBatches, newCheckpoint)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, int, model.Checkpoint) error); ok {
-		r0 = rf(trialID, totalBatches, newCheckpoint)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // UpdateCheckpointMetadata provides a mock function with given fields: checkpoint
 func (_m *DB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
 	ret := _m.Called(checkpoint)
@@ -2127,20 +2029,6 @@ func (_m *DB) UpdateResourceAllocationAggregation() error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateStep provides a mock function with given fields: trialID, totalBatches, newState, metrics
-func (_m *DB) UpdateStep(trialID int, totalBatches int, newState model.State, metrics model.JSONObj) error {
-	ret := _m.Called(trialID, totalBatches, newState, metrics)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, int, model.State, model.JSONObj) error); ok {
-		r0 = rf(trialID, totalBatches, newState, metrics)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2239,20 +2127,6 @@ func (_m *DB) UpdateUsername(userID *model.UserID, newUsername string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*model.UserID, string) error); ok {
 		r0 = rf(userID, newUsername)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateValidation provides a mock function with given fields: trialID, totalBatches, newState, metrics
-func (_m *DB) UpdateValidation(trialID int, totalBatches int, newState model.State, metrics model.JSONObj) error {
-	ret := _m.Called(trialID, totalBatches, newState, metrics)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(int, int, model.State, model.JSONObj) error); ok {
-		r0 = rf(trialID, totalBatches, newState, metrics)
 	} else {
 		r0 = ret.Error(0)
 	}
