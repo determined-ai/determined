@@ -1,4 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp';
+import queryString from 'query-string';
 import React from 'react';
 
 import { globalStorage } from 'globalStorage';
@@ -203,6 +204,9 @@ export const paths = {
   },
   masterLogs: (): string => {
     return '/logs';
+  },
+  reload: (path: string): string => {
+    return `/reload?${queryString.stringify({ path })}`;
   },
   taskList: (): string => {
     return '/tasks';

@@ -90,6 +90,12 @@ const routes: RouteConfig[] = [
     path: '/logout',
     title: 'Logout',
   },
+  {
+    id: 'reload',
+    needAuth: false,
+    path: '/reload',
+    title: 'Reload',
+  },
 ];
 
 export default routes;
