@@ -276,9 +276,9 @@ def test_startup_hook() -> None:
 def test_large_model_def_experiment() -> None:
     with tempfile.TemporaryDirectory() as td:
         shutil.copy(conf.fixtures_path("no_op/model_def.py"), td)
-        # Write a 94MB file into the directory.
-        with open(os.path.join(td, "junk.txt"), "w") as f:
-            f.write("x" * 94 * 1024 * 1024)
+        # Write a 94MB file into the directory.  Use random data because it is not compressible.
+        with open(os.path.join(td, "junk.txt"), "wb") as f:
+            f.write(os.urandom(94 * 1024 * 1024))
 
         exp.run_basic_test(conf.fixtures_path("no_op/single-one-short-step.yaml"), td, 1)
 
