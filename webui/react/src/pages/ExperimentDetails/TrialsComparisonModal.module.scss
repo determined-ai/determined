@@ -1,0 +1,15 @@
+.tableContainer {
+  border-radius: var(--theme-sizes-border-radius);
+}
+%tableRow {
+  border: 1px solid lightgray;
+  display: flex;
+}
+.row {
+  @extend %tableRow;
+}
+.headerRow {
+  background-color: lightgray;
+
+  @extend %tableRow;
+}
