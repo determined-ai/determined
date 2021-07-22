@@ -96,13 +96,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
     }
   }, [ canceler, experiment.id ]);
 
-  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
-
-  useEffect(() => {
-    if (trialId != null) return;
-    return () => stopPollingFirstTrialId();
-  }, [ trialId, stopPollingFirstTrialId ]);
-
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
 
@@ -123,12 +116,18 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   }, [ canceler, trialId ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
+  const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
       stopPolling();
     }
   }, [ trialDetails, stopPolling ]);
+
+  useEffect(() => {
+    if (trialId != null) return;
+    return () => stopPollingFirstTrialId();
+  }, [ trialId, stopPollingFirstTrialId ]);
 
   useEffect(() => {
     const isPaused = experiment.state === RunState.Paused;
