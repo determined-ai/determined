@@ -787,7 +787,7 @@ commands:
             - run:
                 name: Test run success -> uploading results to Determined CI
                 command: |
-                  if [ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ] ; then
+                  if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
                     python .circleci/scripts/upload_test_results.py \
                     'success' \
                     <<parameters.test_results_path>> \
@@ -799,7 +799,7 @@ commands:
             - run:
                 name: Test run failed -> uploading results to Determined CI
                 command: |
-                  if [ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ] ; then
+                  if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
                     python .circleci/scripts/upload_test_results.py \
                     'failed' \
                     <<parameters.test_results_path>> \
