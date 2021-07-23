@@ -35,7 +35,7 @@ const ExperimentDetails: React.FC = () => {
 
   const id = parseInt(experimentId);
 
-  const { createModal, showModal } = useCreateExperimentModal();
+  const { showModal } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
@@ -111,7 +111,6 @@ const ExperimentDetails: React.FC = () => {
       ) : (
         <ExperimentMultiTrialTabs experiment={experiment} />
       )}
-      {createModal()}
     </Page>
   );
 };

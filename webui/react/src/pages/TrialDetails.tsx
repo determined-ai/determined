@@ -62,7 +62,7 @@ const TrialDetailsComp: React.FC = () => {
 
   const trial = trialDetails.data;
 
-  const { createModal, showModal } = useCreateExperimentModal();
+  const { showModal } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -193,7 +193,6 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
-      {createModal()}
     </Page>
   );
 };
