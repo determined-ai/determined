@@ -325,7 +325,6 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             $(< /tmp/tests-to-run)
       - upload-test-job:
-          only_on_branch: master
           test_results_path: <<parameters.junit-path>>
 
 
@@ -777,9 +776,6 @@ commands:
 
   upload-test-job:
     parameters:
-      only_on_branch:
-        type: string
-        default: ""
       test_results_path:
         type: string
         default: ""
@@ -1321,7 +1317,6 @@ jobs:
           executor: determinedai/cimg-base:stable
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
-          only_on_branch: master
           test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
