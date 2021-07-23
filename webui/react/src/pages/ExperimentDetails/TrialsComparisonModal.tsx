@@ -31,6 +31,7 @@ const TrialsComparisonModal: React.FC<ModalProps> =
     <Modal
       title={`Experiment ${trials.first()?.experimentId} Trial Comparison`}
       visible={visible}
+      width={1200}
       onCancel={onCancel}>
       <TrialsComparisonTable trials={trials} />
     </Modal>
@@ -114,7 +115,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
 
   return (
     <div className={css.tableContainer}>
-      <div className={css.headerRow}>
+      <div
+        className={css.headerRow}>
         <div />
         {trials.map(trial => <p key={trial.id}>{trial.id}</p>)}</div>
       <div className={css.row}>
