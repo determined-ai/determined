@@ -13,12 +13,12 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import tabulate
 
-import determined
 import determined.experimental
 import determined.load
+from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.common import api, constants, context, util, yaml
+from determined.common import api, constants, context, util, yaml, set_logger
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
@@ -171,9 +171,9 @@ def local_experiment(args: Namespace) -> None:
 
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
 
-    determined.common.set_logger(bool(experiment_config.get("debug", False)))
+    set_logger(bool(experiment_config.get("debug", False)))
 
-    with determined._local_execution_manager(args.model_def.resolve()):
+    with _local_execution_manager(args.model_def.resolve()):
         trial_class = determined.load.trial_class_from_entrypoint(experiment_config["entrypoint"])
         determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
