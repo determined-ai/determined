@@ -29,6 +29,7 @@ const TrialsComparisonModal: React.FC<ModalProps> =
 ({ onCancel, trials, visible }: ModalProps) => {
   return (
     <Modal
+      footer={null}
       title={`Experiment ${trials.first()?.experimentId} Trial Comparison`}
       visible={visible}
       width={1200}
