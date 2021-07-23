@@ -325,6 +325,10 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             $(< /tmp/tests-to-run)
       - upload-test-job:
+          filters:
+            branches:
+              only:
+                - master
           test_results_path: <<parameters.junit-path>>
 
 
@@ -1317,6 +1321,10 @@ jobs:
           executor: determinedai/cimg-base:stable
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
       - upload-test-job:
+          filters:
+            branches:
+              only:
+                - master
           test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
