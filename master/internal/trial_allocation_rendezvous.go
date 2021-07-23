@@ -1,0 +1,283 @@
+package internal
+
+import (
+	"fmt"
+	"sort"
+	"time"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/pkg/errors"
+
+	apiutils "github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
+)
+
+const (
+	// MinLocalRendezvousPort is the smallest port to use (from the container's point of view;
+	// it will be mapped to some arbitrary port on the host) for communication across containers.
+	MinLocalRendezvousPort = 1734
+
+	// MaxLocalRendezvousPort is the largest port to use for communication across containers.
+	// Each distributed trial can take up to 2 host based ports and we assume a maximum.
+	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
+	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
+)
+
+var rendezvousTimeoutDuration = 10 * time.Minute
+
+type (
+	// watchRendezvousInfo begins watching for rendezvous info.
+	// When all the containers are ready, the trial will send all the
+	// peer addresses on the channel in the response.
+	watchRendezvousInfo struct {
+		allocationID model.AllocationID
+		containerID  cproto.ID
+	}
+	rendezvousInfoOrError struct {
+		info *trialv1.RendezvousInfo
+		err  error
+	}
+	rendezvousWatcher struct {
+		C <-chan rendezvousInfoOrError
+	}
+	unwatchRendezvousInfo struct{ id cproto.ID }
+
+	// It is possible that it takes very long for all containers to be connected after the first
+	// container is connected. This might happen when the k8s cluster waits for new instances
+	// to spin up, which might not happen at all. At the same time, taking up part of all
+	// the resources and waiting is wasteful. So we need to detect this situation.
+	rendezvousTimeout struct{ taskID model.AllocationID }
+
+	// rendezvous encapsulates the rendezvous state of a trial.
+	rendezvous struct {
+		allocationID      model.AllocationID
+		watchers          map[cproto.ID]chan<- rendezvousInfoOrError
+		ranks             map[cproto.ID]int
+		addresses         map[cproto.ID][]cproto.Address
+		lastWatchTime     time.Time
+		allReadySucceeded bool
+	}
+)
+
+func newRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) rendezvous {
+	return rendezvous{
+		allocationID: allocationID,
+		ranks:        ranks,
+		addresses:    map[cproto.ID][]cproto.Address{},
+		watchers:     map[cproto.ID]chan<- rendezvousInfoOrError{},
+	}
+}
+
+func (r *rendezvous) process(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case watchRendezvousInfo:
+		if w, err := r.watch(msg.allocationID, msg.containerID); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(w)
+		}
+	case unwatchRendezvousInfo:
+		r.unwatch(msg.id)
+	case rendezvousTimeout:
+		if err := r.checkTimeout(msg.taskID); err != nil {
+			return err
+		}
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func ranksFromReservations(allocations []sproto.Reservation) map[cproto.ID]int {
+	ranks := map[cproto.ID]int{}
+	for rank, a := range allocations {
+		ranks[a.Summary().ID] = rank
+	}
+	return ranks
+}
+
+func (r *rendezvous) watch(
+	allocationID model.AllocationID, id cproto.ID,
+) (rendezvousWatcher, error) {
+	if r.allocationID != allocationID {
+		err := errStaleTask{received: allocationID, actual: r.allocationID}
+		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+	} else if _, ok := r.ranks[id]; !ok {
+		err := errStaleContainer{id: id}
+		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+	} else if _, ok := r.watchers[id]; ok {
+		return rendezvousWatcher{}, apiutils.AsValidationError(
+			"rendezvous request from already connected container: %s", id,
+		)
+	}
+
+	// Channel is size 1 since rendezvous info will only ever be sent once.
+	w := make(chan rendezvousInfoOrError, 1)
+	r.watchers[id] = w
+	r.lastWatchTime = time.Now()
+	if r.ready() {
+		r.push()
+	}
+	return rendezvousWatcher{C: w}, nil
+}
+
+func (r *rendezvous) unwatch(id cproto.ID) {
+	if r == nil {
+		return
+	}
+	delete(r.watchers, id)
+}
+
+func (r *rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
+	r.addresses[id] = addresses
+	if r.ready() {
+		r.push()
+	}
+}
+
+func (r *rendezvous) containerTerminated(id cproto.ID) {
+	delete(r.addresses, id)
+}
+
+func (r rendezvous) rank(id cproto.ID) int {
+	return r.ranks[id]
+}
+
+// ready returns true if and only if all the containers are reported to be started with the
+// ContainerStarted message and their sockets to be connected with the containerConnected
+// message. The two messages are not guaranteed to come in-order. During each run of the
+// trial, once all the containers are ready this function will return true afterward because this
+// function is used in deciding if the trial should be forcibly killed when terminating.
+func (r *rendezvous) ready() bool {
+	// If a trial has passed allReady it can never return to a state of not ready until the
+	// current containers are all taskTerminated.
+	if r.allReadySucceeded {
+		return true
+	}
+
+	allAddressesArrived := len(r.addresses) == len(r.ranks)
+	allWaiting := len(r.watchers) == len(r.ranks)
+
+	r.allReadySucceeded = allAddressesArrived && allWaiting
+	return r.allReadySucceeded
+}
+
+// push gathers up the external addresses for the exposed ports and sends them to all the
+// containers in the trial.
+func (r rendezvous) push() bool {
+	if !r.ready() {
+		return false
+	}
+	caddrs, raddrs, err := r.info()
+	for _, caddr := range caddrs {
+		w := r.watchers[caddr.id]
+		w <- rendezvousInfoOrError{
+			info: &trialv1.RendezvousInfo{
+				Addresses: raddrs,
+				Rank:      int32(r.ranks[caddr.id]),
+			},
+			err: err,
+		}
+		close(w)
+		delete(r.watchers, caddr.id)
+	}
+	return true
+}
+
+// checkTimeout checks if the task should timeout waiting for rendezvous.
+func (r *rendezvous) checkTimeout(allocationID model.AllocationID) error {
+	if r == nil {
+		return nil
+	}
+
+	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
+	if r.allocationID == allocationID && exceededTimeout {
+		return errTimeoutExceeded{
+			message: "some containers are taking a long time to " +
+				"connect to master; when running on kubernetes this may happen " +
+				"because only some of the pods have been scheduled; it is possible " +
+				"that some pods will never be scheduled without adding compute " +
+				"resources or pausing / killing other experiments in the cluster",
+		}
+	}
+	return nil
+}
+
+func (r *rendezvous) close() {
+	if r == nil {
+		return
+	}
+
+	for cID, w := range r.watchers {
+		w <- rendezvousInfoOrError{err: errors.New("task taskTerminated")}
+		close(w)
+		delete(r.watchers, cID)
+	}
+}
+
+type cAddress struct {
+	id        cproto.ID
+	addresses []cproto.Address
+	ordinal   int
+}
+
+func (r *rendezvous) info() ([]cAddress, []string, error) {
+	var caddrs []cAddress
+	for id, rank := range r.ranks {
+		caddr := cAddress{
+			id:        id,
+			addresses: r.addresses[id],
+			ordinal:   rank,
+		}
+		caddrs = append(caddrs, caddr)
+
+		sort.Slice(caddr.addresses, func(i, j int) bool {
+			a := caddr.addresses[i]
+			b := caddr.addresses[j]
+
+			return a.ContainerPort < b.ContainerPort
+		})
+	}
+
+	sort.Slice(caddrs, func(i, j int) bool {
+		a := caddrs[i]
+		b := caddrs[j]
+		switch {
+		case a.ordinal == 0 && b.ordinal != 0:
+			return true
+		case a.ordinal != 0 && b.ordinal == 0:
+			return false
+		default:
+			return a.id < b.id
+		}
+	})
+
+	var raddrs []string
+	var err *multierror.Error
+	for _, caddr := range caddrs {
+		var addrs []cproto.Address
+		for _, addr := range caddr.addresses {
+			if MinLocalRendezvousPort <= addr.ContainerPort &&
+				addr.ContainerPort <= MaxLocalRendezvousPort {
+				addrs = append(addrs, addr)
+			}
+		}
+
+		if len(addrs) == 1 {
+			raddrs = append(raddrs, formatAddress(addrs[0]))
+		} else {
+			err = multierror.Append(err, fmt.Errorf(
+				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
+				len(addrs), caddr.id, addrs))
+		}
+	}
+	return caddrs, raddrs, err.ErrorOrNil()
+}
+
+func formatAddress(p cproto.Address) string {
+	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
+}

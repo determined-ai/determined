@@ -151,7 +151,8 @@ func (e *experiment) restoreTrial(
 		config, ckpt, e.taskSpec, e.modelDefinition,
 	)
 	if trialID != nil {
-		t.setID(*trialID)
+		t.id = *trialID
+		t.idSet = true
 		if _, ok := e.searcher.TrialIDs[searcher.Create.RequestID]; !ok {
 			ctx.Tell(ctx.Self(), trialCreated{
 				trialID:   *trialID,
