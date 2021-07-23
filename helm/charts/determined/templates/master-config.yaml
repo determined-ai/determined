@@ -19,6 +19,17 @@ data:
       access_key: {{ .Values.checkpointStorage.accessKey | quote }}
       secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
       endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
+      {{- else if eq .Values.checkpointStorage.type "azure" }}
+      {{- if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.account_url }}
+      {{ required "Exactly one of .Values.checkpointStorage.connection_string or .Values.checkpointStorage.account_url must be specified!" "" }}
+      {{- else if and .Values.checkpointStorage.connection_string .Values.checkpointStorage.credential }}
+      {{ required ".Values.checkpointStorage.connection_string and .Values.checkpointStorage.credential must not both be specified!" "" }}
+      {{- else }}
+      container: {{ required "A valid Values.checkpointStorage.container entry is required!" .Values.checkpointStorage.container }}
+      connection_string: {{ .Values.checkpointStorage.connection_string }}
+      account_url: {{ .Values.checkpointStorage.account_url }}
+      credential: {{ .Values.checkpointStorage.credential }}
+      {{- end }}
       {{- end }}
       save_experiment_best: {{ .Values.checkpointStorage.saveExperimentBest | default 0 }}
       save_trial_best: {{ .Values.checkpointStorage.saveTrialBest | default 1 }}

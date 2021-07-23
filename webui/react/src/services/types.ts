@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser, RunState } from 'types';
+import { CommandType, DetailedUser } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -94,10 +94,16 @@ export interface GetExperimentsParams extends PaginationParams {
   users?: Array<string>;
 }
 
+export interface GetExperimentParams {
+  id: number;
+}
+
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME'
   | 'SORT_BY_END_TIME' | 'SORT_BY_STATE';
-  states?: RunState[];
+  states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED'
+  | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR'
+  | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
 }
 
 export interface CreateExperimentParams {

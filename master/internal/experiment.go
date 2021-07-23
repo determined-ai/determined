@@ -285,15 +285,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
 
-	case killExperiment:
-		if _, running := model.RunningStates[e.State]; running {
-			e.updateState(ctx, model.StoppingCanceledState)
-		}
-
-		for _, child := range ctx.Children() {
-			ctx.Tell(child, killTrial{})
-		}
-
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {
@@ -375,30 +366,35 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		default:
 			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
 			case true:
+				// Do nothing more, propagating the state change will cause the
+				// trial to release its resources and gracefully exit.
 				ctx.Respond(&apiv1.CancelExperimentResponse{})
-				for _, child := range ctx.Children() {
-					ctx.Tell(child, killTrial{})
-				}
 			default:
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,
 					"experiment in incompatible state %s", e.State))
 			}
 		}
 
-	case *apiv1.KillExperimentRequest:
+	case killExperiment, *apiv1.KillExperimentRequest:
 		switch {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
-			ctx.Respond(&apiv1.KillExperimentResponse{})
+			if ctx.ExpectingResponse() {
+				ctx.Respond(&apiv1.KillExperimentResponse{})
+			}
 		default:
 			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
 			case true:
-				ctx.Respond(&apiv1.KillExperimentResponse{})
+				if ctx.ExpectingResponse() {
+					ctx.Respond(&apiv1.KillExperimentResponse{})
+				}
 				for _, child := range ctx.Children() {
 					ctx.Tell(child, killTrial{})
 				}
 			default:
-				ctx.Respond(status.Errorf(codes.FailedPrecondition,
-					"experiment in incompatible state %s", e.State))
+				if ctx.ExpectingResponse() {
+					ctx.Respond(status.Errorf(codes.FailedPrecondition,
+						"experiment in incompatible state %s", e.State))
+				}
 			}
 		}
 	}

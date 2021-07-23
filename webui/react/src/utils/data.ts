@@ -1,9 +1,11 @@
-import { RawJson, RecordKey } from 'types';
+import { Primitive, RawJson, RecordKey, UnknownRecord } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
-export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
+export const isObject = <T>(data: T): boolean => {
+  return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
+};
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
 export const isString = (data: unknown): data is string => typeof data === 'string';
@@ -22,6 +24,23 @@ export const isSyncFunction = (fn: unknown): boolean => {
 
 export const hasObjectKeys = (data: unknown): boolean => {
   return isObject(data) && Object.keys(data as Record<RecordKey, unknown>).length !== 0;
+};
+
+export const flattenObject = <T = Primitive>(
+  object: UnknownRecord,
+  keys: RecordKey[] = [],
+): Record<RecordKey, T> => {
+  return Object.keys(object).reduce((acc, key) => {
+    const value = object[key] as UnknownRecord;
+    const newKeys = [ ...keys, key ];
+    if (isObject(value)) {
+      acc = { ...acc, ...flattenObject<T>(value, newKeys) };
+    } else {
+      const keyPath = newKeys.join('.');
+      acc[keyPath] = value as T;
+    }
+    return acc;
+  }, {} as Record<RecordKey, T>);
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

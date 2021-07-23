@@ -707,6 +707,9 @@ func (m *Master) Run(ctx context.Context) error {
 	for _, exp := range toRestore {
 		go m.tryRestoreExperiment(sema, exp)
 	}
+	if err = m.db.FailDeletingExperiment(); err != nil {
+		return errors.Wrap(err, "couldn't force fail deleting experiments after crash")
+	}
 
 	// Docs and WebUI.
 	webuiRoot := filepath.Join(m.config.Root, "webui")

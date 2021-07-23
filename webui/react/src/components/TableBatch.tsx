@@ -1,9 +1,11 @@
+import { Button } from 'antd';
 import React, { PropsWithChildren } from 'react';
 
 import css from './TableBatch.module.scss';
 
 interface Props {
   ids?: string[];
+  onClear?: () => void;
   selectedRowCount?: number;
 }
 
@@ -25,7 +27,12 @@ const TableBatch: React.FC<Props> = (props: PropsWithChildren<Props>) => {
     <div className={classes.join(' ')}>
       <div className={css.container}>
         <div className={css.actions}>{props.children}</div>
-        <div className={css.message}>{message}</div>
+        <div className={css.actions}>
+          <div className={css.message}>{message}</div>
+          {props.onClear &&
+            <Button onClick={props.onClear}>Clear Selected</Button>
+          }
+        </div>
       </div>
     </div>
   );

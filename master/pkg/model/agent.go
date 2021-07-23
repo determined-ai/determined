@@ -23,8 +23,8 @@ type AgentSummary struct {
 // ToProto converts an agent summary to a proto struct.
 func (a AgentSummary) ToProto() *agentv1.Agent {
 	slots := make(map[string]*agentv1.Slot)
-	for _, s := range a.Slots {
-		slots[s.ID] = s.ToProto()
+	for i, s := range a.Slots {
+		slots[i] = s.ToProto()
 	}
 	return &agentv1.Agent{
 		Id:             a.ID,

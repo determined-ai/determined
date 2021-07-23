@@ -11,11 +11,11 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParam, ExperimentHyperParamType, MetricName, MetricType,
+  ExperimentBase, Hyperparameter, HyperparameterType, MetricName, MetricType,
   metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
-import { clone } from 'utils/data';
+import { clone, flattenObject } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
@@ -60,10 +60,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.config.hyperparameters[key];
+      acc[key] = experiment.hyperparameters[key];
       return acc;
-    }, {} as Record<string, ExperimentHyperParam>);
-  }, [ experiment.config.hyperparameters, fullHParams ]);
+    }, {} as Record<string, Hyperparameter>);
+  }, [ experiment.hyperparameters, fullHParams ]);
 
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
 
@@ -84,12 +84,12 @@ const HpParallelCoordinates: React.FC<Props> = ({
       const hp = hyperparameters[key] || {};
       const dimension: Dimension = {
         label: key,
-        type: dimensionTypeMap[hp.type],
+        type: hp.type ? dimensionTypeMap[hp.type] : DimensionType.Scalar,
       };
 
       if (hp.vals) dimension.categories = hp.vals;
       if (hp.minval != null && hp.maxval != null) {
-        const isLogarithmic = hp.type === ExperimentHyperParamType.Log;
+        const isLogarithmic = hp.type === HyperparameterType.Log;
         dimension.range = isLogarithmic ?
           [ 10 ** hp.minval, 10 ** hp.maxval ] : [ hp.minval, hp.maxval ];
       }
@@ -164,14 +164,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
           trialMetricsMap[id] = trial.metric;
           trialMetricRange = updateRange<number>(trialMetricRange, trial.metric);
 
-          Object.keys(trial.hparams || {}).forEach(hpKey => {
-            const hpValue = trial.hparams[hpKey];
+          const flatHParams = flattenObject(trial.hparams || {});
+          Object.keys(flatHParams).forEach(hpKey => {
+            const hpValue = flatHParams[hpKey];
             trialHpMap[hpKey] = trialHpMap[hpKey] || {};
             trialHpMap[hpKey][id] = hpValue;
           });
 
           trialHpTableMap[id] = {
-            hparams: clone(trial.hparams),
+            hparams: clone(flatHParams),
             id,
             metric: trial.metric,
           };

@@ -31,11 +31,11 @@ class RendezvousInfo:
         Returns the ip addresses of all the gang members.
         """
 
-        return [addr.split(":")[0] for addr in self.addrs]
+        return [":".join(addr.split(":")[:-1]) for addr in self.addrs]
 
     def get_ports(self) -> List[int]:
         """
         Returns the first port address of all gang members.
         """
 
-        return [int(addr.split(":")[1]) for addr in self.addrs]
+        return [int(addr.split(":")[-1]) for addr in self.addrs]

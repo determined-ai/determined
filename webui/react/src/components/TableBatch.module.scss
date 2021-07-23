@@ -16,7 +16,6 @@
     height: 48px;
     justify-content: space-between;
     padding: var(--theme-sizes-layout-medium);
-    padding-right: var(--theme-sizes-layout-big);
     position: absolute;
     width: 100%;
     z-index: 1;
@@ -49,9 +48,7 @@
   .actions {
     align-items: center;
     display: flex;
-  }
-  .actions > * {
-    margin-right: var(--theme-sizes-layout-medium);
+    gap: var(--theme-sizes-layout-medium);
   }
   .message {
     font-size: var(--theme-sizes-font-medium);

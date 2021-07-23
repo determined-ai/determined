@@ -804,6 +804,19 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	return exps, nil
 }
 
+// FailDeletingExperiment finds all experiments that were deleting when the master crashed and moves
+// them to DELETE_FAILED.
+func (db *PgDB) FailDeletingExperiment() error {
+	if _, err := db.sql.Exec(`
+UPDATE experiments
+SET state = 'DELETE_FAILED'
+WHERE state = 'DELETING'
+`); err != nil {
+		return errors.Wrap(err, "failing deleting experiments")
+	}
+	return nil
+}
+
 // TerminateExperimentInRestart is used during master restart to properly terminate an experiment
 // which was either in the process of stopping or which is not restorable for some reason, such as
 // an invalid experiment config after a version upgrade.
@@ -870,6 +883,25 @@ UPDATE experiments
 SET state=:state, end_time=:end_time
 WHERE id = :id`
 	return db.namedExecOne(query, experiment)
+}
+
+// TrySaveExperimentState saves the current experiment state to the database and
+// returns if we successfully changed the state or not.
+func (db *PgDB) TrySaveExperimentState(experiment *model.Experiment) error {
+	var newState, oldState model.State
+	if err := db.sql.QueryRowx(`
+UPDATE experiments e
+SET state=$2
+FROM (SELECT state FROM experiments WHERE id = $1 FOR UPDATE) old
+WHERE e.id = $1
+RETURNING e.state, old.state
+`, experiment.ID, experiment.State).Scan(&newState, &oldState); err != nil {
+		return errors.Wrap(err, "updating experiment state")
+	}
+	if newState == oldState {
+		return errors.New("could not transition experiment")
+	}
+	return nil
 }
 
 // SaveExperimentArchiveStatus saves the current experiment archive status to the database.
