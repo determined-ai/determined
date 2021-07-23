@@ -1,9 +1,12 @@
 .tableContainer {
+  border: 0.5px solid lightgray;
   border-radius: var(--theme-sizes-border-radius);
 }
 %tableRow {
-  border: 1px solid lightgray;
+  border: 0.1px solid lightgray;
   display: flex;
+  justify-content: space-between;
+  padding: var(--theme-sizes-layout-small);
 }
 .row {
   @extend %tableRow;
@@ -12,4 +15,7 @@
   background-color: lightgray;
 
   @extend %tableRow;
+}
+h3 {
+  display: inline-block;
 }

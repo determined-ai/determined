@@ -2,10 +2,12 @@ import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import HumanReadableFloat from 'components/HumanReadableFloat';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { CheckpointState, CheckpointWorkload, TrialDetails, TrialItem } from 'types';
+import { CheckpointState, CheckpointWorkload,
+  MetricType, TrialDetails, TrialItem, WorkloadWrapper } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
@@ -47,11 +49,11 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
         { ...prev, [trialId]: { ...prev[trialId], data: response, isLoading: false } }
       ));
     } catch (e) {
-      if (!trialsDetails[trialId].error && !isAborted(e)) {
+      if (!isAborted(e)) {
         setTrialsDetails(prev => ({ ...prev, [trialId]: { ...prev[trialId], error: e } }));
       }
     }
-  }, [ canceler.signal, trialsDetails ]);
+  }, [ canceler.signal ]);
 
   useEffect(() => {
     return () => {
@@ -99,8 +101,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
   );
 
   const metricNames = useMemo(() => extractMetricNames(
-    Object.values(trialsDetails).first()?.data?.workloads || [],
-  ), [ trialsDetails ]);
+    trialsDetails[trials.first().id]?.data?.workloads || [],
+  ), [ trialsDetails, trials ]);
 
   const hyperparameterNames = useMemo(
     () =>
@@ -108,51 +110,72 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
     [ trials ],
   );
 
+  useEffect(() => console.log(trialsDetails), [ trialsDetails ]);
+
   return (
     <div className={css.tableContainer}>
-      <div className={css.headerRow}><div />{trials.map(trial => trial.id)}</div>
-      <div className={css.row}><h3>State</h3>{trials.map(trial => trial.state)}</div>
+      <div className={css.headerRow}>
+        <div />
+        {trials.map(trial => <p key={trial.id}>{trial.id}</p>)}</div>
+      <div className={css.row}>
+        <h3>State</h3>
+        {trials.map(trial => <p key={trial.id}>{trial.state}</p>)}</div>
       <div className={css.row}>
         <h3>Start Time</h3>
         {trials.map(trial =>
-          shortEnglishHumannizer(getDuration({ startTime: trial.startTime })) + ' ago')}
+          <p key={trial.id}>
+            {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+          </p>)}
       </div>
       <div className={css.row}>
         <h3>Training Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.train))}
+        {trials.map(trial =>
+          <p key={trial.id}>
+            {shortEnglishHumannizer(durations[trial.id]?.train)}
+          </p>)}
       </div>
       <div className={css.row}>
         <h3>Validation Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.validation))}
+        {trials.map(trial =>
+          <p key={trial.id}>
+            {shortEnglishHumannizer(durations[trial.id]?.validation)}
+          </p>)}
       </div>
       <div className={css.row}>
         <h3>Checkpoint Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.checkpoint))}
+        {trials.map(trial =>
+          <p key={trial.id}>
+            {shortEnglishHumannizer(durations[trial.id]?.checkpoint)}
+          </p>)}
       </div>
       <div className={css.row}>
         <h3>Batches Processed</h3>
-        {trials.map(trial => trial.totalBatchesProcessed)}
+        {trials.map(trial => <p key={trial.id}>{trial.totalBatchesProcessed}</p>)}
       </div>
       <div className={css.row}>
         <h3>Best Checkpoint</h3>
-        {trials.map(trial => trial.bestAvailableCheckpoint?.totalBatches)}
+        {trials.map(trial => <p key={trial.id}>{trial.bestAvailableCheckpoint?.totalBatches}</p>)}
       </div>
       <div className={css.row}>
         <h3>Total Checkpoint Size</h3>
-        {trials.map(trial => totalCheckpointsSizes[trial.id])}
+        {trials.map(trial => <p key={trial.id}>{totalCheckpointsSizes[trial.id]}</p>)}
       </div>
       <div className={css.headerRow}><h2>Metrics</h2></div>
       {metricNames.map(metric =>
         <div className={css.row} key={metric.name}>
           <h3>{metric.name}</h3>
-          {trials.map(trial => trialsDetails[trial.id].data?.workloads
-            .find(workload =>
-              Object.keys(workload.training?.metrics || {}).first() === metric.name ||
-              Object.keys(workload.validation?.metrics || {}).first() === metric.name))}
         </div>)}
       <div className={css.headerRow}><h2>Hyperparameters</h2></div>
       {hyperparameterNames.map(hp =>
-        trials.map(trial => trial.hyperparameters[hp]))}
+        <div className={css.row} key={hp}>
+          <h3>{hp}</h3>
+          {trials.map(trial =>
+            !isNaN(parseFloat(JSON.stringify(trial.hyperparameters[hp]))) ?
+              <HumanReadableFloat
+                key={trial.id}
+                num={parseFloat(JSON.stringify(trial.hyperparameters[hp]))} />:
+              trial.hyperparameters[hp])}
+        </div>)}
     </div>
   );
 };

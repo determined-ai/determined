@@ -430,7 +430,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
-      {selectedRowKeys.length > 0 &&
+      {showCompareTrials &&
       <TrialsComparisonModal
         trials={selectedTrials}
         visible={showCompareTrials}
