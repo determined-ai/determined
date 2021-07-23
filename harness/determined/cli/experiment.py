@@ -9,13 +9,16 @@ import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 import tabulate
 
-import determined.common
+import determined.experimental
+import determined.load
+from determined import _local_execution_manager
 from determined.cli import checkpoint, render
-from determined.common import api, constants, context, util, yaml
+from determined.cli.command import CONFIG_DESC, parse_config_overrides
+from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
@@ -111,19 +114,22 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     return (remote_url, commit_hash, committer, commit_date)
 
 
-def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
+def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterable[str]) -> Dict:
     experiment_config = util.safe_load_yaml_with_exceptions(config_file)
 
     config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
         print("Error: invalid experiment config file {}".format(config_file.name))
         sys.exit(1)
+
+    parse_config_overrides(experiment_config, config_overrides)
+
     return experiment_config
 
 
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
-    experiment_config = _parse_config_file_or_exit(args.config_file)
+    experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
     model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
 
     additional_body_fields = {}
@@ -156,13 +162,6 @@ def submit_experiment(args: Namespace) -> None:
 
 
 def local_experiment(args: Namespace) -> None:
-    try:
-        import determined as det
-        from determined import experimental, load
-    except ImportError as e:
-        print("--local requires that the `determined` package is installed.")
-        raise e
-
     if not args.test_mode:
         raise NotImplementedError(
             "Local training mode (--local mode without --test mode) is not yet supported. Please "
@@ -170,13 +169,13 @@ def local_experiment(args: Namespace) -> None:
             "the --local flag."
         )
 
-    experiment_config = _parse_config_file_or_exit(args.config_file)
+    experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
 
-    determined.common.set_logger(bool(experiment_config.get("debug", False)))
+    set_logger(bool(experiment_config.get("debug", False)))
 
-    with det._local_execution_manager(args.model_def.resolve()):
-        trial_class = load.trial_class_from_entrypoint(experiment_config["entrypoint"])
-        experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
+    with _local_execution_manager(args.model_def.resolve()):
+        trial_class = determined.load.trial_class_from_entrypoint(experiment_config["entrypoint"])
+        determined.experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 
 def create(args: Namespace) -> None:
@@ -746,6 +745,7 @@ args_description = Cmd(
                     type=str,
                     help="name of template to apply to the experiment configuration",
                 ),
+                Arg("--config", action="append", default=[], help=CONFIG_DESC),
                 Group(
                     Arg(
                         "-f",

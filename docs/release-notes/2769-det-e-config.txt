@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  Allow command-line config overrides in experiment creation, e.g.
+   ``det e create const.yaml . --config name=test``.
