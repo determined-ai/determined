@@ -4,15 +4,13 @@
  Model Definitions
 ###################
 
-The model definition is the interface between Determined and the user's
-application framework (e.g., Keras, TensorFlow), in terms of loading
-training data, describing a model architecture, and specifying the
-underlying iterative optimization training algorithms.
+The model definition is the interface between Determined and the user's application framework (e.g.,
+Keras, TensorFlow), in terms of loading training data, describing a model architecture, and
+specifying the underlying iterative optimization training algorithms.
 
-Model definitions are written using the Trial API, which is an interface
-provided by Determined. With the :ref:`Trial API
-<model-definitions_trial-api>`, developers expose the components of a
-model definition to Determined's training loop implementation.
+Model definitions are written using the Trial API, which is an interface provided by Determined.
+With the :ref:`Trial API <model-definitions_trial-api>`, developers expose the components of a model
+definition to Determined's training loop implementation.
 
 To read more about the Trial API, see:
 
@@ -21,16 +19,16 @@ To read more about the Trial API, see:
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
 
-For examples of how to adapt existing model code to use the Trial APIs,
-see the :ref:`tf.keras tutorial <tf-mnist-tutorial>` and the
-:ref:`PyTorch tutorial <pytorch-mnist-tutorial>`, respectively.
+For examples of how to adapt existing model code to use the Trial APIs, see the :ref:`tf.keras
+tutorial <tf-mnist-tutorial>` and the :ref:`PyTorch tutorial <pytorch-mnist-tutorial>`,
+respectively.
 
 ****************
  Best Practices
 ****************
 
-To learn more about some best practices when writing Trial API model
-definitions, see :ref:`model-definitions_best-practices`.
+To learn more about some best practices when writing Trial API model definitions, see
+:ref:`model-definitions_best-practices`.
 
 .. toctree::
    :hidden:

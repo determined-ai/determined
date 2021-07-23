@@ -4,121 +4,95 @@
  Scheduling
 ############
 
-This topic guide covers the two different scheduling policies that are
-supported in Determined. Administrators can configure the desired
-scheduler in :ref:`master-configuration`. It is also possible to
-configure different scheduling behavior for different :ref:`resource
-pools <resource-pools>`.
+This topic guide covers the two different scheduling policies that are supported in Determined.
+Administrators can configure the desired scheduler in :ref:`master-configuration`. It is also
+possible to configure different scheduling behavior for different :ref:`resource pools
+<resource-pools>`.
 
-Once the scheduling policy has been defined for the current master
-and/or resource pool, the scheduling behavior of an individual task is
-influenced by several task configuration values:
+Once the scheduling policy has been defined for the current master and/or resource pool, the
+scheduling behavior of an individual task is influenced by several task configuration values:
 
--  For the fair-share scheduler, ``resources.weight`` lets users set the
-   resource demand of a task relative to other tasks.
-
--  For the priority scheduler, ``resources.priority`` lets users assign
-   a priority order to tasks.
-
--  Regardless of the scheduler, ``searcher.max_concurrent_trials`` lets
-   users cap the number of slots that an ``adaptive_asha``
-   hyperparameter search experiment will request at any given time.
+-  For the fair-share scheduler, ``resources.weight`` lets users set the resource demand of a task
+   relative to other tasks.
+-  For the priority scheduler, ``resources.priority`` lets users assign a priority order to tasks.
+-  Regardless of the scheduler, ``searcher.max_concurrent_trials`` lets users cap the number of
+   slots that an ``adaptive_asha`` hyperparameter search experiment will request at any given time.
 
 .. note::
 
-   Zero-slot tasks (e.g., CPU-only notebooks, tensorboards) are
-   scheduled independently of tasks that require slots (e.g.,
-   experiments, GPU notebooks). The fair-share scheduler schedules
-   zero-slot tasks on a FIFO basis. The priority scheduler schedules
-   zero-slot tasks based on priority.
+   Zero-slot tasks (e.g., CPU-only notebooks, tensorboards) are scheduled independently of tasks
+   that require slots (e.g., experiments, GPU notebooks). The fair-share scheduler schedules
+   zero-slot tasks on a FIFO basis. The priority scheduler schedules zero-slot tasks based on
+   priority.
 
 ************
  Fair-Share
 ************
 
-The master allocates cluster resources (*slots*) among the active
-experiments using a weighted fair-share scheduling policy. Slots are
-divided among the active experiments according to the *demand* (number
-of desired concurrent tasks) of each experiment. For instance, in an
-eight-GPU cluster running two experiments with demands of ten and
-thirty, the scheduler assigns two slots and six slots respectively. As
-new experiments become active or the resource demand of an active
-experiment changes, the scheduler will adjust how slots are allocated to
-experiments as appropriate.
+The master allocates cluster resources (*slots*) among the active experiments using a weighted
+fair-share scheduling policy. Slots are divided among the active experiments according to the
+*demand* (number of desired concurrent tasks) of each experiment. For instance, in an eight-GPU
+cluster running two experiments with demands of ten and thirty, the scheduler assigns two slots and
+six slots respectively. As new experiments become active or the resource demand of an active
+experiment changes, the scheduler will adjust how slots are allocated to experiments as appropriate.
 
-The behavior of the fair-share scheduler can be modified by changing the
-*weight* of a workload. A workload's demand for slots is multiplied by
-the workload's weight for scheduling purposes; hence, a workload with a
-higher weight will be assigned proportionally more resources than a
-workload with lower weight. The default weight is ``1``. For example, in
-the scenario above, if the weight of the first experiment is set to 3
-and the weight of the second experiment is set to 1, each experiment
+The behavior of the fair-share scheduler can be modified by changing the *weight* of a workload. A
+workload's demand for slots is multiplied by the workload's weight for scheduling purposes; hence, a
+workload with a higher weight will be assigned proportionally more resources than a workload with
+lower weight. The default weight is ``1``. For example, in the scenario above, if the weight of the
+first experiment is set to 3 and the weight of the second experiment is set to 1, each experiment
 will be assigned four slots.
 
 **********
  Priority
 **********
 
-The master allocates cluster resources (*slots*) to active tasks based
-on their *priority*. High-priority tasks are preferred to low-priority
-tasks. Low-priority tasks will be preempted to make space for pending
-high-priority tasks if possible. Tasks of equal priority are scheduled
-in the order in which they were created.
+The master allocates cluster resources (*slots*) to active tasks based on their *priority*.
+High-priority tasks are preferred to low-priority tasks. Low-priority tasks will be preempted to
+make space for pending high-priority tasks if possible. Tasks of equal priority are scheduled in the
+order in which they were created.
 
-By default, the priority scheduler does not use preemption. If
-preemption is enabled (:ref:`master-configuration`), when a higher
-priority task is pending and cannot be scheduled because no idle
-resources are available, the scheduler will attempt to schedule it by
-preempting lower priority tasks, starting with the task with the lowest
-priority. If there are no tasks to preempt, lower priority tasks might
-be backfilled on the idle resources. When a trial is preempted, its
-state is checkpointed so that the progress of the trial is not lost.
-Enabling preemption ensures that cluster resources can be reallocated to
-high priority tasks more promptly and backfilled to make the most use of
-the idle resources; however, preemption can also result in additional
-overhead due to checkpointing low priority tasks, which might be
-expensive for some models.
+By default, the priority scheduler does not use preemption. If preemption is enabled
+(:ref:`master-configuration`), when a higher priority task is pending and cannot be scheduled
+because no idle resources are available, the scheduler will attempt to schedule it by preempting
+lower priority tasks, starting with the task with the lowest priority. If there are no tasks to
+preempt, lower priority tasks might be backfilled on the idle resources. When a trial is preempted,
+its state is checkpointed so that the progress of the trial is not lost. Enabling preemption ensures
+that cluster resources can be reallocated to high priority tasks more promptly and backfilled to
+make the most use of the idle resources; however, preemption can also result in additional overhead
+due to checkpointing low priority tasks, which might be expensive for some models.
 
 .. note::
 
-   Notebooks, tensorboards, shells, and commands are not preemptible.
-   These tasks will continue to occupy cluster resources until they
-   complete or are terminated.
+   Notebooks, tensorboards, shells, and commands are not preemptible. These tasks will continue to
+   occupy cluster resources until they complete or are terminated.
 
-Here is an example of how the priority scheduler behaves with preemption
-enabled:
+Here is an example of how the priority scheduler behaves with preemption enabled:
 
-#. User submits a priority 2 adaptive_asha experiment with
-   max_concurrent_trials 20 and slots_per_trial 1. 8 trials run and
-   utilize all 8 GPUs.
+#. User submits a priority 2 adaptive_asha experiment with max_concurrent_trials 20 and
+   slots_per_trial 1. 8 trials run and utilize all 8 GPUs.
 
-#. User submits a priority 1 distributed training experiment with
-   slots_per_trial 4. 4 ASHA trials are preempted so the new distributed
-   training experiment can run. Note that if preemption was not enabled,
-   the new experiment would not get scheduled until the ASHA
-   experiment's GPU demand becomes <= 4.
+#. User submits a priority 1 distributed training experiment with slots_per_trial 4. 4 ASHA trials
+   are preempted so the new distributed training experiment can run. Note that if preemption was not
+   enabled, the new experiment would not get scheduled until the ASHA experiment's GPU demand
+   becomes <= 4.
 
-#. User starts a priority 3 notebook with resources.slots 1. The
-   notebook has a lower priority than the two active experiments, so it
-   will run as soon as the two active experiments collectively need <= 7
-   GPUs.
+#. User starts a priority 3 notebook with resources.slots 1. The notebook has a lower priority than
+   the two active experiments, so it will run as soon as the two active experiments collectively
+   need <= 7 GPUs.
 
-#. ASHA and the distributed training experiment both complete, and the
-   notebook task with priority 3 will run.
+#. ASHA and the distributed training experiment both complete, and the notebook task with priority 3
+   will run.
 
-#. User submits a priority 1 distributed training experiment with
-   slots_per_trial 8. Although this workload has a higher priority than
-   the active notebook task, it cannot be scheduled because it requires
-   8 slots, notebooks are not preemptible, and therefore only 7 slots
-   are available.
+#. User submits a priority 1 distributed training experiment with slots_per_trial 8. Although this
+   workload has a higher priority than the active notebook task, it cannot be scheduled because it
+   requires 8 slots, notebooks are not preemptible, and therefore only 7 slots are available.
 
-#. User submits a priority 2 distributed training experiment with
-   slots_per_trial 4. One trial will be scheduled to make use of the
-   idle 7 slots.
+#. User submits a priority 2 distributed training experiment with slots_per_trial 4. One trial will
+   be scheduled to make use of the idle 7 slots.
 
-#. The notebook is killed. The priority 2 distributed training
-   experiment is preempted. And then the priority 1 distributed training
-   experiment starts running. Once that experiment is complete,
+#. The notebook is killed. The priority 2 distributed training experiment is preempted. And then the
+   priority 1 distributed training experiment starts running. Once that experiment is complete,
    distributed training experiment with priority 2 restarts.
 
 .. _gang-scheduling-on-kubernetes:
@@ -127,60 +101,47 @@ enabled:
  Gang Scheduling on Kubernetes
 *******************************
 
-By default, the Kubernetes scheduler does not perform gang scheduling or
-support preemption of pods. While it does take pod priority into
-account, it greedily schedules pods without consideration for the job
-each pod belongs to. This can result in problematic behavior for deep
-learning workloads, particularly for distributed training jobs that use
-many GPUs. A distributed training job that uses multiple pods requires
-all pods to be scheduled and running in order to make progress. Because
-Kubernetes does not support gang scheduling by default, cluster
-deadlocks can arise. For example, suppose that two experiments are
-launched simultaneously that each require 16 GPUs on a cluster with only
-16 GPUs. It is possible that Kubernetes will assign some GPUs to one
-experiment and some GPUs to the other. Because neither experiment will
-receive the resources it needs to begin executing, the system will wait
-indefinitely.
+By default, the Kubernetes scheduler does not perform gang scheduling or support preemption of pods.
+While it does take pod priority into account, it greedily schedules pods without consideration for
+the job each pod belongs to. This can result in problematic behavior for deep learning workloads,
+particularly for distributed training jobs that use many GPUs. A distributed training job that uses
+multiple pods requires all pods to be scheduled and running in order to make progress. Because
+Kubernetes does not support gang scheduling by default, cluster deadlocks can arise. For example,
+suppose that two experiments are launched simultaneously that each require 16 GPUs on a cluster with
+only 16 GPUs. It is possible that Kubernetes will assign some GPUs to one experiment and some GPUs
+to the other. Because neither experiment will receive the resources it needs to begin executing, the
+system will wait indefinitely.
 
-One way Determined addresses these problems is through the use of the
-`lightweight coscheduling plugin
-<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
-which extends the Kubernetes scheduler to support priority-based gang
-scheduling. To implement gang scheduling, the coscheduling plugin will
-not schedule a pod unless there are enough available resources to also
-schedule the rest of the pods in the same job. To function, the plugin
-requires special labels to be set that specify the number of nodes that
-each job needs for execution. Determined automatically calculates and
-sets these labels for GPU experiments that it launches.
+One way Determined addresses these problems is through the use of the `lightweight coscheduling
+plugin <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
+which extends the Kubernetes scheduler to support priority-based gang scheduling. To implement gang
+scheduling, the coscheduling plugin will not schedule a pod unless there are enough available
+resources to also schedule the rest of the pods in the same job. To function, the plugin requires
+special labels to be set that specify the number of nodes that each job needs for execution.
+Determined automatically calculates and sets these labels for GPU experiments that it launches.
 
-The coscheduling plugin is in beta and is therefore not enabled by
-default. To enable it, edit ``values.yaml`` in the Determined Helm chart
-to set the ``defaultScheduler`` field to ``coscheduler``.
+The coscheduling plugin is in beta and is therefore not enabled by default. To enable it, edit
+``values.yaml`` in the Determined Helm chart to set the ``defaultScheduler`` field to
+``coscheduler``.
 
 There are several limitations to the coscheduling plugin to be aware of:
 
-#. The coscheduling plugin does not work with Kubernetes' cluster
-   autoscaling feature. Static node pools must be used to achieve gang
-   scheduling
+#. The coscheduling plugin does not work with Kubernetes' cluster autoscaling feature. Static node
+   pools must be used to achieve gang scheduling
 
-#. The plugin does not support preemption. For example, if the cluster
-   is full of low priority jobs and a new high priority job is
-   submitted, the high priority job will not be scheduled until one of
-   the low priority jobs finishes.
+#. The plugin does not support preemption. For example, if the cluster is full of low priority jobs
+   and a new high priority job is submitted, the high priority job will not be scheduled until one
+   of the low priority jobs finishes.
 
-#. Determined's capability to automatically set pod labels is restricted
-   to GPU experiments. Determined does not currently set labels for CPU
-   experiments or user commands.
+#. Determined's capability to automatically set pod labels is restricted to GPU experiments.
+   Determined does not currently set labels for CPU experiments or user commands.
 
-#. When scheduling experiments that utilize the entire cluster, the
-   plugin may take several minutes to schedule the next job. Because the
-   coscheduler only approves of jobs when all of its pods are available,
-   it may repeatedly reject partially-ready jobs, causing them to wait
-   further.
+#. When scheduling experiments that utilize the entire cluster, the plugin may take several minutes
+   to schedule the next job. Because the coscheduler only approves of jobs when all of its pods are
+   available, it may repeatedly reject partially-ready jobs, causing them to wait further.
 
-To enable gang scheduling with commands or CPU experiments, enable the
-coscheduler in ``values.yaml`` and modify the experiment config to
-contain the following:
+To enable gang scheduling with commands or CPU experiments, enable the coscheduler in
+``values.yaml`` and modify the experiment config to contain the following:
 
 .. code:: yaml
 
@@ -193,8 +154,7 @@ contain the following:
          spec:
             schedulerName: coscheduler
 
-You can also use ``schedulerName: default-scheduler`` to use the default
-Kubernetes scheduler.
+You can also use ``schedulerName: default-scheduler`` to use the default Kubernetes scheduler.
 
 .. _priority-scheduling-on-kubernetes:
 
@@ -202,16 +162,14 @@ Kubernetes scheduler.
  Priority Scheduling with Preemption on Kubernetes
 ***************************************************
 
-Determined also makes available a priority scheduler with preemption
-that extends the Kubernetes scheduler to support preemption. This plugin
-will preempt existing pods if higher priority pods are submitted. This
-plugin is also in beta and is not enabled by default. Similar to the
-coscheduling plugin, it is enabled by setting the ``defaultScheduler``
-field to ``preemption``. Autoscaling is not supported and Determined can
-only automatically set labels for GPU experiments.
+Determined also makes available a priority scheduler with preemption that extends the Kubernetes
+scheduler to support preemption. This plugin will preempt existing pods if higher priority pods are
+submitted. This plugin is also in beta and is not enabled by default. Similar to the coscheduling
+plugin, it is enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is
+not supported and Determined can only automatically set labels for GPU experiments.
 
-If using a cluster with tainted nodes or labels, users must specify the
-tolerations or node selectors in the experiment config:
+If using a cluster with tainted nodes or labels, users must specify the tolerations or node
+selectors in the experiment config:
 
 .. code:: yaml
 
@@ -229,10 +187,8 @@ tolerations or node selectors in the experiment config:
                value: "value"
                effect: "NoSchedule"
 
-We recommend using both tolerations and node selectors to better
-constrain where your experiments can run, especially on clusters that
-contain multiple GPU types. Lastly, Determined provides low, medium, and
-high priority classes by default, named ``determined-low-priority``,
-``determined-medium-priority``, and ``determined-high-priority``. Users
-may make their own priority classes for finer grained control if they
-wish.
+We recommend using both tolerations and node selectors to better constrain where your experiments
+can run, especially on clusters that contain multiple GPU types. Lastly, Determined provides low,
+medium, and high priority classes by default, named ``determined-low-priority``,
+``determined-medium-priority``, and ``determined-high-priority``. Users may make their own priority
+classes for finer grained control if they wish.

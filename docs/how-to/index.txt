@@ -2,11 +2,9 @@
  How-To Guides
 ###############
 
-How-To guides are goal-oriented guides. They provide a detailed set of
-steps to perform common use-cases for our product. These are in some
-sense advanced tutorials that assume some knowledge of how Determined
-works but address key use-cases. Below you will find some suggested
-starting guides.
+How-To guides are goal-oriented guides. They provide a detailed set of steps to perform common
+use-cases for our product. These are in some sense advanced tutorials that assume some knowledge of
+how Determined works but address key use-cases. Below you will find some suggested starting guides.
 
 **Installation**
 

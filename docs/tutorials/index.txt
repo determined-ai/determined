@@ -4,9 +4,8 @@
  Tutorials
 ###########
 
-Tutorials are simple step-by-step guides about getting started with
-different topics of Determined. These are a good place to get started
-with using the product.
+Tutorials are simple step-by-step guides about getting started with different topics of Determined.
+These are a good place to get started with using the product.
 
 To get started using Determined, check out the :ref:`quick-start`.
 

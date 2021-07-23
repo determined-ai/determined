@@ -4,73 +4,66 @@
  Best Practices for Model Definitions
 ######################################
 
-The deep learning software ecosystem is still in its early stages and
-changing rapidly. Due to the bleeding-edge nature of this field, many
-code-bases initially optimize for quick iteration and exploration over
-good software engineering practices. The Determined platform is designed
-to bring workflows from research to production and our APIs are designed
-with this goal in mind. This topic guide discusses some of the highly
-recommended best practices to follow when writing model definitions.
+The deep learning software ecosystem is still in its early stages and changing rapidly. Due to the
+bleeding-edge nature of this field, many code-bases initially optimize for quick iteration and
+exploration over good software engineering practices. The Determined platform is designed to bring
+workflows from research to production and our APIs are designed with this goal in mind. This topic
+guide discusses some of the highly recommended best practices to follow when writing model
+definitions.
 
-To learn more about the basics of model definitions, see
-:ref:`model-definitions`.
+To learn more about the basics of model definitions, see :ref:`model-definitions`.
 
 **********************************
  Separate Configuration from Code
 **********************************
 
-Determined encourages a clean separation of code from configuration via
-the :ref:`experiment configuration <experiment-configuration>`.
-Structured properties like the ``searcher``, ``hyperparameters``,
-``optimizations``, and ``resources`` will be stored in the database and
-browsable via our WebUI, improving the **tracking** and
-**collaboration** capabilities of the platform.
+Determined encourages a clean separation of code from configuration via the :ref:`experiment
+configuration <experiment-configuration>`. Structured properties like the ``searcher``,
+``hyperparameters``, ``optimizations``, and ``resources`` will be stored in the database and
+browsable via our WebUI, improving the **tracking** and **collaboration** capabilities of the
+platform.
 
 Do:
 
 -  Move any hardcoded scalar values to the :ref:`hyperparameters
-   <experiment-configuration_hyperparameters>` or :ref:`data
-   <experiment-config-data>` fields in the experiment configuration. Use
-   :func:`context.get_hparam() <determined.TrialContext.get_hparam>` or
-   :func:`context.get_data_config()
-   <determined.TrialContext.get_data_config>` to reference them in code.
+   <experiment-configuration_hyperparameters>` or :ref:`data <experiment-config-data>` fields in the
+   experiment configuration. Use :func:`context.get_hparam() <determined.TrialContext.get_hparam>`
+   or :func:`context.get_data_config() <determined.TrialContext.get_data_config>` to reference them
+   in code.
 
--  Move any hardcoded filesystem paths (e.g., ``/data/train.csv``) to
-   the ``data`` field of the experiment configuration. Use
-   ``context.get_data_config()`` to reference them in code.
+-  Move any hardcoded filesystem paths (e.g., ``/data/train.csv``) to the ``data`` field of the
+   experiment configuration. Use ``context.get_data_config()`` to reference them in code.
 
 Do not:
 
--  Use global variables in your model definition; consider moving them
-   to the experiment configuration.
+-  Use global variables in your model definition; consider moving them to the experiment
+   configuration.
 
 *************************
  Understand Dependencies
 *************************
 
-Determined encourages tracking the dependencies associated with every
-workflow via the :ref:`environment <experiment-configuration>` field.
-Understanding and standardizing the environment you use to execute
-Python in your development environment will pay off dividends in
-**portability**, allowing you to flexibly move between local, cloud, and
-on-premise cluster environments.
+Determined encourages tracking the dependencies associated with every workflow via the
+:ref:`environment <experiment-configuration>` field. Understanding and standardizing the environment
+you use to execute Python in your development environment will pay off dividends in **portability**,
+allowing you to flexibly move between local, cloud, and on-premise cluster environments.
 
 Do:
 
--  Ramp up quickly by using our :ref:`default environment Docker image
-   <default-environment>`, optionally specifying additional PyPI
-   dependencies by using ``pip install`` in ``startup-hook.sh``.
+-  Ramp up quickly by using our :ref:`default environment Docker image <default-environment>`,
+   optionally specifying additional PyPI dependencies by using ``pip install`` in
+   ``startup-hook.sh``.
 
--  As your dependencies increase in complexity, invest in :ref:`building
-   and using a custom Docker image <custom-env>` that meets your needs.
+-  As your dependencies increase in complexity, invest in :ref:`building and using a custom Docker
+   image <custom-env>` that meets your needs.
 
--  Pin Python package dependencies to specific versions (e.g.,
-   ``<package>==<version>``) in build tools.
+-  Pin Python package dependencies to specific versions (e.g., ``<package>==<version>``) in build
+   tools.
 
 Do not:
 
--  Modify the ``PYTHONPATH`` or ``PATH`` environment variables to import
-   libraries by circumventing the Python packaging system.
+-  Modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries by circumventing
+   the Python packaging system.
 
 **********************
  Master the Framework
@@ -80,21 +73,20 @@ Do not:
 -  :ref:`TensorFlow Keras <tf-keras-trial>`
 -  :ref:`PyTorch <pytorch-trial>`
 
-Determined APIs are designed to conform to the best practices of the
-frameworks that we support. Standardizing on the best practices of these
-frameworks will result in a smoother Determined user experience.
+Determined APIs are designed to conform to the best practices of the frameworks that we support.
+Standardizing on the best practices of these frameworks will result in a smoother Determined user
+experience.
 
 Do:
 
 -  Stay up to date with the latest framework version.
--  Follow the best practices and examples laid out by the framework
-   documentation.
+-  Follow the best practices and examples laid out by the framework documentation.
 
 Do not:
 
 -  Use deprecated or unsupported interfaces in application frameworks.
--  Use a custom forked version of the application framework. Determined
-   will only support the official releases of frameworks.
+-  Use a custom forked version of the application framework. Determined will only support the
+   official releases of frameworks.
 
 **************************
  Tips for Determined APIs
@@ -102,28 +94,22 @@ Do not:
 
 Do:
 
--  Use the :ref:`model-debug` guide if you run into issues with your
-   Trial class.
+-  Use the :ref:`model-debug` guide if you run into issues with your Trial class.
 
--  Use framework abstractions to implement learning rate scheduling
-   instead of directly changing the learning rate. See
-   `tf.keras.optimizers.schedules.LearningRateSchedule
+-  Use framework abstractions to implement learning rate scheduling instead of directly changing the
+   learning rate. See `tf.keras.optimizers.schedules.LearningRateSchedule
    <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/LearningRateSchedule>`__
    and :class:`determined.pytorch.LRScheduler` as examples.
 
--  For code that needs to download artifacts (e.g., data,
-   configurations, pretrained weights), download to a
-   `tempfile.TemporaryDirectory
-   <https://docs.python.org/3/library/tempfile.html>`__ unique to the
-   Python process. This will avoid race conditions when using
-   :ref:`distributed training <multi-gpu-training>`, in which Determined
-   executes multiple Python processes in the same task container.
+-  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),
+   download to a `tempfile.TemporaryDirectory <https://docs.python.org/3/library/tempfile.html>`__
+   unique to the Python process. This will avoid race conditions when using :ref:`distributed
+   training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
+   same task container.
 
 Do not:
 
--  Use instance attributes on a trial class to save any state over time
-   (e.g., storing metric history in a ``self`` attribute). The ``Trial``
-   instance will only save and restore model weights and optimizer state
-   over time; ``self`` attributes may be reset to their initial state at
-   any time if the Determined cluster reschedules the trial to another
-   task container.
+-  Use instance attributes on a trial class to save any state over time (e.g., storing metric
+   history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights
+   and optimizer state over time; ``self`` attributes may be reset to their initial state at any
+   time if the Determined cluster reschedules the trial to another task container.

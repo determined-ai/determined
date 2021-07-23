@@ -4,26 +4,21 @@
  Hyperparameter Tuning
 #######################
 
-Determined provides state-of-the-art hyperparameter tuning through an
-intuitive interface. The machine learning engineer simply runs an
-experiment in which they:
+Determined provides state-of-the-art hyperparameter tuning through an intuitive interface. The
+machine learning engineer simply runs an experiment in which they:
 
 #. Configure hyperparameter ranges to search.
-#. Instrument model code to use hyperparameters from the experiment
-   configuration.
-#. Specify a searcher to find effective hyperparameter settings within
-   the predefined ranges.
+#. Instrument model code to use hyperparameters from the experiment configuration.
+#. Specify a searcher to find effective hyperparameter settings within the predefined ranges.
 
 ***********************************
  Configuring Hyperparameter Ranges
 ***********************************
 
-The first step toward automatic hyperparameter tuning is to define the
-hyperparameter space, e.g., by :ref:`listing the decisions
-<topic-guides_hp-tuning-basics-example-hyperparameters>` that may impact
-model performance. For each hyperparameter in the search space, the
-machine learning engineer specifies a range of possible values in the
-experiment configuration:
+The first step toward automatic hyperparameter tuning is to define the hyperparameter space, e.g.,
+by :ref:`listing the decisions <topic-guides_hp-tuning-basics-example-hyperparameters>` that may
+impact model performance. For each hyperparameter in the search space, the machine learning engineer
+specifies a range of possible values in the experiment configuration:
 
 .. code:: yaml
 
@@ -38,55 +33,45 @@ experiment configuration:
 Determined supports the following searchable hyperparameter data types:
 
 #. ``int``: an integer within a range
-
 #. ``double``: a floating point number within a range
+#. ``log``: a logarithmically scaled floating point number---users specify a ``base`` and Determined
+   searches the space of `exponents` within a range
+#. ``categorical``: a variable that can take on a value within a specified set of values---the
+   values themselves can be of any type
 
-#. ``log``: a logarithmically scaled floating point number---users
-   specify a ``base`` and Determined searches the space of `exponents`
-   within a range
-
-#. ``categorical``: a variable that can take on a value within a
-   specified set of values---the values themselves can be of any type
-
-The :ref:`experiment configuration reference
-<experiment-configuration_hyperparameters>` details these data types and
-their associated options.
+The :ref:`experiment configuration reference <experiment-configuration_hyperparameters>` details
+these data types and their associated options.
 
 **************************
  Instrumenting Model Code
 **************************
 
-Determined injects hyperparameters from the experiment configuration
-into model code via a context object in the Trial base class. This
-:class:`~determined.TrialContext` object exposes a
-:func:`~determined.TrialContext.get_hparam` method that takes the
-hyperparameter name. At trial runtime, Determined injects a value for
-the hyperparameter. For example, to inject the value of the
-``dropout_probability`` hyperparameter defined above into the
-constructor of a PyTorch `Dropout
+Determined injects hyperparameters from the experiment configuration into model code via a context
+object in the Trial base class. This :class:`~determined.TrialContext` object exposes a
+:func:`~determined.TrialContext.get_hparam` method that takes the hyperparameter name. At trial
+runtime, Determined injects a value for the hyperparameter. For example, to inject the value of the
+``dropout_probability`` hyperparameter defined above into the constructor of a PyTorch `Dropout
 <https://pytorch.org/docs/stable/nn.html#dropout>`_ layer:
 
 .. code:: python
 
    nn.Dropout(p=self.context.get_hparam("dropout_probability"))
 
-To see hyperparameter injection throughout a complete Trial
-implementation, refer to the :ref:`pytorch-mnist-tutorial`.
+To see hyperparameter injection throughout a complete Trial implementation, refer to the
+:ref:`pytorch-mnist-tutorial`.
 
 *********************************
  Specifying the Search Algorithm
 *********************************
 
 Determined supports a :ref:`variety of hyperparameter search algorithms
-<topic-guides_hp-tuning-det>`. Aside from the ``single`` searcher, a
-searcher runs multiple trials and decides the hyperparameter values to
-use in each trial. Every searcher is configured with the name of the
-validation metric to optimize (via the ``metric`` field), in addition to
-other searcher-specific options. For example, the (`state-of-the-art
-<https://arxiv.org/pdf/1810.05934.pdf>`_) ``adaptive_asha`` searcher,
-suitable for larger experiments with many trials, is configured with the
-maximum number of trials to run, the maximum training length allowed per
-trial, and the maximum number of trials that can be worked on
+<topic-guides_hp-tuning-det>`. Aside from the ``single`` searcher, a searcher runs multiple trials
+and decides the hyperparameter values to use in each trial. Every searcher is configured with the
+name of the validation metric to optimize (via the ``metric`` field), in addition to other
+searcher-specific options. For example, the (`state-of-the-art
+<https://arxiv.org/pdf/1810.05934.pdf>`_) ``adaptive_asha`` searcher, suitable for larger
+experiments with many trials, is configured with the maximum number of trials to run, the maximum
+training length allowed per trial, and the maximum number of trials that can be worked on
 simultaneously:
 
 .. code:: yaml
@@ -99,14 +84,13 @@ simultaneously:
          epochs: 1
      max_concurrent_trials: 8
 
-For details on the supported searchers and their respective
-configuration options, refer to :ref:`topic-guides_hp-tuning-det`.
+For details on the supported searchers and their respective configuration options, refer to
+:ref:`topic-guides_hp-tuning-det`.
 
-That's it! After submitting an experiment, users can easily see the best
-validation metric observed across all trials over time in the WebUI.
-After the experiment has completed, they can view the hyperparameter
-values for the best-performing trials and then export the associated
-model checkpoints for downstream serving.
+That's it! After submitting an experiment, users can easily see the best validation metric observed
+across all trials over time in the WebUI. After the experiment has completed, they can view the
+hyperparameter values for the best-performing trials and then export the associated model
+checkpoints for downstream serving.
 
 .. image:: /assets/images/adaptive-asha-experiment-detail.png
 

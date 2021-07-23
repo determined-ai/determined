@@ -2,5 +2,4 @@
 
 **New Features**
 
--  Enable filtering trials by their state on an experiment's trials
-   page.
+-  Enable filtering trials by their state on an experiment's trials page.

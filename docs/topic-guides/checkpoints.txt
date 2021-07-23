@@ -4,78 +4,65 @@
  Exporting Models and Checkpoints
 ##################################
 
-After training a model that achieves satisfactory performance, it is
-often important to export the model for use outside Determined (e.g., to
-deploy the model as part of a web service or on an embedded device). In
-the current version of Determined, exporting models is supported by
-copying the **checkpoints** that are automatically created during the
-training process.
+After training a model that achieves satisfactory performance, it is often important to export the
+model for use outside Determined (e.g., to deploy the model as part of a web service or on an
+embedded device). In the current version of Determined, exporting models is supported by copying the
+**checkpoints** that are automatically created during the training process.
 
-A checkpoint includes the model definition (Python source code),
-experiment configuration file, network architecture, and the values of
-the model's parameters (i.e., weights) and hyperparameters. When using a
-stateful optimizer during training, checkpoints will also include the
-state of the optimizer (i.e., learning rate). Users can also embed
-arbitrary metadata in checkpoints via a :ref:`Python API
-<store-checkpoint-metadata>`.
+A checkpoint includes the model definition (Python source code), experiment configuration file,
+network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
+When using a stateful optimizer during training, checkpoints will also include the state of the
+optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+:ref:`Python API <store-checkpoint-metadata>`.
 
-The exact checkpoint format depends on the application framework being
-used:
+The exact checkpoint format depends on the application framework being used:
 
 TensorFlow Estimator
-   Trials are checkpointed using the `SavedModel
-   <https://www.tensorflow.org/guide/saved_model>`__ format. Please
-   consult the TensorFlow documentation for details on how to restore
-   models from the SavedModel format.
+   Trials are checkpointed using the `SavedModel <https://www.tensorflow.org/guide/saved_model>`__
+   format. Please consult the TensorFlow documentation for details on how to restore models from the
+   SavedModel format.
 
 TensorFlow Keras
-   Trials are checkpointed to a file named ``determined-keras-model.h5``
-   using ``tf.keras.models.save_model``. You can learn more from the `TF
-   Keras docs
+   Trials are checkpointed to a file named ``determined-keras-model.h5`` using
+   ``tf.keras.models.save_model``. You can learn more from the `TF Keras docs
    <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
 
 PyTorch
-   Trials are checkpointed as a ``state-dict.pth`` file. This file is
-   created in a similar manner to the procedure described in the
-   `PyTorch documentation
+   Trials are checkpointed as a ``state-dict.pth`` file. This file is created in a similar manner to
+   the procedure described in the `PyTorch documentation
    <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__.
-   Instead of the fields in the documentation linked above, the
-   dictionary will have four keys: ``models_state_dict``,
-   ``optimizers_state_dict``, ``lr_schedulers_state_dict``, and
-   ``callbacks``, which are the ``state_dict`` of the models,
-   optimizers, LR schedulers, and callbacks respectively.
+   Instead of the fields in the documentation linked above, the dictionary will have four keys:
+   ``models_state_dict``, ``optimizers_state_dict``, ``lr_schedulers_state_dict``, and
+   ``callbacks``, which are the ``state_dict`` of the models, optimizers, LR schedulers, and
+   callbacks respectively.
 
-Determined will automatically create checkpoints for each trial in an
-experiment. Checkpoints are created in four situations:
+Determined will automatically create checkpoints for each trial in an experiment. Checkpoints are
+created in four situations:
 
-#. When Determined suspends training of a trial at one agent, before
-   later resuming training that trial at a different agent.
+#. When Determined suspends training of a trial at one agent, before later resuming training that
+   trial at a different agent.
 
-#. If :ref:`min_checkpoint_period
-   <experiment-config-min-checkpoint-period>` is set in the experiment
-   configuration, each trial will be checkpointed whenever the specified
-   training length is completed since the last checkpoint.
+#. If :ref:`min_checkpoint_period <experiment-config-min-checkpoint-period>` is set in the
+   experiment configuration, each trial will be checkpointed whenever the specified training length
+   is completed since the last checkpoint.
 
-#. When a trial has been trained to completion (according to the
-   configuration of the experiment's trial search method).
+#. When a trial has been trained to completion (according to the configuration of the experiment's
+   trial search method).
 
-#. Before the search method makes a decision based on a validation of a
-   trial, Determined will checkpoint that trial to guarantee consistency
-   in the event of a failure.
+#. Before the search method makes a decision based on a validation of a trial, Determined will
+   checkpoint that trial to guarantee consistency in the event of a failure.
 
-The Determined CLI can be used to view all the checkpoints associated
-with an experiment:
+The Determined CLI can be used to view all the checkpoints associated with an experiment:
 
 .. code:: bash
 
    $ det experiment list-checkpoints <experiment-id>
 
-Checkpoints are saved to external storage, according to the
-:ref:`checkpoint_storage <checkpoint-storage>` section in either the
-experiment configuration or the master configuration. Each checkpoint
-has a UUID, which is used as the name of the checkpoint directory on the
-external storage system. For example, if the experiment is configured to
-save checkpoints to a shared file system:
+Checkpoints are saved to external storage, according to the :ref:`checkpoint_storage
+<checkpoint-storage>` section in either the experiment configuration or the master configuration.
+Each checkpoint has a UUID, which is used as the name of the checkpoint directory on the external
+storage system. For example, if the experiment is configured to save checkpoints to a shared file
+system:
 
 .. code:: yaml
 
@@ -83,12 +70,10 @@ save checkpoints to a shared file system:
      type: shared_fs
      host_path: /mnt/nfs-volume-1
 
-A checkpoint with UUID ``b3ed462c-a6c9-41e9-9202-5cb8ff00e109`` can be
-found in the directory
+A checkpoint with UUID ``b3ed462c-a6c9-41e9-9202-5cb8ff00e109`` can be found in the directory
 ``/mnt/nfs-volume-1/b3ed462c-a6c9-41e9-9202-5cb8ff00e109``.
 
-The Determined CLI can be used to download a checkpoint saved on a
-shared file system, S3 or GCS:
+The Determined CLI can be used to download a checkpoint saved on a shared file system, S3 or GCS:
 
 .. code:: bash
 
@@ -96,8 +81,8 @@ shared file system, S3 or GCS:
 
 .. warning::
 
-   When downloading checkpoints in a shared file system, we assume the
-   same shared file system is mounted locally.
+   When downloading checkpoints in a shared file system, we assume the same shared file system is
+   mounted locally.
 
 .. _checkpoint-garbage-collection:
 
@@ -105,30 +90,22 @@ shared file system, S3 or GCS:
  Checkpoint Garbage Collection
 *******************************
 
-Typically only some checkpoints need to be retained for future use. Once
-an experiment has finished, Determined can optionally garbage collect
-some or all of the checkpoints taken when the experiment was running.
-The following parameters in the ``checkpoint_storage`` section of the
-experiment configuration specify which checkpoints to save:
+Typically only some checkpoints need to be retained for future use. Once an experiment has finished,
+Determined can optionally garbage collect some or all of the checkpoints taken when the experiment
+was running. The following parameters in the ``checkpoint_storage`` section of the experiment
+configuration specify which checkpoints to save:
 
--  ``save_experiment_best``: The number of the best checkpoints with
-   validations over all trials to save (where best is measured by the
-   validation metric specified in the searcher configuration).
+-  ``save_experiment_best``: The number of the best checkpoints with validations over all trials to
+   save (where best is measured by the validation metric specified in the searcher configuration).
+-  ``save_trial_best``: The number of the best checkpoints with validations of each trial to save.
+-  ``save_trial_latest``: The number of the latest checkpoints of each trial to save.
 
--  ``save_trial_best``: The number of the best checkpoints with
-   validations of each trial to save.
-
--  ``save_trial_latest``: The number of the latest checkpoints of each
-   trial to save.
-
-If multiple ``save_*`` parameters are specified, the union of the
-specified checkpoints are saved.
+If multiple ``save_*`` parameters are specified, the union of the specified checkpoints are saved.
 
 Default GC Policy
 =================
 
-Any GC policy parameter that isn't specified will default to the
-following respective value:
+Any GC policy parameter that isn't specified will default to the following respective value:
 
 .. code:: yaml
 
@@ -136,16 +113,15 @@ following respective value:
    save_trial_best: 1
    save_trial_latest: 1
 
-This policy will save the most recent *and* the best checkpoint per
-trial. In other words, if the most recent checkpoint is also the *best*
-checkpoint for a given trial, only one checkpoint will be saved for that
-trial. Otherwise, two checkpoints will be saved.
+This policy will save the most recent *and* the best checkpoint per trial. In other words, if the
+most recent checkpoint is also the *best* checkpoint for a given trial, only one checkpoint will be
+saved for that trial. Otherwise, two checkpoints will be saved.
 
 Example
 =======
 
-Suppose an experiment has the following trials, checkpoints and
-validation metrics (where ``smaller_is_better`` is true):
+Suppose an experiment has the following trials, checkpoints and validation metrics (where
+``smaller_is_better`` is true):
 
 +--------+-------------+-----------------+
 | Trial  | Checkpoint  | Validation      |
@@ -200,14 +176,12 @@ The effect of various policies is enumerated in the following table:
 | 2                        | 1                   | 1                     | 10,8,7,5             |
 +--------------------------+---------------------+-----------------------+----------------------+
 
-If aggressive reclamation is desired, set ``save_experiment_best`` to a
-1 or 2 and leave the other parameters zero. For more conservative
-reclamation, set ``save_trial_best`` to 1 or 2; optionally set
-``save_trial_latest`` as well.
+If aggressive reclamation is desired, set ``save_experiment_best`` to a 1 or 2 and leave the other
+parameters zero. For more conservative reclamation, set ``save_trial_best`` to 1 or 2; optionally
+set ``save_trial_latest`` as well.
 
-Checkpoints of an existing experiment can be garbage collected by
-changing the GC policy using the ``det experiment set gc-policy``
-subcommand of the Determined CLI.
+Checkpoints of an existing experiment can be garbage collected by changing the GC policy using the
+``det experiment set gc-policy`` subcommand of the Determined CLI.
 
 .. _checkpoint-storage-configuration:
 
@@ -215,14 +189,12 @@ subcommand of the Determined CLI.
  Checkpoint Storage Configuration
 **********************************
 
-A default checkpoint storage will be used when each experiment is
-created. It is recommended to create a default checkpoint configuration
-that will be used by all pertinent tasks started by the cluster. To
-configure this value, edit the ``checkpoint_storage`` section in the
-:ref:`master configuration <master-configuration>` with the desired type
-and location of checkpoint storage. Individual experiments can override
-this value to specify a custom checkpoint storage location via the
-experiment configuration file.
+A default checkpoint storage will be used when each experiment is created. It is recommended to
+create a default checkpoint configuration that will be used by all pertinent tasks started by the
+cluster. To configure this value, edit the ``checkpoint_storage`` section in the :ref:`master
+configuration <master-configuration>` with the desired type and location of checkpoint storage.
+Individual experiments can override this value to specify a custom checkpoint storage location via
+the experiment configuration file.
 
 **********
  See Also

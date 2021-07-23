@@ -4,9 +4,8 @@
  Hyperparameter Tuning Defined
 ###############################
 
-In machine learning, hyperparameter tuning is the process of selecting
-the features, model architecture, and learning process parameters that
-yield an effective model.
+In machine learning, hyperparameter tuning is the process of selecting the features, model
+architecture, and learning process parameters that yield an effective model.
 
 .. _topic-guides_hp-tuning-basics-example-hyperparameters:
 
@@ -14,41 +13,35 @@ yield an effective model.
  Why Do Hyperparameters Matter?
 ********************************
 
-During the model development lifecycle, a machine learning engineer
-makes a wide range of decisions impacting model performance. For
-example, a computer vision model requires decisions on sample features,
-model architecture, and training algorithm parameters, e.g.:
+During the model development lifecycle, a machine learning engineer makes a wide range of decisions
+impacting model performance. For example, a computer vision model requires decisions on sample
+features, model architecture, and training algorithm parameters, e.g.:
 
--  Should we consider features aside from the raw images in the training
-   set?
+-  Should we consider features aside from the raw images in the training set?
 
-   -  Would synthetic data augmentation techniques like image rotation
-      or horizontal flipping yield a better performing model?
-   -  Should we populate additional features via advanced image
-      processing techniques such as shape edge extraction?
+   -  Would synthetic data augmentation techniques like image rotation or horizontal flipping yield
+      a better performing model?
+   -  Should we populate additional features via advanced image processing techniques such as shape
+      edge extraction?
 
 -  What model architecture works best?
 
    -  How many layers?
    -  What kind of layers (e.g., dense, dropout, pooling)?
-   -  How should we parameterize each layer (e.g., size, activation
-      function)?
+   -  How should we parameterize each layer (e.g., size, activation function)?
 
 -  What learning algorithm hyperparameters should we use?
 
    -  What gradient descent batch size should we set?
-   -  What optimizer should we utilize, and how should we parameterize
-      it (e.g., learning rate)?
+   -  What optimizer should we utilize, and how should we parameterize it (e.g., learning rate)?
 
-A machine learning engineer can manually guess and test hyperparameters,
-or they might narrow the search space by using a pretrained model.
-However, even if the machine learning engineer achieves seemingly good
-model performance, they're left wondering how much better they might do
-with additional tuning.
+A machine learning engineer can manually guess and test hyperparameters, or they might narrow the
+search space by using a pretrained model. However, even if the machine learning engineer achieves
+seemingly good model performance, they're left wondering how much better they might do with
+additional tuning.
 
-Hyperparameter tuning is a crucial phase in the model development
-lifecycle. However, it is rife with obstacles covered in the next
-section.
+Hyperparameter tuning is a crucial phase in the model development lifecycle. However, it is rife
+with obstacles covered in the next section.
 
 .. _topic-guides_hp-tuning-basics-difficulty:
 
@@ -58,28 +51,23 @@ section.
 
 Tuning deep learning models is difficult because:
 
-#. A deep learning model's objective (e.g., validation loss) as a
-   function of the hyperparameters is non-continuous and noisy, so we
-   can't apply analytical or continuous optimization techniques to
-   calculate the validation objective given a set of hyperparameters.
-   Thus, hyperparameter tuning is a black box optimization problem in
-   that we must train a model under a set of hyperparameters in order to
-   evaluate the objective.
+#. A deep learning model's objective (e.g., validation loss) as a function of the hyperparameters is
+   non-continuous and noisy, so we can't apply analytical or continuous optimization techniques to
+   calculate the validation objective given a set of hyperparameters. Thus, hyperparameter tuning is
+   a black box optimization problem in that we must train a model under a set of hyperparameters in
+   order to evaluate the objective.
 
-#. Hyperparameter tuning suffers from the curse of dimensionality, as
-   the number of possible hyperparameter configurations is exponential
-   in the number of hyperparameters. For instance, even if a model has
-   just ten categorical hyperparameters with five values per
-   hyperparameter, and each hyperparameter configuration takes one
-   minute to train on average, it would take 5^10 minutes, or nearly 20
-   years, to evaluate all possible hyperparameter configurations.
+#. Hyperparameter tuning suffers from the curse of dimensionality, as the number of possible
+   hyperparameter configurations is exponential in the number of hyperparameters. For instance, even
+   if a model has just ten categorical hyperparameters with five values per hyperparameter, and each
+   hyperparameter configuration takes one minute to train on average, it would take 5^10 minutes, or
+   nearly 20 years, to evaluate all possible hyperparameter configurations.
 
-#. Deep learning model training is computationally expensive. It's not
-   uncommon for a model to require hours or days to train on expensive
-   hardware.
+#. Deep learning model training is computationally expensive. It's not uncommon for a model to
+   require hours or days to train on expensive hardware.
 
-Fortunately, there are automatic hyperparameter tuning techniques that
-the machine learning engineer can leverage to find an effective model.
+Fortunately, there are automatic hyperparameter tuning techniques that the machine learning engineer
+can leverage to find an effective model.
 
 ************
  Next Steps

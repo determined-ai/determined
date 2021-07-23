@@ -4,35 +4,31 @@
  Setting up an Azure Kubernetes Service (AKS) Cluster
 ######################################################
 
-Determined can be installed on a cluster that is hosted on a managed
-Kubernetes service such as `AKS
-<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This
-document describes how to set up an AKS cluster with GPU-enabled nodes.
-The recommended setup includes deploying a cluster with a single non-GPU
-node that will host the Determined master and database, and an
-autoscaling group of GPU nodes. After creating a suitable AKS cluster,
-you can then proceed with the standard :ref:`instructions for installing
-Determined on Kubernetes <install-on-kubernetes>`.
+Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as `AKS
+<https://azure.microsoft.com/en-us/services/kubernetes-service/>`_. This document describes how to
+set up an AKS cluster with GPU-enabled nodes. The recommended setup includes deploying a cluster
+with a single non-GPU node that will host the Determined master and database, and an autoscaling
+group of GPU nodes. After creating a suitable AKS cluster, you can then proceed with the standard
+:ref:`instructions for installing Determined on Kubernetes <install-on-kubernetes>`.
 
-Determined requires the Kubernetes cluster to be running version >= 1.15
-and to have GPU-enabled nodes.
+Determined requires the Kubernetes cluster to be running version >= 1.15 and to have GPU-enabled
+nodes.
 
 ***************
  Prerequisites
 ***************
 
-To deploy an AKS cluster, the user must have a resource group to manage
-the resources consumed by the cluster. To create one, please follow the
-instructions found in the `Azure Resource Groups Documentation
+To deploy an AKS cluster, the user must have a resource group to manage the resources consumed by
+the cluster. To create one, please follow the instructions found in the `Azure Resource Groups
+Documentation
 <https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal#create-resource-groups>`_.
 
 Additionally, users must have the `Azure CLI
-<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and
-`kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_
-installed on their local machine.
+<https://docs.microsoft.com/en-us/cli/azure/install-azure-cli>`_ and `kubectl
+<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their local machine.
 
-Finally, please authenticate with the Azure CLI using ``az login`` in
-order to have access to your Azure subscription.
+Finally, please authenticate with the Azure CLI using ``az login`` in order to have access to your
+Azure subscription.
 
 ************************
  Setting Up the Cluster
@@ -70,9 +66,9 @@ order to have access to your Azure subscription.
  Creating a kubeconfig for AKS
 *******************************
 
-After creating the cluster, ``kubectl`` should be used to deploy apps.
-In order for ``kubectl`` to be used with AKS, users need to create or
-update the cluster kubeconfig. This can be done with the command:
+After creating the cluster, ``kubectl`` should be used to deploy apps. In order for ``kubectl`` to
+be used with AKS, users need to create or update the cluster kubeconfig. This can be done with the
+command:
 
 .. code:: bash
 
@@ -82,14 +78,11 @@ update the cluster kubeconfig. This can be done with the command:
  Enabling GPU Support
 **********************
 
-To allow the AKS cluster to recognize GPU hardware resources, please
-refer to the instructions provided by Azure on the `Install NVIDIA
-Device Plugin
-<https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_
-tutorial.
+To allow the AKS cluster to recognize GPU hardware resources, please refer to the instructions
+provided by Azure on the `Install NVIDIA Device Plugin
+<https://docs.microsoft.com/en-us/azure/aks/gpu-cluster#install-nvidia-device-plugin>`_ tutorial.
 
-With this, the cluster is fully set up, and Determined can be deployed
-onto it.
+With this, the cluster is fully set up, and Determined can be deployed onto it.
 
 ************
  Next Steps
@@ -106,8 +99,7 @@ onto it.
  Updating the Autoscaler
 *************************
 
-To update the cluster autoscaler, please use the following Azure CLI
-command:
+To update the cluster autoscaler, please use the following Azure CLI command:
 
 .. code:: bash
 
@@ -119,18 +111,17 @@ command:
  Node Taints
 *************
 
-For general instructions on adding taints and tolerations to nodes,
-please see the :ref:`Taints and Tolerations <taints-on-kubernetes>`
-section in our :ref:`Guide to Kubernetes <install-on-kubernetes>`.
-There, you can find an explanation of taints and tolerations, as well as
+For general instructions on adding taints and tolerations to nodes, please see the :ref:`Taints and
+Tolerations <taints-on-kubernetes>` section in our :ref:`Guide to Kubernetes
+<install-on-kubernetes>`. There, you can find an explanation of taints and tolerations, as well as
 instructions for using ``kubectl`` to add them to existing clusters.
 
-It is important to note that if you use the Azure CLI to create nodes
-with taints, you must also add tolerations using ``kubectl``; otherwise,
-Kubernetes will be unable to schedule pods on the tainted node.
+It is important to note that if you use the Azure CLI to create nodes with taints, you must also add
+tolerations using ``kubectl``; otherwise, Kubernetes will be unable to schedule pods on the tainted
+node.
 
-To create a nodepool with a taint in AKS, use the `--node-taints` flag
-to specify the type, tag, and effect:
+To create a nodepool with a taint in AKS, use the `--node-taints` flag to specify the type, tag, and
+effect:
 
 .. code:: bash
 
@@ -142,9 +133,9 @@ to specify the type, tag, and effect:
       --node-taints ${TAINT_TYPE}=${TAINT_TAG}:{TAINT_EFFECT} \
       --no-wait
 
-The following CLI command is an example of using the ``az`` CLI to make
-a node that is unschedulable unless a Pod has a toleration for a taint
-with type ``sku`` equal to ``gpu`` with the ``NoSchedule`` effect.
+The following CLI command is an example of using the ``az`` CLI to make a node that is unschedulable
+unless a Pod has a toleration for a taint with type ``sku`` equal to ``gpu`` with the ``NoSchedule``
+effect.
 
 .. code:: bash
 

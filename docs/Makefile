@@ -43,13 +43,15 @@ publish: pre-publish
 live:
 	npx nodemon --ext txt --exec "$(MAKE) build" --ignore site
 
+RSTFMT_WIDTH = 100
+
 .PHONY: fmt
 fmt:
-	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt
+	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt -w $(RSTFMT_WIDTH)
 
 .PHONY: check
 check:
-	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt --check
+	git ls-files -z '*.txt' ':!:requirements.txt' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

@@ -4,44 +4,36 @@
  Organizing Models in the Model Registry
 #########################################
 
-Determined includes built-in support for a *model registry*, which makes
-it easy to organize trained models and their respective versions. Common
-use-cases for the model registry include:
+Determined includes built-in support for a *model registry*, which makes it easy to organize trained
+models and their respective versions. Common use-cases for the model registry include:
 
--  Grouping related checkpoints together, including checkpoints across
-   experiments.
+-  Grouping related checkpoints together, including checkpoints across experiments.
 
--  Storing metadata about a model that is specific to your problem or
-   organization. Examples include references to production systems,
-   dataset links, Git links, and metrics calculated outside of
+-  Storing metadata about a model that is specific to your problem or organization. Examples include
+   references to production systems, dataset links, Git links, and metrics calculated outside of
    Determined.
 
--  Retrieving the latest version of a model for downstream tasks like
-   serving or batch inference.
+-  Retrieving the latest version of a model for downstream tasks like serving or batch inference.
 
-The model registry contains a set of *models*. Each model has a unique
-name and zero or more *model versions*. A model version consists of a
-version number and a checkpoint, which represents the state of a trained
-model.
+The model registry contains a set of *models*. Each model has a unique name and zero or more *model
+versions*. A model version consists of a version number and a checkpoint, which represents the state
+of a trained model.
 
-The model registry is designed to be flexible, and the best way to use
-it depends on your organization's requirements and workflow. For
-example, one approach is to define a model for each high-level task you
-want to use machine learning for (e.g., "object-detection",
-"sentiment-analysis", etc.). Then each version of this model would
-correspond to a new approach to solving that task. Note that different
-versions of a model might come from different experiments, use different
-network architectures, or even use different deep learning frameworks.
-Another approach would be to register a model named "FasterRCNN", and
-ensure that each version of the model uses that network architecture.
+The model registry is designed to be flexible, and the best way to use it depends on your
+organization's requirements and workflow. For example, one approach is to define a model for each
+high-level task you want to use machine learning for (e.g., "object-detection",
+"sentiment-analysis", etc.). Then each version of this model would correspond to a new approach to
+solving that task. Note that different versions of a model might come from different experiments,
+use different network architectures, or even use different deep learning frameworks. Another
+approach would be to register a model named "FasterRCNN", and ensure that each version of the model
+uses that network architecture.
 
 *****************
  Managing Models
 *****************
 
-A *model* has a unique name, an optional description, user-defined
-metadata, and zero or more *model versions*. A model's metadata can
-contain arbitrary information about the model. The following is an
+A *model* has a unique name, an optional description, user-defined metadata, and zero or more *model
+versions*. A model's metadata can contain arbitrary information about the model. The following is an
 example JSON representation of a model for illustration.
 
 .. code:: json
@@ -60,16 +52,14 @@ example JSON representation of a model for illustration.
 Registering Models
 ==================
 
-A model can be added to the registry via the Python API, REST API, or
-CLI. This guide will cover the Python and CLI methods. For information
-on the REST API, see the `Swagger API documentation
+A model can be added to the registry via the Python API, REST API, or CLI. This guide will cover the
+Python and CLI methods. For information on the REST API, see the `Swagger API documentation
 <../rest-api/index.html#/Models>`__.
 
-The following example demonstrates how to add a new model to the
-registry; :func:`~determined.experimental.Determined.create_model`
-returns an instance of the :class:`~determined.experimental.Model`
-class. The new model will not have any versions (model checkpoints)
-associated with it; adding versions to a model is described below.
+The following example demonstrates how to add a new model to the registry;
+:func:`~determined.experimental.Determined.create_model` returns an instance of the
+:class:`~determined.experimental.Model` class. The new model will not have any versions (model
+checkpoints) associated with it; adding versions to a model is described below.
 
 .. code:: Python
 
@@ -81,8 +71,7 @@ associated with it; adding versions to a model is described below.
              metadata={"optional": "JSON serializable dictionary"}
            )
 
-Similarly, you can create a model from the CLI using the following
-command.
+Similarly, you can create a model from the CLI using the following command.
 
 .. code:: bash
 
@@ -91,12 +80,10 @@ command.
 Querying Models
 ===============
 
-The following example returns models registered in Determined as a list
-of :class:`~determined.experimental.Model` objects. Models can be sorted
-by name, description, creation time, and last updated time.
-Additionally, models can be filtered by name or description via the
-Python API. For sorting and ordering options, see
-:class:`~determined.experimental.ModelSortBy` and
+The following example returns models registered in Determined as a list of
+:class:`~determined.experimental.Model` objects. Models can be sorted by name, description, creation
+time, and last updated time. Additionally, models can be filtered by name or description via the
+Python API. For sorting and ordering options, see :class:`~determined.experimental.ModelSortBy` and
 :class:`~determined.experimental.ModelOrderBy` respectively.
 
 .. code:: python
@@ -130,8 +117,8 @@ The following snippet queries for a single model by name.
 
    model = Determined().get_model("model_name")
 
-The CLI equivalent is below. The ``describe`` command will print
-information about the latest version of the model by default as well.
+The CLI equivalent is below. The ``describe`` command will print information about the latest
+version of the model by default as well.
 
 .. code:: bash
 
@@ -140,8 +127,8 @@ information about the latest version of the model by default as well.
 Modifying Model Metadata
 ========================
 
-Currently, model metadata can only be edited via the Python API. The
-following example demonstrates how to use this API.
+Currently, model metadata can only be edited via the Python API. The following example demonstrates
+how to use this API.
 
 .. code:: python
 
@@ -169,14 +156,11 @@ following example demonstrates how to use this API.
  Managing Model Versions
 *************************
 
-Once a model has been added to the registry, you can add one or more
-checkpoints to it. These registered checkpoints are known as *model
-versions*. Version numbers are assigned by the registry; version numbers
-start at ``1`` and increment each time a new model version is
-registered.
+Once a model has been added to the registry, you can add one or more checkpoints to it. These
+registered checkpoints are known as *model versions*. Version numbers are assigned by the registry;
+version numbers start at ``1`` and increment each time a new model version is registered.
 
-For illustration, this JSON document illustrates an example model with a
-single registered version.
+For illustration, this JSON document illustrates an example model with a single registered version.
 
 .. code:: json
 
@@ -212,9 +196,8 @@ Creating Versions
 =================
 
 The following snippet registers a new version of a model.
-:func:`~determined.experimental.Model.register_version()` returns an
-updated :class:`~determined.experimental.Checkpoint` object representing
-the new model version.
+:func:`~determined.experimental.Model.register_version()` returns an updated
+:class:`~determined.experimental.Checkpoint` object representing the new model version.
 
 .. code:: python
 
@@ -228,8 +211,7 @@ the new model version.
 
    model_version = model.register_version(checkpoint.uuid)
 
-Similarly, a new model version can be registered using the CLI as
-follows:
+Similarly, a new model version can be registered using the CLI as follows:
 
 .. code:: bash
 
@@ -238,14 +220,12 @@ follows:
 Accessing Versions
 ==================
 
-The example below demonstrates how to retrieve versions of a model from
-the registry. If no version number is specified, the most recent version
-of the model is returned.
-:func:`~determined.experimental.Model.get_version()` returns an instance
-of :class:`~determined.experimental.Checkpoint`; as shown in the
-example, this makes it easy to perform common operations like
-downloading the checkpoint to local storage or loading the trained model
-into memory.
+The example below demonstrates how to retrieve versions of a model from the registry. If no version
+number is specified, the most recent version of the model is returned.
+:func:`~determined.experimental.Model.get_version()` returns an instance of
+:class:`~determined.experimental.Checkpoint`; as shown in the example, this makes it easy to perform
+common operations like downloading the checkpoint to local storage or loading the trained model into
+memory.
 
 .. code:: python
 
@@ -261,9 +241,8 @@ into memory.
    # PyTorch object representing the trained model.
    tf_or_torch_model = latest_version.load()
 
-The following example lists all the versions of a model. By default,
-model versions are returned in descending order such that the most
-recent versions are returned first.
+The following example lists all the versions of a model. By default, model versions are returned in
+descending order such that the most recent versions are returned first.
 
 .. code:: python
 

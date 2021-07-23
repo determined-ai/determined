@@ -4,9 +4,8 @@
  determined.TrialContext
 #########################
 
-The ``TrialContext`` provides useful methods for writing ``Trial``
-subclasses. All ``Trial`` subclasses receive a ``TrialContext`` object
-as an argument to their ``__init__()`` method:
+The ``TrialContext`` provides useful methods for writing ``Trial`` subclasses. All ``Trial``
+subclasses receive a ``TrialContext`` object as an argument to their ``__init__()`` method:
 
 -  :class:`~determined.pytorch.PyTorchTrial` subclasses receive a plain
    :class:`~determined.PyTorchTrialContext`.
@@ -24,10 +23,8 @@ as an argument to their ``__init__()`` method:
    :inherited-members:
    :member-order: bysource
 
-   TrialContext always has an instance of
-   :class:`~determined._train_context.DistributedContext` accessible as
-   the ``distributed`` attribute for information related to distributed
-   training.
+   TrialContext always has an instance of :class:`~determined._train_context.DistributedContext`
+   accessible as the ``distributed`` attribute for information related to distributed training.
 
 *****************************************
  ``determined.TrialContext.distributed``
