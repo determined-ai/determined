@@ -52,6 +52,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
 ) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
+  const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
   const prevTrialId = usePrevious(trialId, undefined);
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
@@ -77,12 +78,16 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
+      // make sure the experiment is in terminal state before the request is made.
+      const isTerminalExp = terminalRunStates.has(experiment.state);
       const expTrials = await getExpTrials(
         { id: experiment.id, limit: 2 },
         { signal: canceler.signal },
       );
       if (expTrials.trials[0]) {
         setFirstTrialId(expTrials.trials[0].id);
+      } else if (isTerminalExp) {
+        setWontHaveTrials(true);
       }
     } catch (e) {
       handleError({
@@ -94,7 +99,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         type: ErrorType.Server,
       });
     }
-  }, [ canceler, experiment.id ]);
+  }, [ canceler, experiment.id, experiment.state ]);
 
   const fetchTrialDetails = useCallback(async () => {
     if (!trialId) return;
@@ -125,21 +130,21 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
   }, [ trialDetails, stopPolling ]);
 
   useEffect(() => {
-    if (trialId != null) return;
-    return () => stopPollingFirstTrialId();
-  }, [ trialId, stopPollingFirstTrialId ]);
+    if (wontHaveTrials || trialId !== undefined) stopPollingFirstTrialId();
+  }, [ trialId, stopPollingFirstTrialId, wontHaveTrials ]);
 
   useEffect(() => {
     const isPaused = experiment.state === RunState.Paused;
-    setHasLoaded(!!trialDetails || isPaused);
+    setHasLoaded(!!trialDetails || isPaused || terminalRunStates.has(experiment.state));
   }, [ experiment.state, trialDetails ]);
 
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
+      stopPollingFirstTrialId();
     };
-  }, [ canceler, stopPolling ]);
+  }, [ canceler, stopPolling, stopPollingFirstTrialId ]);
 
   /*
    * Immediately attempt to fetch trial details instead of waiting for the
