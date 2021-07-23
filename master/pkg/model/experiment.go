@@ -108,10 +108,12 @@ var ManualStates = map[State]bool{
 	ActiveState:           true,
 	PausedState:           true,
 	StoppingCanceledState: true,
+	StoppingKilledState:   true,
 }
 
 // StoppingToTerminalStates maps from stopping states to the corresponding terminal states.
 var StoppingToTerminalStates = map[State]State{
+	StoppingKilledState:    CanceledState,
 	StoppingCanceledState:  CanceledState,
 	StoppingCompletedState: CompletedState,
 	StoppingErrorState:     ErrorState,
@@ -121,12 +123,14 @@ var StoppingToTerminalStates = map[State]State{
 var ExperimentTransitions = map[State]map[State]bool{
 	ActiveState: {
 		PausedState:            true,
+		StoppingKilledState:    true,
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
 	},
 	PausedState: {
 		ActiveState:            true,
+		StoppingKilledState:    true,
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
@@ -171,15 +175,48 @@ var ExperimentTransitions = map[State]map[State]bool{
 var ExperimentReverseTransitions = reverseTransitions(ExperimentTransitions)
 
 // TrialTransitions maps trial states to their possible transitions.
+// Trials are mostly the same as experiments, but when immediate exits through
+// ErrorState allowed since can die immediately and let the RM clean us up.
 var TrialTransitions = map[State]map[State]bool{
 	ActiveState: {
-		CanceledState:  true,
-		CompletedState: true,
-		ErrorState:     true,
+		PausedState:            true,
+		StoppingKilledState:    true,
+		StoppingCanceledState:  true,
+		StoppingCompletedState: true,
+		StoppingErrorState:     true,
+		ErrorState:             true,
 	},
 	CanceledState:  {},
 	CompletedState: {},
 	ErrorState:     {},
+	PausedState: {
+		ActiveState:            true,
+		StoppingKilledState:    true,
+		StoppingCanceledState:  true,
+		StoppingCompletedState: true,
+		StoppingErrorState:     true,
+		ErrorState:             true,
+	},
+	StoppingCanceledState: {
+		CanceledState:       true,
+		StoppingKilledState: true,
+		StoppingErrorState:  true,
+		ErrorState:          true,
+	},
+	StoppingKilledState: {
+		CanceledState:      true,
+		StoppingErrorState: true,
+		ErrorState:         true,
+	},
+	StoppingCompletedState: {
+		CompletedState:     true,
+		StoppingErrorState: true,
+		ErrorState:         true,
+	},
+	StoppingErrorState: {
+		ActiveState: true,
+		ErrorState:  true,
+	},
 }
 
 // TrialReverseTransitions list possible ancestor states.

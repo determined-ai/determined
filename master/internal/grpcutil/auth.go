@@ -20,7 +20,7 @@ import (
 
 const (
 	// nolint:gosec // These are not potential hardcoded credentials.
-	gatewayTokenHeader = "grpcgateway-authorization"
+	gatewayTokenHeader    = "grpcgateway-authorization"
 	allocationTokenHeader = "x-allocation-token"
 	userTokenHeader       = "x-user-token"
 	cookieName            = "auth"

@@ -13,19 +13,34 @@ ALTER TABLE public.allocation_sessions ADD CONSTRAINT allocation_sessions_sessio
 ALTER TYPE public.experiment_state RENAME TO _experiment_state;
 CREATE TYPE public.experiment_state AS ENUM (
     'ACTIVE',
-    'CANCELED',
-    'COMPLETED',
-    'ERROR',
     'PAUSED',
     'STOPPING_CANCELED',
     'STOPPING_KILLED',
     'STOPPING_COMPLETED',
     'STOPPING_ERROR',
     'DELETING',
+    'CANCELED',
+    'COMPLETED',
+    'ERROR',
     'DELETE_FAILED'
 );
 ALTER TABLE public.experiments ALTER COLUMN state TYPE experiment_state USING state::text::experiment_state;
 DROP TYPE _experiment_state;
+
+ALTER TYPE public.trial_state RENAME TO _trial_state;
+CREATE TYPE public.trial_state AS ENUM (
+    'ACTIVE',
+    'PAUSED',
+    'STOPPING_CANCELED',
+    'STOPPING_KILLED',
+    'STOPPING_COMPLETED',
+    'STOPPING_ERROR',
+    'CANCELED',
+    'COMPLETED',
+    'ERROR'
+);
+ALTER TABLE public.trials ALTER COLUMN state TYPE trial_state USING state::text::trial_state;
+DROP TYPE _trial_state;
 
 ALTER TABLE public.trials
     -- Does not exist for early tasks. TODO, migrate?

@@ -1256,12 +1256,13 @@ WHERE experiment_id = $1 AND request_id = $2`, &trial, experimentID, requestID)
 // UpdateTrial updates an existing trial. Fields that are nil or zero are not
 // updated.  end_time is set if the trial moves to a terminal state.
 func (db *PgDB) UpdateTrial(id int, newState model.State) error {
-	if len(newState) == 0 {
-		return nil
-	}
 	trial, err := db.TrialByID(id)
 	if err != nil {
 		return errors.Wrapf(err, "error finding trial %v to update", id)
+	}
+
+	if trial.State == newState {
+		return nil
 	}
 
 	if !model.TrialTransitions[trial.State][newState] {
@@ -1708,11 +1709,15 @@ func derivePriorWorkloadEndTime(
 	var endTime time.Time
 	if err := tx.QueryRowxContext(ctx, `
 SELECT coalesce(greatest(
-	(SELECT max(end_time) FROM raw_steps WHERE trial_id = $1),
-	(SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
-	(SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
-    (SELECT max(a.start_time) FROM allocations a, trials t WHERE a.task_id = t.task_id AND t.id = $1),
-    (SELECT max(tk.start_time) FROM tasks tk, trials t WHERE tk.task_id = t.task_id AND t.id = $1)), now())
+    (SELECT max(end_time) FROM raw_steps WHERE trial_id = $1),
+    (SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
+    (SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
+    (SELECT max(a.start_time)
+     FROM allocations a, trials t
+     WHERE a.task_id = t.task_id AND t.id = $1),
+    (SELECT max(tk.start_time)
+     FROM tasks tk, trials t
+     WHERE tk.task_id = t.task_id AND t.id = $1)), now())
 `, trialID).Scan(&endTime); err != nil {
 		return time.Time{}, errors.Wrap(err, "deriving start time")
 	}

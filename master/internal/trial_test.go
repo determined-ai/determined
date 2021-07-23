@@ -131,6 +131,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 		mockAlloc(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
+	db.On("UpdateTrial", 0, model.ActiveState).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
 	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
 	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
@@ -213,7 +214,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 	}
 
-	require.True(t, tr.stopped)
+	require.True(t, model.TerminalStates[tr.state])
 	require.NoError(t, self.AwaitTermination())
 }
 
@@ -290,6 +291,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		mockAlloc(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
+	db.On("UpdateTrial", 0, model.ActiveState).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
 	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
 	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
@@ -385,7 +387,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		Closed:   true,
 	}).Error())
 
-	require.True(t, tr.stopped)
+	require.True(t, model.TerminalStates[tr.state])
 	require.NoError(t, self.AwaitTermination())
 }
 
@@ -456,6 +458,7 @@ func TestTrialRestarts(t *testing.T) {
 		})
 		alloc.On("Kill", mock.Anything).Return()
 		db.On("AddTrial", mock.Anything).Return(nil)
+		db.On("UpdateTrial", 0, model.ActiveState).Return(nil)
 		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
 		db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
 		db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
@@ -525,7 +528,7 @@ func TestTrialRestarts(t *testing.T) {
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 	}
-	require.True(t, tr.stopped)
+	require.True(t, model.TerminalStates[tr.state])
 	require.NoError(t, self.AwaitTermination())
 }
 
