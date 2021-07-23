@@ -37,6 +37,7 @@ import { getMetricValue, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import { columns as defaultColumns } from './ExperimentTrials.table';
+import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
@@ -44,6 +45,7 @@ interface Props {
 
 enum Action {
   OpenTensorBoard = 'OpenTensorboard',
+  CompareTrials = 'CompareTrials'
 }
 
 const URL_ALL = 'all';
@@ -73,6 +75,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
@@ -174,6 +177,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     setPagination(pagination);
     setSorter(sorter);
   }, [ filters, isUrlParsed, pagination, sorter ]);
+
+  const trialMap = useMemo(() => {
+    return (trials || []).reduce((acc, trial) => {
+      acc[trial.id] = trial;
+      return acc;
+    }, {} as Record<string, TrialItem>);
+  }, [ trials ]);
+
+  const selectedTrials = useMemo(() => {
+    return selectedRowKeys.map(key => trialMap[key]);
+  }, [ trialMap, selectedRowKeys ]);
 
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
@@ -334,6 +348,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       return openOrCreateTensorboard(
         { trialIds: selectedRowKeys },
       );
+    } else if (action === Action.CompareTrials) {
+      return Promise.resolve([ setShowCompareTrials(true) ]);
     }
     return Promise.all([]);
   }, [ selectedRowKeys ]);
@@ -388,6 +404,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
           </Button>
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
+            Compare Trials
+          </Button>
         </TableBatch>
         <ResponsiveTable
           columns={columns}
@@ -411,6 +430,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
+      {selectedRowKeys.length > 0 &&
+      <TrialsComparisonModal
+        trials={selectedTrials}
+        visible={showCompareTrials}
+        onCancel={() => setShowCompareTrials(false)} />}
     </>
   );
 };

@@ -14,6 +14,7 @@ import { checkpointSize } from 'utils/types';
 import css from './TrialsComparisonModal.module.scss';
 
 interface ModalProps {
+  onCancel: () => void;
   trials: TrialItem[];
   visible: boolean;
 }
@@ -23,9 +24,12 @@ interface TableProps {
 }
 
 const TrialsComparisonModal: React.FC<ModalProps> =
-({ trials, visible }: ModalProps) => {
+({ onCancel, trials, visible }: ModalProps) => {
   return (
-    <Modal title={`Experiment ${trials.first().experimentId} Trial Comparison`} visible={visible}>
+    <Modal
+      title={`Experiment ${trials.first()?.experimentId} Trial Comparison`}
+      visible={visible}
+      onCancel={onCancel}>
       <TrialsComparisonTable trials={trials} />
     </Modal>
   );
@@ -95,7 +99,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
   );
 
   const metricNames = useMemo(() => extractMetricNames(
-    Object.values(trialsDetails).first().data?.workloads || [],
+    Object.values(trialsDetails).first()?.data?.workloads || [],
   ), [ trialsDetails ]);
 
   const hyperparameterNames = useMemo(
@@ -115,15 +119,15 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       </div>
       <div className={css.row}>
         <h3>Training Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].train))}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.train))}
       </div>
       <div className={css.row}>
         <h3>Validation Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].validation))}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.validation))}
       </div>
       <div className={css.row}>
         <h3>Checkpoint Time</h3>
-        {trials.map(trial => shortEnglishHumannizer(durations[trial.id].checkpoint))}
+        {trials.map(trial => shortEnglishHumannizer(durations[trial.id]?.checkpoint))}
       </div>
       <div className={css.row}>
         <h3>Batches Processed</h3>
@@ -131,7 +135,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       </div>
       <div className={css.row}>
         <h3>Best Checkpoint</h3>
-        {trials.map(trial => trial.bestAvailableCheckpoint)}
+        {trials.map(trial => trial.bestAvailableCheckpoint?.totalBatches)}
       </div>
       <div className={css.row}>
         <h3>Total Checkpoint Size</h3>
