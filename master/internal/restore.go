@@ -108,7 +108,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 // restoreTrial takes the a searcher.Create and attempts to restore the trial that would be
 // associated with it. On failure, the trial is just reset to the start and errors are logged.
 func (e *experiment) restoreTrial(
-	ctx *actor.Context, ckpt *model.Checkpoint, searcher TrialSearcherState,
+	ctx *actor.Context, ckpt *model.Checkpoint, searcher trialSearcherState,
 ) {
 	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
 	l.Info("restoring trial")
@@ -153,9 +153,8 @@ func (e *experiment) restoreTrial(
 	if trialID != nil {
 		t.id = *trialID
 		t.idSet = true
-		if _, ok := e.searcher.TrialIDs[searcher.Create.RequestID]; !ok {
+		if _, ok := e.searcher.TrialsCreated[searcher.Create.RequestID]; !ok {
 			ctx.Tell(ctx.Self(), trialCreated{
-				trialID:   *trialID,
 				requestID: searcher.Create.RequestID,
 			})
 		}

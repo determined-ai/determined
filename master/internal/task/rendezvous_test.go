@@ -1,4 +1,4 @@
-package internal
+package task
 
 import (
 	"fmt"
@@ -26,12 +26,12 @@ func TestRendezvous(t *testing.T) {
 			t1 := model.NewAllocationID(uuid.New().String())
 			c1, c2 := cproto.NewID(), cproto.NewID()
 			ranks := map[cproto.ID]int{c1: 0, c2: 1}
-			r := newRendezvous(t1, ranks)
+			r := NewRendezvous(t1, ranks)
 
 			assert.Equal(t, r.rank(c1), 0)
 			assert.Equal(t, r.rank(c2), 1)
 
-			var ws []rendezvousWatcher
+			var ws []RendezvousWatcher
 			watch := func(cID cproto.ID) func() {
 				return func() {
 					w, err := r.watch(t1, cID)
@@ -58,11 +58,11 @@ func TestRendezvous(t *testing.T) {
 			}
 			assert.Check(t, r.ready())
 
-			rendezvousArrived := func(w rendezvousWatcher) {
+			rendezvousArrived := func(w RendezvousWatcher) {
 				select {
 				case resp := <-w.C:
-					assert.NilError(t, resp.err)
-					assert.Equal(t, len(resp.info.Addresses), 2)
+					assert.NilError(t, resp.Err)
+					assert.Equal(t, len(resp.Info.Addresses), 2)
 				default:
 					t.Fatal("expected rendezvous on first watcher but found none")
 				}
@@ -87,7 +87,7 @@ func TestRendezvous(t *testing.T) {
 func TestRendezvousValidation(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1 := cproto.NewID()
-	r := newRendezvous(t1, map[cproto.ID]int{
+	r := NewRendezvous(t1, map[cproto.ID]int{
 		c1: 0,
 	})
 
@@ -105,7 +105,7 @@ func TestTerminationInRendezvous(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := newRendezvous(t1, ranks)
+	r := NewRendezvous(t1, ranks)
 
 	r.containerStarted(c1, addressesFromContainerID(c1))
 	_, err := r.watch(t1, c1)
@@ -123,7 +123,7 @@ func TestUnwatchInRendezvous(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := newRendezvous(t1, ranks)
+	r := NewRendezvous(t1, ranks)
 
 	r.containerStarted(c1, addressesFromContainerID(c1))
 	_, err := r.watch(t1, c1)
@@ -138,12 +138,12 @@ func TestUnwatchInRendezvous(t *testing.T) {
 }
 
 func TestRendezvousTimeout(t *testing.T) {
-	rendezvousTimeoutDuration = 0
+	RendezvousTimeoutDuration = 0
 
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
 	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := newRendezvous(t1, ranks)
+	r := NewRendezvous(t1, ranks)
 
 	_, err := r.watch(t1, c1)
 	assert.NilError(t, err)

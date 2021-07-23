@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/task"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -74,7 +76,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 		taskID,
 		1,
 		model.PausedState,
-		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
 		rm, logger,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{
@@ -95,7 +97,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 
 	// Pre-scheduled stage.
 	require.NoError(t, system.Ask(self, model.ActiveState).Error())
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -168,16 +170,15 @@ func TestTrialMultiAlloc(t *testing.T) {
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
-		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			allocationID: tr.req.AllocationID,
-			containerID:  a.Summary().ID,
+		require.NoError(t, system.Ask(self, task.WatchRendezvousInfo{
+			AllocationID: tr.req.AllocationID,
+			ContainerID:  a.Summary().ID,
 		}).Error())
 	}
-	require.True(t, tr.allocation.rendezvous.ready())
 
 	// Running stage.
 	db.On("UpdateTrial", 0, model.StoppingCompletedState).Return(nil)
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -207,6 +208,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 			},
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
+		system.Ask(self, model.TrialLog{}).Get() // Just to sync
 	}
 
 	require.True(t, model.TerminalStates[tr.state])
@@ -236,7 +238,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		taskID,
 		1,
 		model.PausedState,
-		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
 		rm, logger,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{
@@ -257,7 +259,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 
 	// Pre-scheduled stage.
 	require.NoError(t, system.Ask(self, model.ActiveState).Error())
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -330,15 +332,14 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
-		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			allocationID: tr.req.AllocationID,
-			containerID:  a.Summary().ID,
+		require.NoError(t, system.Ask(self, task.WatchRendezvousInfo{
+			AllocationID: tr.req.AllocationID,
+			ContainerID:  a.Summary().ID,
 		}).Error())
 	}
-	require.True(t, tr.allocation.rendezvous.ready())
 
 	// Running stage.
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -347,7 +348,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		Complete: true,
 		Closed:   false,
 	}).Error())
-	require.NoError(t, system.Ask(self, ackPreemption{allocationID: tr.req.AllocationID}).Error())
+	require.NoError(t, system.Ask(self, task.AckPreemption{AllocationID: tr.req.AllocationID}).Error())
 
 	// Terminating stage.
 	db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
@@ -369,12 +370,13 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 	}
+	system.Ask(self, model.TrialLog{}).Get() // Just to sync
 	require.True(t, db.AssertExpectations(t))
 
 	// Later searcher decides it's done.
 	db.On("UpdateTrial", 0, model.StoppingCompletedState).Return(nil)
 	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -411,7 +413,7 @@ func TestTrialRestarts(t *testing.T) {
 		taskID,
 		1,
 		model.PausedState,
-		TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
 		rm, logger,
 		db,
 		schemas.WithDefaults(expconf.ExperimentConfig{
@@ -433,7 +435,7 @@ func TestTrialRestarts(t *testing.T) {
 
 	// Pre-scheduled stage.
 	require.NoError(t, system.Ask(self, model.ActiveState).Error())
-	require.NoError(t, system.Ask(self, TrialSearcherState{
+	require.NoError(t, system.Ask(self, trialSearcherState{
 		Create: searcher.Create{RequestID: rID},
 		Op: searcher.ValidateAfter{
 			RequestID: rID,
@@ -498,11 +500,10 @@ func TestTrialRestarts(t *testing.T) {
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
 		containerStateChanged.ContainerStarted = nil
-		require.NoError(t, system.Ask(self, watchRendezvousInfo{
-			allocationID: tr.req.AllocationID,
-			containerID:  cID,
+		require.NoError(t, system.Ask(self, task.WatchRendezvousInfo{
+			AllocationID: tr.req.AllocationID,
+			ContainerID:  cID,
 		}).Error())
-		require.True(t, tr.allocation.rendezvous.ready())
 
 		// Running stage.
 
@@ -524,6 +525,7 @@ func TestTrialRestarts(t *testing.T) {
 			}},
 		}
 		require.NoError(t, system.Ask(self, containerStateChanged).Error())
+		system.Ask(self, model.TrialLog{}).Get() // Just to sync.
 		require.True(t, db.AssertExpectations(t))
 	}
 	require.True(t, model.TerminalStates[tr.state])

@@ -15,7 +15,7 @@ func (db *PgDB) initAllocationSessions() error {
 	return err
 }
 
-// AddAllocation persists a the existence of an allocation.
+// AddAllocation persists the existence of an allocation.
 func (db *PgDB) AddAllocation(
 	taskID model.TaskID, allocationID model.AllocationID, rp string) error {
 	_, err := db.sql.Exec(`

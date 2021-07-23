@@ -1229,7 +1229,7 @@ VALUES
 	})
 }
 
-// TrialByID looks up a trial by AllocationID, returning an error if none exists.
+// TrialByID looks up a trial by ID, returning an error if none exists.
 func (db *PgDB) TrialByID(id int) (*model.Trial, error) {
 	var trial model.Trial
 	err := db.query(`
@@ -1303,7 +1303,6 @@ WHERE task_id = $1
 }
 
 // UpdateTrialRunnerState updates a trial runner's state.
-// TODO(XXX): pepper this call all over trial.go once it won't just lead to oodles of conflicts.
 func (db *PgDB) UpdateTrialRunnerState(id int, state string) error {
 	return db.UpdateTrialRunnerMetadata(id, &trialv1.TrialRunnerMetadata{State: state})
 }
@@ -1603,6 +1602,8 @@ VALUES
 }
 
 // ensureStep inserts a noop step if no step exists at the batch index of the validation.
+// This is used to make sure there is at least a dummy step for each validation or checkpoint,
+// in the event one comes without (e.g. perform_initial_validation).
 func (db *PgDB) ensureStep(
 	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID,
 	totalBatches, totalRecords int, totalEpochs float32, startTime time.Time,

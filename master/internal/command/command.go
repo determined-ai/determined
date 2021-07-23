@@ -99,7 +99,7 @@ type command struct {
 	registeredTime       time.Time
 	task                 *sproto.AllocateRequest
 	container            *container.Container
-	allocation           sproto.Reservation
+	reservation          sproto.Reservation
 	proxyNames           []string
 	exitStatus           *string
 	addresses            []container.Address
@@ -305,7 +305,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 			return errors.Wrap(err, "cannot start a new task session")
 		}
 
-		c.allocation = msg.Reservations[0]
+		c.reservation = msg.Reservations[0]
 
 		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, taskToken), 0)
 
@@ -331,11 +331,11 @@ func (c *command) terminate(ctx *actor.Context) {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
 
-	if c.allocation == nil {
+	if c.reservation == nil {
 		c.exit(ctx, "task is aborted without being scheduled")
 	} else {
 		ctx.Log().Info("task forcible terminating")
-		c.allocation.Kill(ctx)
+		c.reservation.Kill(ctx)
 	}
 }
 

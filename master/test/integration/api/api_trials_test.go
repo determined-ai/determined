@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -133,17 +135,17 @@ func trialDetailAPITests(
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
-			step := testutils.StepModel(trial.ID)
-			step.ID = id
-			step.TotalBatches = id * experiment.Config.SchedulingUnit()
-			err = db.AddStep(step)
-			assert.NilError(t, err, "failed to insert step")
-
-			metrics := map[string]interface{}{
+			metrics, err := structpb.NewStruct(map[string]interface{}{
 				"avg_metrics": tc.metrics,
-			}
-			err = db.UpdateStep(trial.ID, step.TotalBatches, model.CompletedState, metrics)
-			assert.NilError(t, err, "failed to update step")
+			})
+			assert.NilError(t, err, "failed to make proto metrics")
+
+			err = db.AddTrainingMetrics(context.Background(), &trialv1.TrainingMetrics{
+				TrialId:      int32(trial.ID),
+				TotalBatches: int32(id * experiment.Config.SchedulingUnit()),
+				Metrics:      metrics,
+			})
+			assert.NilError(t, err, "failed to insert step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)
 			req := apiv1.GetTrialRequest{TrialId: int32(trial.ID)}
@@ -226,6 +228,8 @@ func trialProfilerMetricsTests(
 		assert.Assert(t, origEqRecv, "received:\nt\t%s\noriginal:\n\t%s", bRecv, bOrig)
 	}
 
+	err = pgDB.UpdateTrial(trial.ID, model.StoppingCompletedState)
+	assert.NilError(t, err, "failed to update trial state")
 	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
 	assert.NilError(t, err, "failed to update trial state")
 
@@ -579,6 +583,8 @@ func trialLogFollowingTests(
 		assertStringContains(t, resp.Message, message)
 	}
 
+	err = pgDB.UpdateTrial(trial.ID, model.StoppingCompletedState)
+	assert.NilError(t, err, "failed to update trial state")
 	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
 	assert.NilError(t, err, "failed to update trial state")
 

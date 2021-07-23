@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/task"
+
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/workload"
-
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/pkg/errors"
 
@@ -22,21 +22,16 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// On the surface, a trial is an actor which is responsible for handling:
-//  - messages from the scheduler,
+// A trial is a task actor which is responsible for handling:
+//  - messages from the resource manager,
 //  - messages from the experiment,
 //  - messages from the trial container(s), and
 //  - keeping the trial table of the database up-to-date.
 //
-// At its heart, the trial consists of a task and allocation state machine
-// constantly trying to rectify with each other. On one end the experiment
-// starts a trial and, along with the user, sets its desired state, 'ACTIVE',
-// 'PAUSED', 'STOPPING_CANCELED', etc. On the other end there is the
-// state machine of the underlying task trying to rectify itself with
-// the desired state. If the trial is 'ACTIVE' and has work, the task
-// is trying to allocated, start containers and await their termination,
-// if it is 'STOPPING_CANCELED', it is trying to preempt the task runner
-// and move us to the 'CANCELED' state, and so on.
+// The trial's desired state is dictated to it by the experiment, searcher and user; they push
+// it to states like 'ACTIVE', 'PAUSED' and kill or wake it when more work is available. It takes
+// this information and works with the resource manager, allocation, etc, to push us towards
+// a terminal state, by requesting resources, managing them and restarting them on failures.
 type trial struct {
 	id           int
 	taskID       model.TaskID
@@ -58,7 +53,7 @@ type trial struct {
 	// state is the current state of the trial. It's patched by experiment changes and kill trial.
 	state model.State
 	// searcher encapsulates the searcher state of the trial.
-	searcher TrialSearcherState
+	searcher trialSearcherState
 	// restarts is a failure count, it increments when the trial fails and we retry it.
 	restarts int
 	// runID is a count of how many times the task container(s) have stopped and restarted, which
@@ -69,7 +64,7 @@ type trial struct {
 	// the current allocation request.
 	req *sproto.AllocateRequest
 	// all the state of the current allocation.
-	allocation *trialAllocation
+	allocation *task.Allocation
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -77,7 +72,7 @@ func newTrial(
 	taskID model.TaskID,
 	experimentID int,
 	initialState model.State,
-	searcher TrialSearcherState,
+	searcher trialSearcherState,
 	rm, logger *actor.Ref,
 	db db.DB,
 	config expconf.ExperimentConfig,
@@ -126,31 +121,30 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 	case model.State:
 		return t.transition(ctx, msg)
-	case TrialSearcherState:
+	case trialSearcherState:
 		t.searcher = msg
 		switch {
 		case !t.searcher.Complete:
 			return t.maybeAllocateTask(ctx)
-		case t.searcher.Finished():
+		case t.searcher.Complete && t.searcher.Closed:
 			return t.transition(ctx, model.StoppingCompletedState)
 		}
 		return nil
 
 	case sproto.ResourcesAllocated:
 		return t.processAllocation(ctx, msg)
+	case task.AllocationTerminated:
+		return t.processAllocationExit(ctx, msg)
 
 	case sproto.TaskContainerStateChanged,
-		sproto.ReleaseResources, watchRendezvousInfo, unwatchRendezvousInfo,
-		rendezvousTimeout, watchPreemption, ackPreemption, unwatchPreemption, preemptionTimeout:
+		sproto.ReleaseResources, task.WatchRendezvousInfo, task.UnwatchRendezvousInfo,
+		task.RendezvousTimeout, task.WatchPreemption, task.AckPreemption,
+		task.UnwatchPreemption, task.PreemptionTimeout:
 		if t.allocation == nil {
-			return errNoAllocation{action: fmt.Sprintf("%T", msg)}
+			return task.ErrNoAllocation{Action: fmt.Sprintf("%T", msg)}
 		}
-		switch status, err := t.allocation.process(ctx); {
-		case err != nil:
-			return err
-		case status != nil:
-			return t.processAllocationExit(ctx, *status)
-		}
+		return t.allocation.Receive(ctx)
+
 	case sproto.ContainerLog:
 		if log, err := t.enrichTrialLog(model.TrialLog{
 			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
@@ -173,6 +167,8 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+// recover recovers the trial minimal (hopefully to stay) state for a trial actor.
+// Separately, the experiment stores and recovers our searcher state.
 func (t *trial) recover() error {
 	runID, restarts, err := t.db.TrialRunIDAndRestarts(t.id)
 	if err != nil {
@@ -183,8 +179,7 @@ func (t *trial) recover() error {
 	return nil
 }
 
-// maybeAllocateTask checks if the trial's task is in an allocatable state and
-// allocates it if so.
+// maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	if !(t.allocation == nil &&
 		!t.searcher.Complete &&
@@ -218,12 +213,14 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	return nil
 }
 
+// processAllocation receives resources and starts them, taking care of house keeping like
+// saving metadata, materializing the task spec and initializing the trialAllocation.
 func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
-	// Ignore this message if it is from the last run of the trial.
-	if t.req == nil || msg.ID != t.req.AllocationID {
-		ctx.Log().
-			WithField("allocation", t.req).
-			Infof("ignoring and stale allocation %v", msg)
+	if t.req == nil {
+		ctx.Log().Infof("no allocation requested by received %v", msg)
+		return nil
+	} else if msg.ID != t.req.AllocationID {
+		ctx.Log().Infof("ignoring stale allocation %v (actual = %v)", msg, t.req)
 		return nil
 	}
 
@@ -253,24 +250,12 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
 			TaskHandler: ctx.Self(),
 		})
-		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID, trialID: t.id})
+		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 	}
 
 	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
 		return errors.Wrap(err, "failed to save trial run AllocationID")
-	}
-	ctx.AddLabel("trial-run-id", t.runID)
-
-	if err := t.db.AddAllocation(t.taskID, t.req.AllocationID, msg.ResourcePool); err != nil {
-		return errors.Wrap(err, "failed to save trial allocation")
-	}
-
-	ctx.Log().Infof("starting trial container")
-
-	taskToken, err := t.db.StartAllocationSession(t.req.AllocationID)
-	if err != nil {
-		return errors.Wrap(err, "cannot start a new task session for a trial")
 	}
 
 	var latestBatch int
@@ -283,7 +268,6 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 	default:
 		latestBatch = latestCheckpoint.TotalBatches
 	}
-
 	trialSpec := &tasks.TrialSpec{
 		Base: *t.taskSpec,
 
@@ -299,36 +283,28 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 		IsMultiAgent:     len(msg.Reservations) > 1,
 	}
 
-	t.allocation = newTrialAllocation(*t.req, msg.Reservations)
-	actors.NotifyAfter(ctx, rendezvousTimeoutDuration, rendezvousTimeout{taskID: t.req.AllocationID})
-
-	for rank, a := range msg.Reservations {
-		a.Start(ctx, trialSpec.ToTaskSpec(t.generatedKeys, taskToken), rank)
-	}
-
-	return nil
+	t.allocation = task.NewAllocation(
+		t.taskID, *t.req, msg.Reservations, trialSpec, t.generatedKeys, t.db)
+	return t.allocation.Prestart(ctx)
 }
 
-func (t *trial) processAllocationExit(ctx *actor.Context, exit AllocationExitStatus) error {
-	ctx.Log().
-		WithField("preempt_ack", t.allocation.preemption.acknowledged()).
-		WithField("killed", t.allocation.killed).
-		Info("trial allocation exited")
+// processAllocationExit cleans up after an allocation exit and exits permanently or reallocates.
+func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationTerminated) error {
+	ctx.Log().Info("trial allocation exited")
 
+	// Clean up old stuff.
+	if err := t.allocation.PostStop(ctx); err != nil {
+		return err
+	}
+	t.req = nil
+	t.allocation = nil
 	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
-	if err := t.db.DeleteAllocationSession(t.req.AllocationID); err != nil {
-		return errors.Wrap(err, "error delete task session for a trial")
-	}
-
-	if err := t.db.CompleteAllocation(t.req.AllocationID); err != nil {
-		return errors.Wrap(err, "failed to mark trial run completed")
-	}
-
+	// Decide if this is permanent.
 	switch {
-	case exit.err != nil:
+	case exit.Err != nil:
 		ctx.Log().
-			WithError(exit.err).
+			WithError(exit.Err).
 			Errorf("trial failed (restart %d/%d)", t.restarts, t.config.MaxRestarts())
 		t.restarts++
 		if err := t.db.UpdateTrialRestarts(t.id, t.restarts); err != nil {
@@ -336,33 +312,30 @@ func (t *trial) processAllocationExit(ctx *actor.Context, exit AllocationExitSta
 		}
 		if t.restarts > t.config.MaxRestarts() {
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
-				trialID: t.id,
-				reason:  workload.Errored,
+				requestID: t.searcher.Create.RequestID,
+				reason:    workload.Errored,
 			})
 			return t.transition(ctx, model.ErrorState)
 		}
-	case exit.userRequestedStop:
+	case exit.UserRequestedStop:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
-			trialID: t.id,
-			reason:  workload.UserCanceled,
+			requestID: t.searcher.Create.RequestID,
+			reason:    workload.UserCanceled,
 		})
 		return t.transition(ctx, model.CompletedState)
-	case t.searcher.Finished():
+	case t.searcher.Complete && t.searcher.Closed:
 		return t.transition(ctx, model.CompletedState)
 	case model.StoppingStates[t.state]:
 		return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 	}
 
-	t.req = nil
-	t.allocation = nil
+	// Maybe reschedule.
 	return errors.Wrap(t.maybeAllocateTask(ctx), "failed to reschedule trial")
 }
 
-// transition handles rectifying user and experiment requested states with task state, and
-// moving us out of progressive states once they are reflected by the state of the task.
+// transition transitions the trial and rectifies the underlying allocation state with it.
 func (t *trial) transition(ctx *actor.Context, state model.State) error {
-	// All the logic to transition a trial's state lives in the db layer, maybe it should
-	// be moved.
+	// Transition the trial.
 	ctx.Log().Infof("trial changed from state %s to %s", t.state, state)
 	if t.idSet {
 		if err := t.db.UpdateTrial(t.id, state); err != nil {
@@ -371,6 +344,7 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 	}
 	t.state = state
 
+	// Rectify the allocation state with the transition.
 	switch {
 	case t.state == model.ActiveState:
 		return t.maybeAllocateTask(ctx)
@@ -382,12 +356,7 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 			ctx.Log().Info("terminating trial before resources are allocated")
 			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 		default:
-			switch status, err := t.allocation.terminate(ctx, preempt); {
-			case err != nil:
-				return errors.Wrap(err, "error preempting allocation")
-			case status != nil:
-				return t.processAllocationExit(ctx, *status)
-			}
+			return t.allocation.Terminate(ctx, task.Graceful)
 		}
 	case model.StoppingStates[t.state]:
 		switch {
@@ -399,18 +368,13 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 		default:
-			action := map[model.State]terminationType{
-				model.StoppingCompletedState: noop,
-				model.StoppingCanceledState:  preempt,
-				model.StoppingKilledState:    kill,
-				model.StoppingErrorState:     kill,
+			action := map[model.State]task.TerminationType{
+				model.StoppingCompletedState: task.Noop,
+				model.StoppingCanceledState:  task.Graceful,
+				model.StoppingKilledState:    task.Kill,
+				model.StoppingErrorState:     task.Kill,
 			}[t.state]
-			switch status, err := t.allocation.terminate(ctx, action); {
-			case err != nil:
-				return errors.Wrapf(err, "error terminating allocation (%s)", action)
-			case status != nil:
-				return t.processAllocationExit(ctx, *status)
-			}
+			return t.allocation.Terminate(ctx, action)
 		}
 	case model.TerminalStates[t.state]:
 		ctx.Self().Stop()

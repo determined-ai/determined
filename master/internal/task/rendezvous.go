@@ -1,9 +1,11 @@
-package internal
+package task
 
 import (
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -27,35 +29,41 @@ const (
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
 )
 
-var rendezvousTimeoutDuration = 10 * time.Minute
+// RendezvousTimeoutDuration is the default timeout for rendezvous.
+var RendezvousTimeoutDuration = 10 * time.Minute
 
 type (
-	// watchRendezvousInfo begins watching for rendezvous info.
+	// WatchRendezvousInfo begins watching for rendezvous info.
 	// When all the containers are ready, the trial will send all the
 	// peer addresses on the channel in the response.
-	watchRendezvousInfo struct {
-		allocationID model.AllocationID
-		containerID  cproto.ID
+	WatchRendezvousInfo struct {
+		AllocationID model.AllocationID
+		ContainerID  cproto.ID
 	}
-	rendezvousInfoOrError struct {
-		info *trialv1.RendezvousInfo
-		err  error
+	// RendezvousInfoOrError contains either rendezvous info or an error from failing
+	// to materialize it.
+	RendezvousInfoOrError struct {
+		Info *trialv1.RendezvousInfo
+		Err  error
 	}
-	rendezvousWatcher struct {
-		C <-chan rendezvousInfoOrError
+	// RendezvousWatcher contains a channel which can be polled for rendezvous info.
+	RendezvousWatcher struct {
+		C <-chan RendezvousInfoOrError
 	}
-	unwatchRendezvousInfo struct{ id cproto.ID }
+	// UnwatchRendezvousInfo removes the watcher for the given container.
+	UnwatchRendezvousInfo struct{ ID cproto.ID }
 
+	// RendezvousTimeout tracks the timeout of the allocation reservations rendezvousing.
 	// It is possible that it takes very long for all containers to be connected after the first
 	// container is connected. This might happen when the k8s cluster waits for new instances
 	// to spin up, which might not happen at all. At the same time, taking up part of all
 	// the resources and waiting is wasteful. So we need to detect this situation.
-	rendezvousTimeout struct{ taskID model.AllocationID }
+	RendezvousTimeout struct{ AllocationID model.AllocationID }
 
-	// rendezvous encapsulates the rendezvous state of a trial.
-	rendezvous struct {
+	// Rendezvous encapsulates the rendezvous state of a trial.
+	Rendezvous struct {
 		allocationID      model.AllocationID
-		watchers          map[cproto.ID]chan<- rendezvousInfoOrError
+		watchers          map[cproto.ID]chan<- RendezvousInfoOrError
 		ranks             map[cproto.ID]int
 		addresses         map[cproto.ID][]cproto.Address
 		lastWatchTime     time.Time
@@ -63,27 +71,34 @@ type (
 	}
 )
 
-func newRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) rendezvous {
-	return rendezvous{
+// NewRendezvous returns a new rendezvous component.
+func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) Rendezvous {
+	return Rendezvous{
 		allocationID: allocationID,
 		ranks:        ranks,
 		addresses:    map[cproto.ID][]cproto.Address{},
-		watchers:     map[cproto.ID]chan<- rendezvousInfoOrError{},
+		watchers:     map[cproto.ID]chan<- RendezvousInfoOrError{},
 	}
 }
 
-func (r *rendezvous) process(ctx *actor.Context) error {
+// Prestart sets up the rendezvous.
+func (r *Rendezvous) Prestart(ctx *actor.Context) {
+	actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{AllocationID: r.allocationID})
+}
+
+// Receive implements actor.Receive.
+func (r *Rendezvous) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case watchRendezvousInfo:
-		if w, err := r.watch(msg.allocationID, msg.containerID); err != nil {
+	case WatchRendezvousInfo:
+		if w, err := r.watch(msg.AllocationID, msg.ContainerID); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(w)
 		}
-	case unwatchRendezvousInfo:
-		r.unwatch(msg.id)
-	case rendezvousTimeout:
-		if err := r.checkTimeout(msg.taskID); err != nil {
+	case UnwatchRendezvousInfo:
+		r.unwatch(msg.ID)
+	case RendezvousTimeout:
+		if err := r.checkTimeout(msg.AllocationID); err != nil {
 			return err
 		}
 	default:
@@ -100,50 +115,50 @@ func ranksFromReservations(allocations []sproto.Reservation) map[cproto.ID]int {
 	return ranks
 }
 
-func (r *rendezvous) watch(
+func (r *Rendezvous) watch(
 	allocationID model.AllocationID, id cproto.ID,
-) (rendezvousWatcher, error) {
+) (RendezvousWatcher, error) {
 	if r.allocationID != allocationID {
-		err := errStaleTask{received: allocationID, actual: r.allocationID}
-		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+		err := ErrStaleTask{Received: allocationID, Actual: r.allocationID}
+		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.ranks[id]; !ok {
-		err := errStaleContainer{id: id}
-		return rendezvousWatcher{}, apiutils.AsValidationError(err.Error())
+		err := ErrStaleContainer{ID: id}
+		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.watchers[id]; ok {
-		return rendezvousWatcher{}, apiutils.AsValidationError(
+		return RendezvousWatcher{}, apiutils.AsValidationError(
 			"rendezvous request from already connected container: %s", id,
 		)
 	}
 
 	// Channel is size 1 since rendezvous info will only ever be sent once.
-	w := make(chan rendezvousInfoOrError, 1)
+	w := make(chan RendezvousInfoOrError, 1)
 	r.watchers[id] = w
 	r.lastWatchTime = time.Now()
 	if r.ready() {
 		r.push()
 	}
-	return rendezvousWatcher{C: w}, nil
+	return RendezvousWatcher{C: w}, nil
 }
 
-func (r *rendezvous) unwatch(id cproto.ID) {
+func (r *Rendezvous) unwatch(id cproto.ID) {
 	if r == nil {
 		return
 	}
 	delete(r.watchers, id)
 }
 
-func (r *rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
+func (r *Rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
 	r.addresses[id] = addresses
 	if r.ready() {
 		r.push()
 	}
 }
 
-func (r *rendezvous) containerTerminated(id cproto.ID) {
+func (r *Rendezvous) containerTerminated(id cproto.ID) {
 	delete(r.addresses, id)
 }
 
-func (r rendezvous) rank(id cproto.ID) int {
+func (r Rendezvous) rank(id cproto.ID) int {
 	return r.ranks[id]
 }
 
@@ -152,7 +167,7 @@ func (r rendezvous) rank(id cproto.ID) int {
 // message. The two messages are not guaranteed to come in-order. During each run of the
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
-func (r *rendezvous) ready() bool {
+func (r *Rendezvous) ready() bool {
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all taskTerminated.
 	if r.allReadySucceeded {
@@ -168,19 +183,19 @@ func (r *rendezvous) ready() bool {
 
 // push gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
-func (r rendezvous) push() bool {
+func (r Rendezvous) push() bool {
 	if !r.ready() {
 		return false
 	}
 	caddrs, raddrs, err := r.info()
 	for _, caddr := range caddrs {
 		w := r.watchers[caddr.id]
-		w <- rendezvousInfoOrError{
-			info: &trialv1.RendezvousInfo{
+		w <- RendezvousInfoOrError{
+			Info: &trialv1.RendezvousInfo{
 				Addresses: raddrs,
 				Rank:      int32(r.ranks[caddr.id]),
 			},
-			err: err,
+			Err: err,
 		}
 		close(w)
 		delete(r.watchers, caddr.id)
@@ -189,15 +204,15 @@ func (r rendezvous) push() bool {
 }
 
 // checkTimeout checks if the task should timeout waiting for rendezvous.
-func (r *rendezvous) checkTimeout(allocationID model.AllocationID) error {
+func (r *Rendezvous) checkTimeout(allocationID model.AllocationID) error {
 	if r == nil {
 		return nil
 	}
 
-	exceededTimeout := time.Now().After(r.lastWatchTime.Add(rendezvousTimeoutDuration))
+	exceededTimeout := time.Now().After(r.lastWatchTime.Add(RendezvousTimeoutDuration))
 	if r.allocationID == allocationID && exceededTimeout {
-		return errTimeoutExceeded{
-			message: "some containers are taking a long time to " +
+		return ErrTimeoutExceeded{
+			Message: "some containers are taking a long time to " +
 				"connect to master; when running on kubernetes this may happen " +
 				"because only some of the pods have been scheduled; it is possible " +
 				"that some pods will never be scheduled without adding compute " +
@@ -207,13 +222,13 @@ func (r *rendezvous) checkTimeout(allocationID model.AllocationID) error {
 	return nil
 }
 
-func (r *rendezvous) close() {
+func (r *Rendezvous) close() {
 	if r == nil {
 		return
 	}
 
 	for cID, w := range r.watchers {
-		w <- rendezvousInfoOrError{err: errors.New("task taskTerminated")}
+		w <- RendezvousInfoOrError{Err: errors.New("task taskTerminated")}
 		close(w)
 		delete(r.watchers, cID)
 	}
@@ -225,7 +240,7 @@ type cAddress struct {
 	ordinal   int
 }
 
-func (r *rendezvous) info() ([]cAddress, []string, error) {
+func (r *Rendezvous) info() ([]cAddress, []string, error) {
 	var caddrs []cAddress
 	for id, rank := range r.ranks {
 		caddr := cAddress{

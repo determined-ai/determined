@@ -274,7 +274,7 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
-// Long poll for updates to the preemption status for a trial.
+// Long poll for updates to the preemption status for an allocation.
 message AllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "allocation_id" ] }
@@ -392,7 +392,7 @@ message ReportTrialCheckpointMetadataRequest {
 // Response to ReportTrialCheckpointMetadataRequest
 message ReportTrialCheckpointMetadataResponse {}
 
-// Gathers the rendezvous info for the task.
+// Gathers the rendezvous info for an allocation.
 message AllocationRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "allocation_id", "container_id" ] }

@@ -1,4 +1,4 @@
-package internal
+package task
 
 import (
 	"testing"
@@ -11,25 +11,25 @@ import (
 
 func TestPreemption(t *testing.T) {
 	// Initialize a nil preemption.
-	var p preemption
+	var p Preemption
 
 	// Watch nil should not panic and return an error.
 	id := uuid.New()
-	_, err := p.watch(model.NewAllocationID(uuid.New().String()), id)
+	_, err := p.Watch(model.NewAllocationID(uuid.New().String()), id)
 	assert.ErrorContains(t, err, "stale task")
 
 	// All method on nil should not panic.
-	p.unwatch(id)
-	p.preempt()
-	p.close()
+	p.Unwatch(id)
+	p.Preempt()
+	p.Close()
 
 	// "task" is allocated.
 	t1 := model.NewAllocationID(uuid.New().String())
-	p = newPreemption(t1)
+	p = NewPreemption(t1)
 
 	// real watcher connects
 	id = uuid.New()
-	w, err := p.watch(t1, id)
+	w, err := p.Watch(t1, id)
 	assert.NilError(t, err)
 
 	// should immediately receive initial status.
@@ -40,7 +40,7 @@ func TestPreemption(t *testing.T) {
 	}
 
 	// on preemption, it should also receive status.
-	p.preempt()
+	p.Preempt()
 
 	// should receive updated preemption status.
 	select {
@@ -50,20 +50,20 @@ func TestPreemption(t *testing.T) {
 	}
 
 	// preempted preemption unwatching should work.
-	p.unwatch(id)
+	p.Unwatch(id)
 
 	// new post-preemption watch connects
 	id = uuid.New()
-	w, err = p.watch(t1, id)
+	w, err = p.Watch(t1, id)
 	assert.NilError(t, err)
 
 	// should immediately receive initial status and initial status should be preemption.
 	select {
 	case <-w.C:
 	default:
-		t.Fatal("preemptionWatcher.C was empty channel (should come with initial status when preempted)")
+		t.Fatal("PreemptionWatcher.C was empty channel (should come with initial status when preempted)")
 	}
 
 	// preempted preemption unwatching should work.
-	p.unwatch(id)
+	p.Unwatch(id)
 }

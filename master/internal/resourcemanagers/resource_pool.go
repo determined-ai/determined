@@ -147,12 +147,12 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 }
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
+	ctx.Log().Infof("resources are released for %s", handler.Address())
 	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
 		for _, allocation := range allocated.Reservations {
 			typed := allocation.(*containerReservation)
 			typed.agent.deallocateContainer(typed.container.id)
 		}
-		ctx.Log().Infof("resources are released for %s", handler.Address())
 	}
 	rp.taskList.RemoveTaskByHandler(handler)
 }

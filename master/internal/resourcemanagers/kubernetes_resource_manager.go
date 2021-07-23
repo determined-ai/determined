@@ -225,7 +225,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	}
 
 	ctx.Log().Infof(
-		"resources are requested by %s (Task AllocationID: %s)",
+		"resources are requested by %s (Allocation ID: %s)",
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	k.reqList.AddTask(&msg)

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/task"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 
 	cproto "github.com/determined-ai/determined/master/pkg/container"
@@ -565,13 +567,13 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 
 	id := uuid.New()
-	var w preemptionWatcher
-	if err := a.ask(handler.Address(), watchPreemption{
-		id: id, allocationID: allocationID,
+	var w task.PreemptionWatcher
+	if err := a.ask(handler.Address(), task.WatchPreemption{
+		ID: id, AllocationID: allocationID,
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), unwatchPreemption{id: id})
+	defer a.m.system.TellAt(handler.Address(), task.UnwatchPreemption{ID: id})
 
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(req.TimeoutSeconds)*time.Second)
 	defer cancel()
@@ -591,8 +593,8 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		return nil, err
 	}
 
-	if err := a.ask(handler.Address(), ackPreemption{
-		allocationID: model.AllocationID(req.AllocationId),
+	if err := a.ask(handler.Address(), task.AckPreemption{
+		AllocationID: model.AllocationID(req.AllocationId),
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -602,14 +604,18 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 func (a *apiServer) GetCurrentTrialSearcherOperation(
 	_ context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
-	exp, err := a.experimentActorFromTrialID(int(req.TrialId))
-	if err != nil {
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
 		return nil, err
 	}
+	exp := actor.Addr("experiments", eID)
 
-	var resp TrialSearcherState
+	var resp trialSearcherState
 	if err := a.ask(exp, trialGetSearcherState{
-		trialID: int(req.TrialId),
+		requestID: rID,
 	}, &resp); err != nil {
 		return nil, err
 	}
@@ -637,9 +643,9 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	exp := actor.Addr("experiments", eID)
 
 	if err = a.ask(exp, trialCompleteOperation{
-		trialID: int(req.TrialId),
-		metric:  req.CompletedOperation.SearcherMetric,
-		op:      searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
+		requestID: rID,
+		metric:    req.CompletedOperation.SearcherMetric,
+		op:        searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -649,7 +655,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	_ context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	eID, _, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
+	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
 	switch {
 	case errors.Is(err, db.ErrNotFound):
 		return nil, trialNotFound
@@ -659,8 +665,8 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 	exp := actor.Addr("experiments", eID)
 
 	if err = a.ask(exp, trialReportEarlyExit{
-		trialID: int(req.TrialId),
-		reason:  workload.ExitedReasonFromProto(req.EarlyExit.Reason),
+		requestID: rID,
+		reason:    workload.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -736,21 +742,22 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, err
 	}
 
-	var w rendezvousWatcher
-	if err = a.ask(handler.Address(), watchRendezvousInfo{
-		allocationID: model.AllocationID(req.AllocationId),
-		containerID:  cproto.ID(req.ContainerId),
+	var w task.RendezvousWatcher
+	if err = a.ask(handler.Address(), task.WatchRendezvousInfo{
+		AllocationID: model.AllocationID(req.AllocationId),
+		ContainerID:  cproto.ID(req.ContainerId),
 	}, &w); err != nil {
 		return nil, err
 	}
-	defer a.m.system.TellAt(handler.Address(), unwatchRendezvousInfo{id: cproto.ID(req.ContainerId)})
+	defer a.m.system.TellAt(
+		handler.Address(), task.UnwatchRendezvousInfo{ID: cproto.ID(req.ContainerId)})
 
 	select {
 	case rsp := <-w.C:
-		if rsp.err != nil {
+		if rsp.Err != nil {
 			return nil, err
 		}
-		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.info}, nil
+		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.Info}, nil
 	case <-ctx.Done():
 		return nil, nil
 	}
@@ -776,17 +783,6 @@ func (a *apiServer) PostTrialRunnerMetadata(
 	}
 
 	return &apiv1.PostTrialRunnerMetadataResponse{}, nil
-}
-
-func (a *apiServer) experimentActorFromTrialID(trialID int) (actor.Address, error) {
-	eID, _, err := a.m.db.TrialExperimentAndRequestID(trialID)
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return actor.Address{}, trialNotFound
-	case err != nil:
-		return actor.Address{}, err
-	}
-	return actor.Addr("experiments", eID), nil
 }
 
 func (a *apiServer) checkTrialExists(id int) error {

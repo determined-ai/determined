@@ -336,7 +336,9 @@ func (e *Experiment) Transition(state State) (bool, error) {
 // Trial represents a row from the `trials` table.
 type Trial struct {
 	ID int `db:"id"`
-	// Uniquely identifies the trial task among all tasks.
+	// Uniquely identifies the trial task among all tasks. Likely,
+	// to be replaced in the near future by some smarter combination
+	// of ID, RequestID and TaskID.. we don't need them all.
 	TaskID                TaskID     `db:"task_id"`
 	RequestID             *RequestID `db:"request_id"`
 	ExperimentID          int        `db:"experiment_id"`

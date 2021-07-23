@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/determined-ai/determined/master/internal/db"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/labstack/echo/v4"
@@ -21,21 +23,16 @@ func (m *Master) postTrialKill(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	trial, err := m.db.TrialByID(args.TrialID)
-	if err != nil {
+	eID, rID, err := m.db.TrialExperimentAndRequestID(args.TrialID)
+	switch {
+	case errors.Is(err, db.ErrNotFound):
+		return nil, trialNotFound
+	case err != nil:
 		return nil, err
 	}
-	resp := m.system.AskAt(actor.Addr("experiments", trial.ExperimentID),
-		getTrial{trialID: args.TrialID})
-	if resp.Source() == nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("active experiment not found: %d", trial.ExperimentID))
-	}
-	if resp.Empty() {
-		return nil, echo.NewHTTPError(http.StatusNotFound,
-			fmt.Sprintf("active trial not found: %d", args.TrialID))
-	}
-	resp = m.system.AskAt(resp.Get().(*actor.Ref).Address(), model.StoppingCanceledState)
+	trialAddr := actor.Addr("experiments", eID, rID)
+
+	resp := m.system.AskAt(trialAddr, model.StoppingCanceledState)
 	if resp.Source() == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("active trial not found: %d", args.TrialID))

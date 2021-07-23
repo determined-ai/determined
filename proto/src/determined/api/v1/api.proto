@@ -514,10 +514,10 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Long poll preemption signals for the given task. If the task's current
-  // task has been preempted when called, it will return so immediately.
-  // Otherwise, the connection will be kept open until the timeout is reached or
-  // the task is preempted.
+  // Long poll preemption signals for the given allocation. If the allocation
+  // has been preempted when called, it will return so immediately. Otherwise,
+  // the connection will be kept open until the timeout is reached or
+  // the allocation is preempted.
   rpc AllocationPreemptionSignal(AllocationPreemptionSignalRequest)
       returns (AllocationPreemptionSignalResponse) {
     option (google.api.http) = {
@@ -527,10 +527,10 @@ service Determined {
       tags: "Internal"
     };
   }
-  // Acknowledge the receipt of a signal to stop the current running task early.
-  // This is used indicate and exit 0 isn't final. Used for HP search directed
-  // early stops and preemption signals (not necessarily just scheduler
-  // preemption).
+  // Acknowledge the receipt of a signal to stop the given allocation early.
+  // This is used indicate and exit 0 isn't final; specifically, it is used
+  // for HP search directed early stops and preemption signals (not necessarily
+  // just scheduler preemption).
   rpc AckAllocationPreemptionSignal(AckAllocationPreemptionSignalRequest)
       returns (AckAllocationPreemptionSignalResponse) {
     option (google.api.http) = {
@@ -632,8 +632,9 @@ service Determined {
       tags: "Internal"
     };
   }
-  // Gather a task's rendezvous info. Blocks until all trial containers connect
-  // to gather their rendezvous information and responds to them all at once.
+  // Gather an allocation's rendezvous info. Blocks until all trial containers
+  // connect to gather their rendezvous information and responds to them all at
+  // once.
   rpc AllocationRendezvousInfo(AllocationRendezvousInfoRequest)
       returns (AllocationRendezvousInfoResponse) {
     option (google.api.http) = {

@@ -17,15 +17,15 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 
 func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	args := struct {
-		TaskID string `path:"task_id"`
+		AllocationID string `path:"allocation_id"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	id := model.AllocationID(args.TaskID)
+	id := model.AllocationID(args.AllocationID)
 	resp := m.system.Ask(m.rm, sproto.GetTaskSummary{ID: &id})
 	if resp.Empty() {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.TaskID)
+		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.AllocationID)
 	}
 	return resp.Get(), nil
 }

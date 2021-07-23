@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,53 +31,42 @@ import (
 type (
 	// Searcher-related messages.
 	trialCreated struct {
-		trialID   int
 		requestID model.RequestID
 	}
 	trialCompleteOperation struct {
-		trialID int
-		op      searcher.ValidateAfter
-		metric  float64
+		requestID model.RequestID
+		op        searcher.ValidateAfter
+		metric    float64
 	}
 	trialReportEarlyExit struct {
-		trialID int
-		reason  workload.ExitedReason
+		requestID model.RequestID
+		reason    workload.ExitedReason
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
 		progress  model.PartialUnits
 	}
 	trialGetSearcherState struct {
-		trialID int
+		requestID model.RequestID
 	}
-
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
 		requestID model.RequestID
 	}
-	getTrial       struct{ trialID int }
-	killExperiment struct{}
 )
 
-// TrialSearcherState is the searcher state for a single trial.
-type TrialSearcherState struct {
-	Create   searcher.Create
-	Op       searcher.ValidateAfter
-	Complete bool
-	Closed   bool
-}
-
-// Finished returns true if the trial has completed all work that will ever be assigned to it.
-func (t TrialSearcherState) Finished() bool {
-	return t.Complete && t.Closed
-}
-
 type (
+	trialSearcherState struct {
+		Create   searcher.Create
+		Op       searcher.ValidateAfter
+		Complete bool
+		Closed   bool
+	}
+
 	experimentState struct {
 		SearcherState      json.RawMessage                        `json:"searcher_state"`
-		TrialSearcherState map[model.RequestID]TrialSearcherState `json:"trial_searcher_state"`
-		BestValidation     *float64                               `json:"best_validation"`
+		TrialSearcherState map[model.RequestID]trialSearcherState `json:"trial_searcher_state"`
 	}
 
 	experiment struct {
@@ -164,7 +155,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		faultToleranceEnabled: true,
 
 		experimentState: experimentState{
-			TrialSearcherState: map[model.RequestID]TrialSearcherState{},
+			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
 	}, nil
 }
@@ -197,7 +188,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.processOperations(ctx, ops, nil)
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
 	case trialCreated:
-		ops, err := e.searcher.TrialCreated(msg.requestID, msg.trialID)
+		ops, err := e.searcher.TrialCreated(msg.requestID)
 		e.processOperations(ctx, ops, err)
 	case trialCompleteOperation:
 		state, ok := e.TrialSearcherState[msg.op.RequestID]
@@ -216,18 +207,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		state.Complete = true
 		e.TrialSearcherState[msg.op.RequestID] = state
 		ctx.Tell(ctx.Child(msg.op.RequestID), state)
-		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
+		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialSnapshot:
 		// Handled by the defered call at the top.
 	case trialReportEarlyExit:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
-		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial not found"))
-			return nil
-		}
-
-		state, ok := e.TrialSearcherState[requestID]
+		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {
 			ctx.Respond(api.AsValidationError("trial has no state"))
 			return nil
@@ -235,9 +220,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		state.Complete = true
 		state.Closed = true
-		e.TrialSearcherState[requestID] = state
-		ctx.Tell(ctx.Child(requestID), state)
-		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
+		e.TrialSearcherState[msg.requestID] = state
+		ctx.Tell(ctx.Child(msg.requestID), state)
+		ops, err := e.searcher.TrialExitedEarly(msg.requestID, msg.reason)
 		e.processOperations(ctx, ops, err)
 	case trialReportProgress:
 		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
@@ -247,18 +232,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
 	case trialGetSearcherState:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
+		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial %d not found", msg.trialID))
+			ctx.Respond(api.AsErrNotFound("trial has no state"))
 			return nil
 		}
-
-		state, ok := e.TrialSearcherState[requestID]
-		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial %d has no state", msg.trialID))
-			return nil
-		}
-
 		ctx.Respond(state)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
@@ -267,13 +245,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
-
-	case getTrial:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
-		ref := ctx.Child(requestID)
-		if ok && ref != nil {
-			ctx.Respond(ref)
-		}
 
 	// Patch experiment messages.
 	case model.State:
@@ -371,7 +342,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				"experiment in incompatible state %s", e.State))
 		}
 
-	// TODO(XXX): Why do cancel and kill have the same behavior?
 	case *apiv1.CancelExperimentRequest:
 		switch {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
@@ -386,7 +356,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			}
 		}
 
-	case killExperiment, *apiv1.KillExperimentRequest:
+	case *apiv1.KillExperimentRequest:
 		switch {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.KillExperimentResponse{})
@@ -451,7 +421,7 @@ func (e *experiment) processOperations(
 				return
 			}
 			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
-			state := TrialSearcherState{Create: op, Complete: true}
+			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, op.RequestID))
 			ctx.ActorOf(op.RequestID, newTrial(
@@ -489,12 +459,12 @@ func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint,
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
-		trialID, ok := e.searcher.TrialID(op.Checkpoint.RequestID)
-		if !ok {
-			return nil, errors.Errorf(
+		trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.Checkpoint.RequestID)
+		if err != nil {
+			return nil, errors.Wrapf(err,
 				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
 		}
-		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trialID, nil)
+		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trial.ID, nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpoint not found")
 		}
@@ -546,4 +516,35 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
 	return nil
+}
+
+func checkpointFromTrialIDOrUUID(
+	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
+) (*model.Checkpoint, error) {
+	var checkpoint *model.Checkpoint
+	var err error
+
+	// Attempt to find a Checkpoint object from the given IDs.
+	if trialID != nil {
+		checkpoint, err = db.LatestCheckpointForTrial(*trialID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get checkpoint for source trial %d", *trialID)
+		}
+		if checkpoint == nil {
+			return nil, errors.Errorf("no checkpoint found for source trial %d", *trialID)
+		}
+	} else if checkpointUUIDStr != nil {
+		checkpointUUID, err := uuid.Parse(*checkpointUUIDStr)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid source checkpoint UUID")
+		}
+		checkpoint, err = db.CheckpointByUUID(checkpointUUID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get source checkpoint %v", checkpointUUID)
+		}
+		if checkpoint == nil {
+			return nil, errors.Errorf("no checkpoint found with UUID %v", checkpointUUID)
+		}
+	}
+	return checkpoint, nil
 }

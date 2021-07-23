@@ -107,7 +107,7 @@ func Simulate(
 		case Create:
 			simulation.Results[requestID] = []ValidateAfter{}
 			trialIDs[requestID] = nextTrialID
-			ops, err := s.TrialCreated(operation.RequestID, nextTrialID)
+			ops, err := s.TrialCreated(operation.RequestID)
 			if err != nil {
 				return simulation, err
 			}
@@ -123,7 +123,7 @@ func Simulate(
 			s.SetTrialProgress(requestID, model.PartialUnits(operation.Length.Units))
 
 			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
-			ops, err := s.ValidationCompleted(trialIDs[requestID], metric, operation)
+			ops, err := s.ValidationCompleted(requestID, metric, operation)
 			if err != nil {
 				return simulation, err
 			}
