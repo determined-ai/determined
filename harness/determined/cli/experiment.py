@@ -18,7 +18,7 @@ import determined.load
 from determined import _local_execution_manager
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.common import api, constants, context, util, yaml, set_logger
+from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
