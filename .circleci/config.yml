@@ -784,30 +784,30 @@ commands:
         type: string
         default: ""
     steps:
-            - run:
-                name: Test run success -> uploading results to Determined CI
-                command: |
-                  if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
-                    python .circleci/scripts/upload_test_results.py \
-                    'success' \
-                    <<parameters.test_results_path>> \
-                    ${CIRCLE_BUILD_NUM} \
-                    ${DET_CI_ACCESS_KEY} \
-                    ${DET_CI_URL}
-                  fi
-                when: on_success
-            - run:
-                name: Test run failed -> uploading results to Determined CI
-                command: |
-                  if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
-                    python .circleci/scripts/upload_test_results.py \
-                    'failed' \
-                    <<parameters.test_results_path>> \
-                    ${CIRCLE_BUILD_NUM} \
-                    ${DET_CI_ACCESS_KEY} \
-                    ${DET_CI_URL}
-                  fi
-                when: on_fail
+      - run:
+          name: Test run success -> uploading results to Determined CI
+          command: |
+            if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
+              python .circleci/scripts/upload_test_results.py \
+              'success' \
+              <<parameters.test_results_path>> \
+              ${CIRCLE_BUILD_NUM} \
+              ${DET_CI_ACCESS_KEY} \
+              ${DET_CI_URL}
+            fi
+          when: on_success
+      - run:
+          name: Test run failed -> uploading results to Determined CI
+          command: |
+            if [[ ${CIRCLE_BRANCH} = <<parameters.only_on_branch>> ]] ; then
+              python .circleci/scripts/upload_test_results.py \
+              'failed' \
+              <<parameters.test_results_path>> \
+              ${CIRCLE_BUILD_NUM} \
+              ${DET_CI_ACCESS_KEY} \
+              ${DET_CI_URL}
+            fi
+          when: on_fail
 
   locate-cloudwatch-logs:
     parameters:
