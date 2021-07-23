@@ -25,12 +25,18 @@ import css from './ExperimentDetailsHeader.module.scss';
 interface Props {
   experiment: ExperimentBase;
   fetchExperimentDetails: () => void;
+  isSingleTrial: boolean;
+  showContinueTrial: () => void;
   showForkModal: () => void;
 }
 
-const ExperimentDetailsHeader: React.FC<Props> = (
-  { experiment, fetchExperimentDetails, showForkModal }: Props,
-) => {
+const ExperimentDetailsHeader: React.FC<Props> = ({
+  showContinueTrial,
+  experiment,
+  fetchExperimentDetails,
+  isSingleTrial,
+  showForkModal,
+}: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
@@ -59,37 +65,51 @@ const ExperimentDetailsHeader: React.FC<Props> = (
   }, [ experiment.id, fetchExperimentDetails ]);
 
   const headerOptions = useMemo<Option[]>(() => {
-    const options: Option[] = [
-      {
-        icon: <Icon name="fork" size="small" />,
-        key: 'fork',
-        label: 'Fork',
-        onClick: showForkModal,
+    const continueTrial: Option = {
+      key: 'continue-trial',
+      label: 'Continue Trial',
+      onClick: showContinueTrial,
+    };
+    const downloadModel: Option = {
+      icon: <Icon name="download" size="small" />,
+      key: 'download-model',
+      label: 'Download Model',
+      onClick: (e) => {
+        handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
       },
-      {
-        icon: <Icon name="tensorboard" size="small" />,
-        isLoading: isRunningTensorboard,
-        key: 'tensorboard',
-        label: 'TensorBoard',
-        onClick: async () => {
-          setIsRunningTensorboard(true);
-          try {
-            const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
-            openCommand(tensorboard);
-            setIsRunningTensorboard(false);
-          } catch (e) {
-            setIsRunningTensorboard(false);
-          }
-        },
+    };
+    const fork: Option = {
+      icon: <Icon name="fork" size="small" />,
+      key: 'fork',
+      label: 'Fork',
+      onClick: showForkModal,
+    };
+    const tensorboard: Option = {
+      icon: <Icon name="tensorboard" size="small" />,
+      isLoading: isRunningTensorboard,
+      key: 'tensorboard',
+      label: 'TensorBoard',
+      onClick: async () => {
+        setIsRunningTensorboard(true);
+        try {
+          const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
+          openCommand(tensorboard);
+          setIsRunningTensorboard(false);
+        } catch (e) {
+          setIsRunningTensorboard(false);
+        }
       },
-      {
-        icon: <Icon name="download" size="small" />,
-        key: 'download-model',
-        label: 'Download Model',
-        onClick: (e) => {
-          handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
-        },
-      },
+    };
+
+    const options: Option[] = isSingleTrial ? [
+      tensorboard,
+      downloadModel,
+      fork,
+      continueTrial,
+    ] : [
+      fork,
+      tensorboard,
+      downloadModel,
     ];
 
     if (terminalRunStates.has(experiment.state)) {
@@ -135,6 +155,8 @@ const ExperimentDetailsHeader: React.FC<Props> = (
     isRunningArchive,
     isRunningTensorboard,
     isRunningUnarchive,
+    isSingleTrial,
+    showContinueTrial,
     showForkModal,
   ]);
 

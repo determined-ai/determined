@@ -132,7 +132,7 @@ func createPodWithMockQueue() (
 	map[string]*mockReceiver,
 	map[string]*actor.Ref,
 ) {
-	commandSpec := tasks.CommandSpec{
+	commandSpec := tasks.GenericCommandSpec{
 		Base: tasks.TaskSpec{
 			TaskID:         "task",
 			ContainerID:    "container",

@@ -70,7 +70,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
         <ExperimentTrials experiment={experiment} />
       </TabPane>
       <TabPane key="configuration" tab="Configuration">
-        <React.Suspense fallback={<Spinner tip="Loading experiment configuration editor..." />}>
+        <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
           <ExperimentConfiguration experiment={experiment} />
         </React.Suspense>
       </TabPane>

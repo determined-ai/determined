@@ -265,7 +265,7 @@ func (k *kubernetesResourceManager) assignResources(
 	allocations := make([]sproto.Allocation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
 		container := newContainer(req, k.agent, slotsPerPod)
-		allocations = append(allocations, &podAllocation{
+		allocations = append(allocations, &k8sAllocation{
 			req:       req,
 			agent:     k.agent,
 			container: container,
@@ -329,14 +329,14 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 	}
 }
 
-type podAllocation struct {
+type k8sAllocation struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
 }
 
 // Summary summarizes a container allocation.
-func (p podAllocation) Summary() sproto.ContainerSummary {
+func (p k8sAllocation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{
 		TaskID: p.req.ID,
 		ID:     p.container.id,
@@ -345,7 +345,7 @@ func (p podAllocation) Summary() sproto.ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
+func (p k8sAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
@@ -358,7 +358,7 @@ func (p podAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) 
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p podAllocation) Kill(ctx *actor.Context) {
+func (p k8sAllocation) Kill(ctx *actor.Context) {
 	handler := p.agent.handler
 	ctx.Tell(handler, sproto.KillTaskPod{
 		PodID: p.container.id,

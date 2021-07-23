@@ -39,22 +39,6 @@ const TrialDetailsHeader: React.FC<Props> = (
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
 
-    if (trial.bestAvailableCheckpoint !== undefined) {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.Continue,
-        label: 'Continue Trial',
-        onClick: () => handleActionClick(Action.Continue),
-      });
-    } else {
-      options.push({
-        icon: <Icon name="fork" size="small" />,
-        key: Action.Continue,
-        label: 'Continue Trial',
-        tooltip: 'No checkpoints found. Cannot continue trial',
-      });
-    }
-
     if (!trialWillNeverHaveData(trial)) {
       options.push({
         icon: <Icon name="tensorboard" size="small" />,
@@ -68,6 +52,22 @@ const TrialDetailsHeader: React.FC<Props> = (
           await fetchTrialDetails();
           setIsRunningTensorboard(false);
         },
+      });
+    }
+
+    if (trial.bestAvailableCheckpoint !== undefined) {
+      options.push({
+        icon: <Icon name="fork" size="small" />,
+        key: Action.Continue,
+        label: 'Continue Trial',
+        onClick: () => handleActionClick(Action.Continue),
+      });
+    } else {
+      options.push({
+        icon: <Icon name="fork" size="small" />,
+        key: Action.Continue,
+        label: 'Continue Trial',
+        tooltip: 'No checkpoints found. Cannot continue trial',
       });
     }
 

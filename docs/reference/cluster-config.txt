@@ -774,9 +774,9 @@ The master supports the following configuration settings:
    stored. This can be overridden on a per-experiment basis in the
    :ref:`experiment-configuration`. A checkpoint contains the
    architecture and weights of the model being trained. Determined
-   currently supports four kinds of checkpoint storage, ``gcs``,
-   ``hdfs``, ``s3``, and ``shared_fs``, identified by the ``type``
-   subfield.
+   currently supports several kinds of checkpoint storage, ``gcs``,
+   ``hdfs``, ``s3``, ``azure``, and ``shared_fs``, identified by the
+   ``type`` subfield.
 
    -  ``type: gcs``: Checkpoints are stored on Google Cloud Storage
       (GCS). Authentication is done using GCP's "`Application Default
@@ -822,6 +822,21 @@ The master supports the following configuration settings:
       -  ``secret_key``: The AWS secret key to use.
       -  ``endpoint_url``: The optional endpoint to use for S3 clones,
          e.g., ``http://127.0.0.1:8080/``.
+
+   -  ``type: azure``: Checkpoints are stored in Microsoft's Azure Blob
+      Storage. Authentication is performed by providing either a
+      connection string, or an account URL and an optional credential.
+
+      -  ``container``: The Azure Blob Storage container name to use.
+      -  ``connection_string``: The connection string for the service
+         account to use.
+      -  ``account_url``: The account URL for the service account to
+         use.
+      -  ``credential``: The optional credential to use in conjunction
+         with the account URL.
+
+      Please only specify either ``connection_string`` or the
+      ``account_url`` and ``credential`` pair.
 
    -  ``type: shared_fs``: Checkpoints are written to a directory on the
       agent's file system. The assumption is that the system

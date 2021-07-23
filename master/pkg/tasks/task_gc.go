@@ -32,7 +32,7 @@ func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 
 	res.TaskToken = taskToken
 
-	res.Archives = res.makeArchives([]container.RunArchive{
+	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
 				g.Base.AgentUserGroup.OwnedArchiveItem(
@@ -56,7 +56,7 @@ func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 			},
 			ContainerWorkDir,
 		),
-	})
+	}
 
 	res.Description = "gc"
 
@@ -74,20 +74,18 @@ func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
 	}
 
 	// Keep only the EnvironmentVariables provided by the experiment's config.
-	envvars := g.LegacyConfig.EnvironmentVariables()
+	envVars := g.LegacyConfig.EnvironmentVariables()
 	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: &envvars,
+		RawEnvironmentVariables: &envVars,
 	}
 	// Fill the rest of the environment with default values.
 	defaultConfig := expconf.ExperimentConfig{}
-	g.Base.TaskContainerDefaults.MergeIntoConfig(&defaultConfig)
+	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
 
 	if defaultConfig.RawEnvironment != nil {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
-
-	res.EnvVars = res.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {

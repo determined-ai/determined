@@ -16,6 +16,12 @@ type (
 )
 
 type (
+	// commandOwner describes the owner of a command.
+	commandOwner struct {
+		ID       model.UserID `json:"id"`
+		Username string       `json:"username"`
+	}
+
 	// summary holds an immutable snapshot of the command.
 	summary struct {
 		RegisteredTime time.Time              `json:"registered_time"`
@@ -37,7 +43,10 @@ type (
 func newSummary(c *command) summary {
 	return summary{
 		RegisteredTime: c.registeredTime,
-		Owner:          c.owner,
+		Owner: commandOwner{
+			ID:       c.Base.Owner.ID,
+			Username: c.Base.Owner.Username,
+		},
 		ID:             c.taskID,
 		Config:         c.Config,
 		State:          c.State().String(),

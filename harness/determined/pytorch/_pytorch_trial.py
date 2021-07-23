@@ -652,7 +652,7 @@ class PyTorchTrialController(det.LoopTrialController):
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
-        if "scaler_state_dict":
+        if "scaler_state_dict" in checkpoint:
             if self.context._scaler:
                 self.context._scaler.load_state_dict(checkpoint["scaler_state_dict"])
             else:

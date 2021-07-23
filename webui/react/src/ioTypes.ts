@@ -3,7 +3,7 @@ import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import {
-  CheckpointStorageType, ExperimentHyperParamType, ExperimentSearcherName, LogLevel, RunState,
+  CheckpointStorageType, ExperimentSearcherName, HyperparameterType, LogLevel, RunState,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -130,7 +130,7 @@ const ioDataLayer = io.type({
 const ioExpResources = io.type({ max_slots: optional(io.number) });
 
 const hParamTypes: Record<string, null> = Object
-  .values(ExperimentHyperParamType)
+  .values(HyperparameterType)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const ioHParamTypes = io.keyof(hParamTypes);
 const ioExpHParamVal = optional(io.unknown);
@@ -146,7 +146,13 @@ const ioExpHParam = io.type({
 
 export type ioTypeHyperparameter = io.TypeOf<typeof ioExpHParam>;
 
-export const ioHyperparameters = io.record(io.string, ioExpHParam);
+/*
+ * We are unable to create a recursive dictionary type in io-ts,
+ * so until we have JavaScript JSON schema support:
+ *   - temporarily changing to an unknown record
+ *   - use a custom decoder instead of relying on io-ts to decode hp
+ */
+export const ioHyperparameters = io.UnknownRecord;
 export type ioTypeHyperparameters = io.TypeOf<typeof ioHyperparameters>;
 
 const experimentSearcherName: Record<string, null> = Object.values(ExperimentSearcherName)

@@ -154,7 +154,9 @@ Checkpoint Storage
 ==================
 
 Checkpoints and TensorBoard events can be configured to be stored in
-``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`__, or `GCS
+``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`__, `Microsoft Azure
+Blob Storage
+<https://azure.microsoft.com/en-us/services/storage/blobs>`__, or `GCS
 <https://cloud.google.com/storage>`__. By default, checkpoints and
 TensorBoard events are stored using ``shared_fs``, which creates a
 `hostPath Volume
@@ -164,8 +166,8 @@ saves to the host file system. This configuration is intended for
 ``shared_fs`` for actual deployments of Determined on Kubernetes,
 because most Kubernetes cluster nodes do not have a shared file system.
 
-Instead of using ``shared_fs``, users should configure either AWS S3 or
-GCS:
+Instead of using ``shared_fs``, users should configure either AWS S3,
+Microsoft Azure Blob Storage or GCS:
 
 -  **AWS S3**: To configure Determined to use AWS S3 for checkpoint and
    TensorBoard storage, users need to set ``checkpointStorage.type`` in
@@ -177,6 +179,15 @@ GCS:
    ``checkpointStorage.endpointUrl`` which specifies the endpoint to use
    for S3 clones (e.g.,
    ``http://<minio-endpoint>:<minio-port|default=9000>``).
+
+-  **Microsoft Azure Blob Storage**: To configure Determined to use Microsoft Azure Blob Storage for checkpoint and TensorBoard storage, users need to set ``checkpointStorage.type`` in ``values.yaml`` to ``azure``
+      and set ``checkpointStorage.container`` to the name of the
+      container to store it in. Users must also specify one of
+      ``connection_string`` - the connection string associated with the
+      Azure Blob Storage service account to use, or the tuple
+      ``account_url`` and ``credential`` - where ``account_url`` is the
+      URL for the service account to use, and ``credential`` is an
+      optional credential.
 
 -  **GCS**: To configure Determined to use Google Cloud Storage for
    checkpoints and TensorBoard data, users need to set
@@ -317,6 +328,78 @@ set ``defaultScheduler`` to ``preemption``.
 .. code:: yaml
 
    defaultScheduler: preemption
+
+.. _taints-on-kubernetes:
+
+Node Taints
+===========
+
+Tainting nodes is optional, but users may want to taint nodes to
+restrict which nodes a pod may be scheduled onto. A taint consists of a
+taint type, tag, and effect.
+
+When using a managed kubernetes cluster (e.g. a :ref:`GKE
+<setup-gke-cluster>`, :ref:`AKS <setup-aks-cluster>`, or :ref:`EKS
+<setup-eks-cluster>` cluster), it is possible to specify taints at
+cluster or nodepool creation using the specified CLIs. Please refer to
+the set up pages for each managed cluster service for instructions on
+how to do so. To add taints to an existing resource, it is necessary to
+use ``kubectl``. Tolerations can be added to Pods by including the
+``tolerations`` field in the Pod specification.
+
+Taints and Tolerations with ``kubectl``
+---------------------------------------
+
+Taints
+^^^^^^
+
+To taint a node with kubectl, use ``kubectl taint nodes``.
+
+.. code:: bash
+
+   kubectl taint nodes ${NODE_NAME} ${TAINT_TYPE}=${TAINT_TAG}:${TAINT_EFFECT}
+
+As an example, the following snippet taints nodes named ``node-1`` to
+not be schedulable if the ``accelerator`` taint type has the ``gpu``
+taint value.
+
+.. code:: bash
+
+   kubectl taint nodes node-1 accelerator=gpu:NoSchedule
+
+Tolerations
+^^^^^^^^^^^
+
+To specify a toleration, use the ``toleration`` field in the PodSpec.
+
+.. code:: YAML
+
+   tolerations:
+      - key: "${TAINT_TYPE}"
+         operator: "Equal"
+         value: "${TAINT_TAG}"
+         effect: "${TAINT_EFFECT}"
+
+The following example is a toleration for when a node has the
+``accelerator`` taint type equal to the ``gpu`` taint value.
+
+.. code:: YAML
+
+   tolerations:
+      - key: "accelerator"
+         operator: "Equal"
+         value: "gpu"
+         effect: "NoSchedule"
+
+The next example is a toleration for when a node has the ``gpu`` taint
+type.
+
+.. code:: YAML
+
+   tolerations:
+      - key: "gpu"
+         operator: "Exists"
+         effect: "NoSchedule"
 
 ***********************
  Installing Determined

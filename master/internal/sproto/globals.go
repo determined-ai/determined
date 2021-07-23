@@ -74,24 +74,44 @@ func GetCurrentRM(system *actor.System) *actor.Ref {
 	panic("There should either be a k8s resource manager or an agent resource manager")
 }
 
-// GetDefaultComputeResourcePool returns the default GPU resource pool.
-func GetDefaultComputeResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultComputeResourcePoolRequest{}).Get()
-	return resp.(GetDefaultComputeResourcePoolResponse).PoolName
-}
-
-// GetDefaultAuxResourcePool returns the default CPU resource pool.
-func GetDefaultAuxResourcePool(system *actor.System) string {
-	resp := system.Ask(GetCurrentRM(system), GetDefaultAuxResourcePoolRequest{}).Get()
-	return resp.(GetDefaultAuxResourcePoolResponse).PoolName
-}
-
-// ValidateRP validates if the resource pool exists when using the agent resource manager,
+// ValidateResourcePool validates if the resource pool exists when using the agent resource manager,
 // or if it's the dummy kubernetes pool.
-func ValidateRP(system *actor.System, name string) error {
+func ValidateResourcePool(system *actor.System, name string) error {
 	if name == "" || UseAgentRM(system) && GetRP(system, name) != nil ||
 		UseK8sRM(system) && name == "kubernetes" {
 		return nil
 	}
 	return errors.Errorf("cannot find resource pool: %s", name)
+}
+
+// GetResourcePool returns the validated resource pool name based on the value set in
+// the configuration.
+func GetResourcePool(
+	system *actor.System, poolName string, slots int, command bool,
+) (string, error) {
+	// If the resource pool isn't set, fill in the default at creation time.
+	if poolName == "" {
+		if slots == 0 {
+			resp := system.Ask(GetCurrentRM(system), GetDefaultAuxResourcePoolRequest{}).Get()
+			poolName = resp.(GetDefaultAuxResourcePoolResponse).PoolName
+		} else {
+			resp := system.Ask(GetCurrentRM(system), GetDefaultComputeResourcePoolRequest{}).Get()
+			poolName = resp.(GetDefaultComputeResourcePoolResponse).PoolName
+		}
+	}
+
+	if err := ValidateResourcePool(system, poolName); err != nil {
+		return "", errors.Wrapf(err, "resource pool does not exist: %s", poolName)
+	}
+
+	if slots > 0 && command {
+		fillable, err := ValidateRPResources(system, poolName, slots)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to check resource pool resources: %s", poolName)
+		}
+		if !fillable {
+			return "", errors.New("resource request unfulfillable, please try requesting less slots")
+		}
+	}
+	return poolName, nil
 }

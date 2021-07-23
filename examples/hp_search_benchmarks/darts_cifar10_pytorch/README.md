@@ -37,7 +37,7 @@ configuration file in place of `adaptive.yaml`.
 ## Expected Performance
 When running HP search via `adaptive.yaml` with 16 V100 GPUs, the best architecture after 1 day should achieve around 97.0\% accuracy on CIFAR-10.  
 
-When running HP search via `constrained_adaptive.yaml` with 16 V100 GPUs, the best architecture after 1 day should achieve around 97.3\% accuracy on CIFAR-10.  
+When running HP search via `constrained_adaptive.yaml` with 16 V100 GPUs, the best architecture after evaluating 1k trials should achieve around 97.3\% accuracy on CIFAR-10 as shown in the image below.  
+![constrained results](./figures/constrained_adaptive.png)
 
-For a fair comparison to the NAS results for this search space, you will have to train the best architecture for a total of 600 epochs instead of the 300 epochs 
-used for the HP search experiment.
+*__Note:__ For a fair comparison to the NAS results for this search space, you will have to train the best architecture for a total of 600 epochs instead of the 300 epochs used for the HP search experiment.*

@@ -13,7 +13,8 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.timeout(600)  # type: ignore
+# TODO(DET-5803): We need a GPU warm-up job to prevent this excessive time limit.
+@pytest.mark.timeout(30 * 60)  # type: ignore
 @pytest.mark.parametrize(  # type: ignore
     "framework_base_experiment,framework_timings_enabled",
     [

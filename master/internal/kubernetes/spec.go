@@ -324,7 +324,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 	spec := p.taskSpec
 
-	runArchives := spec.Archives
+	runArchives := spec.Archives()
 
 	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, spec.Mounts, runArchives,
@@ -336,7 +336,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		p.ports = append(p.ports, port)
 	}
 
-	envVars, err := p.configureEnvVars(spec.EnvVars, env, deviceType)
+	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
 	if err != nil {
 		return err
 	}

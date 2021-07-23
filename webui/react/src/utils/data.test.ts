@@ -4,6 +4,7 @@ import { RawJson } from 'types';
 import {
   clone,
   deletePathList,
+  flattenObject,
   getPath,
   getPathList,
   getPathOrElse,
@@ -59,28 +60,35 @@ const asyncFn = async (): Promise<boolean> => {
   }
 };
 
-const tests = [
-  { type: [ Type.AsyncFn, Type.Fn ], value: asyncFn },
-  { type: [ Type.SyncFn, Type.Fn ], value: syncFn },
-  { type: [ Type.SyncFn, Type.Fn ], value: voidFn },
-  { type: [ Type.Map, Type.Object ], value: new Map() },
-  { type: [ Type.Map, Type.Object ], value: new Map([ [ 'a', 'value1' ], [ 'b', 'value2' ] ]) },
-  { type: [ Type.Map, Type.Object ], value: new Map([ [ 'x', -1 ], [ 'y', 1.5 ] ]) },
-  { type: Type.Primitive, value: 'Jalapeño' },
-  { type: [ Type.Number, Type.Primitive ], value: -3.14159 },
-  { type: [ Type.Number, Type.Primitive ], value: 1.23e-8 },
-  { type: [ Type.Number, Type.Primitive ], value: 0 },
-  { type: Type.Primitive, value: null },
-  { type: Type.Primitive, value: undefined },
-  { type: Type.Object, value: {} },
-  { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
-  { type: [ Type.Set, Type.Object ], value: new Set() },
-  { type: [ Type.Set, Type.Object ], value: new Set([ 'abc', 'def', 'ghi' ]) },
-  { type: [ Type.Set, Type.Object ], value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]) },
-];
 const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
 
 describe('data utility', () => {
+  describe('flattenObject', () => {
+    const tests = [
+      {
+        input: {
+          a: {
+            x: true,
+            y: -5.280,
+            z: { hello: 'world' },
+          },
+          b: [ 0, 1, 2 ],
+        },
+        output: {
+          'a.x': true,
+          'a.y': -5.280,
+          'a.z.hello': 'world',
+          'b': [ 0, 1, 2 ],
+        },
+      },
+    ];
+    it('should flatten object', () => {
+      tests.forEach(test => {
+        expect(flattenObject(test.input)).toStrictEqual(test.output);
+      });
+    });
+  });
+
   describe('clone', () => {
     it('should preserve primitives', () => {
       expect(clone(-1.23e-8)).toBe(-1.23e-8);
@@ -129,7 +137,6 @@ describe('data utility', () => {
     it('should support empty path', () => {
       expect(getPath<RawJson>(object, '')).toBe(object);
     });
-
   });
 
   describe('getPathOrElse', () => {
@@ -203,9 +210,30 @@ describe('data utility', () => {
         expect(config.min_validation_period === value).toBeTruthy();
       });
     });
-
   });
 
+  const tests = [
+    { type: [ Type.AsyncFn, Type.Fn ], value: asyncFn },
+    { type: [ Type.SyncFn, Type.Fn ], value: syncFn },
+    { type: [ Type.SyncFn, Type.Fn ], value: voidFn },
+    { type: [ Type.Map, Type.Object ], value: new Map() },
+    { type: [ Type.Map, Type.Object ], value: new Map([ [ 'a', 'value1' ], [ 'b', 'value2' ] ]) },
+    { type: [ Type.Map, Type.Object ], value: new Map([ [ 'x', -1 ], [ 'y', 1.5 ] ]) },
+    { type: Type.Primitive, value: 'Jalapeño' },
+    { type: [ Type.Number, Type.Primitive ], value: -3.14159 },
+    { type: [ Type.Number, Type.Primitive ], value: 1.23e-8 },
+    { type: [ Type.Number, Type.Primitive ], value: 0 },
+    { type: Type.Primitive, value: null },
+    { type: Type.Primitive, value: undefined },
+    { type: Type.Object, value: {} },
+    { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
+    { type: [ Type.Set ], value: new Set() },
+    { type: [ Type.Set ], value: new Set([ 'abc', 'def', 'ghi' ]) },
+    {
+      type: [ Type.Set ],
+      value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]),
+    },
+  ];
   testGroups.forEach(group => {
     /* eslint-disable-next-line jest/valid-title */
     describe(group.fn.name, () => {

@@ -10,8 +10,9 @@ import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, ExperimentHyperParam, MetricName, metricTypeParamMap, RunState,
+  ExperimentBase, Hyperparameter, MetricName, metricTypeParamMap, RunState,
 } from 'types';
+import { flattenObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -47,10 +48,10 @@ const LearningCurve: React.FC<Props> = ({
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
-      acc[key] = experiment.config.hyperparameters[key];
+      acc[key] = experiment.hyperparameters[key];
       return acc;
-    }, {} as Record<string, ExperimentHyperParam>);
-  }, [ experiment.config.hyperparameters, fullHParams ]);
+    }, {} as Record<string, Hyperparameter>);
+  }, [ experiment.hyperparameters, fullHParams ]);
 
   const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
     const href = paths.trialDetails(trialId, experiment.id);
@@ -108,10 +109,11 @@ const LearningCurve: React.FC<Props> = ({
 
         (event.trials || []).forEach(trial => {
           const id = trial.trialId;
-          const hasHParams = Object.keys(trial.hparams || {}).length !== 0;
+          const flatHParams = flattenObject(trial.hparams || {});
+          const hasHParams = Object.keys(flatHParams).length !== 0;
 
           if (hasHParams && !trialHpMap[id]) {
-            trialHpMap[id] = { hparams: trial.hparams, id, metric: null };
+            trialHpMap[id] = { hparams: flatHParams, id, metric: null };
           }
 
           trialDataMap[id] = trialDataMap[id] || [];

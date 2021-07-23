@@ -10,18 +10,23 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 )
 
-// CommandSpec is a description of a task for running a command.
-type CommandSpec struct {
+// GenericCommandSpec is a description of a task for running a command.
+type GenericCommandSpec struct {
 	Base TaskSpec
 
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
 	AdditionalFiles archive.Archive
 	Metadata        map[string]interface{}
+
+	Keys *ssh.PrivateAndPublicKeys
+
+	Port     *int
+	ProxyTCP bool
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
 	res := s.Base
 
 	res.TaskToken = taskToken
@@ -47,18 +52,16 @@ func (s CommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string
 		}...)
 	}
 
-	res.Archives = res.makeArchives([]container.RunArchive{
+	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
-	})
+	}
 
 	res.Description = "cmd"
 
 	res.Entrypoint = s.Config.Entrypoint
 
 	res.Environment = s.Config.Environment.ToExpconf()
-
-	res.EnvVars = res.makeEnvVars(nil)
 
 	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
 

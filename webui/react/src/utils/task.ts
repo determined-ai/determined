@@ -142,6 +142,7 @@ export const generateOldExperiment = (id = 1): ExperimentOld => {
       searcher: { metric: 'val_error', name: 'single', smallerIsBetter: true },
     },
     configRaw: config,
+    hyperparameters: {},
     id: id,
     name: experimentTask.name,
     username: user.username,
