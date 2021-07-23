@@ -786,7 +786,7 @@ commands:
     steps:
       - when:
           condition:
-            equal: [ <<parameters.only_on_branch>>, ${CIRCLE_BRANCH} ]
+            equal: [ <<parameters.only_on_branch>>, << pipeline.git.branch >> ]
           steps:
             - run:
                 name: Test run success -> uploading results to Determined CI
