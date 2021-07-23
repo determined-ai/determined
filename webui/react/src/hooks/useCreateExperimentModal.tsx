@@ -215,7 +215,7 @@ const useCreateExperimentModal = (): ModalHooks => {
   }, [ getConfigFromForm, modalState, submitExperiment ]);
 
   const handleEditorChange = useCallback((newConfigString: string) => {
-    // Update config string upon each keystroke change.
+    // Update config string and config error upon each keystroke change.
     setModalState(prev => {
       let configError = undefined;
 
@@ -233,6 +233,8 @@ const useCreateExperimentModal = (): ModalHooks => {
   const generateModalContent = useCallback((state: ModalState): React.ReactNode => {
     const { config, configError, configString, error, type } = state;
     const isFork = type === CreateExperimentType.Fork;
+
+    // We always render the form regardless of mode to provide a reference to it.
     return (
       <>
         {error && <Alert className={css.error} message={error} type="error" />}
@@ -299,6 +301,7 @@ const useCreateExperimentModal = (): ModalHooks => {
       closable: true,
       content: generateModalContent(state),
       icon: null,
+      maskClosable: true,
       okText: type,
       onCancel: handleCancel,
       onOk: handleOk,
@@ -331,6 +334,15 @@ const useCreateExperimentModal = (): ModalHooks => {
       setModalState(prev => ({ ...prev, configString: getConfigFromForm(prev.config) }));
     }
   }, [ getConfigFromForm, modalState.isAdvancedMode, prevIsAdvancedMode ]);
+
+  // When the component using the hook unmounts, remove the modal automatically.
+  useEffect(() => {
+    return () => {
+      if (!modalRef.current) return;
+      modalRef.current.destroy();
+      modalRef.current = undefined;
+    };
+  }, []);
 
   return { showModal };
 };

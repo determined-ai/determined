@@ -105,7 +105,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       downloadModel,
     ];
 
-    if (continueTrial) options.splice(1, 0, continueTrial);
+    if (showContinueTrial) options.splice(1, 0, continueTrial);
 
     if (terminalRunStates.has(experiment.state)) {
       if (experiment.archived) {
