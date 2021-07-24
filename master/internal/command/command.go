@@ -12,11 +12,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -57,6 +57,15 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
+	if spec.WatchTensorBoardTimeout && spec.Config.IdleTimeout != nil {
+		cmd.idleTimeoutWatcher = &task.ProxyIdleTimeoutWatcher{
+			TaskID:      string(taskID),
+			Description: spec.Config.Description,
+			Timeout:     *spec.Config.IdleTimeout,
+			KillMessage: &apiv1.KillTensorboardRequest{},
+		}
+	}
+
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
@@ -68,26 +77,14 @@ func createGenericCommandActor(
 	return nil
 }
 
-// DefaultConfig is the default configuration used by all
-// commands (e.g., commands, notebooks, shells) if a request
-// does not specify any configuration options.
-func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
-	expConf := model.DefaultExperimentConfig(taskContainerDefaults)
-	expConf.Resources.Slots = 1
-	return model.CommandConfig{
-		Resources:   expConf.Resources,
-		Environment: expConf.Environment,
-		BindMounts:  expConf.BindMounts,
-	}
-}
-
 // command is executed in a containerized environment on a Determined cluster.
 type command struct {
 	db          *db.PgDB
 	proxy       *actor.Ref
 	eventStream *actor.Ref
 
-	readinessChecks map[string]readinessCheck
+	idleTimeoutWatcher *task.ProxyIdleTimeoutWatcher
+	readinessChecks    map[string]readinessCheck
 
 	tasks.GenericCommandSpec
 
@@ -139,11 +136,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.allocationID})
 
+		if c.idleTimeoutWatcher != nil {
+			c.idleTimeoutWatcher.PreStart(ctx)
+		}
+
 	case actor.PostStop:
 		c.terminate(ctx)
 
 	case sproto.ResourcesAllocated:
 		return c.receiveSchedulerMsg(ctx)
+
+	case task.ProxyIdleTimeoutWatcherTick:
+		return c.idleTimeoutWatcher.ReceiveMsg(ctx)
 
 	case getSummary:
 		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {

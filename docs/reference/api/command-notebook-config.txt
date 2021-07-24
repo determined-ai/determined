@@ -133,3 +133,10 @@ The following configuration settings are supported:
 
 -  ``tensorboard_args``: Lists optional arguments for launching TensorBoard. Each element of the
    list should be a string of the form ``NAME=VALUE``.
+
+-  ``idle_timeout``: Specifies the duration in seconds before idle instances are
+      automatically terminated. This string is a sequence of decimal numbers, each with optional
+      fraction and a unit suffix, such as "30s", "1h", or "1m30s". Valid time units are "s", "m",
+      "h". The default value is ``20m``. This is only used by TensorBoard instances. A TensorBoard
+      instance is considered to be idle if it does not receive any HTTP traffic. The default timeout
+      for TensorBoard is ``5m`` (5 minutes).

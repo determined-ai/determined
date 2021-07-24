@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -95,7 +94,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	taskSpec.Owner = user
 
 	// Get the full configuration.
-	config := command.DefaultConfig(&taskSpec.TaskContainerDefaults)
+	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
