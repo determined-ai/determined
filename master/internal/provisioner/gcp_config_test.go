@@ -8,6 +8,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestDefaultGCPClusterConfig(t *testing.T) {
@@ -79,7 +80,7 @@ func TestUnmarshalGCPClusterConfig(t *testing.T) {
 				GPUType:     "nvidia-tesla-v100",
 				GPUNum:      2,
 			},
-			OperationTimeoutPeriod: Duration(5 * time.Minute),
+			OperationTimeoutPeriod: model.Duration(5 * time.Minute),
 		},
 	}
 

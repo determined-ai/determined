@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/version"
-
-	"google.golang.org/api/compute/v1"
-
 	"github.com/ghodss/yaml"
+	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/version"
 )
 
 func TestProvisionerConfigMissingFields(t *testing.T) {
@@ -23,8 +22,8 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	err = check.Validate(&config)
 	assert.ErrorContains(t, err, "must configure aws or gcp cluster")
 	expected := Config{
-		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
-		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MaxInstances:           5,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
@@ -64,8 +63,8 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 		AWS:                    &awsConfig,
-		MaxIdleAgentPeriod:     Duration(30 * time.Second),
-		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
+		MaxAgentStartingPeriod: model.Duration(30 * time.Second),
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
@@ -115,8 +114,8 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(30 * time.Second),
-		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MaxIdleAgentPeriod:     model.Duration(30 * time.Second),
+		MaxAgentStartingPeriod: model.Duration(30 * time.Second),
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
@@ -149,8 +148,8 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
-		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
@@ -209,8 +208,8 @@ boot_disk_source_image: test-source_image3
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
-		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, expected, unmarshaled)
