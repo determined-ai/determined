@@ -22,7 +22,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import { paths } from 'routes/utils';
-import { getExpTrials, openOrCreateTensorboard } from 'services/api';
+import { getExpTrials, getTrialDetails, openOrCreateTensorboard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
@@ -77,8 +77,18 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ showCompareTrials, setShowCompareTrials ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
+  const [ trialMap, setTrialMap ] = useState<Record<string, TrialItem>>({});
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
+
+  const updateTrialMap = useCallback((trials) => {
+    setTrialMap(trialMap => {
+      return (trials || [])
+        .reduce((acc: Record<string, TrialItem>, trial: TrialItem) => {
+          return { ...acc, [trial.id]: trial };
+        }, trialMap);
+    });
+  }, []);
 
   /*
    * When filters changes update the page URL.
@@ -172,7 +182,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     // selected rows
     const rows = urlSearchParams.getAll('row');
     if (rows != null) {
-      setSelectedRowKeys(rows.map(row => parseInt(row)));
+      const rowKeys = rows.map(row => parseInt(row));
+      rowKeys.forEach(async row => {
+        const trial = await getTrialDetails({ id: row });
+        updateTrialMap([ trial ]);
+      });
+      setSelectedRowKeys(rowKeys);
 
       const compare = urlSearchParams.get('compare');
       if (sortDesc != null) {
@@ -184,18 +199,19 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     setIsUrlParsed(true);
     setPagination(pagination);
     setSorter(sorter);
-  }, [ filters, isUrlParsed, pagination, sorter ]);
+  }, [ filters, isUrlParsed, pagination, sorter, updateTrialMap ]);
 
-  const trialMap = useMemo(() => {
-    return (trials || []).reduce((acc, trial) => {
-      acc[trial.id] = trial;
-      return acc;
-    }, {} as Record<string, TrialItem>);
-  }, [ trials ]);
+  useEffect(() => {
+    updateTrialMap(trials);
+  }, [ trials, updateTrialMap ]);
 
   const selectedTrials = useMemo(() => {
     return selectedRowKeys.map(key => trialMap[key]);
   }, [ trialMap, selectedRowKeys ]);
+
+  const selectedTrialsLoaded = useMemo(() => {
+    return selectedTrials.every(trial => trial);
+  }, [ selectedTrials ]);
 
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
@@ -438,7 +454,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
-      {showCompareTrials && selectedTrials.first() &&
+      {showCompareTrials && selectedTrialsLoaded &&
       <TrialsComparisonModal
         trials={selectedTrials}
         visible={showCompareTrials}

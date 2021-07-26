@@ -11,7 +11,7 @@ import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { CheckpointState, CheckpointWorkload,
-  MetricType, TrialDetails, TrialItem, WorkloadWrapper } from 'types';
+  MetricType, TrialDetails, TrialItem } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
