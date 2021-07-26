@@ -1256,6 +1256,17 @@ jobs:
           executor: determinedai/cimg-base:stable
       - run: make -C docs check
 
+  lint-secrets:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - run: git clone https://github.com/awslabs/git-secrets /tmp/git-secrets
+      - run: cd /tmp/git-secrets && make install
+      - checkout
+      - run: git secrets --install
+      - run: git secrets --register-aws
+      - run: git secrets --scan-history
+
   lint-python:
     docker:
       - image: determinedai/cimg-base:stable
@@ -1730,6 +1741,7 @@ workflows:
           requires:
             - build-bindings
       - lint-webui-tests
+      - lint-secrets
 
   test-cli:
     jobs:
