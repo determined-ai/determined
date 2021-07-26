@@ -25,6 +25,10 @@ if [ "$HOME" = "/" ] ; then
     export HOME
 fi
 
+# Use user's preferred SHELL in JupyterLab terminals.
+SHELL="$(set -o pipefail; getent passwd "$(whoami)" | cut -d: -f7)" || SHELL="/bin/bash"
+export SHELL
+
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
 pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
