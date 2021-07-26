@@ -456,6 +456,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         onHide={handleCheckpointDismiss} />}
       {showCompareTrials && selectedTrialsLoaded &&
       <TrialsComparisonModal
+        experiment={experiment}
         trials={selectedTrials}
         visible={showCompareTrials}
         onCancel={() => setShowCompareTrials(false)} />}
