@@ -301,7 +301,7 @@ The cli would then find the existing cluster, take it down and spin up a
 new one with the updated options.
 
 2. If you want more control over the master configuration while
-minimizing the downtime, you can into the master instance using the
+minimizing the downtime, you can ssh into the master instance using the
 private key from the keypair that was used to provision the cluster.
 Once you're successfully connected, you can modify ``master.yaml`` under
 ``/usr/local/determined/etc`` and restart the master docker container
@@ -309,7 +309,7 @@ for your changes to take effect :
 
 .. code:: bash
 
-   sudo sh -c 'docker stop determined-master && docker start determined-master'
+   sudo docker container restart determined-master
 
 For example, if you want to add or modify resource pools you can edit
 the master configuration file at
