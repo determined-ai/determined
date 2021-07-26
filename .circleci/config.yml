@@ -1265,6 +1265,7 @@ jobs:
       - checkout
       - run: git secrets --install
       - run: git secrets --register-aws
+      - run: git secrets --add '\bprivate_key\b'
       - run: git secrets --scan-history
 
   lint-python:
