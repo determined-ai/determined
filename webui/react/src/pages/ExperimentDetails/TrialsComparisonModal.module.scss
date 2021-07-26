@@ -3,6 +3,7 @@
   border-radius: var(--theme-sizes-border-radius);
   display: grid;
   grid-auto-flow: row;
+  min-height: 75vh;
   overflow-x: scroll;
 }
 %tableRow {

@@ -8,6 +8,7 @@ import BadgeTag from 'components/BadgeTag';
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
+import Spinner from 'components/Spinner';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -154,94 +155,102 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     [ trials ],
   );
 
+  const isLoaded = useMemo(() => {
+    const detailsArr = Object.values(trialsDetails);
+    return detailsArr.length === trials.length && detailsArr.every(trial => !trial.isLoading);
+  }, [ trialsDetails, trials.length ]);
+
   console.log(trialsDetails);
 
   return (
     <>
       <div className={css.tableContainer}>
-        <div
-          className={css.headerRow}>
-          <div />
-          {trials.map(trial =>
-            <Tag
-              className={[ css.trialTag, css.centerVertically ].join(' ')}
-              closable
-              key={trial.id}
-              onClose={() => handleTrialUnselect(trial)}>Trial {trial.id}</Tag>)}</div>
-        <div className={css.row}>
-          <h3>State</h3>
-          {trials.map(trial =>
-            <div className={css.centerVertically} key={trial.id}>
-              <Badge state={trial.state} type={BadgeType.State} />
-            </div>)}
-        </div>
-        <div className={css.row}>
-          <h3>Start Time</h3>
-          {trials.map(trial =>
-            <p key={trial.id}>
-              {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
-            </p>)}
-        </div>
-        <div className={css.row}>
-          <h3>Training Time</h3>
-          {trials.map(trial =>
-            <p key={trial.id}>
-              {shortEnglishHumannizer(durations[trial.id]?.train)}
-            </p>)}
-        </div>
-        <div className={css.row}>
-          <h3>Validation Time</h3>
-          {trials.map(trial =>
-            <p key={trial.id}>
-              {shortEnglishHumannizer(durations[trial.id]?.validation)}
-            </p>)}
-        </div>
-        <div className={css.row}>
-          <h3>Checkpoint Time</h3>
-          {trials.map(trial =>
-            <p key={trial.id}>
-              {shortEnglishHumannizer(durations[trial.id]?.checkpoint)}
-            </p>)}
-        </div>
-        <div className={css.row}>
-          <h3>Batches Processed</h3>
-          {trials.map(trial => <p key={trial.id}>{trial.totalBatchesProcessed}</p>)}
-        </div>
-        <div className={css.row}>
-          <h3>Best Checkpoint</h3>
-          {trials.map(trial =>
-            trial.bestAvailableCheckpoint ?
-              <Button
-                className={css.checkpointButton}
-                key={trial.id}
-                onClick={e => handleCheckpointShow(e, trial)}>
-                <Icon name="checkpoint" />
-                <span>Batch {trial.bestAvailableCheckpoint?.totalBatches}</span>
-              </Button> : <div />)}
-        </div>
-        <div className={css.row}>
-          <h3>Total Checkpoint Size</h3>
-          {trials.map(trial => <p key={trial.id}>{totalCheckpointsSizes[trial.id]}</p>)}
-        </div>
-        <div className={css.headerRow}><h2>Metrics</h2></div>
-        {metricNames.map(metric =>
-          <div className={css.row} key={metric.name}>
-            <BadgeTag label={metric.name}>{metric.type === MetricType.Training ?
-              <Tooltip title="training">T</Tooltip> :
-              <Tooltip title="validation">V</Tooltip>}
-            </BadgeTag>
-          </div>)}
-        <div className={css.headerRow}><h2>Hyperparameters</h2></div>
-        {hyperparameterNames.map(hp =>
-          <div className={css.row} key={hp}>
-            <h3>{hp}</h3>
-            {trials.map(trial =>
-              !isNaN(parseFloat(JSON.stringify(trial.hyperparameters[hp]))) ?
-                <HumanReadableFloat
+        {isLoaded ?
+          <>
+            <div
+              className={css.headerRow}>
+              <div />
+              {trials.map(trial =>
+                <Tag
+                  className={[ css.trialTag, css.centerVertically ].join(' ')}
+                  closable
                   key={trial.id}
-                  num={parseFloat(JSON.stringify(trial.hyperparameters[hp]))} />:
-                trial.hyperparameters[hp])}
-          </div>)}
+                  onClose={() => handleTrialUnselect(trial)}>Trial {trial.id}</Tag>)}</div>
+            <div className={css.row}>
+              <h3>State</h3>
+              {trials.map(trial =>
+                <div className={css.centerVertically} key={trial.id}>
+                  <Badge state={trial.state} type={BadgeType.State} />
+                </div>)}
+            </div>
+            <div className={css.row}>
+              <h3>Start Time</h3>
+              {trials.map(trial =>
+                <p key={trial.id}>
+                  {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+                </p>)}
+            </div>
+            <div className={css.row}>
+              <h3>Training Time</h3>
+              {trials.map(trial =>
+                <p key={trial.id}>
+                  {shortEnglishHumannizer(durations[trial.id]?.train)}
+                </p>)}
+            </div>
+            <div className={css.row}>
+              <h3>Validation Time</h3>
+              {trials.map(trial =>
+                <p key={trial.id}>
+                  {shortEnglishHumannizer(durations[trial.id]?.validation)}
+                </p>)}
+            </div>
+            <div className={css.row}>
+              <h3>Checkpoint Time</h3>
+              {trials.map(trial =>
+                <p key={trial.id}>
+                  {shortEnglishHumannizer(durations[trial.id]?.checkpoint)}
+                </p>)}
+            </div>
+            <div className={css.row}>
+              <h3>Batches Processed</h3>
+              {trials.map(trial => <p key={trial.id}>{trial.totalBatchesProcessed}</p>)}
+            </div>
+            <div className={css.row}>
+              <h3>Best Checkpoint</h3>
+              {trials.map(trial =>
+                trial.bestAvailableCheckpoint ?
+                  <Button
+                    className={css.checkpointButton}
+                    key={trial.id}
+                    onClick={e => handleCheckpointShow(e, trial)}>
+                    <Icon name="checkpoint" />
+                    <span>Batch {trial.bestAvailableCheckpoint?.totalBatches}</span>
+                  </Button> : <div />)}
+            </div>
+            <div className={css.row}>
+              <h3>Total Checkpoint Size</h3>
+              {trials.map(trial => <p key={trial.id}>{totalCheckpointsSizes[trial.id]}</p>)}
+            </div>
+            <div className={css.headerRow}><h2>Metrics</h2></div>
+            {metricNames.map(metric =>
+              <div className={css.row} key={metric.name}>
+                <BadgeTag label={metric.name}>{metric.type === MetricType.Training ?
+                  <Tooltip title="training">T</Tooltip> :
+                  <Tooltip title="validation">V</Tooltip>}
+                </BadgeTag>
+              </div>)}
+            <div className={css.headerRow}><h2>Hyperparameters</h2></div>
+            {hyperparameterNames.map(hp =>
+              <div className={css.row} key={hp}>
+                <h3>{hp}</h3>
+                {trials.map(trial =>
+                  !isNaN(parseFloat(JSON.stringify(trial.hyperparameters[hp]))) ?
+                    <HumanReadableFloat
+                      key={trial.id}
+                      num={parseFloat(JSON.stringify(trial.hyperparameters[hp]))} />:
+                    trial.hyperparameters[hp])}
+              </div>)}
+          </> : <Spinner spinning={!isLoaded} />}
       </div>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
