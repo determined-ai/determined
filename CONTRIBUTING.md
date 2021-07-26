@@ -21,8 +21,10 @@ We welcome outside contributions. If you'd like to make a contribution, please:
    We'd hate for you to duplicate effort is already in-flight.
 
 1. Apply the linter with `make fmt` and test locally with `make test` before
-   submitting your code.
-
+   submitting your code. Make sure that your code doesn't accidentally include
+   cloud credentials. We recommend [using git-secrets to automatically prevent 
+   this](#secrets).
+   
 1. The first time you submit code, you'll need to
    [sign a CLA](https://determined.ai/cla/).
 
@@ -178,3 +180,27 @@ docker run --gpus all --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04 nvidia-sm
 If this command displays one or more GPUs, the Determined agent should
 automatically detect the system's GPUs and make them available for
 running experiments.
+
+
+### Secrets
+
+To prevent cloud credentials from accidentally being exposed on GitHub, install 
+and configure the [git-secrets](https://github.com/awslabs/git-secrets) tool. 
+This sets up git hooks to prevent pushing code that contain secrets (based on regex).
+
+For Mac, the tool can be installed via `brew install git-secrets`. For other 
+OSes see installation instructions [here](https://github.com/awslabs/git-secrets#installing-git-secrets).
+
+Then navigate to the repo, set up the git hooks, and define the regexes:
+```shell
+cd /path/to/my/repository
+
+# Set up the git hooks for this repo
+git secrets --install
+
+# Add AWS regexes
+git secrets --register-aws
+# Add GCP regex
+git secrets --add '\bprivate_key.*\b'
+```
+
