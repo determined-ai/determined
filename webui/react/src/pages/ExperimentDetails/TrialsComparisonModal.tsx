@@ -2,6 +2,7 @@ import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
@@ -122,7 +123,11 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
         {trials.map(trial => <p key={trial.id}>{trial.id}</p>)}</div>
       <div className={css.row}>
         <h3>State</h3>
-        {trials.map(trial => <p key={trial.id}>{trial.state}</p>)}</div>
+        {trials.map(trial =>
+          <div className={css.centerVertically} key={trial.id}>
+            <Badge state={trial.state} type={BadgeType.State} />
+          </div>)}
+      </div>
       <div className={css.row}>
         <h3>Start Time</h3>
         {trials.map(trial =>
