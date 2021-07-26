@@ -13,9 +13,8 @@ import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { CheckpointState, CheckpointWorkload,
-  CheckpointWorkloadExtended,
-  ExperimentBase,
-  MetricName,
+  CheckpointWorkloadExtended, ExperimentBase,
+  MetricName, MetricsWorkload,
   MetricType, TrialDetails, TrialItem } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -149,6 +148,49 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
 
+  const extractLatestMetrics = useCallback((
+    metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
+    workload: MetricsWorkload,
+    trialId: string,
+  ) => {
+    for (const metricName of
+      Object.keys(workload.metrics || {})) {
+      if (metricsObj[trialId][metricName]) {
+        if ((new Date(workload.endTime || Date())).getTime() -
+        (new Date(metricsObj[trialId][metricName].endTime || Date()).getTime()) > 0) {
+          metricsObj[trialId][metricName] = workload;
+        }
+      } else {
+        metricsObj[trialId][metricName] = workload;
+      }
+    }
+    return metricsObj;
+  }, []);
+
+  const metrics = useMemo(() => {
+    const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
+    for (const [ trialId, trialDetails ] of Object.entries(trialsDetails)) {
+      metricsObj[trialId] = {};
+      trialDetails.data?.workloads.forEach(workload => {
+        if (workload.training) {
+          extractLatestMetrics(metricsObj, workload.training, trialId);
+        } else if (workload.validation) {
+          extractLatestMetrics(metricsObj, workload.validation, trialId);
+        }
+      });
+    }
+    const metricValues: Record<string, {[key: string]: number}> = {};
+    for (const [ trialId, metrics ] of Object.entries(metricsObj)) {
+      metricValues[trialId] = {};
+      for (const [ metric, workload ] of Object.entries(metrics)) {
+        if (workload.metrics){
+          metricValues[trialId][metric] = workload.metrics[metric];
+        }
+      }
+    }
+    return metricValues;
+  }, [ extractLatestMetrics, trialsDetails ]);
+
   const hyperparameterNames = useMemo(
     () =>
       Object.keys(trials.first().hyperparameters),
@@ -159,8 +201,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     const detailsArr = Object.values(trialsDetails);
     return detailsArr.length === trials.length && detailsArr.every(trial => !trial.isLoading);
   }, [ trialsDetails, trials.length ]);
-
-  console.log(trialsDetails);
 
   return (
     <>
@@ -238,6 +278,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                   <Tooltip title="training">T</Tooltip> :
                   <Tooltip title="validation">V</Tooltip>}
                 </BadgeTag>
+                {trials.map(trial => metrics[trial.id][metric.name] ?
+                  <HumanReadableFloat
+                    key={trial.id}
+                    num={metrics[trial.id][metric.name]} />: <div />)}
               </div>)}
             <div className={css.headerRow}><h2>Hyperparameters</h2></div>
             {hyperparameterNames.map(hp =>
