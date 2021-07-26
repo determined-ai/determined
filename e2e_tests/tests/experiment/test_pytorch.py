@@ -8,6 +8,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.profile
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))

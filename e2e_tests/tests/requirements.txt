@@ -9,3 +9,5 @@ tensorflow==2.4.1
 pandas
 pyyaml
 docker
+boto3
+botocore

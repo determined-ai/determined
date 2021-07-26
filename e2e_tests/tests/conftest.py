@@ -8,6 +8,9 @@ import boto3
 import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import SubRequest
+from _pytest.reports import TestReport
+from _pytest.nodes import Item
+from _pytest.runner import CallInfo
 from botocore import exceptions as boto_exc
 
 from tests import config
@@ -154,3 +157,13 @@ def test_start_timer(request: SubRequest) -> Iterator[None]:
         # This ends up concatenated to the line pytest prints containing the test file and name.
         print("starting at", time.strftime("%Y-%m-%d %H:%M:%S"))
     yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport() -> None:
+    # Call other hooks of same type to get result
+    outcome = yield
+    report = outcome.get_result()
+    if report.when == "call":
+        report.longrepr.addsection("test", "value")
+    print(f"report {report}")
