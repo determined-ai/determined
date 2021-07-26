@@ -283,7 +283,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, errors.Wrapf(err, "cannot find Tensorboard manager actor")
 	}
 
-	tensorboardID := tensorboardIDFut.Get().(model.AllocationID)
+	tensorboardID := tensorboardIDFut.Get().(model.TaskID)
 	tensorboard := a.m.system.AskAt(
 		tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
 	if err = api.ProcessActorResponseError(&tensorboard); err != nil {

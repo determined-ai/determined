@@ -170,7 +170,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
-	notebookID := notebookIDFut.Get().(model.AllocationID)
+	notebookID := notebookIDFut.Get().(model.TaskID)
 	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
 	if err = api.ProcessActorResponseError(&notebook); err != nil {
 		return nil, err

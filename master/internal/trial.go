@@ -342,6 +342,15 @@ func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationEx
 
 // transition transitions the trial and rectifies the underlying allocation state with it.
 func (t *trial) transition(ctx *actor.Context, state model.State) error {
+	// A terminal-state trial never transitions.
+	if terminal := model.TerminalStates[t.state]; terminal {
+		ctx.Log().Infof("ignoring transition in terminal state (%s -> %s)", t.state, state)
+		return nil
+	} else if t.state == state {
+		ctx.Log().Infof("ignoring noop transition (%s -> %s)", t.state, state)
+		return nil
+	}
+
 	// Transition the trial.
 	ctx.Log().Infof("trial changed from state %s to %s", t.state, state)
 	if t.idSet {

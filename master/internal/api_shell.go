@@ -136,7 +136,7 @@ func (a *apiServer) LaunchShell(
 		return nil, err
 	}
 
-	shellID := shellIDFut.Get().(model.AllocationID)
+	shellID := shellIDFut.Get().(model.TaskID)
 	shell := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
 	if err = api.ProcessActorResponseError(&shell); err != nil {
 		return nil, err
