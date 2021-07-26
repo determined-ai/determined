@@ -3,7 +3,12 @@ const ansiConverter = require('ansi-to-html');
 const converter = new ansiConverter({ newline: true });
 
 export const ansiToHtml = (ansi: string): string => {
-  const ansiWithHtml = ansi.replace('<', '&lt;').replace('>', '&gt;');
+  const ansiWithHtml = ansi
+    .replace(/(&|\u0026)/g, '&amp;')
+    .replace(/(>|\u003e)/g, '&gt;')
+    .replace(/(<|\u003c)/g, '&lt;')
+    .replace(/('|\u0027)/g, '&apos;')
+    .replace(/("|\u0022)/g, '&quot;');
   return converter.toHtml(ansiWithHtml);
 };
 
