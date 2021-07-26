@@ -14,6 +14,7 @@ import { isAborted } from 'services/utils';
 import { CheckpointState, CheckpointWorkload,
   CheckpointWorkloadExtended,
   ExperimentBase,
+  MetricName,
   MetricType, TrialDetails, TrialItem } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -138,15 +139,22 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     , [ getCheckpointSize, trialsDetails ],
   );
 
-  const metricNames = useMemo(() => extractMetricNames(
-    trialsDetails[trials.first().id]?.data?.workloads || [],
-  ), [ trialsDetails, trials ]);
+  const metricNames = useMemo(() => {
+    const nameSet: Record<string, MetricName> = {};
+    trials.forEach(trial => {
+      extractMetricNames(trialsDetails[trial.id]?.data?.workloads || [])
+        .forEach(item => nameSet[item.name] = (item));
+    });
+    return Object.values(nameSet);
+  }, [ trialsDetails, trials ]);
 
   const hyperparameterNames = useMemo(
     () =>
       Object.keys(trials.first().hyperparameters),
     [ trials ],
   );
+
+  console.log(trialsDetails);
 
   return (
     <>
@@ -220,7 +228,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
           <div className={css.row} key={metric.name}>
             <BadgeTag label={metric.name}>{metric.type === MetricType.Training ?
               <Tooltip title="training">T</Tooltip> :
-              <Tooltip title="validation">T</Tooltip>}
+              <Tooltip title="validation">V</Tooltip>}
             </BadgeTag>
           </div>)}
         <div className={css.headerRow}><h2>Hyperparameters</h2></div>
