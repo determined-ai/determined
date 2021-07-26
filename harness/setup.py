@@ -58,16 +58,6 @@ setup(
         # so we expose that requirement here.
         "websocket-client<1",
     ],
-    extras_require={
-        "tf-115-cuda102": ["tensorflow-gpu==1.15.5"],
-        "tf-115-cpu": ["tensorflow==1.15.5"],
-        "tf-240-cuda102": ["tensorflow-gpu==2.4.1"],
-        "tf-240-cpu": ["tensorflow==2.4.1"],
-        "tf-241-cuda110": ["tensorflow-gpu==2.4.1"],
-        "pytorch-18-cuda102": ["torch==1.8.1", "torchvision==0.9.1"],
-        "pytorch-18-cuda110": ["torch==1.8.1", "torchvision==0.9.1"],
-        "pytorch-18-cpu": ["torch==1.8.1", "torchvision==0.9.1"],
-    },
     zip_safe=False,
     entry_points={
         "console_scripts": [
