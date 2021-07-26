@@ -178,3 +178,27 @@ docker run --gpus all --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04 nvidia-sm
 If this command displays one or more GPUs, the Determined agent should
 automatically detect the system's GPUs and make them available for
 running experiments.
+
+
+### Secrets
+
+To prevent cloud credentials from accidentally being exposed on GitHub, install 
+and configure the [git-secrets](https://github.com/awslabs/git-secrets) tool. 
+This sets up git hooks to prevent pushing code that contain secrets (based on regex).
+
+For Mac, the tool can be installed via `brew install git-secrets`. For other 
+OSes see installation instructions [here](https://github.com/awslabs/git-secrets#installing-git-secrets).
+
+Then navigate to the repo, set up the git hooks, and define the regexes:
+```shell
+cd /path/to/my/repository
+
+# Set up the git hooks for this repo
+git secrets --install
+
+# Add AWS regexes
+git secrets --register-aws
+# Add GCP regex
+git secrets --add '\bprivate_key.*\b'
+```
+
