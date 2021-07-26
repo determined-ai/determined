@@ -1,9 +1,10 @@
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import { getTrialDetails } from 'services/api';
@@ -178,7 +179,10 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       <div className={css.headerRow}><h2>Metrics</h2></div>
       {metricNames.map(metric =>
         <div className={css.row} key={metric.name}>
-          <h3>{metric.name}</h3>
+          <BadgeTag label={metric.name}>{metric.type === MetricType.Training ?
+            <Tooltip title="training">T</Tooltip> :
+            <Tooltip title="validation">T</Tooltip>}
+          </BadgeTag>
         </div>)}
       <div className={css.headerRow}><h2>Hyperparameters</h2></div>
       {hyperparameterNames.map(hp =>
