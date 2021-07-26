@@ -46,4 +46,8 @@ h3 {
 .trialTag {
   font-size: 14px;
   width: fit-content;
+
+  p {
+    padding-right: var(--theme-sizes-layout-small);
+  }
 }

@@ -215,7 +215,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                   className={[ css.trialTag, css.centerVertically ].join(' ')}
                   closable
                   key={trial.id}
-                  onClose={() => handleTrialUnselect(trial)}>Trial {trial.id}</Tag>)}</div>
+                  onClose={() => handleTrialUnselect(trial)}><p>Trial {trial.id}</p></Tag>)}</div>
             <div className={css.row}>
               <h3>State</h3>
               {trials.map(trial =>
