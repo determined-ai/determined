@@ -21,8 +21,10 @@ We welcome outside contributions. If you'd like to make a contribution, please:
    We'd hate for you to duplicate effort is already in-flight.
 
 1. Apply the linter with `make fmt` and test locally with `make test` before
-   submitting your code.
-
+   submitting your code. Make sure that your code doesn't accidentally include
+   cloud credentials. We recommend [using git-secrets to automatically prevent 
+   this](#secrets).
+   
 1. The first time you submit code, you'll need to
    [sign a CLA](https://determined.ai/cla/).
 
