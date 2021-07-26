@@ -1261,7 +1261,7 @@ jobs:
       - image: determinedai/cimg-base:stable
     steps:
       - run: git clone https://github.com/awslabs/git-secrets /tmp/git-secrets
-      - run: cd /tmp/git-secrets && make install
+      - run: cd /tmp/git-secrets && sudo make install
       - checkout
       - run: git secrets --install
       - run: git secrets --register-aws
