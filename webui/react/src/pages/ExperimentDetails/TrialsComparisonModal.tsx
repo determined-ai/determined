@@ -116,8 +116,6 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
     [ trials ],
   );
 
-  useEffect(() => console.log(trialsDetails), [ trialsDetails ]);
-
   return (
     <div className={css.tableContainer}>
       <div

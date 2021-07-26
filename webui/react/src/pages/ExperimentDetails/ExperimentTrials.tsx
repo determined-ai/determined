@@ -113,12 +113,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       selectedRowKeys.forEach(rowKey => searchParams.append('row', String(rowKey)));
     }
 
+    // compare modal
+    searchParams.append('compare', showCompareTrials ? '1' : '0');
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ filters, isUrlParsed, pagination, selectedRowKeys, sorter ]);
+  }, [ filters, isUrlParsed, pagination, selectedRowKeys, showCompareTrials, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -170,6 +173,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     const rows = urlSearchParams.getAll('row');
     if (rows != null) {
       setSelectedRowKeys(rows.map(row => parseInt(row)));
+
+      const compare = urlSearchParams.get('compare');
+      if (sortDesc != null) {
+        setShowCompareTrials(compare === '1');
+      }
     }
 
     setFilters(filters);
@@ -430,7 +438,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
-      {showCompareTrials &&
+      {showCompareTrials && selectedTrials.first() &&
       <TrialsComparisonModal
         trials={selectedTrials}
         visible={showCompareTrials}
