@@ -1,4 +1,4 @@
-import { Button, Tooltip } from 'antd';
+import { Button, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,17 +25,19 @@ import css from './TrialsComparisonModal.module.scss';
 interface ModalProps {
   experiment: ExperimentBase;
   onCancel: () => void;
+  onUnselect: (trialId: number) => void;
   trials: TrialItem[];
   visible: boolean;
 }
 
 interface TableProps {
   experiment: ExperimentBase;
+  onUnselect: (trialId: number) => void;
   trials: TrialItem[];
 }
 
 const TrialsComparisonModal: React.FC<ModalProps> =
-({ experiment, onCancel, trials, visible }: ModalProps) => {
+({ experiment, onCancel, onUnselect, trials, visible }: ModalProps) => {
   return (
     <Modal
       footer={null}
@@ -43,12 +45,14 @@ const TrialsComparisonModal: React.FC<ModalProps> =
       visible={visible}
       width={1200}
       onCancel={onCancel}>
-      <TrialsComparisonTable experiment={experiment} trials={trials} />
+      <TrialsComparisonTable experiment={experiment} trials={trials} onUnselect={onUnselect} />
     </Modal>
   );
 };
 
-const TrialsComparisonTable: React.FC<TableProps> = ({ trials, experiment }: TableProps) => {
+const TrialsComparisonTable: React.FC<TableProps> = (
+  { trials, experiment, onUnselect }: TableProps,
+) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, ApiState<TrialDetails>>>({});
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -110,6 +114,9 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials, experiment }: Tab
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
+  const handleTrialUnselect = useCallback((trial: TrialItem) =>
+    onUnselect(trial.id), [ onUnselect ]);
+
   const durations: Record<string, TrialDurations> = useMemo(
     () => Object.fromEntries(Object.values(trialsDetails)
       .map(trial => (trial.data ? [ trial.data.id, trialDurations(trial.data.workloads) ] : [])))
@@ -147,7 +154,12 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials, experiment }: Tab
         <div
           className={css.headerRow}>
           <div />
-          {trials.map(trial => <p key={trial.id}>{trial.id}</p>)}</div>
+          {trials.map(trial =>
+            <Tag
+              className={[ css.trialTag, css.centerVertically ].join(' ')}
+              closable
+              key={trial.id}
+              onClose={() => handleTrialUnselect(trial)}>Trial {trial.id}</Tag>)}</div>
         <div className={css.row}>
           <h3>State</h3>
           {trials.map(trial =>

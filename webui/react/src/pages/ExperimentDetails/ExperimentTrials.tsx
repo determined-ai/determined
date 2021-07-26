@@ -421,6 +421,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
+  const handleTrialUnselect = useCallback((trialId: number) =>
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+
   return (
     <>
       <Section>
@@ -459,7 +462,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         experiment={experiment}
         trials={selectedTrials}
         visible={showCompareTrials}
-        onCancel={() => setShowCompareTrials(false)} />}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect} />}
     </>
   );
 };
