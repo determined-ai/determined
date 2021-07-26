@@ -1,9 +1,11 @@
+import { Button } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import Icon from 'components/Icon';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -162,7 +164,12 @@ const TrialsComparisonTable: React.FC<TableProps> = ({ trials }: TableProps) => 
       </div>
       <div className={css.row}>
         <h3>Best Checkpoint</h3>
-        {trials.map(trial => <p key={trial.id}>{trial.bestAvailableCheckpoint?.totalBatches}</p>)}
+        {trials.map(trial =>
+          trial.bestAvailableCheckpoint ?
+            <Button className={css.checkpointButton} key={trial.id}>
+              <Icon name="checkpoint" />
+              <span>Batch {trial.bestAvailableCheckpoint?.totalBatches}</span>
+            </Button> : <div />)}
       </div>
       <div className={css.row}>
         <h3>Total Checkpoint Size</h3>

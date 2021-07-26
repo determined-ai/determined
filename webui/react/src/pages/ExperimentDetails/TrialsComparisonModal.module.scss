@@ -13,10 +13,6 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   justify-content: space-between;
   padding: 0 var(--theme-sizes-layout-small);
-
-  * {
-    min-width: 100px;
-  }
 }
 .row {
   @extend %tableRow;
@@ -34,4 +30,10 @@ h3 {
 .centerVertically {
   align-items: center;
   display: flex;
+}
+.checkpointButton {
+  display: inline-flex;
+  gap: 5px;
+  justify-content: center;
+  width: fit-content;
 }
