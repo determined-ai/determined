@@ -4,24 +4,21 @@
  Using The Determined REST APIs
 ################################
 
-Determined's REST APIs provide a way for users and external tools to
-interact with a Determined cluster programmatically. Determined includes
-detailed documentation about all of the REST endpoints provided by the
-API, alongside a playground for interacting with the API. The endpoint
-documentation and playground are provided via `Swagger UI
-<https://swagger.io/tools/swagger-ui/>`__ and are available `here
-<../rest-api/index.html>`__.
+Determined's REST APIs provide a way for users and external tools to interact with a Determined
+cluster programmatically. Determined includes detailed documentation about all of the REST endpoints
+provided by the API, alongside a playground for interacting with the API. The endpoint documentation
+and playground are provided via `Swagger UI <https://swagger.io/tools/swagger-ui/>`__ and are
+available `here <../rest-api/index.html>`__.
 
 ****************
  Authentication
 ****************
 
-Most of the API calls to Determined cluster need to be authenticated. On
-each API call, the server expects a Bearer token to be present.
+Most of the API calls to Determined cluster need to be authenticated. On each API call, the server
+expects a Bearer token to be present.
 
-To receive a token POST a valid username and password combination to the
-login endpoint, currently at ``/api/v1/auth/login`` with the following
-format:
+To receive a token POST a valid username and password combination to the login endpoint, currently
+at ``/api/v1/auth/login`` with the following format:
 
 .. code:: json
 
@@ -55,33 +52,29 @@ Sample response:
      }
    }
 
-Once we have the token, we should store it and attach it to future API
-calls under the ``Authorization`` header using the following format:
-``Bearer $TOKEN``.
+Once we have the token, we should store it and attach it to future API calls under the
+``Authorization`` header using the following format: ``Bearer $TOKEN``.
 
 *********
  Example
 *********
 
-In this example, we will show how to use the REST APIs to unarchive an
-experiment that was previously archived.
+In this example, we will show how to use the REST APIs to unarchive an experiment that was
+previously archived.
 
-By looking at the archive endpoint entry from our API docs (Swagger UI),
-we see that all we need is an experiment ID.
+By looking at the archive endpoint entry from our API docs (Swagger UI), we see that all we need is
+an experiment ID.
 
-To find an experiment that was archived, we lookup the experiments
-endpoint to figure out which filtering options we have. We see that we
-have ``archived`` and ``limit`` to work with. Using a bearer token we
-authenticate our request. We then use the ``archived`` and ``limit``
-query parameters to limit the result set to only show a single archived
-experiment.
+To find an experiment that was archived, we lookup the experiments endpoint to figure out which
+filtering options we have. We see that we have ``archived`` and ``limit`` to work with. Using a
+bearer token we authenticate our request. We then use the ``archived`` and ``limit`` query
+parameters to limit the result set to only show a single archived experiment.
 
 .. code:: bash
 
    curl -H "Authorization: Bearer ${token}" "${DET_MASTER}/api/v1/experiments?archived=true&limit=1"
 
-Here's what our example response looks like. We see it matches the
-expected response shape.
+Here's what our example response looks like. We see it matches the expected response shape.
 
 .. code:: json
 
@@ -109,9 +102,8 @@ expected response shape.
      }
    }
 
-Now that we have our desired experiment's ID, we use it to target the
-experiment through the unarchive endpoint using a POST request as
-specified by the endpoint:
+Now that we have our desired experiment's ID, we use it to target the experiment through the
+unarchive endpoint using a POST request as specified by the endpoint:
 
 .. code:: bash
 

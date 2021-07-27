@@ -2,5 +2,5 @@
 
 **New Features**
 
--  WebUI: Add support for nested hyperparameters in experiment config,
-   trial hyperparameters and hp visualizations.
+-  WebUI: Add support for nested hyperparameters in experiment config, trial hyperparameters and hp
+   visualizations.

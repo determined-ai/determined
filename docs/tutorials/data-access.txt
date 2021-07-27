@@ -4,73 +4,57 @@
  Accessing Data
 ################
 
-Data plays a fundamental role in machine learning model development. The
-best way to load data into your ML models depends on several factors,
-including whether you are running on-premise or in the cloud, the size
-of your data sets, and your security requirements. Accordingly,
-Determined supports a variety of methods for accessing data.
+Data plays a fundamental role in machine learning model development. The best way to load data into
+your ML models depends on several factors, including whether you are running on-premise or in the
+cloud, the size of your data sets, and your security requirements. Accordingly, Determined supports
+a variety of methods for accessing data.
 
 This tutorial discusses three methods for accessing data in Determined:
 
 #. **Object Storage**: Data stored in object stores such as `Amazon S3
    <https://aws.amazon.com/s3/>`__.
-
-#. **Distributed File Systems**: Data stored on distributed file systems
-   such as `NFS <https://en.wikipedia.org/wiki/Network_File_System>`__
-   or `Ceph <https://ceph.io/>`__.
-
-#. **Small Data**: Small data sets can be uploaded as part of the model
-   definition.
+#. **Distributed File Systems**: Data stored on distributed file systems such as `NFS
+   <https://en.wikipedia.org/wiki/Network_File_System>`__ or `Ceph <https://ceph.io/>`__.
+#. **Small Data**: Small data sets can be uploaded as part of the model definition.
 
 ****************
  Object Storage
 ****************
 
-Object stores manage data as a collection of key-value pairs. Object
-storage is particularly popular in cloud environments -- for example,
-Amazon's `Simple Storage Service <https://aws.amazon.com/s3/>`__ (S3)
-and `Google Cloud Storage <https://cloud.google.com/storage>`__ (GCS)
-are both object stores. When running Determined in the cloud, it is
-highly recommended that you store your data using the same cloud
-provider being used for the Determined cluster itself.
+Object stores manage data as a collection of key-value pairs. Object storage is particularly popular
+in cloud environments -- for example, Amazon's `Simple Storage Service
+<https://aws.amazon.com/s3/>`__ (S3) and `Google Cloud Storage <https://cloud.google.com/storage>`__
+(GCS) are both object stores. When running Determined in the cloud, it is highly recommended that
+you store your data using the same cloud provider being used for the Determined cluster itself.
 
-Unless you are accessing a publicly available data set, you will need to
-ensure that Determined trial containers can access data in the object
-storage service you are using. This can be done by configuring a
-:ref:`custom environment <custom-env>` with the appropriate credentials.
-When using :ref:`Dynamic Agents on GCP <dynamic-agents-gcp>`, a system
-administrator will need to configure a valid :ref:`service account
-<cluster-configuration>` with read credentials. When using :ref:`Dynamic
-Agents on AWS <dynamic-agents-aws>`, the system administrator will need
-to configure an :ref:`iam_instance_profile_arn <cluster-configuration>`
-with read credentials.
+Unless you are accessing a publicly available data set, you will need to ensure that Determined
+trial containers can access data in the object storage service you are using. This can be done by
+configuring a :ref:`custom environment <custom-env>` with the appropriate credentials. When using
+:ref:`Dynamic Agents on GCP <dynamic-agents-gcp>`, a system administrator will need to configure a
+valid :ref:`service account <cluster-configuration>` with read credentials. When using :ref:`Dynamic
+Agents on AWS <dynamic-agents-aws>`, the system administrator will need to configure an
+:ref:`iam_instance_profile_arn <cluster-configuration>` with read credentials.
 
-Once security access has been configured, we can use open-source
-libraries such as `boto3 <https://aws.amazon.com/sdk-for-python/>`__ or
-`gcsfs <https://gcsfs.readthedocs.io/en/latest/>`__ to access data from
-object storage. The simplest way to do this is for your model definition
-code to download the entire data set whenever a trial container starts
-up.
+Once security access has been configured, we can use open-source libraries such as `boto3
+<https://aws.amazon.com/sdk-for-python/>`__ or `gcsfs <https://gcsfs.readthedocs.io/en/latest/>`__
+to access data from object storage. The simplest way to do this is for your model definition code to
+download the entire data set whenever a trial container starts up.
 
 Downloading from Object Storage
 ===============================
 
-The example below demonstrates how to download data from S3 using
-``boto``. The S3 bucket name is specified in the experiment config file
-(using a field named ``data.bucket``). The ``download_directory``
-variable defines where data that is downloaded from S3 will be stored.
-Note that we include :func:`self.context.distributed.get_rank()
-<determined._train_context.DistributedContext.get_rank>` in the name of
-this directory: when doing distributed training, multiple processes
-might be downloading data concurrently (one process per GPU), so
-embedding the rank in the directory name ensures that these processes do
-not conflict with one another. For more detail, see the
-:ref:`Distributed Training How-To Guide <multi-gpu-training>`.
+The example below demonstrates how to download data from S3 using ``boto``. The S3 bucket name is
+specified in the experiment config file (using a field named ``data.bucket``). The
+``download_directory`` variable defines where data that is downloaded from S3 will be stored. Note
+that we include :func:`self.context.distributed.get_rank()
+<determined._train_context.DistributedContext.get_rank>` in the name of this directory: when doing
+distributed training, multiple processes might be downloading data concurrently (one process per
+GPU), so embedding the rank in the directory name ensures that these processes do not conflict with
+one another. For more detail, see the :ref:`Distributed Training How-To Guide <multi-gpu-training>`.
 
-Once the download directory has been created,
-``s3.download_file(s3_bucket, data_file, filepath)`` fetches the file
-from S3 and stores it at the specified location. The data can then be
-accessed in the ``download_directory``.
+Once the download directory has been created, ``s3.download_file(s3_bucket, data_file, filepath)``
+fetches the file from S3 and stores it at the specified location. The data can then be accessed in
+the ``download_directory``.
 
 .. code:: python
 
@@ -90,53 +74,46 @@ accessed in the ``download_directory``.
            s3.download_file(s3_bucket, data_file, filepath)
        return download_directory
 
-To use this in your trial class, start by calling
-``download_data_from_s3`` in the trial's ``__init__`` function. Next,
-implement the ``build_training_data_loader`` and
-``build_validation_data_loader`` functions to load the training and
-validation data sets, respectively, from the downloaded data.
+To use this in your trial class, start by calling ``download_data_from_s3`` in the trial's
+``__init__`` function. Next, implement the ``build_training_data_loader`` and
+``build_validation_data_loader`` functions to load the training and validation data sets,
+respectively, from the downloaded data.
 
 Streaming from Object Storage
 =============================
 
-Rather than downloading the entire training data set from object storage
-during trial startup, another way to load data is to *stream* batches of
-data from the training and validation sets as needed. This has several
-advantages:
+Rather than downloading the entire training data set from object storage during trial startup,
+another way to load data is to *stream* batches of data from the training and validation sets as
+needed. This has several advantages:
 
--  It avoids downloading the entire data set during trial startup,
-   allowing training tasks to start more quickly.
+-  It avoids downloading the entire data set during trial startup, allowing training tasks to start
+   more quickly.
 
--  If a container doesn't need to access the entire data set, streaming
-   can result in downloading less data. For example, when during
-   hyperparameter search, many trials can often be terminated after
-   having been trained for less than a full epoch.
+-  If a container doesn't need to access the entire data set, streaming can result in downloading
+   less data. For example, when during hyperparameter search, many trials can often be terminated
+   after having been trained for less than a full epoch.
 
--  If the data set is extremely large, streaming can avoid the need to
-   store the entire data set on disk.
+-  If the data set is extremely large, streaming can avoid the need to store the entire data set on
+   disk.
 
--  Streaming can allow model training and data downloading to happen in
-   parallel, improving performance.
+-  Streaming can allow model training and data downloading to happen in parallel, improving
+   performance.
 
-To perform streaming data loading, the data must be stored in a format
-that allows efficient random access, so that the model code can fetch a
-specific batch of training or validation data. One way to do this is to
-store each batch of data as a separate object in the object store.
-Alternatively, if the data set consists of fixed-size records, you can
-use a single object and then read the appropriate byte range from it.
+To perform streaming data loading, the data must be stored in a format that allows efficient random
+access, so that the model code can fetch a specific batch of training or validation data. One way to
+do this is to store each batch of data as a separate object in the object store. Alternatively, if
+the data set consists of fixed-size records, you can use a single object and then read the
+appropriate byte range from it.
 
-To stream data, a custom ``torch.utils.data.Dataset`` or
-``tf.keras.utils.Sequence`` object is required, depending on whether you
-are using PyTorch or TensorFlow Keras, respectively. These classes
-require a ``__getitem__`` method that is passed an index and returns the
-associated batch or record of data. When streaming data, the
-implementation of ``__getitem__`` should fetch the required data from
-the object store.
+To stream data, a custom ``torch.utils.data.Dataset`` or ``tf.keras.utils.Sequence`` object is
+required, depending on whether you are using PyTorch or TensorFlow Keras, respectively. These
+classes require a ``__getitem__`` method that is passed an index and returns the associated batch or
+record of data. When streaming data, the implementation of ``__getitem__`` should fetch the required
+data from the object store.
 
-The code below demonstrates a custom ``tf.keras.utils.Sequence`` class
-that streams data from Amazon S3. In the ``__getitem__`` method,
-``boto3`` is used to fetch the data based on the provided bucket and
-key.
+The code below demonstrates a custom ``tf.keras.utils.Sequence`` class that streams data from Amazon
+S3. In the ``__getitem__`` method, ``boto3`` is used to fetch the data based on the provided bucket
+and key.
 
 .. code:: python
 
@@ -158,41 +135,34 @@ key.
  Distributed File System
 *************************
 
-Another way to store data is to use a distributed file system, which
-enables a cluster of machines to access a shared data set via the
-familiar POSIX file system interface. Amazon's `Elastic File System
-<https://aws.amazon.com/efs/>`__ and Google's `Cloud Filestore
-<https://cloud.google.com/filestore>`__ are examples of distributed file
-systems that are available in cloud environments. For on-premise
-deployments, popular distributed file systems include `Ceph
-<https://ceph.io/>`__, `GlusterFS <https://www.gluster.org/>`__, and
-`NFS <https://en.wikipedia.org/wiki/Network_File_System>`__.
+Another way to store data is to use a distributed file system, which enables a cluster of machines
+to access a shared data set via the familiar POSIX file system interface. Amazon's `Elastic File
+System <https://aws.amazon.com/efs/>`__ and Google's `Cloud Filestore
+<https://cloud.google.com/filestore>`__ are examples of distributed file systems that are available
+in cloud environments. For on-premise deployments, popular distributed file systems include `Ceph
+<https://ceph.io/>`__, `GlusterFS <https://www.gluster.org/>`__, and `NFS
+<https://en.wikipedia.org/wiki/Network_File_System>`__.
 
-To access data on a distributed file system, you should first ensure
-that the file system is mounted at the same mount point on every
-Determined agent. For cloud deployments, this can be done by configuring
-``provisioner.startup_script`` in ``master.yaml`` to point to a script
-that mounts the distributed file system. An example of how to do this on
-GCP can be :ref:`found here <gcp-attach-disk>`.
+To access data on a distributed file system, you should first ensure that the file system is mounted
+at the same mount point on every Determined agent. For cloud deployments, this can be done by
+configuring ``provisioner.startup_script`` in ``master.yaml`` to point to a script that mounts the
+distributed file system. An example of how to do this on GCP can be :ref:`found here
+<gcp-attach-disk>`.
 
-Next, you will need to ensure the file system is accessible to each
-trial container. This can be done by configuring a bind mount in the
-:ref:`experiment configuration file <experiment-configuration>`. Each
-bind mount consists of a ``host_path`` and a ``container_path``; the
-host path specifies the absolute path where the distributed file system
-has been mounted on the agent, while the container path specifies the
-path within the container's file system where the distributed file
-system will be accessible.
+Next, you will need to ensure the file system is accessible to each trial container. This can be
+done by configuring a bind mount in the :ref:`experiment configuration file
+<experiment-configuration>`. Each bind mount consists of a ``host_path`` and a ``container_path``;
+the host path specifies the absolute path where the distributed file system has been mounted on the
+agent, while the container path specifies the path within the container's file system where the
+distributed file system will be accessible.
 
-To avoid confusion, you may wish to set the ``container_path`` to be
-equal to the ``host_path``. You may also want to set ``read_only`` to
-``true`` for each bind mount, to ensure that data sets are not modified
-by training code.
+To avoid confusion, you may wish to set the ``container_path`` to be equal to the ``host_path``. You
+may also want to set ``read_only`` to ``true`` for each bind mount, to ensure that data sets are not
+modified by training code.
 
-The following example assumes a Determined cluster is configured with a
-distributed file system mounted at ``/mnt/data`` on each agent. To
-access data on this file system, we use an experiment configuration file
-as follows:
+The following example assumes a Determined cluster is configured with a distributed file system
+mounted at ``/mnt/data`` on each agent. To access data on this file system, we use an experiment
+configuration file as follows:
 
 .. code:: yaml
 
@@ -201,8 +171,7 @@ as follows:
        container_path: /mnt/data
        read_only: true
 
-Our model definition code can then access data in the ``/mnt/data``
-directory as follows:
+Our model definition code can then access data in the ``/mnt/data`` directory as follows:
 
 .. code:: python
 
@@ -217,17 +186,14 @@ directory as follows:
  Embed in Model Definition
 ***************************
 
-In Determined, each experiment has an associated :ref:`model definition
-<model-definitions>` directory. The model definition directory must
-include the model's source code, but it can also include other files
-related to the model, such as a data set. The size of this directory
-must not exceed 96MB, so this method is only appropriate when the size
-of the data set is small.
+In Determined, each experiment has an associated :ref:`model definition <model-definitions>`
+directory. The model definition directory must include the model's source code, but it can also
+include other files related to the model, such as a data set. The size of this directory must not
+exceed 96MB, so this method is only appropriate when the size of the data set is small.
 
-For example, the model definition directory below contains the model
-definition, an experiment configuration file, and a CSV data file. All
-three files are small and hence the total size of the directory is much
-smaller than the 96MB limit:
+For example, the model definition directory below contains the model definition, an experiment
+configuration file, and a CSV data file. All three files are small and hence the total size of the
+directory is much smaller than the 96MB limit:
 
 .. code::
 
@@ -236,22 +202,19 @@ smaller than the 96MB limit:
    ├── data.csv (5 KB)
    └── model_def.py (4.1 KB)
 
-The data can be submitted along with the model definition using the
-command:
+The data can be submitted along with the model definition using the command:
 
 .. code::
 
    det create experiment const.yaml .
 
-Determined injects the contents of the model definition directory into
-each trial container that is launched for the experiment. Any file in
-that directory can then be accessed by your model code, e.g., by
-relative path (the model definition directory is the initial working
-directory for each trial container).
+Determined injects the contents of the model definition directory into each trial container that is
+launched for the experiment. Any file in that directory can then be accessed by your model code,
+e.g., by relative path (the model definition directory is the initial working directory for each
+trial container).
 
-For example, the code below uses `Pandas <https://pandas.pydata.org/>`__
-to load ``data.csv`` into a `DataFrame
-<https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`__:
+For example, the code below uses `Pandas <https://pandas.pydata.org/>`__ to load ``data.csv`` into a
+`DataFrame <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html>`__:
 
 .. code:: python
 

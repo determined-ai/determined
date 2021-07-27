@@ -6,54 +6,42 @@
  Distributed Training
 ######################
 
-Determined provides three main methods to take advantage of multiple
-GPUs:
+Determined provides three main methods to take advantage of multiple GPUs:
 
-#. **Parallelism across experiments.** Schedule multiple experiments at
-   once: more than one experiment can proceed in parallel if there are
-   enough GPUs available.
+#. **Parallelism across experiments.** Schedule multiple experiments at once: more than one
+   experiment can proceed in parallel if there are enough GPUs available.
 
-#. **Parallelism within an experiment.** Schedule multiple trials of an
-   experiment at once: a :ref:`hyperparameter search
-   <topic-guides_hp-tuning-det>` may train more than one trial at once,
+#. **Parallelism within an experiment.** Schedule multiple trials of an experiment at once: a
+   :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may train more than one trial at once,
    each of which will use its own GPUs.
 
-#. **Parallelism within a trial.** Use multiple GPUs to speed up the
-   training of a single trial (*distributed training*). Determined can
-   coordinate across multiple GPUs on a single machine or across
-   multiple GPUs on multiple machines to improve the performance of
-   training a single trial.
+#. **Parallelism within a trial.** Use multiple GPUs to speed up the training of a single trial
+   (*distributed training*). Determined can coordinate across multiple GPUs on a single machine or
+   across multiple GPUs on multiple machines to improve the performance of training a single trial.
 
-This guide will focus on the third approach, demonstrating how to
-perform distributed training with Determined to speed up the training of
-a single trial.
+This guide will focus on the third approach, demonstrating how to perform distributed training with
+Determined to speed up the training of a single trial.
 
 ***************
  Configuration
 ***************
 
-In the :ref:`experiment-configuration`, the
-``resources.slots_per_trial`` field controls the number of GPUs that
-will be used to train a single trial. The default value is 1, which
-disables distributed training. Setting ``slots_per_trial`` to a larger
-value enables multi-GPU training automatically. Note that these GPUs
-might be on a single machine or across multiple machines; the experiment
-configuration simply defines how many GPUs should be used for training,
-and the Determined job scheduler decides whether to schedule the task on
-a single agent or multiple agents, depending on the machines in the
-cluster and the other active workloads.
+In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` field controls the number
+of GPUs that will be used to train a single trial. The default value is 1, which disables
+distributed training. Setting ``slots_per_trial`` to a larger value enables multi-GPU training
+automatically. Note that these GPUs might be on a single machine or across multiple machines; the
+experiment configuration simply defines how many GPUs should be used for training, and the
+Determined job scheduler decides whether to schedule the task on a single agent or multiple agents,
+depending on the machines in the cluster and the other active workloads.
 
 .. note::
 
-   When the ``slots_per_trial`` option is changed, the per-slot batch
-   size is set to ``global_batch_size // slots_per_trial``. The per-slot
-   (per-GPU) and global batch size should be accessed via the context
-   using :func:`context.get_per_slot_batch_size()
-   <determined.TrialContext.get_per_slot_batch_size>` and
-   :func:`context.get_global_batch_size()
-   <determined.TrialContext.get_global_batch_size>`, respectively. If
-   ``global_batch_size`` is not evenly divisible by ``slots_per_trial``,
-   the remainder is dropped.
+   When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
+   ``global_batch_size // slots_per_trial``. The per-slot (per-GPU) and global batch size should be
+   accessed via the context using :func:`context.get_per_slot_batch_size()
+   <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
+   <determined.TrialContext.get_global_batch_size>`, respectively. If ``global_batch_size`` is not
+   evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
 Example configuration with distributed training:
 
@@ -66,22 +54,18 @@ Example configuration with distributed training:
  Data Downloading
 ******************
 
-When performing distributed training, Determined will automatically
-create one process for every GPU that is being used for training. Each
-process will attempt to download training and/or validation data, so
-care should be taken to ensure that concurrent data downloads do not
-conflict with one another. One way to do this is to include a unique
-identifier in the local file system path where the downloaded data is
-stored. A convenient identifier is the ``rank`` of the current process:
-a process's ``rank`` is automatically assigned by Determined, and will
-be unique among all the processes in a trial.
+When performing distributed training, Determined will automatically create one process for every GPU
+that is being used for training. Each process will attempt to download training and/or validation
+data, so care should be taken to ensure that concurrent data downloads do not conflict with one
+another. One way to do this is to include a unique identifier in the local file system path where
+the downloaded data is stored. A convenient identifier is the ``rank`` of the current process: a
+process's ``rank`` is automatically assigned by Determined, and will be unique among all the
+processes in a trial.
 
-You can do this by leveraging the
-:func:`self.context.distributed.get_rank()
-<determined._train_context.DistributedContext.get_rank>` function. Below
-is an example of how to do this when downloading data from S3. In this
-example, the S3 bucket name is configured via a field ``data.bucket`` in
-the experiment configuration.
+You can do this by leveraging the :func:`self.context.distributed.get_rank()
+<determined._train_context.DistributedContext.get_rank>` function. Below is an example of how to do
+this when downloading data from S3. In this example, the S3 bucket name is configured via a field
+``data.bucket`` in the experiment configuration.
 
 .. code:: python
 
@@ -107,67 +91,54 @@ the experiment configuration.
  Scheduling Behavior
 *********************
 
-The Determined master takes care of scheduling distributed training jobs
-automatically, ensuring that all of the compute resources required for a
-job are available before the job itself is launched. Users should be
-aware of the following details about scheduler behavior when using
+The Determined master takes care of scheduling distributed training jobs automatically, ensuring
+that all of the compute resources required for a job are available before the job itself is
+launched. Users should be aware of the following details about scheduler behavior when using
 distributed training:
 
--  If ``slots_per_trial`` is smaller than or equal to the number of
-   slots on a single agent, Determined will consider scheduling multiple
-   distributed training jobs on a single agent. This is designed to
-   improve utilization and to allow multiple small training jobs to run
-   on a single agent. For example, an agent with 8 GPUs could be
-   assigned two 4-GPU jobs, or four 2-GPU jobs.
+-  If ``slots_per_trial`` is smaller than or equal to the number of slots on a single agent,
+   Determined will consider scheduling multiple distributed training jobs on a single agent. This is
+   designed to improve utilization and to allow multiple small training jobs to run on a single
+   agent. For example, an agent with 8 GPUs could be assigned two 4-GPU jobs, or four 2-GPU jobs.
 
--  Otherwise, if ``slots_per_trial`` is greater than the number of slots
-   on a single agent, Determined will schedule the distributed training
-   job onto multiple agents. A multi-machine distributed training job
-   will only be scheduled onto an agent if this will result in utilizing
-   all of the agent's GPUs. This is to ensure good performance and
-   utilize the full network bandwidth of each machine, while minimizing
-   inter-machine networking. For example, if all of the agents in your
-   cluster have 8 GPUs each , you should submit jobs with
-   ``slots_per_trial`` set to a multiple of 8 (e.g., 8, 16, or 24).
+-  Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
+   Determined will schedule the distributed training job onto multiple agents. A multi-machine
+   distributed training job will only be scheduled onto an agent if this will result in utilizing
+   all of the agent's GPUs. This is to ensure good performance and utilize the full network
+   bandwidth of each machine, while minimizing inter-machine networking. For example, if all of the
+   agents in your cluster have 8 GPUs each , you should submit jobs with ``slots_per_trial`` set to
+   a multiple of 8 (e.g., 8, 16, or 24).
 
 .. warning::
 
-   If the scheduling constraints for multi-machine distributed training
-   described above are not satisfied, distributed training jobs will not
-   be scheduled and will wait indefinitely. For example, if every agent
-   in the cluster has 8 GPUs, a job with ``slots_per_trial`` set to
-   ``12`` will never be scheduled.
+   If the scheduling constraints for multi-machine distributed training described above are not
+   satisfied, distributed training jobs will not be scheduled and will wait indefinitely. For
+   example, if every agent in the cluster has 8 GPUs, a job with ``slots_per_trial`` set to ``12``
+   will never be scheduled.
 
-   If a multi-GPU experiment does not become active after a minute or
-   so, please confirm that ``slots_per_trial`` is set so that it can be
-   scheduled within these constraints. The CLI command ``det task list``
-   can also be used to check if any other tasks are using GPUs and
-   preventing your experiment from using all the GPUs on a machine.
+   If a multi-GPU experiment does not become active after a minute or so, please confirm that
+   ``slots_per_trial`` is set so that it can be scheduled within these constraints. The CLI command
+   ``det task list`` can also be used to check if any other tasks are using GPUs and preventing your
+   experiment from using all the GPUs on a machine.
 
 ***********************
  Distributed Inference
 ***********************
 
-PyTorch users can also use the existing distributed training workflow
-with PytorchTrial to accelerate their inference workloads. This workflow
-is not yet officially supported, so users must specify certain
-training-specific artifacts that are not used for inference. To run a
-distributed batch inference job, create a new PyTorchTrial and follow
-these steps:
+PyTorch users can also use the existing distributed training workflow with PytorchTrial to
+accelerate their inference workloads. This workflow is not yet officially supported, so users must
+specify certain training-specific artifacts that are not used for inference. To run a distributed
+batch inference job, create a new PyTorchTrial and follow these steps:
 
--  Load the trained model and build the inference dataset using
-   ``build_validation_data_loader()``.
--  Specify the inference step using ``evaluate_batch()`` or
-   ``evaluate_full_dataset()``.
+-  Load the trained model and build the inference dataset using ``build_validation_data_loader()``.
+-  Specify the inference step using ``evaluate_batch()`` or ``evaluate_full_dataset()``.
 -  Register a dummy ``optimizer``.
--  Specify a ``build_training_data_loader()`` that returns a dummy
-   dataloader.
--  Specify a no-op ``train_batch()`` that returns an empty map of
-   metrics.
+-  Specify a ``build_training_data_loader()`` that returns a dummy dataloader.
+-  Specify a no-op ``train_batch()`` that returns an empty map of metrics.
 
-Once the new PyTorchTrial object is created, use the experiment
-configuration to distribute inference in the same way as training.
-cifar10_pytorch_inference_ is an example of distributed batch inference.
+Once the new PyTorchTrial object is created, use the experiment configuration to distribute
+inference in the same way as training. cifar10_pytorch_inference_ is an example of distributed batch
+inference.
 
 ************
  Next Steps

@@ -4,45 +4,36 @@
  YAML
 ######
 
-`YAML <https://yaml.org/>`__ is a markup language often used for
-configuration. Determined uses YAML for configuring tasks such as
-:ref:`experiments <experiment-configuration>` and :ref:`notebooks
-<notebook-configuration>`, as well as configuring the Determined
-:ref:`cluster as a whole <cluster-configuration>`. This guide describes
-a subset of YAML that we recommend for use with Determined. This is not
-a full description of YAML; see the `specification
-<https://yaml.org/spec/1.2/spec.html>`__ or other online guides for more
-details.
+`YAML <https://yaml.org/>`__ is a markup language often used for configuration. Determined uses YAML
+for configuring tasks such as :ref:`experiments <experiment-configuration>` and :ref:`notebooks
+<notebook-configuration>`, as well as configuring the Determined :ref:`cluster as a whole
+<cluster-configuration>`. This guide describes a subset of YAML that we recommend for use with
+Determined. This is not a full description of YAML; see the `specification
+<https://yaml.org/spec/1.2/spec.html>`__ or other online guides for more details.
 
 **********
  Overview
 **********
 
-A value in YAML can be a scalar (``null`` or a number, string, or
-Boolean) or a collection (an array or map). Collections can contain
-other collections nested to any depth (though Determined's YAML files
-generally have a fairly fixed structure).
+A value in YAML can be a scalar (``null`` or a number, string, or Boolean) or a collection (an array
+or map). Collections can contain other collections nested to any depth (though Determined's YAML
+files generally have a fairly fixed structure).
 
-A comment in a YAML file starts with a ``#`` character and extends to
-the end of the line.
+A comment in a YAML file starts with a ``#`` character and extends to the end of the line.
 
-If you are familiar with `JSON <https://www.json.org>`__, you can think
-of YAML as an alternative way of expressing JSON objects that is meant
-to be easier for humans to read and write, since it allows comments and
-has fewer markup characters around the content.
+If you are familiar with `JSON <https://www.json.org>`__, you can think of YAML as an alternative
+way of expressing JSON objects that is meant to be easier for humans to read and write, since it
+allows comments and has fewer markup characters around the content.
 
 Maps
 ====
 
-Maps represent unordered mappings from strings to YAML values. A map is
-written as a sequence of key-value pairs. Each key is followed by a
-colon and the corresponding value. The value can be on the same line as
-the key if it is a scalar (in which case it must be preceded by a space)
-or on subsequent lines (in which case it must be indented,
-conventionally by two spaces).
+Maps represent unordered mappings from strings to YAML values. A map is written as a sequence of
+key-value pairs. Each key is followed by a colon and the corresponding value. The value can be on
+the same line as the key if it is a scalar (in which case it must be preceded by a space) or on
+subsequent lines (in which case it must be indented, conventionally by two spaces).
 
-We use a map in the experiment configuration to configure
-hyperparameters:
+We use a map in the experiment configuration to configure hyperparameters:
 
 .. code:: yaml
 
@@ -53,19 +44,17 @@ hyperparameters:
      n_filters1: 40
      n_filters2: 40
 
-The snippet above describes a map with one key, ``hyperparameters``; the
-corresponding value is itself a map whose keys are
-``base_learning_rate``, ``weight_cost``, etc.
+The snippet above describes a map with one key, ``hyperparameters``; the corresponding value is
+itself a map whose keys are ``base_learning_rate``, ``weight_cost``, etc.
 
 Arrays
 ======
 
-An array contains multiple other YAML values in some order. An array is
-written as a sequence of values, each one preceded by a hyphen and a
-space. The hyphens for one list must all be indented by the same amount.
+An array contains multiple other YAML values in some order. An array is written as a sequence of
+values, each one preceded by a hyphen and a space. The hyphens for one list must all be indented by
+the same amount.
 
-We use an array in the experiment configuration to configure environment
-variables:
+We use an array in the experiment configuration to configure environment variables:
 
 .. code:: yaml
 
@@ -78,13 +67,11 @@ variables:
 Scalars
 =======
 
-Scalars generally behave naturally: ``null``, ``true``, ``2.718``, and
-``"foo"`` all have the same meanings that they would in JSON (and many
-programming languages). However, YAML allows strings to be unquoted:
-``foo`` is the same as ``"foo"``. This behavior is often convenient, but
-it can lead to unexpected behavior when small edits to a value change
-its type. For example, the following YAML block represents a list
-containing several values whose types are listed in the comments:
+Scalars generally behave naturally: ``null``, ``true``, ``2.718``, and ``"foo"`` all have the same
+meanings that they would in JSON (and many programming languages). However, YAML allows strings to
+be unquoted: ``foo`` is the same as ``"foo"``. This behavior is often convenient, but it can lead to
+unexpected behavior when small edits to a value change its type. For example, the following YAML
+block represents a list containing several values whose types are listed in the comments:
 
 .. code:: yaml
 
@@ -102,13 +89,11 @@ containing several values whose types are listed in the comments:
  Putting It All Together
 *************************
 
-A Determined configuration file consists of a YAML object with a
-particular structure: a map at the top level that is expected to have
-certain keys, with the value for each key expected to have a certain
-structure in turn.
+A Determined configuration file consists of a YAML object with a particular structure: a map at the
+top level that is expected to have certain keys, with the value for each key expected to have a
+certain structure in turn.
 
-In this example experiment configuration, we use numbers, strings, maps,
-and an array:
+In this example experiment configuration, we use numbers, strings, maps, and an array:
 
 .. code:: yaml
 

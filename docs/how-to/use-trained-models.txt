@@ -4,8 +4,8 @@
  Using Checkpoints
 ###################
 
-Determined provides APIs for downloading checkpoints and loading them
-into memory in a Python process.
+Determined provides APIs for downloading checkpoints and loading them into memory in a Python
+process.
 
 This guide discusses:
 
@@ -21,16 +21,13 @@ The Checkpoint Export API is a subset of the features found in the
  Querying Checkpoints
 **********************
 
-The :class:`~determined.experimental.client.ExperimentReference` class
-is a reference to an experiment. The reference contains the
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint`
-method. Without arguments, the method will check the experiment
-configuration searcher field for the ``metric`` and
-``smaller_is_better`` values. These values are used to sort the
-experiment's checkpoints by validation performance. The searcher
-settings in the following snippet from an experiment configuration file
-will result in checkpoints being sorted by the loss metric in ascending
-order.
+The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
+experiment. The reference contains the
+:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` method. Without
+arguments, the method will check the experiment configuration searcher field for the ``metric`` and
+``smaller_is_better`` values. These values are used to sort the experiment's checkpoints by
+validation performance. The searcher settings in the following snippet from an experiment
+configuration file will result in checkpoints being sorted by the loss metric in ascending order.
 
 .. code:: yaml
 
@@ -38,10 +35,9 @@ order.
      metric: "loss"
      smaller_is_better: true
 
-The following snippet of Python code can be run after the specified
-experiment has generated a checkpoint. It returns an instance of
-:class:`~determined.experimental.client.Checkpoint` representing the
-checkpoint that has the best validation metric.
+The following snippet of Python code can be run after the specified experiment has generated a
+checkpoint. It returns an instance of :class:`~determined.experimental.client.Checkpoint`
+representing the checkpoint that has the best validation metric.
 
 .. code:: python
 
@@ -49,10 +45,9 @@ checkpoint that has the best validation metric.
 
    checkpoint = client.get_experiment(id).top_checkpoint()
 
-Checkpoints can be sorted by any metric using the ``sort_by`` keyword
-argument, which defines which metric to use, and ``smaller_is_better``,
-which defines whether to sort the checkpoints in ascending or descending
-order with respect to the specified metric.
+Checkpoints can be sorted by any metric using the ``sort_by`` keyword argument, which defines which
+metric to use, and ``smaller_is_better``, which defines whether to sort the checkpoints in ascending
+or descending order with respect to the specified metric.
 
 .. code:: python
 
@@ -63,12 +58,10 @@ order with respect to the specified metric.
    )
 
 You may also query multiple checkpoints at the same time using the
-:meth:`~determined.experimental.client.ExperimentReference.top_n_checkpoints`
-method. Only the single best checkpoint from each trial is considered;
-out of those, the checkpoints with the best validation metric values are
-returned in sorted order, with the best one first. For example, the
-following snippet returns the top five checkpoints from distinct trials
-of a specified experiment.
+:meth:`~determined.experimental.client.ExperimentReference.top_n_checkpoints` method. Only the
+single best checkpoint from each trial is considered; out of those, the checkpoints with the best
+validation metric values are returned in sorted order, with the best one first. For example, the
+following snippet returns the top five checkpoints from distinct trials of a specified experiment.
 
 .. code:: python
 
@@ -76,29 +69,21 @@ of a specified experiment.
 
    checkpoints = client.get_experiment(id).top_n_checkpoints(5)
 
-This method also accepts ``sort_by`` and ``smaller_is_better``
-arguments.
+This method also accepts ``sort_by`` and ``smaller_is_better`` arguments.
 
-:class:`~determined.experimental.client.TrialReference` is used for
-fine-grained control over checkpoint selection within a trial. It
-contains a
-:meth:`~determined.experimental.client.TrialReference.top_checkpoint`
-method, which mirrors
-:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint`
-for an experiment. It also contains
-:meth:`~determined.experimental.client.TrialReference.select_checkpoint`,
-which offers three ways to query checkpoints:
+:class:`~determined.experimental.client.TrialReference` is used for fine-grained control over
+checkpoint selection within a trial. It contains a
+:meth:`~determined.experimental.client.TrialReference.top_checkpoint` method, which mirrors
+:meth:`~determined.experimental.client.ExperimentReference.top_checkpoint` for an experiment. It
+also contains :meth:`~determined.experimental.client.TrialReference.select_checkpoint`, which offers
+three ways to query checkpoints:
 
-#. ``best``: Returns the best checkpoint based on validation metrics as
-   discussed above. When using ``best``, ``smaller_is_better`` and
-   ``sort_by`` are also accepted.
-
+#. ``best``: Returns the best checkpoint based on validation metrics as discussed above. When using
+   ``best``, ``smaller_is_better`` and ``sort_by`` are also accepted.
 #. ``latest``: Returns the most recent checkpoint for the trial.
-
 #. ``uuid``: Returns the checkpoint with the specified UUID.
 
-The following snippet showcases how to use the different modes for
-selecting checkpoints.
+The following snippet showcases how to use the different modes for selecting checkpoints.
 
 .. code:: python
 
@@ -120,18 +105,14 @@ selecting checkpoints.
  Using the Checkpoint Class
 ****************************
 
-The :class:`~determined.experimental.client.Checkpoint` class can both
-download the checkpoint from persistent storage and load it into memory
-in a Python process.
+The :class:`~determined.experimental.client.Checkpoint` class can both download the checkpoint from
+persistent storage and load it into memory in a Python process.
 
-The :meth:`~determined.experimental.client.Checkpoint.download` method
-downloads a checkpoint from persistent storage to a directory on the
-local file system. By default, checkpoints are downloaded to
-``checkpoints/<checkpoint-uuid>/`` (relative to the current working
-directory). The
-:meth:`~determined.experimental.client.Checkpoint.download` method
-accepts ``path`` as an optional parameter, which changes the checkpoint
-download location.
+The :meth:`~determined.experimental.client.Checkpoint.download` method downloads a checkpoint from
+persistent storage to a directory on the local file system. By default, checkpoints are downloaded
+to ``checkpoints/<checkpoint-uuid>/`` (relative to the current working directory). The
+:meth:`~determined.experimental.client.Checkpoint.download` method accepts ``path`` as an optional
+parameter, which changes the checkpoint download location.
 
 .. code:: python
 
@@ -142,10 +123,9 @@ download location.
 
    specific_path = checkpoint.download(path="specific-checkpoint-path")
 
-The :meth:`~determined.experimental.client.Checkpoint.load` method
-downloads the checkpoint, if it does not already exist locally, and then
-loads it into memory in a Python process, as shown in the following
-snippet.
+The :meth:`~determined.experimental.client.Checkpoint.load` method downloads the checkpoint, if it
+does not already exist locally, and then loads it into memory in a Python process, as shown in the
+following snippet.
 
 .. code:: python
 
@@ -154,17 +134,13 @@ snippet.
    checkpoint = client.get_experiment(id).top_checkpoint()
    model = checkpoint.load()
 
-TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5``
-formats and are loaded as trackable objects (see documentation for
-`tf.compat.v1.saved_model.load_v2
-<https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`__
-for details).
+TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5`` formats and are loaded as
+trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
+<https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`__ for details).
 
-PyTorch checkpoints are saved using `pickle
-<https://docs.python.org/3/library/pickle.html>`__ and loaded as
-:ref:`pytorch-trial` objects (see `the PyTorch documentation
-<https://pytorch.org/docs/stable/notes/serialization.html>`__ for
-details).
+PyTorch checkpoints are saved using `pickle <https://docs.python.org/3/library/pickle.html>`__ and
+loaded as :ref:`pytorch-trial` objects (see `the PyTorch documentation
+<https://pytorch.org/docs/stable/notes/serialization.html>`__ for details).
 
 .. _store-checkpoint-metadata:
 
@@ -172,9 +148,8 @@ details).
  User-Defined Checkpoint Metadata
 **********************************
 
-You can add arbitrary user-defined metadata to a checkpoint via the
-Python API. This feature is useful for storing post-training metrics,
-labels, information related to deployment, etc.
+You can add arbitrary user-defined metadata to a checkpoint via the Python API. This feature is
+useful for storing post-training metrics, labels, information related to deployment, etc.
 
 .. code:: python
 
@@ -187,9 +162,8 @@ labels, information related to deployment, etc.
    print(checkpoint.metadata)
 
 You may store an arbitrarily nested dictionary using the
-:meth:`~determined.experimental.client.Checkpoint.add_metadata` method.
-If the top level key already exists the entire tree beneath it will be
-overwritten.
+:meth:`~determined.experimental.client.Checkpoint.add_metadata` method. If the top level key already
+exists the entire tree beneath it will be overwritten.
 
 .. code:: python
 
@@ -201,10 +175,9 @@ overwritten.
 
    print(checkpoint.metadata)  # Output: {"metrics": {"acc": 0.92}}
 
-You may remove metadata via the
-:meth:`~determined.experimental.client.Checkpoint.remove_metadata`
-method. The method accepts a list of top level keys. The entire tree
-beneath the keys passed will be deleted.
+You may remove metadata via the :meth:`~determined.experimental.client.Checkpoint.remove_metadata`
+method. The method accepts a list of top level keys. The entire tree beneath the keys passed will be
+deleted.
 
 .. code:: python
 
@@ -217,23 +190,21 @@ beneath the keys passed will be deleted.
  Download Checkpoints via the CLI
 **********************************
 
-Determined offers the following CLI commands for downloading checkpoints
-locally:
+Determined offers the following CLI commands for downloading checkpoints locally:
 
 #. ``det checkpoint download``
 #. ``det trial download``
 #. ``det experiment download``
 
-The ``det checkpoint download`` command downloads a checkpoint for the
-given UUID as shown below:
+The ``det checkpoint download`` command downloads a checkpoint for the given UUID as shown below:
 
 .. code::
 
    # Download a specific checkpoint.
    det checkpoint download 46985143-af68-4d48-ab91-a6447052ca49
 
-The command should display output resembling the following upon
-successfully downloading the checkpoint.
+The command should display output resembling the following upon successfully downloading the
+checkpoint.
 
 .. code::
 
@@ -252,11 +223,9 @@ successfully downloading the checkpoint.
               |                                      |     }
               |                                      | }
 
-The ``det trial download`` command downloads checkpoints for a specified
-trial. Similar to the
-:class:`~determined.experimental.client.TrialReference` API, the ``det
-trial download`` command accepts ``--best``, ``--latest``, and
-``--uuid`` options.
+The ``det trial download`` command downloads checkpoints for a specified trial. Similar to the
+:class:`~determined.experimental.client.TrialReference` API, the ``det trial download`` command
+accepts ``--best``, ``--latest``, and ``--uuid`` options.
 
 .. code::
 
@@ -265,8 +234,8 @@ trial download`` command accepts ``--best``, ``--latest``, and
    # Download best checkpoint to a particular directory.
    det trial download <trial_id> --best --output-dir local_checkpoint
 
-The command should display output resembling the following upon
-successfully downloading the checkpoint.
+The command should display output resembling the following upon successfully downloading the
+checkpoint.
 
 .. code::
 
@@ -295,8 +264,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
    # Download a specific checkpoint.
    det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
-Finally, the ``det experiment download`` command provides a similar
-experience to using the
+Finally, the ``det experiment download`` command provides a similar experience to using the
 :class:`~determined.experimental.client.ExperimentReference` Python API.
 
 .. code:: bash
@@ -307,8 +275,8 @@ experience to using the
    # Download the best 3 checkpoints for a given experiment.
    det experiment download <experiment_id> --top-n 3
 
-The command should display output resembling the following upon
-successfully downloading the checkpoints.
+The command should display output resembling the following upon successfully downloading the
+checkpoints.
 
 .. code::
 
@@ -355,10 +323,9 @@ successfully downloading the checkpoints.
  Loading From a Local Path
 ***************************
 
-:class:`~determined.experimental.client.Checkpoint` contains a static
-method,
-:meth:`~determined.experimental.client.Checkpoint.load_from_path`, that
-loads a checkpoint from a path on the local file system.
+:class:`~determined.experimental.client.Checkpoint` contains a static method,
+:meth:`~determined.experimental.client.Checkpoint.load_from_path`, that loads a checkpoint from a
+path on the local file system.
 
 Suppose a checkpoint is downloaded using a command like this:
 

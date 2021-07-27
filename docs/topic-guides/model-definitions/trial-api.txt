@@ -8,78 +8,66 @@
  Model Definition Interfaces
 *****************************
 
-To create a Trial API model definition, we should implement the Trial
-interface provided by Determined. This interface returns information
-about the machine learning task the user wants to perform, like the
-model architecture to use or the validation metrics that should be
-computed.
+To create a Trial API model definition, we should implement the Trial interface provided by
+Determined. This interface returns information about the machine learning task the user wants to
+perform, like the model architecture to use or the validation metrics that should be computed.
 
-Determined provides versions of the Trial interface for each of the
-application frameworks it supports:
+Determined provides versions of the Trial interface for each of the application frameworks it
+supports:
 
 -  :ref:`pytorch-trial`
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
 
-If you hit any issues creating your Trial API model definition, you can
-visit :ref:`model-debug`. It may also be useful for writing your first
-trial, as it has a framework for incrementally testing each of the
-features you will need in a successful Trial definition.
+If you hit any issues creating your Trial API model definition, you can visit :ref:`model-debug`. It
+may also be useful for writing your first trial, as it has a framework for incrementally testing
+each of the features you will need in a successful Trial definition.
 
 **********************************
  Create an Experiment via the CLI
 **********************************
 
-A user can submit an experiment via the ``det experiment create`` CLI
-command:
+A user can submit an experiment via the ``det experiment create`` CLI command:
 
 .. code::
 
    $ det experiment create <YAML config file> <context directory>
 
-The context directory of Python files that contain the Trial API
-implementation should include an accompanying ``entrypoint`` that
-specifies from where to load a trial class. The entrypoint specification
-is expected to take the form:
+The context directory of Python files that contain the Trial API implementation should include an
+accompanying ``entrypoint`` that specifies from where to load a trial class. The entrypoint
+specification is expected to take the form:
 
 .. code::
 
    <module>:<object reference>
 
-``<module>`` specifies the module containing the trial class within the
-model definition, relative to the root. It may be an empty string if the
-model definition is a `Python package
-<https://docs.python.org/3/tutorial/modules.html#packages>`_ and the
-trial class is exposed in the top-level ``__init__.py`` file.
+``<module>`` specifies the module containing the trial class within the model definition, relative
+to the root. It may be an empty string if the model definition is a `Python package
+<https://docs.python.org/3/tutorial/modules.html#packages>`_ and the trial class is exposed in the
+top-level ``__init__.py`` file.
 
-``<object reference>`` specifies the naming of the trial class within
-the module. It may be a nested object delimited by dots.
+``<object reference>`` specifies the naming of the trial class within the module. It may be a nested
+object delimited by dots.
 
 Examples:
 
-#. ``:MNistTrial`` expects an ``MNistTrial`` class that is exposed in a
-   ``__init__.py`` file at the top level of the context directory.
+#. ``:MNistTrial`` expects an ``MNistTrial`` class that is exposed in a ``__init__.py`` file at the
+   top level of the context directory.
 
-#. ``model_def:CIFAR10Trial`` expects a ``CIFAR10Trial`` class that is
-   defined in a file ``model_def.py`` at the top level of the context
-   directory.
+#. ``model_def:CIFAR10Trial`` expects a ``CIFAR10Trial`` class that is defined in a file
+   ``model_def.py`` at the top level of the context directory.
 
-#. ``determined_lib.trial:trial_classes.NestedTrial`` expects a
-   ``NestedTrial`` class that is an attribute of ``trial_classes``,
-   where ``trial_classes`` is defined in a file
+#. ``determined_lib.trial:trial_classes.NestedTrial`` expects a ``NestedTrial`` class that is an
+   attribute of ``trial_classes``, where ``trial_classes`` is defined in a file
    ``determined_lib/trial.py``.
 
-Note that this follows the `Entry points specification defined in the
-Python Packaging User Guide
-<https://packaging.python.org/specifications/entry-points/>`_ with a
-single difference: the name of the context directory is prefixed to
-``<module>``, or used as the module if ``<module>`` is empty.
+Note that this follows the `Entry points specification defined in the Python Packaging User Guide
+<https://packaging.python.org/specifications/entry-points/>`_ with a single difference: the name of
+the context directory is prefixed to ``<module>``, or used as the module if ``<module>`` is empty.
 
-Since project directories might include large artifacts that should not
-be packaged as part of the model definition (e.g., data sets or compiled
-binaries), users can optionally include a ``.detignore`` file at the top
-level that specifies file paths to be omitted from the model definition.
-The ``.detignore`` file uses the same syntax as `.gitignore
-<https://git-scm.com/docs/gitignore>`__. Note that byte-compiled Python
-files (e.g., ``.pyc`` files or ``__pycache__`` directories) are always
-ignored.
+Since project directories might include large artifacts that should not be packaged as part of the
+model definition (e.g., data sets or compiled binaries), users can optionally include a
+``.detignore`` file at the top level that specifies file paths to be omitted from the model
+definition. The ``.detignore`` file uses the same syntax as `.gitignore
+<https://git-scm.com/docs/gitignore>`__. Note that byte-compiled Python files (e.g., ``.pyc`` files
+or ``__pycache__`` directories) are always ignored.

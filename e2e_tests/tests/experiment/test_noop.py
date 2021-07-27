@@ -363,3 +363,19 @@ def test_pytorch_cpu_rng_restore() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_gpu_rng_restore() -> None:
     _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_noop_experiment_config_override() -> None:
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config_obj, f)
+        experiment_id = exp.create_experiment(
+            tf.name,
+            conf.fixtures_path("no_op"),
+            ["--config", "reproducibility.experiment_seed=8200"],
+        )
+        exp_config = exp.experiment_json(experiment_id)["config"]
+        assert exp_config["reproducibility"]["experiment_seed"] == 8200
+        exp.cancel_single(experiment_id)

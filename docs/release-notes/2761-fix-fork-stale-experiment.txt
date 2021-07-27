@@ -2,5 +2,4 @@
 
 **Bug Fixes**
 
--  WebUI: fix the issue of new experiments from fork and continue trial
-   showing outdated data.
+-  WebUI: fix the issue of new experiments from fork and continue trial showing outdated data.

@@ -15,35 +15,30 @@ A Determined cluster has the following requirements.
 Software
 ========
 
--  The Determined agent and master nodes must be configured with Ubuntu
-   16.04, Ubuntu 18.04, or CentOS 7, or with macOS 10.13 or higher.
+-  The Determined agent and master nodes must be configured with Ubuntu 16.04, Ubuntu 18.04, or
+   CentOS 7, or with macOS 10.13 or higher.
 
 -  The agent nodes must have :ref:`Docker installed <install-docker>`.
 
--  To run jobs with GPUs, the Nvidia drivers must be installed on each
-   Determined agent. Determined requires version >= 384.81 of the Nvidia
-   drivers. (The Nvidia drivers can be installed as part of installing
-   CUDA, but the rest of the CUDA toolkit is not required.)
+-  To run jobs with GPUs, the Nvidia drivers must be installed on each Determined agent. Determined
+   requires version >= 384.81 of the Nvidia drivers. (The Nvidia drivers can be installed as part of
+   installing CUDA, but the rest of the CUDA toolkit is not required.)
 
 Hardware
 ========
 
--  The Determined master node should be configured with at least 4 CPUs
-   (Intel Broadwell or later), 8GB of RAM, and 200GB of free disk space.
-   Note that the Determined master does not use GPUs.
+-  The Determined master node should be configured with at least 4 CPUs (Intel Broadwell or later),
+   8GB of RAM, and 200GB of free disk space. Note that the Determined master does not use GPUs.
 
--  Each Determined agent node should be configured with at least 2 CPUs
-   (Intel Broadwell or later), 4GB of RAM, and 50GB of free disk space.
-   If using GPUs, Nvidia GPUs with compute capability 3.7 or greater are
-   required (e.g., K80, P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN,
-   TITAN XP).
+-  Each Determined agent node should be configured with at least 2 CPUs (Intel Broadwell or later),
+   4GB of RAM, and 50GB of free disk space. If using GPUs, Nvidia GPUs with compute capability 3.7
+   or greater are required (e.g., K80, P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, TITAN XP).
 
 .. note::
 
-   Most of the disk space required by the master is due to the
-   experiment metadata database; if PostgreSQL is set up on a different
-   machine, the disk space requirements for the master are minimal
-   (~100MB).
+   Most of the disk space required by the master is due to the experiment metadata database; if
+   PostgreSQL is set up on a different machine, the disk space requirements for the master are
+   minimal (~100MB).
 
 .. _install-docker:
 
@@ -51,15 +46,14 @@ Hardware
  Installing Docker
 *******************
 
-Docker is a dependency of several components of the Determined system.
-For example, every agent node must have Docker installed to allow it to
-run containerized workloads.
+Docker is a dependency of several components of the Determined system. For example, every agent node
+must have Docker installed to allow it to run containerized workloads.
 
 Install on Linux
 ================
 
-#. Install Docker. We require the version of Docker 19.03 or newer on
-   the machine where the agent is running.
+#. Install Docker. We require the version of Docker 19.03 or newer on the machine where the agent is
+   running.
 
    On Ubuntu:
 
@@ -83,9 +77,8 @@ Install on Linux
       sudo yum install -y docker-ce
       sudo systemctl start docker
 
-#. If the machine has GPUs that you would like to use with Determined,
-   install the Nvidia Container Toolkit to allow Docker to run
-   containers that use them. For more information, see the `Nvidia
+#. If the machine has GPUs that you would like to use with Determined, install the Nvidia Container
+   Toolkit to allow Docker to run containers that use them. For more information, see the `Nvidia
    documentation <https://github.com/NVIDIA/nvidia-docker>`__.
 
    On Ubuntu:
@@ -110,18 +103,16 @@ Install on Linux
       sudo yum install -y nvidia-container-toolkit
       sudo systemctl restart docker
 
-#. Log out and start a new terminal session. Verify that the current
-   user is in the ``docker`` group and, if the machine has GPUs, that
-   Docker can start a container using them.
+#. Log out and start a new terminal session. Verify that the current user is in the ``docker`` group
+   and, if the machine has GPUs, that Docker can start a container using them.
 
    .. code::
 
       groups
       docker run --gpus all --rm debian:10-slim nvidia-smi
 
-#. If using CentOS 7, `enable the persistent storage
-   <https://unix.stackexchange.com/a/159390>`_ of journalctl log
-   messages so that logs are saved on machine reboot.
+#. If using CentOS 7, `enable the persistent storage <https://unix.stackexchange.com/a/159390>`_ of
+   journalctl log messages so that logs are saved on machine reboot.
 
    .. code::
 
@@ -152,6 +143,5 @@ Install on macOS
 
 .. note::
 
-   Docker on macOS does not support running containers that use GPUs. As
-   a result, Determined agents on macOS will only be able to run
-   CPU-based workloads.
+   Docker on macOS does not support running containers that use GPUs. As a result, Determined agents
+   on macOS will only be able to run CPU-based workloads.

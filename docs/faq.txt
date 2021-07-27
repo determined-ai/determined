@@ -13,8 +13,7 @@ How do I install the CLI?
 
    pip install determined
 
-For more details, see the :ref:`installation instructions
-<install-cli>`.
+For more details, see the :ref:`installation instructions <install-cli>`.
 
 When trying to install the Determined command-line interface, I encounter this ``distutils`` error
 ==================================================================================================
@@ -23,18 +22,15 @@ When trying to install the Determined command-line interface, I encounter this `
 
    Uninstalling a distutils installed project (...) has been deprecated and will be removed in a future version. This is due to the fact that uninstalling a distutils project will only partially uninstall the project.
 
-If a Python library has previously been installed in your environment
-with `distutils <https://docs.python.org/3/library/distutils.html>`__ or
-`conda <https://conda.io/en/latest/>`__, ``pip`` may not be able to
-upgrade or downgrade the library to the version required by Determined.
+If a Python library has previously been installed in your environment with `distutils
+<https://docs.python.org/3/library/distutils.html>`__ or `conda <https://conda.io/en/latest/>`__,
+``pip`` may not be able to upgrade or downgrade the library to the version required by Determined.
 There are two recommended solutions:
 
-#. Install the Determined command-line interface into a fresh
-   `virtualenv <https://virtualenv.pypa.io/en/latest/>`__ with no
-   previous Python packages installed.
+#. Install the Determined command-line interface into a fresh `virtualenv
+   <https://virtualenv.pypa.io/en/latest/>`__ with no previous Python packages installed.
 
-#. Use ``--ignore-installed`` with ``pip`` to force overwriting the
-   library version(s).
+#. Use ``--ignore-installed`` with ``pip`` to force overwriting the library version(s).
 
    .. code:: bash
 
@@ -43,8 +39,7 @@ There are two recommended solutions:
 Is it possible to install Determined on Kubernetes?
 ===================================================
 
-Yes; please see :ref:`Installing Determined on Kubernetes
-<install-on-kubernetes>` for details.
+Yes; please see :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` for details.
 
 After installing Determined on Kubernetes, I can't reach the Determined master
 ==============================================================================
@@ -70,16 +65,15 @@ Please see :ref:`useful-kubectl-commands` for more debugging tips.
 When installing Determined on Kubernetes, I get an ``ImagePullBackOff`` error
 =============================================================================
 
-You may be trying to install a non-released version of Determined or a
-version in a private registry without the right secret. Please see the
-documentation on how to configure which :ref:`version of Determined
-<configure-determined-kubernetes-version>` to install on Kubernetes.
+You may be trying to install a non-released version of Determined or a version in a private registry
+without the right secret. Please see the documentation on how to configure which :ref:`version of
+Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
 
 After upgrading Determined and trying to use the CLI, I get ``det: command not found`` error
 ============================================================================================
 
-When upgrading from a version earlier than 0.15.0, some users may need
-to uninstall Determined and then install it again by running:
+When upgrading from a version earlier than 0.15.0, some users may need to uninstall Determined and
+then install it again by running:
 
 .. code::
 
@@ -93,25 +87,21 @@ to uninstall Determined and then install it again by running:
 How do I install Python packages that my model code depends on?
 ===============================================================
 
-By default, workloads execute inside a Determined-provided container
-that includes common deep learning libraries and frameworks. If your
-model code has additional dependencies, the easiest way to install them
-is to specify a container :ref:`startup hook <startup-hooks>`. For more
-complex dependencies, you can also use a :ref:`custom Docker image
-<custom-docker-images>`.
+By default, workloads execute inside a Determined-provided container that includes common deep
+learning libraries and frameworks. If your model code has additional dependencies, the easiest way
+to install them is to specify a container :ref:`startup hook <startup-hooks>`. For more complex
+dependencies, you can also use a :ref:`custom Docker image <custom-docker-images>`.
 
 Can I use a custom container image?
 ===================================
 
-Yes; see the documentation on :ref:`custom Docker images
-<custom-docker-images>` for details.
+Yes; see the documentation on :ref:`custom Docker images <custom-docker-images>` for details.
 
 Can I use Determined with a private Docker Registry?
 ====================================================
 
-Yes: specify the registry path as part of the custom image name. See the
-documentation on :ref:`custom Docker images <custom-docker-images>` for
-more details.
+Yes: specify the registry path as part of the custom image name. See the documentation on
+:ref:`custom Docker images <custom-docker-images>` for more details.
 
 ***********************
  Experiment Management
@@ -120,23 +110,21 @@ more details.
 What happens when an experiment is archived?
 ============================================
 
-Archiving is designed to make it easier to organize experiments by
-omitting information about experiment runs that are no longer relevant
-(e.g., training jobs that failed with an error or jobs submitted as part
-of the model development process).
+Archiving is designed to make it easier to organize experiments by omitting information about
+experiment runs that are no longer relevant (e.g., training jobs that failed with an error or jobs
+submitted as part of the model development process).
 
-When an experiment is archived, it is hidden from the default view in
-both the WebUI and the CLI, but all of the metadata associated with the
-experiment (including checkpoints) is preserved. An experiment can
-subsequently be unarchived if desired, without losing any of the
-experiment's metadata.
+When an experiment is archived, it is hidden from the default view in both the WebUI and the CLI,
+but all of the metadata associated with the experiment (including checkpoints) is preserved. An
+experiment can subsequently be unarchived if desired, without losing any of the experiment's
+metadata.
 
 How can I delete model checkpoints that are no longer useful?
 =============================================================
 
-The best way to delete a checkpoint is to modify the garbage collection
-policy of the experiment that created the checkpoint. For example, to
-delete *all* of the experiments associated with an experiment, run:
+The best way to delete a checkpoint is to modify the garbage collection policy of the experiment
+that created the checkpoint. For example, to delete *all* of the experiments associated with an
+experiment, run:
 
 .. code::
 
@@ -149,35 +137,29 @@ delete *all* of the experiments associated with an experiment, run:
 Why do my distributed training experiments never start?
 =======================================================
 
-If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is
-greater than the number of slots on a single agent, Determined will
-schedule it over multiple machines. When scheduling a multi-machine
-distributed training job, Determined requires that the job uses all of
-the slots (GPUs) on an agent. For example, in a cluster that consists of
-8-GPU agents, an experiment with :ref:`slots_per_trial
-<exp-config-resources-slots-per-trial>` set to ``12`` will never be
-scheduled and will instead wait indefinitely. The :ref:`distributed
-training documentation <dtrain-scheduling>` describes this scheduling
-behavior in more detail.
+If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than the number of slots
+on a single agent, Determined will schedule it over multiple machines. When scheduling a
+multi-machine distributed training job, Determined requires that the job uses all of the slots
+(GPUs) on an agent. For example, in a cluster that consists of 8-GPU agents, an experiment with
+:ref:`slots_per_trial <exp-config-resources-slots-per-trial>` set to ``12`` will never be scheduled
+and will instead wait indefinitely. The :ref:`distributed training documentation
+<dtrain-scheduling>` describes this scheduling behavior in more detail.
 
-There may also be running tasks preventing your multi-GPU trials from
-acquiring enough GPUs on a single machine. Consider adjusting
-``slots_per_trial`` or terminating existing tasks to free up slots in
-your cluster.
+There may also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
+single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free up
+slots in your cluster.
 
 Why do my multi-machine training experiments appear to be stuck?
 ================================================================
 
-Multi-machine training requires that all machines are able to connect to
-each other directly. There may be firewall rules or network
-configuration that prevent machines in your cluster from communicating.
-Please check if agent machines can access each other outside of
-Determined (e.g., using the ``ping`` or ``netcat`` tools).
+Multi-machine training requires that all machines are able to connect to each other directly. There
+may be firewall rules or network configuration that prevent machines in your cluster from
+communicating. Please check if agent machines can access each other outside of Determined (e.g.,
+using the ``ping`` or ``netcat`` tools).
 
-More rarely, if agents have multiple network interfaces and some of them
-are not routable, Determined may pick one of those interfaces rather
-than one that allows one agent to contact another. In this case, it is
-possible to set the network interface used for distributed training
+More rarely, if agents have multiple network interfaces and some of them are not routable,
+Determined may pick one of those interfaces rather than one that allows one agent to contact
+another. In this case, it is possible to set the network interface used for distributed training
 explicitly in the :ref:`cluster-configuration`.
 
 ************
@@ -187,9 +169,8 @@ explicitly in the :ref:`cluster-configuration`.
 How can I control which agents a task is scheduled on?
 ======================================================
 
-Agents can now be grouped into multiple resource pools and tasks can be
-assigned to specific resource pools. For more information, please see
-:ref:`resource-pools`.
+Agents can now be grouped into multiple resource pools and tasks can be assigned to specific
+resource pools. For more information, please see :ref:`resource-pools`.
 
 ********************
  TensorFlow Support
@@ -198,32 +179,28 @@ assigned to specific resource pools. For more information, please see
 Can I use TensorFlow Core models with Determined?
 =================================================
 
-Determined has support for TensorFlow models that use the :ref:`tf.keras
-<tf-keras-trial>` or :ref:`Estimator <estimator-trial>` APIs. For models
-that use the low-level TensorFlow Core APIs, we recommend porting your
-model to use :ref:`Estimator Trial <estimator-trial>`. `Example of
-converting a TensorFlow graph into an Estimator
+Determined has support for TensorFlow models that use the :ref:`tf.keras <tf-keras-trial>` or
+:ref:`Estimator <estimator-trial>` APIs. For models that use the low-level TensorFlow Core APIs, we
+recommend porting your model to use :ref:`Estimator Trial <estimator-trial>`. `Example of converting
+a TensorFlow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
 
 Can I use TensorFlow 2 with Determined?
 =======================================
 
-Yes; Determined supports both TensorFlow 1 and 2. The version of
-TensorFlow that is used for a particular experiment is controlled by the
-container image that has been configured for that experiment. Determined
-provides prebuilt Docker images that include TensorFlow 2.4, 1.15, and
-2.5, respectively:
+Yes; Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is used for a
+particular experiment is controlled by the container image that has been configured for that
+experiment. Determined provides prebuilt Docker images that include TensorFlow 2.4, 1.15, and 2.5,
+respectively:
 
--  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``
-   (default)
+-  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2`` (default)
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.16.2``
 -  ``determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.2``
 
-To change the container image used for an experiment, specify
-:ref:`environment.image <exp-environment-image>` in the experiment
-configuration file. Please see :ref:`container-images` for more details
-about configuring training environments and a more complete list of
-prebuilt Docker images.
+To change the container image used for an experiment, specify :ref:`environment.image
+<exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
+for more details about configuring training environments and a more complete list of prebuilt Docker
+images.
 
 How do I debug a TensorFlow model inside Determined?
 ====================================================
@@ -242,29 +219,24 @@ Please see :ref:`model-debug`.
 Why am I seeing significantly different metrics for trials which are paused and later continued than trials which aren't paused?
 ================================================================================================================================
 
-When a trial is paused, the current state of the trial is saved to a
-:ref:`checkpoint <exporting-checkpoints>`. When the trial later resumes
-training, Determined will reload the state of the model from the most
-recent checkpoint. If you observe that this process degrades the model's
-training or validation metrics (compared to a model trained on the same
-data without interruption), one explanation is that the model's state
-might not be restored accurately or completely from the checkpoint. When
-using PyTorch, this can sometimes happen if the PyTorch API is not used
-correctly.
+When a trial is paused, the current state of the trial is saved to a :ref:`checkpoint
+<exporting-checkpoints>`. When the trial later resumes training, Determined will reload the state of
+the model from the most recent checkpoint. If you observe that this process degrades the model's
+training or validation metrics (compared to a model trained on the same data without interruption),
+one explanation is that the model's state might not be restored accurately or completely from the
+checkpoint. When using PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
 
 Please verify the following in the model code:
 
--  The model is wrapped with :meth:`wrap_model
-   <determined.pytorch.PyTorchTrialContext.wrap_model>`.
+-  The model is wrapped with :meth:`wrap_model <determined.pytorch.PyTorchTrialContext.wrap_model>`.
 
 -  The optimizer is wrapped with :meth:`wrap_optimizer
-   <determined.pytorch.PyTorchTrialContext.wrap_optimizer>` and based on
-   the output of ``wrap_model``, not the original unwrapped model.
+   <determined.pytorch.PyTorchTrialContext.wrap_optimizer>` and based on the output of
+   ``wrap_model``, not the original unwrapped model.
 
 -  The LR scheduler is wrapped with :meth:`wrap_lr_scheduler
-   <determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler>` and based
-   on the output of ``wrap_optimizer``, not the original unwrapped
-   optimizer.
+   <determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler>` and based on the output of
+   ``wrap_optimizer``, not the original unwrapped optimizer.
 
 *********************
  TensorBoard Support
@@ -273,10 +245,8 @@ Please verify the following in the model code:
 Can I log additional TensorBoard events beyond what Determined logs automatically?
 ==================================================================================
 
-Yes; any additional TFEvent files that are written to
-``/tmp/tensorboard`` inside a trial container will be accessible via
-TensorBoard. For example, to log a custom TensorBoard event using
-PyTorch:
+Yes; any additional TFEvent files that are written to ``/tmp/tensorboard`` inside a trial container
+will be accessible via TensorBoard. For example, to log a custom TensorBoard event using PyTorch:
 
 .. code:: python
 
@@ -285,19 +255,16 @@ PyTorch:
    writer = SummaryWriter(log_dir="/tmp/tensorboard")
    writer.add_scalar("my_metric", np.random.random(), batch_idx)
 
-For more details, as well as examples of how to do this with TF
-Estimator and TF Keras models, refer to the :ref:`TensorBoard How-To
-Guide <data-in-tensorboard>`.
+For more details, as well as examples of how to do this with TF Estimator and TF Keras models, refer
+to the :ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
 
 Can I use TensorBoard with PyTorch?
 ===================================
 
-Yes! For an example of this check out the :download:`mnist-GAN
-</examples/gan_mnist_pytorch.tgz>` example. This model uses the
-:class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter`
-class which automatically configures the location for writing
-TensorBoards. Users can also directly use
-``torch.utils.tensorboard.SummaryWriter`` as shown in the snippet above.
+Yes! For an example of this check out the :download:`mnist-GAN </examples/gan_mnist_pytorch.tgz>`
+example. This model uses the :class:`~determined.tensorboard.metric_writers.pytorch.TorchWriter`
+class which automatically configures the location for writing TensorBoards. Users can also directly
+use ``torch.utils.tensorboard.SummaryWriter`` as shown in the snippet above.
 
 ************************
  Ecosystem Integrations
@@ -306,12 +273,9 @@ TensorBoards. Users can also directly use
 How can I use Determined with Spark, Airflow, or Pachyderm?
 ===========================================================
 
-Determined is focused on helping teams of deep learning engineers train
-better models more quickly. However, Determined is also designed to
-easily integrate with other popular ML ecosystem tools for tasks that
-are related to model training, such as ETL, ML pipelines, and model
-serving. The `Works with Determined
-<https://github.com/determined-ai/works-with-determined>`__ repository
-includes examples of how to use Determined with a variety of ML
-ecosystem tools, including Pachyderm, DVC, Delta Lake, Seldon, Spark,
-Argo, Airflow, and Kubeflow.
+Determined is focused on helping teams of deep learning engineers train better models more quickly.
+However, Determined is also designed to easily integrate with other popular ML ecosystem tools for
+tasks that are related to model training, such as ETL, ML pipelines, and model serving. The `Works
+with Determined <https://github.com/determined-ai/works-with-determined>`__ repository includes
+examples of how to use Determined with a variety of ML ecosystem tools, including Pachyderm, DVC,
+Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.

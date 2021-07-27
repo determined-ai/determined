@@ -4,14 +4,12 @@
  Dynamic Agents on AWS
 #######################
 
-This document describes how to install, configure, and upgrade a
-deployment of Determined with dynamic agents on AWS. See
-:ref:`elastic-infrastructure` for an overview of using elastic
+This document describes how to install, configure, and upgrade a deployment of Determined with
+dynamic agents on AWS. See :ref:`elastic-infrastructure` for an overview of using elastic
 infrastructure in Determined.
 
-Determined is able to launch dynamic agents as spot instances, which can
-be much cheaper than using standard on-demand instances. For more
-details on spot instances, see :ref:`aws-spot`.
+Determined is able to launch dynamic agents as spot instances, which can be much cheaper than using
+standard on-demand instances. For more details on spot instances, see :ref:`aws-spot`.
 
 *********************
  System Requirements
@@ -20,69 +18,51 @@ details on spot instances, see :ref:`aws-spot`.
 EC2 Instance Tags
 =================
 
-An important assumption of Determined with dynamic agents is that any
-EC2 instances with the configured ``tag_key:tag_value`` pair are managed
-by the Determined master (See :ref:`aws-cluster-configuration`). This
-pair should be unique to your Determined installation. If it is not,
-Determined may inadvertently manage your non-Determined EC2 instances.
+An important assumption of Determined with dynamic agents is that any EC2 instances with the
+configured ``tag_key:tag_value`` pair are managed by the Determined master (See
+:ref:`aws-cluster-configuration`). This pair should be unique to your Determined installation. If it
+is not, Determined may inadvertently manage your non-Determined EC2 instances.
 
-If using spot instances, Determined also assumes that any EC2 spot
-instance requests with the configured ``tag_key:tag_value`` pair are
-managed by the Determined master.
+If using spot instances, Determined also assumes that any EC2 spot instance requests with the
+configured ``tag_key:tag_value`` pair are managed by the Determined master.
 
 EC2 AMIs
 ========
 
--  The Determined master node will run on a custom AMI that will be
-   shared with you by Determined AI.
--  Determined agent nodes will run on a custom AMI that will be shared
-   with you by Determined AI.
+-  The Determined master node will run on a custom AMI that will be shared with you by Determined
+   AI.
+-  Determined agent nodes will run on a custom AMI that will be shared with you by Determined AI.
 
 EC2 Instance Types
 ==================
 
--  The Determined master node should be deployed on an EC2 instance
-   supporting >= 2 CPUs (Intel Broadwell or later), 4GB of RAM, and
-   100GB of disk storage. This corresponds to an EC2 ``t2.medium``
-   instance or better.
+-  The Determined master node should be deployed on an EC2 instance supporting >= 2 CPUs (Intel
+   Broadwell or later), 4GB of RAM, and 100GB of disk storage. This corresponds to an EC2
+   ``t2.medium`` instance or better.
 
--  All Determined agent nodes must be the same AWS instance type; any
-   G4, P2, or P3 instance type is supported. This can be configured in
-   the :ref:`aws-cluster-configuration`.
+-  All Determined agent nodes must be the same AWS instance type; any G4, P2, or P3 instance type is
+   supported. This can be configured in the :ref:`aws-cluster-configuration`.
 
 .. _master-iam-role:
 
 Master IAM Role
 ===============
 
-The Determined master needs to have an IAM role with the following
-permissions:
+The Determined master needs to have an IAM role with the following permissions:
 
--  ``ec2:CreateTags``: used to tag the Determined agent instances that
-   the Determined master provisions. These tags are configured by the
-   `aws-cluster-configuration`.
-
--  ``ec2:DescribeInstances``: used to find active Determined agent
-   instances based on tags.
-
+-  ``ec2:CreateTags``: used to tag the Determined agent instances that the Determined master
+   provisions. These tags are configured by the `aws-cluster-configuration`.
+-  ``ec2:DescribeInstances``: used to find active Determined agent instances based on tags.
 -  ``ec2:RunInstances``: used to provision Determined agent instances.
+-  ``ec2:TerminateInstances``: used to terminate idle Determined agent instances.
 
--  ``ec2:TerminateInstances``: used to terminate idle Determined agent
-   instances.
+If using spot instances, the master also needs the following permissions:
 
-If using spot instances, the master also needs the following
-permissions:
-
--  ``ec2:RequestSpotInstances``: used to provision Determined agent
-   instances as spot instances.
-
--  ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot
-   instance requests to match the number of instances needed for the
-   current workloads.
-
--  ``ec2:DescribeSpotInstanceRequests``: used to find open spot instance
-   requests that, once fulfilled, will create Determined agent spot
-   instances.
+-  ``ec2:RequestSpotInstances``: used to provision Determined agent instances as spot instances.
+-  ``ec2:CancelSpotInstanceRequests``: used to adjust the number of spot instance requests to match
+   the number of instances needed for the current workloads.
+-  ``ec2:DescribeSpotInstanceRequests``: used to find open spot instance requests that, once
+   fulfilled, will create Determined agent spot instances.
 
 An example IAM policy with the appropriate permissions is below:
 
@@ -108,11 +88,9 @@ An example IAM policy with the appropriate permissions is below:
      ]
    }
 
-If you need to attach an instance profile to the agent (e.g.,
-``iam_instance_profile_arn`` is set in the
-:ref:`aws-cluster-configuration`), make sure to add ``PassRole`` policy
-to the master role with ``Resource`` set to the desired agent role. For
-example:
+If you need to attach an instance profile to the agent (e.g., ``iam_instance_profile_arn`` is set in
+the :ref:`aws-cluster-configuration`), make sure to add ``PassRole`` policy to the master role with
+``Resource`` set to the desired agent role. For example:
 
 .. code:: json
 
@@ -127,10 +105,8 @@ example:
      ]
    }
 
-See `Using an IAM Role to Grant Permissions to Applications Running on
-Amazon EC2 Instances
-<https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html>`__
-for details.
+See `Using an IAM Role to Grant Permissions to Applications Running on Amazon EC2 Instances
+<https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html>`__ for details.
 
 .. _aws-network-requirements:
 
@@ -145,63 +121,55 @@ See :ref:`network-requirements` for details.
  Cluster Configuration
 ***********************
 
-The Determined Cluster is configured with ``master.yaml`` file located
-at ``/usr/local/determined/etc/`` on the Determined master instance. We
-need to configure AWS dynamic agents in each resource pool. See
-:ref:`cluster-configuration` for details.
+The Determined Cluster is configured with ``master.yaml`` file located at
+``/usr/local/determined/etc/`` on the Determined master instance. We need to configure AWS dynamic
+agents in each resource pool. See :ref:`cluster-configuration` for details.
 
 **************
  Installation
 **************
 
-These instructions describe how to install Determined for the first
-time; for directions on how to upgrade an existing Determined
-installation, see the :ref:`aws-upgrades` section below.
+These instructions describe how to install Determined for the first time; for directions on how to
+upgrade an existing Determined installation, see the :ref:`aws-upgrades` section below.
 
-Ensure that you are using the most up-to-date Determined AMIs. Keep the
-AMI IDs handy as we will need them later (e.g., ami-0f4677bfc3161edc8).
+Ensure that you are using the most up-to-date Determined AMIs. Keep the AMI IDs handy as we will
+need them later (e.g., ami-0f4677bfc3161edc8).
 
 Master
 ======
 
-To install the master, we will launch an instance from the Determined
-master AMI.
+To install the master, we will launch an instance from the Determined master AMI.
 
-Let's start by navigating to the EC2 Dashboard of the AWS Console. Click
-"Launch Instance" and follow the instructions below:
+Let's start by navigating to the EC2 Dashboard of the AWS Console. Click "Launch Instance" and
+follow the instructions below:
 
-#. Choose AMI: find the Determined master AMI in "My AMIs" and click
-   "Select".
+#. Choose AMI: find the Determined master AMI in "My AMIs" and click "Select".
 
 #. Choose Instance Type: we recommend a t2.medium or more powerful.
 
-#. Configure Instance: choose the ``IAM role`` according to
-   :ref:`master-iam-role`.
+#. Configure Instance: choose the ``IAM role`` according to :ref:`master-iam-role`.
 
-#. Add Storage: click ``Add New Volume`` and add an EBS volume of at
-   least 100GB. If you have a previous Determined installation that you
-   are upgrading, you want to use the attach the same EBS volume as the
-   previous installation. This volume will be used to store all your
-   experiment metadata and checkpoints.
+#. Add Storage: click ``Add New Volume`` and add an EBS volume of at least 100GB. If you have a
+   previous Determined installation that you are upgrading, you want to use the attach the same EBS
+   volume as the previous installation. This volume will be used to store all your experiment
+   metadata and checkpoints.
 
-#. Configure Security Group: choose or create a security group according
-   to :ref:`aws-network-requirements`.
+#. Configure Security Group: choose or create a security group according to
+   :ref:`aws-network-requirements`.
 
 #. Review and launch the instance.
 
-#. SSH into the Determined master and edit the config at
-   ``/usr/local/determined/etc/master.yaml`` according to the guide on
-   :ref:`aws-cluster-configuration`.
+#. SSH into the Determined master and edit the config at ``/usr/local/determined/etc/master.yaml``
+   according to the guide on :ref:`aws-cluster-configuration`.
 
-#. Start the Determined master by entering ``make -C
-   /usr/local/determined enable-master`` into the terminal.
+#. Start the Determined master by entering ``make -C /usr/local/determined enable-master`` into the
+   terminal.
 
 Agent
 =====
 
-There is no installation needed for the agent. The Determined master
-will dynamically launch Determined agent instances based on the
-:ref:`aws-cluster-configuration`.
+There is no installation needed for the agent. The Determined master will dynamically launch
+Determined agent instances based on the :ref:`aws-cluster-configuration`.
 
 .. _aws-upgrades:
 
@@ -209,33 +177,28 @@ will dynamically launch Determined agent instances based on the
  Upgrades
 **********
 
-Upgrading an existing Determined installation with dynamic agents on AWS
-requires the same steps as an installation without dynamic agents. See
-:ref:`upgrades`.
+Upgrading an existing Determined installation with dynamic agents on AWS requires the same steps as
+an installation without dynamic agents. See :ref:`upgrades`.
 
 ************
  Monitoring
 ************
 
-Both the Determined master and agent AMIs are configured to forward
-system journald logs and basic GPU metrics to AWS CloudWatch when their
-instances have the appropriate IAM permissions. These logs and metrics
-can be helpful for diagnosing infrastructure issues when using Dynamic
-Agents on AWS.
+Both the Determined master and agent AMIs are configured to forward system journald logs and basic
+GPU metrics to AWS CloudWatch when their instances have the appropriate IAM permissions. These logs
+and metrics can be helpful for diagnosing infrastructure issues when using Dynamic Agents on AWS.
 
 CloudWatch Logging
 ==================
 
-An instance needs the following permissions to upload logs to
-CloudWatch:
+An instance needs the following permissions to upload logs to CloudWatch:
 
 -  ``logs:CreateLogStream``
 -  ``logs:PutLogEvents``
 -  ``logs:DescribeLogStreams``
 
-Instances will upload their logs to the log group
-``/determined/determined/journald``. This log group must be created in
-advance before any logs can be stored.
+Instances will upload their logs to the log group ``/determined/determined/journald``. This log
+group must be created in advance before any logs can be stored.
 
 An example IAM policy with the appropriate permissions is below:
 
@@ -262,8 +225,7 @@ An example IAM policy with the appropriate permissions is below:
 CloudWatch Metrics
 ==================
 
-An instance needs the following permissions to upload logs to
-CloudWatch:
+An instance needs the following permissions to upload logs to CloudWatch:
 
 -  ``cloudwatch:PutMetricData``
 

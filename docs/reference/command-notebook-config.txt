@@ -4,15 +4,13 @@
  Determined Task Configuration
 ###############################
 
-The behavior of Determined tasks, such as :ref:`TensorBoards
-<how-to-tensorboard>`, :ref:`notebooks <how-to-notebooks>`,
-:ref:`commands, and shells <commands-and-shells>`, can be influenced by
-setting a variety of configuration variables. These configuration
-variables are similar but not identical to the configuration options
-supported by :ref:`experiments <experiment-configuration>`.
+The behavior of Determined tasks, such as :ref:`TensorBoards <how-to-tensorboard>`, :ref:`notebooks
+<how-to-notebooks>`, :ref:`commands, and shells <commands-and-shells>`, can be influenced by setting
+a variety of configuration variables. These configuration variables are similar but not identical to
+the configuration options supported by :ref:`experiments <experiment-configuration>`.
 
-Configuration settings can be specified by passing a YAML configuration
-file when launching the workload via the Determined CLI:
+Configuration settings can be specified by passing a YAML configuration file when launching the
+workload via the Determined CLI:
 
 .. code::
 
@@ -21,8 +19,8 @@ file when launching the workload via the Determined CLI:
    $ det cmd run --config-file=my_config.yaml ...
    $ det shell start --config-file=my_config.yaml
 
-Configuration variables can also be set directly on the command line
-when any Determined task, except a TensorBoard, is launched:
+Configuration variables can also be set directly on the command line when any Determined task,
+except a TensorBoard, is launched:
 
 .. code::
 
@@ -30,9 +28,8 @@ when any Determined task, except a TensorBoard, is launched:
    $ det cmd run --config description="determined_command" ...
    $ det shell start --config resources.priority=1
 
-Options set via ``--config`` take precedence over values specified in
-the configuration file. Configuration settings are compatible with any
-Determined task unless otherwise specified.
+Options set via ``--config`` take precedence over values specified in the configuration file.
+Configuration settings are compatible with any Determined task unless otherwise specified.
 
 ************************
  Configuration Settings
@@ -40,124 +37,99 @@ Determined task unless otherwise specified.
 
 The following configuration settings are supported:
 
--  ``description``: A human-readable description of the task. This does
-   not need to be unique. The default description consists of a
-   timestamp and the entrypoint of the command.
+-  ``description``: A human-readable description of the task. This does not need to be unique. The
+   default description consists of a timestamp and the entrypoint of the command.
 
--  ``environment``: Specifies the environment of the container that is
-   used to execute the task.
+-  ``environment``: Specifies the environment of the container that is used to execute the task.
 
-   -  ``image``: Specifies a Docker image to use when executing the
-      workload. The image must be available via ``docker pull`` to every
-      Determined agent machine in the cluster. Users can customize the
-      image used for GPU vs. CPU agents by specifying a dict with two
-      keys, ``cpu`` and ``gpu``. Defaults to
-      ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2``
-      for CPU agents and
-      ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``
+   -  ``image``: Specifies a Docker image to use when executing the workload. The image must be
+      available via ``docker pull`` to every Determined agent machine in the cluster. Users can
+      customize the image used for GPU vs. CPU agents by specifying a dict with two keys, ``cpu``
+      and ``gpu``. Defaults to
+      ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2`` for CPU
+      agents and ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``
       for GPU agents.
 
-   -  ``force_pull_image``: Forcibly pull the image from the Docker
-      registry and bypass the Docker cache. Defaults to ``false``.
+   -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
+      cache. Defaults to ``false``.
 
-   -  ``environment_variables``: Specifies a list of environment
-      variables for the container. Each element of the list should be a
-      string of the form ``NAME=VALUE``. See
-      :ref:`environment-variables` for more details. Users can customize
-      environment variables for GPU vs. CPU agents differently by
-      specifying a dict with two keys, ``cpu`` and ``gpu``.
+   -  ``environment_variables``: Specifies a list of environment variables for the container. Each
+      element of the list should be a string of the form ``NAME=VALUE``. See
+      :ref:`environment-variables` for more details. Users can customize environment variables for
+      GPU vs. CPU agents differently by specifying a dict with two keys, ``cpu`` and ``gpu``.
 
-   -  ``pod_spec``: Only applicable when running Determined on
-      Kubernetes. Applies a pod spec to the pods that are launched by
-      Determined for this task. See :ref:`custom-pod-specs` for details.
+   -  ``pod_spec``: Only applicable when running Determined on Kubernetes. Applies a pod spec to the
+      pods that are launched by Determined for this task. See :ref:`custom-pod-specs` for details.
 
    -  ``registry_auth``: Specifies the `Docker registry credentials
-      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
-      to use when pulling a Docker image, if needed.
+      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use when pulling a
+      Docker image, if needed.
 
       -  ``username`` (required)
       -  ``password`` (required)
       -  ``server`` (optional)
       -  ``email`` (optional)
 
-   -  ``add_capabilities``: A list of Linux capabilities to grant to
-      task containers. Each entry in the list is equivalent to a
-      ``--cap-add CAP`` command line argument to ``docker run``.
-      ``add_capabilities`` is honored by resource managers of type
-      ``agent`` but is ignored by resource managers of type
-      ``kubernetes``. See :ref:`master configuration
+   -  ``add_capabilities``: A list of Linux capabilities to grant to task containers. Each entry in
+      the list is equivalent to a ``--cap-add CAP`` command line argument to ``docker run``.
+      ``add_capabilities`` is honored by resource managers of type ``agent`` but is ignored by
+      resource managers of type ``kubernetes``. See :ref:`master configuration
       <master-configuration>` for details about resource managers.
 
-   -  ``drop_capabilities``: Just like ``add_capabilities`` but
-      corresponding to the ``--cap-drop`` argument of ``docker run``
-      rather than ``--cap-add``.
+   -  ``drop_capabilities``: Just like ``add_capabilities`` but corresponding to the ``--cap-drop``
+      argument of ``docker run`` rather than ``--cap-add``.
 
 -  ``resources``: The resources Determined allows a task to use.
 
-   -  ``slots``: Specifies the number of slots to use for the task. The
-      default value is ``1``. The maximum value is the number of slots
-      on the agent in the cluster with the most slots. For example,
-      Determined will be unable to schedule a task that requests 4 slots
-      if the Determined cluster is composed of agents with 2 slots each.
-      The number of slots for TensorBoard is fixed at ``0`` and may not
-      be changed.
+   -  ``slots``: Specifies the number of slots to use for the task. The default value is ``1``. The
+      maximum value is the number of slots on the agent in the cluster with the most slots. For
+      example, Determined will be unable to schedule a task that requests 4 slots if the Determined
+      cluster is composed of agents with 2 slots each. The number of slots for TensorBoard is fixed
+      at ``0`` and may not be changed.
 
-   -  ``agent_label``: If set, the task will *only* be scheduled on
-      agents that have the given label set. If this is not set (the
-      default behavior), the task will only be scheduled on unlabeled
-      agents. An agent's label can be configured via the ``label`` field
-      in the :ref:`agent configuration <agent-configuration>`.
+   -  ``agent_label``: If set, the task will *only* be scheduled on agents that have the given label
+      set. If this is not set (the default behavior), the task will only be scheduled on unlabeled
+      agents. An agent's label can be configured via the ``label`` field in the :ref:`agent
+      configuration <agent-configuration>`.
 
-   -  ``shm_size``: The size in bytes of ``/dev/shm`` for task
-      containers. Defaults to ``4294967296`` (4GiB). If set, this value
-      overrides the value specified in the :ref:`master configuration
-      <master-configuration>`.
+   -  ``shm_size``: The size in bytes of ``/dev/shm`` for task containers. Defaults to
+      ``4294967296`` (4GiB). If set, this value overrides the value specified in the :ref:`master
+      configuration <master-configuration>`.
 
-   -  ``priority``: The priority assigned to this task. Tasks with
-      smaller priority values are scheduled before tasks with higher
-      priority values. Only applicable when using the ``priority``
-      scheduler. Refer to :ref:`scheduling` for more information.
+   -  ``priority``: The priority assigned to this task. Tasks with smaller priority values are
+      scheduled before tasks with higher priority values. Only applicable when using the
+      ``priority`` scheduler. Refer to :ref:`scheduling` for more information.
 
-   -  ``resource_pool``: The resource pool where this task will be
-      scheduled. If no resource pool is specified, CPU-only tasks will
-      be scheduled in the default CPU pool, while GPU-using tasks will
-      be scheduled in the default GPU tool. Refer to
-      :ref:`resource-pools` for more information.
+   -  ``resource_pool``: The resource pool where this task will be scheduled. If no resource pool is
+      specified, CPU-only tasks will be scheduled in the default CPU pool, while GPU-using tasks
+      will be scheduled in the default GPU tool. Refer to :ref:`resource-pools` for more
+      information.
 
-   -  ``devices``: A list of device strings to pass to the Docker
-      daemon. Each entry in the list is equivalent to a ``--device
-      DEVICE`` command line argument to ``docker run``. ``devices`` is
-      honored by resource managers of type ``agent`` but is ignored by
-      resource managers of type ``kubernetes``. See :ref:`master
-      configuration <master-configuration>` for details about resource
-      managers.
+   -  ``devices``: A list of device strings to pass to the Docker daemon. Each entry in the list is
+      equivalent to a ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is
+      honored by resource managers of type ``agent`` but is ignored by resource managers of type
+      ``kubernetes``. See :ref:`master configuration <master-configuration>` for details about
+      resource managers.
 
--  ``bind_mounts``: Specifies a collection of directories that are
-   bind-mounted into the Docker containers for execution. This can be
-   used to allow commands to access additional data that is not
-   contained in the command context. This field should consist of an
-   array of entries. Note that users should ensure that the specified
-   host paths are accessible on all agent hosts (e.g., by configuring a
-   network file system appropriately). Defaults to an empty list.
+-  ``bind_mounts``: Specifies a collection of directories that are bind-mounted into the Docker
+   containers for execution. This can be used to allow commands to access additional data that is
+   not contained in the command context. This field should consist of an array of entries. Note that
+   users should ensure that the specified host paths are accessible on all agent hosts (e.g., by
+   configuring a network file system appropriately). Defaults to an empty list.
 
-   -  ``host_path``: (required) The file system path on each agent to
-      use. Must be an absolute filepath.
+   -  ``host_path``: (required) The file system path on each agent to use. Must be an absolute
+      filepath.
 
-   -  ``container_path``: (required) The file system path in the
-      container to use. May be a relative filepath, in which case it
-      will be mounted relative to the working directory inside the
-      container. It is not allowed to mount directly into the working
-      directory (``container_path == "."``) to reduce the risk of
-      cluttering the host filesystem.
+   -  ``container_path``: (required) The file system path in the container to use. May be a relative
+      filepath, in which case it will be mounted relative to the working directory inside the
+      container. It is not allowed to mount directly into the working directory (``container_path ==
+      "."``) to reduce the risk of cluttering the host filesystem.
 
-   -  ``read_only``: Whether the bind-mount should be a read-only mount.
-      Defaults to ``false``.
+   -  ``read_only``: Whether the bind-mount should be a read-only mount. Defaults to ``false``.
 
-   -  ``propagation``: (Advanced users only) Optional `propagation
-      behavior
-      <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
-      for replicas of the bind-mount. Defaults to ``rprivate``.
+   -  ``propagation``: (Advanced users only) Optional `propagation behavior
+      <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+      the bind-mount. Defaults to ``rprivate``.
 
--  ``tensorboard_args``: Lists optional arguments for launching
-   TensorBoard. Each element of the list should be a string of the form
-   ``NAME=VALUE``.
+-  ``tensorboard_args``: Lists optional arguments for launching TensorBoard. Each element of the
+   list should be a string of the form ``NAME=VALUE``.

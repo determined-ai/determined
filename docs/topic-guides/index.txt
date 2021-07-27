@@ -2,9 +2,9 @@
  Topic Guides
 ##############
 
-Topic guides discuss different concepts and topics about Determined and
-deep learning at a high level. They provide useful information and
-explanation. Below you will find some suggested starting guides.
+Topic guides discuss different concepts and topics about Determined and deep learning at a high
+level. They provide useful information and explanation. Below you will find some suggested starting
+guides.
 
 **System Concepts**
 

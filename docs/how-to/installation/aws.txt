@@ -4,14 +4,11 @@
  Install Determined on AWS
 ###########################
 
-This document describes how to deploy a Determined cluster on Amazon Web
-Services (AWS). We provide the :ref:`det deploy <determined-deploy>`
-tool for easy creation and deployment of these resources. If you would
-rather create the cluster manually, see the :ref:`aws-manual-deployment`
-section below.
+This document describes how to deploy a Determined cluster on Amazon Web Services (AWS). We provide
+the :ref:`det deploy <determined-deploy>` tool for easy creation and deployment of these resources.
+If you would rather create the cluster manually, see the :ref:`aws-manual-deployment` section below.
 
-For more information about using Determined on AWS, see the
-:ref:`topic_guide_aws` topic guide.
+For more information about using Determined on AWS, see the :ref:`topic_guide_aws` topic guide.
 
 .. _determined-deploy:
 
@@ -19,33 +16,29 @@ For more information about using Determined on AWS, see the
  ``det deploy`` tool
 *********************
 
-The ``det deploy`` tool is provided by the ``determined`` Python
-package. It uses `AWS CloudFormation
-<https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
-configure a Determined cluster. CloudFormation builds the necessary
-components for Determined into a single CloudFormation stack.
+The ``det deploy`` tool is provided by the ``determined`` Python package. It uses `AWS
+CloudFormation <https://aws.amazon.com/cloudformation/>`__ to automatically deploy and configure a
+Determined cluster. CloudFormation builds the necessary components for Determined into a single
+CloudFormation stack.
 
 Requirements
 ============
 
--  Either AWS credentials or an IAM role with permissions to access AWS
-   CloudFormation APIs. See the `AWS Documentation
-   <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
+-  Either AWS credentials or an IAM role with permissions to access AWS CloudFormation APIs. See the
+   `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
    for information on how to use AWS credentials.
 
--  An `AWS EC2 Keypair
-   <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
+-  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
 
 You may also want to increase the `EC2 instance limits
-<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html>`__
-on your account --- the `default instance limits
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html>`__ on your account
+--- the `default instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html#ec2-on-demand-instances-limits>`__
-are quite low, particularly for GPU instances. For example, by default
-an AWS account can only create 128 vCPUs worth of P-type instances in a
-given AWS region. The default configuration for ``det deploy`` can
-result in launching up to 5 ``p2.8xlarge`` instances (which have 32
-vCPUs each), which would exceed the default quota. AWS instance limits
-can be increased by submitting a request to the `AWS Support Center
+are quite low, particularly for GPU instances. For example, by default an AWS account can only
+create 128 vCPUs worth of P-type instances in a given AWS region. The default configuration for
+``det deploy`` can result in launching up to 5 ``p2.8xlarge`` instances (which have 32 vCPUs each),
+which would exceed the default quota. AWS instance limits can be increased by submitting a request
+to the `AWS Support Center
 <https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
 
 Installation
@@ -66,51 +59,42 @@ The basic command to deploy a cluster is as follows:
 
    det deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
-``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We
-recommend choosing a cluster ID that is memorable and helps identify
-what the cluster is being used for. The cluster ID will be used as the
-AWS CloudFormation stack name.
+``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We recommend choosing a cluster ID
+that is memorable and helps identify what the cluster is being used for. The cluster ID will be used
+as the AWS CloudFormation stack name.
 
-``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when
-provisioning the cluster. If the AWS CLI is installed on your machine,
-you can get a list of the available keypair names by running ``aws ec2
-describe-key-pairs``.
+``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when provisioning the cluster. If the
+AWS CLI is installed on your machine, you can get a list of the available keypair names by running
+``aws ec2 describe-key-pairs``.
 
-The deployment process may take 5--10 minutes. When it completes,
-summary information about the newly deployed cluster will be printed,
-including the URL of the Determined master.
+The deployment process may take 5--10 minutes. When it completes, summary information about the
+newly deployed cluster will be printed, including the URL of the Determined master.
 
 .. _determined-deploy-deployment-types:
 
 Deployment Types
 ================
 
-``det deploy`` supports multiple different deployment types to work with
-different security needs. The deployment type can be specified using the
-``--deployment-type`` argument (e.g., ``det deploy aws --deployment-type
-secure``).
+``det deploy`` supports multiple different deployment types to work with different security needs.
+The deployment type can be specified using the ``--deployment-type`` argument (e.g., ``det deploy
+aws --deployment-type secure``).
 
--  ``simple``: The simple deployment provides an easy way to deploy a
-   Determined cluster in AWS. This creates the master instance in the
-   default subnet for the account.
+-  ``simple``: The simple deployment provides an easy way to deploy a Determined cluster in AWS.
+   This creates the master instance in the default subnet for the account.
 
--  ``vpc``: The VPC deployment creates a separate VPC with public
-   subnets; the Determined cluster is deployed into these subnets.
+-  ``vpc``: The VPC deployment creates a separate VPC with public subnets; the Determined cluster is
+   deployed into these subnets.
 
--  ``efs``: The EFS deployment creates an `EFS
-   <https://aws.amazon.com/efs/>`_ drive and a Determined cluster into a
-   separate VPC. The EFS drive attaches to agent instances at
-   ``/mnt/efs``. This path is automatically bind-mounted into the task
-   containers.
+-  ``efs``: The EFS deployment creates an `EFS <https://aws.amazon.com/efs/>`_ drive and a
+   Determined cluster into a separate VPC. The EFS drive attaches to agent instances at
+   ``/mnt/efs``. This path is automatically bind-mounted into the task containers.
 
--  ``fsx``: The FSX deployment creates a `Lustre FSx
-   <https://aws.amazon.com/fsx/lustre/>`_ drive and a Determined cluster
-   into a separate VPC. The FSx drive attaches to agent instances at
-   ``/mnt/fsx``. This path is automatically bind-mounted into the task
-   containers.
+-  ``fsx``: The FSX deployment creates a `Lustre FSx <https://aws.amazon.com/fsx/lustre/>`_ drive
+   and a Determined cluster into a separate VPC. The FSx drive attaches to agent instances at
+   ``/mnt/fsx``. This path is automatically bind-mounted into the task containers.
 
--  ``secure``: The secure deployment creates resources to lock down the
-   Determined cluster. These resources are:
+-  ``secure``: The secure deployment creates resources to lock down the Determined cluster. These
+   resources are:
 
    -  A VPC with a public and private subnet
    -  A NAT gateway for the private subnet to make outbound connections
@@ -137,13 +121,11 @@ Spinning up the Cluster
       -  Default Value
 
    -  -  ``--cluster-id``
-      -  Unique ID for the cluster (used as the CloudFormation stack
-         name).
+      -  Unique ID for the cluster (used as the CloudFormation stack name).
       -  *required*
 
    -  -  ``--keypair``
-      -  The name of the AWS EC2 key pair to use for both master and
-         agent instances.
+      -  The name of the AWS EC2 key pair to use for both master and agent instances.
       -  *required*
 
    -  -  ``--region``
@@ -160,38 +142,30 @@ Spinning up the Cluster
 
    -  -  ``--aux-agent-instance-type``
 
-      -  AWS instance type to use for the agents in the auxiliary
-         resource pool. Must be one of the following instance types:
-         ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
-         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``,
-         ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``,
-         ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
-         ``p3dn.24xlarge``, or any general purpose instance types
-         (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and variants).
-         Prior to 0.16.1, this option was called
+      -  AWS instance type to use for the agents in the auxiliary resource pool. Must be one of the
+         following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+         ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
+         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``,
+         ``p3dn.24xlarge``, or any general purpose instance types (``t2``, ``t3``, ``c4``, ``c5``,
+         ``m4``, ``m5`` and variants). Prior to 0.16.1, this option was called
          ``--cpu-agent-instance-type``.
 
       -  t2.xlarge
 
    -  -  ``--compute-agent-instance-type``
 
-      -  AWS instance type to use for the agents in the compute resource
-         pool. For GPU-based training, must be one of the following
-         instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
-         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
-         ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
-         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
-         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. For
-         CPU-based training or testing, any general purpose instance
-         type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``,
-         ``m5`` and variants). Prior to 0.16.1, this option was called
-         ``--gpu-agent-instance-type``.
+      -  AWS instance type to use for the agents in the compute resource pool. For GPU-based
+         training, must be one of the following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
+         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
+         ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``,
+         ``p3.16xlarge``, or ``p3dn.24xlarge``. For CPU-based training or testing, any general
+         purpose instance type may be used (``t2``, ``t3``, ``c4``, ``c5``, ``m4``, ``m5`` and
+         variants). Prior to 0.16.1, this option was called ``--gpu-agent-instance-type``.
 
       -  p2.8xlarge
 
    -  -  ``--deployment-type``
-      -  The :ref:`deployment template
-         <determined-deploy-deployment-types>` to use.
+      -  The :ref:`deployment template <determined-deploy-deployment-types>` to use.
       -  simple
 
    -  -  ``--inbound-cidr``
@@ -203,18 +177,17 @@ Spinning up the Cluster
       -  postgres
 
    -  -  ``--max-aux-containers-per-agent``
-      -  The maximum number of containers to launch on each agent in the
-         default auxiliary :ref:`resource pool <resource-pools>`.
+      -  The maximum number of containers to launch on each agent in the default auxiliary
+         :ref:`resource pool <resource-pools>`.
       -  100
 
    -  -  ``--max-idle-agent-period``
-      -  The length of time to wait before idle dynamic agents will be
-         automatically terminated.
+      -  The length of time to wait before idle dynamic agents will be automatically terminated.
       -  10m (10 minutes)
 
    -  -  ``--max-dynamic-agents``
-      -  Maximum number of dynamic agent instances in the default GPU
-         :ref:`resource pool <resource-pools>`.
+      -  Maximum number of dynamic agent instances in the default GPU :ref:`resource pool
+         <resource-pools>`.
       -  5
 
    -  -  ``--spot``
@@ -223,11 +196,10 @@ Spinning up the Cluster
 
    -  -  ``--spot-max-price``
 
-      -  The maximum price to use when launching spot instances. If the
-         current spot market price exceeds this value, Determined will
-         not create new instances. If no maximum price is configured,
-         the maximum price will be the on-demand price for the
-         configured instance type and region.
+      -  The maximum price to use when launching spot instances. If the current spot market price
+         exceeds this value, Determined will not create new instances. If no maximum price is
+         configured, the maximum price will be the on-demand price for the configured instance type
+         and region.
 
       -  Not set
 
@@ -251,8 +223,7 @@ Tearing Down the Cluster
       -  Default Value
 
    -  -  ``--cluster-id``
-      -  Unique ID for the cluster (used as the CloudFormation stack
-         name).
+      -  Unique ID for the cluster (used as the CloudFormation stack name).
       -  *required*
 
    -  -  ``--region``
@@ -295,11 +266,9 @@ Listing Clusters
 Database
 ========
 
-Determined requires a PostgreSQL-compatible database, such as AWS
-Aurora. Configure the cluster to use the database by including the
-database information in ``master.yaml``. Make sure to create a database
-before running the Determined cluster (e.g., ``CREATE DATABASE
-<database-name>``).
+Determined requires a PostgreSQL-compatible database, such as AWS Aurora. Configure the cluster to
+use the database by including the database information in ``master.yaml``. Make sure to create a
+database before running the Determined cluster (e.g., ``CREATE DATABASE <database-name>``).
 
 Example ``master.yaml`` snippet:
 
@@ -315,8 +284,8 @@ Example ``master.yaml`` snippet:
 Security Groups
 ===============
 
-VPC Security Groups provide a set of rules for inbound and outbound
-network traffic. The requirements for a Determined cluster are:
+VPC Security Groups provide a set of rules for inbound and outbound network traffic. The
+requirements for a Determined cluster are:
 
 Master
 ------
@@ -427,18 +396,16 @@ Example:
 IAM Roles
 =========
 
-IAM roles comprise IAM policies, which provide access to AWS APIs such
-as the EC2 or S3 API. The IAM policies needed for the Determined cluster
-are:
+IAM roles comprise IAM policies, which provide access to AWS APIs such as the EC2 or S3 API. The IAM
+policies needed for the Determined cluster are:
 
 Master
 ------
 
 -  Allow EC2 to assume role
--  Allow EC2 to describe, create, and terminate instances with agent
-   role
--  Allow EC2 to describe, create, and terminate spot instance requests
-   (only required if using spot instances)
+-  Allow EC2 to describe, create, and terminate instances with agent role
+-  Allow EC2 to describe, create, and terminate spot instance requests (only required if using spot
+   instances)
 
 .. code:: yaml
 
@@ -518,10 +485,9 @@ Agent
 Master Node
 ===========
 
-The master node should be deployed on an EC2 instance with at least 4
-CPUs (Intel Broadwell or later), 8GB of RAM, and 200GB of disk storage.
-This roughly corresponds to an EC2 t2.large instance or better. The AMI
-should be the default Ubuntu 18.04 AMI.
+The master node should be deployed on an EC2 instance with at least 4 CPUs (Intel Broadwell or
+later), 8GB of RAM, and 200GB of disk storage. This roughly corresponds to an EC2 t2.large instance
+or better. The AMI should be the default Ubuntu 18.04 AMI.
 
 Running Determined
 ------------------
@@ -548,27 +514,24 @@ Running Determined
 
       docker network create determined
 
-#. Configure the cluster with ``master.yaml``. See
-   :ref:`cluster-configuration` for more information.
+#. Configure the cluster with ``master.yaml``. See :ref:`cluster-configuration` for more
+   information.
 
    Notes:
 
    -  ``image_id`` should be the latest Determined agent AMI.
    -  ``instance_type`` should be any p2 or p3 EC2 instance type.
-   -  For more information about resource pools, see
-      :ref:`resource-pools`
+   -  For more information about resource pools, see :ref:`resource-pools`
 
    .. warning::
 
-      An important assumption of Determined with Dynamic Agents is that
-      any EC2 instances with the configured tag_key:tag_value pair are
-      managed by the Determined master. This pair should be unique to
-      your Determined installation. If it is not, Determined may
-      inadvertently manage your non-Determined EC2 instances.
+      An important assumption of Determined with Dynamic Agents is that any EC2 instances with the
+      configured tag_key:tag_value pair are managed by the Determined master. This pair should be
+      unique to your Determined installation. If it is not, Determined may inadvertently manage your
+      non-Determined EC2 instances.
 
-      If using spot instances, Determined also assumes that any EC2 spot
-      instance requests with the configured tag_key:tag_value pair are
-      managed by the Determined master.
+      If using spot instances, Determined also assumes that any EC2 spot instance requests with the
+      configured tag_key:tag_value pair are managed by the Determined master.
 
    .. code:: yaml
 
@@ -614,5 +577,5 @@ Running Determined
         -v master.yaml:/etc/determined/master.yaml \
         determinedai/determined-master:${Version}
 
-Once you have your Determined cluster running on AWS, try out some of
-our :ref:`tutorials <tutorials>`.
+Once you have your Determined cluster running on AWS, try out some of our :ref:`tutorials
+<tutorials>`.

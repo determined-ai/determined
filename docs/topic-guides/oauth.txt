@@ -4,28 +4,25 @@
  OAuth 2.0 (Enterprise Edition)
 ################################
 
-Determined EE allows requests to certain endpoints to be authenticated
-using OAuth 2.0 with the authorization code flow. Currently, only the
-SCIM endpoints are supported.
+Determined EE allows requests to certain endpoints to be authenticated using OAuth 2.0 with the
+authorization code flow. Currently, only the SCIM endpoints are supported.
 
 ***************
  Configuration
 ***************
 
-To enable OAuth support, set ``scim.auth.type`` to ``oauth`` in the
-Determined :ref:`master configuration <master-configuration>`.
+To enable OAuth support, set ``scim.auth.type`` to ``oauth`` in the Determined :ref:`master
+configuration <master-configuration>`.
 
-The values you'll need to configure an OAuth client application are as
-follows:
+The values you'll need to configure an OAuth client application are as follows:
 
--  The authorization endpoint, which is the hostname of the Determined
-   master followed by ``/oauth2/authorize``.
+-  The authorization endpoint, which is the hostname of the Determined master followed by
+   ``/oauth2/authorize``.
 
--  The access token endpoint, which is the hostname of the Determined
-   master followed by ``/oauth2/token``.
+-  The access token endpoint, which is the hostname of the Determined master followed by
+   ``/oauth2/token``.
 
--  The client ID and secret, which are obtained using the Determined
-   CLI:
+-  The client ID and secret, which are obtained using the Determined CLI:
 
    .. code::
 
@@ -42,15 +39,15 @@ follows:
 
    .. warning::
 
-      There is no other way to obtain the secret. Make sure not to lose
-      it before configuring your client.
+      There is no other way to obtain the secret. Make sure not to lose it before configuring your
+      client.
 
 ************
  Management
 ************
 
-The CLI also provides these commands for listing and removing OAuth
-clients after they have been added:
+The CLI also provides these commands for listing and removing OAuth clients after they have been
+added:
 
 .. code::
 

@@ -19,41 +19,33 @@
  Overview
 **********
 
-Determined is an open-source deep learning training platform that makes
-building models fast and easy. Determined enables you to:
+Determined is an open-source deep learning training platform that makes building models fast and
+easy. Determined enables you to:
 
--  **Train models faster** using state-of-the-art :ref:`distributed
-   training <multi-gpu-training>`, without changing your model code
+-  **Train models faster** using state-of-the-art :ref:`distributed training <multi-gpu-training>`,
+   without changing your model code
+-  **Automatically find high-quality models** with advanced :ref:`hyperparameter tuning
+   <hyperparameter-tuning>` from the creators of Hyperband
+-  **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by seamlessly using
+   preemptible instances
+-  **Track and reproduce your work** with experiment tracking that works out-of-the-box, covering
+   code versions, metrics, checkpoints, and hyperparameters
 
--  **Automatically find high-quality models** with advanced
-   :ref:`hyperparameter tuning <hyperparameter-tuning>` from the
-   creators of Hyperband
+Determined integrates these features into an easy-to-use, high-performance deep learning environment
+--- which means you can spend your time building models instead of managing infrastructure.
 
--  **Get more from your GPUs** with smart scheduling and cut cloud GPU
-   costs by seamlessly using preemptible instances
+To use Determined, you can continue using popular DL frameworks such as TensorFlow and PyTorch; you
+just need to update your model code to integrate with the Determined API.
 
--  **Track and reproduce your work** with experiment tracking that works
-   out-of-the-box, covering code versions, metrics, checkpoints, and
-   hyperparameters
-
-Determined integrates these features into an easy-to-use,
-high-performance deep learning environment --- which means you can spend
-your time building models instead of managing infrastructure.
-
-To use Determined, you can continue using popular DL frameworks such as
-TensorFlow and PyTorch; you just need to update your model code to
-integrate with the Determined API.
-
-More information about Determined can be found on the `website
-<https://determined.ai/>`__.
+More information about Determined can be found on the `website <https://determined.ai/>`__.
 
 *********************
  Get Started Locally
 *********************
 
 Follow `these instructions
-<https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker>`_
-to install and set up Docker.
+<https://docs.determined.ai/latest/how-to/installation/requirements.html#install-docker>`_ to
+install and set up Docker.
 
 .. code:: bash
 
@@ -79,21 +71,20 @@ to install and set up Docker.
 Installation
 ============
 
-To install Determined, please follow the :ref:`installation instructions
-<install-cluster>`. Determined can be installed on the public cloud, an
-on-premise cluster, or a local development machine.
+To install Determined, please follow the :ref:`installation instructions <install-cluster>`.
+Determined can be installed on the public cloud, an on-premise cluster, or a local development
+machine.
 
-Each user should also :ref:`install the Determined command-line tools
-<install-cli>` on systems they will use to access Determined.
+Each user should also :ref:`install the Determined command-line tools <install-cli>` on systems they
+will use to access Determined.
 
 Next Steps
 ==========
 
-We recommend starting with the :ref:`quick-start` if you're new to
-Determined.
+We recommend starting with the :ref:`quick-start` if you're new to Determined.
 
-Next, learn more about Determined's Python APIs by following a tutorial.
-Follow the tutorial for your preferred framework:
+Next, learn more about Determined's Python APIs by following a tutorial. Follow the tutorial for
+your preferred framework:
 
 -  :ref:`pytorch-mnist-tutorial`
 -  :ref:`tf-mnist-tutorial`
@@ -101,13 +92,12 @@ Follow the tutorial for your preferred framework:
 Join the Community
 ==================
 
-Whether you're trying our software for the first time or you're training
-production models, we'd love to hear from you!
+Whether you're trying our software for the first time or you're training production models, we'd
+love to hear from you!
 
 -  `Slack
    <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_
--  `Mailing list
-   <https://groups.google.com/a/determined.ai/forum/#!forum/community>`_
+-  `Mailing list <https://groups.google.com/a/determined.ai/forum/#!forum/community>`_
 -  `GitHub <https://github.com/determined-ai/determined>`_
 -  `Website <https://determined.ai/>`_
 -  `Blog <https://determined.ai/blog/>`_
@@ -115,8 +105,7 @@ production models, we'd love to hear from you!
 Learn More
 ==========
 
-Use the links below to start learning more about Determined's
-capabilities.
+Use the links below to start learning more about Determined's capabilities.
 
 **General Concepts**
 
@@ -177,20 +166,13 @@ capabilities.
 
 The Determined documentation is divided up into five main categories:
 
--  **Tutorials** are simple step-by-step guides about getting started
-   with different topics of Determined. Tutorials are a good place to
-   get started with using the product.
-
--  **Topic Guides** discuss concepts and topics at a high level. They
-   provide useful information and explanation.
-
--  **Reference** guides contain technical reference for our APIs. They
-   describe how to use it; however, these guides assume you have a
-   working understanding of key concepts of Determined.
-
--  **How-to** guides take you through the steps needed to address key
-   use-cases. You can think of them as advanced tutorials that assume
-   some knowledge of key concepts of Determined.
-
--  **System administration** guides take you through what's needed to
-   set up and configure the Determined system.
+-  **Tutorials** are simple step-by-step guides about getting started with different topics of
+   Determined. Tutorials are a good place to get started with using the product.
+-  **Topic Guides** discuss concepts and topics at a high level. They provide useful information and
+   explanation.
+-  **Reference** guides contain technical reference for our APIs. They describe how to use it;
+   however, these guides assume you have a working understanding of key concepts of Determined.
+-  **How-to** guides take you through the steps needed to address key use-cases. You can think of
+   them as advanced tutorials that assume some knowledge of key concepts of Determined.
+-  **System administration** guides take you through what's needed to set up and configure the
+   Determined system.
