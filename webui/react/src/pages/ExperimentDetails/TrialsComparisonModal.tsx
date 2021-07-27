@@ -85,9 +85,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, [ canceler, source ]);
 
   useEffect(() => {
-    const trialIds = trials.map(trial => {
-      setTrialsDetails(prev =>
-        ({
+    trials.forEach(trial => {
+      setTrialsDetails(prev => {
+        if (prev[trial.id]) return prev;
+        return ({
           ...prev,
           [trial.id]: {
             data: undefined,
@@ -95,10 +96,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             isLoading: true,
             source,
           },
-        }));
-      return trial.id;
+        });
+      });
+      fetchTrialDetails(trial.id);
     });
-    trialIds.forEach(trialId => fetchTrialDetails(trialId));
   }, [ fetchTrialDetails, source, trials ]);
 
   const handleCheckpointShow = (
@@ -203,8 +204,8 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const isLoaded = useMemo(() => {
     const detailsArr = Object.values(trialsDetails);
-    return detailsArr.length === trials.length && detailsArr.every(trial => !trial.isLoading);
-  }, [ trialsDetails, trials.length ]);
+    return detailsArr.every(trial => !trial.isLoading);
+  }, [ trialsDetails ]);
 
   return (
     <>
