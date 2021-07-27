@@ -2,18 +2,16 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, cast
+from typing import Any, Dict, Iterator, Optional, cast, Callable
 
 import boto3
 import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.fixtures import SubRequest
-from _pytest.reports import TestReport
-from _pytest.nodes import Item
-from _pytest.runner import CallInfo
 from botocore import exceptions as boto_exc
 
 from tests import config
+from tests.experiment import ProfileTest
 
 from .cluster_log_manager import ClusterLogManager
 
@@ -159,11 +157,14 @@ def test_start_timer(request: SubRequest) -> Iterator[None]:
     yield
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport() -> None:
-    # Call other hooks of same type to get result
-    outcome = yield
-    report = outcome.get_result()
-    if report.when == "call":
-        report.longrepr.addsection("test", "value")
-    print(f"report {report}")
+@pytest.fixture
+def profile_test(record_property: Callable[[str, object], None]) -> Callable[[int], None]:
+    """
+    Returns a method that allows profiling of test run for certain system metrics
+    and records to JUnit report.
+
+    Currently retrieves metrics by trial (assumes one trial per experiment) using
+    profiler API.
+    """
+
+    return ProfileTest(record_property=record_property).record

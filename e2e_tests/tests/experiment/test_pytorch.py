@@ -5,14 +5,16 @@ import pytest
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
+from typing import Callable
 
 
 @pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.profile
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
-def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
+def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool,
+                          profile_test: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
+    config = conf.set_profiling_enabled(config)
 
     if using_k8s:
         pod_spec = {
@@ -29,7 +31,9 @@ def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
         }
         config = conf.set_pod_spec(config, pod_spec)
 
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    profile_test(trial_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
