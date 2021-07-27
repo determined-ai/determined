@@ -217,7 +217,7 @@ export default class StepImplementation {
   @Step('Navigate to experiment list page')
   public async navigateToExperimentList() {
     await goto(`${BASE_URL}/experiments`);
-    await t.waitFor(async () => await t.$(selectors.antdTable).exists());
+    await t.$(selectors.antdTable).exists();
   }
 
   @Step('Navigate to experiment <id> page')
@@ -278,7 +278,7 @@ export default class StepImplementation {
 
   @Step('Toggle all table row selection')
   public async toggleAllTableRowSelection() {
-    await t.waitFor(async () => t.$('th input[type=checkbox]').exists());
+    await t.$('th input[type=checkbox]').exists();
     await t.click(t.$('th input[type=checkbox]'));
   }
 
@@ -444,7 +444,7 @@ export default class StepImplementation {
 
   @Step('Page should contain <text>')
   public async checkTextExist(value: string) {
-    await t.waitFor(async () => await t.text(value).exists());
+    await t.text(value).exists();
   }
 
   /* Logs */
