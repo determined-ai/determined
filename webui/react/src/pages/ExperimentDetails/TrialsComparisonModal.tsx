@@ -9,6 +9,7 @@ import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
+import useResize from 'hooks/useResize';
 import { getTrialDetails } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
@@ -39,12 +40,15 @@ interface TableProps {
 
 const TrialsComparisonModal: React.FC<ModalProps> =
 ({ experiment, onCancel, onUnselect, trials, visible }: ModalProps) => {
+  const resize = useResize();
   return (
     <Modal
+      centered
       footer={null}
+      style={{ height: resize.height*.9 }}
       title={`Experiment ${trials.first()?.experimentId} Trial Comparison`}
       visible={visible}
-      width={1200}
+      width={resize.width*.9}
       onCancel={onCancel}>
       <TrialsComparisonTable experiment={experiment} trials={trials} onUnselect={onUnselect} />
     </Modal>
