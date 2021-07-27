@@ -19,6 +19,7 @@ def test_tf_keras_const_warm_start(tf2: bool,
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_tf_keras"), 1
@@ -58,6 +59,7 @@ def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool,
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_tf_keras"), 1
@@ -78,6 +80,7 @@ def test_tf_keras_single_gpu(tf2: bool,
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_tf_keras"), 1
@@ -95,6 +98,7 @@ def test_tf_keras_mnist_parallel(profile_test: Callable[[int], None]) -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("fashion_mnist_tf_keras"), 1
@@ -110,6 +114,8 @@ def test_tf_keras_tf2_disabled(profile_test: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
     config = conf.set_tf2_image(config)
+    config = conf.set_profiling_enabled(config)
+
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("keras_tf2_disabled_no_op"), 1
     )
@@ -147,6 +153,8 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_profiling_enabled(config)
+
     if storage_type == "lfs":
         config = conf.set_shared_fs_data_layer(config)
     else:
@@ -168,6 +176,8 @@ def test_tf_keras_mnist_data_layer_parallel(
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_profiling_enabled(config)
+
     if storage_type == "lfs":
         config = conf.set_shared_fs_data_layer(config)
     else:
@@ -188,6 +198,7 @@ def run_tf_keras_dcgan_example(profile_test: Callable[[int], None]) -> None:
     config = conf.set_min_validation_period(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf2_image(config)
+    config = conf.set_profiling_enabled(config)
 
     exp_id = exp.run_basic_test_with_temp_config(config,
                                                  conf.gan_examples_path("dcgan_tf_keras"),
