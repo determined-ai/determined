@@ -134,8 +134,8 @@ const useCreateExperimentModal = (): ModalHooks => {
   }, []);
 
   const submitExperiment = useCallback(async (newConfig: string) => {
-    const isContinueTrial = modalState.type === CreateExperimentType.ContinueTrial;
-    if (!modalState.experiment || (isContinueTrial && !modalState.trial)) return;
+    const isFork = modalState.type === CreateExperimentType.ContinueTrial;
+    if (!modalState.experiment || (!isFork && !modalState.trial)) return;
 
     try {
       const { id: newExperimentId } = await createExperiment({
@@ -149,7 +149,7 @@ const useCreateExperimentModal = (): ModalHooks => {
       const newPath = paths.experimentDetails(newExperimentId);
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
-      let errorMessage = 'Unable to continue trial with the provided config.';
+      let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
       if (e.name === 'YAMLException') {
         errorMessage = e.message;
       } else if (e.response?.data?.message) {
