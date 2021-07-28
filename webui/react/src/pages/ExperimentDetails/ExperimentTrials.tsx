@@ -205,14 +205,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     updateTrialMap(trials);
   }, [ trials, updateTrialMap ]);
 
-  const selectedTrials = useMemo(() => {
-    return selectedRowKeys.map(key => trialMap[key]);
-  }, [ trialMap, selectedRowKeys ]);
-
-  const selectedTrialsLoaded = useMemo(() => {
-    return selectedTrials.every(trial => trial);
-  }, [ selectedTrials ]);
-
   const clearSelected = useCallback(() => {
     setSelectedRowKeys([]);
   }, []);
@@ -454,10 +446,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
-      {showCompareTrials && selectedTrialsLoaded &&
+      {showCompareTrials &&
       <TrialsComparisonModal
         experiment={experiment}
-        trials={selectedTrials}
+        trials={selectedRowKeys}
         visible={showCompareTrials}
         onCancel={() => setShowCompareTrials(false)}
         onUnselect={handleTrialUnselect} />}

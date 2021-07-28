@@ -1,6 +1,5 @@
 import { Button, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
-import axios from 'axios';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -11,12 +10,9 @@ import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { getTrialDetails } from 'services/api';
-import { ApiState } from 'services/types';
-import { isAborted } from 'services/utils';
 import { CheckpointState, CheckpointWorkload,
   CheckpointWorkloadExtended, ExperimentBase,
-  MetricName, MetricsWorkload,
-  MetricType, TrialDetails, TrialItem } from 'types';
+  MetricName, MetricsWorkload, MetricType, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
@@ -28,14 +24,14 @@ interface ModalProps {
   experiment: ExperimentBase;
   onCancel: () => void;
   onUnselect: (trialId: number) => void;
-  trials: TrialItem[];
+  trials: number[];
   visible: boolean;
 }
 
 interface TableProps {
   experiment: ExperimentBase;
   onUnselect: (trialId: number) => void;
-  trials: TrialItem[];
+  trials: number[];
 }
 
 const TrialsComparisonModal: React.FC<ModalProps> =
@@ -46,7 +42,7 @@ const TrialsComparisonModal: React.FC<ModalProps> =
       centered
       footer={null}
       style={{ height: resize.height*.9 }}
-      title={`Experiment ${trials.first()?.experimentId} Trial Comparison`}
+      title={`Experiment ${experiment.id} Trial Comparison`}
       visible={visible}
       width={resize.width*.9}
       onCancel={onCancel}>
@@ -58,53 +54,34 @@ const TrialsComparisonModal: React.FC<ModalProps> =
 const TrialsComparisonTable: React.FC<TableProps> = (
   { trials, experiment, onUnselect }: TableProps,
 ) => {
-  const [ trialsDetails, setTrialsDetails ] = useState<Record<string, ApiState<TrialDetails>>>({});
+  const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ source ] = useState(axios.CancelToken.source());
   const [ canceler ] = useState(new AbortController());
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialsDetails(prev => (
-        { ...prev, [trialId]: { ...prev[trialId], data: response, isLoading: false } }
-      ));
-    } catch (e) {
-      if (!isAborted(e)) {
-        setTrialsDetails(prev => ({ ...prev, [trialId]: { ...prev[trialId], error: e } }));
-      }
+      setTrialsDetails(prev => ({ ...prev, [trialId]: response }));
+    } catch {
     }
   }, [ canceler.signal ]);
 
   useEffect(() => {
     return () => {
-      source.cancel();
       canceler.abort();
     };
-  }, [ canceler, source ]);
+  }, [ canceler ]);
 
   useEffect(() => {
     trials.forEach(trial => {
-      setTrialsDetails(prev => {
-        if (prev[trial.id]) return prev;
-        return ({
-          ...prev,
-          [trial.id]: {
-            data: undefined,
-            error: undefined,
-            isLoading: true,
-            source,
-          },
-        });
-      });
-      fetchTrialDetails(trial.id);
+      fetchTrialDetails(trial);
     });
-  }, [ fetchTrialDetails, source, trials ]);
+  }, [ fetchTrialDetails, trials ]);
 
   const handleCheckpointShow = (
     event: React.MouseEvent,
-    trial: TrialItem,
+    trial: TrialDetails,
   ) => {
     if (trial.bestAvailableCheckpoint) {
       const checkpoint = {
@@ -120,12 +97,11 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
-  const handleTrialUnselect = useCallback((trial: TrialItem) =>
-    onUnselect(trial.id), [ onUnselect ]);
+  const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
   const durations: Record<string, TrialDurations> = useMemo(
     () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => (trial.data ? [ trial.data.id, trialDurations(trial.data.workloads) ] : [])))
+      .map(trial => [ trial.id, trialDurations(trial.workloads) ]))
     , [ trialsDetails ],
   );
 
@@ -140,14 +116,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const totalCheckpointsSizes: Record<string, string> = useMemo(
     () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => trial.data ? [ trial.data.id, getCheckpointSize(trial.data) ] : []))
+      .map(trial => [ trial.id, getCheckpointSize(trial) ]))
     , [ getCheckpointSize, trialsDetails ],
   );
 
   const metricNames = useMemo(() => {
     const nameSet: Record<string, MetricName> = {};
     trials.forEach(trial => {
-      extractMetricNames(trialsDetails[trial.id]?.data?.workloads || [])
+      extractMetricNames(trialsDetails[trial]?.workloads || [])
         .forEach(item => nameSet[item.name] = (item));
     });
     return Object.values(nameSet);
@@ -156,7 +132,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const extractLatestMetrics = useCallback((
     metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
     workload: MetricsWorkload,
-    trialId: string,
+    trialId: number,
   ) => {
     for (const metricName of
       Object.keys(workload.metrics || {})) {
@@ -174,13 +150,13 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const metrics = useMemo(() => {
     const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
-    for (const [ trialId, trialDetails ] of Object.entries(trialsDetails)) {
-      metricsObj[trialId] = {};
-      trialDetails.data?.workloads.forEach(workload => {
+    for (const trial of Object.values(trialsDetails)) {
+      metricsObj[trial.id] = {};
+      trial.workloads.forEach(workload => {
         if (workload.training) {
-          extractLatestMetrics(metricsObj, workload.training, trialId);
+          extractLatestMetrics(metricsObj, workload.training, trial.id);
         } else if (workload.validation) {
-          extractLatestMetrics(metricsObj, workload.validation, trialId);
+          extractLatestMetrics(metricsObj, workload.validation, trial.id);
         }
       });
     }
@@ -198,14 +174,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const hyperparameterNames = useMemo(
     () =>
-      Object.keys(trials.first().hyperparameters),
-    [ trials ],
+      Object.keys(trialsDetails[trials.first()].hyperparameters),
+    [ trials, trialsDetails ],
   );
 
-  const isLoaded = useMemo(() => {
-    const detailsArr = Object.values(trialsDetails);
-    return detailsArr.every(trial => !trial.isLoading);
-  }, [ trialsDetails ]);
+  const isLoaded = useMemo(
+    () => trials.every(trialId => trialsDetails[trialId])
+    , [ trials, trialsDetails ],
+  );
 
   return (
     <>
@@ -219,62 +195,64 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 <Tag
                   className={[ css.trialTag, css.centerVertically ].join(' ')}
                   closable
-                  key={trial.id}
-                  onClose={() => handleTrialUnselect(trial)}><p>Trial {trial.id}</p></Tag>)}</div>
+                  key={trial}
+                  onClose={() => handleTrialUnselect(trial)}><p>Trial {trial}</p></Tag>)}</div>
             <div className={css.row}>
               <h3>State</h3>
               {trials.map(trial =>
-                <div className={css.centerVertically} key={trial.id}>
-                  <Badge state={trial.state} type={BadgeType.State} />
+                <div className={css.centerVertically} key={trial}>
+                  <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
                 </div>)}
             </div>
             <div className={css.row}>
               <h3>Start Time</h3>
               {trials.map(trial =>
-                <p key={trial.id}>
-                  {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
+                <p key={trial}>
+                  {shortEnglishHumannizer(
+                    getDuration({ startTime: trialsDetails[trial].startTime }),
+                  )} ago
                 </p>)}
             </div>
             <div className={css.row}>
               <h3>Training Time</h3>
               {trials.map(trial =>
-                <p key={trial.id}>
-                  {shortEnglishHumannizer(durations[trial.id]?.train)}
+                <p key={trial}>
+                  {shortEnglishHumannizer(durations[trial]?.train)}
                 </p>)}
             </div>
             <div className={css.row}>
               <h3>Validation Time</h3>
               {trials.map(trial =>
-                <p key={trial.id}>
-                  {shortEnglishHumannizer(durations[trial.id]?.validation)}
+                <p key={trial}>
+                  {shortEnglishHumannizer(durations[trial]?.validation)}
                 </p>)}
             </div>
             <div className={css.row}>
               <h3>Checkpoint Time</h3>
               {trials.map(trial =>
-                <p key={trial.id}>
-                  {shortEnglishHumannizer(durations[trial.id]?.checkpoint)}
+                <p key={trial}>
+                  {shortEnglishHumannizer(durations[trial]?.checkpoint)}
                 </p>)}
             </div>
             <div className={css.row}>
               <h3>Batches Processed</h3>
-              {trials.map(trial => <p key={trial.id}>{trial.totalBatchesProcessed}</p>)}
+              {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
             </div>
             <div className={css.row}>
               <h3>Best Checkpoint</h3>
               {trials.map(trial =>
-                trial.bestAvailableCheckpoint ?
+                trialsDetails[trial].bestAvailableCheckpoint ?
                   <Button
                     className={css.checkpointButton}
-                    key={trial.id}
-                    onClick={e => handleCheckpointShow(e, trial)}>
+                    key={trial}
+                    onClick={e => handleCheckpointShow(e, trialsDetails[trial])}>
                     <Icon name="checkpoint" />
-                    <span>Batch {trial.bestAvailableCheckpoint?.totalBatches}</span>
+                    <span>Batch {trialsDetails[trial].bestAvailableCheckpoint?.totalBatches}</span>
                   </Button> : <div />)}
             </div>
             <div className={css.row}>
               <h3>Total Checkpoint Size</h3>
-              {trials.map(trial => <p key={trial.id}>{totalCheckpointsSizes[trial.id]}</p>)}
+              {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
             </div>
             <div className={css.headerRow}><h2>Metrics</h2></div>
             {metricNames.map(metric =>
@@ -283,21 +261,23 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                   <Tooltip title="training">T</Tooltip> :
                   <Tooltip title="validation">V</Tooltip>}
                 </BadgeTag>
-                {trials.map(trial => metrics[trial.id][metric.name] ?
+                {trials.map(trial => metrics[trial][metric.name] ?
                   <HumanReadableFloat
-                    key={trial.id}
-                    num={metrics[trial.id][metric.name]} />: <div />)}
+                    key={trial}
+                    num={metrics[trial][metric.name]} />: <div />)}
               </div>)}
             <div className={css.headerRow}><h2>Hyperparameters</h2></div>
             {hyperparameterNames.map(hp =>
               <div className={css.row} key={hp}>
                 <h3>{hp}</h3>
                 {trials.map(trial =>
-                  !isNaN(parseFloat(JSON.stringify(trial.hyperparameters[hp]))) ?
+                  !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ?
                     <HumanReadableFloat
-                      key={trial.id}
-                      num={parseFloat(JSON.stringify(trial.hyperparameters[hp]))} />:
-                    trial.hyperparameters[hp])}
+                      key={trial}
+                      num={parseFloat(
+                        JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
+                      )} /> :
+                    <p>trialsDetails[trial].hyperparameters[hp]</p>)}
               </div>)}
           </> : <Spinner spinning={!isLoaded} />}
       </div>
