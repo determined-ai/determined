@@ -134,7 +134,7 @@ const useCreateExperimentModal = (): ModalHooks => {
   }, []);
 
   const submitExperiment = useCallback(async (newConfig: string) => {
-    const isFork = modalState.type === CreateExperimentType.ContinueTrial;
+    const isFork = modalState.type === CreateExperimentType.Fork;
     if (!modalState.experiment || (!isFork && !modalState.trial)) return;
 
     try {
