@@ -1,6 +1,4 @@
-import React, {
-  forwardRef, useEffect, useImperativeHandle, useMemo, useRef,
-} from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -20,16 +18,13 @@ interface ScaleZoomData {
 
 interface Props {
   data?: AlignedData;
+  focusIndex?: number;
   options?: Options;
-  ref?: React.Ref<uPlot|undefined>;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = forwardRef((
-  { data, options }: Props,
-  ref?: React.Ref<uPlot|undefined>,
-) => {
+const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const scalesRef = useRef<Record<RecordKey, uPlot.Scale>>();
@@ -116,6 +111,15 @@ const UPlotChart: React.FC<Props> = forwardRef((
   }, [ normalizedData ]);
 
   /*
+   * When a focus index is provided, highlight applicable series.
+   */
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const hasFocus = focusIndex !== undefined;
+    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+  }, [ focusIndex ]);
+
+  /*
    * Resize the chart when resize events happen.
    */
   const resize = useResize(chartDivRef);
@@ -149,11 +153,9 @@ const UPlotChart: React.FC<Props> = forwardRef((
     };
   }, []);
 
-  useImperativeHandle(ref, () => chartRef.current, []);
-
   return hasData
     ? <div ref={chartDivRef} />
     : <Message title="No data to plot." type={MessageType.Empty} />;
-});
+};
 
 export default UPlotChart;

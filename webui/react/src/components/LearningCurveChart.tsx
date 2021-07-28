@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AlignedData } from 'uplot';
 
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { closestPointPlugin } from 'components/UPlotChart/closestPointPlugin';
@@ -30,7 +30,7 @@ const LearningCurveChart: React.FC<Props> = ({
   trialIds,
   xValues,
 }: Props) => {
-  const chart = useRef<uPlot>();
+  const [ focusIndex, setFocusIndex ] = useState<number>();
 
   const chartData: AlignedData = useMemo(() => {
     return [ xValues, ...data ];
@@ -87,21 +87,14 @@ const LearningCurveChart: React.FC<Props> = ({
    * Focus on a trial series if provided.
    */
   useEffect(() => {
-    if (!chart.current) return;
-
     let seriesIdx = -1;
     if (focusedTrialId && trialIds.includes(focusedTrialId)) {
       seriesIdx = trialIds.findIndex(id => id === focusedTrialId);
     }
-
-    if (seriesIdx === -1) {
-      chart.current.setSeries(null as unknown as number, { focus: false });
-    } else {
-      chart.current.setSeries(seriesIdx + 1, { focus: true });
-    }
+    setFocusIndex(seriesIdx !== -1 ? seriesIdx : undefined);
   }, [ focusedTrialId, trialIds ]);
 
-  return <UPlotChart data={chartData} options={chartOptions} ref={chart} />;
+  return <UPlotChart data={chartData} focusIndex={focusIndex} options={chartOptions} />;
 };
 
 export default LearningCurveChart;
