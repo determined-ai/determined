@@ -37,6 +37,7 @@ import { getMetricValue, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import { columns as defaultColumns } from './ExperimentTrials.table';
+import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
@@ -44,6 +45,7 @@ interface Props {
 
 enum Action {
   OpenTensorBoard = 'OpenTensorboard',
+  CompareTrials = 'CompareTrials'
 }
 
 const URL_ALL = 'all';
@@ -73,6 +75,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   const [ sorter, setSorter ] = useState(initSorter);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ trials, setTrials ] = useState<TrialItem[]>();
   const [ canceler ] = useState(new AbortController());
@@ -110,12 +113,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       selectedRowKeys.forEach(rowKey => searchParams.append('row', String(rowKey)));
     }
 
+    // compare modal
+    searchParams.append('compare', showCompareTrials ? '1' : '0');
+
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ filters, isUrlParsed, pagination, selectedRowKeys, sorter ]);
+  }, [ filters, isUrlParsed, pagination, selectedRowKeys, showCompareTrials, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -166,7 +172,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     // selected rows
     const rows = urlSearchParams.getAll('row');
     if (rows != null) {
-      setSelectedRowKeys(rows.map(row => parseInt(row)));
+      const rowKeys = rows.map(row => parseInt(row));
+      setSelectedRowKeys(rowKeys);
+
+      const compare = urlSearchParams.get('compare');
+      if (compare != null) {
+        setShowCompareTrials(compare === '1');
+      }
     }
 
     setFilters(filters);
@@ -329,13 +341,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id, canceler, pagination, sorter, filters ]);
 
-  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+  const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
-      return openOrCreateTensorboard(
-        { trialIds: selectedRowKeys },
-      );
+      return await openOrCreateTensorboard({ trialIds: selectedRowKeys });
+    } else if (action === Action.CompareTrials) {
+      return setShowCompareTrials(true);
     }
-    return Promise.all([]);
   }, [ selectedRowKeys ]);
 
   const handleBatchAction = useCallback(async (action: Action) => {
@@ -381,12 +392,18 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
+  const handleTrialUnselect = useCallback((trialId: number) =>
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+
   return (
     <>
       <Section>
         <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
+          </Button>
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
+            Compare Trials
           </Button>
         </TableBatch>
         <ResponsiveTable
@@ -411,6 +428,13 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
+      {showCompareTrials &&
+      <TrialsComparisonModal
+        experiment={experiment}
+        trials={selectedRowKeys}
+        visible={showCompareTrials}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect} />}
     </>
   );
 };
