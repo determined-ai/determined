@@ -310,7 +310,7 @@ for your changes to take effect :
 
 .. code:: bash
 
-   sudo sh -c 'docker stop determined-master && docker start determined-master'
+   sudo docker container restart determined-master
 
 For example, if you want to add or modify resource pools you can edit
 the master configuration file at
