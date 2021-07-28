@@ -37,6 +37,11 @@ interface TableProps {
 const TrialsComparisonModal: React.FC<ModalProps> =
 ({ experiment, onCancel, onUnselect, trials, visible }: ModalProps) => {
   const resize = useResize();
+
+  useEffect(() => {
+    if (trials.length === 0) onCancel();
+  }, [ trials, onCancel ]);
+
   return (
     <Modal
       centered
@@ -174,7 +179,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 
   const hyperparameterNames = useMemo(
     () =>
-      Object.keys(trialsDetails[trials.first()].hyperparameters),
+      Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
     [ trials, trialsDetails ],
   );
 
