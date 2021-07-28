@@ -153,9 +153,11 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
     };
   }, []);
 
-  return hasData
-    ? <div ref={chartDivRef} />
-    : <Message title="No data to plot." type={MessageType.Empty} />;
+  return (
+    <div ref={chartDivRef}>
+      {!hasData && <Message title="No data to plot." type={MessageType.Empty} />}
+    </div>
+  );
 };
 
 export default UPlotChart;
