@@ -1,13 +1,13 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import ContinueTrial, { ContinueTrialHandles } from 'components/ContinueTrial';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
+import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
@@ -46,7 +46,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ source ] = useState(axios.CancelToken.source());
-  const continueTrialRef = useRef<ContinueTrialHandles>(null);
   const history = useHistory();
   const routeParams = useParams<Params>();
 
@@ -61,6 +60,8 @@ const TrialDetailsComp: React.FC = () => {
   const trialId = parseInt(routeParams.trialId);
 
   const trial = trialDetails.data;
+
+  const { showModal } = useCreateExperimentModal();
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -108,10 +109,14 @@ const TrialDetailsComp: React.FC = () => {
   const handleActionClick = useCallback((action: TrialAction) => {
     switch (action) {
       case TrialAction.Continue:
-        continueTrialRef.current?.show();
+        if (experiment && trial) showModal({
+          experiment,
+          trial,
+          type: CreateExperimentType.ContinueTrial,
+        });
         break;
     }
-  }, [ continueTrialRef ]);
+  }, [ experiment, showModal, trial ]);
 
   const handleTabChange = useCallback(key => {
     setTabKey(key);
@@ -187,7 +192,6 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
-      <ContinueTrial experiment={experiment} ref={continueTrialRef} trial={trial} />
     </Page>
   );
 };
