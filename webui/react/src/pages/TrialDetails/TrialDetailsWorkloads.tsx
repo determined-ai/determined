@@ -1,7 +1,7 @@
 import { Button, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
@@ -11,35 +11,23 @@ import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
-import { defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
 import useStorage from 'hooks/useStorage';
-import { parseUrl } from 'routes/utils';
 import { ApiSorter } from 'services/types';
 import {
   CheckpointDetail, CommandTask, ExperimentBase, MetricName,
-  Pagination, Step, TrialDetails,
+  Pagination,
+  Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricValue } from 'utils/trial';
 
+import { TrialInfoFilter } from './TrialDetailsOverview';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
 const { Option } = Select;
-
-enum TrialInfoFilter {
-  Checkpoint = 'Has Checkpoint',
-  Validation = 'Has Validation',
-  CheckpointOrValidation = 'Has Checkpoint or Validation',
-}
-
-const defaultSorter: ApiSorter = {
-  descend: true,
-  key: 'batches',
-};
-
-const URL_ALL = 'all';
 
 const STORAGE_PATH = 'trial-detail';
 const STORAGE_LIMIT_KEY = 'limit';
@@ -52,110 +40,24 @@ export interface Props {
   handleMetricChange: (value: MetricName[]) => void;
   metricNames: MetricName[];
   metrics: MetricName[];
+  pagination: Pagination;
+  setPagination: (pagination: Pagination) => void;
+  setShowFilter: (showFilter: TrialInfoFilter) => void;
+  setSorter: (sorter: ApiSorter) => void;
+  showFilter: TrialInfoFilter;
+  sorter: ApiSorter;
   trial: TrialDetails;
 }
 
 const TrialDetailsWorkloads: React.FC<Props> = (
-  { defaultMetrics, experiment, trial, metrics }: Props,
+  {
+    defaultMetrics, experiment, pagination, setPagination,
+    setShowFilter, setSorter, showFilter, sorter, trial, metrics,
+  }: Props,
 ) => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const storage = useStorage(STORAGE_PATH);
-
-  const initFilter = storage.getWithDefault(
-    STORAGE_CHECKPOINT_VALIDATION_KEY,
-    TrialInfoFilter.CheckpointOrValidation,
-  );
-  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
-  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
-  const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
-  const [ pagination, setPagination ] = useState<Pagination>(
-    { limit: initLimit, offset: 0 },
-  );
-  const [ showFilter, setShowFilter ] = useState(initFilter);
-
-  /*
-   * When filters changes update the page URL.
-   */
-  useEffect(() => {
-    if (!isUrlParsed) return;
-
-    const searchParams = new URLSearchParams;
-    const url = parseUrl(window.location.href);
-
-    // limit
-    searchParams.append('limit', pagination.limit.toString());
-
-    // offset
-    searchParams.append('offset', pagination.offset.toString());
-
-    // sortDesc
-    searchParams.append('sortDesc', sorter.descend ? '1' : '0');
-
-    // sortKey
-    searchParams.append('sortKey', sorter.key || '');
-
-    // filters
-    searchParams.append('filter', showFilter ? showFilter : URL_ALL);
-
-    window.history.pushState(
-      {},
-      '',
-      url.origin + url.pathname + '?' + searchParams.toString(),
-    );
-  }, [ isUrlParsed, pagination, showFilter, sorter ]);
-
-  /*
-   * On first load: if filters are specified in URL, override default.
-   */
-  useEffect(() => {
-    if (isUrlParsed) return;
-
-    // If search params are not set, we default to user preferences
-    const url = parseUrl(window.location.href);
-    if (url.search === '') {
-      setIsUrlParsed(true);
-      return;
-    }
-
-    const urlSearchParams = url.searchParams;
-
-    // limit
-    const limit = urlSearchParams.get('limit');
-    if (limit != null && !isNaN(parseInt(limit))) {
-      pagination.limit = parseInt(limit);
-    }
-
-    // offset
-    const offset = urlSearchParams.get('offset');
-    if (offset != null && !isNaN(parseInt(offset))) {
-      pagination.offset = parseInt(offset);
-    }
-
-    // sortDesc
-    const sortDesc = urlSearchParams.get('sortDesc');
-    if (sortDesc != null) {
-      sorter.descend = (sortDesc === '1');
-    }
-
-    // filter
-    const filter = urlSearchParams.get('filter');
-    if (filter != null) {
-      setShowFilter(filter as TrialInfoFilter);
-    }
-
-    // sortKey
-    const sortKey = urlSearchParams.get('sortKey');
-    if (sortKey != null &&
-    [ 'batches', 'state', ...metrics.map(metric => metric.name) ].includes(sortKey)) {
-      sorter.key = sortKey;
-    }
-
-    setIsUrlParsed(true);
-    setPagination(pagination);
-    setSorter(sorter);
-  }, [ isUrlParsed, pagination, showFilter, sorter, metrics ]);
 
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
@@ -261,14 +163,13 @@ const TrialDetailsWorkloads: React.FC<Props> = (
     setSorter(updatedSorter);
 
     storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
-    setPagination(pagination => {
-      return {
-        ...pagination,
+    setPagination(
+      ({
         limit: tablePagination.pageSize,
         offset: (tablePagination.current - 1) * tablePagination.pageSize,
-      };
-    });
-  }, [ columns, storage ]);
+      }),
+    );
+  }, [ columns, setPagination, setSorter, storage ]);
 
   const options = (
     <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
