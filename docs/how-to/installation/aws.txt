@@ -295,13 +295,14 @@ Listing Clusters
 To modify an already deployed cluster you have a few options:
 
 1. If what you'd like to change is provided as a ``det deploy`` CLI
-option, you can re-deploy the cluster using ``det deploy``. Simply
-provide the updated option while keeping the ``cluster-id`` the same.
-The cli would then find the existing cluster, take it down and spin up a
-new one with the updated options.
+option, you can re-deploy the cluster using ``det deploy``. Use the same
+full det deploy command as on cluster creation, but update the options
+as necessary, while keeping the cluster-id the same. `det` tool would
+then find the existing cluster, take it down and spin up a new one with
+the updated options.
 
 2. If you want more control over the master configuration while
-minimizing the downtime, you can into the master instance using the
+minimizing the downtime, you can ssh into the master instance using the
 private key from the keypair that was used to provision the cluster.
 Once you're successfully connected, you can modify ``master.yaml`` under
 ``/usr/local/determined/etc`` and restart the master docker container
