@@ -31,6 +31,9 @@ data:
         unreserve:
           enabled:
             - name: Coscheduling
+        score:
+          enabled:
+            - name: Coscheduling
     # optional plugin configs
       pluginConfig: 
       - name: Coscheduling

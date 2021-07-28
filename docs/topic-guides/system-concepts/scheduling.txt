@@ -163,10 +163,15 @@ You can also use ``schedulerName: default-scheduler`` to use the default Kuberne
 ***************************************************
 
 Determined also makes available a priority scheduler with preemption that extends the Kubernetes
-scheduler to support preemption. This plugin will preempt existing pods if higher priority pods are
-submitted. This plugin is also in beta and is not enabled by default. Similar to the coscheduling
-plugin, it is enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is
-not supported and Determined can only automatically set labels for GPU experiments.
+scheduler to support preemption with backfilling. This plugin will preempt existing pods if higher
+priority pods are submitted. If there is still space in the cluster, backfilling will attempt to
+fill the nodes by scheduling lower priority jobs. Additionally, if there are leftover slots on
+partially-filled nodes, the scheduler will attempt to assign single-slot tasks until the space is
+filled. This packing behavior only occurs with single-slot tasks.
+
+This plugin is also in beta and is not enabled by default. Similar to the coscheduling plugin, it is
+enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is not supported
+and Determined can only automatically set labels for GPU experiments.
 
 If using a cluster with tainted nodes or labels, users must specify the tolerations or node
 selectors in the experiment config:
