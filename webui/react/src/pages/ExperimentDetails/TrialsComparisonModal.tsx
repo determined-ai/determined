@@ -280,7 +280,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                       num={parseFloat(
                         JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
                       )} /> :
-                    <p>trialsDetails[trial].hyperparameters[hp]</p>)}
+                    <p>{trialsDetails[trial].hyperparameters[hp]}</p>)}
               </div>)}
           </> : <Spinner spinning={!isLoaded} />}
       </div>
