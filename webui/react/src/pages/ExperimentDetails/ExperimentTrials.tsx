@@ -190,7 +190,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       setSelectedRowKeys(rowKeys);
 
       const compare = urlSearchParams.get('compare');
-      if (sortDesc != null) {
+      if (compare != null) {
         setShowCompareTrials(compare === '1');
       }
     }

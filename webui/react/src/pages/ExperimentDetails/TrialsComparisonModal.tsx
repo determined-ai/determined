@@ -88,16 +88,15 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     event: React.MouseEvent,
     trial: TrialDetails,
   ) => {
-    if (trial.bestAvailableCheckpoint) {
-      const checkpoint = {
-        ...trial.bestAvailableCheckpoint,
-        experimentId: trial.experimentId,
-        trialId: trial.id,
-      };
-      event.stopPropagation();
-      setActiveCheckpoint(checkpoint);
-      setShowCheckpoint(true);
-    }
+    if (!trial.bestAvailableCheckpoint) return;
+    const checkpoint = {
+      ...trial.bestAvailableCheckpoint,
+      experimentId: trial.experimentId,
+      trialId: trial.id,
+    };
+    event.stopPropagation();
+    setActiveCheckpoint(checkpoint);
+    setShowCheckpoint(true);
   };
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
@@ -178,8 +177,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, [ extractLatestMetrics, trialsDetails ]);
 
   const hyperparameterNames = useMemo(
-    () =>
-      Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
+    () => Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
     [ trials, trialsDetails ],
   );
 
