@@ -16,7 +16,6 @@ import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparame
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
-import TrialDetailsWorkloads from '../TrialDetails/TrialDetailsWorkloads';
 
 const { TabPane } = Tabs;
 
@@ -169,11 +168,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
         <TabPane key="hyperparameters" tab="Hyperparameters">
           {trialDetails
             ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
-            : NoDataAlert}
-        </TabPane>
-        <TabPane key="workloads" tab="Workloads">
-          {trialDetails
-            ? <TrialDetailsWorkloads experiment={experiment} trial={trialDetails} />
             : NoDataAlert}
         </TabPane>
         <TabPane key="configuration" tab="Configuration">

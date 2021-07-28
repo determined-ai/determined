@@ -7,7 +7,6 @@ import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
@@ -18,12 +17,12 @@ import { parseUrl } from 'routes/utils';
 import { ApiSorter } from 'services/types';
 import {
   CheckpointDetail, CommandTask, ExperimentBase, MetricName,
-  MetricType, Pagination, Step, TrialDetails,
+  Pagination, Step, TrialDetails,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
-import { extractMetricNames, extractMetricValue } from 'utils/trial';
+import { extractMetricValue } from 'utils/trial';
 
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 
@@ -45,22 +44,24 @@ const URL_ALL = 'all';
 const STORAGE_PATH = 'trial-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_CHECKPOINT_VALIDATION_KEY = 'checkpoint-validation';
-const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 const STORAGE_SORTER_KEY = 'sorter';
 
 export interface Props {
+  defaultMetrics: MetricName[];
   experiment: ExperimentBase;
+  handleMetricChange: (value: MetricName[]) => void;
+  metricNames: MetricName[];
+  metrics: MetricName[];
   trial: TrialDetails;
 }
 
-const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) => {
+const TrialDetailsWorkloads: React.FC<Props> = (
+  { defaultMetrics, experiment, trial, metrics }: Props,
+) => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ defaultMetrics, setDefaultMetrics ] = useState<MetricName[]>([]);
-  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
   const storage = useStorage(STORAGE_PATH);
-  const storageMetricsPath = experiment ? `experiments/${experiment.id}` : undefined;
 
   const initFilter = storage.getWithDefault(
     STORAGE_CHECKPOINT_VALIDATION_KEY,
@@ -69,8 +70,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
-  const storageTableMetricsKey =
-    storageMetricsPath && `${storageMetricsPath}/${STORAGE_TABLE_METRICS_KEY}`;
   const [ pagination, setPagination ] = useState<Pagination>(
     { limit: initLimit, offset: 0 },
   );
@@ -100,19 +99,12 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
     // filters
     searchParams.append('filter', showFilter ? showFilter : URL_ALL);
 
-    // metrics
-    if (metrics && metrics.length > 0) {
-      metrics.forEach(metric => searchParams.append('metric', metric.name + '|' + metric.type));
-    } else {
-      searchParams.append('state', URL_ALL);
-    }
-
     window.history.pushState(
       {},
       '',
       url.origin + url.pathname + '?' + searchParams.toString(),
     );
-  }, [ isUrlParsed, metrics, pagination, showFilter, sorter ]);
+  }, [ isUrlParsed, pagination, showFilter, sorter ]);
 
   /*
    * On first load: if filters are specified in URL, override default.
@@ -153,16 +145,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
       setShowFilter(filter as TrialInfoFilter);
     }
 
-    // metrics
-    const visibleMetrics = urlSearchParams.getAll('metric');
-    let metrics = defaultMetrics;
-    if (visibleMetrics != null) {
-      metrics = (visibleMetrics.map(metric => {
-        const splitMetric = metric.split('|');
-        return { name: splitMetric[0], type: splitMetric[1] as MetricType };
-      }));
-    }
-
     // sortKey
     const sortKey = urlSearchParams.get('sortKey');
     if (sortKey != null &&
@@ -172,19 +154,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
 
     setIsUrlParsed(true);
     setPagination(pagination);
-    setMetrics(metrics);
     setSorter(sorter);
-  }, [ defaultMetrics, isUrlParsed, metrics, pagination, showFilter, sorter ]);
+  }, [ isUrlParsed, pagination, showFilter, sorter, metrics ]);
 
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = showFilter as string !== ALL_VALUE;
     return metricsApplied || checkpointValidationFilterApplied;
-  }, [ showFilter, metrics, defaultMetrics ]);
-
-  const metricNames = useMemo(() => extractMetricNames(
-    trial?.workloads || [],
-  ), [ trial?.workloads ]);
+  }, [ defaultMetrics, showFilter, metrics ]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -259,18 +236,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
       });
   }, [ showFilter, trial?.workloads ]);
 
-  // Default to selecting config search metric only.
-  useEffect(() => {
-    const searcherName = experiment.config?.searcher?.metric;
-    const defaultMetric = metricNames.find(metricName => {
-      return metricName.name === searcherName && metricName.type === MetricType.Validation;
-    });
-    const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-    setDefaultMetrics(defaultMetrics);
-    const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
-    setMetrics(initMetrics);
-  }, [ experiment, metricNames, storage, storageTableMetricsKey ]);
-
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
     setActiveCheckpoint(checkpoint);
@@ -284,11 +249,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
     setShowFilter(filter);
     storage.set(STORAGE_CHECKPOINT_VALIDATION_KEY, filter);
   }, [ setShowFilter, storage ]);
-
-  const handleMetricChange = useCallback((value: MetricName[]) => {
-    setMetrics(value);
-    if (storageTableMetricsKey) storage.set(storageTableMetricsKey, value);
-  }, [ storage, storageTableMetricsKey ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
@@ -320,12 +280,6 @@ const TrialDetailsWorkloads: React.FC<Props> = ({ experiment, trial }: Props) =>
         <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
       </SelectFilter>
-      {metrics && <MetricSelectFilter
-        defaultMetricNames={defaultMetrics}
-        metricNames={metricNames}
-        multiple
-        value={metrics}
-        onChange={handleMetricChange} />}
     </ResponsiveFilters>
   );
 
