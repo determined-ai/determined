@@ -2,10 +2,6 @@
 
 Specification to clean up outstanding experiments and tasks.
 
-## Sign in
-
-* Sign in as "user-w-pw" with "special-pw"
-
 ## Kill all experiments
 
 * Navigate to experiment list page

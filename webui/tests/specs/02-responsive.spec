@@ -3,13 +3,9 @@ Tags: parallelizable
 
 Specification to test the responsive design elements.
 
-## Sign in
-
-* Sign in as "user-w-pw" with "special-pw"
-* Navigate to dashboard page
-
 ## Test mobile view
 
+* Navigate to dashboard page
 * Switch to mobile view
 * Should have element "nav[class*=Navigation] a[aria-label*=Overflow]" present
 
@@ -17,7 +13,3 @@ Specification to test the responsive design elements.
 
 * Switch to desktop view
 * Should have element "nav[class*=Navigation] a[aria-label*=Docs]" present
-
-## Sign out
-
-* Sign out
