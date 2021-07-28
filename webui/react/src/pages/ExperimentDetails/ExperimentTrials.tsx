@@ -367,15 +367,12 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ experiment.id, canceler, pagination, sorter, filters ]);
 
-  const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
+  const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
-      return openOrCreateTensorboard(
-        { trialIds: selectedRowKeys },
-      );
+      return await openOrCreateTensorboard({ trialIds: selectedRowKeys });
     } else if (action === Action.CompareTrials) {
-      return Promise.resolve([ setShowCompareTrials(true) ]);
+      return setShowCompareTrials(true);
     }
-    return Promise.all([]);
   }, [ selectedRowKeys ]);
 
   const handleBatchAction = useCallback(async (action: Action) => {
