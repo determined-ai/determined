@@ -211,6 +211,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <div className={css.foldableItem}>
             <span className={css.foldableItemLabel}>Description:</span>
             <InlineEditor
+              allowNewline
               isOnDark
               value={experiment.description || ''}
               onSave={handleDescriptionUpdate} />

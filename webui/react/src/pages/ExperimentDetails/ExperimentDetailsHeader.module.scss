@@ -16,7 +16,6 @@
 @media only screen and (min-width: $breakpoint-tablet) {
   .experimentId {
     font-size: var(--theme-sizes-font-medium);
-    //margin-top: 0;
   }
   .experimentName {
     font-size: var(--theme-sizes-font-medium);
@@ -25,10 +24,11 @@
 
 .foldableItem {
   display: flex;
-  margin-bottom: var(--theme-sizes-layout-medium);
+  line-height: 32px;
 }
 .foldableItemLabel {
   display: inline-block;
+  line-height: 32px;
   margin-right: var(--theme-sizes-layout-small);
   opacity: 0.75;
 }
