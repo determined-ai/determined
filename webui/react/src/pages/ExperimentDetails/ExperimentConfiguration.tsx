@@ -1,8 +1,9 @@
 import yaml from 'js-yaml';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import Section from 'components/Section';
+import useResize from 'hooks/useResize';
 import { ExperimentBase } from 'types';
 
 interface Props {
@@ -10,6 +11,13 @@ interface Props {
 }
 
 const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
+  const editor = useRef<MonacoEditor>(null);
+  const resize = useResize();
+
+  useEffect(() => {
+    editor.current?.editor?.layout();
+  }, [ resize ]);
+
   return (
     <Section bodyBorder bodyScroll>
       <MonacoEditor
@@ -22,6 +30,7 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
           scrollBeyondLastLine: false,
           selectOnLineNumbers: true,
         }}
+        ref={editor}
         theme="vs-light"
         value={yaml.dump(experiment.configRaw)} />
     </Section>
