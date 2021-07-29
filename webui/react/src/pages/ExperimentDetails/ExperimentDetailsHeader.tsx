@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
+import InlineEditor from 'components/InlineEditor';
 import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
@@ -210,10 +211,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         foldableContent={<>
           <div className={css.foldableItem}>
             <span className={css.foldableItemLabel}>Description:</span>
-            <InlineTextEdit
+            {/* <InlineTextEdit
               setValue={handleDescriptionUpdate}
               value={experiment.description || ''}
-            />
+            /> */}
+            <InlineEditor
+              isOnDark
+              value={experiment.description || ''}
+              onSave={handleDescriptionUpdate} />
           </div>
           <div className={css.foldableItem}>
             <span className={css.foldableItemLabel}>Start Time:</span>
@@ -239,7 +244,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             Experiment {experiment.id}
           </div>
           <div className={css.experimentName}>
-            <InlineTextEdit setValue={handleNameUpdate} value={experiment.name} />
+            {/* <InlineTextEdit setValue={handleNameUpdate} value={experiment.name} /> */}
+            <InlineEditor isOnDark value={experiment.name} onSave={handleNameUpdate} />
           </div>
         </>}
         options={headerOptions}
