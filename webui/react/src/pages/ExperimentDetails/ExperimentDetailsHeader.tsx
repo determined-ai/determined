@@ -5,7 +5,6 @@ import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
 import InlineEditor from 'components/InlineEditor';
-import InlineTextEdit from 'components/InlineTextEdit';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -211,10 +210,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         foldableContent={<>
           <div className={css.foldableItem}>
             <span className={css.foldableItemLabel}>Description:</span>
-            {/* <InlineTextEdit
-              setValue={handleDescriptionUpdate}
-              value={experiment.description || ''}
-            /> */}
             <InlineEditor
               isOnDark
               value={experiment.description || ''}
@@ -244,7 +239,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             Experiment {experiment.id}
           </div>
           <div className={css.experimentName}>
-            {/* <InlineTextEdit setValue={handleNameUpdate} value={experiment.name} /> */}
             <InlineEditor isOnDark value={experiment.name} onSave={handleNameUpdate} />
           </div>
         </>}
