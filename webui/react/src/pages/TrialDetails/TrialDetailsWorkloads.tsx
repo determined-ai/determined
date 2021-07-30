@@ -186,7 +186,7 @@ const TrialDetailsWorkloads: React.FC<Props> = (
 
   return (
     <>
-      <Section options={options}>
+      <Section options={options} title="Workloads">
         <ResponsiveTable<Step>
           columns={columns}
           dataSource={workloadSteps}
