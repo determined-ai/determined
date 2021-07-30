@@ -24,7 +24,7 @@ import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import useSettings from 'hooks/useSettings';
+import useSettings, { SettingsConfigProp } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
@@ -57,9 +57,11 @@ interface SourceInfo {
   sources: TensorBoardSource[];
 }
 
+const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
+
 const TaskList: React.FC = () => {
   const { users } = useStore();
-  const { filterCount, resetFilters, settings, updateSettings } = useSettings<Settings>(
+  const { settings, updateSettings } = useSettings<Settings>(
     settingsConfig,
     paths.taskList(),
   );
@@ -103,6 +105,30 @@ const TaskList: React.FC = () => {
     }
     return false;
   }, [ selectedTasks ]);
+
+  const filterConfigMap = useMemo(() => {
+    return filterKeys.reduce((acc, key) => {
+      const config = settingsConfig.settings.find(config => config.key === key);
+      return { ...acc, [key]: config };
+    }, {} as Record<keyof Settings, SettingsConfigProp>);
+  }, []);
+
+  const filterCount = useMemo(() => {
+    return filterKeys.reduce((acc, key) => {
+      const config = filterConfigMap[key];
+      const settingsValue = settings[key];
+      const settingsIsSet = settingsValue && !isEqual(settingsValue, config.defaultValue);
+      return acc + (settingsIsSet ? 1 : 0);
+    }, 0);
+  }, [ filterConfigMap, settings ]);
+
+  const resetFilters = useCallback(() => {
+    const newSettings = filterKeys.reduce((acc, key) => {
+      const config = filterConfigMap[key];
+      return { ...acc, [key]: config.defaultValue };
+    }, { tableOffset: 0 } as Partial<Settings>);
+    updateSettings(newSettings);
+  }, [ filterConfigMap, updateSettings ]);
 
   const fetchTasks = useCallback(async () => {
     try {

@@ -1,5 +1,5 @@
 import queryString from 'query-string';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { Primitive } from 'types';
@@ -19,14 +19,12 @@ type GenericSettingsType = Primitive | Primitive[] | undefined;
 
 /*
  * defaultValue   - Must be provided even when `undefined`.
- * isFilter       - Needed to support filterCount and resetFilters.
  * storageKey     - If provide, save/load setting into/from storage.
  * type.baseType  - How to decode the string-based query param.
  * type.isArray   - List based query params can be non-array.
  */
-interface SettingsConfigProp {
+export interface SettingsConfigProp {
   defaultValue: GenericSettingsType;
-  isFilter?: boolean;
   key: string;
   storageKey?: string;
   type: {
@@ -43,8 +41,6 @@ export interface SettingsConfig {
 type GenericSettings = Record<string, GenericSettingsType>;
 
 interface SettingsHook<T> {
-  filterCount: number;
-  resetFilters: () => void;
   settings: T;
   updateSettings: (newSettings: Partial<T>, push?: boolean) => void;
 }
@@ -126,27 +122,11 @@ const useSettings = <T>(
     }, {} as GenericSettings) as unknown as T;
   });
 
-  const filterCount = useMemo(() => {
-    return config.settings.reduce((acc, config) => {
-      const settingsValue = (settings as unknown as GenericSettings)[config.key];
-      return acc + (config.isFilter && settingsValue !== config.defaultValue ? 1 : 0);
-    }, 0);
-  }, [ config.settings, settings ]);
-
   const updateSettings = useCallback((partialSettings: Partial<T>, push = false) => {
     const newSettings = { ...clone(settings), ...partialSettings };
     const path = `${basePath}?${queryString.stringify(newSettings)}`;
     push ? history.push(path) : history.replace(path);
   }, [ basePath, history, settings ]);
-
-  const resetFilters = useCallback(() => {
-    const newSettings = config.settings.reduce((acc, config) => {
-      if (config.isFilter || config.key === 'tableOffset') acc[config.key] = config.defaultValue;
-      return acc;
-    }, {} as Partial<GenericSettings>) as unknown as Partial<T>;
-
-    updateSettings(newSettings);
-  }, [ config.settings, updateSettings ]);
 
   useEffect(() => {
     if (!location.search || location.search === prevSearch) return;
@@ -161,7 +141,7 @@ const useSettings = <T>(
     });
   }, [ config, location.search, prevSearch ]);
 
-  return { filterCount, resetFilters, settings, updateSettings };
+  return { settings, updateSettings };
 };
 
 export default useSettings;

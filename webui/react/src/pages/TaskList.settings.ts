@@ -17,7 +17,6 @@ const config: SettingsConfig = {
   settings: [
     {
       defaultValue: '',
-      isFilter: true,
       key: 'search',
       type: { baseType: BaseType.String },
     },
@@ -35,7 +34,6 @@ const config: SettingsConfig = {
     },
     {
       defaultValue: undefined,
-      isFilter: true,
       key: 'state',
       storageKey: 'state',
       type: {
@@ -56,7 +54,6 @@ const config: SettingsConfig = {
     },
     {
       defaultValue: undefined,
-      isFilter: true,
       key: 'type',
       storageKey: 'type',
       type: {
@@ -66,7 +63,6 @@ const config: SettingsConfig = {
     },
     {
       defaultValue: undefined,
-      isFilter: true,
       key: 'user',
       storageKey: 'user',
       type: {
