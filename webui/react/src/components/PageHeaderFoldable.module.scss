@@ -69,7 +69,7 @@
 }
 .bottom {
   flex: 1 1 100%;
-  margin-top: var(--theme-sizes-layout-big)
+  width: 100%
 }
 
 @media only screen and (min-width: $breakpoint-tablet) {

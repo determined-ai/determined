@@ -207,47 +207,51 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   return (
     <>
       <PageHeaderFoldable
-        foldableContent={<>
-          <div className={css.foldableItem}>
-            <span className={css.foldableItemLabel}>Description:</span>
-            <InlineEditor
-              allowNewline
-              isOnDark
-              placeholder="experiment description"
-              value={experiment.description || ''}
-              onSave={handleDescriptionUpdate} />
-          </div>
-          <div className={css.foldableItem}>
-            <span className={css.foldableItemLabel}>Start Time:</span>
-            <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
-              <TimeAgo datetime={new Date(experiment.startTime)} />
-            </Tooltip>
-          </div>
-          {experiment.endTime != null && (
+        foldableContent={
+          <div className={css.foldableSection}>
             <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Duration:</span>
-              {shortEnglishHumannizer(getDuration(experiment))}
+              <span className={css.foldableItemLabel}>Description:</span>
+              <InlineEditor
+                allowNewline
+                isOnDark
+                placeholder="experiment description"
+                value={experiment.description || ''}
+                onSave={handleDescriptionUpdate} />
             </div>
-          )}
-          <TagList
-            ghost={true}
-            tags={experiment.config.labels || []}
-            onChange={experimentTags.handleTagListChange(experiment.id)}
-          />
-        </>}
-        leftContent={<>
-          <ExperimentState experiment={experiment} />
-          <div className={css.experimentId}>
-            Experiment {experiment.id}
+            <div className={css.foldableItem}>
+              <span className={css.foldableItemLabel}>Start Time:</span>
+              <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
+                <TimeAgo datetime={new Date(experiment.startTime)} />
+              </Tooltip>
+            </div>
+            {experiment.endTime != null && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Duration:</span>
+                {shortEnglishHumannizer(getDuration(experiment))}
+              </div>
+            )}
+            <TagList
+              ghost={true}
+              tags={experiment.config.labels || []}
+              onChange={experimentTags.handleTagListChange(experiment.id)}
+            />
           </div>
-          <div className={css.experimentName}>
-            <InlineEditor
-              isOnDark
-              placeholder="experiment name"
-              value={experiment.name}
-              onSave={handleNameUpdate} />
+        }
+        leftContent={
+          <div className={css.base}>
+            <div className={css.experimentInfo}>
+              <ExperimentState experiment={experiment} />
+              <div className={css.experimentId}>Experiment {experiment.id}</div>
+            </div>
+            <div className={css.experimentName}>
+              <InlineEditor
+                isOnDark
+                placeholder="experiment name"
+                value={experiment.name}
+                onSave={handleNameUpdate} />
+            </div>
           </div>
-        </>}
+        }
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />

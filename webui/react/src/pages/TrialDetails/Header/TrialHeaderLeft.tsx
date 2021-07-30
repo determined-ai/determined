@@ -15,18 +15,18 @@ interface Props {
 
 const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
   return (
-    <>
+    <div className={css.base}>
       <Link className={css.experiment} to={paths.experimentDetails(trial.experimentId)}>
-        Experiment {trial.experimentId} | <span>{experiment.name}</span>
-        <Icon name="arrow-right" size="tiny" />
+        Experiment {trial.experimentId} | {experiment.name}
       </Link>
+      <Icon name="arrow-right" size="tiny" />
       <div className={css.trial}>
         <div className={css.state} style={{ backgroundColor: getStateColorCssVar(trial.state) }}>
           {trial.state}
         </div>
         Trial {trial.id}
       </div>
-    </>
+    </div>
   );
 };
 
