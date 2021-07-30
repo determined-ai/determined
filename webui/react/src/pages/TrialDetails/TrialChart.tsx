@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -8,21 +8,18 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlotChart/trackAxis';
-import useStorage from 'hooks/useStorage';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
 import { glasbeyColor } from 'utils/color';
 
 interface Props {
   defaultMetricNames: MetricName[];
+  handleMetricChange: (value: MetricName[]) => void;
   id?: string;
   metricNames: MetricName[];
-  storageKey?: string;
-  validationMetric?: string;
+  metrics: MetricName[];
   workloads?: WorkloadWrapper[];
 }
-
-const STORAGE_PATH = 'trial-detail';
 
 const getChartMetricLabel = (metric: MetricName): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
@@ -32,24 +29,12 @@ const getChartMetricLabel = (metric: MetricName): string => {
 
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
+  handleMetricChange,
   metricNames,
-  storageKey,
-  validationMetric,
+  metrics,
   workloads,
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
-  const defaultMetric = useMemo(() => {
-    return metricNames.find(metricName => (
-      metricName.name === validationMetric && metricName.type === MetricType.Validation
-    ));
-  }, [ metricNames, validationMetric ]);
-  const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
-  const initMetric = defaultMetric || fallbackMetric;
-  const storage = useStorage(STORAGE_PATH);
-
-  const [ metrics, setMetrics ] = useState<MetricName[]>(
-    storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []),
-  );
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
@@ -101,12 +86,6 @@ const TrialChart: React.FC<Props> = ({
       ],
     };
   }, [ metrics, scale ]);
-
-  const handleMetricChange = useCallback((value: MetricName[]) => {
-    setMetrics(value);
-
-    if (storageKey) storage.set(storageKey, value);
-  }, [ storage, storageKey ]);
 
   const options = (
     <ResponsiveFilters>

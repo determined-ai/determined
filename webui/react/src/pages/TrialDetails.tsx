@@ -14,7 +14,6 @@ import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperpar
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
-import TrialDetailsWorkloads from 'pages/TrialDetails/TrialDetailsWorkloads';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
@@ -181,9 +180,6 @@ const TrialDetailsComp: React.FC = () => {
               <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
               <TrialRangeHyperparameters experiment={experiment} trial={trial} />
           }
-        </TabPane>
-        <TabPane key={TabType.Workloads} tab="Workloads">
-          <TrialDetailsWorkloads experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Profiler} tab="Profiler">
           <TrialDetailsProfiles experiment={experiment} trial={trial} />
