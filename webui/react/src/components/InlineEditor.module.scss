@@ -79,7 +79,7 @@
     color: var(--theme-colors-monochrome-17);
   }
   .growWrap:hover > textarea {
-    border-color: var(--theme-colors-monochrome-14);
+    border-color: var(--theme-colors-monochrome-10);
   }
   .growWrap > .spinner :global(.ant-spin) {
     color: var(--theme-colors-monochrome-17);
@@ -88,6 +88,6 @@
 .base.onDark.editable {
   .growWrap > textarea,
   .growWrap::after {
-    border-color: var(--theme-colors-monochrome-14);
+    border-color: var(--theme-colors-monochrome-17);
   }
 }
