@@ -32,6 +32,7 @@
 
     /* Prevent user resizing, which ruins auto sizing. */
     resize: none;
+    transition: border-color 0.2s;
   }
   .growWrap > textarea,
   .growWrap::after {
@@ -66,6 +67,11 @@
     box-shadow: var(--theme-outline);
   }
 }
+.base.editable.maxLength {
+  .growWrap > textarea {
+    border-color: var(--theme-colors-danger-normal);
+  }
+}
 .base.loading {
   .growWrap > textarea,
   .growWrap::after {
@@ -89,5 +95,10 @@
   .growWrap > textarea,
   .growWrap::after {
     border-color: var(--theme-colors-monochrome-17);
+  }
+}
+.base.onDark.editable.maxLength {
+  .growWrap > textarea {
+    border-color: var(--theme-colors-danger-light);
   }
 }

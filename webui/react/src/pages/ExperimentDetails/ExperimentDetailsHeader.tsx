@@ -214,6 +214,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <InlineEditor
                 allowNewline
                 isOnDark
+                maxLength={500}
                 placeholder="experiment description"
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate} />
@@ -246,6 +247,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <div className={css.experimentName}>
               <InlineEditor
                 isOnDark
+                maxLength={128}
                 placeholder="experiment name"
                 value={experiment.name}
                 onSave={handleNameUpdate} />
