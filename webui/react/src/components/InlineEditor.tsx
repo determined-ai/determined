@@ -11,6 +11,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   maxLength?: number;
   onCancel?: () => void;
   onSave?: (newValue: string) => Promise<void>;
+  placeholder?: string;
   value: string;
 }
 
@@ -21,6 +22,7 @@ const InlineEditor: React.FC<Props> = ({
   allowNewline = false,
   isOnDark = false,
   maxLength,
+  placeholder,
   value,
   onCancel,
   onSave,
@@ -116,6 +118,7 @@ const InlineEditor: React.FC<Props> = ({
       <div className={css.growWrap} ref={growWrapRef} onClick={handleWrapperClick}>
         <textarea
           maxLength={maxLength}
+          placeholder={placeholder}
           readOnly={!isEditable}
           ref={textareaRef}
           rows={1}

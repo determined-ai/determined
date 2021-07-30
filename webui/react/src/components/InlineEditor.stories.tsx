@@ -1,4 +1,4 @@
-import { boolean, number, withKnobs } from '@storybook/addon-knobs';
+import { boolean, number, text, withKnobs } from '@storybook/addon-knobs';
 import React, { useCallback, useState } from 'react';
 
 import loremIpsum from 'storybook/loremIpsum';
@@ -32,6 +32,7 @@ export const Default = (): React.ReactNode => {
       allowNewline={boolean('allow newline (use <shift> + <enter>)', false)}
       isOnDark={boolean('is on dark', false)}
       maxLength={number('max length', 100)}
+      placeholder={text('placeholder', 'placeholder text')}
       value={value}
       onSave={handleSave}
     />
