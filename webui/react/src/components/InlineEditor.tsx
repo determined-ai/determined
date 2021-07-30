@@ -44,8 +44,9 @@ const InlineEditor: React.FC<Props> = ({
   }, []);
 
   const cancel = useCallback(() => {
+    updateEditorValue(value);
     if (onCancel) onCancel();
-  }, [ onCancel ]);
+  }, [ onCancel, updateEditorValue, value ]);
 
   const save = useCallback(async (newValue: string) => {
     if (onSave) {
@@ -64,14 +65,14 @@ const InlineEditor: React.FC<Props> = ({
 
   /*
    * To trigger a save or cancel, we trigger the blur.
-   * It is considered a save if the value has changed,
-   * otherwise we assume it is a cancel.
+   * It is considered a save if the value has changed
+   * and not empty, otherwise we assume it is a cancel.
    */
   const handleTextareaBlur = useCallback(() => {
     if (!textareaRef.current) return;
 
     const newValue = textareaRef.current.value;
-    newValue !== value ? save(newValue) : cancel();
+    !!newValue && newValue !== value ? save(newValue) : cancel();
 
     // Reset `isEditable` to false if the blur was user triggered.
     setIsEditable(false);
