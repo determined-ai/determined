@@ -58,13 +58,11 @@ interface SourceInfo {
 }
 
 const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
+const settingsBasePath = paths.taskList();
 
 const TaskList: React.FC = () => {
   const { users } = useStore();
-  const { settings, updateSettings } = useSettings<Settings>(
-    settingsConfig,
-    paths.taskList(),
-  );
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, settingsBasePath);
   const [ canceler ] = useState(new AbortController());
   const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
