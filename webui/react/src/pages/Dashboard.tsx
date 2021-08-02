@@ -201,9 +201,9 @@ const Dashboard: React.FC = () => {
           ? (
             <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
               {filteredTasks.map((props: RecentTask) => <TaskCard
+                curUser={user}
                 key={props.id}
-                {...props}
-                curUser={user} />)}
+                {...props} />)}
             </Grid>
           ) : <Message
             title="No recent tasks matching the current filters"
