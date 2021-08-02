@@ -25,13 +25,13 @@ data:
           enabled:
             - name: Coscheduling
         {{- end }}
+        score:
+          enabled:
+            - name: Coscheduling
         permit:
           enabled:
             - name: Coscheduling
         unreserve:
-          enabled:
-            - name: Coscheduling
-        score:
           enabled:
             - name: Coscheduling
     # optional plugin configs
