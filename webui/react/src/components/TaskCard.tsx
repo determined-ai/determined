@@ -15,7 +15,7 @@ import css from './TaskCard.module.scss';
 
 type Props = AnyTask & RecentEvent & {curUser?: DetailedUser}
 
-const TaskCard: React.FC<Props> = (props: Props) => {
+const TaskCard: React.FC<Props> = ({ curUser, ...props }: Props) => {
   let [ hasProgress, isComplete ] = [ false, false ];
   if (isExperimentTask(props)) {
     hasProgress = !!props.progress;
@@ -55,7 +55,7 @@ const TaskCard: React.FC<Props> = (props: Props) => {
             {isExperimentTask(props) && hasProgress && !isComplete
                 && <div className={css.percent}>{`${percent(props.progress || 0)}%`}</div>}
           </div>
-          <TaskActionDropdown curUser={props.curUser} task={props} />
+          <TaskActionDropdown curUser={curUser} task={props} />
         </div>
       </Link>
     </div>
