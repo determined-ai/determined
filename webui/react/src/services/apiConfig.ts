@@ -232,6 +232,16 @@ export const archiveExperiment: DetApi<
   },
 };
 
+export const deleteExperiment: DetApi<
+  ExperimentIdParams, Api.V1DeleteExperimentResponse, void
+> = {
+  name: 'deleteExperiment',
+  postProcess: noOp,
+  request: (params: ExperimentIdParams, options) => {
+    return detApi.Experiments.determinedDeleteExperiment(params.experimentId, options);
+  },
+};
+
 export const unarchiveExperiment: DetApi<
   ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
 > = {

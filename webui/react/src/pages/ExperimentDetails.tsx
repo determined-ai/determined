@@ -4,6 +4,7 @@ import { useParams } from 'react-router';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import { useStore } from 'contexts/Store';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
@@ -25,6 +26,7 @@ interface Params {
 
 const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
+  const { auth: { user } } = useStore();
   const [ canceler ] = useState(new AbortController());
   const [ experiment, setExperiment ] = useState<ExperimentBase>();
   const [ trial, setTrial ] = useState<TrialDetails>();
@@ -98,6 +100,7 @@ const ExperimentDetails: React.FC = () => {
   return (
     <Page
       headerComponent={<ExperimentDetailsHeader
+        curUser={user}
         experiment={experiment}
         fetchExperimentDetails={fetchExperimentDetails}
         showContinueTrial={trial ? showContinueTrial : undefined}
