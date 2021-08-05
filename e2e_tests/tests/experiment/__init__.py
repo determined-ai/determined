@@ -30,7 +30,7 @@ from .experiment import (
     shared_fs_checkpoint_config,
     trial_logs,
     trial_metrics,
-    wait_for_experiment_state
+    wait_for_experiment_state,
 )
 
 from .record_profiling import (

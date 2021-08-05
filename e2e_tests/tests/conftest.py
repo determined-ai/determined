@@ -2,7 +2,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, cast, Callable
+from typing import Any, Callable, Dict, Iterator, Optional, cast
 
 import boto3
 import pytest
