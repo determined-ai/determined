@@ -160,18 +160,18 @@ const TaskList: React.FC = () => {
 
   const handleNameSearchApply = useCallback((newSearch: string) => {
     setSelectedRowKeys([]);
-    updateSettings({ search: newSearch });
+    updateSettings({ search: newSearch || undefined });
   }, [ updateSettings ]);
 
   const handleNameSearchReset = useCallback(() => {
     setSelectedRowKeys([]);
-    updateSettings({ search: '' });
+    updateSettings({ search: undefined });
   }, [ updateSettings ]);
 
   const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
     <TableFilterSearch
       {...filterProps}
-      value={settings.search}
+      value={settings.search || ''}
       onReset={handleNameSearchReset}
       onSearch={handleNameSearchApply}
     />
@@ -308,7 +308,7 @@ const TaskList: React.FC = () => {
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
         key: 'name',
-        onHeaderCell: () => settings.search !== '' ? { className: tableCss.headerFilterOn } : {},
+        onHeaderCell: () => settings.search ? { className: tableCss.headerFilterOn } : {},
         render: nameNSourceRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
         title: 'Name',

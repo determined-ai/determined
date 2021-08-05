@@ -3,7 +3,7 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { CommandState, CommandType } from 'types';
 
 export interface Settings {
-  search: string;
+  search?: string;
   sortDesc: boolean;
   sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'username';
   state?: CommandState[];
@@ -16,7 +16,6 @@ export interface Settings {
 const config: SettingsConfig = {
   settings: [
     {
-      defaultValue: '',
       key: 'search',
       type: { baseType: BaseType.String },
     },
@@ -33,7 +32,6 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.String },
     },
     {
-      defaultValue: undefined,
       key: 'state',
       storageKey: 'state',
       type: {
@@ -53,7 +51,6 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Integer },
     },
     {
-      defaultValue: undefined,
       key: 'type',
       storageKey: 'type',
       type: {
@@ -62,7 +59,6 @@ const config: SettingsConfig = {
       },
     },
     {
-      defaultValue: undefined,
       key: 'user',
       storageKey: 'user',
       type: {
