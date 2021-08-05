@@ -1,5 +1,5 @@
 from statistics import mean
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
 import simplejson
@@ -8,7 +8,7 @@ from determined.common import api
 from determined.profiler import SysMetricName
 from tests import config as conf
 
-summary_methods = {"avg": mean, "max": max, "min": min}
+summary_methods: Dict[str, Callable] = {"avg": mean, "max": max, "min": min}
 
 default_metrics = {
     SysMetricName.GPU_UTIL_METRIC: ["avg", "max"],
@@ -22,11 +22,13 @@ default_metrics = {
 
 
 class ProfileTest:
-    def __init__(self, record_property: Callable[[str, object], None], metrics=None):
+    def __init__(
+        self, record_property: Callable[[str, object], None], metrics: Optional[Dict] = None
+    ):
         self.record_property = record_property
         self.metrics = metrics or default_metrics
 
-    def record(self, trial_id: int):
+    def record(self, trial_id: int) -> None:
         for metric in self.metrics:
             metrics = get_profiling_metrics(trial_id, metric)
             if not metrics:
