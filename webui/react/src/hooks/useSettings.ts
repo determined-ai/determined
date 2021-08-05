@@ -25,7 +25,7 @@ type GenericSettingsType = Primitive | Primitive[] | undefined;
  * type.baseType    - How to decode the string-based query param.
  * type.isArray     - List based query params can be non-array.
  */
-export interface SettingsConfigProp {
+interface SettingsConfigProp {
   defaultValue?: GenericSettingsType;
   key: string;
   skipUrlEncoding?: boolean;
@@ -44,7 +44,9 @@ export interface SettingsConfig {
 type GenericSettings = Record<string, GenericSettingsType>;
 
 interface SettingsHook<T> {
+  resetSettings: (keys?: string[]) => void;
   settings: T;
+  settingsCount: (keys?: string[]) => number;
   updateSettings: (newSettings: Partial<T>, push?: boolean) => void;
 }
 
@@ -137,10 +139,7 @@ const validateSetting = (config: SettingsConfigProp, value: unknown): boolean =>
   return validateBaseType(config.type.baseType, value);
 };
 
-const useSettings = <T>(
-  config: SettingsConfig,
-  basePath: string,
-): SettingsHook<T> => {
+const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<T> => {
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(config.storagePath);
@@ -200,6 +199,25 @@ const useSettings = <T>(
     push ? history.push(path) : history.replace(path);
   }, [ config, configMap, basePath, history, settings, storage ]);
 
+  const resetSettings = useCallback((keys?: string[]) => {
+    const newSettings = config.settings.reduce((acc, prop) => {
+      const includesKey = !keys || keys.includes(prop.key);
+      if (includesKey) acc[prop.key] = prop.defaultValue;
+      return acc;
+    }, {} as GenericSettings) as Partial<T>;
+
+    updateSettings(newSettings);
+  }, [ config.settings, updateSettings ]);
+
+  const settingsCount = useCallback((keys?: string[]) => {
+    return config.settings.reduce((acc, prop) => {
+      const key = prop.key as keyof T;
+      const includesKey = !keys || keys.includes(prop.key);
+      const isDefault = isEqual(settings[key], prop.defaultValue);
+      return acc + (includesKey && !isDefault ? 1 : 0);
+    }, 0);
+  }, [ config.settings, settings ]);
+
   useEffect(() => {
     if (location.search === prevSearch) return;
 
@@ -220,7 +238,7 @@ const useSettings = <T>(
     }
   }, [ basePath, config, history, location.search, prevSearch, settings, storage ]);
 
-  return { settings, updateSettings };
+  return { resetSettings, settings, settingsCount, updateSettings };
 };
 
 export default useSettings;

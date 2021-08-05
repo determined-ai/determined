@@ -24,7 +24,7 @@ import { useStore } from 'contexts/Store';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
-import useSettings, { SettingsConfigProp } from 'hooks/useSettings';
+import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
@@ -62,11 +62,15 @@ const settingsBasePath = paths.taskList();
 
 const TaskList: React.FC = () => {
   const { users } = useStore();
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig, settingsBasePath);
   const [ canceler ] = useState(new AbortController());
   const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+
+  const { resetSettings, settings, settingsCount, updateSettings } = useSettings<Settings>(
+    settingsConfig,
+    settingsBasePath,
+  );
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -104,29 +108,11 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
-  const filterConfigMap = useMemo(() => {
-    return filterKeys.reduce((acc, key) => {
-      const config = settingsConfig.settings.find(config => config.key === key);
-      return { ...acc, [key]: config };
-    }, {} as Record<keyof Settings, SettingsConfigProp>);
-  }, []);
-
-  const filterCount = useMemo(() => {
-    return filterKeys.reduce((acc, key) => {
-      const config = filterConfigMap[key];
-      const settingsValue = settings[key];
-      const settingsIsSet = settingsValue && !isEqual(settingsValue, config.defaultValue);
-      return acc + (settingsIsSet ? 1 : 0);
-    }, 0);
-  }, [ filterConfigMap, settings ]);
+  const filterCount = useMemo(() => settingsCount(filterKeys), [ settingsCount ]);
 
   const resetFilters = useCallback(() => {
-    const newSettings = filterKeys.reduce((acc, key) => {
-      const config = filterConfigMap[key];
-      return { ...acc, [key]: config.defaultValue };
-    }, { tableOffset: 0 } as Partial<Settings>);
-    updateSettings(newSettings);
-  }, [ filterConfigMap, updateSettings ]);
+    resetSettings([ ...filterKeys, 'tableOffset' ]);
+  }, [ resetSettings ]);
 
   const fetchTasks = useCallback(async () => {
     try {
