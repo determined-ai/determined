@@ -152,15 +152,8 @@ def test_pytorch_gan_parallel(profile_test: Callable[[int], None]) -> None:
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_pytorch_native_api(profile_test: Callable[[int], None]) -> None:
-    config = conf.fixtures_path("pytorch_no_op")
+def test_pytorch_native_api() -> None:
     exp_id = exp.create_native_experiment(
         conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
     )
     exp.wait_for_experiment_state(exp_id, "COMPLETED")
-    trial_id = exp.experiment_trials(exp_id)[0]["id"]
-    profile_test(trial_id)
-
-
-def test_test():
-    assert True
