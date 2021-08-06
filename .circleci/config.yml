@@ -19,6 +19,9 @@ executors:
   python-38:
     docker:
       - image: python:3.8-slim-buster
+  python-39:
+    docker:
+      - image: python:3.9-slim-buster
 
 parameters:
   det-version:
@@ -1754,6 +1757,7 @@ workflows:
                   "python-36",
                   "python-37",
                   "python-38",
+                  "python-39",
                   "win/default",
                 ]
 
