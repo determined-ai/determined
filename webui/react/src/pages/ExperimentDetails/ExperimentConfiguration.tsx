@@ -21,7 +21,7 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
   return (
     <Section bodyBorder bodyScroll>
       <MonacoEditor
-        height={`${resize.width < 480 ? resize.height-320: '100%'}`}
+        height="100%"
         language="yaml"
         options={{
           minimap: { enabled: false },
