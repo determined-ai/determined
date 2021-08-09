@@ -5,6 +5,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -15,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/types/known/structpb"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -135,16 +136,19 @@ func trialDetailAPITests(
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
-			metrics, err := structpb.NewStruct(map[string]interface{}{
-				"avg_metrics": tc.metrics,
-			})
-			assert.NilError(t, err, "failed to make proto metrics")
-
-			err = db.AddTrainingMetrics(context.Background(), &trialv1.TrainingMetrics{
+			metrics := trialv1.TrainingMetrics{
 				TrialId:      int32(trial.ID),
 				TotalBatches: int32(id * experiment.Config.SchedulingUnit()),
-				Metrics:      metrics,
-			})
+			}
+
+			m := structpb.Struct{}
+			b, err := json.Marshal(map[string]interface{}{"metrics": tc.metrics})
+			assert.NilError(t, err, "failed to marshal metrics")
+			err = protojson.Unmarshal(b, &m)
+			assert.NilError(t, err, "failed to unmarshal metrics")
+			metrics.Metrics = &m
+
+			err = db.AddTrainingMetrics(context.Background(), &metrics)
 			assert.NilError(t, err, "failed to insert step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)

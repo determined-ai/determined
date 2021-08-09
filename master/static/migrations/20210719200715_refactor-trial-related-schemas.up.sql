@@ -43,7 +43,6 @@ ALTER TABLE public.trials ALTER COLUMN state TYPE trial_state USING state::text:
 DROP TYPE _trial_state;
 
 ALTER TABLE public.trials
-    -- Does not exist for early tasks. TODO, migrate?
     ADD COLUMN task_id text NULL,
     ADD COLUMN run_id integer NOT NULL DEFAULT 0,
     ADD COLUMN restarts integer NOT NULL DEFAULT 0;
@@ -64,7 +63,6 @@ CREATE TYPE public.task_type AS ENUM (
 );
 
 CREATE TABLE public.tasks (
-    id SERIAL,
     task_id text NOT NULL UNIQUE,
     task_type task_type NOT NULL,
     start_time timestamp without time zone NOT NULL,
@@ -72,7 +70,6 @@ CREATE TABLE public.tasks (
 );
 
 CREATE TABLE public.allocations (
-    id SERIAL,
     task_id text NOT NULL REFERENCES public.tasks(task_id),
     allocation_id text NOT NULL UNIQUE,
     resource_pool text NOT NULL,

@@ -110,25 +110,25 @@ func TestTrialMultiAlloc(t *testing.T) {
 	require.Contains(t, rmImpl.messages, *tr.req)
 
 	// Pre-allocated stage.
-	mockAlloc := func(cID cproto.ID, agentID string) sproto.Reservation {
-		alloc := &mocks.Allocation{}
-		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
-		alloc.On("Summary").Return(sproto.ContainerSummary{
+	mockRsvn := func(cID cproto.ID, agentID string) sproto.Reservation {
+		rsrv := &mocks.Reservation{}
+		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return().Times(1)
+		rsrv.On("Summary").Return(sproto.ContainerSummary{
 			AllocationID: tr.req.AllocationID,
 			ID:           cID,
 			Agent:        agentID,
 		})
-		alloc.On("Kill", mock.Anything).Return()
-		return alloc
+		rsrv.On("Kill", mock.Anything).Return()
+		return rsrv
 	}
 
 	reservations := []sproto.Reservation{
-		mockAlloc(cproto.NewID(), "agent-1"),
-		mockAlloc(cproto.NewID(), "agent-2"),
+		mockRsvn(cproto.NewID(), "agent-1"),
+		mockRsvn(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+	db.On("AddAllocation", mock.Anything).Return(nil)
 	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(rm, forward{
@@ -191,7 +191,7 @@ func TestTrialMultiAlloc(t *testing.T) {
 
 	// Terminating stage.
 	db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
-	db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
+	db.On("CompleteAllocation", mock.Anything).Return(nil)
 	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
 	for _, a := range reservations {
 		containerStateChanged := sproto.TaskContainerStateChanged{
@@ -272,25 +272,25 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 	require.Contains(t, rmImpl.messages, *tr.req)
 
 	// Pre-allocated stage.
-	mockAlloc := func(cID cproto.ID, agentID string) sproto.Reservation {
-		alloc := &mocks.Allocation{}
-		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
-		alloc.On("Summary").Return(sproto.ContainerSummary{
+	mockRsrv := func(cID cproto.ID, agentID string) sproto.Reservation {
+		rsrv := &mocks.Reservation{}
+		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
+		rsrv.On("Summary").Return(sproto.ContainerSummary{
 			AllocationID: tr.req.AllocationID,
 			ID:           cID,
 			Agent:        agentID,
 		})
-		alloc.On("Kill", mock.Anything).Return()
-		return alloc
+		rsrv.On("Kill", mock.Anything).Return()
+		return rsrv
 	}
 
 	reservations := []sproto.Reservation{
-		mockAlloc(cproto.NewID(), "agent-1"),
-		mockAlloc(cproto.NewID(), "agent-2"),
+		mockRsrv(cproto.NewID(), "agent-1"),
+		mockRsrv(cproto.NewID(), "agent-2"),
 	}
 	db.On("AddTrial", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
-	db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+	db.On("AddAllocation", mock.Anything).Return(nil)
 	db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 	require.NoError(t, system.Ask(rm, forward{
@@ -352,7 +352,7 @@ func TestTrialDelayedSearcherClose(t *testing.T) {
 
 	// Terminating stage.
 	db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
-	db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
+	db.On("CompleteAllocation", mock.Anything).Return(nil)
 	db.On("UpdateTrialRunID", 0, 1).Return(nil)
 	for _, a := range reservations {
 		containerStateChanged := sproto.TaskContainerStateChanged{
@@ -449,17 +449,17 @@ func TestTrialRestarts(t *testing.T) {
 	for i := 0; i <= tr.config.MaxRestarts(); i++ {
 		// Pre-allocated stage.
 		cID := cproto.NewID()
-		alloc := &mocks.Allocation{}
-		alloc.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
-		alloc.On("Summary").Return(sproto.ContainerSummary{
+		rsrv := &mocks.Reservation{}
+		rsrv.On("Start", mock.Anything, mock.Anything, mock.Anything).Return()
+		rsrv.On("Summary").Return(sproto.ContainerSummary{
 			AllocationID: tr.req.AllocationID,
 			ID:           cID,
 			Agent:        "agent-1",
 		})
-		alloc.On("Kill", mock.Anything).Return()
+		rsrv.On("Kill", mock.Anything).Return()
 		db.On("AddTrial", mock.Anything).Return(nil)
 		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
-		db.On("AddAllocation", tr.taskID, tr.req.AllocationID, mock.Anything).Return(nil)
+		db.On("AddAllocation", mock.Anything).Return(nil)
 		db.On("StartAllocationSession", tr.req.AllocationID).Return("", nil)
 		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
 		require.NoError(t, system.Ask(rm, forward{
@@ -467,7 +467,7 @@ func TestTrialRestarts(t *testing.T) {
 			msg: sproto.ResourcesAllocated{
 				ID:           tr.req.AllocationID,
 				ResourcePool: "default",
-				Reservations: []sproto.Reservation{alloc},
+				Reservations: []sproto.Reservation{rsrv},
 			},
 		}).Error())
 		require.NotNil(t, tr.allocation)
@@ -509,7 +509,7 @@ func TestTrialRestarts(t *testing.T) {
 
 		// Terminating stage.
 		db.On("DeleteAllocationSession", tr.req.AllocationID).Return(nil)
-		db.On("CompleteAllocation", tr.req.AllocationID).Return(nil)
+		db.On("CompleteAllocation", mock.Anything).Return(nil)
 		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
 		if i == tr.config.MaxRestarts() {
 			db.On("UpdateTrial", 0, model.ErrorState).Return(nil)

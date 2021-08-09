@@ -42,7 +42,7 @@ func JSONErrorHandler(err error, c echo.Context) {
 var (
 	// ErrInvalid is the inner error for errors that convert to a 400. Currently
 	// only apiServer.askAtDefaultSystem respects this.
-	ErrInvalid = errors.New("bad request")
+	ErrInvalid = errors.New("invalid arguments")
 	// ErrNotFound is the inner error for errors that convert to a 404.
 	ErrNotFound = errors.New("not found")
 )

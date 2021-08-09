@@ -45,13 +45,13 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesAllocated:
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		taskToken, err := t.db.StartAllocationSession(msg.ID)
+		allocationToken, err := t.db.StartAllocationSession(msg.ID)
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
 		for rank, a := range msg.Reservations {
-			a.Start(ctx, t.ToTaskSpec(taskToken), rank)
+			a.Start(ctx, t.ToTaskSpec(allocationToken), rank)
 		}
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.

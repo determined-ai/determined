@@ -5,8 +5,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
@@ -79,11 +77,6 @@ func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) Ren
 		addresses:    map[cproto.ID][]cproto.Address{},
 		watchers:     map[cproto.ID]chan<- RendezvousInfoOrError{},
 	}
-}
-
-// Prestart sets up the rendezvous.
-func (r *Rendezvous) Prestart(ctx *actor.Context) {
-	actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{AllocationID: r.allocationID})
 }
 
 // Receive implements actor.Receive.

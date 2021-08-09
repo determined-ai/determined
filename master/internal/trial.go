@@ -133,7 +133,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 	case sproto.ResourcesAllocated:
 		return t.processAllocation(ctx, msg)
-	case task.AllocationTerminated:
+	case task.AllocationExited:
 		return t.processAllocationExit(ctx, msg)
 
 	case sproto.TaskContainerStateChanged,
@@ -143,7 +143,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		if t.allocation == nil {
 			return task.ErrNoAllocation{Action: fmt.Sprintf("%T", msg)}
 		}
-		return t.allocation.Receive(ctx)
+		switch exit, err := t.allocation.HandleEvent(ctx); {
+		case err != nil:
+			return err
+		case exit != nil:
+			return t.processAllocationExit(ctx, *exit)
+		default:
+			return nil
+		}
 
 	case sproto.ContainerLog:
 		if log, err := t.enrichTrialLog(model.TrialLog{
@@ -275,7 +282,6 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 		TrialID:          t.id,
 		TrialRunID:       t.runID,
 		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
-		ModelDefinition:  t.modelDefinition,
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		LatestBatch:      latestBatch,
@@ -283,17 +289,18 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 		IsMultiAgent:     len(msg.Reservations) > 1,
 	}
 
-	t.allocation = task.NewAllocation(
-		t.taskID, *t.req, msg.Reservations, trialSpec, t.generatedKeys, t.db)
-	return t.allocation.Prestart(ctx)
+	t.allocation, err = task.NewAllocation(
+		ctx, t.taskID, *t.req, msg.Reservations, trialSpec, t.generatedKeys, t.db,
+	)
+	return errors.Wrapf(err, "failed to initialize allocation")
 }
 
 // processAllocationExit cleans up after an allocation exit and exits permanently or reallocates.
-func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationTerminated) error {
+func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationExited) error {
 	ctx.Log().Info("trial allocation exited")
 
 	// Clean up old stuff.
-	if err := t.allocation.PostStop(ctx); err != nil {
+	if err := t.allocation.Close(ctx); err != nil {
 		return err
 	}
 	t.req = nil
@@ -356,7 +363,12 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 			ctx.Log().Info("terminating trial before resources are allocated")
 			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 		default:
-			return t.allocation.Terminate(ctx, task.Graceful)
+			switch exit, err := t.allocation.Terminate(ctx, task.Graceful); {
+			case err != nil:
+				return errors.Wrap(err, "failed to terminate allocation")
+			case exit != nil:
+				return t.processAllocationExit(ctx, *exit)
+			}
 		}
 	case model.StoppingStates[t.state]:
 		switch {
@@ -374,7 +386,13 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 				model.StoppingKilledState:    task.Kill,
 				model.StoppingErrorState:     task.Kill,
 			}[t.state]
-			return t.allocation.Terminate(ctx, action)
+
+			switch exit, err := t.allocation.Terminate(ctx, action); {
+			case err != nil:
+				return errors.Wrapf(err, "failed to terminate allocation (%s)", action)
+			case exit != nil:
+				return t.processAllocationExit(ctx, *exit)
+			}
 		}
 	case model.TerminalStates[t.state]:
 		ctx.Self().Stop()

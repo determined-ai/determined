@@ -12,7 +12,6 @@ func NewAllocationID(name string) AllocationID {
 
 // Allocation is the model for an allocation in the database.
 type Allocation struct {
-	ID           int          `db:"id"`
 	TaskID       TaskID       `db:"task_id"`
 	AllocationID AllocationID `db:"allocation_id"`
 	ResourcePool string       `db:"resource_pool"`
@@ -43,8 +42,8 @@ const (
 
 // Task is the model for a task in the database.
 type Task struct {
-	ID        int        `db:"id" `
 	TaskID    TaskID     `db:"task_id"`
+	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
 }

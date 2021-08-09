@@ -81,8 +81,8 @@ type DB interface {
 	UpdateTrialRunnerState(id int, state string) error
 	UpdateTrialRunnerMetadata(id int, md *trialv1.TrialRunnerMetadata) error
 	TrialDetailsRaw(id int) ([]byte, error)
-	AddAllocation(taskID model.TaskID, allocationID model.AllocationID, rp string) error
-	CompleteAllocation(allocationID model.AllocationID) error
+	AddAllocation(a *model.Allocation) error
+	CompleteAllocation(a *model.Allocation) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)
 	UpdateTrialRunID(id, runID int) error
 	UpdateTrialRestarts(id, restarts int) error

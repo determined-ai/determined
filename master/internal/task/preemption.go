@@ -36,10 +36,10 @@ type (
 	// preempted.
 	PreemptionTimeout struct{ allocationID model.AllocationID }
 
-	// Preemption represents the preemption status of a task. A task is assumed to be preempted
-	// exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
-	// preemption. This is nice until we move to trial has many task actors / generic task actor,
-	// where the lifetime of a "preemption" is equivalent to the lifetime of task and they can be
+	// Preemption represents the preemption status of an allocation. An alllocation is assumed to be
+	// preempted exactly one time. The object is "nil safe" - it'll gracefully handle calls on a nil
+	// preemption. This is nice until we move to trial has many task actors / generic task actor, where
+	// the lifetime of a "preemption" is equivalent to the lifetime of allocation and they can be
 	// initialized together.
 	Preemption struct {
 		allocationID model.AllocationID

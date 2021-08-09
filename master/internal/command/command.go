@@ -300,14 +300,14 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		check.Panic(check.Equal(len(msg.Reservations), 1,
 			"Command should only receive an allocation of one container"))
 
-		taskToken, err := c.db.StartAllocationSession(c.task.AllocationID)
+		allocationToken, err := c.db.StartAllocationSession(c.task.AllocationID)
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session")
 		}
 
 		c.reservation = msg.Reservations[0]
 
-		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, taskToken), 0)
+		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, allocationToken), 0)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 

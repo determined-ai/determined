@@ -28,13 +28,13 @@ type DB struct {
 	mock.Mock
 }
 
-// AddAllocation provides a mock function with given fields: taskID, allocationID, rp
-func (_m *DB) AddAllocation(taskID model.TaskID, allocationID model.AllocationID, rp string) error {
-	ret := _m.Called(taskID, allocationID, rp)
+// AddAllocation provides a mock function with given fields: a
+func (_m *DB) AddAllocation(a *model.Allocation) error {
+	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.TaskID, model.AllocationID, string) error); ok {
-		r0 = rf(taskID, allocationID, rp)
+	if rf, ok := ret.Get(0).(func(*model.Allocation) error); ok {
+		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -325,13 +325,13 @@ func (_m *DB) Close() error {
 	return r0
 }
 
-// CompleteAllocation provides a mock function with given fields: allocationID
-func (_m *DB) CompleteAllocation(allocationID model.AllocationID) error {
-	ret := _m.Called(allocationID)
+// CompleteAllocation provides a mock function with given fields: a
+func (_m *DB) CompleteAllocation(a *model.Allocation) error {
+	ret := _m.Called(a)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.AllocationID) error); ok {
-		r0 = rf(allocationID)
+	if rf, ok := ret.Get(0).(func(*model.Allocation) error); ok {
+		r0 = rf(a)
 	} else {
 		r0 = ret.Error(0)
 	}

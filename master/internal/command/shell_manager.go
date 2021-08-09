@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -15,8 +17,7 @@ import (
 )
 
 type shellManager struct {
-	db      *db.PgDB
-	shellID int
+	db *db.PgDB
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -37,8 +38,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		s.shellID++
-		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeShell, s.shellID))
+		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeShell, uuid.New()))
 		return createGenericCommandActor(ctx, s.db, taskID, msg, map[string]readinessCheck{
 			"shell": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "Server listening on")

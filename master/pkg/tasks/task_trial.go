@@ -23,7 +23,6 @@ type TrialSpec struct {
 	TrialID          int
 	TrialRunID       int
 	ExperimentConfig expconf.ExperimentConfig
-	ModelDefinition  archive.Archive
 	HParams          map[string]interface{}
 	TrialSeed        uint32
 	LatestCheckpoint *model.Checkpoint
@@ -35,9 +34,9 @@ type TrialSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, allocationToken string) TaskSpec {
 	res := s.Base
-	res.AllocationSessionToken = taskToken
+	res.AllocationSessionToken = allocationToken
 
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(

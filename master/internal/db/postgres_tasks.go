@@ -3,6 +3,7 @@ package db
 import (
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
@@ -15,22 +16,43 @@ func (db *PgDB) initAllocationSessions() error {
 	return err
 }
 
+// addTask persists the existence of a task from a tx.
+func addTask(tx *sqlx.Tx, t *model.Task) error {
+	if _, err := tx.NamedExec(`
+INSERT INTO tasks (task_id, task_type, start_time)
+VALUES (:task_id, :task_type, :start_time)
+`, t); err != nil {
+		return errors.Wrap(err, "adding task")
+	}
+	return nil
+}
+
+func completeTask(tx *sqlx.Tx, tID model.TaskID, endTime *time.Time) error {
+	if _, err := tx.Exec(`
+UPDATE tasks
+SET end_time = $2
+WHERE task_id = $1
+	`, tID, endTime); err != nil {
+		return errors.Wrap(err, "completing task")
+	}
+	return nil
+}
+
 // AddAllocation persists the existence of an allocation.
-func (db *PgDB) AddAllocation(
-	taskID model.TaskID, allocationID model.AllocationID, rp string) error {
-	_, err := db.sql.Exec(`
+func (db *PgDB) AddAllocation(a *model.Allocation) error {
+	_, err := db.sql.NamedExec(`
 INSERT INTO allocations (task_id, allocation_id, resource_pool, start_time)
-VALUES ($1, $2, $3, $4)
-`, taskID, allocationID, rp, time.Now().UTC())
+VALUES (:task_id, :allocation_id, :resource_pool, :start_time)
+`, a)
 	return err
 }
 
 // CompleteAllocation persists the end of an allocation lifetime.
-func (db *PgDB) CompleteAllocation(allocationID model.AllocationID) error {
+func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
 	_, err := db.sql.Exec(`
 UPDATE allocations
-SET end_time = $2
-WHERE allocation_id = $1`, allocationID, time.Now().UTC())
+SET end_time = :end_time
+WHERE allocation_id = :allocation_id`, a)
 	return err
 }
 

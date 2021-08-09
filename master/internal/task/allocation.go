@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -24,14 +26,13 @@ type (
 		// system dependencies
 		db db.DB
 
-		// the id of the task this allocation belongs to
-		taskID model.TaskID
+		// the persisted representation.
+		model model.Allocation
+
 		// the spec used to start reservations
-		spec TaskSpecer
+		spec TaskSpecMaker
 		// the keys for SSH access to the task.
 		keys *ssh.PrivateAndPublicKeys
-		// the request associated with this allocation
-		req sproto.AllocateRequest
 		// The existence of allocations signifies the trial has been allocated.
 		reservations map[cproto.ID]sproto.Reservation
 		// The following fields tracks containers and their states.
@@ -52,8 +53,8 @@ type (
 		killCooldown *time.Time
 	}
 
-	// AllocationTerminated summarizes the exit status of an allocation.
-	AllocationTerminated struct {
+	// AllocationExited summarizes the exit status of an allocation.
+	AllocationExited struct {
 		// userRequestedStop when a container unexpectedly exits with 0.
 		UserRequestedStop bool
 		Err               error
@@ -64,18 +65,23 @@ const killCooldown = 30 * time.Second
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
 func NewAllocation(
-	taskID model.TaskID, req sproto.AllocateRequest, reservations []sproto.Reservation,
-	spec TaskSpecer, keys *ssh.PrivateAndPublicKeys, db db.DB,
-) *Allocation {
+	ctx *actor.Context, taskID model.TaskID, req sproto.AllocateRequest,
+	reservations []sproto.Reservation, spec TaskSpecMaker, keys *ssh.PrivateAndPublicKeys, db db.DB,
+) (*Allocation, error) {
 	containerIDToReservation := map[cproto.ID]sproto.Reservation{}
 	for _, a := range reservations {
 		containerIDToReservation[a.Summary().ID] = a
 	}
-	return &Allocation{
+	a := &Allocation{
 		db: db,
 
-		taskID:               taskID,
-		req:                  req,
+		model: model.Allocation{
+			TaskID:       taskID,
+			AllocationID: req.AllocationID,
+			ResourcePool: req.ResourcePool,
+			StartTime:    time.Now().UTC(),
+		},
+
 		reservations:         containerIDToReservation,
 		spec:                 spec,
 		keys:                 keys,
@@ -84,35 +90,32 @@ func NewAllocation(
 		containers:           make(map[cproto.ID]cproto.Container),
 		terminatedContainers: make(map[cproto.ID]sproto.TaskContainerStopped),
 	}
-}
 
-// TaskSpecer an interface for anything that creates task specs.
-type TaskSpecer interface {
-	ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) tasks.TaskSpec
-}
-
-// Prestart sets up the allocation.
-func (a *Allocation) Prestart(ctx *actor.Context) error {
-	ctx.Log().Infof("starting trial allocation")
-
-	if err := a.db.AddAllocation(a.taskID, a.req.AllocationID, a.req.ResourcePool); err != nil {
-		return errors.Wrap(err, "failed to save trial allocation")
+	if err := a.db.AddAllocation(&a.model); err != nil {
+		return nil, errors.Wrap(err, "saving trial allocation")
 	}
-
-	token, err := a.db.StartAllocationSession(a.req.AllocationID)
+	token, err := a.db.StartAllocationSession(a.model.AllocationID)
 	if err != nil {
-		return errors.Wrap(err, "cannot start a new task session for a trial")
+		return nil, errors.Wrap(err, "starting a new allocation session")
 	}
 
 	for cID, r := range a.reservations {
 		r.Start(ctx, a.spec.ToTaskSpec(a.keys, token), a.rendezvous.ranks[cID])
 	}
-	a.rendezvous.Prestart(ctx)
-	return nil
+	actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
+		AllocationID: a.model.AllocationID,
+	})
+
+	return a, nil
 }
 
-// Receive implements actor.Actor.
-func (a *Allocation) Receive(ctx *actor.Context) error {
+// TaskSpecMaker an interface for anything that creates task specs.
+type TaskSpecMaker interface {
+	ToTaskSpec(keys *ssh.PrivateAndPublicKeys, allocationToken string) tasks.TaskSpec
+}
+
+// HandleEvent receives a message for this allocation.
+func (a *Allocation) HandleEvent(ctx *actor.Context) (*AllocationExited, error) {
 	switch msg := ctx.Message().(type) {
 	case sproto.TaskContainerStateChanged:
 		return a.processContainerMessage(ctx, msg)
@@ -124,9 +127,9 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			ctx.Tell(ctx.Self(), model.TrialLog{Message: err.Error()})
 		case nil:
 		default:
-			return errors.Wrap(err, "processing rendezvous")
+			return nil, errors.Wrap(err, "processing rendezvous")
 		}
-		return nil
+		return nil, nil
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
 		switch err := a.preemption.Receive(ctx).(type) {
 		case ErrTimeoutExceeded:
@@ -134,20 +137,20 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return a.Terminate(ctx, Kill)
 		case nil:
 		default:
-			return errors.Wrap(err, "processing preemption")
+			return nil, errors.Wrap(err, "processing preemption")
 		}
-		return nil
+		return nil, nil
 	default:
-		return actor.ErrUnexpectedMessage(ctx)
+		return nil, actor.ErrUnexpectedMessage(ctx)
 	}
 }
 
-// PostStop tears down an allocation.
-func (a *Allocation) PostStop(ctx *actor.Context) error {
-	if err := a.db.DeleteAllocationSession(a.req.AllocationID); err != nil {
+// Close tears down an allocation.
+func (a *Allocation) Close(ctx *actor.Context) error {
+	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		return errors.Wrap(err, "error delete allocation session")
 	}
-	if err := a.db.CompleteAllocation(a.req.AllocationID); err != nil {
+	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		return errors.Wrap(err, "failed to mark allocation completed")
 	}
 	return nil
@@ -155,9 +158,9 @@ func (a *Allocation) PostStop(ctx *actor.Context) error {
 
 func (a *Allocation) processContainerMessage(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
-) error {
+) (*AllocationExited, error) {
 	if _, ok := a.reservations[msg.Container.ID]; !ok {
-		return ErrStaleContainer{ID: msg.Container.ID}
+		return nil, ErrStaleContainer{ID: msg.Container.ID}
 	}
 
 	a.containers[msg.Container.ID] = msg.Container
@@ -188,7 +191,7 @@ func (a *Allocation) processContainerMessage(
 			return a.Terminate(ctx, Noop)
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // TerminationType controls the way in which an allocation is terminated.
@@ -208,26 +211,27 @@ const (
 	Noop TerminationType = "noop"
 )
 
-// Terminate encapsulates all termination logic for the trial's allocation.
+// Terminate encapsulates all termination logic for an allocation.
 //
-// It just exists to translate caller desires "kill this task, preempt this task" to the
-// corresponding action to actually take based on our state, instead of each caller needing
+// It just exists to translate caller desires "kill this allocation, preempt this allocation" to
+// the corresponding action to actually take based on our state, instead of each caller needing
 // to be aware of how to take certain actions in certain states.
-func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) error {
+func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) (*AllocationExited, error) {
 	switch {
 	case len(a.reservations) == len(a.terminatedContainers):
-		ctx.Log().Info("terminating trial because all containers have exited")
-		ctx.Tell(ctx.Self(), a.terminated(ctx))
+		ctx.Log().Info("terminating allocation because all containers have exited")
+		exit := a.terminated(ctx)
+		return &exit, nil
 	case tt == Noop, tt == Graceful && len(a.terminatedContainers) > 0:
 		// Working on it.
 	case tt == Graceful && a.rendezvous.ready():
-		ctx.Log().Info("gracefully terminating trial")
+		ctx.Log().Info("gracefully terminating allocation")
 		a.preemption.Preempt()
-		ctx.Tell(ctx.Self(), PreemptionTimeout{a.req.AllocationID})
+		ctx.Tell(ctx.Self(), PreemptionTimeout{a.model.AllocationID})
 	default:
 		if a.killCooldown != nil && time.Now().UTC().Before(*a.killCooldown) {
 			ctx.Log().Debug("still inside of kill cooldown")
-			return nil
+			return nil, nil
 		}
 
 		ctx.Log().Info("forcibly terminating trial")
@@ -237,37 +241,34 @@ func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) error {
 			reservation.Kill(ctx)
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // terminated decides what action to take to close or restart a trial's task. This is only
 // called once the current task is cleaned up and we're ready to move on.
-func (a *Allocation) terminated(ctx *actor.Context) AllocationTerminated {
-	ctx.Log().
-		WithField("preempt_ack", a.preemption.Acknowledged()).
-		WithField("killed", a.killed).
-		Info("trial task terminated")
+func (a *Allocation) terminated(ctx *actor.Context) AllocationExited {
+	ctx.Log().Info("trial allocation terminated")
 
 	defer a.preemption.Close()
 	defer a.rendezvous.close()
 
 	switch status := a.exitStatus(); {
 	case a.killed:
-		return AllocationTerminated{}
+		return AllocationExited{}
 	case status.Failure != nil:
 		switch status.Failure.FailureType {
 		case aproto.ContainerFailed, aproto.TaskError:
-			return AllocationTerminated{Err: status.Failure}
+			return AllocationExited{Err: status.Failure}
 		case aproto.AgentError, aproto.AgentFailed:
 			// Questionable, could be considered failures.
 		case aproto.TaskAborted:
 			// Definitely not a failure.
 		}
-		return AllocationTerminated{}
+		return AllocationExited{}
 	case a.preemption.Acknowledged():
-		return AllocationTerminated{}
+		return AllocationExited{}
 	default:
-		return AllocationTerminated{
+		return AllocationExited{
 			UserRequestedStop: true,
 		}
 	}

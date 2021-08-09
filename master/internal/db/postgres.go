@@ -127,6 +127,22 @@ func (db *PgDB) namedExecOne(query string, arg interface{}) error {
 	return nil
 }
 
+// namedGet is a convenience method for a named query for a single value.
+func namedGet(tx *sqlx.Tx, dest interface{}, query string, arg interface{}) error {
+	nstmt, err := tx.PrepareNamed(query)
+	if err != nil {
+		return errors.Wrapf(err, "error preparing query %s", query)
+	}
+	if sErr := nstmt.QueryRowx(arg).Scan(dest); sErr != nil {
+		err = errors.Wrapf(sErr, "error scanning query %s", query)
+	}
+	if cErr := nstmt.Close(); cErr != nil && err != nil {
+		err = errors.Wrap(cErr, "error closing named DB statement")
+	}
+
+	return err
+}
+
 // namedExecOne is a convenience method for a NamedExec that should affect only one row.
 func namedExecOne(tx *sqlx.Tx, query string, arg interface{}) error {
 	res, err := tx.NamedExec(query, arg)
@@ -1207,7 +1223,8 @@ func (db *PgDB) AddTrial(trial *model.Trial) error {
 		if trial.ID != 0 {
 			return errors.Errorf("error adding a trial with non-zero id %v", trial.ID)
 		}
-		if err := db.namedGet(&trial.ID, `
+
+		if err := namedGet(tx, &trial.ID, `
 INSERT INTO trials
   (task_id, request_id, experiment_id, state, start_time, end_time,
    hparams, warm_start_checkpoint_id, seed)
@@ -1218,14 +1235,11 @@ RETURNING id`, trial); err != nil {
 			return errors.Wrapf(err, "error inserting trial %v", *trial)
 		}
 
-		if _, err := db.sql.Exec(`
-INSERT INTO tasks
-    (task_id, task_type, start_time)
-VALUES
-	($1, $2, $3)`, trial.TaskID, model.TaskTypeTrial, time.Now().UTC()); err != nil {
-			return errors.Wrap(err, "inserting task")
-		}
-		return nil
+		return addTask(tx, &model.Task{
+			TaskID:    trial.TaskID,
+			TaskType:  model.TaskTypeTrial,
+			StartTime: trial.StartTime,
+		})
 	})
 }
 
@@ -1289,13 +1303,7 @@ WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
 		}
 
 		if model.TerminalStates[newState] {
-			if _, err := tx.Exec(`
-UPDATE tasks
-SET end_time = $2
-WHERE task_id = $1
-`, trial.TaskID, time.Now().UTC()); err != nil {
-				return errors.Wrap(err, "completing task")
-			}
+			return completeTask(tx, trial.TaskID, trial.EndTime)
 		}
 
 		return nil

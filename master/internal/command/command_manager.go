@@ -3,6 +3,8 @@ package command
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,8 +14,7 @@ import (
 )
 
 type commandManager struct {
-	db        *db.PgDB
-	commandID int
+	db *db.PgDB
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -34,8 +35,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		c.commandID++
-		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeCommand, c.commandID))
+		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeCommand, uuid.New()))
 		return createGenericCommandActor(ctx, c.db, taskID, msg, nil)
 
 	default:

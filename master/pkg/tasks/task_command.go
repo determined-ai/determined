@@ -26,10 +26,12 @@ type GenericCommandSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec(
+	keys *ssh.PrivateAndPublicKeys, allocationToken string,
+) TaskSpec {
 	res := s.Base
 
-	res.AllocationSessionToken = taskToken
+	res.AllocationSessionToken = allocationToken
 
 	if keys != nil {
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{
