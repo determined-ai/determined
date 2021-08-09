@@ -260,10 +260,13 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             <div className={css.headerRow}><h2>Metrics</h2></div>
             {metricNames.map(metric =>
               <div className={css.row} key={metric.name}>
-                <BadgeTag label={metric.name}>{metric.type === MetricType.Training ?
-                  <Tooltip title="training">T</Tooltip> :
-                  <Tooltip title="validation">V</Tooltip>}
-                </BadgeTag>
+                <h3>
+                  <BadgeTag label={metric.name}>
+                    {metric.type === MetricType.Training ?
+                      <Tooltip title="training">T</Tooltip> :
+                      <Tooltip title="validation">V</Tooltip>}
+                  </BadgeTag>
+                </h3>
                 {trials.map(trial => metrics[trial][metric.name] ?
                   <HumanReadableFloat
                     key={trial}
