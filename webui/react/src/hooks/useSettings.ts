@@ -17,6 +17,7 @@ export enum BaseType {
 }
 
 type GenericSettingsType = Primitive | Primitive[] | undefined;
+type GenericSettings = Record<string, GenericSettingsType>;
 
 /*
  * defaultValue     - Optional default value. `undefined` as ultimate default.
@@ -40,8 +41,6 @@ export interface SettingsConfig {
   settings: SettingsConfigProp[];
   storagePath: string;
 }
-
-type GenericSettings = Record<string, GenericSettingsType>;
 
 interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
@@ -72,7 +71,7 @@ const queryParamToType = (type: BaseType, param: string | null): Primitive | und
   return undefined;
 };
 
-const queryToSettings = <T>(query: string, config: SettingsConfig): T => {
+const queryToSettings = <T>(config: SettingsConfig, query: string): T => {
   const params = queryString.parse(query);
   return config.settings.reduce((acc, prop) => {
     /*
@@ -120,6 +119,47 @@ const settingsToQuery = <T>(config: SettingsConfig, settings: T): string => {
   }, {} as Partial<T>);
 
   return queryString.stringify(fullSettings);
+};
+
+/*
+ * Check to see if the two query strings have the same settings based on
+ * the settings config. This function only compares the query params
+ * specified in the settings config.
+ */
+const isSameQuery = <T>(config: SettingsConfig, query1: string, query2: string): boolean => {
+  const settings1 = queryToSettings<T>(config, query1);
+  const settings2 = queryToSettings<T>(config, query2);
+  for (const prop of config.settings) {
+    const key = prop.key as keyof T;
+    if (!isEqual(settings1[key], settings2[key])) return false;
+  }
+  return true;
+};
+
+const getConfigKeyMap = (config: SettingsConfig): Record<RecordKey, boolean> => {
+  return config.settings.reduce((acc, prop) => {
+    acc[prop.key] = true;
+    return acc;
+  }, {} as Record<RecordKey, boolean>);
+};
+
+const getNewQueryPath = (
+  config: SettingsConfig,
+  basePath: string,
+  currentQuery: string,
+  newQuery: string,
+): string => {
+  // Strip out existing config settings from the current query.
+  const keyMap = getConfigKeyMap(config);
+  const params = queryString.parse(currentQuery);
+  const cleanParams = {} as Record<RecordKey, unknown>;
+  Object.keys(params).forEach(key => {
+    if (!keyMap[key] && params[key]) cleanParams[key] = params[key];
+  });
+
+  // Add new query to the clean query.
+  const cleanQuery = queryString.stringify(cleanParams);
+  return `${basePath}?${cleanQuery}&${newQuery}`;
 };
 
 const validateBaseType = (type: BaseType, value: unknown): boolean => {
@@ -209,9 +249,9 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
 
     // Update path with new and validated settings.
     const query = settingsToQuery(config, { ...clone(settings), ...querySettings });
-    const path = `${basePath}?${query}`;
+    const path = getNewQueryPath(config, basePath, location.search, query);
     push ? history.push(path) : history.replace(path);
-  }, [ config, configMap, basePath, history, settings, storage ]);
+  }, [ config, configMap, basePath, history, location.search, settings, storage ]);
 
   const resetSettings = useCallback((keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -231,12 +271,12 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
      * but not found in the url query string.
      */
     const currentQuery = settingsToQuery(config, settings);
-    if (location.search === '' && location.search !== currentQuery) {
+    if (!isSameQuery(config, location.search, currentQuery)) {
       history.replace(`${basePath}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
       setSettings(prevSettings => {
-        const querySettings = queryToSettings<Partial<T>>(location.search, config);
+        const querySettings = queryToSettings<Partial<T>>(config, location.search);
         const defaultSettings = getDefaultSettings<T>(config, storage);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
