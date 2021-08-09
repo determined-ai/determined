@@ -26,6 +26,7 @@
 }
 .headerRow {
   background-color: var(--theme-colors-monochrome-14);
+  border-bottom: 1px solid var(--theme-colors-monochrome-10);
 
   @extend %tableRow;
 }
