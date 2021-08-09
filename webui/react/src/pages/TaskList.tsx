@@ -67,7 +67,7 @@ const TaskList: React.FC = () => {
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
-  const { resetSettings, settings, settingsCount, updateSettings } = useSettings<Settings>(
+  const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
     settingsConfig,
     settingsBasePath,
   );
@@ -108,7 +108,7 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
-  const filterCount = useMemo(() => settingsCount(filterKeys), [ settingsCount ]);
+  const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
 
   const resetFilters = useCallback(() => {
     resetSettings([ ...filterKeys, 'tableOffset' ]);

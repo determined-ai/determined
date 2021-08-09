@@ -44,9 +44,9 @@ export interface SettingsConfig {
 type GenericSettings = Record<string, GenericSettingsType>;
 
 interface SettingsHook<T> {
+  activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
   settings: T;
-  settingsCount: (keys?: string[]) => number;
   updateSettings: (newSettings: Partial<T>, push?: boolean) => void;
 }
 
@@ -153,6 +153,20 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
     }, {} as Record<RecordKey, SettingsConfigProp>);
   }, [ config.settings ]);
 
+  /*
+   * A setting is considered active if it is set to a value and the
+   * value is not equivalent to a default value (if applicable).
+   */
+  const activeSettings = useCallback((keys?: string[]): string[] => {
+    return config.settings.reduce((acc, prop) => {
+      const key = prop.key as keyof T;
+      const includesKey = !keys || keys.includes(prop.key);
+      const isDefault = isEqual(settings[key], prop.defaultValue);
+      if (includesKey && !isDefault) acc.push(prop.key);
+      return acc;
+    }, [] as string[]);
+  }, [ config.settings, settings ]);
+
   const updateSettings = useCallback((partialSettings: Partial<T>, push = false) => {
     const changes = Object.keys(partialSettings) as (keyof T)[];
     const { internalSettings, querySettings } = changes.reduce((acc, key) => {
@@ -209,15 +223,6 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
     updateSettings(newSettings);
   }, [ config.settings, updateSettings ]);
 
-  const settingsCount = useCallback((keys?: string[]) => {
-    return config.settings.reduce((acc, prop) => {
-      const key = prop.key as keyof T;
-      const includesKey = !keys || keys.includes(prop.key);
-      const isDefault = isEqual(settings[key], prop.defaultValue);
-      return acc + (includesKey && !isDefault ? 1 : 0);
-    }, 0);
-  }, [ config.settings, settings ]);
-
   useEffect(() => {
     if (location.search === prevSearch) return;
 
@@ -238,7 +243,7 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
     }
   }, [ basePath, config, history, location.search, prevSearch, settings, storage ]);
 
-  return { resetSettings, settings, settingsCount, updateSettings };
+  return { activeSettings, resetSettings, settings, updateSettings };
 };
 
 export default useSettings;
