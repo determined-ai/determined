@@ -85,7 +85,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
-			// TODO(Brad): After push arch, return and handle this error when starting allocations.
+			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
 			ctx.Log().WithError(err).Error("failed to write start container message")
 		}
 		ctx.Tell(a.slots, msg.StartContainer)
