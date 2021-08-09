@@ -201,6 +201,6 @@ git secrets --install
 # Add AWS regexes
 git secrets --register-aws
 # Add GCP regex
-git secrets --add '\bprivate_key.*\b'
+git secrets --add '"private_key":\s"-----BEGIN\sPRIVATE\sKEY-----'
 ```
 

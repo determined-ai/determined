@@ -27,6 +27,12 @@ const viewports = {
   desktop: { width: 1366, height: 768 },
 };
 
+const selectors = {
+  antdTableRows: '.ant-table-container tbody tr[data-row-key]',
+  antdTable: '.ant-table-container tbody tr[data-row-key]',
+  antdEmptyTable: '.ant-table-container .ant-empty',
+};
+
 /* Helper functions */
 
 const clickAndWaitForPage = async (
@@ -211,6 +217,7 @@ export default class StepImplementation {
   @Step('Navigate to experiment list page')
   public async navigateToExperimentList() {
     await goto(`${BASE_URL}/experiments`);
+    await t.$(selectors.antdTable).exists();
   }
 
   @Step('Navigate to experiment <id> page')
@@ -253,11 +260,15 @@ export default class StepImplementation {
 
   @Step('Should have <count> table rows')
   public async checkTableRowCount(count: string) {
-    await t.waitFor(async () => {
-      const rows = await getElements('tr[data-row-key]', '.ant-table-cell:nth-child(2)');
-      const expectedCount = parseInt(count);
-      return rows.length === expectedCount;
-    });
+    await t.$(selectors.antdTable).exists();
+    // TODO this should check that the table is not in loading state.
+    const expectedCount = parseInt(count);
+    if (expectedCount === 0) {
+      await t.$(selectors.antdEmptyTable).exists();
+      return;
+    }
+    const rows = await getElements(selectors.antdTableRows, '.ant-table-cell:nth-child(2)');
+    expect(rows).toHaveLength(expectedCount);
   }
 
   @Step('Sort table by column <column>')
@@ -267,7 +278,7 @@ export default class StepImplementation {
 
   @Step('Toggle all table row selection')
   public async toggleAllTableRowSelection() {
-    await t.waitFor(async () => t.$('th input[type=checkbox]').exists());
+    await t.$('th input[type=checkbox]').exists();
     await t.click(t.$('th input[type=checkbox]'));
   }
 
@@ -322,7 +333,7 @@ export default class StepImplementation {
   //Notebook tests are the same, they both just choose the first resource pool
   @Step('Launch notebook')
   public async launchNotebook() {
-    await t.click(t.button('Launch JupyterLab'));
+    await t.click('Launch JupyterLab');
     // Wait for the modal to animate in
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.$('.ant-select-selector'), t.near('Resource Pool'));
@@ -433,7 +444,7 @@ export default class StepImplementation {
 
   @Step('Page should contain <text>')
   public async checkTextExist(value: string) {
-    await t.waitFor(async () => await t.text(value).exists());
+    await t.text(value).exists();
   }
 
   /* Logs */

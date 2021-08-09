@@ -3,11 +3,6 @@ Tags: parallelizable
 
 Specification to test the responsive design elements.
 
-## Sign in
-
-* Sign in as "user-w-pw" with "special-pw"
-* Navigate to dashboard page
-
 ## Check Cluster elements
 
 * Navigate to React page at "/cluster"
@@ -25,7 +20,3 @@ Specification to test the responsive design elements.
 * Page should contain "Compute Hours by Label"
 * Page should contain "Compute Hours by Resource Pool"
 * Page should contain "Compute Hours by Agent Label"
-
-## Sign out
-
-* Sign out

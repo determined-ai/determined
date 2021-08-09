@@ -3,13 +3,9 @@ Tags: parallelizable
 
 Specification to test the experiment list page.
 
-## Sign in
-
-* Sign in as "user-w-pw" with "special-pw"
-* Navigate to experiment list page
-
 ## Experiment batch operations
 
+* Navigate to experiment list page
 * Toggle all table row selection
 * Table batch should have following buttons
 
@@ -31,7 +27,3 @@ Specification to test the experiment list page.
 // * Should have "1" table rows
 // * Filter table header "Archived" with option "Unarchived"
 // * Should have "3" table rows
-
-## Sign out
-
-* Sign out

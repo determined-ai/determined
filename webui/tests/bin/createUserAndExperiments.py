@@ -60,6 +60,7 @@ def createExperiment(directory, config_file, count):
         "det",
         "experiment",
         "create",
+        "--paused",
         str(directory.joinpath(config_file)),
         str(directory),
     ]

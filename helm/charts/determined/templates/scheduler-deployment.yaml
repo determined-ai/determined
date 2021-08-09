@@ -36,7 +36,7 @@ spec:
         - --config=/etc/config/config.yaml
         name: coscheduler
         {{- if eq $schedulerType "preemption"}}
-        image: determinedai/kube-scheduler:latest
+        image: determinedai/kube-scheduler:0.16.0
         {{- else }}
         image: k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.18.9
         {{- end}}

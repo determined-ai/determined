@@ -1,11 +1,10 @@
-import React, {
-  forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState,
-} from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
 import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
+import { RecordKey } from 'types';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
@@ -19,95 +18,117 @@ interface ScaleZoomData {
 
 interface Props {
   data?: AlignedData;
+  focusIndex?: number;
   options?: Options;
-  ref?: React.Ref<uPlot|undefined>;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = forwardRef((
-  { data, options }: Props,
-  ref?: React.Ref<uPlot|undefined>,
-) => {
-  const [ chart, setChart ] = useState<uPlot>();
+const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
+  const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
+  const scalesRef = useRef<Record<RecordKey, uPlot.Scale>>();
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
 
-  const hasData: boolean = useMemo(() => {
-    // no x values
-    if (!data || !data[0] || data[0].length === 0) return false;
+  const [ hasData, normalizedData ] = useMemo(() => {
+    const chartData: unknown[][] = data || [];
 
-    // series values length not matching x values length
-    for (let i = 1; i < data.length; i++) {
-      if (data[i].length !== data[0].length) return false;
-    }
+    // Figure out the lowest sized series data.
+    const minDataLength = chartData.reduce((acc: number, series: unknown[]) => {
+      return Math.min(acc, series.length);
+    }, Number.MAX_SAFE_INTEGER);
 
-    return true;
+    // Making sure the X series and all the other series data are the same length;
+    const trimmedData = chartData.map(series => series.slice(0, minDataLength));
+
+    // Checking to make sure the X series has some data.
+    const hasXValues = trimmedData && trimmedData[0] && trimmedData[0].length !== 0;
+
+    return [ hasXValues, trimmedData as unknown as AlignedData ];
   }, [ data ]);
 
   /*
-   * Chart setup.
+   * Chart mount and dismount.
    */
   useEffect(() => {
     if (!chartDivRef.current || !hasData || !options) return;
-
-    scalesZoomData.current = {};
 
     const optionsExtended = uPlot.assign(
       {
         cursor: { drag: { dist: 5, uni: 10, x: true, y: true } },
         hooks: {
-          ready: [ (chart: uPlot) => setChart(chart) ],
+          ready: [ (chart: uPlot) => {
+            chartRef.current = chart;
+          } ],
           setScale: [ (uPlot: uPlot, scaleKey: string) => {
-            if (![ 'x', 'y' ].includes(scaleKey)) return;
-
-            const currentMax: number|undefined =
-              uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
-            const currentMin: number|undefined =
-              uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
-            let max: number|undefined = scalesZoomData.current[scaleKey]?.max;
-            let min: number|undefined = scalesZoomData.current[scaleKey]?.min;
+            const currentMax = uPlot.posToVal(scaleKey === 'x' ? uPlot.bbox.width : 0, scaleKey);
+            const currentMin = uPlot.posToVal(scaleKey === 'x' ? 0 : uPlot.bbox.height, scaleKey);
+            let max = scalesZoomData.current[scaleKey]?.max;
+            let min = scalesZoomData.current[scaleKey]?.min;
 
             if (max == null || currentMax > max) max = currentMax;
             if (min == null || currentMin < min) min = currentMin;
 
-            scalesZoomData.current[scaleKey] = {
-              isZoomed: currentMax < max || currentMin > min,
-              max,
-              min,
-            };
+            const isZoomed = currentMax < max || currentMin > min;
+            scalesZoomData.current[scaleKey] = { isZoomed, max, min };
+
+            /*
+             * Save the scale info if zoomed in and clear it otherwise.
+             * This info will be used to restore the zoom when remounting
+             * the chart, which can be caused by new series data, chart option
+             * changes, etc.
+             */
+            if (!scalesRef.current) scalesRef.current = {};
+            if (isZoomed) {
+              scalesRef.current[scaleKey] = uPlot.scales[scaleKey];
+            } else {
+              delete scalesRef.current[scaleKey];
+            }
+            if (Object.keys(scalesRef.current).length === 0) scalesRef.current = undefined;
           } ],
         },
+        scales: scalesRef.current,
         width: chartDivRef.current.offsetWidth,
       },
       options,
-    );
+    ) as uPlot.Options;
 
-    const plotChart = new uPlot(optionsExtended as uPlot.Options, [ [] ], chartDivRef.current);
+    const plotChart = new uPlot(optionsExtended, normalizedData, chartDivRef.current);
 
     return () => {
-      setChart(undefined);
       plotChart.destroy();
+      chartRef.current = undefined;
     };
-  }, [ chartDivRef, hasData, options ]);
+  }, [ chartDivRef, hasData, normalizedData, options ]);
 
   /*
-   * Chart data.
+   * Chart data when data changes.
    */
   useEffect(() => {
-    if (!chart || !data) return;
+    if (!chartRef.current || !normalizedData) return;
     const isZoomed = !!Object.values(scalesZoomData.current).find(i => i.isZoomed === true);
-    chart.setData(data, !isZoomed);
-  }, [ chart, data ]);
+    chartRef.current.setData(normalizedData, isZoomed);
+  }, [ normalizedData ]);
+
+  /*
+   * When a focus index is provided, highlight applicable series.
+   */
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const hasFocus = focusIndex !== undefined;
+    chartRef.current.setSeries(hasFocus ? focusIndex as number + 1 : null, { focus: hasFocus });
+  }, [ focusIndex ]);
 
   /*
    * Resize the chart when resize events happen.
    */
   const resize = useResize(chartDivRef);
   useEffect(() => {
-    if (!chart || !options?.height || !resize.width) return;
-    chart.setSize({ height: options.height, width: resize.width });
-  }, [ chart, options?.height, resize ]);
+    if (!chartRef.current) return;
+    const [ width, height ] = [ resize.width, options?.height || chartRef.current.height ];
+    if (chartRef.current.width === width && chartRef.current.height === height) return;
+    chartRef.current.setSize({ height, width });
+  }, [ options?.height, resize ]);
 
   /*
    * Resync the chart when scroll events happen to correct the cursor position upon
@@ -115,7 +136,7 @@ const UPlotChart: React.FC<Props> = forwardRef((
    */
   useEffect(() => {
     const throttleFunc = throttle(SCROLL_THROTTLE_TIME, () => {
-      if (chart) chart.syncRect();
+      if (chartRef.current) chartRef.current.syncRect();
     });
     const handleScroll = () => throttleFunc();
 
@@ -130,13 +151,13 @@ const UPlotChart: React.FC<Props> = forwardRef((
       document.removeEventListener('scroll', handleScroll);
       throttleFunc.cancel();
     };
-  }, [ chart ]);
+  }, []);
 
-  useImperativeHandle(ref, () => chart, [ chart ]);
-
-  return hasData
-    ? <div ref={chartDivRef} />
-    : <Message title="No data to plot." type={MessageType.Empty} />;
-});
+  return (
+    <div ref={chartDivRef}>
+      {!hasData && <Message title="No data to plot." type={MessageType.Empty} />}
+    </div>
+  );
+};
 
 export default UPlotChart;
