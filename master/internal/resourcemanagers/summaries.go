@@ -13,6 +13,7 @@ import (
 
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
+	TaskID         model.TaskID              `json:"task_id"`
 	AllocationID   model.AllocationID        `json:"allocation_id"`
 	Name           string                    `json:"name"`
 	RegisteredTime time.Time                 `json:"registered_time"`
@@ -37,6 +38,7 @@ func newTaskSummary(
 		}
 	}
 	summary := TaskSummary{
+		TaskID:         request.TaskID,
 		AllocationID:   request.AllocationID,
 		Name:           request.Name,
 		RegisteredTime: request.TaskActor.RegisteredTime(),

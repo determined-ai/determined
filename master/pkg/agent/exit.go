@@ -63,6 +63,7 @@ func ContainerExited(code ExitCode) ContainerStopped {
 }
 
 // FailureType denotes the type of failure that resulted in the container stopping.
+// Each FailureType must be handled by ./internal/task/allocation.go.
 type FailureType string
 
 const (

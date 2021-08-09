@@ -208,7 +208,9 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 			Addresses: sc.ContainerStarted.Addresses(),
 		}
 	case container.Terminated:
-		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
+		ctx.Log().
+			WithError(sc.ContainerStopped.Failure).
+			Infof("container %s terminated", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
 		rsc.ContainerStopped = &sproto.TaskContainerStopped{
 			ContainerStopped: *sc.ContainerStopped,

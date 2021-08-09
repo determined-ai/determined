@@ -10,6 +10,7 @@ import (
 type (
 	// AllocateRequest notifies resource managers to assign resources to a task.
 	AllocateRequest struct {
+		TaskID              model.TaskID
 		AllocationID        model.AllocationID
 		Name                string
 		Group               *actor.Ref

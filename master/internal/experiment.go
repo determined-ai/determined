@@ -300,8 +300,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
-
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
+			taskID: model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
 			GCCkptSpec: tasks.GCCkptSpec{
 				Base:         taskSpec,
 				ExperimentID: e.Experiment.ID,
@@ -423,10 +423,9 @@ func (e *experiment) processOperations(
 			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
-			taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, op.RequestID))
 			ctx.ActorOf(op.RequestID, newTrial(
-				taskID, e.ID, e.State, state, e.rm, e.trialLogger, e.db, config,
-				checkpoint, e.taskSpec, e.modelDefinition,
+				trialTaskID(e.ID, op.RequestID), e.ID, e.State, state, e.rm, e.trialLogger, e.db,
+				config, checkpoint, e.taskSpec, e.modelDefinition,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]
@@ -453,6 +452,10 @@ func (e *experiment) processOperations(
 	for requestID := range updatedTrials {
 		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
 	}
+}
+
+func trialTaskID(eID int, rID model.RequestID) model.TaskID {
+	return model.TaskID(fmt.Sprintf("%d.%s", eID, rID))
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {

@@ -3,8 +3,6 @@ package internal
 import (
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/pkg/errors"
@@ -20,6 +18,7 @@ type checkpointGCTask struct {
 	rm *actor.Ref
 	db *db.PgDB
 
+	taskID model.TaskID
 	tasks.GCCkptSpec
 
 	task *sproto.AllocateRequest
@@ -30,9 +29,9 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		allocationID := fmt.Sprintf("%s-%d-%s", model.TaskTypeCheckpointGC, t.ExperimentID, uuid.New())
 		t.task = &sproto.AllocateRequest{
-			AllocationID: model.NewAllocationID(allocationID),
+			TaskID:       t.taskID,
+			AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1)),
 			Name:         fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,

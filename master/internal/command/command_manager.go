@@ -1,8 +1,6 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -35,7 +33,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeCommand, uuid.New()))
+		taskID := model.TaskID(uuid.New().String())
 		return createGenericCommandActor(ctx, c.db, taskID, msg, nil)
 
 	default:

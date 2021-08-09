@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	"regexp"
 
 	"github.com/google/uuid"
@@ -40,7 +39,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeNotebook, uuid.New()))
+		taskID := model.TaskID(uuid.New().String())
 		return createGenericCommandActor(ctx, n.db, taskID, msg, map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
 				return jupyterReadyPattern.MatchString(log.String())

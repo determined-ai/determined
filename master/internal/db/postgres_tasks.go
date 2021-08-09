@@ -40,20 +40,19 @@ WHERE task_id = $1
 
 // AddAllocation persists the existence of an allocation.
 func (db *PgDB) AddAllocation(a *model.Allocation) error {
-	_, err := db.sql.NamedExec(`
+	return db.namedExecOne(`
 INSERT INTO allocations (task_id, allocation_id, resource_pool, start_time)
 VALUES (:task_id, :allocation_id, :resource_pool, :start_time)
 `, a)
-	return err
 }
 
 // CompleteAllocation persists the end of an allocation lifetime.
 func (db *PgDB) CompleteAllocation(a *model.Allocation) error {
-	_, err := db.sql.Exec(`
+	return db.namedExecOne(`
 UPDATE allocations
 SET end_time = :end_time
-WHERE allocation_id = :allocation_id`, a)
-	return err
+WHERE allocation_id = :allocation_id
+`, a)
 }
 
 // StartAllocationSession creates a row in the allocation_sessions table.

@@ -359,6 +359,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
+				taskID: model.TaskID(uuid.New().String()),
 				GCCkptSpec: tasks.GCCkptSpec{
 					Base:               taskSpec,
 					ExperimentID:       dbExp.ID,

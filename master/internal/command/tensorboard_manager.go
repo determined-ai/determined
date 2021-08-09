@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -72,7 +71,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(fmt.Sprintf("%s-%d", model.TaskTypeShell, uuid.New()))
+		taskID := model.TaskID(uuid.New().String())
 		return createGenericCommandActor(ctx, t.db, taskID, msg, map[string]readinessCheck{
 			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")

@@ -202,7 +202,8 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	}
 
 	t.req = &sproto.AllocateRequest{
-		AllocationID:   model.NewAllocationID(fmt.Sprintf("%s-%d", t.taskID, t.runID)),
+		TaskID:         t.taskID,
+		AllocationID:   model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		Name:           name,
 		Group:          ctx.Self().Parent(),
 		SlotsNeeded:    t.config.Resources().SlotsPerTrial(),
@@ -297,8 +298,6 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 
 // processAllocationExit cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationExited) error {
-	ctx.Log().Info("trial allocation exited")
-
 	// Clean up old stuff.
 	if err := t.allocation.Close(ctx); err != nil {
 		return err

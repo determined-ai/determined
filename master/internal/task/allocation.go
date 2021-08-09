@@ -23,39 +23,41 @@ import (
 type (
 	// Allocation encapsulates all the state of a single allocation
 	Allocation struct {
-		// system dependencies
+		// System dependencies.
 		db db.DB
 
-		// the persisted representation.
+		// The persisted representation.
 		model model.Allocation
 
-		// the spec used to start reservations
+		// The spec used to start reservations.
 		spec TaskSpecMaker
-		// the keys for SSH access to the task.
+		// The keys for SSH access to the task.
 		keys *ssh.PrivateAndPublicKeys
 		// The existence of allocations signifies the trial has been allocated.
 		reservations map[cproto.ID]sproto.Reservation
 		// The following fields tracks containers and their states.
-		containers           map[cproto.ID]cproto.Container
+		containers map[cproto.ID]cproto.Container
+		// Tracks the initial container exit, unless we caused the failure by killed the trial.
 		terminatedFirst      *cproto.ID
 		terminatedContainers map[cproto.ID]sproto.TaskContainerStopped
-		// preemption encapsulates the preemption state of the currently allocated task.
+		// Encapsulates the preemption state of the currently allocated task.
 		// If there is no current task, or it is unallocated, it is nil.
 		preemption Preemption
-		// rendezvous encapsulates logic of rendezvousing containers of the currently
+		// Encapsulates logic of rendezvousing containers of the currently
 		// allocated task. If there is no current task, or it is unallocated, it is nil.
 		rendezvous Rendezvous
-		// killed marks that we have intentionally killed the trial, so we can know to ignore
-		// any errors from containers dying.
-		killed bool
-		// we send a kill when we terminate a task forcibly. we terminate forcibly when a container
+		// Marks that we intentionally killed the allocation so we can know to
+		// ignore any errors from containers dying. Not set when we kill an already
+		// terminating trial.
+		killedWhileRunning bool
+		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
 		// exits non zero. we don't need to send all these kills, so this exists.
 		killCooldown *time.Time
 	}
 
 	// AllocationExited summarizes the exit status of an allocation.
 	AllocationExited struct {
-		// userRequestedStop when a container unexpectedly exits with 0.
+		// userRequestedStop is when a container unexpectedly exits with 0.
 		UserRequestedStop bool
 		Err               error
 	}
@@ -219,13 +221,12 @@ const (
 func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) (*AllocationExited, error) {
 	switch {
 	case len(a.reservations) == len(a.terminatedContainers):
-		ctx.Log().Info("terminating allocation because all containers have exited")
-		exit := a.terminated(ctx)
-		return &exit, nil
+		ctx.Log().Info("decided to close allocation because all containers have exited")
+		return a.terminated(ctx), nil
 	case tt == Noop, tt == Graceful && len(a.terminatedContainers) > 0:
 		// Working on it.
 	case tt == Graceful && a.rendezvous.ready():
-		ctx.Log().Info("gracefully terminating allocation")
+		ctx.Log().Info("decided to gracefully terminate allocation")
 		a.preemption.Preempt()
 		ctx.Tell(ctx.Self(), PreemptionTimeout{a.model.AllocationID})
 	default:
@@ -234,8 +235,10 @@ func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) (*Allocat
 			return nil, nil
 		}
 
-		ctx.Log().Info("forcibly terminating trial")
-		a.killed = true
+		ctx.Log().Info("decided to kill allocation")
+		if a.terminatedFirst == nil {
+			a.killedWhileRunning = true
+		}
 		a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
 		for _, reservation := range a.reservations {
 			reservation.Kill(ctx)
@@ -246,51 +249,44 @@ func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) (*Allocat
 
 // terminated decides what action to take to close or restart a trial's task. This is only
 // called once the current task is cleaned up and we're ready to move on.
-func (a *Allocation) terminated(ctx *actor.Context) AllocationExited {
-	ctx.Log().Info("trial allocation terminated")
-
+func (a *Allocation) terminated(ctx *actor.Context) *AllocationExited {
 	defer a.preemption.Close()
 	defer a.rendezvous.close()
 
-	switch status := a.exitStatus(); {
-	case a.killed:
-		return AllocationExited{}
-	case status.Failure != nil:
-		switch status.Failure.FailureType {
-		case aproto.ContainerFailed, aproto.TaskError:
-			return AllocationExited{Err: status.Failure}
-		case aproto.AgentError, aproto.AgentFailed:
-			// Questionable, could be considered failures.
-		case aproto.TaskAborted:
-			// Definitely not a failure.
-		}
-		return AllocationExited{}
+	switch {
+	case a.killedWhileRunning:
+		ctx.Log().Info("allocation successfully killed")
+		return &AllocationExited{}
 	case a.preemption.Acknowledged():
-		return AllocationExited{}
-	default:
-		return AllocationExited{
-			UserRequestedStop: true,
-		}
-	}
-}
-
-func (a *Allocation) exitStatus() aproto.ContainerStopped {
-	anyStarted := func(cs map[cproto.ID]cproto.Container) bool {
-		for _, c := range cs {
-			if c.State != cproto.Assigned {
-				return true
+		ctx.Log().Info("allocated successfully preempted")
+		return &AllocationExited{}
+	case a.terminatedFirst != nil:
+		err := a.terminatedContainers[*a.terminatedFirst].Failure
+		if err == nil {
+			// This is true because searcher and preemption exits both ack preemption.
+			return &AllocationExited{
+				UserRequestedStop: true,
 			}
 		}
-		return false
-	}
 
-	if !anyStarted(a.containers) {
-		return aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
+		switch err.FailureType {
+		case aproto.ContainerFailed, aproto.TaskError:
+			ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)
+			return &AllocationExited{Err: err}
+		case aproto.AgentError, aproto.AgentFailed:
+			// Questionable, could be considered failures.
+			ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
+			return &AllocationExited{}
+		case aproto.TaskAborted:
+			// Definitely not a failure.
+			ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
+			return &AllocationExited{}
+		default:
+			panic(errors.Wrapf(err, "unexpected allocation failure (%s)", err.FailureType))
+		}
+	default:
+		panic("allocation exited without being killed, preempted or having a container exit")
 	}
-	if a.terminatedFirst != nil {
-		return a.terminatedContainers[*a.terminatedFirst].ContainerStopped
-	}
-	return aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
 }
 
 // ErrTimeoutExceeded is return, with a bit of detail, when a timeout is exceeded.

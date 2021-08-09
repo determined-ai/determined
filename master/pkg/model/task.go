@@ -2,7 +2,15 @@ package model
 
 import "time"
 
-// AllocationID is the ID of an allocation of a task.
+// TaskID is the unique ID of a task among all tasks.
+type TaskID string
+
+// TaskType is the type of a task.
+type TaskType string
+
+// AllocationID is the ID of an allocation of a task. It is usually of the form
+// TaskID.allocation_number, maybe with some other metadata if different types of
+// allocations run.
 type AllocationID string
 
 // NewAllocationID returns a new unique task id.
@@ -18,12 +26,6 @@ type Allocation struct {
 	StartTime    time.Time    `db:"start_time"`
 	EndTime      *time.Time   `db:"end_time"`
 }
-
-// TaskID is the unique ID of a task among all tasks.
-type TaskID string
-
-// TaskType is the type of a task.
-type TaskType string
 
 const (
 	// TaskTypeTrial is the "TRIAL" job type for the enum public.job_type in Postgres.

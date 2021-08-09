@@ -107,6 +107,8 @@ func (t TaskSpec) EnvVars() map[string]string {
 	if t.MasterCert != nil {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
+	} else {
+		e["DET_USE_TLS"] = "false"
 	}
 
 	for k, v := range t.ExtraEnvVars {

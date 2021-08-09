@@ -115,9 +115,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
-		// Since command tasks a single allocation, allocation ID is just the taskID.
-		c.allocationID = model.NewAllocationID(string(c.taskID))
+		// Since command tasks a single allocation, allocation ID is just the taskID with a 1.
+		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.task = &sproto.AllocateRequest{
+			TaskID:         c.taskID,
 			AllocationID:   c.allocationID,
 			Name:           c.Config.Description,
 			SlotsNeeded:    c.Config.Resources.Slots,
@@ -247,7 +248,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 			if assignedPort == nil && len(names) > 0 {
 				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
-			} else if len(names) != 1 {
+			} else if assignedPort != nil && len(names) != 1 {
 				ctx.Log().Errorf(
 					"expected to proxy exactly 1 port but proxied %v instead", len(names),
 				)
