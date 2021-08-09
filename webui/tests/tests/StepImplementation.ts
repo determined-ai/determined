@@ -26,6 +26,7 @@ const BASE_URL = `${HOST}${BASE_PATH}`;
 const viewports = {
   desktop: { width: 1366, height: 768 },
 };
+const TIMEOUT = 5000;
 
 const selectors = {
   antdTableRows: '.ant-table-container tbody tr[data-row-key]',
@@ -62,6 +63,42 @@ const checkTextContentFor = async (keywords: string[], shouldExist: boolean, tim
 
 const goto = async (url: string) => {
   await t.goto(url, { waitForEvents: ['loadEventFired'] });
+};
+
+type Eventually<T> = T | Promise<T>;
+
+const sleep = (ms = 1000) => {
+  return new Promise((resolve, _) => {
+    setTimeout(resolve, ms);
+  });
+};
+
+// waitFor that takes a throwable function instead of a predicate compared to t.waitFor
+const waitFor = async (throwableFn: () => Eventually<void | Error>, timeout = TIMEOUT) => {
+  let timeOver = false;
+  let timeoutPromise = sleep(timeout).then(() => {
+    timeOver = true;
+  });
+  let lastStatus = undefined;
+  const runSafely = async (fn) => {
+    try {
+      const pr = await fn();
+      return pr;
+    } catch (e) {
+      return e;
+    }
+  };
+  while (true) {
+    const rv = await runSafely(() => Promise.race([timeoutPromise, runSafely(throwableFn)]));
+    if (!(rv instanceof Error)) {
+      return rv;
+    } else {
+      lastStatus = rv;
+    }
+    if (timeOver) {
+      return lastStatus;
+    }
+  }
 };
 
 /*
@@ -360,13 +397,13 @@ export default class StepImplementation {
 
   @Step('Should have <count> recent task cards')
   public async checkRecentTasks(count: string) {
-    await t.waitFor(async () => {
-      const expectedCount = parseInt(count);
+    const expectedCount = parseInt(count);
+    waitFor(async () => {
       const cards = await getElements(
         '[class*=TaskCard_base]',
         '[class*=TaskCard_badges] span:first-of-type',
       );
-      return cards.length === expectedCount;
+      expect(cards).toHaveLength(expectedCount);
     });
   }
 
