@@ -165,95 +165,93 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   );
 
   return (
-    <>
-      <div className={css.tableContainer}>
-        {isLoaded ?
-          <>
-            <div
-              className={css.headerRow}>
-              <div />
-              {trials.map(trial =>
-                <Tag
-                  className={[ css.trialTag, css.centerVertically ].join(' ')}
-                  closable
+    <div className={css.tableContainer}>
+      {isLoaded ?
+        <>
+          <div
+            className={css.headerRow}>
+            <div />
+            {trials.map(trial =>
+              <Tag
+                className={[ css.trialTag, css.centerVertically ].join(' ')}
+                closable
+                key={trial}
+                onClose={() => handleTrialUnselect(trial)}><p>Trial {trial}</p></Tag>)}</div>
+          <div className={css.row}>
+            <h3>State</h3>
+            {trials.map(trial =>
+              <div className={css.centerVertically} key={trial}>
+                <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
+              </div>)}
+          </div>
+          <div className={css.row}>
+            <h3>Start Time</h3>
+            {trials.map(trial =>
+              <p key={trial}>
+                {shortEnglishHumannizer(
+                  getDuration({ startTime: trialsDetails[trial].startTime }),
+                )} ago
+              </p>)}
+          </div>
+          <div className={css.row}>
+            <h3>Training Time</h3>
+            {trials.map(trial =>
+              <p key={trial}>
+                {shortEnglishHumannizer(durations[trial]?.train)}
+              </p>)}
+          </div>
+          <div className={css.row}>
+            <h3>Validation Time</h3>
+            {trials.map(trial =>
+              <p key={trial}>
+                {shortEnglishHumannizer(durations[trial]?.validation)}
+              </p>)}
+          </div>
+          <div className={css.row}>
+            <h3>Checkpoint Time</h3>
+            {trials.map(trial =>
+              <p key={trial}>
+                {shortEnglishHumannizer(durations[trial]?.checkpoint)}
+              </p>)}
+          </div>
+          <div className={css.row}>
+            <h3>Batches Processed</h3>
+            {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
+          </div>
+          <div className={css.row}>
+            <h3>Total Checkpoint Size</h3>
+            {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
+          </div>
+          <div className={css.headerRow}><h2>Metrics</h2></div>
+          {metricNames.map(metric =>
+            <div className={css.row} key={metric.name}>
+              <h3>
+                <BadgeTag label={metric.name}>
+                  {metric.type === MetricType.Training ?
+                    <Tooltip title="training">T</Tooltip> :
+                    <Tooltip title="validation">V</Tooltip>}
+                </BadgeTag>
+              </h3>
+              {trials.map(trial => metrics[trial][metric.name] ?
+                <HumanReadableFloat
                   key={trial}
-                  onClose={() => handleTrialUnselect(trial)}><p>Trial {trial}</p></Tag>)}</div>
-            <div className={css.row}>
-              <h3>State</h3>
+                  num={metrics[trial][metric.name]} />: <div />)}
+            </div>)}
+          <div className={css.headerRow}><h2>Hyperparameters</h2></div>
+          {hyperparameterNames.map(hp =>
+            <div className={css.row} key={hp}>
+              <h3>{hp}</h3>
               {trials.map(trial =>
-                <div className={css.centerVertically} key={trial}>
-                  <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
-                </div>)}
-            </div>
-            <div className={css.row}>
-              <h3>Start Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(
-                    getDuration({ startTime: trialsDetails[trial].startTime }),
-                  )} ago
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Training Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.train)}
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Validation Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.validation)}
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Checkpoint Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.checkpoint)}
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Batches Processed</h3>
-              {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Total Checkpoint Size</h3>
-              {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
-            </div>
-            <div className={css.headerRow}><h2>Metrics</h2></div>
-            {metricNames.map(metric =>
-              <div className={css.row} key={metric.name}>
-                <h3>
-                  <BadgeTag label={metric.name}>
-                    {metric.type === MetricType.Training ?
-                      <Tooltip title="training">T</Tooltip> :
-                      <Tooltip title="validation">V</Tooltip>}
-                  </BadgeTag>
-                </h3>
-                {trials.map(trial => metrics[trial][metric.name] ?
+                !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ?
                   <HumanReadableFloat
                     key={trial}
-                    num={metrics[trial][metric.name]} />: <div />)}
-              </div>)}
-            <div className={css.headerRow}><h2>Hyperparameters</h2></div>
-            {hyperparameterNames.map(hp =>
-              <div className={css.row} key={hp}>
-                <h3>{hp}</h3>
-                {trials.map(trial =>
-                  !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ?
-                    <HumanReadableFloat
-                      key={trial}
-                      num={parseFloat(
-                        JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
-                      )} /> :
-                    <p>{trialsDetails[trial].hyperparameters[hp]}</p>)}
-              </div>)}
-          </> : <Spinner spinning={!isLoaded} />}
-      </div>
-    </>
+                    num={parseFloat(
+                      JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
+                    )} /> :
+                  <p>{trialsDetails[trial].hyperparameters[hp]}</p>)}
+            </div>)}
+        </> : <Spinner spinning={!isLoaded} />}
+    </div>
   );
 };
 
