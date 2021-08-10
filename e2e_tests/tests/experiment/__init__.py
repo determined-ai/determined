@@ -10,6 +10,8 @@ from .experiment import (
     create_native_experiment,
     experiment_has_active_workload,
     experiment_has_completed_workload,
+    wait_for_experiment_active_workload,
+    wait_for_experiment_workload_progress,
     experiment_json,
     experiment_state,
     experiment_trials,

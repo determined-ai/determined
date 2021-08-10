@@ -121,7 +121,7 @@ Command = namedtuple(
 
 
 @authentication.required
-def list(args: Namespace) -> None:
+def list_tasks(args: Namespace) -> None:
     api_path = RemoteTaskNewAPIs[args._command]
     api_full_path = "api/v1/{}".format(api_path)
     table_header = RemoteTaskListTableHeaders[args._command]
@@ -141,7 +141,14 @@ def list(args: Namespace) -> None:
     for item in res:
         if item["state"].startswith("STATE_"):
             item["state"] = item["state"][6:]
-    render.render_table(res, table_header)
+
+    if getattr(args, "json", None):
+        print(json.dumps(res, indent=4))
+        return
+
+    values = render.select_values(res, table_header)
+
+    render.tabulate_or_csv(table_header, values, getattr(args, "csv", None))
 
 
 @authentication.required

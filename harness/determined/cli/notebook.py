@@ -62,7 +62,7 @@ def open_notebook(args: Namespace) -> None:
 
 args_description = [
     Cmd("notebook", None, "manage notebooks", [
-        Cmd("list ls", command.list, "list notebooks", [
+        Cmd("list ls", command.list_tasks, "list notebooks", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",

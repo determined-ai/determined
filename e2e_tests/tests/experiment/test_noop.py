@@ -34,32 +34,10 @@ def test_noop_pause() -> None:
     exp.wait_for_experiment_state(experiment_id, "ACTIVE")
 
     # Wait for the only trial to get scheduled.
-    workload_active = False
-    for _ in range(conf.MAX_TASK_SCHEDULED_SECS):
-        workload_active = exp.experiment_has_active_workload(experiment_id)
-        if workload_active:
-            break
-        else:
-            time.sleep(1)
-    check.true(
-        workload_active,
-        f"The only trial cannot be scheduled within {conf.MAX_TASK_SCHEDULED_SECS} seconds.",
-    )
+    exp.wait_for_experiment_active_workload(experiment_id)
 
     # Wait for the only trial to show progress, indicating the image is built and running.
-    num_steps = 0
-    for _ in range(conf.MAX_TRIAL_BUILD_SECS):
-        trials = exp.experiment_trials(experiment_id)
-        if len(trials) > 0:
-            only_trial = trials[0]
-            num_steps = len(only_trial["steps"])
-            if num_steps > 1:
-                break
-        time.sleep(1)
-    check.true(
-        num_steps > 1,
-        f"The only trial cannot start training within {conf.MAX_TRIAL_BUILD_SECS} seconds.",
-    )
+    exp.wait_for_experiment_workload_progress(experiment_id)
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check

@@ -18,10 +18,7 @@ func labelSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 
 func maxZeroSlotContainersSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	if req.SlotsNeeded == 0 {
-		if agent.maxZeroSlotContainers == 0 {
-			return false
-		}
-		return agent.numZeroSlotContainers() < agent.maxZeroSlotContainers
+		return agent.numEmptyZeroSlots() > 0
 	}
 	return true
 }
@@ -40,10 +37,10 @@ func BestFit(req *sproto.AllocateRequest, agent *agentState) float64 {
 	switch {
 	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
 		return 1.0 / (1.0 + float64(agent.numEmptySlots()))
-	case agent.maxZeroSlotContainers == 0:
+	case agent.numZeroSlots() == 0:
 		return 0.0
 	default:
-		return 1.0 / (1.0 + float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()))
+		return 1.0 / (1.0 + float64(agent.numEmptyZeroSlots()))
 	}
 }
 
@@ -54,11 +51,10 @@ func WorstFit(req *sproto.AllocateRequest, agent *agentState) float64 {
 	switch {
 	case agent.numUsedSlots() != 0 || req.SlotsNeeded != 0:
 		return float64(agent.numEmptySlots()) / float64(agent.numSlots())
-	case agent.maxZeroSlotContainers == 0:
+	case agent.numZeroSlots() == 0:
 		return 0.0
 	default:
-		return float64(agent.maxZeroSlotContainers-agent.numZeroSlotContainers()) /
-			float64(agent.maxZeroSlotContainers)
+		return float64(agent.numEmptyZeroSlots()) / float64(agent.numZeroSlots())
 	}
 }
 

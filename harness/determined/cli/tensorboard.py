@@ -70,7 +70,7 @@ def open_tensorboard(args: Namespace) -> None:
 
 args_description = [
     Cmd("tensorboard", None, "manage TensorBoard instances", [
-        Cmd("list ls", command.list, "list TensorBoard instances", [
+        Cmd("list ls", command.list_tasks, "list TensorBoard instances", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",

@@ -88,6 +88,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			// Expose a fake number here just to signal to the UI
 			// that this RP does support the aux containers.
 			maxZeroSlotContainers: 1,
+			enabled:               true,
 		}
 
 	case
@@ -161,7 +162,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		AuxContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
 		DefaultComputePool:           true,
 		DefaultAuxPool:               true,
 		Preemptible:                  false,

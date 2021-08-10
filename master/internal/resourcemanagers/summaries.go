@@ -111,8 +111,8 @@ func getResourceSummary(
 		summary.numAgents++
 		summary.numTotalSlots += agentState.numSlots()
 		summary.numActiveSlots += agentState.numUsedSlots()
-		summary.maxNumAuxContainers += agentState.maxZeroSlotContainers
-		summary.numActiveAuxContainers += agentState.numZeroSlotContainers()
+		summary.maxNumAuxContainers += agentState.numZeroSlots()
+		summary.numActiveAuxContainers += agentState.numUsedZeroSlots()
 		for agentDevice := range agentState.devices {
 			deviceTypeCount[agentDevice.Type]++
 		}

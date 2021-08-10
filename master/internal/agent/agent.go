@@ -103,9 +103,19 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
+		ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.DisableAgentRequest:
-		ctx.Tell(a.slots, patchSlot{Enabled: false})
+		// Mark current agent as disabled with RP.
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: msg.Drain})
+		// Update individual slot state.
+		ctx.Tell(a.slots, patchSlot{Enabled: false, Drain: msg.Drain})
+		// Kill both slotted and zero-slot tasks, unless draining.
+		if !msg.Drain {
+			for cid := range a.containers {
+				ctx.Tell(ctx.Self(), sproto.KillTaskContainer{ContainerID: cid})
+			}
+		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
@@ -198,6 +208,11 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 }
 
 func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
+	agentState := ctx.Ask(
+		a.resourcePool,
+		sproto.AgentStateRequest{Agent: ctx.Self()},
+	).Get().(sproto.AgentStateResponse)
+
 	return model.AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
@@ -206,5 +221,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
 		Addresses:      []string{a.address},
+		Enabled:        agentState.Enabled,
+		Draining:       agentState.Draining,
 	}
 }
