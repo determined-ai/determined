@@ -37,4 +37,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ConnectionError as err:
+        print(f"Error connecting to CI server {err}")
