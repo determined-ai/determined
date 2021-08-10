@@ -68,7 +68,7 @@ const goto = async (url: string) => {
 type Eventually<T> = T | Promise<T>;
 
 const sleep = (ms = 1000) => {
-  return new Promise((resolve, _) => {
+  return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 };
