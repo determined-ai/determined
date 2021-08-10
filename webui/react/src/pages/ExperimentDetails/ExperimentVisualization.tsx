@@ -111,7 +111,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: batches && batches.length !== 0 && metrics && metrics.length !== 0,
-      hasLoaded: batches && setMetrics,
+      hasLoaded: batches && metrics,
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: ![
         ExperimentSearcherName.Single,
@@ -283,7 +283,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       type="warning" />;
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
-  } else if (!hasLoaded) {
+  } else if (!hasLoaded && experiment.state !== RunState.Paused) {
     return <Spinner tip="Fetching metrics..." />;
   } else if (!hasData) {
     return (isExperimentTerminal || experiment.state === RunState.Paused) ? (
