@@ -1,17 +1,14 @@
-import { Button, Tag, Tooltip } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
-import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { getTrialDetails } from 'services/api';
-import { CheckpointState, CheckpointWorkload,
-  CheckpointWorkloadExtended, ExperimentBase,
+import { CheckpointState, CheckpointWorkload, ExperimentBase,
   MetricName, MetricsWorkload, MetricType, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -57,11 +54,9 @@ const TrialsComparisonModal: React.FC<ModalProps> =
 };
 
 const TrialsComparisonTable: React.FC<TableProps> = (
-  { trials, experiment, onUnselect }: TableProps,
+  { trials, onUnselect }: TableProps,
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ canceler ] = useState(new AbortController());
 
   const fetchTrialDetails = useCallback(async (trialId) => {
@@ -83,23 +78,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
       fetchTrialDetails(trial);
     });
   }, [ fetchTrialDetails, trials ]);
-
-  const handleCheckpointShow = (
-    event: React.MouseEvent,
-    trial: TrialDetails,
-  ) => {
-    if (!trial.bestAvailableCheckpoint) return;
-    const checkpoint = {
-      ...trial.bestAvailableCheckpoint,
-      experimentId: trial.experimentId,
-      trialId: trial.id,
-    };
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-
-  const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
@@ -242,18 +220,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
             </div>
             <div className={css.row}>
-              <h3>Best Checkpoint</h3>
-              {trials.map(trial =>
-                trialsDetails[trial].bestAvailableCheckpoint ?
-                  <Button
-                    className={css.checkpointButton}
-                    key={trial}
-                    onClick={e => handleCheckpointShow(e, trialsDetails[trial])}>
-                    <Icon name="checkpoint" />
-                    <span>Batch {trialsDetails[trial].bestAvailableCheckpoint?.totalBatches}</span>
-                  </Button> : <div />)}
-            </div>
-            <div className={css.row}>
               <h3>Total Checkpoint Size</h3>
               {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
             </div>
@@ -287,12 +253,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               </div>)}
           </> : <Spinner spinning={!isLoaded} />}
       </div>
-      {activeCheckpoint && <CheckpointModal
-        checkpoint={activeCheckpoint}
-        config={experiment.config}
-        show={showCheckpoint}
-        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        onHide={handleCheckpointDismiss} />}
     </>
   );
 };
