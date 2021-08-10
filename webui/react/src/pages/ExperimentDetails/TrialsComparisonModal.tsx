@@ -11,7 +11,7 @@ import { getTrialDetails } from 'services/api';
 import { CheckpointState, CheckpointWorkload, ExperimentBase,
   MetricName, MetricsWorkload, MetricType, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
+import { shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
 
@@ -185,33 +185,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               </div>)}
           </div>
           <div className={css.row}>
-            <h3>Start Time</h3>
-            {trials.map(trial =>
-              <p key={trial}>
-                {shortEnglishHumannizer(
-                  getDuration({ startTime: trialsDetails[trial].startTime }),
-                )} ago
-              </p>)}
-          </div>
-          <div className={css.row}>
             <h3>Training Time</h3>
             {trials.map(trial =>
               <p key={trial}>
                 {shortEnglishHumannizer(durations[trial]?.train)}
-              </p>)}
-          </div>
-          <div className={css.row}>
-            <h3>Validation Time</h3>
-            {trials.map(trial =>
-              <p key={trial}>
-                {shortEnglishHumannizer(durations[trial]?.validation)}
-              </p>)}
-          </div>
-          <div className={css.row}>
-            <h3>Checkpoint Time</h3>
-            {trials.map(trial =>
-              <p key={trial}>
-                {shortEnglishHumannizer(durations[trial]?.checkpoint)}
               </p>)}
           </div>
           <div className={css.row}>
