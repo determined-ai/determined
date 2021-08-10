@@ -26,7 +26,7 @@ type GenericSettings = Record<string, GenericSettingsType>;
  * type.baseType    - How to decode the string-based query param.
  * type.isArray     - List based query params can be non-array.
  */
-interface SettingsConfigProp {
+export interface SettingsConfigProp {
   defaultValue?: GenericSettingsType;
   key: string;
   skipUrlEncoding?: boolean;
@@ -49,7 +49,25 @@ interface SettingsHook<T> {
   updateSettings: (newSettings: Partial<T>, push?: boolean) => void;
 }
 
-const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage): T => {
+export const validateBaseType = (type: BaseType, value: unknown): boolean => {
+  if (type === BaseType.Boolean && isBoolean(value)) return true;
+  if (type === BaseType.Float && isNumber(value)) return true;
+  if (type === BaseType.Integer && isNumber(value) &&
+      Math.ceil(value) === Math.floor(value)) return true;
+  if (type === BaseType.String && isString(value)) return true;
+  return false;
+};
+
+export const validateSetting = (config: SettingsConfigProp, value: unknown): boolean => {
+  if (value === undefined) return true;
+  if (config.type.isArray) {
+    if (!Array.isArray(value)) return false;
+    return value.every(val => validateBaseType(config.type.baseType, val));
+  }
+  return validateBaseType(config.type.baseType, value);
+};
+
+export const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage): T => {
   return config.settings.reduce((acc, prop) => {
     let defaultValue = prop.defaultValue;
     if (prop.storageKey) {
@@ -60,7 +78,7 @@ const getDefaultSettings = <T>(config: SettingsConfig, storage: Storage): T => {
   }, {} as GenericSettings) as unknown as T;
 };
 
-const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
+export const queryParamToType = (type: BaseType, param: string | null): Primitive | undefined => {
   if (param == null) return undefined;
   if (type === BaseType.Boolean) return param === 'true';
   if (type === BaseType.Float || type === BaseType.Integer) {
@@ -71,7 +89,7 @@ const queryParamToType = (type: BaseType, param: string | null): Primitive | und
   return undefined;
 };
 
-const queryToSettings = <T>(config: SettingsConfig, query: string): T => {
+export const queryToSettings = <T>(config: SettingsConfig, query: string): T => {
   const params = queryString.parse(query);
   return config.settings.reduce((acc, prop) => {
     /*
@@ -109,7 +127,7 @@ const queryToSettings = <T>(config: SettingsConfig, query: string): T => {
   }, {} as GenericSettings) as unknown as T;
 };
 
-const settingsToQuery = <T>(config: SettingsConfig, settings: T): string => {
+export const settingsToQuery = <T>(config: SettingsConfig, settings: T): string => {
   const fullSettings = config.settings.reduce((acc, prop) => {
     // Save settings into query if there is value defined and is not the default value.
     const value = settings[prop.key as keyof T];
@@ -136,7 +154,7 @@ const isSameQuery = <T>(config: SettingsConfig, query1: string, query2: string):
   return true;
 };
 
-const getConfigKeyMap = (config: SettingsConfig): Record<RecordKey, boolean> => {
+export const getConfigKeyMap = (config: SettingsConfig): Record<RecordKey, boolean> => {
   return config.settings.reduce((acc, prop) => {
     acc[prop.key] = true;
     return acc;
@@ -160,23 +178,6 @@ const getNewQueryPath = (
   // Add new query to the clean query.
   const cleanQuery = queryString.stringify(cleanParams);
   return `${basePath}?${cleanQuery}&${newQuery}`;
-};
-
-const validateBaseType = (type: BaseType, value: unknown): boolean => {
-  if (type === BaseType.Boolean && isBoolean(value)) return true;
-  if (type === BaseType.Float && isNumber(value)) return true;
-  if (type === BaseType.Integer && isNumber(value)) return true;
-  if (type === BaseType.String && isString(value)) return true;
-  return false;
-};
-
-const validateSetting = (config: SettingsConfigProp, value: unknown): boolean => {
-  if (value === undefined) return true;
-  if (config.type.isArray) {
-    if (!Array.isArray(value)) return false;
-    return value.every(val => validateBaseType(config.type.baseType, val));
-  }
-  return validateBaseType(config.type.baseType, value);
 };
 
 const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<T> => {
