@@ -21,6 +21,10 @@
     margin: 0;
   }
 }
+h2,
+h3 {
+  font-size: 14px;
+}
 .row {
   h3:first-child {
     margin-right: 5px;
@@ -33,10 +37,6 @@
   border-bottom: 1px solid var(--theme-colors-monochrome-10);
 
   @extend %tableRow;
-}
-h2,
-h3 {
-  font-size: 14px;
 }
 .centerVertically {
   align-items: center;
