@@ -82,8 +82,8 @@ const waitFor = async (throwableFn: () => Eventually<void | Error>, timeout = TI
   let lastStatus = undefined;
   const runSafely = async (fn) => {
     try {
-      const pr = await fn();
-      return pr;
+      const aPromise = await fn();
+      return aPromise;
     } catch (e) {
       return e;
     }
