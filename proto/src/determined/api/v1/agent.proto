@@ -89,6 +89,8 @@ message EnableAgentResponse {
 message DisableAgentRequest {
   // The id of the agent.
   string agent_id = 1;
+  // If true, wait for running tasks to finish.
+  bool drain = 2;
 }
 // Response to DisableAgentRequest.
 message DisableAgentResponse {

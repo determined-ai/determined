@@ -141,7 +141,14 @@ def list_tasks(args: Namespace) -> None:
     for item in res:
         if item["state"].startswith("STATE_"):
             item["state"] = item["state"][6:]
-    render.render_table(res, table_header)
+
+    if getattr(args, "json", None):
+        print(json.dumps(res, indent=4))
+        return
+
+    values = render.select_values(res, table_header)
+
+    render.tabulate_or_csv(table_header, values, getattr(args, "csv", None))
 
 
 @authentication.required

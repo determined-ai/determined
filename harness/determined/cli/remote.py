@@ -5,7 +5,7 @@ from typing import Any, List
 from determined.cli import command
 from determined.common import api
 from determined.common.api import authentication
-from determined.common.declarative_argparse import Arg, Cmd
+from determined.common.declarative_argparse import Arg, Cmd, Group
 
 from .command import (
     CONFIG_DESC,
@@ -48,6 +48,10 @@ args_description = [
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all commands (including other users')"),
+            Group(
+                Arg("--csv", action="store_true", help="print as CSV"),
+                Arg("--json", action="store_true", help="print as JSON"),
+            ),
         ], is_default=True),
         Cmd("config", command.config,
             "display command config", [

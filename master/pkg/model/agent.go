@@ -18,6 +18,8 @@ type AgentSummary struct {
 	ResourcePool   string       `json:"resource_pool"`
 	Label          string       `json:"label"`
 	Addresses      []string     `json:"addresses"`
+	Enabled        bool         `json:"enabled"`
+	Draining       bool         `json:"draining"`
 }
 
 // ToProto converts an agent summary to a proto struct.
@@ -34,6 +36,8 @@ func (a AgentSummary) ToProto() *agentv1.Agent {
 		Label:          a.Label,
 		ResourcePool:   a.ResourcePool,
 		Addresses:      a.Addresses,
+		Enabled:        a.Enabled,
+		Draining:       a.Draining,
 	}
 }
 
@@ -49,6 +53,7 @@ type SlotSummary struct {
 	Device    device.Device        `json:"device"`
 	Enabled   bool                 `json:"enabled"`
 	Container *container.Container `json:"container"`
+	Draining  bool                 `json:"draining"`
 }
 
 // ToProto converts a SlotSummary to its protobuf representation.
@@ -58,5 +63,6 @@ func (s SlotSummary) ToProto() *agentv1.Slot {
 		Device:    s.Device.Proto(),
 		Enabled:   s.Enabled,
 		Container: s.Container.Proto(),
+		Draining:  s.Draining,
 	}
 }

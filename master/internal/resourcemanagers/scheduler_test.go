@@ -312,6 +312,7 @@ func setupSchedulerStates(
 			devices:               make(map[device.Device]*cproto.ID),
 			zeroSlotContainers:    make(map[cproto.ID]bool),
 			maxZeroSlotContainers: mockAgent.maxZeroSlotContainers,
+			enabled:               true,
 		}
 		for i := 0; i < mockAgent.slots; i++ {
 			agent.devices[device.Device{ID: i}] = nil

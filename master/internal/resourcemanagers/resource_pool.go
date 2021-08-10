@@ -226,7 +226,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.AddAgent,
 		sproto.AddDevice,
 		sproto.RemoveDevice,
-		sproto.RemoveAgent:
+		sproto.RemoveAgent,
+		sproto.EnableAgent,
+		sproto.DisableAgent,
+		sproto.AgentStateRequest:
 		return rp.receiveAgentMsg(ctx)
 
 	case
@@ -304,6 +307,31 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(rp.agents, msg.Agent)
+
+	case sproto.EnableAgent:
+		ctx.Log().Infof("enabling agent: %s", msg.Agent.Address().Local())
+		state, ok := rp.agents[msg.Agent]
+		check.Panic(check.True(ok, "error enabling agent, agent not found: %s", msg.Agent.Address()))
+		state.enabled = true
+		state.draining = false
+
+	case sproto.DisableAgent:
+		drain := msg.Drain
+		drainStr := "disabling"
+		if drain {
+			drainStr = "draining"
+		}
+		ctx.Log().Infof("%s agent: %s", drainStr, msg.Agent.Address().Local())
+		state, ok := rp.agents[msg.Agent]
+		check.Panic(check.True(ok, "error %s agent, agent not found: %s", drainStr, msg.Agent.Address()))
+		state.draining = drain
+		state.enabled = false
+
+	case sproto.AgentStateRequest:
+		state, ok := rp.agents[msg.Agent]
+		check.Panic(check.True(
+			ok, "error on AgentStateRequest, agent not found: %s", msg.Agent.Address()))
+		ctx.Respond(sproto.AgentStateResponse{Enabled: state.enabled, Draining: state.draining})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
