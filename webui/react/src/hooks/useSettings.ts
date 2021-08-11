@@ -177,7 +177,8 @@ const getNewQueryPath = (
 
   // Add new query to the clean query.
   const cleanQuery = queryString.stringify(cleanParams);
-  return `${basePath}?${cleanQuery}&${newQuery}`;
+  const queries = [ cleanQuery, newQuery ].filter(query => !!query).join('&');
+  return `${basePath}?${queries}`;
 };
 
 const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
