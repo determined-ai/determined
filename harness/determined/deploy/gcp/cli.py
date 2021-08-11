@@ -134,7 +134,7 @@ def handle_up(args: argparse.Namespace) -> None:
 args_description = Cmd(
     "gcp",
     None,
-    "gcp_help",
+    "GCP help",
     [
         Cmd(
             "down",
