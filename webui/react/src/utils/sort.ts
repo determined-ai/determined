@@ -12,6 +12,8 @@ const runStateSortValues: Record<RunState, number> = {
   [RunState.StoppingCanceled]: 6,
   [RunState.Canceled]: 7,
   [RunState.Deleted]: 7,
+  [RunState.Deleting]: 7,
+  [RunState.DeleteFailed]: 7,
   [RunState.Unspecified]: 8,
 };
 

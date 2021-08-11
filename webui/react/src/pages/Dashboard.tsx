@@ -43,7 +43,7 @@ const countActiveCommand = (commands: CommandTask[]): number => {
 };
 
 const Dashboard: React.FC = () => {
-  const { cluster: overview, users } = useStore();
+  const { cluster: overview, users, auth: { user } } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
@@ -200,7 +200,10 @@ const Dashboard: React.FC = () => {
         {filteredTasks.length !== 0
           ? (
             <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>
-              {filteredTasks.map((props: RecentTask) => <TaskCard key={props.id} {...props} />)}
+              {filteredTasks.map((props: RecentTask) => <TaskCard
+                curUser={user}
+                key={props.id}
+                {...props} />)}
             </Grid>
           ) : <Message
             title="No recent tasks matching the current filters"

@@ -60,23 +60,34 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
-		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{MasterSetAgentOptions: a.opts}})
+		wsm := ws.WriteMessage{Message: aproto.AgentMessage{MasterSetAgentOptions: a.opts}}
+		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+			ctx.Log().WithError(err).Error("failed to write master set agent options")
+		}
 	case sproto.KillTaskContainer:
 		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
 		}
-		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}})
+		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}}
+		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+			ctx.Log().WithError(err).Error("failed to write kill task message")
+		}
 	case aproto.SignalContainer:
-		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
+		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}}
+		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+			ctx.Log().WithError(err).Error("failed to write signal container message")
+		}
 	case sproto.StartTaskContainer:
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
 			msg.TaskActor.Address())
 
-		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{
-			StartContainer: &msg.StartContainer,
-		}})
+		wsm := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
+		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
+			// TODO(DET-5862): After push arch, return and handle this error when starting allocations.
+			ctx.Log().WithError(err).Error("failed to write start container message")
+		}
 		ctx.Tell(a.slots, msg.StartContainer)
 		a.containers[msg.Container.ID] = msg.TaskActor
 	case aproto.MasterMessage:

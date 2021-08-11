@@ -110,6 +110,10 @@ export const unarchiveExperiment = generateDetApi<
   ExperimentIdParams, Api.V1UnarchiveExperimentResponse, void
 >(Config.unarchiveExperiment);
 
+export const deleteExperiment = generateDetApi<
+  ExperimentIdParams, Api.V1DeleteExperimentResponse, void
+>(Config.deleteExperiment);
+
 export const activateExperiment = generateDetApi<
   ExperimentIdParams, Api.V1ActivateExperimentResponse, void
 >(Config.activateExperiment);

@@ -65,6 +65,10 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 	grpcS := grpc.NewServer(
 		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(streamInterceptors...)),
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(unaryInterceptors...)),
+		// Allow receiving messages _slightly_ larger than the maximum allowed context
+		// directory. We should either just move these back to echo or have a chunker for
+		// .tar.gz files long term.
+		grpc.MaxRecvMsgSize(96*1024*1024),
 	)
 	proto.RegisterDeterminedServer(grpcS, srv)
 	return grpcS

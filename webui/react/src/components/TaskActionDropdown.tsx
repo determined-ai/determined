@@ -1,6 +1,7 @@
 import { isNumber } from 'util';
 
-import { Dropdown, Menu } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Dropdown, Menu, Modal } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
@@ -8,10 +9,10 @@ import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, killExperiment, killTask,
-  openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
+  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { AnyTask, CommandTask, ExperimentTask, RunState } from 'types';
+import { AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
@@ -24,6 +25,7 @@ export enum Action {
   Activate = 'activate',
   Archive = 'archive',
   Cancel = 'cancel',
+  Delete = 'delete',
   Kill = 'kill',
   Pause = 'pause',
   Tensorboard = 'tensorboard',
@@ -31,13 +33,14 @@ export enum Action {
 }
 
 interface Props {
+  curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   task: AnyTask;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
+const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Props) => {
   const id = isNumber(task.id) ? task.id : parseInt(task.id);
   const isExperiment = isExperimentTask(task);
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
@@ -50,6 +53,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
+  const isDeletable = curUser?.isAdmin && isExperimentTask(task) ?
+    terminalRunStates.has(task.state) : false;
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -90,6 +95,22 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           if (!isExperiment) break;
           await unarchiveExperiment({ experimentId: id });
           if (onComplete) onComplete(action);
+          break;
+        case Action.Delete:
+          if (!isExperiment) break;
+          Modal.confirm({
+            content: `
+            Are you sure you want to delete
+            experiment ${id}?
+          `,
+            icon: <ExclamationCircleOutlined />,
+            okText: 'Delete',
+            onOk: async () => {
+              await deleteExperiment({ experimentId: id });
+              if (onComplete) onComplete(action);
+            },
+            title: 'Confirm Experiment Deletion',
+          });
       }
     } catch (e) {
       handleError({
@@ -112,6 +133,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isUnarchivable) menuItems.push(<Menu.Item key={Action.Unarchive}>Unarchive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key={Action.Cancel}>Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
+  if (isDeletable) menuItems.push(<Menu.Item key={Action.Delete}>Delete</Menu.Item>);
   if (isExperiment) {
     menuItems.push(<Menu.Item key={Action.Tensorboard}>View in TensorBoard</Menu.Item>);
   } else {
