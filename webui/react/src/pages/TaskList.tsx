@@ -58,7 +58,6 @@ interface SourceInfo {
 }
 
 const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
-const settingsBasePath = paths.taskList();
 
 const TaskList: React.FC = () => {
   const { users } = useStore();
@@ -67,10 +66,12 @@ const TaskList: React.FC = () => {
   const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
-  const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
-    settingsConfig,
-    settingsBasePath,
-  );
+  const {
+    activeSettings,
+    resetSettings,
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchUsers = useFetchUsers(canceler);
 

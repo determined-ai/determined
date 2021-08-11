@@ -180,7 +180,7 @@ const getNewQueryPath = (
   return `${basePath}?${cleanQuery}&${newQuery}`;
 };
 
-const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<T> => {
+const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(config.storagePath);
@@ -250,9 +250,9 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
 
     // Update path with new and validated settings.
     const query = settingsToQuery(config, { ...clone(settings), ...querySettings });
-    const path = getNewQueryPath(config, basePath, location.search, query);
+    const path = getNewQueryPath(config, location.pathname, location.search, query);
     push ? history.push(path) : history.replace(path);
-  }, [ config, configMap, basePath, history, location.search, settings, storage ]);
+  }, [ config, configMap, history, location.pathname, location.search, settings, storage ]);
 
   const resetSettings = useCallback((keys?: string[]) => {
     const newSettings = config.settings.reduce((acc, prop) => {
@@ -273,7 +273,7 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
      */
     const currentQuery = settingsToQuery(config, settings);
     if (!isSameQuery(config, location.search, currentQuery)) {
-      history.replace(`${basePath}?${currentQuery}`);
+      history.replace(`${location.pathname}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
       setSettings(prevSettings => {
@@ -282,7 +282,7 @@ const useSettings = <T>(config: SettingsConfig, basePath: string): SettingsHook<
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }
-  }, [ basePath, config, history, location.search, prevSearch, settings, storage ]);
+  }, [ config, history, location.pathname, location.search, prevSearch, settings, storage ]);
 
   return { activeSettings, resetSettings, settings, updateSettings };
 };
