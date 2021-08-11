@@ -83,7 +83,7 @@ const waitFor = async (
     return timeoutError;
   });
   let lastStatus = undefined;
-  const runSafely = async (fn: () => Eventually<unknown | Error>) => {
+  const runSafely = async (fn: () => Eventually<unknown | Error>): Promise<unknown> => {
     try {
       const result = await fn();
       return result;
@@ -92,14 +92,16 @@ const waitFor = async (
     }
   };
   while (true) {
-    const rv = await runSafely(() => Promise.race([timeoutPromise, runSafely(throwableFn)]));
-    if (rv instanceof Error) {
-      if (rv === timeoutError) {
+    const raceResult = await runSafely(() =>
+      Promise.race([timeoutPromise, runSafely(throwableFn)]),
+    );
+    if (raceResult instanceof Error) {
+      if (raceResult === timeoutError) {
         throw lastStatus || timeoutError;
       }
-      lastStatus = rv;
+      lastStatus = raceResult;
     } else {
-      return rv;
+      return raceResult;
     }
   }
 };
