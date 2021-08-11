@@ -19,11 +19,14 @@ interface Props {
   colorScale?: ColorScale[];
   experimentId: number;
   filteredTrialIdMap?: Record<number, boolean>;
+  handleTableRowSelect?: (rowKeys: unknown) => void;
   highlightedTrialId?: number;
   hyperparameters: HyperparametersFlattened;
   metric: MetricName;
   onMouseEnter?: (event: React.MouseEvent, record: TrialHParams) => void;
   onMouseLeave?: (event: React.MouseEvent, record: TrialHParams) => void;
+  selectedRowKeys?: number[];
+  selection?: boolean;
   trialHps: TrialHParams[];
   trialIds: number[];
 }
@@ -45,6 +48,9 @@ const HpTrialTable: React.FC<Props> = ({
   trialHps,
   trialIds,
   experimentId,
+  selection,
+  handleTableRowSelect,
+  selectedRowKeys,
 }: Props) => {
   const [ pageSize, setPageSize ] = useState(MINIMUM_PAGE_SIZE);
 
@@ -154,6 +160,11 @@ const HpTrialTable: React.FC<Props> = ({
       pagination={getPaginationConfig(dataSource.length, pageSize)}
       rowClassName={rowClassName}
       rowKey="id"
+      rowSelection={selection ? {
+        onChange: handleTableRowSelect,
+        preserveSelectedRowKeys: true,
+        selectedRowKeys,
+      } : undefined}
       scroll={{ x: 1000 }}
       showSorterTooltip={false}
       size="small"
