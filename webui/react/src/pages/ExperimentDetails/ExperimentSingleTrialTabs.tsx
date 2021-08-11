@@ -8,7 +8,7 @@ import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails } from 'services/api';
-import { ExperimentBase, RunState, TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
 import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparameters';
@@ -53,7 +53,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
-  const [ hasLoaded, setHasLoaded ] = useState(false);
 
   const basePath = paths.experimentDetails(experiment.id);
   const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
@@ -105,7 +104,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     try {
       const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
       setTrialDetails(response);
-      setHasLoaded(true);
     } catch (e) {
       handleError({
         error: e,
@@ -132,11 +130,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   }, [ trialId, stopPollingFirstTrialId, wontHaveTrials ]);
 
   useEffect(() => {
-    const isPaused = experiment.state === RunState.Paused;
-    setHasLoaded(!!trialDetails || isPaused || terminalRunStates.has(experiment.state));
-  }, [ experiment.state, trialDetails ]);
-
-  useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
@@ -151,10 +144,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   useEffect(() => {
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
-
-  if (!hasLoaded) return <Spinner tip={ trialId === undefined ?
-    'Waiting for trial...' : `Fetching trial ${trialId} details...`
-  } />;
 
   return (
     <>
