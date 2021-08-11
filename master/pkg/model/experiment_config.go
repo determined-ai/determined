@@ -197,11 +197,25 @@ func (d *DevicesConfig) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
 		return errors.Wrap(err, "failed to parse devices")
 	}
-	*d = append(*d, unmarshaled...)
+
+	// Prevent duplicate container paths as a result of the merge.  Prefer the unmarshaled devices
+	// to the old ones since with this unmarshaling strategy we always unmarshal in order of
+	// increasing priority.
+	paths := map[string]bool{}
+	for _, device := range unmarshaled {
+		paths[device.ContainerPath] = true
+	}
+	for _, device := range *d {
+		if _, ok := paths[device.ContainerPath]; !ok {
+			unmarshaled = append(unmarshaled, device)
+		}
+	}
+
+	*d = unmarshaled
 	return nil
 }
 
-// DeviceConfig configures trial runner filesystem bind mounts.
+// DeviceConfig configures container device access.
 type DeviceConfig struct {
 	HostPath      string `json:"host_path"`
 	ContainerPath string `json:"container_path"`
@@ -312,7 +326,21 @@ func (b *BindMountsConfig) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &unmarshaled); err != nil {
 		return errors.Wrap(err, "failed to parse bind mounts")
 	}
-	*b = append(*b, unmarshaled...)
+
+	// Prevent duplicate container paths as a result of the merge.  Prefer the unmarshaled bind
+	// mounts to the old ones since with this unmarshaling strategy we always unmarshal in order of
+	// increasing priority.
+	paths := map[string]bool{}
+	for _, mount := range unmarshaled {
+		paths[mount.ContainerPath] = true
+	}
+	for _, mount := range *b {
+		if _, ok := paths[mount.ContainerPath]; !ok {
+			unmarshaled = append(unmarshaled, mount)
+		}
+	}
+
+	*b = unmarshaled
 	return nil
 }
 
