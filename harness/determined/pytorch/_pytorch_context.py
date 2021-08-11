@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined import pytorch
+from determined import profiler, pytorch
 from determined.common import check
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
@@ -267,6 +267,9 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             **kwargs,
         )
 
+    def _set_determined_profiler(self, prof: profiler.ProfilerAgent) -> None:
+        self.determined_profiler = prof
+
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
         of all the named parameters from a specified model. We need this function because
@@ -299,7 +302,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        return pytorch.to_device(data, self.device, self._to_device_warned_types)
+        with self.determined_profiler.record_timing("to_device", accumulate=True):
+            return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def wrap_scaler(self, scaler: Any) -> Any:
         """
@@ -523,9 +527,12 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             with apex.amp.scale_loss(
                 loss, self.optimizers, loss_id=self._loss_ids[loss]
             ) as scaled_loss:
-                scaled_loss.backward(
-                    gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
-                )
+                with self.determined_profiler.record_timing(
+                    "train_batch.backward", accumulate=True
+                ):
+                    scaled_loss.backward(
+                        gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
+                    )
 
                 if self.hvd_config.use and self._should_communicate_and_update():
                     # When we exit out of this context manager, we need to finish
@@ -537,17 +544,21 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     # multiple backward passes on one loss. A long-term solution is
                     # to integrate torch native AMP (https://pytorch.org/docs/stable/amp.html),
                     # which will come out soon.
-                    for optimizer in self.optimizers:
-                        optimizer.synchronize()  # type: ignore
+                    with self.determined_profiler.record_timing(
+                        "train_batch.sync_optimizers", accumulate=True
+                    ):
+                        for optimizer in self.optimizers:
+                            optimizer.synchronize()  # type: ignore
         else:
             if self._scaler and self.experimental._auto_amp:
                 loss = self._scaler.scale(loss)
 
-            loss.backward(  # type: ignore
-                gradient=gradient,
-                retain_graph=retain_graph,
-                create_graph=create_graph,
-            )
+            with self.determined_profiler.record_timing("train_batch.backward", accumulate=True):
+                loss.backward(  # type: ignore
+                    gradient=gradient,
+                    retain_graph=retain_graph,
+                    create_graph=create_graph,
+                )
 
     def _average_gradients(self, parameters: Any, divisor: int) -> None:
         check.gt_eq(divisor, 1)
@@ -613,7 +624,10 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
         if self.hvd_config.use and not self._use_apex:
-            optimizer.synchronize()  # type: ignore
+            with self.determined_profiler.record_timing(
+                "train_batch.sync_optimizers", accumulate=True
+            ):
+                optimizer.synchronize()  # type: ignore
 
         parameters = (
             [p for group in optimizer.param_groups for p in group.get("params", [])]
