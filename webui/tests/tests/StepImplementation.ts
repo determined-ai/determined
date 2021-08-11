@@ -74,13 +74,16 @@ const sleep = (ms = 1000) => {
 };
 
 // waitFor that takes a throwable function instead of a predicate compared to t.waitFor
-const waitFor = async (throwableFn: () => Eventually<void | Error>, timeout = TIMEOUT) => {
-  let timeOver = false;
-  let timeoutPromise = sleep(timeout).then(() => {
-    timeOver = true;
+const waitFor = async (
+  throwableFn: () => Eventually<unknown | Error>,
+  timeout = TIMEOUT,
+): Promise<unknown> => {
+  const timeoutError = new Error('timeout');
+  const timeoutPromise = sleep(timeout).then(() => {
+    return timeoutError;
   });
   let lastStatus = undefined;
-  const runSafely = async (fn) => {
+  const runSafely = async (fn: () => Eventually<unknown | Error>) => {
     try {
       const result = await fn();
       return result;
@@ -88,15 +91,17 @@ const waitFor = async (throwableFn: () => Eventually<void | Error>, timeout = TI
       return e;
     }
   };
-  while (lastStatus === undefined && !timeOver) {
+  while (true) {
     const rv = await runSafely(() => Promise.race([timeoutPromise, runSafely(throwableFn)]));
     if (rv instanceof Error) {
+      if (rv === timeoutError) {
+        throw lastStatus || timeoutError;
+      }
       lastStatus = rv;
     } else {
       return rv;
     }
   }
-  return lastStatus;
 };
 
 /*
