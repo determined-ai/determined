@@ -88,17 +88,15 @@ const waitFor = async (throwableFn: () => Eventually<void | Error>, timeout = TI
       return e;
     }
   };
-  while (true) {
+  while (lastStatus === undefined && !timeOver) {
     const rv = await runSafely(() => Promise.race([timeoutPromise, runSafely(throwableFn)]));
-    if (!(rv instanceof Error)) {
-      return rv;
-    } else {
+    if (rv instanceof Error) {
       lastStatus = rv;
-    }
-    if (timeOver) {
-      return lastStatus;
+    } else {
+      return rv;
     }
   }
+  return lastStatus;
 };
 
 /*
