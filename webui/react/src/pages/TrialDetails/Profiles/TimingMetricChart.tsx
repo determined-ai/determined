@@ -30,7 +30,7 @@ const TimingMetricChart: React.FC<Props> = ({ timingMetrics }: Props) => {
             return factor ? Math.min(70, (plotDim / factor)) : 35;
           },
         },
-        { label: 'Milliseconds' },
+        { label: 'Seconds' },
       ],
       height: CHART_HEIGHT,
       scales: { x: { time: false } },
