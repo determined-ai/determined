@@ -32,7 +32,6 @@
 
     /* Prevent user resizing, which ruins auto sizing. */
     resize: none;
-    transition: border-color 0.2s;
   }
   .growWrap > textarea,
   .growWrap::after {
