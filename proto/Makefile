@@ -35,7 +35,7 @@ get-deps:
 	go install google.golang.org/grpc
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-	go get github.com/swaggo/swag/cmd/swag
+	go get github.com/swaggo/swag/cmd/swag@v1.7.0
 
 build/proto.stamp: $(source_files)
 	rm -rf build/proto pkg
