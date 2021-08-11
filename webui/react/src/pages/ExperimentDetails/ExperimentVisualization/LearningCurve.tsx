@@ -245,6 +245,7 @@ const LearningCurve: React.FC<Props> = ({
             highlightedTrialId={highlightedTrialId}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
+            selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}
             trialIds={trialIds}
