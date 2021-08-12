@@ -20,6 +20,20 @@
     padding-left: var(--theme-sizes-layout-small);
     text-overflow: ellipsis;
   }
+}
+.trial {
+  margin-top: var(--theme-sizes-layout-medium);
+}
+.state {
+  border-radius: 100px;
+  display: inline-flex;
+  font-size: var(--theme-sizes-font-micro);
+  font-weight: 600;
+  margin-right: var(--theme-sizes-layout-medium);
+  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+  text-transform: uppercase;
+  vertical-align: top;
+}
 
   @media only screen and (max-width: $breakpoint-tablet) {
     align-items: flex-start;
