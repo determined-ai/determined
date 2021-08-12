@@ -14,9 +14,16 @@ clean-test-artifacts:
 clean: clean-test-artifacts
 	rm -rf node_modules/
 
-.PHONY: test
-test:
+.PHONY: test-unit
+test-unit:
+	npx jest tests
+
+.PHONY: test-e2e
+test-e2e: 
 	python ./bin/e2e-tests.py e2e-tests
+
+.PHONY: test
+test: test-unit test-e2e
 
 .PHONY: check
 check:

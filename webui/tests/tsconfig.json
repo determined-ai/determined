@@ -15,7 +15,7 @@
         /* add experimental taiko TypeScript Type Definition folder to the project */
         "typeRoots": ["node_modules/@types", "node_modules/taiko/types"],
         /* use taiko types in the project */
-        "types": ["node", "taiko"]
+        "types": ["node", "taiko", "jest"]
     },
     "exclude": [
         "node_modules",
