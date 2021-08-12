@@ -43,8 +43,14 @@ const settingsConfig: SettingsConfig = {
 const menuConfig = {
   bottom: [
     { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
-    { icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
-    { icon: 'cloud', label: 'API (Beta)', path: paths.docs('/rest-api/'), popout: true },
+    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+    {
+      external: true,
+      icon: 'cloud',
+      label: 'API (Beta)',
+      path: paths.docs('/rest-api/'),
+      popout: true,
+    },
   ],
   top: [
     { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
