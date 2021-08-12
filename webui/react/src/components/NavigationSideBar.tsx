@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
-import useStorage from 'hooks/useStorage';
+import { useStore } from 'contexts/Store';
+import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { ResourceType } from 'types';
 
@@ -20,10 +20,47 @@ interface ItemProps extends LinkProps {
   icon: string;
   label: string;
   status?: string;
+  tooltip?: boolean;
 }
 
+interface Settings {
+  navbarCollapsed: boolean;
+}
+
+const settingsConfig: SettingsConfig = {
+  settings: [
+    {
+      defaultValue: false,
+      key: 'navbarCollapsed',
+      skipUrlEncoding: true,
+      storageKey: 'navbarCollapsed',
+      type: { baseType: BaseType.Boolean },
+    },
+  ],
+  storagePath: 'navigation',
+};
+
+const menuConfig = {
+  bottom: [
+    { icon: 'logs', label: 'Master Logs', path: paths.masterLogs() },
+    { external: true, icon: 'docs', label: 'Docs', path: paths.docs(), popout: true },
+    {
+      external: true,
+      icon: 'cloud',
+      label: 'API (Beta)',
+      path: paths.docs('/rest-api/'),
+      popout: true,
+    },
+  ],
+  top: [
+    { icon: 'dashboard', label: 'Dashboard', path: paths.dashboard() },
+    { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
+    { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
+    { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+  ],
+};
+
 const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
-  const { ui } = useStore();
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
@@ -41,21 +78,17 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
     </Link>
   );
 
-  return ui.chromeCollapsed ? (
+  return props.tooltip ? (
     <Tooltip placement="right" title={props.label}><div>{link}</div></Tooltip>
   ) : link;
 };
-
-const STORAGE_KEY = 'collapsed';
 
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
   const { auth, cluster: overview, ui } = useStore();
-  const storeDispatch = useStoreDispatch();
-  const storage = useStorage('navigation');
-  const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ showNotebookModal, setShowNotebookModal ] = useState(false);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -66,15 +99,8 @@ const NavigationSideBar: React.FC = () => {
     undefined : `${overview[ResourceType.ALL].allocation}%`;
 
   const handleCollapse = useCallback(() => {
-    const newCollapsed = !isCollapsed;
-    storage.set(STORAGE_KEY, newCollapsed);
-    setIsCollapsed(newCollapsed);
-  }, [ isCollapsed, storage ]);
-
-  useEffect(() => {
-    const type = isCollapsed ? StoreAction.CollapseUIChrome : StoreAction.ExpandUIChrome;
-    storeDispatch({ type });
-  }, [ isCollapsed, storeDispatch ]);
+    updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
+  }, [ settings.navbarCollapsed, updateSettings ]);
 
   if (!showNavigation) return null;
 
@@ -83,8 +109,8 @@ const NavigationSideBar: React.FC = () => {
       appear={true}
       classNames={{
         appear: css.collapsedAppear,
-        appearActive: isCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
-        appearDone: isCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
+        appearActive: settings.navbarCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+        appearDone: settings.navbarCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
         enter: css.collapsedEnter,
         enterActive: css.collapsedEnterActive,
         enterDone: css.collapsedEnterDone,
@@ -92,7 +118,7 @@ const NavigationSideBar: React.FC = () => {
         exitActive: css.collapsedExitActive,
         exitDone: css.collapsedExitDone,
       }}
-      in={isCollapsed}
+      in={settings.navbarCollapsed}
       nodeRef={nodeRef}
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
@@ -117,12 +143,13 @@ const NavigationSideBar: React.FC = () => {
               <Button
                 className={css.launchButton}
                 onClick={() => setShowNotebookModal(true)}>Launch JupyterLab</Button>
-              {isCollapsed?
+              {settings.navbarCollapsed ? (
                 <Button className={css.launchIcon} onClick={() => setShowNotebookModal(true)}>
                   <Icon
                     name={'add-small'}
                     size="tiny" />
-                </Button> : null}
+                </Button>
+              ) : null}
             </div>
             <NotebookModal
               visible={showNotebookModal}
@@ -130,27 +157,27 @@ const NavigationSideBar: React.FC = () => {
               onLaunch={() => setShowNotebookModal(false)} />
           </section>
           <section className={css.top}>
-            <NavigationItem icon="dashboard" label="Dashboard" path={paths.dashboard()} />
-            <NavigationItem icon="experiment" label="Experiments" path={paths.experimentList()} />
-            <NavigationItem icon="tasks" label="Tasks" path={paths.taskList()} />
-            <NavigationItem
-              icon="cluster"
-              label="Cluster"
-              path={paths.cluster()}
-              status={cluster} />
-            <NavigationItem icon="logs" label="Master Logs" path={paths.masterLogs()} />
+            {menuConfig.top.map(config => (
+              <NavigationItem
+                key={config.icon}
+                status={config.icon === 'cluster' ? cluster : undefined}
+                tooltip={settings.navbarCollapsed}
+                {...config}
+              />
+            ))}
           </section>
           <section className={css.bottom}>
-            <NavigationItem external icon="docs" label="Docs" path={paths.docs()} popout />
+            {menuConfig.bottom.map(config => (
+              <NavigationItem
+                key={config.icon}
+                tooltip={settings.navbarCollapsed}
+                {...config}
+              />
+            ))}
             <NavigationItem
-              external
-              icon="cloud"
-              label="API (Beta)"
-              path={paths.docs('/rest-api/')}
-              popout />
-            <NavigationItem
-              icon={isCollapsed ? 'expand' : 'collapse'}
-              label={isCollapsed ? 'Expand' : 'Collapse'}
+              icon={settings.navbarCollapsed ? 'expand' : 'collapse'}
+              label={settings.navbarCollapsed ? 'Expand' : 'Collapse'}
+              tooltip={settings.navbarCollapsed}
               onClick={handleCollapse} />
           </section>
         </main>
@@ -161,8 +188,8 @@ const NavigationSideBar: React.FC = () => {
                 <Link path={paths.logout()}>Sign Out</Link>
               </Menu.Item>
             </Menu>}
-            offset={isCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
-            placement={isCollapsed ? Placement.Right : Placement.TopLeft}>
+            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
+            placement={settings.navbarCollapsed ? Placement.Right : Placement.TopLeft}>
             <div className={css.user}>
               <Avatar hideTooltip name={username} />
               <span>{username}</span>
