@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
 import Icon from 'components/Icon';
-import InlineTextEdit from 'components/InlineTextEdit';
+import InlineEditor from 'components/InlineEditor';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -83,6 +83,23 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         message: e.message,
         publicMessage: 'Please try again later.',
         publicSubject: 'Unable to update experiment description.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  const handleNameUpdate = useCallback(async (newValue: string) => {
+    try {
+      await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment name.',
         silent: false,
         type: ErrorType.Server,
       });
@@ -190,38 +207,53 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   return (
     <>
       <PageHeaderFoldable
-        foldableContent={<>
-          <div className={css.foldableItem}>
-            <span className={css.foldableItemLabel}>Description:</span>
-            <InlineTextEdit
-              setValue={handleDescriptionUpdate}
-              value={experiment.description || ''}
+        foldableContent={
+          <div className={css.foldableSection}>
+            <div className={css.foldableItem}>
+              <span className={css.foldableItemLabel}>Description:</span>
+              <InlineEditor
+                allowNewline
+                isOnDark
+                maxLength={500}
+                placeholder="experiment description"
+                value={experiment.description || ''}
+                onSave={handleDescriptionUpdate} />
+            </div>
+            <div className={css.foldableItem}>
+              <span className={css.foldableItemLabel}>Start Time:</span>
+              <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
+                <TimeAgo datetime={new Date(experiment.startTime)} />
+              </Tooltip>
+            </div>
+            {experiment.endTime != null && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Duration:</span>
+                {shortEnglishHumannizer(getDuration(experiment))}
+              </div>
+            )}
+            <TagList
+              ghost={true}
+              tags={experiment.config.labels || []}
+              onChange={experimentTags.handleTagListChange(experiment.id)}
             />
           </div>
-          <div className={css.foldableItem}>
-            <span className={css.foldableItemLabel}>Start Time:</span>
-            <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
-              <TimeAgo datetime={new Date(experiment.startTime)} />
-            </Tooltip>
-          </div>
-          {experiment.endTime != null && (
-            <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Duration:</span>
-              {shortEnglishHumannizer(getDuration(experiment))}
+        }
+        leftContent={
+          <div className={css.base}>
+            <div className={css.experimentInfo}>
+              <ExperimentState experiment={experiment} />
+              <div className={css.experimentId}>Experiment {experiment.id}</div>
             </div>
-          )}
-          <TagList
-            ghost={true}
-            tags={experiment.config.labels || []}
-            onChange={experimentTags.handleTagListChange(experiment.id)}
-          />
-        </>}
-        leftContent={<>
-          <ExperimentState experiment={experiment} />
-          <div className={css.experimentTitle}>
-            Experiment {experiment.id} | <span>{experiment.name}</span>
+            <div className={css.experimentName}>
+              <InlineEditor
+                isOnDark
+                maxLength={128}
+                placeholder="experiment name"
+                value={experiment.name}
+                onSave={handleNameUpdate} />
+            </div>
           </div>
-        </>}
+        }
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
       />

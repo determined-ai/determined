@@ -115,6 +115,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
   body: Partial<{
     description: string,
     labels: string[],
+    name: string,
   }>
 }
 
