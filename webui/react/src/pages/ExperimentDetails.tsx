@@ -105,6 +105,7 @@ const ExperimentDetails: React.FC = () => {
         fetchExperimentDetails={fetchExperimentDetails}
         showContinueTrial={trial ? showContinueTrial : undefined}
         showForkModal={showForkModal}
+        trial={trial}
       />}
       stickyHeader
       title={`Experiment ${experimentId}`}>

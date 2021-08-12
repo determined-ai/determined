@@ -17,7 +17,7 @@ import {
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { DetailedUser, ExperimentBase, RecordKey, RunState } from 'types';
+import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
@@ -30,6 +30,7 @@ interface Props {
   fetchExperimentDetails: () => void;
   showContinueTrial?: () => void;
   showForkModal?: () => void;
+  trial?: TrialDetails;
 }
 
 const ExperimentDetailsHeader: React.FC<Props> = ({
@@ -38,6 +39,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   showContinueTrial,
   showForkModal,
+  trial,
 }: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
   const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
@@ -239,20 +241,45 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           </div>
         }
         leftContent={
-          <div className={css.base}>
-            <div className={css.experimentInfo}>
-              <ExperimentState experiment={experiment} />
-              <div className={css.experimentId}>Experiment {experiment.id}</div>
+          trial ? (
+            <div className={css.base}>
+              <div className={css.experimentInfo}>
+                <div className={css.experimentId}>Experiment {experiment.id}</div>
+              </div>
+              <div className={css.experimentName}>
+                <InlineEditor
+                  isOnDark
+                  maxLength={128}
+                  placeholder="experiment name"
+                  value={experiment.name}
+                  onSave={handleNameUpdate} />
+              </div>
+              <Icon name="arrow-right" size="tiny" />
+              <div className={css.trial}>
+                <div
+                  className={css.state}
+                  style={{ backgroundColor: getStateColorCssVar(trial.state) }}>
+                  {trial.state}
+                </div>
+              Trial {trial.id}
+              </div>
             </div>
-            <div className={css.experimentName}>
-              <InlineEditor
-                isOnDark
-                maxLength={128}
-                placeholder="experiment name"
-                value={experiment.name}
-                onSave={handleNameUpdate} />
+          ) : (
+            <div className={css.base}>
+              <div className={css.experimentInfo}>
+                <ExperimentState experiment={experiment} />
+                <div className={css.experimentId}>Experiment {experiment.id}</div>
+              </div>
+              <div className={css.experimentName}>
+                <InlineEditor
+                  isOnDark
+                  maxLength={128}
+                  placeholder="experiment name"
+                  value={experiment.name}
+                  onSave={handleNameUpdate} />
+              </div>
             </div>
-          </div>
+          )
         }
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
