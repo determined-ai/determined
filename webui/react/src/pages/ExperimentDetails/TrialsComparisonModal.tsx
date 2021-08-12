@@ -8,7 +8,8 @@ import HumanReadableFloat from 'components/HumanReadableFloat';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { getTrialDetails } from 'services/api';
-import { CheckpointState, CheckpointWorkload, ExperimentBase,
+import { CheckpointState, CheckpointWorkload,
+  CheckpointWorkloadExtended, ExperimentBase,
   MetricName, MetricsWorkload, MetricType, TrialDetails } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
