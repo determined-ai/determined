@@ -67,14 +67,14 @@ const goto = async (url: string) => {
 
 type Eventually<T> = T | Promise<T>;
 
-const sleep = (ms = 1000) => {
+export const sleep = (ms = 1000) => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 };
 
 // waitFor that takes a throwable function instead of a predicate compared to t.waitFor
-const waitFor = async (
+export const waitFor = async (
   throwableFn: () => Eventually<unknown | Error>,
   timeout = TIMEOUT,
 ): Promise<unknown> => {
