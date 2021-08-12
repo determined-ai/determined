@@ -1,4 +1,4 @@
-import { Tag, Tooltip } from 'antd';
+import { Select, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +16,8 @@ import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial'
 import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
+
+const { Option } = Select;
 
 interface ModalProps {
   experiment: ExperimentBase;
@@ -58,6 +60,8 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
+  const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<string[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -111,6 +115,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
 
+  useEffect(() => {
+    setSelectedMetrics(metricNames.map(metric => metric.name));
+  }, [ metricNames ]);
+
+  const onMetricSelect = useCallback((selectedMetrics) => {
+    setSelectedMetrics(selectedMetrics);
+  }, []);
+
   const extractLatestMetrics = useCallback((
     metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
     workload: MetricsWorkload,
@@ -158,6 +170,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     () => Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
     [ trials, trialsDetails ],
   );
+
+  useEffect(() => {
+    setSelectedHyperparameters(hyperparameterNames);
+  }, [ hyperparameterNames ]);
+
+  const onHyperparameterSelect = useCallback((selectedHPs) => {
+    setSelectedHyperparameters(selectedHPs);
+  }, []);
 
   const isLoaded = useMemo(
     () => trials.every(trialId => trialsDetails[trialId])
