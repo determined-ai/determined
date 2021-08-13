@@ -42,6 +42,8 @@ def main(
                 int(env.det_trial_id),
                 env.trial_run_id,
                 int(env.det_experiment_id),
+                None,
+                None,
             )
             training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             logging.info("InvalidHP detected during Trial init, worker is exiting")

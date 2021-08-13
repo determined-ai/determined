@@ -1,9 +1,11 @@
+import logging
+import math
 import sys
 from typing import Any, Generator, Optional, Tuple
 
 import determined as det
-from determined import _generic, workload
-from determined.common import check
+from determined import _generic, tensorboard, workload
+from determined.common import check, constants
 from determined.experimental import client
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
@@ -13,7 +15,7 @@ WorkloadGenerator = Generator[WorkloadStreamElem, None, None]
 
 def yield_and_await_response(
     wkld: workload.Workload,
-) -> Generator[WorkloadStreamElem, None, workload.Metrics]:
+) -> Generator[WorkloadStreamElem, None, workload.Response]:
     """
     rb: I didn't know that generators could return meaningful values when I designed the layers
     abstraction of the harness.  If I had, I would have used it all over, most likely in place of
@@ -26,10 +28,9 @@ def yield_and_await_response(
     whole harness is getting refactored with push architecture, and the layers will be a thing of
     the past.
     """
-    out: Optional[workload.Metrics] = None
+    out: Optional[workload.Response] = None
 
     def respond(r: workload.Response) -> None:
-        assert not isinstance(r, workload.Skipped)
         nonlocal out
         out = r
 
@@ -44,6 +45,9 @@ class ShouldExit(Exception):
     """
     ShouldExit breaks out of the top-level workload sequencer loop from inside function calls.
     """
+
+    def __init__(self, skip_exit_checkpoint: bool = False):
+        self.skip_exit_checkpoint = skip_exit_checkpoint
 
     pass
 
@@ -95,10 +99,22 @@ class WorkloadSequencer(workload.Source):
         self._trial_id = int(env.det_trial_id)
         self._allocation_id = env.allocation_id
         self._exp_id = int(env.det_experiment_id)
-        self.training = _generic.Training(session, self._trial_id, self._run_id, self._exp_id)
+
+        tbd_mgr = tensorboard.build(
+            env.det_cluster_id,
+            env.det_experiment_id,
+            env.det_trial_id,
+            env.experiment_config["checkpoint_storage"],
+            container_path=None if not env.on_cluster else constants.SHARED_FS_CONTAINER_PATH,
+        )
+        tbd_writer = tensorboard.get_metric_writer()
+        self.training = _generic.Training(
+            session, self._trial_id, self._run_id, self._exp_id, tbd_mgr, tbd_writer
+        )
+
         api_path = f"/api/v1/trials/{self._trial_id}/checkpoint_metadata"
         static_metadata = {"trial_id": self._trial_id, "trial_run_id": self._run_id}
-        self.checkpointing = _generic.Checkpointing(session, api_path, static_metadata)
+        self.checkpointing = _generic.Checkpointing(session, api_path, static_metadata, tbd_mgr)
 
         self.val_from_previous_run = self.training.get_last_validation()
 
@@ -185,8 +201,7 @@ class WorkloadSequencer(workload.Source):
 
         # Train step is complete, process the result.
 
-        exited_reason = response.get("exited_reason")
-        if exited_reason == "INVALID_HP":
+        if isinstance(response, workload.InvalidHP):
             # Exit before reporting metrics (which would be empty anyway).
             self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
@@ -212,7 +227,7 @@ class WorkloadSequencer(workload.Source):
         else:
             raise ValueError(f"unrecognized searcher op unit: {op.unit}")
 
-        if response.get("exited_reason") == "USER_CANCELED":
+        if response.get("stop_requested"):
             # Exit after reporting metrics.
             raise ShouldExit()
 
@@ -241,12 +256,36 @@ class WorkloadSequencer(workload.Source):
 
         # Validation step is complete, process the result.
 
-        exited_reason = response.get("exited_reason")
-        if exited_reason == "INVALID_HP":
+        if isinstance(response, workload.InvalidHP):
             self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response["metrics"]["validation_metrics"]
+
+        # Check that the validation metrics computed by the model code
+        # includes the metric used by the search method.
+        searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
+        if searcher_metric_name not in metrics:
+            raise RuntimeError(
+                f"Search method is configured to use metric '{searcher_metric_name}' but model "
+                f"definition returned validation metrics {list(metrics.keys())}. The metric "
+                "used by the search method must be one of the validation "
+                "metrics returned by the model definition."
+            )
+
+        # Check that the searcher metric has a scalar value so that it can be compared for
+        # search purposes. Other metrics don't have to be scalars.
+        searcher_metric = metrics[searcher_metric_name]
+        if not tensorboard.metric_writers.util.is_numerical_scalar(searcher_metric):
+            raise RuntimeError(
+                f"Searcher validation metric '{searcher_metric_name}' returned "
+                f"a non-scalar value: {searcher_metric}"
+            )
+
+        if math.isnan(searcher_metric):
+            raise RuntimeError(
+                f"Searcher validation metric '{searcher_metric_name}' returned a NaN value"
+            )
 
         # Report to the searcher API first, so we don't end up in a situation where we die between
         # reporting to the metrics API and when we come back we refuse to repeat a validation, but
@@ -260,8 +299,6 @@ class WorkloadSequencer(workload.Source):
         #   - checkpoint
         #
         # But we can't do that without breaking behavior.
-        searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
-        searcher_metric = metrics[searcher_metric_name]
         if op is not None and self.batches_until_op_complete(op) < 1:
             op.complete(searcher_metric)
 
@@ -276,7 +313,7 @@ class WorkloadSequencer(workload.Source):
             metrics=metrics,
         )
 
-        if exited_reason == "USER_CANCELED":
+        if response.get("stop_requested"):
             raise ShouldExit()
 
         if not self.checkpoint_is_current():
@@ -304,13 +341,22 @@ class WorkloadSequencer(workload.Source):
         )
         response = yield from yield_and_await_response(wkld)
 
-        storage_metadata = response["metrics"]
+        if isinstance(response, workload.InvalidHP):
+            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+            if not already_exiting:
+                raise ShouldExit(skip_exit_checkpoint=True)
+            return
+
+        uuid = response["uuid"]
+
+        logging.info(f"Saved trial to checkpoint {uuid}")
+
         self.checkpointing._report_checkpoint(
-            uuid=storage_metadata.storage_id,
-            resources=storage_metadata.resources,
+            uuid=uuid,
+            resources=response["resources"],
             metadata={
-                "framework": storage_metadata.framework,
-                "format": storage_metadata.format,
+                "framework": response.get("framework", ""),
+                "format": response.get("format", ""),
                 "latest_batch": self.state.latest_batch,
             },
         )
@@ -318,11 +364,7 @@ class WorkloadSequencer(workload.Source):
         if already_exiting:
             return
 
-        exited_reason = response.get("exited_reason")
-        if exited_reason == "INVALID_HP":
-            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
-
-        if exited_reason is not None:
+        if response.get("stop_requested"):
             raise ShouldExit()
 
         self.check_for_preemption()
@@ -405,9 +447,9 @@ class WorkloadSequencer(workload.Source):
 
                 assert op._completed, "logic error; op was never completed"
 
-        except ShouldExit:
+        except ShouldExit as e:
             # Checkpoint unsaved work and exit.
-            if not self.checkpoint_is_current():
+            if not e.skip_exit_checkpoint and not self.checkpoint_is_current():
                 yield from self.checkpoint(already_exiting=True)
 
         finally:

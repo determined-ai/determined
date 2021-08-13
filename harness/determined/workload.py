@@ -61,14 +61,14 @@ class Workload:
 Metrics = Dict[str, Any]
 
 
-class Skipped:
-    """Skipped is used in place of Metrics when a workload is ignored by a lower layer."""
+class InvalidHP:
+    """Workload canceled because an InvalidHP was raised."""
 
     pass
 
 
-"""Every Workload needs a Response, which is either a Metrics object or a SkippedWorkload."""
-Response = Union[Metrics, Skipped]
+"""Every Workload needs a Response, which is either a Metrics object or an InvalidHP."""
+Response = Union[Metrics, InvalidHP]
 
 
 """
@@ -156,9 +156,9 @@ class WorkloadResponseInterceptor:
         return cast(Response, out)
 
     def metrics_result(self) -> Metrics:
-        """Identical to result but disallow workload.Skipped responses."""
+        """Identical to result but disallow workload.InvalidHP responses."""
         check.is_not_none(self._response, "_respond() was not called by the TrialController.")
-        check.is_instance(self._response, dict, "unexpected SkippedWorkload response.")
+        check.is_instance(self._response, dict, "unexpected InvalidHP response.")
         return cast(Metrics, self._response)
 
 
