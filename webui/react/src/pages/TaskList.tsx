@@ -409,10 +409,10 @@ const TaskList: React.FC = () => {
     });
   }, [ handleBatchKill ]);
 
-  const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
-    if (Array.isArray(sorter)) return;
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<CommandTask>;
+    const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     const newSettings = {
