@@ -818,7 +818,7 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	var exps []*model.Experiment
 	for rows.Next() {
 		var exp model.Experiment
-		if err = rows.StructScan(&exp); err != nil {
+		if err := rows.StructScan(&exp); err != nil {
 			items, err := rows.SliceScan()
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to read experiment from db")
@@ -833,6 +833,13 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 			err = db.TerminateExperimentInRestart(int(expID), model.ErrorState)
 			if err != nil {
 				log.WithError(err).Error("failed to mark experiment as errored")
+			}
+			continue
+		}
+		if model.StoppingStates[exp.State] {
+			finalState := model.StoppingToTerminalStates[exp.State]
+			if err := db.TerminateExperimentInRestart(exp.ID, finalState); err != nil {
+				log.WithError(err).Errorf("finalizing %v on restart", exp)
 			}
 			continue
 		}

@@ -457,16 +457,15 @@ func closeWithErrCheck(name string, closer io.Closer) {
 func (m *Master) tryRestoreExperiment(sema chan struct{}, e *model.Experiment) {
 	sema <- struct{}{}
 	defer func() { <-sema }()
-	err := m.restoreExperiment(e)
-	if err == nil {
-		return
+
+	if err := m.restoreExperiment(e); err != nil {
+		log.WithError(err).Errorf("failed to restore experiment: %d", e.ID)
+		e.State = model.ErrorState
+		if err := m.db.TerminateExperimentInRestart(e.ID, e.State); err != nil {
+			log.WithError(err).Error("failed to mark experiment as errored")
+		}
+		telemetry.ReportExperimentStateChanged(m.system, m.db, *e)
 	}
-	log.WithError(err).Errorf("failed to restore experiment: %d", e.ID)
-	e.State = model.ErrorState
-	if err := m.db.TerminateExperimentInRestart(e.ID, e.State); err != nil {
-		log.WithError(err).Error("failed to mark experiment as errored")
-	}
-	telemetry.ReportExperimentStateChanged(m.system, m.db, *e)
 }
 
 // convertDBErrorsToNotFound helps reduce boilerplate in our handlers, by

@@ -84,7 +84,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 
-	log.WithField("experiment", expModel.ID).Info("restoring experiment")
+	log.WithField("experiment", expModel.ID).Debug("restoring experiment")
 	snapshot, err := m.retrieveExperimentSnapshot(expModel)
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
@@ -99,7 +99,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		}
 		e.restored = true
 	}
-	log.WithField("experiment", e.ID).Info("restored experiment")
 
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 	return nil
@@ -111,13 +110,13 @@ func (e *experiment) restoreTrial(
 	ctx *actor.Context, ckpt *model.Checkpoint, searcher trialSearcherState,
 ) {
 	l := ctx.Log().WithField("request-id", searcher.Create.RequestID)
-	l.Info("restoring trial")
+	l.Debug("restoring trial")
 
 	var trialID *int
 	var terminal bool
 	switch trial, err := e.db.TrialByExperimentAndRequestID(e.ID, searcher.Create.RequestID); {
 	case errors.Cause(err) == db.ErrNotFound:
-		l.Info("trial was never previously allocated")
+		l.Debug("trial was never previously allocated")
 	case err != nil:
 		// This is the only place we _have_ to error, because if the trial did previously exist
 		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
@@ -128,10 +127,10 @@ func (e *experiment) restoreTrial(
 		trialID = &trial.ID
 		l = l.WithField("trial-id", trial.ID)
 		if model.TerminalStates[trial.State] {
-			l.Infof("trial was in terminal state in restore: %s", trial.State)
+			l.Debugf("trial was in terminal state in restore: %s", trial.State)
 			terminal = true
 		} else if !model.RunningStates[trial.State] {
-			l.Infof("cannot restore trial in state: %s", trial.State)
+			l.Debugf("cannot restore trial in state: %s", trial.State)
 			terminal = true
 		}
 	}
@@ -146,8 +145,8 @@ func (e *experiment) restoreTrial(
 
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 	t := newTrial(
-		trialTaskID(e.ID, searcher.Create.RequestID), e.ID, e.State, searcher, e.rm, e.trialLogger,
-		e.db, config, ckpt, e.taskSpec, e.modelDefinition,
+		trialTaskID(e.ID, searcher.Create.RequestID), e.ID, e.State, searcher, e.rm,
+		e.trialLogger, e.db, config, ckpt, e.taskSpec, e.modelDefinition,
 	)
 	if trialID != nil {
 		t.id = *trialID
@@ -159,14 +158,14 @@ func (e *experiment) restoreTrial(
 		}
 	}
 	ctx.ActorOf(searcher.Create.RequestID, t)
-	l.Infof("restored trial")
+	l.Debug("restored trial")
 }
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.
 func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte, error) {
 	switch snapshot, version, err := m.db.ExperimentSnapshot(expModel.ID); {
 	case snapshot == nil:
-		log.WithField("experiment-id", expModel.ID).Info("no snapshot found")
+		log.WithField("experiment-id", expModel.ID).Debug("no snapshot found")
 		return nil, nil
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")

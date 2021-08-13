@@ -109,7 +109,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			}
 			ctx.AddLabel("task-run-id", t.runID)
 		}
-		return nil
+		return t.maybeAllocateTask(ctx)
 	case actor.PostStop:
 		if !t.idSet {
 			return nil
