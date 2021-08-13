@@ -1,10 +1,12 @@
-import { Tag, Tooltip } from 'antd';
+import { Select, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import MetricSelectFilter from 'components/MetricSelectFilter';
+import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { getTrialDetails } from 'services/api';
@@ -16,6 +18,8 @@ import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial'
 import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
+
+const { Option } = Select;
 
 interface ModalProps {
   experiment: ExperimentBase;
@@ -58,6 +62,8 @@ const TrialsComparisonTable: React.FC<TableProps> = (
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
+  const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -111,6 +117,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
 
+  useEffect(() => {
+    setSelectedMetrics(metricNames);
+  }, [ metricNames ]);
+
+  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
+    setSelectedMetrics(selectedMetrics);
+  }, []);
+
   const extractLatestMetrics = useCallback((
     metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
     workload: MetricsWorkload,
@@ -159,6 +173,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     [ trials, trialsDetails ],
   );
 
+  useEffect(() => {
+    setSelectedHyperparameters(hyperparameterNames);
+  }, [ hyperparameterNames ]);
+
+  const onHyperparameterSelect = useCallback((selectedHPs) => {
+    setSelectedHyperparameters(selectedHPs);
+  }, []);
+
   const isLoaded = useMemo(
     () => trials.every(trialId => trialsDetails[trialId])
     , [ trials, trialsDetails ],
@@ -177,56 +199,81 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 closable
                 key={trial}
                 onClose={() => handleTrialUnselect(trial)}><p>Trial {trial}</p></Tag>)}</div>
-          <div className={css.row}>
-            <h3>State</h3>
-            {trials.map(trial =>
-              <div className={css.centerVertically} key={trial}>
-                <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
-              </div>)}
+          <ul>
+            <li><ul className={css.row}>
+              <h3>State</h3>
+              {trials.map(trial =>
+                <li className={css.centerVertically} key={trial}>
+                  <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
+                </li>)}
+            </ul></li>
+            <li><ul className={css.row}>
+              <h3>Training Time</h3>
+              {trials.map(trial =>
+                <li key={trial}>
+                  {shortEnglishHumannizer(durations[trial]?.train)}
+                </li>)}
+            </ul></li>
+            <li><ul className={css.row}>
+              <h3>Batches Processed</h3>
+              {trials.map(trial =>
+                <li key={trial}>{trialsDetails[trial].totalBatchesProcessed}</li>)}
+            </ul></li>
+            <li><ul className={css.row}>
+              <h3>Total Checkpoint Size</h3>
+              {trials.map(trial => <li key={trial}>{totalCheckpointsSizes[trial]}</li>)}
+            </ul></li>
+          </ul>
+          <div className={css.headerRow}><h2>Metrics</h2>
+            <MetricSelectFilter
+              defaultMetricNames={metricNames}
+              label=""
+              metricNames={metricNames}
+              multiple
+              value={selectedMetrics}
+              onChange={onMetricSelect} />
           </div>
-          <div className={css.row}>
-            <h3>Training Time</h3>
-            {trials.map(trial =>
-              <p key={trial}>
-                {shortEnglishHumannizer(durations[trial]?.train)}
-              </p>)}
+          <ul>
+            {metricNames.filter(metric => selectedMetrics.map(m => m.name)
+              .includes(metric.name)).map(metric =>
+              <li key={metric.name}><ul className={css.row}>
+                <h3>
+                  <BadgeTag label={metric.name}>
+                    {metric.type === MetricType.Training ?
+                      <Tooltip title="training">T</Tooltip> :
+                      <Tooltip title="validation">V</Tooltip>}
+                  </BadgeTag>
+                </h3>
+                {trials.map(trial => metrics[trial][metric.name] ?
+                  <li><HumanReadableFloat
+                    key={trial}
+                    num={metrics[trial][metric.name]} /></li>: <li />)}
+              </ul></li>)}
+          </ul>
+          <div className={css.headerRow}><h2>Hyperparameters</h2>
+            <SelectFilter
+              disableTags
+              dropdownMatchSelectWidth={200}
+              label=""
+              mode="multiple"
+              showArrow
+              value={selectedHyperparameters}
+              onChange={onHyperparameterSelect}>
+              {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
+            </SelectFilter>
           </div>
-          <div className={css.row}>
-            <h3>Batches Processed</h3>
-            {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
-          </div>
-          <div className={css.row}>
-            <h3>Total Checkpoint Size</h3>
-            {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
-          </div>
-          <div className={css.headerRow}><h2>Metrics</h2></div>
-          {metricNames.map(metric =>
-            <div className={css.row} key={metric.name}>
-              <h3>
-                <BadgeTag label={metric.name}>
-                  {metric.type === MetricType.Training ?
-                    <Tooltip title="training">T</Tooltip> :
-                    <Tooltip title="validation">V</Tooltip>}
-                </BadgeTag>
-              </h3>
-              {trials.map(trial => metrics[trial][metric.name] ?
-                <HumanReadableFloat
-                  key={trial}
-                  num={metrics[trial][metric.name]} />: <div />)}
-            </div>)}
-          <div className={css.headerRow}><h2>Hyperparameters</h2></div>
-          {hyperparameterNames.map(hp =>
-            <div className={css.row} key={hp}>
+          {selectedHyperparameters.map(hp =>
+            <li key={hp}><ul className={css.row}>
               <h3>{hp}</h3>
               {trials.map(trial =>
                 !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ?
-                  <HumanReadableFloat
+                  <li><HumanReadableFloat
                     key={trial}
                     num={parseFloat(
                       JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
-                    )} /> :
-                  <p>{trialsDetails[trial].hyperparameters[hp]}</p>)}
-            </div>)}
+                    )} /></li> :
+                  <li>{trialsDetails[trial].hyperparameters[hp]}</li>)}
+            </ul></li>)}
         </> : <Spinner spinning={!isLoaded} />}
     </div>
   );
