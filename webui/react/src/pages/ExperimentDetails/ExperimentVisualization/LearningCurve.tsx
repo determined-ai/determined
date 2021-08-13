@@ -1,19 +1,26 @@
-import { Alert } from 'antd';
+import { Alert, Button } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Message, { MessageType } from 'components/Message';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import TableBatch from 'components/TableBatch';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
+import { openOrCreateTensorboard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
+  CommandTask,
   ExperimentBase, Hyperparameter, MetricName, metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
+
+import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
 import css from './LearningCurve.module.scss';
@@ -24,6 +31,11 @@ interface Props {
   fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
+}
+
+enum Action {
+  OpenTensorBoard = 'OpenTensorboard',
+  CompareTrials = 'CompareTrials'
 }
 
 const MAX_DATAPOINTS = 5000;
@@ -42,6 +54,8 @@ const LearningCurve: React.FC<Props> = ({
   const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
   const [ hasLoaded, setHasLoaded ] = useState(false);
   const [ pageError, setPageError ] = useState<Error>();
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
+  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
@@ -69,6 +83,10 @@ const LearningCurve: React.FC<Props> = ({
 
   const handleTableMouseLeave = useCallback(() => {
     setHighlightedTrialId(undefined);
+  }, []);
+
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
   }, []);
 
   useEffect(() => {
@@ -149,6 +167,41 @@ const LearningCurve: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment.id, selectedMaxTrial, selectedMetric ]);
 
+  const sendBatchActions = useCallback(async (action: Action) => {
+    if (action === Action.OpenTensorBoard) {
+      return await openOrCreateTensorboard({ trialIds: selectedRowKeys });
+    } else if (action === Action.CompareTrials) {
+      return setShowCompareTrials(true);
+    }
+  }, [ selectedRowKeys ]);
+
+  const handleBatchAction = useCallback(async (action: Action) => {
+    try {
+      const result = await sendBatchActions(action);
+      if (action === Action.OpenTensorBoard && result) {
+        openCommand(result as CommandTask);
+      }
+    } catch (e) {
+      const publicSubject = action === Action.OpenTensorBoard ?
+        'Unable to View TensorBoard for Selected Trials' :
+        `Unable to ${action} Selected Trials`;
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject,
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ sendBatchActions ]);
+
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  const handleTrialUnselect = useCallback((trialId: number) =>
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !hasTrials) {
@@ -178,11 +231,22 @@ const LearningCurve: React.FC<Props> = ({
               onTrialClick={handleTrialClick}
               onTrialFocus={handleTrialFocus} />
           </div>
+          <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
+            <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+            View in TensorBoard
+            </Button>
+            <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
+            Compare Trials
+            </Button>
+          </TableBatch>
           <HpTrialTable
             experimentId={experiment.id}
+            handleTableRowSelect={handleTableRowSelect}
             highlightedTrialId={highlightedTrialId}
             hyperparameters={hyperparameters}
             metric={selectedMetric}
+            selectedRowKeys={selectedRowKeys}
+            selection={true}
             trialHps={trialHps}
             trialIds={trialIds}
             onMouseEnter={handleTableMouseEnter}
@@ -190,6 +254,13 @@ const LearningCurve: React.FC<Props> = ({
           />
         </div>
       </Section>
+      {showCompareTrials &&
+      <TrialsComparisonModal
+        experiment={experiment}
+        trials={selectedRowKeys}
+        visible={showCompareTrials}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect} />}
     </div>
   );
 };
