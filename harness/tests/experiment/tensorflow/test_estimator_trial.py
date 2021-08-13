@@ -107,7 +107,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_checkpoint = interceptor.metrics_result()
             latest_batch = trainer.get_latest_batch()
 
         controller = xor_trial_controller(
@@ -153,7 +153,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint
-            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_checkpoint = interceptor.metrics_result()
 
         controller = xor_trial_controller(
             self.hparams,
@@ -241,7 +241,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_checkpoint = interceptor.metrics_result()
             latest_batch = trainer.get_latest_batch()
 
         def verify_callback(checkpoint_dir: str, checkpoint_num: int) -> None:

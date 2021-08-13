@@ -52,7 +52,7 @@ class TrainAndValidate:
             self._training_metrics.extend(batch_metrics)
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
             self._latest_batch += scheduling_unit
-            if metrics.get("exited_reason") == "USER_CANCELED":
+            if metrics.get("stop_requested"):
                 assert step_id == self.request_stop_step_id
                 stop_requested = True
 
@@ -65,7 +65,7 @@ class TrainAndValidate:
                 validation = interceptor.metrics_result()
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
-                if validation.get("exited_reason") == "USER_CANCELED":
+                if validation.get("stop_requested"):
                     assert step_id == self.request_stop_step_id
                     stop_requested = True
 
@@ -383,7 +383,7 @@ def checkpointing_and_restoring_test(
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()["metrics"].__json__()
+            latest_checkpoint = interceptor.metrics_result()
             latest_batch = trainer.get_latest_batch()
 
     controller_A1 = make_trial_controller_fn(

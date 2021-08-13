@@ -1,5 +1,6 @@
 import enum
 import logging
+import math
 from typing import Iterator, Optional
 
 import determined as det
@@ -72,6 +73,8 @@ class SearcherOp:
     def complete(self, searcher_metric: float) -> None:
         if self._completed:
             raise RuntimeError("you may only call op.complete() once")
+        if math.isnan(searcher_metric):
+            raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
         body = {
             "op": {

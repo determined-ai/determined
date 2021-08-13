@@ -17,7 +17,7 @@ from tensorflow.python.framework.ops import EagerTensor
 import determined as det
 from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check, experimental
+from determined.common import check, experimental, storage
 from determined.common.api import certs
 from determined.horovod import hvd
 
@@ -361,8 +361,6 @@ class TFKerasTrialController(det.TrialController):
 
         self._configure_callbacks(train_config.callbacks)
 
-        self.train_start_time = self._generic._current_timestamp()
-        self.train_workload = None  # type: Optional[workload.Workload]
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
         self.train_workload_metrics = []  # type: List[Dict[str, Any]]
         self.train_workload_batches = 0
@@ -543,7 +541,7 @@ class TFKerasTrialController(det.TrialController):
 
         self.callback_list.model.stop_training = False
 
-    def _save_checkpoint(self, path: pathlib.Path) -> workload.Response:
+    def _save_checkpoint(self, path: pathlib.Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         # Save model weights. We use `tf` format because `h5` does not support
@@ -578,8 +576,6 @@ class TFKerasTrialController(det.TrialController):
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
-
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
 
     def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
         logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
@@ -770,64 +766,46 @@ class TFKerasTrialController(det.TrialController):
     def _control_loop(self) -> None:
         assert self.workloads is not None
         for wkld, response_func in self.workloads:
-            start_time = self._generic._current_timestamp()
             logging.debug(f"Received wkld {wkld.kind}.")
 
-            if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Configure the state for a training step.
-                self.train_workload = wkld
-                self.train_start_time = start_time
-                self.train_response_func = response_func
-                self.train_workload_batches = 0
-                self.train_workload_metrics = []
-                self.train_workload_len = wkld.num_batches
-                self.multiplexer.set_batches_requested(wkld.num_batches)
-                return
+            try:
+                if wkld.kind == workload.Workload.Kind.RUN_STEP:
+                    # Configure the state for a training step.
+                    self.train_response_func = response_func
+                    self.train_workload_batches = 0
+                    self.train_workload_metrics = []
+                    self.train_workload_len = wkld.num_batches
+                    self.multiplexer.set_batches_requested(wkld.num_batches)
+                    return
 
-            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                try:
-                    response = det.util.wrap_metrics(
-                        self._compute_validation_metrics(),
-                        self.context.get_stop_requested(),
-                        invalid_hp=False,
-                        init_invalid_hp=False,
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
-                    )
-                    response = util.wrap_metrics(
-                        {},
-                        self.context.get_stop_requested(),
-                        invalid_hp=True,
-                        init_invalid_hp=False,
-                    )
-                searcher_metric = self.env.experiment_config.get_searcher_metric()
-                response = self._generic._after_validation(
-                    wkld,
-                    start_time,
-                    searcher_metric,
-                    response,
-                )
-                response_func(response)
+                elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    action = "validation"
+                    response = {
+                        "metrics": self._compute_validation_metrics(),
+                        "stop_requested": self.context.get_stop_requested(),
+                    }  # type: workload.Response
 
-            elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                if self.is_chief:
-                    with self._generic._storage_mgr.store_path() as (storage_id, path):
-                        response = self._save_checkpoint(pathlib.Path(path))
-                        response = self._generic._after_checkpoint(
-                            wkld,
-                            start_time,
-                            storage_id,
-                            path,
-                            response,
-                        )
+                elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    action = "checkpointing"
+                    if self.is_chief:
+                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                            self._save_checkpoint(pathlib.Path(path))
+                            response = {
+                                "uuid": storage_id,
+                                "resources": storage.StorageManager._list_directory(path),
+                                "framework": f"tensorflow-{tf.__version__}",
+                                "format": "saved_weights",
+                            }
+                    else:
+                        response = {}
+
                 else:
-                    response = workload.Skipped()
-                response_func(response)
+                    raise AssertionError(f"Unknown workload kind {wkld.kind}.")
 
-            else:
-                raise AssertionError(f"Unknown workload kind {wkld.kind}.")
+            except det.InvalidHP as e:
+                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                response = workload.InvalidHP()
+            response_func(response)
 
         # End-of-training.
         self.multiplexer._corrected_train_end()
@@ -889,7 +867,6 @@ class TFKerasTrialController(det.TrialController):
                 "Callback should avoid calling model.predict(), "
                 "as this will affect Determined training behavior",
             )
-        assert self.train_workload is not None
 
         if self.hvd_config.use:
             num_inputs = self._hvd_allreduce(num_inputs, average=False, name="train_num_inputs")
@@ -905,8 +882,6 @@ class TFKerasTrialController(det.TrialController):
         self._stop_training_check()
 
         if self.is_chief:
-            # Don't use det.util.make_metrics, because our batch metrics are not raw metrics.
-
             response = {
                 "metrics": {
                     "num_inputs": num_inputs,
@@ -914,14 +889,9 @@ class TFKerasTrialController(det.TrialController):
                     "avg_metrics": final_metrics,
                 },
                 "stop_requested": self.context.get_stop_requested(),
-                "invalid_hp": False,
-                "init_invalid_hp": False,
             }  # type: workload.Response
-            response = self._generic._after_training(
-                self.train_workload, self.train_start_time, response
-            )
         else:
-            response = workload.Skipped()
+            response = {}
 
         self.train_response_func(response)
         self.train_response_func = None
@@ -952,7 +922,7 @@ class TFKerasTrialController(det.TrialController):
         self.multiplexer._test_end(metrics)
 
         if not self.is_chief:
-            return workload.Skipped()
+            return {}
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 

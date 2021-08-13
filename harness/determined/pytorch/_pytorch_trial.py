@@ -11,7 +11,7 @@ import torch
 
 import determined as det
 from determined import horovod, layers, pytorch, util, workload
-from determined.common import check, experimental
+from determined.common import check, experimental, storage
 from determined.common.api import certs
 from determined.horovod import hvd
 from determined.util import has_param
@@ -203,72 +203,46 @@ class PyTorchTrialController(det.TrialController):
     def _run(self) -> None:
         assert self.workloads is not None
         for w, response_func in self.workloads:
-            start_time = self._generic._current_timestamp()
-
-            if w.kind == workload.Workload.Kind.RUN_STEP:
-                try:
-                    response = util.wrap_metrics(
-                        self._train_for_step(
+            try:
+                if w.kind == workload.Workload.Kind.RUN_STEP:
+                    action = "training"
+                    response = {
+                        "metrics": self._train_for_step(
                             w.step_id,
                             w.num_batches,
                             w.total_batches_processed,
                         ),
-                        self.context.get_stop_requested(),
-                        invalid_hp=False,
-                        init_invalid_hp=False,
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial train step: {}".format(e)
-                    )
-                    response = util.wrap_metrics(
-                        {},
-                        self.context.get_stop_requested(),
-                        invalid_hp=True,
-                        init_invalid_hp=False,
-                    )
-                response = self._generic._after_training(w, start_time, response)
-                response_func(response)
+                        "stop_requested": self.context.get_stop_requested(),
+                    }  # type: workload.Response
 
-            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                try:
-                    response = util.wrap_metrics(
-                        self._compute_validation_metrics(),
-                        self.context.get_stop_requested(),
-                        invalid_hp=False,
-                        init_invalid_hp=False,
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
-                    )
-                    response = util.wrap_metrics(
-                        {},
-                        self.context.get_stop_requested(),
-                        invalid_hp=True,
-                        init_invalid_hp=False,
-                    )
-                searcher_metric = self.env.experiment_config.get_searcher_metric()
-                response = self._generic._after_validation(w, start_time, searcher_metric, response)
-                response_func(response)
+                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    action = "validation"
+                    response = {
+                        "metrics": self._compute_validation_metrics(),
+                        "stop_requested": self.context.get_stop_requested(),
+                    }
 
-            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                if self.is_chief:
-                    with self._generic._storage_mgr.store_path() as (storage_id, path):
-                        response = self._save(pathlib.Path(path))
-                        response = self._generic._after_checkpoint(
-                            w,
-                            start_time,
-                            storage_id,
-                            path,
-                            response,
-                        )
+                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    action = "checkpointing"
+                    if self.is_chief:
+                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                            self._save(pathlib.Path(path))
+                            response = {
+                                "uuid": storage_id,
+                                "resources": storage.StorageManager._list_directory(path),
+                                "framework": f"torch-{torch.__version__}",
+                                "format": "pickle",
+                            }
+                    else:
+                        response = {}
+
                 else:
-                    response = workload.Skipped()
-                response_func(response)
+                    raise AssertionError("Unexpected workload: {}".format(w.kind))
 
-            else:
-                raise AssertionError("Unexpected workload: {}".format(w.kind))
+            except det.InvalidHP as e:
+                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                response = workload.InvalidHP()
+            response_func(response)
 
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)
@@ -450,7 +424,7 @@ class PyTorchTrialController(det.TrialController):
 
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
-            return workload.Skipped()
+            return {}
 
         logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
         self.prof.set_training(False)
@@ -576,7 +550,7 @@ class PyTorchTrialController(det.TrialController):
             callback.on_validation_end(metrics)
 
         if not self.is_chief:
-            return workload.Skipped()
+            return {}
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
@@ -779,7 +753,7 @@ class PyTorchTrialController(det.TrialController):
             with wlsq_path.open("rb") as f:
                 self.wlsq.load_state(pickle.load(f))
 
-    def _save(self, path: pathlib.Path) -> workload.Response:
+    def _save(self, path: pathlib.Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         util.write_user_code(path, self.env.on_cluster)
@@ -829,14 +803,6 @@ class PyTorchTrialController(det.TrialController):
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
-
-        return cast(
-            workload.Response,
-            {
-                "framework": f"torch-{torch.__version__}",
-                "format": "pickle",
-            },
-        )
 
 
 class PyTorchTrial(det.Trial):

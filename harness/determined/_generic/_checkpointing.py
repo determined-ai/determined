@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict, Optional
 
 import determined as det
+from determined import tensorboard
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.generic")
@@ -17,11 +18,13 @@ class Checkpointing:
         session: Session,
         api_path: str,
         static_metadata: Optional[Dict[str, Any]] = None,
+        tbd_mgr: Optional[tensorboard.TensorboardManager] = None,
     ) -> None:
         self._session = session
         self._static_metadata = static_metadata or {}
         self._static_metadata["determined_version"] = det.__version__
         self._api_path = api_path
+        self._tbd_mgr = tbd_mgr
 
     def _report_checkpoint(
         self,
@@ -60,3 +63,7 @@ class Checkpointing:
         }
         logger.debug(f"_report_checkpoint({uuid})")
         self._session.post(self._api_path, data=det.util.json_encode(body))
+
+        # Also sync tensorboard.
+        if self._tbd_mgr:
+            self._tbd_mgr.sync()

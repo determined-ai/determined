@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -31,18 +31,20 @@ class BatchMetricWriter:
         self,
         latest_batch: int,
         metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
     ) -> None:
         metrics_seen = set()
 
         # Log all batch metrics.
-        for batch_idx, batch_metrics in enumerate(metrics["batch_metrics"]):
-            batches_seen = latest_batch - len(metrics["batch_metrics"]) + batch_idx
-            for name, value in batch_metrics.items():
-                self._maybe_write_metric(name, value, batches_seen)
-                metrics_seen.add(name)
+        if batch_metrics:
+            for batch_idx, batch in enumerate(batch_metrics):
+                batches_seen = latest_batch - len(batch) + batch_idx
+                for name, value in batch.items():
+                    self._maybe_write_metric(name, value, batches_seen)
+                    metrics_seen.add(name)
 
         # Log avg metrics which were calculated by a custom reducer and are not in batch metrics.
-        for name, value in metrics["avg_metrics"].items():
+        for name, value in metrics.items():
             if name in metrics_seen:
                 continue
             self._maybe_write_metric(name, value, latest_batch)

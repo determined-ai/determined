@@ -6,6 +6,7 @@ import numpy as np
 
 import determined as det
 from determined import horovod, layers, workload
+from determined.common import storage
 from determined.common.api import certs
 from determined.experimental import client
 
@@ -102,35 +103,19 @@ class MetricMaker(det.TrialController):
 
     def run(self) -> None:
         for w, response_func in self.workloads:
-            start_time = self._generic._current_timestamp()
-            try:
-                if w.kind == workload.Workload.Kind.RUN_STEP:
-                    response = self.train_for_step(
-                        w.step_id, w.num_batches
-                    )  # type: workload.Response
-                    response = self._generic._after_training(w, start_time, response)
-                elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                    response = self.compute_validation_metrics(w.step_id)
-                    searcher_metric = self.env.experiment_config.get_searcher_metric()
-                    response = self._generic._after_validation(
-                        w, start_time, searcher_metric, response
-                    )
-                elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                    with self._generic._storage_mgr.store_path() as (storage_id, path):
-                        self.save(pathlib.Path(path))
-                        response = {}
-                        response = self._generic._after_checkpoint(
-                            w,
-                            start_time,
-                            storage_id,
-                            path,
-                            response,
-                        )
-                else:
-                    raise AssertionError("Unexpected workload: {}".format(w.kind))
-
-            except det.errors.SkipWorkloadException:
-                response = workload.Skipped()
+            if w.kind == workload.Workload.Kind.RUN_STEP:
+                response = self.train_for_step(w.step_id, w.num_batches)
+            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                response = self.compute_validation_metrics(w.step_id)
+            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                with self._generic._storage_mgr.store_path() as (storage_id, path):
+                    self.save(pathlib.Path(path))
+                    response = {
+                        "uuid": storage_id,
+                        "resources": storage.StorageManager._list_directory(path),
+                    }
+            else:
+                raise AssertionError("Unexpected workload: {}".format(w.kind))
 
             response_func(response)
 
