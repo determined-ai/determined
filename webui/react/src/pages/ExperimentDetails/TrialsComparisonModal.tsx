@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import BadgeTag from 'components/BadgeTag';
 import HumanReadableFloat from 'components/HumanReadableFloat';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
@@ -62,7 +63,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
   const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
-  const [ selectedMetrics, setSelectedMetrics ] = useState<string[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -117,10 +118,10 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, [ trialsDetails, trials ]);
 
   useEffect(() => {
-    setSelectedMetrics(metricNames.map(metric => metric.name));
+    setSelectedMetrics(metricNames);
   }, [ metricNames ]);
 
-  const onMetricSelect = useCallback((selectedMetrics) => {
+  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
     setSelectedMetrics(selectedMetrics);
   }, []);
 
@@ -224,20 +225,17 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             </ul></li>
           </ul>
           <div className={css.headerRow}><h2>Metrics</h2>
-            <SelectFilter
-              disableTags
-              dropdownMatchSelectWidth={200}
+            <MetricSelectFilter
+              defaultMetricNames={metricNames}
               label=""
-              mode="multiple"
+              metricNames={metricNames}
+              multiple
               value={selectedMetrics}
-              onChange={onMetricSelect}>
-              {metricNames.map(metric => <Option key={metric.name} value={metric.name}>
-                {metric.name}
-              </Option>)}
-            </SelectFilter>
+              onChange={onMetricSelect} />
           </div>
           <ul>
-            {metricNames.filter(metric => selectedMetrics.includes(metric.name)).map(metric =>
+            {metricNames.filter(metric => selectedMetrics.map(m => m.name)
+              .includes(metric.name)).map(metric =>
               <li key={metric.name}><ul className={css.row}>
                 <h3>
                   <BadgeTag label={metric.name}>
@@ -258,6 +256,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               dropdownMatchSelectWidth={200}
               label=""
               mode="multiple"
+              showArrow
               value={selectedHyperparameters}
               onChange={onHyperparameterSelect}>
               {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
