@@ -8,6 +8,8 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
+min_checkpoint_period:
+  batches: 100
 searcher:
   name: single
   metric: validation_loss
