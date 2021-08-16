@@ -44,8 +44,8 @@ interface Props {
 }
 
 enum Action {
-  OpenTensorBoard = 'OpenTensorboard',
-  CompareTrials = 'CompareTrials'
+  OpenTensorBoard = 'View in Tensorboard',
+  CompareTrials = 'Compare Trials'
 }
 
 const URL_ALL = 'all';
@@ -349,7 +349,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ selectedRowKeys ]);
 
-  const handleBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
@@ -373,6 +373,10 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       });
     }
   }, [ fetchExperimentTrials, sendBatchActions ]);
+
+  const handleBatchAction = useCallback((action: string) => {
+    submitBatchAction(action as Action);
+  }, [ submitBatchAction ]);
 
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
@@ -398,14 +402,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   return (
     <>
       <Section>
-        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-            View in TensorBoard
-          </Button>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
-            Compare Trials
-          </Button>
-        </TableBatch>
+        <TableBatch
+          actions={[
+            { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+            { label: Action.CompareTrials, value: Action.CompareTrials },
+          ]}
+          selectedRowCount={selectedRowKeys.length}
+          onAction={handleBatchAction}
+          onClear={clearSelected}
+        />
         <ResponsiveTable
           columns={columns}
           dataSource={trials}

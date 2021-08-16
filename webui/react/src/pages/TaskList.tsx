@@ -45,6 +45,10 @@ enum TensorBoardSourceType {
   Trial = 'Trial',
 }
 
+enum Action {
+  Kill = 'Kill',
+}
+
 interface TensorBoardSource {
   id: number;
   path: string;
@@ -396,7 +400,7 @@ const TaskList: React.FC = () => {
     }
   }, [ fetchAll, selectedTasks ]);
 
-  const handleConfirmation = useCallback(() => {
+  const showConfirmation = useCallback(() => {
     Modal.confirm({
       content: `
         Are you sure you want to kill
@@ -408,6 +412,10 @@ const TaskList: React.FC = () => {
       title: 'Confirm Batch Kill',
     });
   }, [ handleBatchKill ]);
+
+  const handleBatchAction = useCallback((action?: string) => {
+    if (action === Action.Kill) showConfirmation();
+  }, [ showConfirmation ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
@@ -444,13 +452,12 @@ const TaskList: React.FC = () => {
       options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} /> }
       title="Tasks">
       <div className={css.base}>
-        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-          <Button
-            danger
-            disabled={!hasKillable}
-            type="primary"
-            onClick={handleConfirmation}>Kill</Button>
-        </TableBatch>
+        <TableBatch
+          actions={[ { disabled: !hasKillable, label: Action.Kill, value: Action.Kill } ]}
+          selectedRowCount={selectedRowKeys.length}
+          onAction={handleBatchAction}
+          onClear={clearSelected}
+        />
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}

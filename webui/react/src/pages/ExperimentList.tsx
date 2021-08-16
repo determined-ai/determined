@@ -51,7 +51,7 @@ enum Action {
   Cancel = 'Cancel',
   Kill = 'Kill',
   Pause = 'Pause',
-  OpenTensorBoard = 'OpenTensorboard',
+  OpenTensorBoard = 'View in TensorBoard',
   Unarchive = 'Unarchive',
 }
 
