@@ -4,14 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-<<<<<<< HEAD
+import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-=======
-import Icon from 'components/Icon';
-import Link from 'components/Link';
->>>>>>> Add links to trial pages
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
 import { paths } from 'routes/utils';
@@ -65,7 +61,7 @@ const TrialsComparisonModal: React.FC<ModalProps> =
 };
 
 const TrialsComparisonTable: React.FC<TableProps> = (
-  { trials, onUnselect }: TableProps,
+  { trials, experiment, onUnselect }: TableProps,
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
   const [ canceler ] = useState(new AbortController());
@@ -205,7 +201,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 closable
                 key={trial}
                 onClose={() => handleTrialUnselect(trial)}>
-                <p>Trial {trial}</p>
+                <Link path={paths.trialDetails(trial, experiment.id)}>Trial {trial}</Link>
               </Tag>
             ))}
           </div>
