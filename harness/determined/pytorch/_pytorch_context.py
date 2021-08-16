@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Type, Union
 
@@ -79,6 +80,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
         self.experimental = pytorch.PyTorchExperimentalContext(self)
         self._reducers = pytorch._PyTorchReducerContext()
+        self._determined_profiler = None  # type: Optional[profiler.ProfilerAgent]
 
     def autocast_forward_pass(self, to_wrap: torch.nn.Module) -> torch.nn.Module:
         # First, ensure the forward pass is wrapped in an autocast context:
@@ -268,7 +270,15 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         )
 
     def _set_determined_profiler(self, prof: profiler.ProfilerAgent) -> None:
-        self.determined_profiler = prof
+        self._determined_profiler = prof
+
+    @contextlib.contextmanager
+    def _record_timing(self, metric_name: str, accumulate: bool = False) -> Iterator[None]:
+        if not self._determined_profiler:
+            yield
+            return
+        with self._determined_profiler.record_timing(metric_name, accumulate):
+            yield
 
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:
         """_filter_named_parameters filters the named parameters of a specified optimizer out
@@ -302,7 +312,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         allocated device. This method aims at providing a function for the data generated
         on the fly.
         """
-        with self.determined_profiler.record_timing("to_device", accumulate=True):
+        with self._record_timing("to_device", accumulate=True):
             return pytorch.to_device(data, self.device, self._to_device_warned_types)
 
     def wrap_scaler(self, scaler: Any) -> Any:
@@ -527,9 +537,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
             with apex.amp.scale_loss(
                 loss, self.optimizers, loss_id=self._loss_ids[loss]
             ) as scaled_loss:
-                with self.determined_profiler.record_timing(
-                    "train_batch.backward", accumulate=True
-                ):
+                with self._record_timing("train_batch.backward", accumulate=True):
                     scaled_loss.backward(
                         gradient=gradient, retain_graph=retain_graph, create_graph=create_graph
                     )
@@ -544,16 +552,14 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     # multiple backward passes on one loss. A long-term solution is
                     # to integrate torch native AMP (https://pytorch.org/docs/stable/amp.html),
                     # which will come out soon.
-                    with self.determined_profiler.record_timing(
-                        "train_batch.sync_optimizers", accumulate=True
-                    ):
+                    with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                         for optimizer in self.optimizers:
                             optimizer.synchronize()  # type: ignore
         else:
             if self._scaler and self.experimental._auto_amp:
                 loss = self._scaler.scale(loss)
 
-            with self.determined_profiler.record_timing("train_batch.backward", accumulate=True):
+            with self._record_timing("train_batch.backward", accumulate=True):
                 loss.backward(  # type: ignore
                     gradient=gradient,
                     retain_graph=retain_graph,
@@ -624,9 +630,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # this is called in backward() instead, so that it's inside the context
         # manager and before unscaling.
         if self.hvd_config.use and not self._use_apex:
-            with self.determined_profiler.record_timing(
-                "train_batch.sync_optimizers", accumulate=True
-            ):
+            with self._record_timing("train_batch.sync_optimizers", accumulate=True):
                 optimizer.synchronize()  # type: ignore
 
         parameters = (
