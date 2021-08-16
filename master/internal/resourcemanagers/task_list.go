@@ -91,11 +91,11 @@ func (i *taskIterator) value() *sproto.AllocateRequest {
 
 func taskComparator(a interface{}, b interface{}) int {
 	t1, t2 := a.(*sproto.AllocateRequest), b.(*sproto.AllocateRequest)
-	if t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
-		return strings.Compare(string(t1.ID), string(t2.ID))
+	if !t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
+		if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
+			return -1
+		}
+		return 1
 	}
-	if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
-		return -1
-	}
-	return 1
+	return strings.Compare(string(t1.ID), string(t2.ID))
 }
