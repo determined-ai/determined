@@ -269,11 +269,13 @@ const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
     if (location.search === prevSearch) return;
 
     /*
-     * Set the initial query string if query settings are detected
-     * but not found in the url query string.
+     * Set the initial query string if:
+     * 1) current settings have set values
+     * 2) query settings are detected
+     * 3) query settings do not match current settings
      */
     const currentQuery = settingsToQuery(config, settings);
-    if (!isSameQuery(config, location.search, currentQuery)) {
+    if (currentQuery && !isSameQuery(config, location.search, currentQuery)) {
       history.replace(`${location.pathname}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
