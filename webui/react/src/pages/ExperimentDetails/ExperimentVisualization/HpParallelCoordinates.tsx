@@ -1,4 +1,4 @@
-import { Alert, Button } from 'antd';
+import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
