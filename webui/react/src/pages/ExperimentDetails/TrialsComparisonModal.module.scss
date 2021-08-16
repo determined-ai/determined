@@ -53,9 +53,12 @@
     font-size: 14px;
     width: fit-content;
 
-    p {
+    a {
       margin: 0;
       padding-right: var(--theme-sizes-layout-small);
+    }
+    :hover {
+      color: var(--theme-colors-action-normal);
     }
   }
 }
