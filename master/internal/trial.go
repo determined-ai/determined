@@ -709,6 +709,13 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.Comple
 		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{runID: t.RunID})
 		return nil
 	default:
+		if msg.CheckpointMetrics != nil {
+			if err := t.tellWithSnapshot(ctx, ctx.Self().Parent(), func(s trialSnapshot) interface{} {
+				return s
+			}); err != nil {
+				return errors.Wrap(err, "failed to report snapshot")
+			}
+		}
 		return t.sendNextWorkload(ctx)
 	}
 }

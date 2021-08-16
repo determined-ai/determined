@@ -223,6 +223,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
+	case trialSnapshot:
+		// Handled by the defered call at the top.
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
 		if err != nil && ctx.ExpectingResponse() {
