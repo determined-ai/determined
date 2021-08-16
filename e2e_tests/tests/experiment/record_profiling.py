@@ -21,25 +21,26 @@ default_metrics = {
 }
 
 
-class ProfileTest:
-    def __init__(
-        self, record_property: Callable[[str, object], None], metrics: Optional[Dict] = None
-    ):
-        self.record_property = record_property
-        self.metrics = metrics or default_metrics
+def profile_test(
+    record_property: Callable[[str, object], None], profiled_metrics: Optional[Dict] = None
+):
+    if not profiled_metrics:
+        profiled_metrics = default_metrics
 
-    def record(self, trial_id: int) -> None:
-        for metric in self.metrics:
+    def record(trial_id: int) -> None:
+        for metric in profiled_metrics:
             metrics = get_profiling_metrics(trial_id, metric)
             if not metrics:
                 print(f"No {metric} metrics collected")
                 continue
 
-            for method in self.metrics[metric]:
+            for method in profiled_metrics[metric]:
                 metric_key, metric_value = format_xml_property(
                     metric, method, summary_methods[method](metrics)
                 )
-                self.record_property(metric_key, metric_value)
+                record_property(metric_key, metric_value)
+
+    return record
 
 
 def format_xml_property(

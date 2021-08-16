@@ -11,7 +11,7 @@ from tests import experiment as exp
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 def test_pytorch_11_const(
-    aggregation_frequency: int, using_k8s: bool, profile_test: Callable[[int], None]
+    aggregation_frequency: int, using_k8s: bool, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
@@ -36,11 +36,11 @@ def test_pytorch_11_const(
         config, conf.tutorials_path("mnist_pytorch"), 1
     )
     trial_id = exp.experiment_trials(experiment_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_pytorch_load(profile_test: Callable[[int], None]) -> None:
+def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
 
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -54,7 +54,7 @@ def test_pytorch_load(profile_test: Callable[[int], None]) -> None:
         .load(map_location="cpu")
     )
     trial_id = exp.experiment_trials(experiment_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -101,7 +101,9 @@ def test_pytorch_const_warm_start() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.gpu_required  # type: ignore
 @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])  # type: ignore
-def test_pytorch_const_with_amp(api_style: str, profile_test: Callable[[int], None]) -> None:
+def test_pytorch_const_with_amp(
+    api_style: str, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
@@ -109,11 +111,11 @@ def test_pytorch_const_with_amp(api_style: str, profile_test: Callable[[int], No
         config, conf.fixtures_path("pytorch_amp"), 1
     )
     trial_id = exp.experiment_trials(experiment_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel  # type: ignore
-def test_pytorch_cifar10_parallel(profile_test: Callable[[int], None]) -> None:
+def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
@@ -129,11 +131,11 @@ def test_pytorch_cifar10_parallel(profile_test: Callable[[int], None]) -> None:
         .load(map_location="cpu")
     )
 
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.parallel  # type: ignore
-def test_pytorch_gan_parallel(profile_test: Callable[[int], None]) -> None:
+def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
@@ -148,7 +150,7 @@ def test_pytorch_gan_parallel(profile_test: Callable[[int], None]) -> None:
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.e2e_cpu  # type: ignore

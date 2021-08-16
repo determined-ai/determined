@@ -34,5 +34,5 @@ from .experiment import (
 )
 
 from .record_profiling import (
-    ProfileTest,
+    profile_test,
 )

@@ -13,7 +13,9 @@ from tests import experiment as exp
         pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
     ],
 )
-def test_tf_keras_const_warm_start(tf2: bool, profile_test: Callable[[int], None]) -> None:
+def test_tf_keras_const_warm_start(
+    tf2: bool, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 1000})
@@ -45,14 +47,14 @@ def test_tf_keras_const_warm_start(tf2: bool, profile_test: Callable[[int], None
     for trial in trials:
         assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
     trial_id = trials[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
 def test_tf_keras_parallel(
-    aggregation_frequency: int, tf2: bool, profile_test: Callable[[int], None]
+    aggregation_frequency: int, tf2: bool, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
@@ -69,12 +71,12 @@ def test_tf_keras_parallel(
 
     # Test exporting a checkpoint.
     exp.export_and_load_model(experiment_id)
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-def test_tf_keras_single_gpu(tf2: bool, profile_test: Callable[[int], None]) -> None:
+def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_max_length(config, {"batches": 200})
@@ -89,11 +91,11 @@ def test_tf_keras_single_gpu(tf2: bool, profile_test: Callable[[int], None]) -> 
 
     # Test exporting a checkpoint.
     exp.export_and_load_model(experiment_id)
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.parallel  # type: ignore
-def test_tf_keras_mnist_parallel(profile_test: Callable[[int], None]) -> None:
+def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
@@ -104,11 +106,11 @@ def test_tf_keras_mnist_parallel(profile_test: Callable[[int], None]) -> None:
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.tensorflow2_cpu  # type: ignore
-def test_tf_keras_tf2_disabled(profile_test: Callable[[int], None]) -> None:
+def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) -> None:
     """Keras on tf2 with tf2 and eager execution disabled."""
     config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
@@ -121,28 +123,30 @@ def test_tf_keras_tf2_disabled(profile_test: Callable[[int], None]) -> None:
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
     exp.export_and_load_model(experiment_id)
-    profile_test(trials[0]["id"])
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
 )
-def test_tf_keras_mnist_data_layer_lfs(tf2: bool, profile_test: Callable[[int], None]) -> None:
+def test_tf_keras_mnist_data_layer_lfs(
+    tf2: bool, collect_trial_profiles: Callable[[int], None]
+) -> None:
     exp_id = run_tf_keras_mnist_data_layer_test(tf2, "lfs")
     trial_id = exp.experiment_trials(exp_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_s3(
-    tf2: bool, storage_type: str, profile_test: Callable[[int], None]
+    tf2: bool, storage_type: str, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     exp_id = run_tf_keras_mnist_data_layer_test(tf2, storage_type)
     trial_id = exp.experiment_trials(exp_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
@@ -166,7 +170,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_parallel(
-    tf2: bool, storage_type: str, profile_test: Callable[[int], None]
+    tf2: bool, storage_type: str, collect_trial_profiles: Callable[[int], None]
 ) -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -184,11 +188,11 @@ def test_tf_keras_mnist_data_layer_parallel(
     )
 
     trial_id = exp.experiment_trials(exp_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel  # type: ignore
-def run_tf_keras_dcgan_example(profile_test: Callable[[int], None]) -> None:
+def run_tf_keras_dcgan_example(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("dcgan_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_min_validation_period(config, {"batches": 200})
@@ -200,4 +204,4 @@ def run_tf_keras_dcgan_example(profile_test: Callable[[int], None]) -> None:
         config, conf.gan_examples_path("dcgan_tf_keras"), 1
     )
     trial_id = exp.experiment_trials(exp_id)[0]["id"]
-    profile_test(trial_id)
+    collect_trial_profiles(trial_id)

@@ -11,7 +11,7 @@ from _pytest.fixtures import SubRequest
 from botocore import exceptions as boto_exc
 
 from tests import config
-from tests.experiment import ProfileTest
+from tests.experiment import profile_test
 
 from .cluster_log_manager import ClusterLogManager
 
@@ -158,7 +158,7 @@ def test_start_timer(request: SubRequest) -> Iterator[None]:
 
 
 @pytest.fixture
-def profile_test(record_property: Callable[[str, object], None]) -> Callable[[int], None]:
+def collect_trial_profiles(record_property: Callable[[str, object], None]) -> Callable[[int], None]:
     """
     Returns a method that allows profiling of test run for certain system metrics
     and records to JUnit report.
@@ -167,4 +167,4 @@ def profile_test(record_property: Callable[[str, object], None]) -> Callable[[in
     profiler API.
     """
 
-    return ProfileTest(record_property=record_property).record
+    return profile_test(record_property=record_property)
