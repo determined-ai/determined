@@ -44,6 +44,10 @@ For an introduction to using the Trial API, refer to the :ref:`PyTorch MNIST
       -  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
 
    -  -  PyTorch
+      -  Imagenet
+      -  :download:`imagenet_pytorch.tgz </examples/imagenet_pytorch.tgz>`
+
+   -  -  PyTorch
       -  Penn-Fudan Dataset
       -  :download:`fasterrcnn_coco_pytorch.tgz </examples/fasterrcnn_coco_pytorch.tgz>`
 
