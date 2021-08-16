@@ -68,6 +68,19 @@ message KillNotebookResponse {
   determined.notebook.v1.Notebook notebook = 1;
 }
 
+// Set the priority of the requested notebook.
+message SetNotebookPriorityRequest {
+  // The id of the notebook.
+  string notebook_id = 1;
+  // The new priority.
+  int32 priority = 2;
+}
+// Response to SetNotebookPriorityRequest.
+message SetNotebookPriorityResponse {
+  // The requested notebook.
+  determined.notebook.v1.Notebook notebook = 1;
+}
+
 // Stream notebook logs.
 message NotebookLogsRequest {
   // Requested Notebook id.

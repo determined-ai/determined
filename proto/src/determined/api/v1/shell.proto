@@ -67,6 +67,19 @@ message KillShellResponse {
   determined.shell.v1.Shell shell = 1;
 }
 
+// Set the priority of the requested shell.
+message SetShellPriorityRequest {
+  // The id of the shell.
+  string shell_id = 1;
+  // The new priority.
+  int32 priority = 2;
+}
+// Response to SetShellPriorityRequest.
+message SetShellPriorityResponse {
+  // The requested shell.
+  determined.shell.v1.Shell shell = 1;
+}
+
 // Request to launch a shell.
 message LaunchShellRequest {
   // Shell config (JSON).

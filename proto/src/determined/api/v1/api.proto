@@ -683,6 +683,17 @@ service Determined {
       tags: "Notebooks"
     };
   }
+  // Set the priority of the requested notebook.
+  rpc SetNotebookPriority(SetNotebookPriorityRequest)
+      returns (SetNotebookPriorityResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/notebooks/{notebook_id}/set_priority"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Notebooks"
+    };
+  }
   // Stream notebook logs.
   rpc NotebookLogs(NotebookLogsRequest) returns (stream NotebookLogsResponse) {
     option (google.api.http) = {
@@ -730,6 +741,17 @@ service Determined {
       tags: "Shells"
     };
   }
+  // Set the priority of the requested shell.
+  rpc SetShellPriority(SetShellPriorityRequest)
+      returns (SetShellPriorityResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/shells/{shell_id}/set_priority"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Shells"
+    };
+  }
   // Launch a shell.
   rpc LaunchShell(LaunchShellRequest) returns (LaunchShellResponse) {
     option (google.api.http) = {
@@ -763,6 +785,17 @@ service Determined {
   rpc KillCommand(KillCommandRequest) returns (KillCommandResponse) {
     option (google.api.http) = {
       post: "/api/v1/commands/{command_id}/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Commands"
+    };
+  }
+  // Set the priority of the requested command.
+  rpc SetCommandPriority(SetCommandPriorityRequest)
+      returns (SetCommandPriorityResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/commands/{command_id}/set_priority"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Commands"
@@ -803,6 +836,17 @@ service Determined {
       returns (KillTensorboardResponse) {
     option (google.api.http) = {
       post: "/api/v1/tensorboards/{tensorboard_id}/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Tensorboards"
+    };
+  }
+  // Set the priority of the requested TensorBoard.
+  rpc SetTensorboardPriority(SetTensorboardPriorityRequest)
+      returns (SetTensorboardPriorityResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/tensorboards/{tensorboard_id}/set_priority"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Tensorboards"

@@ -162,12 +162,7 @@ func trySchedulingTaskViaPreemption(
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
 	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
-		if _, ok := priorityToScheduledTaskMap[priority]; !ok {
-			continue
-		}
-
-		preemptionCandidates := priorityToScheduledTaskMap[priority]
-		for _, preemptionCandidate := range preemptionCandidates {
+		for _, preemptionCandidate := range priorityToScheduledTaskMap[priority] {
 			if preemptionCandidate.NonPreemptible || !filter(preemptionCandidate) {
 				continue
 			}

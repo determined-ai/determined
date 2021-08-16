@@ -103,6 +103,12 @@ args_description = [
             Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
+        Cmd("set", None, "set notebook attributes", [
+            Cmd("priority", command.set_priority, "set notebook priority", [
+                Arg("notebook_id", help="notebook ID"),
+                Arg("priority", type=int, help="priority"),
+            ]),
+        ]),
     ])
 ]  # type: List[Any]
 

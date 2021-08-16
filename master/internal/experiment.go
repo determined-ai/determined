@@ -284,6 +284,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)
+	case sproto.SetGroupPriority:
+		resources := e.Config.Resources()
+		resources.SetPriority(msg.Priority)
+		e.Config.SetResources(resources)
+		msg.Handler = ctx.Self()
+		ctx.Tell(e.rm, msg)
 
 	// Experiment shutdown logic.
 	case actor.PostStop:

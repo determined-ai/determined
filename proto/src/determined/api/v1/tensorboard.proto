@@ -68,6 +68,19 @@ message KillTensorboardResponse {
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
+// Set the priority of the requested TensorBoard.
+message SetTensorboardPriorityRequest {
+  // The id of the TensorBoard.
+  string tensorboard_id = 1;
+  // The new priority.
+  int32 priority = 2;
+}
+// Response to SetTensorboardPriorityRequest.
+message SetTensorboardPriorityResponse {
+  // The requested Tensorboard.
+  determined.tensorboard.v1.Tensorboard tensorboard = 1;
+}
+
 // Request to launch a tensorboard.
 message LaunchTensorboardRequest {
   // List of source experiment ids.
