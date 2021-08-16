@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  Support configuring working directory in the ``work_dir`` field for commands, shells, and
+   Notebooks. You can also optionally set it in the `task_container_defaults.work_dir` field of the
+   master configuration. The value set in the master configuration will be ignored if submitting a
+   context directory.

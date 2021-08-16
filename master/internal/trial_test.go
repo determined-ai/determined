@@ -19,7 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -174,7 +173,6 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},
 		},
-		archive.Archive{},
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)
 	return system, db, rID, tr, self

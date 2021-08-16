@@ -33,6 +33,19 @@ type TrialSpec struct {
 func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
+	env := s.ExperimentConfig.Environment()
+	ports := env.Ports()
+	if ports == nil {
+		ports = make(map[string]int)
+	}
+	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
+	env.SetPorts(ports)
+	res.Environment = env
+
+	res.ResourcesConfig = s.ExperimentConfig.Resources()
+
+	res.WorkDir = DefaultWorkDir
+
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(
 			trialEntrypointFile,
@@ -97,15 +110,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
 
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
-	env.SetPorts(ports)
-	res.Environment = env
-
 	portOffset := trialUniquePortOffset(s.Base.Devices)
 	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
@@ -132,9 +136,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		res.ShmSize = int64(*shm)
 	}
 
-	res.ResourcesConfig = s.ExperimentConfig.Resources()
-
-	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts())
+	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts(), res.WorkDir)
 	addMount := func(source, target string, bindOpts *mount.BindOptions) {
 		mounts = append(mounts, mount.Mount{
 			Type: mount.TypeBind, Source: source, Target: target, BindOptions: bindOpts,

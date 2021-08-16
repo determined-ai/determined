@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -47,7 +46,6 @@ type trial struct {
 	// Fields that are essentially configuration for the trial.
 	config              expconf.ExperimentConfig
 	taskSpec            *tasks.TaskSpec
-	modelDefinition     archive.Archive
 	warmStartCheckpoint *model.Checkpoint
 	generatedKeys       *ssh.PrivateAndPublicKeys
 
@@ -77,7 +75,6 @@ func newTrial(
 	config expconf.ExperimentConfig,
 	warmStartCheckpoint *model.Checkpoint,
 	taskSpec *tasks.TaskSpec,
-	modelDefinition archive.Archive,
 ) *trial {
 	return &trial{
 		taskID: taskID,
@@ -92,7 +89,6 @@ func newTrial(
 
 		config:              config,
 		taskSpec:            taskSpec,
-		modelDefinition:     modelDefinition,
 		warmStartCheckpoint: warmStartCheckpoint,
 	}
 }

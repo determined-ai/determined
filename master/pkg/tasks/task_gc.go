@@ -32,6 +32,22 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 
 	res.AllocationSessionToken = allocationToken
 
+	// Set Environment.
+	// Keep only the EnvironmentVariables provided by the experiment's config.
+	envVars := g.LegacyConfig.EnvironmentVariables()
+	env := expconf.EnvironmentConfig{
+		RawEnvironmentVariables: &envVars,
+	}
+	// Fill the rest of the environment with default values.
+	defaultConfig := expconf.ExperimentConfig{}
+	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
+	if defaultConfig.RawEnvironment != nil {
+		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
+	}
+	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+
+	res.WorkDir = DefaultWorkDir
+
 	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
@@ -74,21 +90,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}
 
-	// Keep only the EnvironmentVariables provided by the experiment's config.
-	envVars := g.LegacyConfig.EnvironmentVariables()
-	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: &envVars,
-	}
-	// Fill the rest of the environment with default values.
-	defaultConfig := expconf.ExperimentConfig{}
-	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
-
-	if defaultConfig.RawEnvironment != nil {
-		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
-	}
-	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
-
-	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
+	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts(), res.WorkDir)
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
 		res.Mounts = append(res.Mounts, mount.Mount{
 			Type:   mount.TypeBind,

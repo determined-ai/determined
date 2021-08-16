@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"crypto/tls"
 	"fmt"
+	"strings"
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	// ContainerWorkDir is the working directory for tasks.
-	ContainerWorkDir  = "/run/determined/workdir"
+	// DefaultWorkDir is the default workdir.
+	DefaultWorkDir    = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
 	trainDir          = "/run/determined/train"
@@ -49,9 +50,12 @@ type TaskSpec struct {
 	MasterCert  *tls.Certificate
 
 	// Fields that are set on the per-request basis.
+	// TaskContainerDefaults should be removed from TaskSpec once we move to using the same
+	// schema for the cluster-level defaults and the request-level configuration.
 	TaskContainerDefaults model.TaskContainerDefaultsConfig
 	Environment           expconf.EnvironmentConfig
 	ResourcesConfig       expconf.ResourcesConfig
+	WorkDir               string
 	Owner                 *model.User
 	AgentUserGroup        *model.AgentUserGroup
 	ExtraArchives         []container.RunArchive
@@ -73,11 +77,25 @@ type TaskSpec struct {
 	Devices                []device.Device
 }
 
+// ResolveWorkDir resolves the work dir.
+func (t *TaskSpec) ResolveWorkDir() {
+	agentUser := ""
+	detUser := ""
+	if t.AgentUserGroup != nil {
+		agentUser = t.AgentUserGroup.User
+	}
+	if t.Owner != nil {
+		detUser = t.Owner.Username
+	}
+	workDir := strings.Replace(t.WorkDir, "$AGENT_USER", agentUser, -1)
+	t.WorkDir = strings.Replace(workDir, "$DET_USER", detUser, -1)
+}
+
 // Archives returns all the archives.
 func (t *TaskSpec) Archives() []container.RunArchive {
 	res := []container.RunArchive{
-		workDirArchive(t.AgentUserGroup),
-		injectUserArchive(t.AgentUserGroup),
+		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
+		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
 	}
@@ -173,7 +191,7 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 				Env:          envVars,
 				Cmd:          t.Entrypoint,
 				Image:        env.Image().For(deviceType),
-				WorkingDir:   ContainerWorkDir,
+				WorkingDir:   t.WorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     network,
@@ -196,24 +214,26 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 }
 
 // workDirArchive ensures that the workdir is created and owned by the user.
-func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
-	return wrapArchive(
-		archive.Archive{
-			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
-		},
-		rootDir,
-	)
+func workDirArchive(
+	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
+) container.RunArchive {
+	a := archive.Archive{
+		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+	}
+	if createWorkDir {
+		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0700, tar.TypeDir))
+	}
+	return wrapArchive(a, rootDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files
 // to /run/determined/etc, which will be read by libnss_determined inside the container. If
 // libnss_determined is not present in the container, these files will be simply ignored and some
 // non-root container features will not work properly.
-func injectUserArchive(aug *model.AgentUserGroup) container.RunArchive {
+func injectUserArchive(aug *model.AgentUserGroup, workDir string) container.RunArchive {
 	passwdBytes := []byte(
-		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, ContainerWorkDir),
+		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
 	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))

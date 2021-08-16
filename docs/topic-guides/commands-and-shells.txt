@@ -82,12 +82,10 @@ In order to stop the SSH server container and free up cluster resources, run ``d
  Context Directories
 *********************
 
-Commands and shells become much more powerful with the use of the ``-c <directory>`` option, which
-tells Determined to transfer files from a directory on the local machine (the "context directory")
-to the container. The contents of the context directory are placed into the directory
-``/run/determined/workdir`` within the container before the command or shell starts running.
-``/run/determined/workdir`` is also the initial working directory for commands, so they can easily
-access files from the context using relative paths.
+By using the ``-c <directory>`` option, files are transferred from a directory on the local machine
+(the "context directory") to the container. The contents of the context directory are placed into
+the working directory within the container before the command or shell starts running, so files in
+the context can be easily accessed using relative paths.
 
 .. code::
 
