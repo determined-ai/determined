@@ -61,7 +61,6 @@ const TableBatch: React.FC<Props> = ({
           <Select
             options={actions}
             placeholder="Select an action..."
-            style={{ width: 190 }}
             value={action}
             onSelect={handleAction}
           />
