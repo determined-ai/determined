@@ -209,8 +209,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Child(msg.op.RequestID), state)
 		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
-	case trialSnapshot:
-		// Handled by the defered call at the top.
 	case trialReportEarlyExit:
 		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {

@@ -541,6 +541,22 @@ service Determined {
       tags: "Internal"
     };
   }
+  // Mark the given reservation (container, pod, etc) within an allocation as
+  // a daemon reservation. In the exit of a successful exit, Determined will
+  // wait for all reservations to exit - unless they are marked as daemon
+  // reservations, in which case Determined will clean them up regardless of
+  // exit status after all non-daemon reservations have exited.
+  rpc MarkAllocationReservationDaemon(MarkAllocationReservationDaemonRequest)
+      returns (MarkAllocationReservationDaemonResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/containers/{container_id}/daemon"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the current searcher operation.
   rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
       returns (GetCurrentTrialSearcherOperationResponse) {

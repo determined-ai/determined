@@ -35,6 +35,8 @@ type (
 		keys *ssh.PrivateAndPublicKeys
 		// The existence of allocations signifies the trial has been allocated.
 		reservations map[cproto.ID]sproto.Reservation
+		// The daemon reservations within the allocation.
+		daemonReservations map[cproto.ID]bool
 		// The following fields tracks containers and their states.
 		containers map[cproto.ID]cproto.Container
 		// Tracks the initial container exit, unless we caused the failure by killed the trial.
@@ -55,6 +57,13 @@ type (
 		killCooldown *time.Time
 	}
 
+	// MarkReservationDaemon marks the given reservation as a daemon. In the event of a normal exit,
+	// the allocation will not wait for it to exit on its own and instead will kill it and instead
+	// await it's hopefully quick termination.
+	MarkReservationDaemon struct {
+		AllocationID model.AllocationID
+		ContainerID  cproto.ID
+	}
 	// AllocationExited summarizes the exit status of an allocation.
 	AllocationExited struct {
 		// userRequestedStop is when a container unexpectedly exits with 0.
@@ -122,7 +131,16 @@ func (a *Allocation) HandleEvent(ctx *actor.Context) (*AllocationExited, error) 
 	case sproto.TaskContainerStateChanged:
 		return a.processContainerMessage(ctx, msg)
 	case sproto.ReleaseResources:
-		return a.Terminate(ctx, Graceful)
+		return a.Terminate(ctx), nil
+	case MarkReservationDaemon:
+		if err := a.processSetReservationDaemon(msg.AllocationID, msg.ContainerID); err != nil {
+			if ctx.ExpectingResponse() {
+				ctx.Respond(err)
+			} else {
+				ctx.Log().WithError(err).Warn("setting daemon")
+			}
+		}
+
 	case WatchRendezvousInfo, UnwatchRendezvousInfo, RendezvousTimeout:
 		switch err := a.rendezvous.Receive(ctx).(type) {
 		case ErrTimeoutExceeded:
@@ -131,30 +149,39 @@ func (a *Allocation) HandleEvent(ctx *actor.Context) (*AllocationExited, error) 
 		default:
 			return nil, errors.Wrap(err, "processing rendezvous")
 		}
-		return nil, nil
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
 		switch err := a.preemption.Receive(ctx).(type) {
 		case ErrTimeoutExceeded:
-			ctx.Log().WithError(err).Errorf("forcibly terminating trial")
-			return a.Terminate(ctx, Kill)
+			return a.Kill(ctx), nil
 		case nil:
 		default:
 			return nil, errors.Wrap(err, "processing preemption")
 		}
-		return nil, nil
 	default:
 		return nil, actor.ErrUnexpectedMessage(ctx)
 	}
+	return nil, nil
 }
 
-// Close tears down an allocation.
-func (a *Allocation) Close(ctx *actor.Context) error {
+// ResourcesReleased tears down an allocation.
+func (a *Allocation) ResourcesReleased() error {
 	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
 		return errors.Wrap(err, "error delete allocation session")
 	}
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		return errors.Wrap(err, "failed to mark allocation completed")
 	}
+	return nil
+}
+
+func (a *Allocation) processSetReservationDaemon(aID model.AllocationID, cID cproto.ID) error {
+	if aID != a.model.AllocationID {
+		return ErrStaleAllocation{aID, a.model.AllocationID}
+	}
+	if _, ok := a.reservations[cID]; !ok {
+		return ErrStaleContainer{ID: cID}
+	}
+	a.daemonReservations[cID] = true
 	return nil
 }
 
@@ -188,63 +215,84 @@ func (a *Allocation) processContainerMessage(
 
 		switch {
 		case msg.ContainerStopped.Failure != nil:
-			return a.Terminate(ctx, Kill)
+			return a.Kill(ctx), nil
 		default:
-			return a.Terminate(ctx, Noop)
+			return a.Close(ctx), nil
 		}
 	}
 	return nil, nil
 }
 
-// TerminationType controls the way in which an allocation is terminated.
-type TerminationType string
+// AllocationSignal is an interface for signals that can be sent to an allocation.
+type AllocationSignal func(ctx *actor.Context) *AllocationExited
 
-const (
-	// Kill is used to forcibly halt a trial. calling this will kill existing allocations
-	// and exit. terminate is re-entered after a kill when all containers have stopped.
-	Kill TerminationType = "kill"
-	// Graceful is used to gracefully halt a trial. calling this will (usually, with the exception
-	// of unready trials) send a preemption signal to all watchers and begin a timeout after which
-	// we forcibly kill the trial.
-	Graceful TerminationType = "graceful"
-	// Noop is used to try to move a trial to a terminal state while taking no direct action on it.
-	// e.g., if the searcher tells us it's done, we either should exit right away if we're unallocated,
-	// or just chill and wait for the active task to exit.
-	Noop TerminationType = "noop"
-)
-
-// Terminate encapsulates all termination logic for an allocation.
-//
-// It just exists to translate caller desires "kill this allocation, preempt this allocation" to
-// the corresponding action to actually take based on our state, instead of each caller needing
-// to be aware of how to take certain actions in certain states.
-func (a *Allocation) Terminate(ctx *actor.Context, tt TerminationType) (*AllocationExited, error) {
+// Close attempts to cleanup an allocation while not killing or preempting it.
+func (a *Allocation) Close(ctx *actor.Context) *AllocationExited {
 	switch {
 	case len(a.reservations) == len(a.terminatedContainers):
-		ctx.Log().Info("decided to close allocation because all containers have exited")
-		return a.terminated(ctx), nil
-	case tt == Noop, tt == Graceful && len(a.terminatedContainers) > 0:
-		// Working on it.
-	case tt == Graceful && a.rendezvous.ready():
-		ctx.Log().Info("decided to gracefully terminate allocation")
-		a.preemption.Preempt()
-		ctx.Tell(ctx.Self(), PreemptionTimeout{a.model.AllocationID})
-	default:
-		if a.killCooldown != nil && time.Now().UTC().Before(*a.killCooldown) {
-			ctx.Log().Debug("still inside of kill cooldown")
-			return nil, nil
-		}
+		return a.terminated(ctx)
+	case a.allNonDaemonsExited():
+		a.kill(ctx)
+	}
+	return nil
+}
 
-		ctx.Log().Info("decided to kill allocation")
-		if a.terminatedFirst == nil {
-			a.killedWhileRunning = true
-		}
-		a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
-		for _, reservation := range a.reservations {
-			reservation.Kill(ctx)
+// Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
+func (a *Allocation) Terminate(ctx *actor.Context) *AllocationExited {
+	if exit := a.Close(ctx); exit != nil {
+		return exit
+	}
+
+	switch {
+	case a.rendezvous.ready():
+		a.preempt(ctx)
+	default:
+		a.kill(ctx)
+	}
+	return nil
+}
+
+// Kill attempts to close an allocation by killing it.
+func (a *Allocation) Kill(ctx *actor.Context) *AllocationExited {
+	if exit := a.Close(ctx); exit != nil {
+		return exit
+	}
+
+	a.kill(ctx)
+	return nil
+}
+
+func (a *Allocation) allNonDaemonsExited() bool {
+	for id := range a.reservations {
+		_, terminated := a.terminatedContainers[id]
+		_, daemon := a.daemonReservations[id]
+		if !(terminated || daemon) {
+			return false
 		}
 	}
-	return nil, nil
+	return true
+}
+
+func (a *Allocation) preempt(ctx *actor.Context) {
+	ctx.Log().Info("decided to gracefully terminate allocation")
+	a.preemption.Preempt()
+	ctx.Tell(ctx.Self(), PreemptionTimeout{a.model.AllocationID})
+}
+
+func (a *Allocation) kill(ctx *actor.Context) {
+	if a.killCooldown != nil && time.Now().UTC().Before(*a.killCooldown) {
+		ctx.Log().Debug("still inside of kill cooldown")
+		return
+	}
+
+	ctx.Log().Info("decided to kill allocation")
+	if a.terminatedFirst == nil {
+		a.killedWhileRunning = true
+	}
+	a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
+	for _, reservation := range a.reservations {
+		reservation.Kill(ctx)
+	}
 }
 
 // terminated decides what action to take to close or restart a trial's task. This is only
@@ -274,7 +322,7 @@ func (a *Allocation) terminated(ctx *actor.Context) *AllocationExited {
 			ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)
 			return &AllocationExited{Err: err}
 		case aproto.AgentError, aproto.AgentFailed:
-			// Questionable, could be considered failures.
+			// Questionable, could be considered failures, but for now we don't.
 			ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
 			return &AllocationExited{}
 		case aproto.TaskAborted:
@@ -307,12 +355,12 @@ func (e ErrNoAllocation) Error() string {
 	return fmt.Sprintf("%s not valid without active allocation", e.Action)
 }
 
-// ErrStaleTask is returned when an operation was attempted by a stale task.
-type ErrStaleTask struct {
+// ErrStaleAllocation is returned when an operation was attempted by a stale task.
+type ErrStaleAllocation struct {
 	Received, Actual model.AllocationID
 }
 
-func (e ErrStaleTask) Error() string {
+func (e ErrStaleAllocation) Error() string {
 	return fmt.Sprintf("stale task %s != %s (received != actual)", e.Received, e.Actual)
 }
 

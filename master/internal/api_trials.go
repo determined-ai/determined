@@ -601,6 +601,23 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
+func (a *apiServer) MarkAllocationReservationDaemon(
+	_ context.Context, req *apiv1.MarkAllocationReservationDaemonRequest,
+) (*apiv1.MarkAllocationReservationDaemonResponse, error) {
+	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(handler.Address(), task.MarkReservationDaemon{
+		AllocationID: model.AllocationID(req.AllocationId),
+		ContainerID:  cproto.ID(req.ContainerId),
+	}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.MarkAllocationReservationDaemonResponse{}, nil
+}
+
 func (a *apiServer) GetCurrentTrialSearcherOperation(
 	_ context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {

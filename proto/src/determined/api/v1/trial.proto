@@ -300,6 +300,19 @@ message AckAllocationPreemptionSignalRequest {
 // Response to AckAllocationPreemptionSignalRequest.
 message AckAllocationPreemptionSignalResponse {}
 
+// Mark some reservation as a daemon.
+message MarkAllocationReservationDaemonRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "container_id" ] }
+  };
+  // The allocation ID for the reservation.
+  string allocation_id = 1;
+  // The container ID for the reservation.
+  string container_id = 2;
+}
+// Response to MarkAllocationReservationDaemonRequest.
+message MarkAllocationReservationDaemonResponse {}
+
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

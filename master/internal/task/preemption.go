@@ -93,7 +93,7 @@ func (p *Preemption) Receive(ctx *actor.Context) error {
 func (p *Preemption) Watch(
 	allocationID model.AllocationID, id uuid.UUID) (PreemptionWatcher, error) {
 	if p.allocationID != allocationID {
-		return PreemptionWatcher{}, ErrStaleTask{Received: allocationID, Actual: p.allocationID}
+		return PreemptionWatcher{}, ErrStaleAllocation{Received: allocationID, Actual: p.allocationID}
 	}
 
 	// Size 1; at most a single message can be sent and we don't want to block.
@@ -137,7 +137,7 @@ func (p *Preemption) Acknowledge(taskID model.AllocationID) error {
 		return errNoPreemptionStatus
 	}
 	if p.allocationID != taskID {
-		return ErrStaleTask{Received: taskID, Actual: p.allocationID}
+		return ErrStaleAllocation{Received: taskID, Actual: p.allocationID}
 	}
 
 	p.acked = true

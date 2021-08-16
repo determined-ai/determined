@@ -112,7 +112,7 @@ func (r *Rendezvous) watch(
 	allocationID model.AllocationID, id cproto.ID,
 ) (RendezvousWatcher, error) {
 	if r.allocationID != allocationID {
-		err := ErrStaleTask{Received: allocationID, Actual: r.allocationID}
+		err := ErrStaleAllocation{Received: allocationID, Actual: r.allocationID}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.ranks[id]; !ok {
 		err := ErrStaleContainer{ID: id}

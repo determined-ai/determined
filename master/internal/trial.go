@@ -139,7 +139,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case sproto.TaskContainerStateChanged,
 		sproto.ReleaseResources, task.WatchRendezvousInfo, task.UnwatchRendezvousInfo,
 		task.RendezvousTimeout, task.WatchPreemption, task.AckPreemption,
-		task.UnwatchPreemption, task.PreemptionTimeout:
+		task.UnwatchPreemption, task.PreemptionTimeout, task.MarkReservationDaemon:
 		if t.allocation == nil {
 			return task.ErrNoAllocation{Action: fmt.Sprintf("%T", msg)}
 		}
@@ -299,7 +299,7 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 // processAllocationExit cleans up after an allocation exit and exits permanently or reallocates.
 func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationExited) error {
 	// Clean up old stuff.
-	if err := t.allocation.Close(ctx); err != nil {
+	if err := t.allocation.ResourcesReleased(); err != nil {
 		return err
 	}
 	t.req = nil
@@ -371,10 +371,7 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 			ctx.Log().Info("terminating trial before resources are allocated")
 			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 		default:
-			switch exit, err := t.allocation.Terminate(ctx, task.Graceful); {
-			case err != nil:
-				return errors.Wrap(err, "failed to terminate allocation")
-			case exit != nil:
+			if exit := t.allocation.Terminate(ctx); exit != nil {
 				return t.processAllocationExit(ctx, *exit)
 			}
 		}
@@ -388,17 +385,13 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 		default:
-			action := map[model.State]task.TerminationType{
-				model.StoppingCompletedState: task.Noop,
-				model.StoppingCanceledState:  task.Graceful,
-				model.StoppingKilledState:    task.Kill,
-				model.StoppingErrorState:     task.Kill,
+			action := map[model.State]task.AllocationSignal{
+				model.StoppingCompletedState: t.allocation.Close,
+				model.StoppingCanceledState:  t.allocation.Terminate,
+				model.StoppingKilledState:    t.allocation.Kill,
+				model.StoppingErrorState:     t.allocation.Kill,
 			}[t.state]
-
-			switch exit, err := t.allocation.Terminate(ctx, action); {
-			case err != nil:
-				return errors.Wrapf(err, "failed to terminate allocation (%s)", action)
-			case exit != nil:
+			if exit := action(ctx); exit != nil {
 				return t.processAllocationExit(ctx, *exit)
 			}
 		}
