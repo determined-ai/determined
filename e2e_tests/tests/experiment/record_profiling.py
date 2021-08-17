@@ -10,7 +10,7 @@ from tests import config as conf
 
 summary_methods: Dict[str, Callable] = {"avg": mean, "max": max, "min": min}
 
-default_metrics = {
+default_metrics: Dict[str, List[str]] = {
     SysMetricName.GPU_UTIL_METRIC: ["avg", "max"],
     SysMetricName.SIMPLE_CPU_UTIL_METRIC: ["avg", "max"],
     SysMetricName.DISK_IOPS_METRIC: ["avg", "max"],
@@ -22,12 +22,14 @@ default_metrics = {
 
 
 def profile_test(
-    record_property: Callable[[str, object], None], profiled_metrics: Optional[Dict] = None
-):
+    record_property: Callable[[str, object], None],
+    profiled_metrics: Optional[Dict[str, List[str]]] = None,
+) -> Callable[[int], None]:
     if not profiled_metrics:
         profiled_metrics = default_metrics
 
     def record(trial_id: int) -> None:
+        assert profiled_metrics is not None
         for metric in profiled_metrics:
             metrics = get_profiling_metrics(trial_id, metric)
             if not metrics:
