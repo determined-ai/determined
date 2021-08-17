@@ -1,3 +1,6 @@
+$arrow-size: 11px;
+$arrow-left: 22px;
+
 .base {
   height: 0;
   opacity: 0;
@@ -22,18 +25,19 @@
   }
   .container::before {
     background-color: var(--theme-colors-monochrome-17);
-    border-color: var(--theme-colors-monochrome-12);
+    border-color: var(--theme-colors-monochrome-11);
     border-style: solid;
     border-width: 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width) 0;
     box-shadow: var(--theme-shadow);
     content: '';
     display: block;
-    height: 12px;
-    left: 24px;
+    height: $arrow-size;
+    left: $arrow-left;
     position: absolute;
     top: 100%;
     transform: translate(-50%, -50%) rotate(45deg);
-    width: 12px;
+    width: $arrow-size;
+    z-index: 0;
   }
   .container::after {
     background-color: var(--theme-colors-monochrome-17);
@@ -48,13 +52,22 @@
   .actions {
     align-items: center;
     display: flex;
+    flex-grow: 1;
     gap: var(--theme-sizes-layout-medium);
+    z-index: 1;
   }
   .message {
     font-size: var(--theme-sizes-font-medium);
     overflow: hidden;
+    padding: 0 var(--theme-sizes-layout-medium);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .clear {
+    flex-shrink: 1;
+  }
+  :global(.ant-select-selection-placeholder) {
+    color: var(--theme-colors-monochrome-5);
   }
   &.show {
     height: 48px;
@@ -64,21 +77,37 @@
 
   @media only screen and (max-width: $breakpoint-mobile) {
     .container {
-      flex-direction: column;
-      height: 78px;
-      justify-content: flex-start;
-      padding: 0;
+      flex-wrap: wrap;
+      height: 80px;
+      padding: var(--theme-sizes-layout-medium);
     }
     .actions {
+      flex-grow: 0;
+      order: 1;
       overflow: auto;
-      padding: var(--theme-sizes-layout-medium);
-      width: 100%;
     }
     .message {
-      padding-bottom: var(--theme-sizes-layout-medium);
+      order: 0;
+      padding: 0 0 var(--theme-sizes-layout-medium) 0;
+      width: 100%;
     }
-    &.show {
-      height: 78px;
+    .clear {
+      flex-grow: 1;
+      order: 2;
+      padding-left: var(--theme-sizes-layout-medium);
     }
+    .clear > button { width: 100%; }
+    &.show { height: 80px; }
+  }
+
+  @media only screen and (max-width: 360px) {
+    .container {
+      height: 120px;
+    }
+    .clear {
+      padding: var(--theme-sizes-layout-medium) 0 0 0;
+      width: 100%;
+    }
+    &.show { height: 120px; }
   }
 }

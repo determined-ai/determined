@@ -1,4 +1,4 @@
-import { Alert, Button } from 'antd';
+import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Message, { MessageType } from 'components/Message';
@@ -14,9 +14,8 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  CommandTask,
-  ExperimentBase, Hyperparameter, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
@@ -38,11 +37,6 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
-}
-
-enum Action {
-  OpenTensorBoard = 'OpenTensorboard',
-  CompareTrials = 'CompareTrials'
 }
 
 interface HpTrialData {
@@ -240,7 +234,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
   }, [ selectedRowKeys ]);
 
-  const handleBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
@@ -296,14 +290,15 @@ const HpParallelCoordinates: React.FC<Props> = ({
             />
           </div>
           <div>
-            <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-              <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-            View in TensorBoard
-              </Button>
-              <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
-            Compare Trials
-              </Button>
-            </TableBatch>
+            <TableBatch
+              actions={[
+                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                { label: Action.CompareTrials, value: Action.CompareTrials },
+              ]}
+              selectedRowCount={selectedRowKeys.length}
+              onAction={action => submitBatchAction(action as Action)}
+              onClear={clearSelected}
+            />
             <HpTrialTable
               colorScale={colorScale}
               experimentId={experiment.id}

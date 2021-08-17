@@ -12,7 +12,6 @@ Specification to test the task list page.
   |table batch buttons|disabled|
   |-------------------|--------|
   |Kill               |false   |
-* Toggle all table row selection
 
 ## Filter tasks by type
 

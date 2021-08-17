@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { ColumnsType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -27,8 +27,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { parseUrl } from 'routes/utils';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment,
-  getExperiment, getExperimentLabels, getExperiments,
+  activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
   killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -36,7 +35,8 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RunState,
+  ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem,
+  Pagination, RecordKey, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
@@ -45,16 +45,6 @@ import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
-
-enum Action {
-  Activate = 'Activate',
-  Archive = 'Archive',
-  Cancel = 'Cancel',
-  Kill = 'Kill',
-  Pause = 'Pause',
-  OpenTensorBoard = 'OpenTensorboard',
-  Unarchive = 'Unarchive',
-}
 
 const URL_ALL = 'all';
 
@@ -82,7 +72,6 @@ const ExperimentList: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
-  const [ experimentMap, setExperimentMap ] = useState<Record<string, ExperimentItem>>({});
   const [ labels, setLabels ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
@@ -92,16 +81,6 @@ const ExperimentList: React.FC = () => {
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ total, setTotal ] = useState(0);
-
-  const updateExperimentMap = useCallback((experiments) => {
-    setExperimentMap(experimentMap => {
-      return (experiments || []).reduce((acc: Record<string,
-        ExperimentItem>, experiment: ExperimentItem) => {
-        acc[experiment.id] = experiment;
-        return acc;
-      }, experimentMap);
-    });
-  }, []);
 
   /*
    * When filters changes update the page URL.
@@ -236,10 +215,10 @@ const ExperimentList: React.FC = () => {
     const rows = urlSearchParams.getAll('row');
     if (rows != null) {
       const rowKeys = rows.map(row => parseInt(row));
-      rowKeys.forEach(async row => {
-        const experiment = await getExperiment({ id: row });
-        updateExperimentMap([ experiment ]);
-      });
+      // rowKeys.forEach(async row => {
+      //   const experiment = await getExperiment({ id: row });
+      //   updateExperimentMap([ experiment ]);
+      // });
       setSelectedRowKeys(rowKeys);
     }
 
@@ -247,15 +226,23 @@ const ExperimentList: React.FC = () => {
     setIsUrlParsed(true);
     setPagination(pagination);
     setSorter(sorter);
-  }, [ filters, isUrlParsed, pagination, search, sorter, updateExperimentMap ]);
+  }, [ filters, isUrlParsed, pagination, search, sorter ]);
 
-  useEffect(() => {
-    updateExperimentMap(experiments);
-  }, [ experiments, updateExperimentMap ]);
+  // useEffect(() => {
+  //   updateExperimentMap(experiments);
+  // }, [ experiments, updateExperimentMap ]);
 
-  const selectedExperiments = useMemo(() => {
-    return selectedRowKeys.map(key => experimentMap[key]);
-  }, [ experimentMap, selectedRowKeys ]);
+  // const selectedExperiments = useMemo(() => {
+  //   console.log('selectedExperiments', selectedRowKeys.map(key => experimentMap[key]));
+  //   return selectedRowKeys.map(key => experimentMap[key]);
+  // }, [ experimentMap, selectedRowKeys ]);
+
+  const experimentMap = useMemo(() => {
+    return (experiments || []).reduce((acc, experiment) => {
+      acc[experiment.id] = experiment;
+      return acc;
+    }, {} as Record<RecordKey, ExperimentItem>);
+  }, [ experiments ]);
 
   const {
     hasActivatable,
@@ -273,8 +260,8 @@ const ExperimentList: React.FC = () => {
       hasPausable: false,
       hasUnarchivable: false,
     };
-    for (let i = 0; i < selectedExperiments.length; i++) {
-      const experiment = selectedExperiments[i];
+    for (let i = 0; i < selectedRowKeys.length; i++) {
+      const experiment = experimentMap[selectedRowKeys[i]];
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
@@ -289,7 +276,7 @@ const ExperimentList: React.FC = () => {
       if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
     }
     return tracker;
-  }, [ selectedExperiments ]);
+  }, [ experimentMap, selectedRowKeys ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -586,32 +573,29 @@ const ExperimentList: React.FC = () => {
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
-      return openOrCreateTensorboard(
-        { experimentIds: selectedExperiments.map(experiment => experiment.id) },
-      );
+      return openOrCreateTensorboard({ experimentIds: selectedRowKeys });
     }
-    return Promise.all(selectedExperiments
-      .map(experiment => {
-        switch (action) {
-          case Action.Activate:
-            return activateExperiment({ experimentId: experiment.id });
-          case Action.Archive:
-            return archiveExperiment({ experimentId: experiment.id });
-          case Action.Cancel:
-            return cancelExperiment({ experimentId: experiment.id });
-          case Action.Kill:
-            return killExperiment({ experimentId: experiment.id });
-          case Action.Pause:
-            return pauseExperiment({ experimentId: experiment.id });
-          case Action.Unarchive:
-            return unarchiveExperiment({ experimentId: experiment.id });
-          default:
-            return Promise.resolve();
-        }
-      }));
-  }, [ selectedExperiments ]);
+    return Promise.all(selectedRowKeys.map(experimentId => {
+      switch (action) {
+        case Action.Activate:
+          return activateExperiment({ experimentId });
+        case Action.Archive:
+          return archiveExperiment({ experimentId });
+        case Action.Cancel:
+          return cancelExperiment({ experimentId });
+        case Action.Kill:
+          return killExperiment({ experimentId });
+        case Action.Pause:
+          return pauseExperiment({ experimentId });
+        case Action.Unarchive:
+          return unarchiveExperiment({ experimentId });
+        default:
+          return Promise.resolve();
+      }
+    }));
+  }, [ selectedRowKeys ]);
 
-  const handleBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
@@ -642,7 +626,7 @@ const ExperimentList: React.FC = () => {
     }
   }, [ fetchExperiments, sendBatchActions ]);
 
-  const handleConfirmation = useCallback((action: Action) => {
+  const showConfirmation = useCallback((action: Action) => {
     Modal.confirm({
       content: `
         Are you sure you want to ${action.toLocaleLowerCase()}
@@ -650,10 +634,18 @@ const ExperimentList: React.FC = () => {
       `,
       icon: <ExclamationCircleOutlined />,
       okText: /cancel/i.test(action) ? 'Confirm' : action,
-      onOk: () => handleBatchAction(action),
+      onOk: () => submitBatchAction(action),
       title: 'Confirm Batch Action',
     });
-  }, [ handleBatchAction ]);
+  }, [ submitBatchAction ]);
+
+  const handleBatchAction = useCallback((action?: string) => {
+    if (action === Action.OpenTensorBoard) {
+      submitBatchAction(action);
+    } else {
+      showConfirmation(action as Action);
+    }
+  }, [ submitBatchAction, showConfirmation ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -710,32 +702,20 @@ const ExperimentList: React.FC = () => {
       id="experiments"
       options={<FilterCounter activeFilterCount={activeFilterCount} onReset={resetFilters} />}
       title="Experiments">
-      <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-        <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-            View in TensorBoard
-        </Button>
-        <Button
-          disabled={!hasActivatable}
-          type="primary"
-          onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
-        <Button
-          disabled={!hasPausable}
-          onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
-        <Button
-          disabled={!hasArchivable}
-          onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
-        <Button
-          disabled={!hasUnarchivable}
-          onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
-        <Button
-          disabled={!hasCancelable}
-          onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
-        <Button
-          danger
-          disabled={!hasKillable}
-          type="primary"
-          onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
-      </TableBatch>
+      <TableBatch
+        actions={[
+          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+          { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
+          { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
+          { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },
+          { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
+          { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
+          { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
+        ]}
+        selectedRowCount={selectedRowKeys.length}
+        onAction={handleBatchAction}
+        onClear={clearSelected}
+      />
       <ResponsiveTable<ExperimentItem>
         columns={columns}
         dataSource={experiments}

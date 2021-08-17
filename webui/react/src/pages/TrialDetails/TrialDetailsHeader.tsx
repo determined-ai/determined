@@ -5,15 +5,10 @@ import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorboard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentBase, RunState, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentBase, RunState, TrialDetails } from 'types';
 import { getWorkload, isMetricsWorkload } from 'utils/step';
 import { terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
-
-export enum Action {
-  Continue = 'Continue',
-  Tensorboard = 'Tensorboard',
-}
 
 export const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   const isTerminal = terminalRunStates.has(trial.state);
@@ -43,7 +38,7 @@ const TrialDetailsHeader: React.FC<Props> = (
       options.push({
         icon: <Icon name="tensorboard" size="small" />,
         isLoading: isRunningTensorboard,
-        key: Action.Tensorboard,
+        key: Action.OpenTensorBoard,
         label: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorboard(true);
@@ -58,14 +53,14 @@ const TrialDetailsHeader: React.FC<Props> = (
     if (trial.bestAvailableCheckpoint !== undefined) {
       options.push({
         icon: <Icon name="fork" size="small" />,
-        key: Action.Continue,
+        key: Action.ContinueTrial,
         label: 'Continue Trial',
-        onClick: () => handleActionClick(Action.Continue),
+        onClick: () => handleActionClick(Action.ContinueTrial),
       });
     } else {
       options.push({
         icon: <Icon name="fork" size="small" />,
-        key: Action.Continue,
+        key: Action.ContinueTrial,
         label: 'Continue Trial',
         tooltip: 'No checkpoints found. Cannot continue trial',
       });

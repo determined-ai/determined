@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import { ColumnType, FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -28,7 +28,7 @@ import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
-import { CommandState, CommandTask, CommandType } from 'types';
+import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
 import {
   alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
@@ -396,7 +396,7 @@ const TaskList: React.FC = () => {
     }
   }, [ fetchAll, selectedTasks ]);
 
-  const handleConfirmation = useCallback(() => {
+  const showConfirmation = useCallback(() => {
     Modal.confirm({
       content: `
         Are you sure you want to kill
@@ -408,6 +408,10 @@ const TaskList: React.FC = () => {
       title: 'Confirm Batch Kill',
     });
   }, [ handleBatchKill ]);
+
+  const handleBatchAction = useCallback((action?: string) => {
+    if (action === Action.Kill) showConfirmation();
+  }, [ showConfirmation ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
@@ -444,13 +448,12 @@ const TaskList: React.FC = () => {
       options={<FilterCounter activeFilterCount={filterCount} onReset={resetFilters} /> }
       title="Tasks">
       <div className={css.base}>
-        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-          <Button
-            danger
-            disabled={!hasKillable}
-            type="primary"
-            onClick={handleConfirmation}>Kill</Button>
-        </TableBatch>
+        <TableBatch
+          actions={[ { disabled: !hasKillable, label: Action.Kill, value: Action.Kill } ]}
+          selectedRowCount={selectedRowKeys.length}
+          onAction={handleBatchAction}
+          onClear={clearSelected}
+        />
         <ResponsiveTable<CommandTask>
           columns={columns}
           dataSource={filteredTasks}

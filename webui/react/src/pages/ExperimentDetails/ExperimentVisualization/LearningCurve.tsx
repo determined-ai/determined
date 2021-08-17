@@ -1,4 +1,4 @@
-import { Alert, Button } from 'antd';
+import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
@@ -13,8 +13,8 @@ import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  CommandTask,
-  ExperimentBase, Hyperparameter, MetricName, metricTypeParamMap, RunState,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
+  metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
@@ -31,11 +31,6 @@ interface Props {
   fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
-}
-
-enum Action {
-  OpenTensorBoard = 'OpenTensorboard',
-  CompareTrials = 'CompareTrials'
 }
 
 const MAX_DATAPOINTS = 5000;
@@ -175,7 +170,7 @@ const LearningCurve: React.FC<Props> = ({
     }
   }, [ selectedRowKeys ]);
 
-  const handleBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
@@ -231,14 +226,15 @@ const LearningCurve: React.FC<Props> = ({
               onTrialClick={handleTrialClick}
               onTrialFocus={handleTrialFocus} />
           </div>
-          <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-            <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-            View in TensorBoard
-            </Button>
-            <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
-            Compare Trials
-            </Button>
-          </TableBatch>
+          <TableBatch
+            actions={[
+              { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+              { label: Action.CompareTrials, value: Action.CompareTrials },
+            ]}
+            selectedRowCount={selectedRowKeys.length}
+            onAction={action => submitBatchAction(action as Action)}
+            onClear={clearSelected}
+          />
           <HpTrialTable
             experimentId={experiment.id}
             handleTableRowSelect={handleTableRowSelect}

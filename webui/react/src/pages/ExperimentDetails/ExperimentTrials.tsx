@@ -30,7 +30,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  CheckpointWorkloadExtended, CommandTask, ExperimentBase,
+  ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   Pagination, RunState, TrialFilters, TrialItem,
 } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
@@ -41,11 +41,6 @@ import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
-}
-
-enum Action {
-  OpenTensorBoard = 'OpenTensorboard',
-  CompareTrials = 'CompareTrials'
 }
 
 const URL_ALL = 'all';
@@ -349,7 +344,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ selectedRowKeys ]);
 
-  const handleBatchAction = useCallback(async (action: Action) => {
+  const submitBatchAction = useCallback(async (action: Action) => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard && result) {
@@ -398,14 +393,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   return (
     <>
       <Section>
-        <TableBatch selectedRowCount={selectedRowKeys.length} onClear={clearSelected}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-            View in TensorBoard
-          </Button>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.CompareTrials)}>
-            Compare Trials
-          </Button>
-        </TableBatch>
+        <TableBatch
+          actions={[
+            { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+            { label: Action.CompareTrials, value: Action.CompareTrials },
+          ]}
+          selectedRowCount={selectedRowKeys.length}
+          onAction={action => submitBatchAction(action as Action)}
+          onClear={clearSelected}
+        />
         <ResponsiveTable
           columns={columns}
           dataSource={trials}

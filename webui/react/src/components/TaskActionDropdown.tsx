@@ -12,7 +12,9 @@ import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
   killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
-import { AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState } from 'types';
+import {
+  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
+} from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
@@ -20,17 +22,6 @@ import { openCommand } from 'wait';
 
 import Link from './Link';
 import css from './TaskActionDropdown.module.scss';
-
-export enum Action {
-  Activate = 'activate',
-  Archive = 'archive',
-  Cancel = 'cancel',
-  Delete = 'delete',
-  Kill = 'kill',
-  Pause = 'pause',
-  Tensorboard = 'tensorboard',
-  Unarchive = 'unarchive',
-}
 
 interface Props {
   curUser?: DetailedUser;
@@ -74,7 +65,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
           await cancelExperiment({ experimentId: id });
           if (onComplete) onComplete(action);
           break;
-        case Action.Tensorboard: {
+        case Action.OpenTensorBoard: {
           const tensorboard = await openOrCreateTensorboard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
@@ -135,7 +126,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
   if (isKillable) menuItems.push(<Menu.Item key={Action.Kill}>Kill</Menu.Item>);
   if (isDeletable) menuItems.push(<Menu.Item key={Action.Delete}>Delete</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key={Action.Tensorboard}>View in TensorBoard</Menu.Item>);
+    menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">
       <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>

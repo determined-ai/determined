@@ -5,19 +5,12 @@ import React from 'react';
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
-import {
-  openOrCreateTensorboard,
-} from 'services/api';
-import { TrialItem } from 'types';
+import { openOrCreateTensorboard } from 'services/api';
+import { ExperimentAction as Action, TrialItem } from 'types';
 import { capitalize } from 'utils/string';
 import { openCommand } from 'wait';
 
 import css from './TaskActionDropdown.module.scss';
-
-export enum Action {
-  Tensorboard = 'Open Tensorboard',
-  Logs = 'View Logs'
-}
 
 interface Props {
   experimentId: number;
@@ -32,10 +25,10 @@ const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId }: Props) =>
     try {
       const action = params.key as Action;
       switch (action) { // Cases should match menu items.
-        case Action.Logs:
+        case Action.ViewLogs:
           routeToReactUrl(paths.trialLogs(trial.id, experimentId));
           break;
-        case Action.Tensorboard:
+        case Action.OpenTensorBoard:
           openCommand(await openOrCreateTensorboard({ trialIds: [ trial.id ] }));
           break;
       }
@@ -52,8 +45,8 @@ const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId }: Props) =>
     }
   };
   const menuItems: React.ReactNode[] = [];
-  menuItems.push(<Menu.Item key={Action.Tensorboard}>Tensorboard</Menu.Item>);
-  menuItems.push(<Menu.Item key={Action.Logs}>View Logs</Menu.Item>);
+  menuItems.push(<Menu.Item key={Action.OpenTensorBoard}>View in TensorBoard</Menu.Item>);
+  menuItems.push(<Menu.Item key={Action.ViewLogs}>View Logs</Menu.Item>);
 
   const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
