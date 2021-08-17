@@ -273,7 +273,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                       />
                     </div>
                   ) : (
-                    <div>{trialsDetails[trial].hyperparameters[hp]}</div>
+                    <div>{String(trialsDetails[trial].hyperparameters[hp])}</div>
                   )
                 ))}
               </div>
