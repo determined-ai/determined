@@ -42,6 +42,7 @@ def test_pytorch_11_const(
 @pytest.mark.e2e_cpu  # type: ignore
 def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
@@ -106,6 +107,7 @@ def test_pytorch_const_with_amp(
 ) -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("pytorch_amp"), 1
@@ -119,6 +121,7 @@ def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None])
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch"), 1
@@ -139,6 +142,7 @@ def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> 
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("gan_mnist_pytorch"), 1
