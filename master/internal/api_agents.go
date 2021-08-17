@@ -2,12 +2,12 @@ package internal
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -16,9 +16,9 @@ func (a *apiServer) GetAgents(
 ) (resp *apiv1.GetAgentsResponse, err error) {
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentsAddr.String(), req, &resp)
+		err = a.actorRequest(sproto.AgentsAddr, req, &resp)
 	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.PodsAddr.String(), req, &resp)
+		err = a.actorRequest(sproto.PodsAddr, req, &resp)
 	default:
 		err = status.Error(codes.NotFound, "cannot find agents or pods actor")
 	}
@@ -33,44 +33,52 @@ func (a *apiServer) GetAgents(
 	return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
+func agentAddr(agentID string) actor.Address {
+	return sproto.AgentsAddr.Child(agentID)
+}
+
+func slotAddr(agentID, slotID string) actor.Address {
+	return sproto.AgentsAddr.Child(agentID).Child("slots").Child(slotID)
+}
+
 func (a *apiServer) GetAgent(
 	_ context.Context, req *apiv1.GetAgentRequest) (resp *apiv1.GetAgentResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
+	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) GetSlots(
 	_ context.Context, req *apiv1.GetSlotsRequest) (resp *apiv1.GetSlotsResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
+	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) GetSlot(
 	_ context.Context, req *apiv1.GetSlotRequest) (resp *apiv1.GetSlotResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s/slots/%s", req.AgentId, req.SlotId), req, &resp)
+	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) EnableAgent(
 	_ context.Context, req *apiv1.EnableAgentRequest) (resp *apiv1.EnableAgentResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
+	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) DisableAgent(
 	_ context.Context, req *apiv1.DisableAgentRequest) (resp *apiv1.DisableAgentResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s", req.AgentId), req, &resp)
+	err = a.actorRequest(agentAddr(req.AgentId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) EnableSlot(
 	_ context.Context, req *apiv1.EnableSlotRequest) (resp *apiv1.EnableSlotResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s/slots/%s", req.AgentId, req.SlotId), req, &resp)
+	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
 	return resp, err
 }
 
 func (a *apiServer) DisableSlot(
 	_ context.Context, req *apiv1.DisableSlotRequest) (resp *apiv1.DisableSlotResponse, err error) {
-	err = a.actorRequest(fmt.Sprintf("/agents/%s/slots/%s", req.AgentId, req.SlotId), req, &resp)
+	err = a.actorRequest(slotAddr(req.AgentId, req.SlotId), req, &resp)
 	return resp, err
 }

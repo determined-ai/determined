@@ -152,12 +152,8 @@ func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv.Elem().Set(results)
 }
 
-func (a *apiServer) actorRequest(addr string, req actor.Message, v interface{}) error {
-	actorAddr := actor.Address{}
-	if err := actorAddr.UnmarshalText([]byte(addr)); err != nil {
-		return status.Errorf(codes.InvalidArgument, "/api/v1%s is not a valid path", addr)
-	}
-	resp := a.m.system.AskAt(actorAddr, req)
+func (a *apiServer) actorRequest(addr actor.Address, req actor.Message, v interface{}) error {
+	resp := a.m.system.AskAt(addr, req)
 	if err := api.ProcessActorResponseError(&resp); err != nil {
 		return err
 	}

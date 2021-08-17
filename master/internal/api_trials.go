@@ -303,8 +303,7 @@ func (a *apiServer) KillTrial(
 	}
 
 	resp := apiv1.KillTrialResponse{}
-	addr := actor.Addr("trials", req.Id).String()
-	err = a.actorRequest(addr, req, &resp)
+	err = a.actorRequest(actor.Addr("trials", req.Id), req, &resp)
 	if status.Code(err) == codes.NotFound {
 		return &apiv1.KillTrialResponse{}, nil
 	}
