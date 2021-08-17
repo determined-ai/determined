@@ -66,6 +66,9 @@ $arrow-left: 22px;
   .clear {
     flex-shrink: 1;
   }
+  :global(.ant-select-selection-placeholder) {
+    color: var(--theme-colors-monochrome-5);
+  }
   &.show {
     height: 48px;
     opacity: 1;
