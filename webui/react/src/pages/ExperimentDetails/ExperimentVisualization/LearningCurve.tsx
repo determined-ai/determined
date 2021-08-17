@@ -13,8 +13,8 @@ import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  CommandTask,
-  ExperimentBase, Hyperparameter, MetricName, metricTypeParamMap, RunState,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
+  metricTypeParamMap, RunState,
 } from 'types';
 import { flattenObject } from 'utils/data';
 import { terminalRunStates } from 'utils/types';
@@ -31,11 +31,6 @@ interface Props {
   fullHParams: string[];
   selectedMaxTrial: number;
   selectedMetric: MetricName
-}
-
-enum Action {
-  OpenTensorBoard = 'View in TensorBoard',
-  CompareTrials = 'Compare Trials'
 }
 
 const MAX_DATAPOINTS = 5000;
@@ -197,10 +192,6 @@ const LearningCurve: React.FC<Props> = ({
     }
   }, [ sendBatchActions ]);
 
-  const handleBatchAction = useCallback((action: string) => {
-    submitBatchAction(action as Action);
-  }, [ submitBatchAction ]);
-
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTrialUnselect = useCallback((trialId: number) =>
@@ -241,7 +232,7 @@ const LearningCurve: React.FC<Props> = ({
               { label: Action.CompareTrials, value: Action.CompareTrials },
             ]}
             selectedRowCount={selectedRowKeys.length}
-            onAction={handleBatchAction}
+            onAction={action => submitBatchAction(action as Action)}
             onClear={clearSelected}
           />
           <HpTrialTable

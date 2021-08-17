@@ -35,7 +35,8 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem, Pagination, RecordKey, RunState,
+  ExperimentAction as Action, ArchiveFilter, CommandTask, ExperimentFilters, ExperimentItem,
+  Pagination, RecordKey, RunState,
 } from 'types';
 import { isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
@@ -44,16 +45,6 @@ import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
-
-enum Action {
-  Activate = 'Activate',
-  Archive = 'Archive',
-  Cancel = 'Cancel',
-  Kill = 'Kill',
-  Pause = 'Pause',
-  OpenTensorBoard = 'View in TensorBoard',
-  Unarchive = 'Unarchive',
-}
 
 const URL_ALL = 'all';
 
@@ -713,7 +704,7 @@ const ExperimentList: React.FC = () => {
       title="Experiments">
       <TableBatch
         actions={[
-          { label: 'View in TensorBoard', value: Action.OpenTensorBoard },
+          { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
           { disabled: !hasActivatable, label: Action.Activate, value: Action.Activate },
           { disabled: !hasPausable, label: Action.Pause, value: Action.Pause },
           { disabled: !hasArchivable, label: Action.Archive, value: Action.Archive },

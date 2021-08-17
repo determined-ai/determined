@@ -30,7 +30,7 @@ import { encodeExperimentState } from 'services/decoder';
 import { ApiSorter } from 'services/types';
 import { validateDetApiEnum, validateDetApiEnumList } from 'services/utils';
 import {
-  CheckpointWorkloadExtended, CommandTask, ExperimentBase,
+  ExperimentAction as Action, CheckpointWorkloadExtended, CommandTask, ExperimentBase,
   Pagination, RunState, TrialFilters, TrialItem,
 } from 'types';
 import { getMetricValue, terminalRunStates } from 'utils/types';
@@ -41,11 +41,6 @@ import TrialsComparisonModal from './TrialsComparisonModal';
 
 interface Props {
   experiment: ExperimentBase;
-}
-
-enum Action {
-  OpenTensorBoard = 'View in Tensorboard',
-  CompareTrials = 'Compare Trials'
 }
 
 const URL_ALL = 'all';
@@ -374,10 +369,6 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
     }
   }, [ fetchExperimentTrials, sendBatchActions ]);
 
-  const handleBatchAction = useCallback((action: string) => {
-    submitBatchAction(action as Action);
-  }, [ submitBatchAction ]);
-
   const { stopPolling } = usePolling(fetchExperimentTrials);
 
   // Get new trials based on changes to the pagination, sorter and filters.
@@ -408,7 +399,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
           selectedRowCount={selectedRowKeys.length}
-          onAction={handleBatchAction}
+          onAction={action => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
         <ResponsiveTable

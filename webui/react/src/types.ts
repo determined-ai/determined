@@ -277,6 +277,21 @@ export interface ExperimentConfig {
 
 /* Experiment */
 
+export enum ExperimentAction {
+  Activate = 'Activate',
+  Archive = 'Archive',
+  Cancel = 'Cancel',
+  CompareTrials = 'Compare Trials',
+  ContinueTrial = 'Continue Trial',
+  Delete = 'Delete',
+  Fork = 'Fork',
+  Kill = 'Kill',
+  Pause = 'Pause',
+  OpenTensorBoard = 'View in TensorBoard',
+  Unarchive = 'Unarchive',
+  ViewLogs = 'View Logs',
+}
+
 export interface ExperimentPagination extends WithPagination {
   experiments: ExperimentItem[];
 }

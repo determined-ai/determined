@@ -28,7 +28,7 @@ import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
-import { CommandState, CommandTask, CommandType } from 'types';
+import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
 import {
   alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
@@ -43,10 +43,6 @@ import settingsConfig, { Settings } from './TaskList.settings';
 enum TensorBoardSourceType {
   Experiment = 'Experiment',
   Trial = 'Trial',
-}
-
-enum Action {
-  Kill = 'Kill',
 }
 
 interface TensorBoardSource {

@@ -14,9 +14,8 @@ import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  CommandTask,
-  ExperimentBase, Hyperparameter, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
@@ -38,11 +37,6 @@ interface Props {
   selectedBatchMargin: number;
   selectedHParams: string[];
   selectedMetric: MetricName;
-}
-
-enum Action {
-  OpenTensorBoard = 'View in TensorBoard',
-  CompareTrials = 'Compare Trials'
 }
 
 interface HpTrialData {
@@ -262,10 +256,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
     }
   }, [ sendBatchActions ]);
 
-  const handleBatchAction = useCallback((action: string) => {
-    submitBatchAction(action as Action);
-  }, [ submitBatchAction ]);
-
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTrialUnselect = useCallback((trialId: number) =>
@@ -306,7 +296,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
                 { label: Action.CompareTrials, value: Action.CompareTrials },
               ]}
               selectedRowCount={selectedRowKeys.length}
-              onAction={handleBatchAction}
+              onAction={action => submitBatchAction(action as Action)}
               onClear={clearSelected}
             />
             <HpTrialTable
