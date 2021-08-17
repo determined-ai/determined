@@ -561,7 +561,7 @@ func (a *apiServer) AllocationPreemptionSignal(
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
 	allocationID := model.AllocationID(req.AllocationId)
-	handler, err := a.taskHandlerByAllocationID(allocationID)
+	handler, err := a.allocationHandlerByID(allocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +588,7 @@ func (a *apiServer) AllocationPreemptionSignal(
 func (a *apiServer) AckAllocationPreemptionSignal(
 	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
-	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +604,7 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 func (a *apiServer) MarkAllocationReservationDaemon(
 	_ context.Context, req *apiv1.MarkAllocationReservationDaemonRequest,
 ) (*apiv1.MarkAllocationReservationDaemonResponse, error) {
-	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -754,7 +754,7 @@ func (a *apiServer) AllocationRendezvousInfo(
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
 
-	handler, err := a.taskHandlerByAllocationID(model.AllocationID(req.AllocationId))
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
 	if err != nil {
 		return nil, err
 	}
@@ -780,7 +780,7 @@ func (a *apiServer) AllocationRendezvousInfo(
 	}
 }
 
-func (a *apiServer) taskHandlerByAllocationID(id model.AllocationID) (*actor.Ref, error) {
+func (a *apiServer) allocationHandlerByID(id model.AllocationID) (*actor.Ref, error) {
 	var handler *actor.Ref
 	if err := a.ask(a.m.rm.Address(), sproto.GetTaskHandler{ID: id}, &handler); err != nil {
 		return nil, err

@@ -147,8 +147,8 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 }
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("resources are released for %s", handler.Address())
 	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
+		ctx.Log().Infof("resources are released for %s", handler.Address())
 		for _, allocation := range allocated.Reservations {
 			typed := allocation.(*containerReservation)
 			typed.agent.deallocateContainer(typed.container.id)
@@ -393,10 +393,14 @@ func (c containerReservation) Summary() sproto.ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerReservation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
+func (c containerReservation) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.AllocationID = string(c.req.AllocationID)
+	spec.AllocationSessionToken = rri.Token
+	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,

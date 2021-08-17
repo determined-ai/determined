@@ -70,8 +70,8 @@ type (
 )
 
 // NewRendezvous returns a new rendezvous component.
-func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) Rendezvous {
-	return Rendezvous{
+func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) *Rendezvous {
+	return &Rendezvous{
 		allocationID: allocationID,
 		ranks:        ranks,
 		addresses:    map[cproto.ID][]cproto.Address{},
@@ -81,6 +81,10 @@ func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) Ren
 
 // Receive implements actor.Receive.
 func (r *Rendezvous) Receive(ctx *actor.Context) error {
+	if r == nil {
+		return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", ctx.Message())}
+	}
+
 	switch msg := ctx.Message().(type) {
 	case WatchRendezvousInfo:
 		if w, err := r.watch(msg.AllocationID, msg.ContainerID); err != nil {
@@ -215,13 +219,14 @@ func (r *Rendezvous) checkTimeout(allocationID model.AllocationID) error {
 	return nil
 }
 
-func (r *Rendezvous) close() {
+// Close closes rendezvous by letting still active watchers know they were terminated.
+func (r *Rendezvous) Close() {
 	if r == nil {
 		return
 	}
 
 	for cID, w := range r.watchers {
-		w <- RendezvousInfoOrError{Err: errors.New("task taskTerminated")}
+		w <- RendezvousInfoOrError{Err: errors.New("task terminated")}
 		close(w)
 		delete(r.watchers, cID)
 	}

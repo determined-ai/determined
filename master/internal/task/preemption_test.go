@@ -25,7 +25,7 @@ func TestPreemption(t *testing.T) {
 
 	// "task" is allocated.
 	t1 := model.NewAllocationID(uuid.New().String())
-	p = NewPreemption(t1)
+	p = *NewPreemption(t1)
 
 	// real watcher connects
 	id = uuid.New()

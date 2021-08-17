@@ -350,15 +350,19 @@ func (p k8sPodReservation) Summary() sproto.ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p k8sPodReservation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
+func (p k8sPodReservation) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.AllocationID = string(p.req.AllocationID)
+	spec.AllocationSessionToken = rri.Token
+	spec.UseHostMode = rri.IsMultiAgent
 	ctx.Tell(handler, sproto.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
-		Rank:      rank,
+		Rank:      rri.AgentRank,
 	})
 }
 

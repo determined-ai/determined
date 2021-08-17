@@ -308,7 +308,12 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 
 		c.reservation = msg.Reservations[0]
 
-		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, allocationToken), 0)
+		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, allocationToken),
+			sproto.ReservationRuntimeInfo{
+				Token:        allocationToken,
+				AgentRank:    0,
+				IsMultiAgent: false,
+			})
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 

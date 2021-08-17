@@ -27,16 +27,11 @@ type TrialSpec struct {
 	TrialSeed        uint32
 	LatestCheckpoint *model.Checkpoint
 	LatestBatch      int
-
-	// This is used to hint the resource manager to override defaults and start
-	// the container in host mode iff it has been scheduled across multiple agents.
-	IsMultiAgent bool
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, allocationToken string) TaskSpec {
+func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
-	res.AllocationSessionToken = allocationToken
 
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(
@@ -132,8 +127,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, allocationToken st
 	}
 
 	res.UseFluentLogging = true
-
-	res.UseHostMode = s.IsMultiAgent
 
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)

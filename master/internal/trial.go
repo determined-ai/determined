@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/task"
@@ -61,10 +62,8 @@ type trial struct {
 	// it effectively invalidates many outstanding messages associated with the previous run.
 	runID int
 
-	// the current allocation request.
-	req *sproto.AllocateRequest
-	// all the state of the current allocation.
-	allocation *task.Allocation
+	// a ref to the current allocation
+	allocation *actor.Ref
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -118,6 +117,18 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return t.transition(ctx, model.ErrorState)
 		}
 		return nil
+	case actor.ChildStopped:
+		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
+			return t.allocationExited(ctx, &task.AllocationExited{
+				Err: errors.New("trial allocation exited without reporting"),
+			})
+		}
+	case actor.ChildFailed:
+		if t.allocation != nil && t.runID == mustParseTrialRunID(msg.Child) {
+			return t.allocationExited(ctx, &task.AllocationExited{
+				Err: errors.Wrapf(msg.Error, "trial allocation failed"),
+			})
+		}
 
 	case model.State:
 		return t.transition(ctx, msg)
@@ -131,27 +142,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 		return nil
 
-	case sproto.ResourcesAllocated:
-		return t.processAllocation(ctx, msg)
-	case task.AllocationExited:
-		return t.processAllocationExit(ctx, msg)
-
-	case sproto.TaskContainerStateChanged,
-		sproto.ReleaseResources, task.WatchRendezvousInfo, task.UnwatchRendezvousInfo,
-		task.RendezvousTimeout, task.WatchPreemption, task.AckPreemption,
-		task.UnwatchPreemption, task.PreemptionTimeout, task.MarkReservationDaemon:
-		if t.allocation == nil {
-			return task.ErrNoAllocation{Action: fmt.Sprintf("%T", msg)}
+	case task.BuildTaskSpec:
+		if spec, err := t.buildTaskSpec(ctx); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(spec)
 		}
-		switch exit, err := t.allocation.HandleEvent(ctx); {
-		case err != nil:
-			return err
-		case exit != nil:
-			return t.processAllocationExit(ctx, *exit)
-		default:
-			return nil
-		}
-
+	case *task.AllocationExited:
+		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
 		if log, err := t.enrichTrialLog(model.TrialLog{
 			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
@@ -186,6 +184,9 @@ func (t *trial) recover() error {
 	return nil
 }
 
+// To change in testing.
+var taskAllocator = task.NewAllocation
+
 // maybeAllocateTask checks if the trial should allocate state and allocates it if so.
 func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	if !(t.allocation == nil &&
@@ -201,7 +202,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
 	}
 
-	t.req = &sproto.AllocateRequest{
+	req := sproto.AllocateRequest{
 		TaskID:         t.taskID,
 		AllocationID:   model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		Name:           name,
@@ -215,27 +216,16 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		},
 		TaskActor: ctx.Self(),
 	}
-	if err := ctx.Ask(t.rm, *t.req).Error(); err != nil {
-		return errors.Wrap(err, "failed to request allocation")
-	}
+
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(req, t.db, t.rm))
 	return nil
 }
 
-// processAllocation receives resources and starts them, taking care of house keeping like
-// saving metadata, materializing the task spec and initializing the trialAllocation.
-func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAllocated) error {
-	if t.req == nil {
-		ctx.Log().Infof("no allocation requested by received %v", msg)
-		return nil
-	} else if msg.ID != t.req.AllocationID {
-		ctx.Log().Infof("ignoring stale allocation %v (actual = %v)", msg, t.req)
-		return nil
-	}
-
+func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
 	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate keys for trial")
+			return nil, errors.Wrap(err, "failed to generate keys for trial")
 		}
 		t.generatedKeys = &generatedKeys
 	}
@@ -249,34 +239,34 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 			t.warmStartCheckpoint,
 			int64(t.searcher.Create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
-			return errors.Wrap(err, "failed to save trial to database")
+			return nil, errors.Wrap(err, "failed to save trial to database")
 		}
 		t.id = modelTrial.ID
 		t.idSet = true
 		ctx.AddLabel("trial-id", t.id)
 		ctx.Tell(t.rm, sproto.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID),
-			TaskHandler: ctx.Self(),
+			TaskHandler: t.allocation,
 		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 	}
 
-	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return errors.Wrap(err, "failed to save trial run AllocationID")
+		return nil, errors.Wrap(err, "failed to save trial run ID")
 	}
+	t.runID++
 
 	var latestBatch int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
-		return errors.Wrapf(err, "failed to query latest checkpoint for trial")
+		return nil, errors.Wrapf(err, "failed to query latest checkpoint for trial")
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
 		latestBatch = latestCheckpoint.TotalBatches
 	}
-	trialSpec := &tasks.TrialSpec{
+	spec := tasks.TrialSpec{
 		Base: *t.taskSpec,
 
 		ExperimentID:     t.experimentID,
@@ -287,27 +277,23 @@ func (t *trial) processAllocation(ctx *actor.Context, msg sproto.ResourcesAlloca
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		LatestBatch:      latestBatch,
 		LatestCheckpoint: latestCheckpoint,
-		IsMultiAgent:     len(msg.Reservations) > 1,
-	}
-
-	t.allocation, err = task.NewAllocation(
-		ctx, t.taskID, *t.req, msg.Reservations, trialSpec, t.generatedKeys, t.db,
-	)
-	return errors.Wrapf(err, "failed to initialize allocation")
+	}.ToTaskSpec(t.generatedKeys)
+	return &spec, nil
 }
 
-// processAllocationExit cleans up after an allocation exit and exits permanently or reallocates.
-func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationExited) error {
-	// Clean up old stuff.
-	if err := t.allocation.ResourcesReleased(); err != nil {
-		return err
+// allocationExited cleans up after an allocation exit and exits permanently or reallocates.
+func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited) error {
+	if err := t.allocation.AwaitTermination(); err != nil {
+		ctx.Log().WithError(err).Error("trial allocation failed")
 	}
-	t.req = nil
 	t.allocation = nil
-	ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 
 	// Decide if this is permanent.
 	switch {
+	case t.searcher.Complete && t.searcher.Closed:
+		return t.transition(ctx, model.CompletedState)
+	case model.StoppingStates[t.state]:
+		return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 	case exit.Err != nil:
 		ctx.Log().
 			WithError(exit.Err).
@@ -329,10 +315,6 @@ func (t *trial) processAllocationExit(ctx *actor.Context, exit task.AllocationEx
 			reason:    workload.UserCanceled,
 		})
 		return t.transition(ctx, model.CompletedState)
-	case t.searcher.Complete && t.searcher.Closed:
-		return t.transition(ctx, model.CompletedState)
-	case model.StoppingStates[t.state]:
-		return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 	}
 
 	// Maybe reschedule.
@@ -365,35 +347,27 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 		return t.maybeAllocateTask(ctx)
 	case t.state == model.PausedState:
 		switch {
-		case t.req == nil:
-			ctx.Log().Info("terminating trial before resources are requested")
 		case t.allocation == nil:
-			ctx.Log().Info("terminating trial before resources are allocated")
-			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
+			ctx.Log().Info("terminating trial before resources are requested")
 		default:
-			if exit := t.allocation.Terminate(ctx); exit != nil {
-				return t.processAllocationExit(ctx, *exit)
-			}
+			ctx.Tell(t.allocation, task.Kill)
 		}
 	case model.StoppingStates[t.state]:
 		switch {
-		case t.req == nil:
-			ctx.Log().Info("terminating trial before resources are requested")
-			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 		case t.allocation == nil:
-			ctx.Log().Info("terminating trial before resources are allocated")
-			ctx.Tell(t.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
+			ctx.Log().Info("terminating trial before resources are requested")
 			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 		default:
 			action := map[model.State]task.AllocationSignal{
-				model.StoppingCompletedState: t.allocation.Close,
-				model.StoppingCanceledState:  t.allocation.Terminate,
-				model.StoppingKilledState:    t.allocation.Kill,
-				model.StoppingErrorState:     t.allocation.Kill,
+				model.StoppingCompletedState: "",
+				model.StoppingCanceledState:  task.Terminate,
+				model.StoppingKilledState:    task.Kill,
+				model.StoppingErrorState:     task.Kill,
 			}[t.state]
-			if exit := action(ctx); exit != nil {
-				return t.processAllocationExit(ctx, *exit)
+			if action == "" {
+				return nil
 			}
+			ctx.Tell(t.allocation, action)
 		}
 	case model.TerminalStates[t.state]:
 		ctx.Self().Stop()
@@ -421,4 +395,13 @@ func (t *trial) enrichTrialLog(log model.TrialLog) (model.TrialLog, error) {
 		log.StdType = ptrs.StringPtr("stdout")
 	}
 	return log, nil
+}
+
+func mustParseTrialRunID(child *actor.Ref) int {
+	idStr := child.Address().Local()
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		panic(errors.Wrapf(err, "could not parse run id %s", idStr))
+	}
+	return id
 }

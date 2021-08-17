@@ -42,18 +42,18 @@ type (
 	// the lifetime of a "preemption" is equivalent to the lifetime of allocation and they can be
 	// initialized together.
 	Preemption struct {
-		allocationID model.AllocationID
-		preempted    bool
-		acked        bool
-		preemptedAt  time.Time
+		allocationID       model.AllocationID
+		preempted          bool
+		acked              bool
+		preemptionDeadline time.Time
 		// Map of watcher AllocationID to a bool indicating if the trial should preempt.
 		watchers map[uuid.UUID]chan<- struct{}
 	}
 )
 
 // NewPreemption returns a new preemption struct.
-func NewPreemption(allocationID model.AllocationID) Preemption {
-	return Preemption{
+func NewPreemption(allocationID model.AllocationID) *Preemption {
+	return &Preemption{
 		allocationID: allocationID,
 		preempted:    false,
 		acked:        false,
@@ -63,6 +63,9 @@ func NewPreemption(allocationID model.AllocationID) Preemption {
 
 // Receive implements actor.Actor.
 func (p *Preemption) Receive(ctx *actor.Context) error {
+	if p == nil {
+		return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", ctx.Message())}
+	}
 	switch msg := ctx.Message().(type) {
 	case WatchPreemption:
 		if w, err := p.Watch(msg.AllocationID, msg.ID); err != nil {
@@ -123,7 +126,7 @@ func (p *Preemption) Preempt() {
 		return
 	}
 	p.preempted = true
-	p.preemptedAt = time.Now()
+	p.preemptionDeadline = time.Now().Add(preemptionTimeoutDuration)
 	for id, w := range p.watchers {
 		w <- struct{}{}
 		close(w)
@@ -154,15 +157,15 @@ func (p *Preemption) Acknowledged() bool {
 }
 
 // CheckTimeout checks the preemption deadline and returns an error if exceeded.
-func (p *Preemption) CheckTimeout(taskID model.AllocationID) error {
+func (p *Preemption) CheckTimeout(aID model.AllocationID) error {
 	if p == nil {
 		return nil
 	}
-	if p.allocationID != taskID {
+	if p.allocationID != aID {
 		return nil
 	}
 
-	if time.Now().After(p.preemptedAt.Add(preemptionTimeoutDuration)) {
+	if time.Now().After(p.preemptionDeadline) {
 		return errors.New("preemption timeout out")
 	}
 	return nil

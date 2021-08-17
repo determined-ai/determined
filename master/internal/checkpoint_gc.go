@@ -49,9 +49,15 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
-		for rank, a := range msg.Reservations {
-			a.Start(ctx, t.ToTaskSpec(allocationToken), rank)
+		if len(msg.Reservations) != 1 {
+			return errors.New("multi-reservation checkpoint gc is wrong")
 		}
+
+		msg.Reservations[0].Start(ctx, t.ToTaskSpec(allocationToken), sproto.ReservationRuntimeInfo{
+			Token:        allocationToken,
+			AgentRank:    0,
+			IsMultiAgent: false,
+		})
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.
 

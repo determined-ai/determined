@@ -80,12 +80,18 @@ type (
 	ReleaseResources struct {
 		ResourcePool string
 	}
+	// ReservationRuntimeInfo is all the inforamation provided at runtime to make a task spec.
+	ReservationRuntimeInfo struct {
+		Token        string
+		AgentRank    int
+		IsMultiAgent bool
+	}
 )
 
 // Reservation is an interface that provides function for task actors
 // to start tasks on assigned resources.
 type Reservation interface {
 	Summary() ContainerSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec, rank int)
+	Start(ctx *actor.Context, spec tasks.TaskSpec, rri ReservationRuntimeInfo)
 	Kill(ctx *actor.Context)
 }

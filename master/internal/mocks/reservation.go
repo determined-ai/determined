@@ -22,9 +22,9 @@ func (_m *Reservation) Kill(ctx *actor.Context) {
 	_m.Called(ctx)
 }
 
-// Start provides a mock function with given fields: ctx, spec, rank
-func (_m *Reservation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
-	_m.Called(ctx, spec, rank)
+// Start provides a mock function with given fields: ctx, spec, rri
+func (_m *Reservation) Start(ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo) {
+	_m.Called(ctx, spec, rri)
 }
 
 // Summary provides a mock function with given fields:

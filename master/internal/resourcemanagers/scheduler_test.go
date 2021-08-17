@@ -98,7 +98,11 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 
 	case sproto.ResourcesAllocated:
 		for rank, allocation := range msg.Reservations {
-			allocation.Start(ctx, tasks.TaskSpec{}, rank)
+			allocation.Start(ctx, tasks.TaskSpec{}, sproto.ReservationRuntimeInfo{
+				Token:        "",
+				AgentRank:    rank,
+				IsMultiAgent: len(msg.Reservations) > 1,
+			})
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})
