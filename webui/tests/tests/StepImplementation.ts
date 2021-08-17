@@ -23,6 +23,7 @@ const HEADLESS = process.env.HEADLESS === 'true';
 const HOST = process.env.DET_MASTER || 'localhost:8080';
 const BASE_PATH = process.env.PUBLIC_URL || '/det';
 const BASE_URL = `${HOST}${BASE_PATH}`;
+
 const viewports = {
   desktop: { width: 1366, height: 768 },
 };
@@ -32,6 +33,9 @@ const selectors = {
   antdTable: '.ant-table-container tbody tr[data-row-key]',
   antdEmptyTable: '.ant-table-container .ant-empty',
 };
+
+const BATCH_ACTION_TEXT = 'Select an action...';
+const BATCH_CLEAR_TEXT = 'Clear';
 
 /* Helper functions */
 
@@ -278,27 +282,34 @@ export default class StepImplementation {
 
   @Step('Toggle all table row selection')
   public async toggleAllTableRowSelection() {
-    await t.$('th input[type=checkbox]').exists();
+    await t.waitFor(async () => await t.$('th input[type=checkbox]').exists());
     await t.click(t.$('th input[type=checkbox]'));
   }
 
   @Step('Table batch should have following buttons <table>')
   public async checkTableBatchButton(table: Table) {
+    await t.click(t.text(BATCH_ACTION_TEXT));
     for (var row of table.getTableRows()) {
       await t.waitFor(async () => {
         const disabled = row.getCell('disabled') === 'true';
         const label = row.getCell('table batch buttons');
-        const batchButton = await t.button(label, t.within(t.$('[class*=TableBatch_base]')));
-        const buttonExists = await batchButton.exists();
-        const isDisabled = await batchButton.isDisabled();
-        return buttonExists && isDisabled === disabled;
+        const menuItem = await t.text(label);
+        const menuItemExists = await menuItem.exists();
+        const selector = `.ant-select-item${disabled ? '-option-disabled' : ''}`;
+        const isValid = await t.text(label, t.within(t.$(selector))).exists();
+        return menuItemExists && isValid;
       });
     }
+    await t.click(t.button(BATCH_CLEAR_TEXT));
   }
 
   @Step('<action> all table rows')
-  public async actionOnAllExperiments(action: string) {
-    await t.click(t.button(action, t.within(t.$('[class*=TableBatch_base]'))));
+  public async actionOnAllTableRows(action: string) {
+    await t.click(t.text(BATCH_ACTION_TEXT));
+    await t.waitFor(async () => {
+      return await t.text(action, t.within(t.$('.ant-select-dropdown'))).exists();
+    });
+    await t.click(t.text(action, t.within(t.$('.ant-select-dropdown'))));
     // Wait for the modal to animate in
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
