@@ -148,42 +148,20 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case *notebookv1.Notebook:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			ctx.Respond(notebook)
-		}
+		ctx.Respond(c.toNotebook(ctx))
 
 	case *apiv1.GetNotebookRequest:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			ctx.Respond(&apiv1.GetNotebookResponse{
-				Notebook: notebook,
-				Config:   protoutils.ToStruct(c.Config),
-			})
-		}
+		ctx.Respond(&apiv1.GetNotebookResponse{
+			Notebook: c.toNotebook(ctx),
+			Config:   protoutils.ToStruct(c.Config),
+		})
 
 	case *apiv1.KillNotebookRequest:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			c.terminate(ctx)
-			ctx.Respond(&apiv1.KillNotebookResponse{Notebook: notebook})
-		}
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
 	case *apiv1.SetNotebookPriorityRequest:
-		if notebook, err := c.toNotebook(ctx); err != nil {
-			ctx.Log().Error(err)
-		} else {
-			c.setPriority(ctx, int(msg.Priority))
-			ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: notebook})
-		}
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
 
 	case *commandv1.Command:
 		ctx.Respond(c.toCommand(ctx))
@@ -421,7 +399,7 @@ func (c *command) State() State {
 	return state
 }
 
-func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
+func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 	exitStatus := protoutils.DefaultStringValue
 	if c.exitStatus != nil {
 		exitStatus = *c.exitStatus
@@ -437,7 +415,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
-	}, nil
+	}
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
