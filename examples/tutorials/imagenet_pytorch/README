@@ -1,5 +1,5 @@
 # PyTorch ImageNet Tutorial
-This tutorial shows how to port PyTorch ImageNet example to 
+This tutorial shows how to port PyTorch ImageNet example to
 Determined's PyTorch API. This example is adapted from this [PyTorch ImageNet
 tutorial](https://github.com/pytorch/examples/tree/master/imagenet).
 
@@ -10,7 +10,7 @@ tutorial](https://github.com/pytorch/examples/tree/master/imagenet).
 * **const.yaml**: Train the model with constant hyperparameter values.
 * **distributed.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
 * **const_cifar.yaml**: Train the model with constant hyperparameter values using the CIFAR10 dataset.
-* **distributed_cifar.yaml**: Same as `const.yaml`, but trains the model with multiple GPUs (distributed training).
+* **distributed_cifar.yaml**: Same as `const_cifar.yaml`, but trains the model with multiple GPUs (distributed training).
 
 ## Data
 The original implementation uses the ImageNet dataset which can be downloaded [here](https://image-net.org/).
@@ -21,6 +21,6 @@ version of the example by loading in directly from the torchvision dataset.
 If you have not yet installed Determined, installation instructions can be found
 under `docs/install-admin.html` or at https://docs.determined.ai/latest/index.html
 
-Run the following command: `det -m <master host:port> experiment create -f 
-const.yaml .`. The other configurations can be run by specifying the appropriate 
+Run the following command: `det -m <master host:port> experiment create -f
+const.yaml .`. The other configurations can be run by specifying the appropriate
 configuration file in place of `const.yaml`.

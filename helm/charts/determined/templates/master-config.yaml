@@ -71,8 +71,8 @@ data:
         cpu: {{ .Values.slotResourceRequests.cpu }}
       {{- end }}
 
-    {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-2409e48")._1}}
-    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-2409e48")._1 -}}
+    {{$cpuImage := (split "/" "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd")._1}}
+    {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd")._1 -}}
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
       {{- if .Values.taskContainerDefaults.networkMode }}
