@@ -163,6 +163,19 @@ def kill(args: Namespace) -> None:
 
 
 @authentication.required
+def set_priority(args: Namespace) -> None:
+    id = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+    name = RemoteTaskName[args._command]
+
+    try:
+        api_full_path = "api/v1/{}/{}/set_priority".format(RemoteTaskNewAPIs[args._command], id)
+        api.post(args.master, api_full_path, {"priority": args.priority})
+        print(colored("Set priority of {} {} to {}".format(name, id, args.priority), "green"))
+    except api.errors.APIException as e:
+        print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
+
+
+@authentication.required
 def config(args: Namespace) -> None:
     api_full_path = "api/v1/{}/{}".format(RemoteTaskNewAPIs[args._command], args.id)
     res_json = api.get(args.master, api_full_path).json()

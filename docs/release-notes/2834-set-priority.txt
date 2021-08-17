@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  Support changing task priorities using the ``det experiment/command/notebook/tensorboard/shell
+   set priority`` commands.

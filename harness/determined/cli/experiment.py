@@ -564,6 +564,12 @@ def set_weight(args: Namespace) -> None:
 
 
 @authentication.required
+def set_priority(args: Namespace) -> None:
+    patch_experiment(args, "change `priority` of", {"resources": {"priority": args.priority}})
+    print("Set `priority` of experiment {} to {}".format(args.experiment_id, args.priority))
+
+
+@authentication.required
 def set_gc_policy(args: Namespace) -> None:
     policy = {
         "save_experiment_best": args.save_experiment_best,
@@ -960,6 +966,15 @@ args_description = Cmd(
                     [
                         experiment_id_arg("experiment ID to modify"),
                         Arg("weight", type=float, help="weight"),
+                    ],
+                ),
+                Cmd(
+                    "priority",
+                    set_priority,
+                    "set `priority` of experiment",
+                    [
+                        experiment_id_arg("experiment ID to modify"),
+                        Arg("priority", type=int, help="priority"),
                     ],
                 ),
             ],

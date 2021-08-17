@@ -85,6 +85,12 @@ func (a *apiServer) KillTensorboard(
 	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
 }
 
+func (a *apiServer) SetTensorboardPriority(
+	_ context.Context, req *apiv1.SetTensorboardPriorityRequest,
+) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
+}
+
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {

@@ -114,6 +114,12 @@ args_description = [
             Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
+        Cmd("set", None, "set TensorBoard attributes", [
+            Cmd("priority", command.set_priority, "set TensorBoard priority", [
+                Arg("tensorboard_id", help="TensorBoard ID"),
+                Arg("priority", type=int, help="priority"),
+            ]),
+        ]),
     ])
 ]  # type: List[Any]
 

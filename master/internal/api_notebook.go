@@ -63,6 +63,12 @@ func (a *apiServer) KillNotebook(
 	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
 }
 
+func (a *apiServer) SetNotebookPriority(
+	_ context.Context, req *apiv1.SetNotebookPriorityRequest,
+) (resp *apiv1.SetNotebookPriorityResponse, err error) {
+	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
+}
+
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
 	if err := grpcutil.ValidateRequest(

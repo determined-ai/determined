@@ -4036,6 +4036,142 @@ export interface V1SearcherOperation {
 }
 
 /**
+ * Set the priority of the requested command.
+ * @export
+ * @interface V1SetCommandPriorityRequest
+ */
+export interface V1SetCommandPriorityRequest {
+    /**
+     * The id of the command.
+     * @type {string}
+     * @memberof V1SetCommandPriorityRequest
+     */
+    commandId?: string;
+    /**
+     * The new priority.
+     * @type {number}
+     * @memberof V1SetCommandPriorityRequest
+     */
+    priority?: number;
+}
+
+/**
+ * Response to SetCommandPriorityRequest.
+ * @export
+ * @interface V1SetCommandPriorityResponse
+ */
+export interface V1SetCommandPriorityResponse {
+    /**
+     * The requested command.
+     * @type {V1Command}
+     * @memberof V1SetCommandPriorityResponse
+     */
+    command?: V1Command;
+}
+
+/**
+ * Set the priority of the requested notebook.
+ * @export
+ * @interface V1SetNotebookPriorityRequest
+ */
+export interface V1SetNotebookPriorityRequest {
+    /**
+     * The id of the notebook.
+     * @type {string}
+     * @memberof V1SetNotebookPriorityRequest
+     */
+    notebookId?: string;
+    /**
+     * The new priority.
+     * @type {number}
+     * @memberof V1SetNotebookPriorityRequest
+     */
+    priority?: number;
+}
+
+/**
+ * Response to SetNotebookPriorityRequest.
+ * @export
+ * @interface V1SetNotebookPriorityResponse
+ */
+export interface V1SetNotebookPriorityResponse {
+    /**
+     * The requested notebook.
+     * @type {V1Notebook}
+     * @memberof V1SetNotebookPriorityResponse
+     */
+    notebook?: V1Notebook;
+}
+
+/**
+ * Set the priority of the requested shell.
+ * @export
+ * @interface V1SetShellPriorityRequest
+ */
+export interface V1SetShellPriorityRequest {
+    /**
+     * The id of the shell.
+     * @type {string}
+     * @memberof V1SetShellPriorityRequest
+     */
+    shellId?: string;
+    /**
+     * The new priority.
+     * @type {number}
+     * @memberof V1SetShellPriorityRequest
+     */
+    priority?: number;
+}
+
+/**
+ * Response to SetShellPriorityRequest.
+ * @export
+ * @interface V1SetShellPriorityResponse
+ */
+export interface V1SetShellPriorityResponse {
+    /**
+     * The requested shell.
+     * @type {V1Shell}
+     * @memberof V1SetShellPriorityResponse
+     */
+    shell?: V1Shell;
+}
+
+/**
+ * Set the priority of the requested TensorBoard.
+ * @export
+ * @interface V1SetTensorboardPriorityRequest
+ */
+export interface V1SetTensorboardPriorityRequest {
+    /**
+     * The id of the TensorBoard.
+     * @type {string}
+     * @memberof V1SetTensorboardPriorityRequest
+     */
+    tensorboardId?: string;
+    /**
+     * The new priority.
+     * @type {number}
+     * @memberof V1SetTensorboardPriorityRequest
+     */
+    priority?: number;
+}
+
+/**
+ * Response to SetTensorboardPriorityRequest.
+ * @export
+ * @interface V1SetTensorboardPriorityResponse
+ */
+export interface V1SetTensorboardPriorityResponse {
+    /**
+     * The requested Tensorboard.
+     * @type {V1Tensorboard}
+     * @memberof V1SetTensorboardPriorityResponse
+     */
+    tensorboard?: V1Tensorboard;
+}
+
+/**
  * Response to SetUserPasswordRequest.
  * @export
  * @interface V1SetUserPasswordResponse
@@ -6686,6 +6822,52 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested command.
+         * @param {string} commandId The id of the command.
+         * @param {V1SetCommandPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'commandId' is not null or undefined
+            if (commandId === null || commandId === undefined) {
+                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling determinedSetCommandPriority.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetCommandPriority.');
+            }
+            const localVarPath = `/api/v1/commands/{commandId}/set_priority`
+                .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SetCommandPriorityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -6775,6 +6957,26 @@ export const CommandsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested command.
+         * @param {string} commandId The id of the command.
+         * @param {V1SetCommandPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedSetCommandPriority(commandId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -6827,6 +7029,17 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          */
         determinedLaunchCommand(body: V1LaunchCommandRequest, options?: any) {
             return CommandsApiFp(configuration).determinedLaunchCommand(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set the priority of the requested command.
+         * @param {string} commandId The id of the command.
+         * @param {V1SetCommandPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
+            return CommandsApiFp(configuration).determinedSetCommandPriority(commandId, body, options)(fetch, basePath);
         },
     };
 };
@@ -6888,6 +7101,19 @@ export class CommandsApi extends BaseAPI {
      */
     public determinedLaunchCommand(body: V1LaunchCommandRequest, options?: any) {
         return CommandsApiFp(this.configuration).determinedLaunchCommand(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the priority of the requested command.
+     * @param {string} commandId The id of the command.
+     * @param {V1SetCommandPriorityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CommandsApi
+     */
+    public determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
+        return CommandsApiFp(this.configuration).determinedSetCommandPriority(commandId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -11638,6 +11864,52 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested notebook.
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1SetNotebookPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'notebookId' is not null or undefined
+            if (notebookId === null || notebookId === undefined) {
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedSetNotebookPriority.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetNotebookPriority.');
+            }
+            const localVarPath = `/api/v1/notebooks/{notebookId}/set_priority`
+                .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SetNotebookPriorityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -11749,6 +12021,26 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested notebook.
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1SetNotebookPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedSetNotebookPriority(notebookId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -11814,6 +12106,17 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          */
         determinedNotebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options?: any) {
             return NotebooksApiFp(configuration).determinedNotebookLogs(notebookId, offset, limit, follow, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set the priority of the requested notebook.
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1SetNotebookPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
+            return NotebooksApiFp(configuration).determinedSetNotebookPriority(notebookId, body, options)(fetch, basePath);
         },
     };
 };
@@ -11890,6 +12193,19 @@ export class NotebooksApi extends BaseAPI {
      */
     public determinedNotebookLogs(notebookId: string, offset?: number, limit?: number, follow?: boolean, options?: any) {
         return NotebooksApiFp(this.configuration).determinedNotebookLogs(notebookId, offset, limit, follow, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the priority of the requested notebook.
+     * @param {string} notebookId The id of the notebook.
+     * @param {V1SetNotebookPriorityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof NotebooksApi
+     */
+    public determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
+        return NotebooksApiFp(this.configuration).determinedSetNotebookPriority(notebookId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -12310,6 +12626,52 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested shell.
+         * @param {string} shellId The id of the shell.
+         * @param {V1SetShellPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'shellId' is not null or undefined
+            if (shellId === null || shellId === undefined) {
+                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling determinedSetShellPriority.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetShellPriority.');
+            }
+            const localVarPath = `/api/v1/shells/{shellId}/set_priority`
+                .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SetShellPriorityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -12399,6 +12761,26 @@ export const ShellsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested shell.
+         * @param {string} shellId The id of the shell.
+         * @param {V1SetShellPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedSetShellPriority(shellId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -12451,6 +12833,17 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          */
         determinedLaunchShell(body: V1LaunchShellRequest, options?: any) {
             return ShellsApiFp(configuration).determinedLaunchShell(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set the priority of the requested shell.
+         * @param {string} shellId The id of the shell.
+         * @param {V1SetShellPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
+            return ShellsApiFp(configuration).determinedSetShellPriority(shellId, body, options)(fetch, basePath);
         },
     };
 };
@@ -12512,6 +12905,19 @@ export class ShellsApi extends BaseAPI {
      */
     public determinedLaunchShell(body: V1LaunchShellRequest, options?: any) {
         return ShellsApiFp(this.configuration).determinedLaunchShell(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the priority of the requested shell.
+     * @param {string} shellId The id of the shell.
+     * @param {V1SetShellPriorityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ShellsApi
+     */
+    public determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
+        return ShellsApiFp(this.configuration).determinedSetShellPriority(shellId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -13083,6 +13489,52 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested TensorBoard.
+         * @param {string} tensorboardId The id of the TensorBoard.
+         * @param {V1SetTensorboardPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'tensorboardId' is not null or undefined
+            if (tensorboardId === null || tensorboardId === undefined) {
+                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling determinedSetTensorboardPriority.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetTensorboardPriority.');
+            }
+            const localVarPath = `/api/v1/tensorboards/{tensorboardId}/set_priority`
+                .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1SetTensorboardPriorityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -13172,6 +13624,26 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Set the priority of the requested TensorBoard.
+         * @param {string} tensorboardId The id of the TensorBoard.
+         * @param {V1SetTensorboardPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedSetTensorboardPriority(tensorboardId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -13224,6 +13696,17 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          */
         determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
             return TensorboardsApiFp(configuration).determinedLaunchTensorboard(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Set the priority of the requested TensorBoard.
+         * @param {string} tensorboardId The id of the TensorBoard.
+         * @param {V1SetTensorboardPriorityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
+            return TensorboardsApiFp(configuration).determinedSetTensorboardPriority(tensorboardId, body, options)(fetch, basePath);
         },
     };
 };
@@ -13285,6 +13768,19 @@ export class TensorboardsApi extends BaseAPI {
      */
     public determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
         return TensorboardsApiFp(this.configuration).determinedLaunchTensorboard(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Set the priority of the requested TensorBoard.
+     * @param {string} tensorboardId The id of the TensorBoard.
+     * @param {V1SetTensorboardPriorityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TensorboardsApi
+     */
+    public determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
+        return TensorboardsApiFp(this.configuration).determinedSetTensorboardPriority(tensorboardId, body, options)(this.fetch, this.basePath);
     }
 
 }

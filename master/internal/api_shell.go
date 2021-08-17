@@ -57,6 +57,12 @@ func (a *apiServer) KillShell(
 	return resp, a.actorRequest(fmt.Sprintf("/shells/%s", req.ShellId), req, &resp)
 }
 
+func (a *apiServer) SetShellPriority(
+	_ context.Context, req *apiv1.SetShellPriorityRequest,
+) (resp *apiv1.SetShellPriorityResponse, err error) {
+	return resp, a.actorRequest(fmt.Sprintf("/shells/%s", req.ShellId), req, &resp)
+}
+
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {

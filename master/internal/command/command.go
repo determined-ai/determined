@@ -177,6 +177,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 			c.terminate(ctx)
 			ctx.Respond(&apiv1.KillNotebookResponse{Notebook: notebook})
 		}
+	case *apiv1.SetNotebookPriorityRequest:
+		if notebook, err := c.toNotebook(ctx); err != nil {
+			ctx.Log().Error(err)
+		} else {
+			c.setPriority(ctx, int(msg.Priority))
+			ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: notebook})
+		}
 
 	case *commandv1.Command:
 		ctx.Respond(c.toCommand(ctx))
@@ -190,6 +197,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
+	case *apiv1.SetCommandPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
 
 	case *shellv1.Shell:
 		ctx.Respond(c.toShell(ctx))
@@ -203,6 +213,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
+	case *apiv1.SetShellPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
 
 	case *tensorboardv1.Tensorboard:
 		ctx.Respond(c.toTensorboard(ctx))
@@ -216,6 +229,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+	case *apiv1.SetTensorboardPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case sproto.TaskContainerStateChanged:
 		c.container = &msg.Container
@@ -362,6 +378,13 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 			ctx.Log().WithError(err).Error("cannot delete task session for a command")
 		}
 	}
+}
+
+func (c *command) setPriority(ctx *actor.Context, priority int) {
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
+		Priority: &priority,
+		Handler:  ctx.Self(),
+	})
 }
 
 func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {

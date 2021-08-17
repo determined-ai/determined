@@ -162,6 +162,12 @@ func (a *apiServer) KillCommand(
 	return resp, a.actorRequest(fmt.Sprintf("/commands/%s", req.CommandId), req, &resp)
 }
 
+func (a *apiServer) SetCommandPriority(
+	_ context.Context, req *apiv1.SetCommandPriorityRequest,
+) (resp *apiv1.SetCommandPriorityResponse, err error) {
+	return resp, a.actorRequest(fmt.Sprintf("/commands/%s", req.CommandId), req, &resp)
+}
+
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {

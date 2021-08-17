@@ -223,6 +223,12 @@ args_description = [
             Arg("shell_id", help="shell ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
+        Cmd("set", None, "set shell attributes", [
+            Cmd("priority", command.set_priority, "set shell priority", [
+                Arg("shell_id", help="shell ID"),
+                Arg("priority", type=int, help="priority"),
+            ]),
+        ]),
     ])
 ]  # type: List[Any]
 
