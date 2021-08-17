@@ -2,7 +2,7 @@ description: imagenet_pytorch_const_cifar
 environment:
   image:
     gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.16.4
-    cpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.16.4
+    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.16.4
 hyperparameters:
   global_batch_size: 256
   data_location: /mnt/data
