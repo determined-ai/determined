@@ -271,17 +271,18 @@ const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
     /*
      * Set the initial query string if:
      * 1) current settings have set values
-     * 2) query settings are detected
+     * 2) query settings are different from the default settings
      * 3) query settings do not match current settings
      */
+    const defaultSettings = getDefaultSettings<T>(config, storage);
+    const defaultQuery = settingsToQuery(config, defaultSettings);
     const currentQuery = settingsToQuery(config, settings);
-    if (currentQuery && !isSameQuery(config, location.search, currentQuery)) {
+    if (currentQuery !== defaultQuery && !isSameQuery(config, location.search, currentQuery)) {
       history.replace(`${location.pathname}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
       setSettings(prevSettings => {
         const querySettings = queryToSettings<Partial<T>>(config, location.search);
-        const defaultSettings = getDefaultSettings<T>(config, storage);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }
