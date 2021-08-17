@@ -1,7 +1,8 @@
-description: fashion_mnist_tf_keras_const
+description: imagenet_pytorch_const_cifar
 environment:
   image:
-    gpu: 'determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.8.0'
+    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.16.2
+    cpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.16.2
 hyperparameters:
   global_batch_size: 256
   data_location: /mnt/data
@@ -12,7 +13,7 @@ hyperparameters:
   weight_decay: 1e-4
   evaluate: store_true
   pretrained: True
-  dataset: cifar 
+  dataset: cifar
   download: True
 records_per_epoch: 50000
 searcher:
