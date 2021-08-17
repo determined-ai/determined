@@ -13,18 +13,29 @@ import tensorflow as tf
 from packaging import version
 from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
-from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
-from tensorflow.python.keras.saving.hdf5_format import (
-    load_optimizer_weights_from_hdf5_group,
-    save_optimizer_weights_to_hdf5_group,
-)
-from tensorflow.python.keras.utils.mode_keys import ModeKeys
 
 import determined as det
 from determined import horovod, keras, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check
 from determined.horovod import hvd
+
+# In TF 2.6, we have to import some keras internals directly from `keras`.
+if version.parse(tf.__version__) >= version.parse("2.6.0"):
+    from keras.callbacks import CallbackList, make_logs, set_callback_parameters
+    from keras.saving.hdf5_format import (
+        load_optimizer_weights_from_hdf5_group,
+        save_optimizer_weights_to_hdf5_group,
+    )
+    from keras.utils.mode_keys import ModeKeys
+else:
+    from tensorflow.python.keras.callbacks import CallbackList, make_logs, set_callback_parameters
+    from tensorflow.python.keras.saving.hdf5_format import (
+        load_optimizer_weights_from_hdf5_group,
+        save_optimizer_weights_to_hdf5_group,
+    )
+    from tensorflow.python.keras.utils.mode_keys import ModeKeys
+
 
 IMPOSSIBLY_LARGE_EPOCHS = sys.maxsize
 
@@ -935,7 +946,7 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2``).
+    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

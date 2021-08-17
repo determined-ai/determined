@@ -101,8 +101,8 @@ hyperparameters for the current trial.
 .. note::
 
    The default images are
-   ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2`` and
-   ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.2`` for GPU and CPU
+   ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4`` and
+   ``determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.4`` for GPU and CPU
    respectively.
 
 Older Images
@@ -139,7 +139,7 @@ and ``apt``-based dependencies.
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.2
+   FROM determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
 
    # Custom Configuration
    RUN apt-get update && \
