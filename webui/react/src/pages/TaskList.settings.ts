@@ -3,6 +3,7 @@ import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { CommandState, CommandType } from 'types';
 
 export interface Settings {
+  row?: string[];
   search?: string;
   sortDesc: boolean;
   sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'username';
@@ -15,6 +16,10 @@ export interface Settings {
 
 const config: SettingsConfig = {
   settings: [
+    {
+      key: 'row',
+      type: { baseType: BaseType.String, isArray: true },
+    },
     {
       key: 'search',
       type: { baseType: BaseType.String },
