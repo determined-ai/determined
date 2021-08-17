@@ -796,6 +796,7 @@ commands:
                 command: |
                   python .circleci/scripts/upload_test_results.py \
                   'success' \
+                  ${CIRCLE_NODE_INDEX} \
                   <<parameters.test_results_path>> \
                   ${CIRCLE_BUILD_NUM} \
                   ${DET_CI_ACCESS_KEY} \
@@ -806,6 +807,7 @@ commands:
                 command: |
                   python .circleci/scripts/upload_test_results.py \
                   'failed' \
+                  ${CIRCLE_NODE_INDEX} \
                   <<parameters.test_results_path>> \
                   ${CIRCLE_BUILD_NUM} \
                   ${DET_CI_ACCESS_KEY} \

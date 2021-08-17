@@ -2,7 +2,7 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional, cast
+from typing import Any, Callable, Dict, Iterator, Optional, cast
 
 import boto3
 import pytest
@@ -11,6 +11,7 @@ from _pytest.fixtures import SubRequest
 from botocore import exceptions as boto_exc
 
 from tests import config
+from tests.experiment import profile_test
 
 from .cluster_log_manager import ClusterLogManager
 
@@ -154,3 +155,16 @@ def test_start_timer(request: SubRequest) -> Iterator[None]:
         # This ends up concatenated to the line pytest prints containing the test file and name.
         print("starting at", time.strftime("%Y-%m-%d %H:%M:%S"))
     yield
+
+
+@pytest.fixture
+def collect_trial_profiles(record_property: Callable[[str, object], None]) -> Callable[[int], None]:
+    """
+    Returns a method that allows profiling of test run for certain system metrics
+    and records to JUnit report.
+
+    Currently retrieves metrics by trial (assumes one trial per experiment) using
+    profiler API.
+    """
+
+    return profile_test(record_property=record_property)
