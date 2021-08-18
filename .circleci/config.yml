@@ -1974,23 +1974,23 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - request-model-hub-tests:
+      - request-model-hub-transformers-tests:
           type: approval
           filters: *upstream-feature-branch
 
       - test-e2e-aws:
-          name: test-e2e-model-hub
+          name: test-e2e-model-hub-transformers
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-model-hub-tests
+            - request-model-hub-transformers-tests
             - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["model-hub"]
-              mark: ["model_hub"]
+              mark: ["model_hub_transformers"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 

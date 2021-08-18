@@ -5,6 +5,7 @@ exclude =
     __pycache__,
     build,
     dist
+    tests/fixtures/merge_config.py
 
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is
