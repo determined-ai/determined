@@ -136,6 +136,8 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 		containerRuntime = runc
 	case device.GPU:
 		containerRuntime = nvidiaContainerRuntime
+	default:
+		panic(fmt.Sprintf("bad device type: %s", deviceType))
 	}
 
 	network := t.TaskContainerDefaults.NetworkMode
