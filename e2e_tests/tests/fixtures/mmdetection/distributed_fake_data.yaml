@@ -1,0 +1,29 @@
+name: mmdet_maskrcnn_fake_distributed
+data:
+  file_client_args:
+    backend: fake
+hyperparameters:
+  global_batch_size: 2
+  validation_batch_size_per_gpu: 2
+  config_file: /mmdetection/configs/mask_rcnn/mask_rcnn_r50_fpn_poly_1x_coco.py
+  merge_config: null
+  use_pretrained: false
+  override_mmdet_config:
+    data.train.ann_file: /tmp/instances_train2017.json
+    data.val.ann_file: /tmp/instances_val2017.json
+searcher:
+  name: single
+  metric: bbox_mAP
+  max_length:
+    batches: 200
+  smaller_is_better: false
+environment:
+  image: 
+    gpu: determinedai/model-hub-mmdetection
+bind_mounts:
+    - host_path: /tmp
+      container_path: /tmp
+resources:
+  slots_per_trial: 2 # max number of GPUs a trial is allowed to individually use
+max_restarts: 0
+entrypoint: model_hub.mmdetection:MMDetTrial

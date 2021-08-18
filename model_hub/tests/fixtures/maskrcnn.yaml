@@ -1,0 +1,18 @@
+name: mmdet_maskrcnn
+data:
+  file_client_args:
+      backend: fake
+hyperparameters:
+  global_batch_size: 2
+  config_file: mask_rcnn/mask_rcnn_r50_caffe_fpn_1x_coco.py
+  merge_config: null
+  use_pretrained: false
+  override_mmdet_config:
+      data.train.ann_file: /tmp/annotations/instances_train2017.json
+      data.val.ann_file: /tmp/annotations/instances_val2017.json
+searcher:
+  name: single
+  metric: bbox_mAP
+  max_length:
+    batches: 200
+  smaller_is_better: false

@@ -10,6 +10,7 @@ TRANSFORMERS_VERSION := 4.8.2
 DATASETS_VERSION := 1.9.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 # MMDetection Args
+# Remember to bump versions in tests/requirements.txt to match.
 MMCV_CUDA_VERSION := cu111 # Needs to match DEFAULT_GPU_IMAGE
 TORCH_VERSION := 1.9.0 # Needs to match DEFAULT_GPU_IMAGE
 MMCV_VERSION := 1.3.9
