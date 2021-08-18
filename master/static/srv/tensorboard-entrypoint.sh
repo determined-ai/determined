@@ -3,7 +3,6 @@
 set -e
 set -x
 
-WORKING_DIR="/run/determined/workdir"
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
 if [ -z "$DET_PYTHON_EXECUTABLE" ] ; then
@@ -17,12 +16,11 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
-cd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
-
 # Install tensorboard if not already installed (for custom Pytorch images)
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard
+"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
+
+test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 TENSORBOARD_VERSION=$(pip show tensorboard | grep Version | sed "s/[^:]*: *//")
-
-"$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"
