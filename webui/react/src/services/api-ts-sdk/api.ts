@@ -1017,19 +1017,7 @@ export interface V1CheckpointMetadata {
      * @type {number}
      * @memberof V1CheckpointMetadata
      */
-    totalBatches?: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1CheckpointMetadata
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1CheckpointMetadata
-     */
-    totalEpochs?: number;
+    latestBatch?: number;
 }
 
 /**
@@ -2814,6 +2802,34 @@ export interface V1LogoutResponse {
 }
 
 /**
+ * Mark some reservation as a daemon.
+ * @export
+ * @interface V1MarkAllocationReservationDaemonRequest
+ */
+export interface V1MarkAllocationReservationDaemonRequest {
+    /**
+     * The allocation ID for the reservation.
+     * @type {string}
+     * @memberof V1MarkAllocationReservationDaemonRequest
+     */
+    allocationId: string;
+    /**
+     * The container ID for the reservation.
+     * @type {string}
+     * @memberof V1MarkAllocationReservationDaemonRequest
+     */
+    containerId: string;
+}
+
+/**
+ * Response to MarkAllocationReservationDaemonRequest.
+ * @export
+ * @interface V1MarkAllocationReservationDaemonResponse
+ */
+export interface V1MarkAllocationReservationDaemonResponse {
+}
+
+/**
  * Response to MasterLogsRequest.
  * @export
  * @interface V1MasterLogsResponse
@@ -4506,62 +4522,6 @@ export interface V1TrainingLength {
 }
 
 /**
- * The training metrics for some duration of training.
- * @export
- * @interface V1TrainingMetrics
- */
-export interface V1TrainingMetrics {
-    /**
-     * The trial associated with these metrics.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    trialId: number;
-    /**
-     * The trial run associated with these metrics.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    trialRunId: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalBatches: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalEpochs?: number;
-    /**
-     * The number of records used to compute the given metrics.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    computedRecords?: number;
-    /**
-     * The metrics for this bit of training (reduced over the reporting period).
-     * @type {any}
-     * @memberof V1TrainingMetrics
-     */
-    metrics: any;
-    /**
-     * The batch metrics for this bit of training.
-     * @type {Array<any>}
-     * @memberof V1TrainingMetrics
-     */
-    batchMetrics?: Array<any>;
-}
-
-/**
  * Signals to the experiment the trial early exited.
  * @export
  * @interface V1TrialEarlyExit
@@ -4643,6 +4603,44 @@ export interface V1TrialLogsResponse {
      * @memberof V1TrialLogsResponse
      */
     level: V1LogLevel;
+}
+
+/**
+ * Metrics from the trial some duration of training.
+ * @export
+ * @interface V1TrialMetrics
+ */
+export interface V1TrialMetrics {
+    /**
+     * The trial associated with these metrics.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    trialId: number;
+    /**
+     * The trial run associated with these metrics.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    trialRunId: number;
+    /**
+     * The number of batches trained on when these metrics were reported.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    latestBatch: number;
+    /**
+     * The metrics for this bit of training (reduced over the reporting period).
+     * @type {any}
+     * @memberof V1TrialMetrics
+     */
+    metrics: any;
+    /**
+     * The batch metrics for this bit of training.
+     * @type {Array<any>}
+     * @memberof V1TrialMetrics
+     */
+    batchMetrics?: Array<any>;
 }
 
 /**
@@ -4931,56 +4929,6 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
-}
-
-/**
- * The validation metrics at some point of training.
- * @export
- * @interface V1ValidationMetrics
- */
-export interface V1ValidationMetrics {
-    /**
-     * The trial associated with these metrics.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    trialId: number;
-    /**
-     * The trial run associated with these metrics.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    trialRunId: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalBatches: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalEpochs?: number;
-    /**
-     * The number of records used to compute the given metrics.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    computedRecords?: number;
-    /**
-     * The metrics.
-     * @type {any}
-     * @memberof V1ValidationMetrics
-     */
-    metrics: any;
 }
 
 
@@ -9661,6 +9609,58 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            // verify required parameter 'containerId' is not null or undefined
+            if (containerId === null || containerId === undefined) {
+                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/containers/{containerId}/daemon`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
+                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1MarkAllocationReservationDaemonRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -9989,11 +9989,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options: any = {}): FetchArgs {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'trainingMetricsTrialId' is not null or undefined
             if (trainingMetricsTrialId === null || trainingMetricsTrialId === undefined) {
                 throw new RequiredError('trainingMetricsTrialId','Required parameter trainingMetricsTrialId was null or undefined when calling determinedReportTrialTrainingMetrics.');
@@ -10023,7 +10023,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1TrainingMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1TrialMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -10035,11 +10035,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options: any = {}): FetchArgs {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'validationMetricsTrialId' is not null or undefined
             if (validationMetricsTrialId === null || validationMetricsTrialId === undefined) {
                 throw new RequiredError('validationMetricsTrialId','Required parameter validationMetricsTrialId was null or undefined when calling determinedReportTrialValidationMetrics.');
@@ -10069,7 +10069,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1ValidationMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1TrialMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -10456,6 +10456,27 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationReservationDaemonResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -10599,11 +10620,11 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10619,11 +10640,11 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10811,6 +10832,18 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
+            return InternalApiFp(configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {string} metricName A metric name.
@@ -10891,22 +10924,22 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any) {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any) {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
@@ -11090,6 +11123,20 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
+     * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+     * @param {string} allocationId The allocation ID for the reservation.
+     * @param {string} containerId The container ID for the reservation.
+     * @param {V1MarkAllocationReservationDaemonRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
+        return InternalApiFp(this.configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the milestones (in batches processed) at which a metric is recorded by an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {string} metricName A metric name.
@@ -11184,12 +11231,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Record training metrics for specified training.
      * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-     * @param {V1TrainingMetrics} body The training metrics to persist.
+     * @param {V1TrialMetrics} body The training metrics to persist.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any) {
+    public determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(this.fetch, this.basePath);
     }
 
@@ -11197,12 +11244,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Record validation metrics.
      * @param {number} validationMetricsTrialId The trial associated with these metrics.
-     * @param {V1ValidationMetrics} body The training metrics to persist.
+     * @param {V1TrialMetrics} body The training metrics to persist.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any) {
+    public determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath);
     }
 
