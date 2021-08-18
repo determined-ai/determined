@@ -1,6 +1,16 @@
 task_container_defaults:
   network_mode: host
 
+
+resource_manager:
+  type: agent
+  default_aux_resource_pool: aux-pool
+  default_compute_resource_pool: compute-pool
+
+resource_pools:
+  - pool_name: aux-pool
+  - pool_name: compute-pool
+
 #logging:
 #  type: elastic
 #  host: 127.0.0.1

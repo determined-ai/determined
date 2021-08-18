@@ -30,7 +30,7 @@ prep-root:
 
 .PHONY: run
 run: prep-root
-	@python3 run-server.py
+	@python3 run-server.py --agents 1 --slots-per-agent 1
 
 .PHONY: fmt
 fmt:

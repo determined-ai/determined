@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing as mp
 import socket
 import subprocess
@@ -60,7 +61,7 @@ def run_master() -> mp.Process:
     )
 
 
-def run_agent() -> mp.Process:
+def run_agent(id: int, slots: int, resource_pool: str) -> mp.Process:
     container_master_host = "host.docker.internal" if sys.platform == "darwin" else ""
     return proc(
         "agent",
@@ -71,8 +72,18 @@ def run_agent() -> mp.Process:
             "agent.yaml",
             "--container-master-host",
             container_master_host,
+            "--resource-pool",
+            resource_pool,
+            "--agent-id",
+            f"{id}",
+            "--fluent-container-name",
+            f"fluent-{id}",
+            "--fluent-port",
+            f"{5170 + id}",
+            "--artificial-slots",
+            f"{slots}",
         ],
-        logs_handler=lambda line: f"{BLUE}determined-agent   |{CLEAR} {line}",
+        logs_handler=lambda line: f"{BLUE}determined-agent-{id}   |{CLEAR} {line}",
     )
 
 
@@ -85,10 +96,17 @@ def is_db_running() -> bool:
 
 
 def main() -> None:
-    db, master, agent, db_logs = False, None, None, None
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--agents", type=int, default=1)
+    parser.add_argument("--slots-per-agent", type=int, default=1)
+    args = parser.parse_args()
+
+    db, master, agents, db_logs = False, None, [], None
     try:
         master = run_master()
-        agent = run_agent()
+        for i in range(args.agents):
+            agents.append(run_agent(i, args.slots_per_agent, "compute-pool"))
+        agents.append(run_agent(i, 0, "aux-pool"))
         db_logs = tail_db_logs()
         if not is_db_running():
             db = True
@@ -98,13 +116,19 @@ def main() -> None:
         db_logs.start()
         master.start()
         wait_for_server(8080)
-        agent.start()
+        for i in range(args.agents):
+            agent = agents[i]
+            agent.start()
 
         # Join the agent first so we can exit if the agent fails to connect to
         # the master.
-        agent.join()
-        if agent.exitcode != 0:
-            raise Exception(f"agent failed with non-zero exit code {agent.exitcode}")
+        for i in range(args.agents):
+            agent = agents[i]
+            agent.join()
+            if agent.exitcode != 0:
+                raise Exception(
+                    f"agent {i} failed with non-zero exit code {agent.exitcode}"
+                )
 
         master.join()
         db_logs.join()
