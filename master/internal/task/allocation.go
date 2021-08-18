@@ -1,6 +1,7 @@
 package task
 
 import (
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -50,6 +51,8 @@ type (
 		// ignore any errors from containers dying. Not set when we kill an already
 		// terminating trial.
 		killedWhileRunning bool
+		// Marks that the trial exited successfully, but we killed some daemon containers.
+		killedDaemons bool
 		// We send a kill when we terminate a task forcibly. we terminate forcibly when a container
 		// exits non zero. we don't need to send all these kills, so this exists.
 		killCooldown *time.Time
@@ -143,7 +146,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			return err
 		}
 	case sproto.ContainerLog:
-		ctx.Tell(ctx.Self().Parent(), msg)
+		ctx.Tell(ctx.Self().Parent(), a.enrichLog(msg))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -297,6 +300,7 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 		a.terminated(ctx)
 		return true
 	case a.allNonDaemonsExited():
+		a.killedDaemons = true
 		a.kill(ctx)
 	}
 	return false
@@ -402,4 +406,14 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	default:
 		panic("allocation exited without being killed, preempted or having a container exit")
 	}
+}
+
+const killedLogSubstr = "exit code 137"
+
+func (a *Allocation) enrichLog(l sproto.ContainerLog) sproto.ContainerLog {
+	killLog := l.RunMessage != nil && strings.Contains(l.RunMessage.Value, killedLogSubstr)
+	if a.killedDaemons && killLog {
+		l.Level = ptrs.StringPtr("DEBUG")
+	}
+	return l
 }

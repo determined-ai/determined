@@ -23,6 +23,11 @@ type (
 		PullMessage *jsonmessage.JSONMessage
 		RunMessage  *agent.RunMessage
 		AuxMessage  *string
+
+		// Level is typically unset, but set by parts of the system that know a log shouldn't
+		// look as scary as is it. For example, it is set when an Allocation is killed intentionally
+		// on the Killed logs.
+		Level *string
 	}
 	// TaskContainerStarted contains the information needed by tasks from container started.
 	TaskContainerStarted struct {
