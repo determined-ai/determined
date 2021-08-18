@@ -1,24 +1,7 @@
 import inspect
-from typing import Dict
 
 import datasets as hf_datasets
 import torch.nn as nn
-
-
-def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) -> int:
-    max_length_unit = list(experiment_config["searcher"]["max_length"].keys())[0]
-    max_length: int = experiment_config["searcher"]["max_length"][max_length_unit]
-    if max_length_unit == "batches":
-        return max_length
-    if max_length_unit == "epochs":
-        if "records_per_epoch" in experiment_config:
-            return max_length * int(experiment_config["records_per_epoch"] / global_batch_size)
-        raise Exception(
-            "Missing num_training_steps hyperparameter in the experiment "
-            "configuration, which is needed to configure the learning rate scheduler."
-        )
-    # Otherwise, max_length_unit=='records'
-    return int(max_length / global_batch_size)
 
 
 """

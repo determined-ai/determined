@@ -9,8 +9,8 @@ import transformers
 import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
+import model_hub.utils
 from model_hub.huggingface import _config_parser as hf_parse
-from model_hub.huggingface import _utils as utils
 
 MODEL_MODES = {
     "base": transformers.AutoModel,
@@ -24,8 +24,6 @@ MODEL_MODES = {
     "token-classification": transformers.AutoModelForTokenClassification,
     "question-answering": transformers.AutoModelForQuestionAnswering,
 }
-
-logger = logging.getLogger(__name__)
 
 
 def build_using_auto(
@@ -250,11 +248,13 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             build_default_lr_scheduler(self.optimizer, scheduler_kwargs),
             det_torch.LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
-        self.grad_clip_fn = (
-            lambda x: torch.nn.utils.clip_grad_norm_(x, optimizer_kwargs.max_grad_norm)
-            if optimizer_kwargs.max_grad_norm > 0  # type: ignore
-            else None
-        )
+
+        self.grad_clip_fn = None
+
+        if optimizer_kwargs.max_grad_norm > 0:  # type: ignore
+            self.grad_clip_fn = lambda x: torch.nn.utils.clip_grad_norm_(
+                x, optimizer_kwargs.max_grad_norm
+            )
 
     def check_hparams(self) -> None:
         # We require hparams to be an AttrDict.
@@ -264,11 +264,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
-            self.hparams.num_training_steps = utils.compute_num_training_steps(
+            self.hparams.num_training_steps = model_hub.utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
         if "use_pretrained_weights" not in self.hparams:
-            logger.warning(
+            logging.warning(
                 "We will be using pretrained weights for the model by default."
                 "If you want to train the model from scratch, you can set a hyperparameter "
                 "named use_pretrained_weights to false in the experiment config."

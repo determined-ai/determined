@@ -1,6 +1,11 @@
-from typing import List, Union
+import logging
+import os
+import urllib.parse
+from typing import Dict, List, Union
 
+import filelock
 import numpy as np
+import requests
 import torch
 
 
@@ -45,3 +50,39 @@ def numpify(x: Union[List, np.ndarray, torch.Tensor]) -> np.ndarray:
     if isinstance(x, torch.Tensor):
         return x.cpu().numpy()
     raise TypeError("Expected input of type List, np.ndarray, or torch.Tensor.")
+
+
+def download_url(download_directory: str, url: str) -> str:
+    url_path = urllib.parse.urlparse(url).path
+    basename = url_path.rsplit("/", 1)[1]
+
+    os.makedirs(download_directory, exist_ok=True)
+    filepath = os.path.join(download_directory, basename)
+    lock = filelock.FileLock(filepath + ".lock")
+
+    with lock:
+        if not os.path.exists(filepath):
+            logging.info("Downloading {} to {}".format(url, filepath))
+
+            r = requests.get(url, stream=True)
+            with open(filepath, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+    return filepath
+
+
+def compute_num_training_steps(experiment_config: Dict, global_batch_size: int) -> int:
+    max_length_unit = list(experiment_config["searcher"]["max_length"].keys())[0]
+    max_length: int = experiment_config["searcher"]["max_length"][max_length_unit]
+    if max_length_unit == "batches":
+        return max_length
+    if max_length_unit == "epochs":
+        if "records_per_epoch" in experiment_config:
+            return max_length * int(experiment_config["records_per_epoch"] / global_batch_size)
+        raise Exception(
+            "Missing num_training_steps hyperparameter in the experiment "
+            "configuration, which is needed to configure the learning rate scheduler."
+        )
+    # Otherwise, max_length_unit=='records'
+    return int(max_length / global_batch_size)
