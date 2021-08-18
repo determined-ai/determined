@@ -251,10 +251,10 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
 		ctx.Tell(ctx.Self().Parent(), trialCreated{requestID: t.searcher.Create.RequestID})
 	}
 
+	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
 		return nil, errors.Wrap(err, "failed to save trial run ID")
 	}
-	t.runID++
 
 	var latestBatch int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
