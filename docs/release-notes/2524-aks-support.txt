@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Add the ability to use Azure Blob Storage for checkpoint storage.
--  Add support for Azure Kubernetes Service - including updating Helm to support Azure Blob Storage,
-   and additional docs for AKS.

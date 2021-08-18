@@ -1,6 +1,0 @@
-:orphan:
-
-**Fixes**
-
--  Fix a bug where experiments with model definitions of exceeding 50% of the maximum allowable size
-   size would actually cause trials to never start.
