@@ -1,0 +1,5 @@
+global_batch_size: 16
+validation_batch_size_per_gpu: 2
+config_file: ???
+merge_config: null
+use_pretrained: false
