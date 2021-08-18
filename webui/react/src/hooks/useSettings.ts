@@ -42,6 +42,14 @@ export interface SettingsConfig {
   storagePath: string;
 }
 
+/*
+ * Provide the ability to override hook options with
+ * dynamic values during initialization.
+ */
+export interface SettingsHookOptions {
+  storagePath?: string;
+}
+
 interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
@@ -181,10 +189,10 @@ const getNewQueryPath = (
   return `${basePath}?${queries}`;
 };
 
-const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
+const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): SettingsHook<T> => {
   const history = useHistory();
   const location = useLocation();
-  const storage = useStorage(config.storagePath);
+  const storage = useStorage(options?.storagePath || config.storagePath);
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
 
