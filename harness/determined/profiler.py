@@ -152,6 +152,7 @@ class NamedMeasurement(Measurement):
         self.metric_name = metric_name
         self.accumulated = accumulated
 
+    @property
     def id(self) -> str:
         return f"{self.metric_type}-{self.metric_name}"
 
@@ -749,10 +750,10 @@ class MetricsBatcherThread(threading.Thread):
                         batch_start_time = time.time()
 
                     if m.accumulated:
-                        if m.id() in self.accumulating_measurements:
-                            self.accumulating_measurements[m.id()].measurement += m.measurement
+                        if m.id in self.accumulating_measurements:
+                            self.accumulating_measurements[m.id].measurement += m.measurement
                         else:
-                            self.accumulating_measurements[m.id()] = m
+                            self.accumulating_measurements[m.id] = m
                     else:
                         self.metrics_batch.append(m.metric_type, m.metric_name, m)
                 elif isinstance(m, FinalizeBatchMessage):
