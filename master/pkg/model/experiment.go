@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
@@ -378,77 +377,16 @@ func NewTrial(
 	}
 }
 
-// Step represents a row from the `steps` table.
-type Step struct {
-	TrialID         int        `db:"trial_id"`
-	TrialRunID      int        `db:"trial_run_id"`
-	ID              int        `db:"id"`
-	TotalBatches    int        `db:"total_batches"`
-	TotalRecords    int        `db:"total_records"`
-	TotalEpochs     float32    `db:"total_epochs" json:"-"`
-	ComputedRecords int        `db:"computed_records"`
-	State           State      `db:"state"`
-	StartTime       time.Time  `db:"start_time"`
-	EndTime         *time.Time `db:"end_time"`
-	Metrics         JSONObj    `db:"metrics"`
-}
-
-// NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, totalBatches int) *Step {
-	return &Step{
-		TrialID:      trialID,
-		ID:           stepID,
-		TotalBatches: totalBatches,
-		State:        ActiveState,
-		StartTime:    time.Now().UTC(),
-	}
-}
-
-// NewNoOpStep creates a new step in the completed state.
-func NewNoOpStep(trialID, stepID int) *Step {
-	now := time.Now().UTC()
-	return &Step{
-		TrialID:   trialID,
-		ID:        stepID,
-		State:     CompletedState,
-		StartTime: now,
-		EndTime:   &now,
-	}
-}
-
-// IsNew checks whether this step describes a new, in-progress step.
-func (s *Step) IsNew() bool {
-	return s.State == ActiveState && s.EndTime == nil && len(s.Metrics) == 0
-}
-
-// Validation represents a row from the `validations` table.
-type Validation struct {
-	ID              int        `db:"id" json:"id"`
-	TrialID         int        `db:"trial_id" json:"trial_id"`
-	TrialRunID      int        `db:"trial_run_id" json:"-"`
-	TotalBatches    int        `db:"total_batches" json:"-"`
-	TotalRecords    int        `db:"total_records" json:"-"`
-	TotalEpochs     float32    `db:"total_epochs" json:"-"`
-	ComputedRecords int        `db:"computed_records" json:"-"`
-	State           State      `db:"state" json:"state"`
-	StartTime       time.Time  `db:"start_time" json:"start_time"`
-	EndTime         *time.Time `db:"end_time" json:"end_time"`
-	Metrics         JSONObj    `db:"metrics" json:"metrics"`
-}
-
-// NewValidation creates a new validation in the active state.
-func NewValidation(trialID, totalBatches int) *Validation {
-	return &Validation{
-		TrialID:      trialID,
-		TotalBatches: totalBatches,
-		State:        ActiveState,
-		StartTime:    time.Now().UTC(),
-	}
-}
-
-// IsNew checks whether this validation describes a new, in-progress validation operation.
-func (v *Validation) IsNew() bool {
-	return v.State == ActiveState && v.ID == 0 && v.EndTime == nil && len(v.Metrics) == 0
+// TrialMetrics represents a row from the `steps` or `validations` table.
+type TrialMetrics struct {
+	ID           int        `db:"id" json:"id"`
+	TrialID      int        `db:"trial_id" json:"trial_id"`
+	TrialRunID   int        `db:"trial_run_id" json:"-"`
+	TotalBatches int        `db:"total_batches" json:"total_batches"`
+	State        State      `db:"state" json:"state"`
+	StartTime    time.Time  `db:"start_time" json:"start_time"`
+	EndTime      *time.Time `db:"end_time" json:"end_time"`
+	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
 // Checkpoint represents a row from the `checkpoints` table.
@@ -457,8 +395,6 @@ type Checkpoint struct {
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	TotalRecords      int        `db:"total_records" json:"-"`
-	TotalEpochs       float32    `db:"total_epochs" json:"-"`
 	State             State      `db:"state" json:"state"`
 	StartTime         time.Time  `db:"start_time" json:"start_time"`
 	EndTime           *time.Time `db:"end_time" json:"end_time"`
@@ -468,24 +404,6 @@ type Checkpoint struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
-}
-
-// NewCheckpoint creates a new checkpoint in the active state.
-func NewCheckpoint(trialID, totalBatches int) *Checkpoint {
-	return &Checkpoint{
-		TrialID:           trialID,
-		TotalBatches:      totalBatches,
-		State:             ActiveState,
-		StartTime:         time.Now().UTC(),
-		Metadata:          JSONObj{},
-		DeterminedVersion: version.Version,
-	}
-}
-
-// IsNew checks whether this checkpoint describes a new, in-progress checkpoint operation.
-func (c *Checkpoint) IsNew() bool {
-	return c.State == ActiveState && c.ID == 0 && c.EndTime == nil &&
-		c.UUID == nil && len(c.Resources) == 0 && len(c.Metadata) == 0
 }
 
 // TrialLog represents a row from the `trial_logs` table.

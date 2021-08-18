@@ -85,11 +85,11 @@ func (_m *DB) AddExperiment(experiment *model.Experiment) error {
 }
 
 // AddTrainingMetrics provides a mock function with given fields: ctx, m
-func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrainingMetrics) error {
+func (_m *DB) AddTrainingMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *trialv1.TrainingMetrics) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *trialv1.TrialMetrics) error); ok {
 		r0 = rf(ctx, m)
 	} else {
 		r0 = ret.Error(0)
@@ -141,11 +141,11 @@ func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) error {
 }
 
 // AddValidationMetrics provides a mock function with given fields: ctx, m
-func (_m *DB) AddValidationMetrics(ctx context.Context, m *trialv1.ValidationMetrics) error {
+func (_m *DB) AddValidationMetrics(ctx context.Context, m *trialv1.TrialMetrics) error {
 	ret := _m.Called(ctx, m)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *trialv1.ValidationMetrics) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *trialv1.TrialMetrics) error); ok {
 		r0 = rf(ctx, m)
 	} else {
 		r0 = ret.Error(0)
@@ -1537,29 +1537,6 @@ func (_m *DB) StartUserSession(user *model.User) (string, error) {
 	return r0, r1
 }
 
-// StepByTotalBatches provides a mock function with given fields: trialID, totalBatches
-func (_m *DB) StepByTotalBatches(trialID int, totalBatches int) (*model.Step, error) {
-	ret := _m.Called(trialID, totalBatches)
-
-	var r0 *model.Step
-	if rf, ok := ret.Get(0).(func(int, int) *model.Step); ok {
-		r0 = rf(trialID, totalBatches)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Step)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(int, int) error); ok {
-		r1 = rf(trialID, totalBatches)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // TemplateByName provides a mock function with given fields: name
 func (_m *DB) TemplateByName(name string) (model.Template, error) {
 	ret := _m.Called(name)
@@ -2250,15 +2227,15 @@ func (_m *DB) UserList() ([]model.FullUser, error) {
 }
 
 // ValidationByTotalBatches provides a mock function with given fields: trialID, totalBatches
-func (_m *DB) ValidationByTotalBatches(trialID int, totalBatches int) (*model.Validation, error) {
+func (_m *DB) ValidationByTotalBatches(trialID int, totalBatches int) (*model.TrialMetrics, error) {
 	ret := _m.Called(trialID, totalBatches)
 
-	var r0 *model.Validation
-	if rf, ok := ret.Get(0).(func(int, int) *model.Validation); ok {
+	var r0 *model.TrialMetrics
+	if rf, ok := ret.Get(0).(func(int, int) *model.TrialMetrics); ok {
 		r0 = rf(trialID, totalBatches)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Validation)
+			r0 = ret.Get(0).(*model.TrialMetrics)
 		}
 	}
 

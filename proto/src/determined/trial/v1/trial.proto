@@ -159,11 +159,11 @@ message TrialEarlyExit {
   ExitedReason reason = 1;
 }
 
-// The training metrics for some duration of training.
-message TrainingMetrics {
+// Metrics from the trial some duration of training.
+message TrialMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
+      required: [ "trial_id", "trial_run_id", "latest_batch", "metrics" ]
     }
   };
   // The trial associated with these metrics.
@@ -171,40 +171,11 @@ message TrainingMetrics {
   // The trial run associated with these metrics.
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 3;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 4;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 5;
-  // The number of records used to compute the given metrics.
-  int32 computed_records = 6;
+  int32 latest_batch = 3;
   // The metrics for this bit of training (reduced over the reporting period).
   google.protobuf.Struct metrics = 7;
   // The batch metrics for this bit of training.
   repeated google.protobuf.Struct batch_metrics = 8;
-}
-
-// The validation metrics at some point of training.
-message ValidationMetrics {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
-    }
-  };
-  // The trial associated with these metrics.
-  int32 trial_id = 1;
-  // The trial run associated with these metrics.
-  int32 trial_run_id = 2;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 3;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 4;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 5;
-  // The number of records used to compute the given metrics.
-  int32 computed_records = 6;
-  // The metrics.
-  google.protobuf.Struct metrics = 7;
 }
 
 // The checkpoint metadata for some trial checkpoint.
@@ -237,11 +208,7 @@ message CheckpointMetadata {
   // The Determined version associated with the checkpoint.
   string determined_version = 7;
   // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 8;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 9;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 10;
+  int32 latest_batch = 8;
 }
 
 // The rendezvous info for the trial to rendezvous with sibling containers.

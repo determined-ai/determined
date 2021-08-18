@@ -136,9 +136,9 @@ func trialDetailAPITests(
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
-			metrics := trialv1.TrainingMetrics{
-				TrialId:      int32(trial.ID),
-				TotalBatches: int32(id * experiment.Config.SchedulingUnit()),
+			metrics := trialv1.TrialMetrics{
+				TrialId:     int32(trial.ID),
+				LatestBatch: int32(id * experiment.Config.SchedulingUnit()),
 			}
 
 			m := structpb.Struct{}

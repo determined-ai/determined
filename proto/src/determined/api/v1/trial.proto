@@ -378,7 +378,7 @@ message ReportTrialTrainingMetricsRequest {
     json_schema: { required: [ "training_metrics" ] }
   };
   // The training metrics to persist.
-  determined.trial.v1.TrainingMetrics training_metrics = 1;
+  determined.trial.v1.TrialMetrics training_metrics = 1;
 }
 // Response to ReportTrialTrainingMetricsRequest
 message ReportTrialTrainingMetricsResponse {}
@@ -389,7 +389,7 @@ message ReportTrialValidationMetricsRequest {
     json_schema: { required: [ "validation_metrics" ] }
   };
   // The training metrics to persist.
-  determined.trial.v1.ValidationMetrics validation_metrics = 1;
+  determined.trial.v1.TrialMetrics validation_metrics = 1;
 }
 // Response to ReportTrialValidationMetricsRequest
 message ReportTrialValidationMetricsResponse {}
