@@ -19,6 +19,12 @@ class PyTorchCallback:
         GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
 
+    def on_run_start(self) -> None:
+        """
+        Run after checkpoint loads and before training begins.
+        """
+        pass
+
     def on_validation_start(self) -> None:
         """
         Run before every validation begins.
