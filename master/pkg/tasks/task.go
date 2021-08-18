@@ -29,6 +29,12 @@ const (
 	certPath          = "/run/determined/etc/ssl/master.crt"
 )
 
+const (
+	// Container runtimes.
+	nvidiaContainerRuntime = "nvidia"
+	runc                   = "runc"
+)
+
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
 	// Fields that are only for task logics.
@@ -124,6 +130,14 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 	}
 	envVars = append(envVars, env.EnvironmentVariables().For(deviceType)...)
 
+	containerRuntime := ""
+	switch deviceType {
+	case device.CPU, device.ZeroSlot:
+		containerRuntime = runc
+	case device.GPU:
+		containerRuntime = nvidiaContainerRuntime
+	}
+
 	network := t.TaskContainerDefaults.NetworkMode
 	if t.UseHostMode {
 		network = hostMode
@@ -165,7 +179,7 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 				ShmSize:         shmSize,
 				CapAdd:          env.AddCapabilities(),
 				CapDrop:         env.DropCapabilities(),
-
+				Runtime:         containerRuntime,
 				Resources: docker.Resources{
 					Devices: devices,
 				},
