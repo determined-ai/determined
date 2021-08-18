@@ -54,6 +54,7 @@ def test_streaming_observability_metrics_apis(
         request_profiling_system_metrics(trial_id, "gpu_util")
     if framework_timings_enabled:
         request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
+        request_profiling_pytorch_timing_metrics(trial_id, "train_batch.backward", accumulated=True)
 
 
 def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_enabled: bool) -> None:
@@ -133,7 +134,9 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
             validate_gpu_metric_batch(batch)
 
 
-def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) -> None:
+def request_profiling_pytorch_timing_metrics(
+    trial_id: int, metric_name: str, accumulated: bool = False
+) -> None:
     def validate_timing_batch(batch: Dict[str, Any], batch_idx: int) -> int:
         values = batch["values"]
         batches = batch["batches"]
@@ -156,6 +159,11 @@ def request_profiling_pytorch_timing_metrics(trial_id: int, metric_name: str) ->
         # Check batches are monotonic with no gaps.
         if not all(x + 1 == y for x, y in zip(batches, batches[1:])):
             pytest.fail(f"skips in batches sampled: {batch}")
+
+        if accumulated and all(x < y for x, y in zip(batches, batches[1:])):
+            pytest.fail(
+                f"per batch accumulated metric was monotonic, which is really fishy: {batch}"
+            )
 
         return int(batches[-1]) + 1
 
