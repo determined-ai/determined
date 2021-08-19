@@ -216,7 +216,7 @@ const LearningCurve: React.FC<Props> = ({
     <div className={css.base}>
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
-          <div className={css.chart}>{chartData &&
+          <div className={css.chart}>
             <LearningCurveChart
               data={chartData}
               focusedTrialId={highlightedTrialId}
@@ -224,7 +224,7 @@ const LearningCurve: React.FC<Props> = ({
               trialIds={trialIds}
               xValues={batches}
               onTrialClick={handleTrialClick}
-              onTrialFocus={handleTrialFocus} />}
+              onTrialFocus={handleTrialFocus} />
           </div>
           <TableBatch
             actions={[

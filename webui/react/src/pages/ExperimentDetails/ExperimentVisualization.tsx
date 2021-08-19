@@ -73,7 +73,6 @@ const ExperimentVisualization: React.FC<Props> = ({
   experiment,
   type,
 }: Props) => {
-  const [ canceler ] = useState(new AbortController());
   const history = useHistory();
   const location = useLocation();
   const storage = useStorage(`${STORAGE_PATH}/${experiment.id}`);
@@ -157,6 +156,7 @@ const ExperimentVisualization: React.FC<Props> = ({
   useEffect(() => {
     if (!isSupported) return;
 
+    const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};
 
@@ -203,16 +203,15 @@ const ExperimentVisualization: React.FC<Props> = ({
     ).catch(() => {
       setPageError(PageError.MetricHpImportance);
     });
-  }, [ experiment.id, filters?.metric, isSupported, canceler.signal ]);
 
-  useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [ experiment.id, filters?.metric, isSupported ]);
 
   // Stream available batches.
   useEffect(() => {
     if (!isSupported) return;
 
+    const canceler = new AbortController();
     const metricTypeParam = activeMetric.type === MetricType.Training
       ? 'METRIC_TYPE_TRAINING' : 'METRIC_TYPE_VALIDATION';
     const batchesMap: Record<number, number> = {};
@@ -234,7 +233,9 @@ const ExperimentVisualization: React.FC<Props> = ({
     ).catch(() => {
       setPageError(PageError.MetricBatches);
     });
-  }, [ activeMetric, experiment.id, filters.batch, isSupported, canceler.signal ]);
+
+    return () => canceler.abort();
+  }, [ activeMetric, experiment.id, filters.batch, isSupported ]);
 
   // Set the default filter batch.
   useEffect(() => {
