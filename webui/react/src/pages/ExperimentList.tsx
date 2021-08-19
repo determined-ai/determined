@@ -514,7 +514,18 @@ const ExperimentList: React.FC = () => {
   useEffect(() => {
     fetchExperiments();
     setIsLoading(true);
-  }, [ fetchExperiments, settings ]);
+  }, [
+    fetchExperiments,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user,
+  ]);
 
   useEffect(() => {
     return () => canceler.abort();

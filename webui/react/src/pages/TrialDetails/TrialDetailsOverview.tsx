@@ -30,10 +30,11 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
     const defaultMetric = defaultValidationMetric || fallbackMetric;
     const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-    const metrics: MetricName[] = (settings.metric || []).map(metric => {
+    const settingMetrics: MetricName[] = (settings.metric || []).map(metric => {
       const splitMetric = metric.split('|');
       return { name: splitMetric[1], type: splitMetric[0] as MetricType };
-    }) || defaultMetrics;
+    });
+    const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
     return { defaultMetrics, metricNames, metrics };
   }, [ experiment?.config?.searcher, settings.metric, trial?.workloads ]);
 

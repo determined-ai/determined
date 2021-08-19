@@ -195,7 +195,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       });
       setIsLoading(false);
     }
-  }, [ experiment.id, canceler, settings ]);
+  }, [
+    experiment.id,
+    canceler,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+  ]);
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
@@ -236,7 +244,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   useEffect(() => {
     fetchExperimentTrials();
     setIsLoading(true);
-  }, [ fetchExperimentTrials, settings ]);
+  }, [
+    fetchExperimentTrials,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+  ]);
 
   useEffect(() => {
     if (terminalRunStates.has(experiment.state)) stopPolling({ terminateGracefully: true });
