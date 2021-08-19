@@ -252,8 +252,7 @@ const ExperimentVisualization: React.FC<Props> = ({
       const activeMetricFound = (metrics || []).reduce((acc, metric) => {
         return acc || (metric.type === prev.type && metric.name === prev.name);
       }, false);
-      if (!activeMetricFound) return (searcherMetric.current);
-      return searcherMetric.current;
+      return activeMetricFound ? prev : searcherMetric.current;
     });
   }, [ metrics ]);
 
