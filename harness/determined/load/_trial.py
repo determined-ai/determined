@@ -89,19 +89,24 @@ def load_trial(
     controller_class.pre_execute_hook(env, hvd_config)
     trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
 
-    # Step 3: Instantiate the user's Trial.
-    trial_inst = trial_class(trial_context)
+    try:
+        # Step 3: Instantiate the user's Trial.
+        trial_inst = trial_class(trial_context)
 
-    # Step 4: Return the TrialController.
-    logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
-    return controller_class.from_trial(
-        trial_inst=trial_inst,
-        context=trial_context,
-        env=env,
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-        workloads=workloads,
-    )
+        # Step 4: Return the TrialController.
+        logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
+        return controller_class.from_trial(
+            trial_inst=trial_inst,
+            context=trial_context,
+            env=env,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            workloads=workloads,
+        )
+    except Exception:
+        # TODO: Refactor load_trial so that it takes a generic context as input.
+        trial_context.distributed.close()
+        raise
 
 
 def prepare_controller(
