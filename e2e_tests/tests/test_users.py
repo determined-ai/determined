@@ -181,9 +181,10 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_logout(clean_auth: None) -> None:
+    # Tests fallback to default determined user
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
-    # Set Determined passwordto something in order to disable auto-login.
+    # Set Determined password to something in order to disable auto-login.
     password = get_random_string()
     assert change_user_password(constants.DEFAULT_DETERMINED_USER, password, ADMIN_CREDENTIALS) == 0
 
@@ -299,6 +300,89 @@ def test_experiment_creation_and_listing(clean_auth: None) -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         # Clean up.
         delete_experiments(experiment_id1, experiment_id2)
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_login_wrong_password(clean_auth: None) -> None:
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+
+    passwd_prompt = f"Password for user '{creds.username}':"
+    unauth_error = r".*Unauthorized\(invalid credentials\).*"
+
+    child = det_spawn(["user", "login", creds.username])
+    child.setecho(True)
+    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
+    child.sendline("this is the wrong password")
+
+    child.expect(unauth_error, timeout=EXPECT_TIMEOUT)
+    child.read()
+    child.wait()
+    child.close()
+
+    assert child.exitstatus != 0
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_login_as_non_existent_user(clean_auth: None) -> None:
+    username = "doesNotExist"
+
+    passwd_prompt = f"Password for user '{username}':"
+    unauth_error = r".*Unauthorized\(user not found\).*"
+
+    child = det_spawn(["user", "login", username])
+    child.setecho(True)
+    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
+    child.sendline("secret")
+
+    child.expect(unauth_error, timeout=EXPECT_TIMEOUT)
+    child.read()
+    child.wait()
+    child.close()
+
+    assert child.exitstatus != 0
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_login_as_non_active_user(clean_auth: None) -> None:
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+
+    passwd_prompt = f"Password for user '{creds.username}':"
+    unauth_error = r".*Unauthorized\(user not active\)"
+
+    with logged_in_user(ADMIN_CREDENTIALS):
+        child = det_spawn(["user", "deactivate", creds.username])
+
+    child = det_spawn(["user", "login", creds.username])
+    child.setecho(True)
+    child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
+    child.sendline(creds.password)
+
+    child.expect(unauth_error, timeout=EXPECT_TIMEOUT)
+    child.read()
+    child.wait()
+    child.close()
+
+    assert child.exitstatus != 0
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_non_admin_user_link_with_agent_user(clean_auth: None) -> None:
+    creds = create_test_user(ADMIN_CREDENTIALS, True)
+    unauth_error = r".*Unauthorized\(user not authorized\)"
+
+    with logged_in_user(creds):
+        child = det_spawn([
+            "user", "link-with-agent-user", creds.username,
+            "--agent-uid", str(1),
+            "--agent-gid", str(1),
+            "--agent-user", creds.username,
+            "--agent-group", creds.username])
+        child.expect(unauth_error, timeout=EXPECT_TIMEOUT)
+        child.read()
+        child.wait()
+        child.close()
+
+        assert child.exitstatus != 0
 
 
 def run_command() -> str:

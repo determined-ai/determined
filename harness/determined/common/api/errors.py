@@ -41,6 +41,13 @@ class NotFoundException(APIException):
     pass
 
 
+class UnauthorizedException(BadRequestException):
+    def __init__(self, username: str, message: str = ""):
+        super().__init__(message=f"Unauthorized({message}): Please contact your administrator "
+                         "in order to access this resource.")
+        self.username = username
+
+
 class UnauthenticatedException(BadRequestException):
     def __init__(self, username: str):
         super().__init__(
