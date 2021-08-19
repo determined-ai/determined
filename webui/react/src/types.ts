@@ -366,7 +366,6 @@ export interface CheckpointWorkloadExtended extends CheckpointWorkload {
 
 export interface MetricsWorkload extends Workload {
   metrics?: Record<string, number>;
-  numInputs?: number;
 }
 export interface WorkloadWrapper {
   checkpoint?: CheckpointWorkload;
@@ -384,11 +383,6 @@ export interface Step extends WorkloadWrapper, StartEndTimes {
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
-}
-
-export interface ValidationMetrics {
-  numInputs: number;
-  validationMetrics: Record<string, number>;
 }
 
 export interface TrialPagination extends WithPagination {

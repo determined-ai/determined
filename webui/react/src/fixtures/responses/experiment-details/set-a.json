@@ -2734,7 +2734,6 @@
           "validation_metric": 0.7290000000000001
         },
         "latest_validation_metrics": {
-          "num_inputs": 1024,
           "validation_metrics": {
             "validation_error": 0.7290000000000001
           }
@@ -2772,7 +2771,6 @@
           "validation_metric": 0.7290000000000001
         },
         "latest_validation_metrics": {
-          "num_inputs": 1024,
           "validation_metrics": {
             "validation_error": 0.7290000000000001
           }
@@ -2810,7 +2808,6 @@
           "validation_metric": 0.7290000000000001
         },
         "latest_validation_metrics": {
-          "num_inputs": 1024,
           "validation_metrics": {
             "validation_error": 0.7290000000000001
           }

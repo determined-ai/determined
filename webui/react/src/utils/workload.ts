@@ -16,7 +16,7 @@ export const getWorkload = (wrapper: WorkloadWrapper): MetricsWorkload | Checkpo
 export const isMetricsWorkload = (workload: MetricsWorkload | CheckpointWorkload)
 : workload is MetricsWorkload => {
   if ('uuid' in workload || 'resources' in workload) return false;
-  if ('metrics' in workload || 'numInputs' in workload) return true;
+  if ('metrics' in workload) return true;
   // we can't determine which one it is.
   return false;
 };
