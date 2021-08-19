@@ -59,9 +59,6 @@ const (
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
-
-	// TrialWorkloadManagerType handles model training loads.
-	TrialWorkloadManagerType WorkloadManagerType = "TRIAL_WORKLOAD_MANAGER"
 )
 
 // States and transitions
@@ -198,20 +195,25 @@ var TrialTransitions = map[State]map[State]bool{
 		StoppingErrorState:     true,
 		ErrorState:             true,
 	},
+	// The pattern of the transitory states here is that they
+	// can always degrade into a more severe state, but never
+	// the other way.
+	StoppingCompletedState: {
+		StoppingCanceledState: true,
+		StoppingKilledState:   true,
+		StoppingErrorState:    true,
+		CompletedState:        true,
+		ErrorState:            true,
+	},
 	StoppingCanceledState: {
-		CanceledState:       true,
 		StoppingKilledState: true,
 		StoppingErrorState:  true,
+		CanceledState:       true,
 		ErrorState:          true,
 	},
 	StoppingKilledState: {
+		StoppingErrorState: true,
 		CanceledState:      true,
-		StoppingErrorState: true,
-		ErrorState:         true,
-	},
-	StoppingCompletedState: {
-		CompletedState:     true,
-		StoppingErrorState: true,
 		ErrorState:         true,
 	},
 	StoppingErrorState: {

@@ -38,9 +38,9 @@ type (
 		daemonReservations map[cproto.ID]bool
 		// The following fields tracks containers and their states.
 		containers map[cproto.ID]cproto.Container
-		// Tracks the initial container exit, unless we caused the failure by killed the trial.
-		firstContainerExited *cproto.ID
-		exitedContainers     map[cproto.ID]sproto.TaskContainerStopped
+		// Tracks the initial container exit, unless we caused the failure by killed the trial.\
+		exitReason       error
+		exitedContainers map[cproto.ID]sproto.TaskContainerStopped
 		// Encapsulates the preemption state of the currently allocated task.
 		// If there is no current task, or it is unallocated, it is nil.
 		preemption *Preemption
@@ -116,13 +116,17 @@ func NewAllocation(req sproto.AllocateRequest, db db.DB, rm *actor.Ref) actor.Ac
 func (a *Allocation) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		return a.RequestResources(ctx)
+		if err := a.RequestResources(ctx); err != nil {
+			a.Error(ctx, err)
+		}
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ResourcesAllocated:
-		return a.ResourcesAllocated(ctx, msg)
+		if err := a.ResourcesAllocated(ctx, msg); err != nil {
+			a.Error(ctx, err)
+		}
 	case sproto.TaskContainerStateChanged:
-		return a.TaskContainerStateChanged(ctx, msg)
+		a.TaskContainerStateChanged(ctx, msg)
 	case sproto.ReleaseResources:
 		a.Terminate(ctx)
 	case MarkReservationDaemon:
@@ -130,25 +134,19 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case AllocationSignal:
 		a.HandleSignal(ctx, msg)
 	case WatchRendezvousInfo, UnwatchRendezvousInfo, RendezvousTimeout:
-		switch err := a.rendezvous.Receive(ctx).(type) {
-		case ErrTimeoutExceeded:
-			ctx.Tell(ctx.Self(), model.TrialLog{Message: err.Error()})
-		case nil:
-		default:
-			return err
+		if err := a.rendezvous.Receive(ctx); err != nil {
+			ctx.Tell(ctx.Self(), model.TrialLog{Log: ptrs.StringPtr(err.Error())})
+			a.Error(ctx, err)
 		}
 	case WatchPreemption, UnwatchPreemption, PreemptionTimeout, AckPreemption:
-		switch err := a.preemption.Receive(ctx).(type) {
-		case ErrTimeoutExceeded:
-			a.Kill(ctx)
-		case nil:
-		default:
-			return err
+		if err := a.preemption.Receive(ctx); err != nil {
+			ctx.Tell(ctx.Self(), model.TrialLog{Log: ptrs.StringPtr(err.Error())})
+			a.Error(ctx, err)
 		}
 	case sproto.ContainerLog:
 		ctx.Tell(ctx.Self().Parent(), a.enrichLog(msg))
 	default:
-		return actor.ErrUnexpectedMessage(ctx)
+		a.Error(ctx, actor.ErrUnexpectedMessage(ctx))
 	}
 	return nil
 }
@@ -165,11 +163,13 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 // Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
 func (a *Allocation) Cleanup(ctx *actor.Context) {
-	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
-		ctx.Log().WithError(err).Error("error delete allocation session")
-	}
-	if err := a.db.CompleteAllocation(&a.model); err != nil {
-		ctx.Log().WithError(err).Error("failed to mark allocation completed")
+	if len(a.reservations) > 0 {
+		if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
+			ctx.Log().WithError(err).Error("error delete allocation session")
+		}
+		if err := a.db.CompleteAllocation(&a.model); err != nil {
+			ctx.Log().WithError(err).Error("failed to mark allocation completed")
+		}
 	}
 	// Just in-case code.
 	if !a.exited {
@@ -229,18 +229,20 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 func (a *Allocation) SetReservationAsDaemon(
 	ctx *actor.Context, aID model.AllocationID, cID cproto.ID,
 ) {
-	var err error
 	if aID != a.model.AllocationID {
-		err = ErrStaleAllocation{aID, a.model.AllocationID}
+		ctx.Respond(ErrStaleAllocation{aID, a.model.AllocationID})
+		return
 	} else if _, ok := a.reservations[cID]; !ok {
-		err = ErrStaleContainer{ID: cID}
-	}
-	if err != nil {
-		ctx.Respond(err)
+		ctx.Respond(ErrStaleContainer{ID: cID})
 		return
 	}
 
 	a.daemonReservations[cID] = true
+
+	if len(a.daemonReservations) == len(a.reservations) {
+		ctx.Log().Warnf("all reservations were marked as daemon, exiting")
+		a.Exit(ctx)
+	}
 }
 
 // HandleSignal handles an external signal to kill or terminate the allocation.
@@ -257,9 +259,10 @@ func (a *Allocation) HandleSignal(ctx *actor.Context, msg actor.Message) {
 // kill us or close us normally depending on the changes, among other things.
 func (a *Allocation) TaskContainerStateChanged(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
-) error {
+) {
 	if _, ok := a.reservations[msg.Container.ID]; !ok {
-		return ErrStaleContainer{ID: msg.Container.ID}
+		ctx.Log().WithError(ErrStaleContainer{ID: msg.Container.ID}).Warnf("old state change")
+		return
 	}
 
 	a.containers[msg.Container.ID] = msg.Container
@@ -273,24 +276,19 @@ func (a *Allocation) TaskContainerStateChanged(
 		}
 	case cproto.Terminated:
 		ctx.Tell(ctx.Self().Parent(), model.TrialLog{
-			Message:     msg.ContainerStopped.String(),
+			Log:         ptrs.StringPtr(msg.ContainerStopped.String()),
 			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
 		})
 
 		a.exitedContainers[msg.Container.ID] = *msg.ContainerStopped
 		a.rendezvous.containerTerminated(msg.Container.ID)
-		if a.firstContainerExited == nil {
-			a.firstContainerExited = &msg.Container.ID
-		}
-
 		switch {
 		case msg.ContainerStopped.Failure != nil:
-			a.Kill(ctx)
+			a.Error(ctx, *msg.ContainerStopped.Failure)
 		default:
 			a.Exit(ctx)
 		}
 	}
-	return nil
 }
 
 // Exit attempts to exit an allocation while not killing or preempting it.
@@ -327,6 +325,14 @@ func (a *Allocation) Kill(ctx *actor.Context) {
 	a.kill(ctx)
 }
 
+// Error closes the allocation due to an error, beginning the kill flow.
+func (a *Allocation) Error(ctx *actor.Context, err error) {
+	if a.exitReason == nil {
+		a.exitReason = err
+	}
+	a.Kill(ctx)
+}
+
 func (a *Allocation) allNonDaemonsExited() bool {
 	for id := range a.reservations {
 		_, terminated := a.exitedContainers[id]
@@ -351,7 +357,7 @@ func (a *Allocation) kill(ctx *actor.Context) {
 	}
 
 	ctx.Log().Info("decided to kill allocation")
-	if a.firstContainerExited == nil {
+	if len(a.exitedContainers) == 0 {
 		a.killedWhileRunning = true
 	}
 	a.killCooldown = ptrs.TimePtr(time.Now().UTC().Add(killCooldown))
@@ -379,30 +385,37 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	case a.preemption.Acknowledged():
 		ctx.Log().Info("allocated successfully preempted")
 		return
-	case a.firstContainerExited != nil:
-		err := a.exitedContainers[*a.firstContainerExited].Failure
-		if err == nil {
+	case len(a.exitedContainers) != 0:
+		if a.exitReason == nil {
 			// This is true because searcher and preemption exits both ack preemption.
 			exit.UserRequestedStop = true
 			return
 		}
 
-		switch err.FailureType {
-		case aproto.ContainerFailed, aproto.TaskError:
-			ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)
+		switch err := a.exitReason.(type) {
+		case aproto.ContainerFailure:
+			switch err.FailureType {
+			case aproto.ContainerFailed, aproto.TaskError:
+				ctx.Log().WithError(err).Infof("allocation exited with failure (%s)", err.FailureType)
+				exit.Err = err
+				return
+			case aproto.AgentError, aproto.AgentFailed:
+				// Questionable, could be considered failures, but for now we don't.
+				ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
+				return
+			case aproto.TaskAborted:
+				// Definitely not a failure.
+				ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
+				return
+			default:
+				panic(errors.Wrapf(err, "unexpected allocation failure (%s)", err.Error()))
+			}
+		default:
+			ctx.Log().WithError(err).Error("allocation handler crashed")
 			exit.Err = err
 			return
-		case aproto.AgentError, aproto.AgentFailed:
-			// Questionable, could be considered failures, but for now we don't.
-			ctx.Log().WithError(err).Warnf("allocation exited due to agent (%s)", err.FailureType)
-			return
-		case aproto.TaskAborted:
-			// Definitely not a failure.
-			ctx.Log().WithError(err).Debugf("allocation aborted (%s)", err.FailureType)
-			return
-		default:
-			panic(errors.Wrapf(err, "unexpected allocation failure (%s)", err.FailureType))
 		}
+
 	default:
 		panic("allocation exited without being killed, preempted or having a container exit")
 	}

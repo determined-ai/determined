@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/task"
@@ -131,14 +132,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 
 	case model.State:
-		return t.transition(ctx, msg)
+		return t.patchState(ctx, msg)
 	case trialSearcherState:
 		t.searcher = msg
 		switch {
 		case !t.searcher.Complete:
 			return t.maybeAllocateTask(ctx)
 		case t.searcher.Complete && t.searcher.Closed:
-			return t.transition(ctx, model.StoppingCompletedState)
+			return t.patchState(ctx, model.StoppingCompletedState)
 		}
 		return nil
 
@@ -153,7 +154,8 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		if log, err := t.enrichTrialLog(model.TrialLog{
 			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
-			Message:     msg.Message(),
+			Log:         ptrs.StringPtr(msg.Message()),
+			Level:       msg.Level,
 		}); err != nil {
 			ctx.Log().WithError(err).Warn("dropping container log")
 		} else {
@@ -217,6 +219,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		TaskActor: ctx.Self(),
 	}
 
+	ctx.Log().Info("decided to allocate trial")
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(req, t.db, t.rm))
 	return nil
 }
@@ -290,10 +293,16 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 
 	// Decide if this is permanent.
 	switch {
-	case t.searcher.Complete && t.searcher.Closed:
-		return t.transition(ctx, model.CompletedState)
 	case model.StoppingStates[t.state]:
+		if exit.Err != nil {
+			return t.transition(ctx, model.ErrorState)
+		}
 		return t.transition(ctx, model.StoppingToTerminalStates[t.state])
+	case t.searcher.Complete && t.searcher.Closed:
+		if exit.Err != nil {
+			return t.transition(ctx, model.ErrorState)
+		}
+		return t.transition(ctx, model.CompletedState)
 	case exit.Err != nil:
 		ctx.Log().
 			WithError(exit.Err).
@@ -303,10 +312,6 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 			return err
 		}
 		if t.restarts > t.config.MaxRestarts() {
-			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
-				requestID: t.searcher.Create.RequestID,
-				reason:    workload.Errored,
-			})
 			return t.transition(ctx, model.ErrorState)
 		}
 	case exit.UserRequestedStop:
@@ -321,56 +326,74 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	return errors.Wrap(t.maybeAllocateTask(ctx), "failed to reschedule trial")
 }
 
-// transition transitions the trial and rectifies the underlying allocation state with it.
-func (t *trial) transition(ctx *actor.Context, state model.State) error {
-	// A terminal-state trial never transitions.
-	if terminal := model.TerminalStates[t.state]; terminal {
+// patchState decide if the state patch is valid. If so, we'll transition the trial.
+func (t *trial) patchState(ctx *actor.Context, state model.State) error {
+	switch {
+	case model.TerminalStates[t.state]:
 		ctx.Log().Infof("ignoring transition in terminal state (%s -> %s)", t.state, state)
 		return nil
-	} else if t.state == state {
-		ctx.Log().Infof("ignoring noop transition (%s -> %s)", t.state, state)
+	case model.TerminalStates[state]:
+		ctx.Log().Infof("ignoring patch to terminal state %s", state)
 		return nil
+	case t.state == state: // Order is important, else below will prevent re-sending kills.
+		ctx.Log().Infof("resending actions for transition for %s", t.state)
+		return t.transition(ctx, state)
+	case model.StoppingStates[t.state] && !model.TrialTransitions[t.state][state]:
+		ctx.Log().Infof("ignoring patch to less severe stopping state (%s)", state)
+		return nil
+	default:
+		ctx.Log().Infof("patching state after request (%s)", state)
+		return t.transition(ctx, state)
 	}
+}
 
-	// Transition the trial.
-	ctx.Log().Infof("trial changed from state %s to %s", t.state, state)
-	if t.idSet {
-		if err := t.db.UpdateTrial(t.id, state); err != nil {
-			return errors.Wrap(err, "updating trial with end state")
+// transition the trial by rectifying the desired state with our actual state to determined
+// a target state, and then propogating the appropriate signals to the allocation if there is any.
+func (t *trial) transition(ctx *actor.Context, state model.State) error {
+	if t.state != state {
+		ctx.Log().Infof("trial changed from state %s to %s", t.state, state)
+		if t.idSet {
+			if err := t.db.UpdateTrial(t.id, state); err != nil {
+				return errors.Wrap(err, "updating trial with end state")
+			}
 		}
+		t.state = state
 	}
-	t.state = state
 
-	// Rectify the allocation state with the transition.
+	// Rectify our state and the allocation state with the transition.
 	switch {
 	case t.state == model.ActiveState:
 		return t.maybeAllocateTask(ctx)
 	case t.state == model.PausedState:
-		switch {
-		case t.allocation == nil:
-			ctx.Log().Info("terminating trial before resources are requested")
-		default:
-			ctx.Tell(t.allocation, task.Kill)
+		if t.allocation != nil {
+			ctx.Log().Infof("decided to %s trial due to pause", task.Terminate)
+			ctx.Tell(t.allocation, task.Terminate)
 		}
 	case model.StoppingStates[t.state]:
 		switch {
 		case t.allocation == nil:
-			ctx.Log().Info("terminating trial before resources are requested")
+			ctx.Log().Info("stopping trial before resources are requested")
 			return t.transition(ctx, model.StoppingToTerminalStates[t.state])
 		default:
-			action := map[model.State]task.AllocationSignal{
-				model.StoppingCompletedState: "",
-				model.StoppingCanceledState:  task.Terminate,
-				model.StoppingKilledState:    task.Kill,
-				model.StoppingErrorState:     task.Kill,
-			}[t.state]
-			if action == "" {
-				return nil
+			if action, ok := map[model.State]task.AllocationSignal{
+				model.StoppingCanceledState: task.Terminate,
+				model.StoppingKilledState:   task.Kill,
+				model.StoppingErrorState:    task.Kill,
+			}[t.state]; ok {
+				ctx.Log().Infof("decided to %s trial", action)
+				ctx.Tell(t.allocation, action)
 			}
-			ctx.Tell(t.allocation, action)
 		}
 	case model.TerminalStates[t.state]:
+		if t.state == model.ErrorState {
+			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
+				requestID: t.searcher.Create.RequestID,
+				reason:    workload.Errored,
+			})
+		}
 		ctx.Self().Stop()
+	default:
+		panic(fmt.Errorf("unmatched state in transition %s", t.state))
 	}
 	return nil
 }
@@ -382,6 +405,9 @@ func (t *trial) enrichTrialLog(log model.TrialLog) (model.TrialLog, error) {
 	}
 	log.TrialID = t.id
 	log.Message += "\n"
+	if log.Log != nil && !strings.HasSuffix(*log.Log, "\n") {
+		log.Log = ptrs.StringPtr(*log.Log + "\n")
+	}
 	if log.Timestamp == nil {
 		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
 	}

@@ -42,7 +42,7 @@ func TestAllocation(t *testing.T) {
 			name:  "container failed",
 			acked: false,
 			err:   &aproto.ContainerFailure{FailureType: aproto.ContainerFailed},
-			exit:  &AllocationExited{Err: &aproto.ContainerFailure{FailureType: aproto.ContainerFailed}},
+			exit:  &AllocationExited{Err: aproto.ContainerFailure{FailureType: aproto.ContainerFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
