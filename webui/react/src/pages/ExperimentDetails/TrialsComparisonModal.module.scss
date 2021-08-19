@@ -1,7 +1,8 @@
 .base {
   border: 1px solid var(--theme-colors-monochrome-14);
   border-radius: var(--theme-sizes-border-radius);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   grid-auto-flow: row;
   height: 75vh;
   overflow-x: scroll;
