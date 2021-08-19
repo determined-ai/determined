@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict
 
 import pytest
 
@@ -142,7 +142,10 @@ def test_tf_keras_mnist_data_layer_lfs(
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_s3(
-    tf2: bool, storage_type: str, collect_trial_profiles: Callable[[int], None]
+    tf2: bool,
+    storage_type: str,
+    secrets: Dict[str, str],
+    collect_trial_profiles: Callable[[int], None],
 ) -> None:
     exp_id = run_tf_keras_mnist_data_layer_test(tf2, storage_type)
     trial_id = exp.experiment_trials(exp_id)[0]["id"]
@@ -170,7 +173,10 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_parallel(
-    tf2: bool, storage_type: str, collect_trial_profiles: Callable[[int], None]
+    tf2: bool,
+    storage_type: str,
+    secrets: Dict[str, str],
+    collect_trial_profiles: Callable[[int], None],
 ) -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
