@@ -15,6 +15,7 @@ export interface BreadCrumbRoute {
 }
 
 export interface Props extends CommonProps {
+  bodyNoPadding?: boolean;
   breadcrumb?: BreadCrumbRoute[];
   docTitle?: string;
   headerComponent?: React.ReactNode,
@@ -45,6 +46,7 @@ const Page: React.FC<Props> = (props: Props) => {
     info.clusterName,
   );
 
+  if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.stickyHeader) classes.push(css.stickyHeader);
 
   return (

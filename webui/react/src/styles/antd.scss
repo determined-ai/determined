@@ -258,13 +258,17 @@ html {
   .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
     height: 100%;
     overflow: auto;
-    padding: var(--theme-sizes-layout-big) 0;
   }
   .ant-tabs-top > .ant-tabs-nav::before,
   .ant-tabs-bottom > .ant-tabs-nav::before,
   .ant-tabs-top > div > .ant-tabs-nav::before,
   .ant-tabs-bottom > div > .ant-tabs-nav::before {
     border-color: var(--theme-colors-monochrome-12);
+  }
+  .ant-tabs.no-padding {
+    & > .ant-tabs-nav {
+      padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
+    }
   }
 
   /* Tabs Cards Style */

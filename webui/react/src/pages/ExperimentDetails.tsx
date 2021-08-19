@@ -99,6 +99,7 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
+      bodyNoPadding
       headerComponent={<ExperimentDetailsHeader
         curUser={user}
         experiment={experiment}

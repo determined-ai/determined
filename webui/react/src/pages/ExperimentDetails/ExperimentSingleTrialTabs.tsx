@@ -147,7 +147,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
 
   return (
     <>
-      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
+      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           {trialDetails
             ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />

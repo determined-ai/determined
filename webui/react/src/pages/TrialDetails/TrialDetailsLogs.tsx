@@ -11,6 +11,8 @@ import { jsonToTrialLog } from 'services/decoder';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
+import css from './TrialDetailsLogs.module.scss';
+
 export interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
@@ -125,15 +127,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [ experiment.id, handleDownloadConfirm, trial.id ]);
 
   return (
-    <LogViewerTimestamp
-      fetchToLogConverter={jsonToTrialLog}
-      FilterComponent={TrialLogFilters}
-      onDownloadClick={handleDownloadLogs}
-      onFetchLogAfter={fetchLogAfter}
-      onFetchLogBefore={fetchLogBefore}
-      onFetchLogFilter={fetchLogFilter}
-      onFetchLogTail={fetchLogTail}
-    />
+    <div className={css.base}>
+      <LogViewerTimestamp
+        fetchToLogConverter={jsonToTrialLog}
+        FilterComponent={TrialLogFilters}
+        onDownloadClick={handleDownloadLogs}
+        onFetchLogAfter={fetchLogAfter}
+        onFetchLogBefore={fetchLogBefore}
+        onFetchLogFilter={fetchLogFilter}
+        onFetchLogTail={fetchLogTail}
+      />
+    </div>
   );
 };
 

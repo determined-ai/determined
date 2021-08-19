@@ -19,7 +19,7 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
   }, [ resize ]);
 
   return (
-    <Section bodyBorder bodyNoPadding bodyScroll maxHeight>
+    <Section bodyNoPadding bodyScroll maxHeight>
       <MonacoEditor
         height="100%"
         language="yaml"

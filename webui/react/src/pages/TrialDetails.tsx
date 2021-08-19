@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import LogViewerPreview from 'components/LogViewerPreview';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -161,6 +162,7 @@ const TrialDetailsComp: React.FC = () => {
 
   return (
     <Page
+      bodyNoPadding
       headerComponent={<TrialDetailsHeader
         experiment={experiment}
         fetchTrialDetails={fetchTrialDetails}
@@ -168,17 +170,15 @@ const TrialDetailsComp: React.FC = () => {
         trial={trial}
       />}
       stickyHeader
-      title={`Trial ${trialId}`}
-    >
-      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
+      title={`Trial ${trialId}`}>
+      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
         <TabPane key={TabType.Overview} tab="Overview">
           <TrialDetailsOverview experiment={experiment} trial={trial} />
         </TabPane>
         <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          {
-            isSingleTrialExperiment(experiment) ?
-              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
-              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+          {isSingleTrialExperiment(experiment) ?
+            <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+            <TrialRangeHyperparameters experiment={experiment} trial={trial} />
           }
         </TabPane>
         <TabPane key={TabType.Profiler} tab="Profiler">
@@ -188,6 +188,7 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
+      <LogViewerPreview />
     </Page>
   );
 };

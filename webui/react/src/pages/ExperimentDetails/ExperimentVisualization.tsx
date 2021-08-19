@@ -320,7 +320,6 @@ const ExperimentVisualization: React.FC<Props> = ({
     <div className={css.base}>
       <Tabs
         activeKey={typeKey}
-        className={css.base}
         destroyInactiveTabPane
         type="card"
         onChange={handleTabChange}>
