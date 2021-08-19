@@ -41,35 +41,37 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = (
     return currentDate.isBefore(formAfterDate) || currentDate.isAfter(dayjs());
   };
 
-  return <Modal
-    okText="Proceed to Download"
-    title="Download Resource Usage Data in CSV"
-    visible={true}
-    onCancel={() => onVisibleChange(false)}
-    onOk={handleOk}
-  >
-    <Form
-      form={form}
-      initialValues={{ afterDate, beforeDate }}
-      labelCol={{ span: 8 }}
+  return (
+    <Modal
+      okText="Proceed to Download"
+      title="Download Resource Usage Data in CSV"
+      visible={true}
+      onCancel={() => onVisibleChange(false)}
+      onOk={handleOk}
     >
-      <Form.Item label="Start" name="afterDate">
-        <DatePicker
-          allowClear={false}
-          disabledDate={isAfterDateDisabled}
-          style={{ minWidth: '150px' }}
-        />
-      </Form.Item>
+      <Form
+        form={form}
+        initialValues={{ afterDate, beforeDate }}
+        labelCol={{ span: 8 }}
+      >
+        <Form.Item label="Start" name="afterDate">
+          <DatePicker
+            allowClear={false}
+            disabledDate={isAfterDateDisabled}
+            style={{ minWidth: '150px' }}
+          />
+        </Form.Item>
 
-      <Form.Item label="End" name="beforeDate">
-        <DatePicker
-          allowClear={false}
-          disabledDate={isBeforeDateDisabled}
-          style={{ minWidth: '150px' }}
-        />
-      </Form.Item>
-    </Form>
-  </Modal>;
+        <Form.Item label="End" name="beforeDate">
+          <DatePicker
+            allowClear={false}
+            disabledDate={isBeforeDateDisabled}
+            style={{ minWidth: '150px' }}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
 };
 
 export default ClusterHistoricalUsageCsvModal;

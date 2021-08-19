@@ -2,7 +2,7 @@ import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
 import { sumArrays } from 'utils/array';
 import { secondToHour } from 'utils/time';
 
-import { GroupBy } from './ClusterHistoricalUsage';
+import { GroupBy } from './ClusterHistoricalUsage.settings';
 
 export interface ResourceAllocationChartSeries {
   groupedBy: GroupBy,

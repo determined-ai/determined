@@ -42,6 +42,14 @@ export interface SettingsConfig {
   storagePath: string;
 }
 
+/*
+ * Provide the ability to override hook options with
+ * dynamic values during initialization.
+ */
+export interface SettingsHookOptions {
+  storagePath?: string;
+}
+
 interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
@@ -181,10 +189,10 @@ const getNewQueryPath = (
   return `${basePath}?${queries}`;
 };
 
-const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
+const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): SettingsHook<T> => {
   const history = useHistory();
   const location = useLocation();
-  const storage = useStorage(config.storagePath);
+  const storage = useStorage(options?.storagePath || config.storagePath);
   const prevSearch = usePrevious(location.search, undefined);
   const [ settings, setSettings ] = useState<T>(() => getDefaultSettings<T>(config, storage));
 
@@ -269,17 +277,18 @@ const useSettings = <T>(config: SettingsConfig): SettingsHook<T> => {
     if (location.search === prevSearch) return;
 
     /*
-     * Set the initial query string if query settings are detected
-     * but not found in the url query string.
+     * Set the initial query string if:
+     * 1) current settings have set values
+     * 2) query settings do not match current settings
      */
     const currentQuery = settingsToQuery(config, settings);
     if (!isSameQuery(config, location.search, currentQuery)) {
       history.replace(`${location.pathname}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
+      const defaultSettings = getDefaultSettings<T>(config, storage);
       setSettings(prevSettings => {
         const querySettings = queryToSettings<Partial<T>>(config, location.search);
-        const defaultSettings = getDefaultSettings<T>(config, storage);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }

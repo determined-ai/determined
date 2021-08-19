@@ -1,28 +1,28 @@
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { CommandState, CommandType } from 'types';
+import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
+import { RunState } from 'types';
 
 export interface Settings {
-  row?: string[];
-  search?: string;
+  compare: boolean;
+  row?: number[];
   sortDesc: boolean;
-  sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'username';
-  state?: CommandState[];
+  sortKey: V1GetExperimentTrialsRequestSortBy;
+  state?: RunState[];
   tableLimit: number;
   tableOffset: number;
-  type?: CommandType[];
-  user?: string[];
 }
 
 const config: SettingsConfig = {
   settings: [
     {
-      key: 'row',
-      type: { baseType: BaseType.String, isArray: true },
+      defaultValue: false,
+      key: 'compare',
+      type: { baseType: BaseType.Boolean },
     },
     {
-      key: 'search',
-      type: { baseType: BaseType.String },
+      key: 'row',
+      type: { baseType: BaseType.Integer, isArray: true },
     },
     {
       defaultValue: true,
@@ -31,7 +31,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: 'startTime',
+      defaultValue: V1GetExperimentTrialsRequestSortBy.ID,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },
@@ -55,24 +55,8 @@ const config: SettingsConfig = {
       key: 'tableOffset',
       type: { baseType: BaseType.Integer },
     },
-    {
-      key: 'type',
-      storageKey: 'type',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
-    },
-    {
-      key: 'user',
-      storageKey: 'user',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
-    },
   ],
-  storagePath: 'task-list',
+  storagePath: 'experiment-trials-list',
 };
 
 export default config;

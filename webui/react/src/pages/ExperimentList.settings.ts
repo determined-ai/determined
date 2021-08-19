@@ -1,24 +1,39 @@
 import { MINIMUM_PAGE_SIZE } from 'components/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { CommandState, CommandType } from 'types';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { RunState } from 'types';
 
 export interface Settings {
-  row?: string[];
+  archived?: boolean;
+  label?: string[];
+  row?: number[];
   search?: string;
   sortDesc: boolean;
-  sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'username';
-  state?: CommandState[];
+  sortKey: V1GetExperimentsRequestSortBy;
+  state?: RunState[];
   tableLimit: number;
   tableOffset: number;
-  type?: CommandType[];
   user?: string[];
 }
 
 const config: SettingsConfig = {
   settings: [
     {
+      key: 'archived',
+      storageKey: 'archived',
+      type: { baseType: BaseType.Boolean },
+    },
+    {
+      key: 'label',
+      storageKey: 'label',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
       key: 'row',
-      type: { baseType: BaseType.String, isArray: true },
+      type: { baseType: BaseType.Integer, isArray: true },
     },
     {
       key: 'search',
@@ -31,7 +46,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: 'startTime',
+      defaultValue: V1GetExperimentsRequestSortBy.STARTTIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },
@@ -72,7 +87,7 @@ const config: SettingsConfig = {
       },
     },
   ],
-  storagePath: 'task-list',
+  storagePath: 'experiment-list',
 };
 
 export default config;
