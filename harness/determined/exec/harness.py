@@ -49,7 +49,13 @@ def main(
             logging.info("InvalidHP detected during Trial init, worker is exiting")
             return 0
 
-        controller.run()
+        try:
+            controller.run()
+        finally:
+            # TODO: Refactor load_trial so that it takes a generic context as input.
+            # That way we can just be inside a context manager and we don't have to keep track of
+            # errors so closely.
+            controller.context.distributed.close()
 
     return 0
 
