@@ -75,7 +75,8 @@ class Authentication:
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
 
-        if password is None and session_user == constants.DEFAULT_DETERMINED_USER:
+        fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
+        if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD
         elif session_user is None:
             session_user = input("Username: ")
@@ -86,7 +87,13 @@ class Authentication:
         if password:
             password = api.salt_and_hash(password)
 
-        token = do_login(self.master_address, session_user, password, cert)
+        try:
+            token = do_login(self.master_address, session_user, password, cert)
+        except api.errors.ForbiddenException:
+            if fallback_to_default:
+                raise api.errors.UnauthenticatedException(username=session_user)
+            raise
+
         self.token_store.set_token(session_user, token)
 
         return Session(session_user, token)
@@ -391,7 +398,7 @@ def optional(func: Callable[[argparse.Namespace], Any]) -> Callable[[argparse.Na
         global cli_auth
         try:
             cli_auth = Authentication(namespace.master, namespace.user, try_reauth=False)
-        except api.errors.UnauthenticatedException:
+        except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
             pass
 
         return func(namespace)
