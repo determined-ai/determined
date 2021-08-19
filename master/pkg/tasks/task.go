@@ -31,8 +31,7 @@ const (
 
 const (
 	// Container runtimes.
-	nvidiaContainerRuntime = "nvidia"
-	runc                   = "runc"
+	runc = "runc"
 )
 
 // TaskSpec defines the spec of a task.
@@ -134,8 +133,6 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 	switch deviceType {
 	case device.CPU, device.ZeroSlot:
 		containerRuntime = runc
-	case device.GPU:
-		containerRuntime = nvidiaContainerRuntime
 	default:
 		panic(fmt.Sprintf("bad device type: %s", deviceType))
 	}
