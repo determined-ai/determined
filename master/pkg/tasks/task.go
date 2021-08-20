@@ -133,8 +133,6 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 	switch deviceType {
 	case device.CPU, device.ZeroSlot:
 		containerRuntime = runc
-	default:
-		panic(fmt.Sprintf("bad device type: %s", deviceType))
 	}
 
 	network := t.TaskContainerDefaults.NetworkMode
