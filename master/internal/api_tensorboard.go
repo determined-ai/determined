@@ -118,7 +118,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
-	spec.WatchTensorBoardTimeout = true
+	spec.WatchProxyIdleTimeout = true
 
 	// Postprocess the spec.
 	if spec.Config.IdleTimeout == nil {

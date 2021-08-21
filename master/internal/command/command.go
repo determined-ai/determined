@@ -6,7 +6,6 @@ import (
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -17,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -57,12 +57,23 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
-	if spec.WatchTensorBoardTimeout && spec.Config.IdleTimeout != nil {
-		cmd.idleTimeoutWatcher = &task.ProxyIdleTimeoutWatcher{
-			TaskID:      string(taskID),
-			Description: spec.Config.Description,
-			Timeout:     *spec.Config.IdleTimeout,
-			KillMessage: &apiv1.KillTensorboardRequest{},
+	if spec.WatchProxyIdleTimeout && spec.Config.IdleTimeout != nil {
+		cmd.idleTimeoutWatcher = &task.IdleTimeoutWatcher{
+			TickInterval: 5 * time.Second,
+			Timeout:      time.Duration(*spec.Config.IdleTimeout),
+			GetLastActivity: func(ctx *actor.Context) *time.Time {
+				proxyRef := ctx.Self().System().Get(actor.Addr("proxy"))
+				services := ctx.Ask(proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
+				service, ok := services[string(taskID)]
+				if !ok {
+					return nil
+				}
+				return &service.LastRequested
+			},
+			Action: func(ctx *actor.Context) {
+				ctx.Log().Infof("killing %s due to inactivity", spec.Config.Description)
+				ctx.Tell(ctx.Self(), &apiv1.KillTensorboardRequest{})
+			},
 		}
 	}
 
@@ -83,7 +94,7 @@ type command struct {
 	proxy       *actor.Ref
 	eventStream *actor.Ref
 
-	idleTimeoutWatcher *task.ProxyIdleTimeoutWatcher
+	idleTimeoutWatcher *task.IdleTimeoutWatcher
 	readinessChecks    map[string]readinessCheck
 
 	tasks.GenericCommandSpec
@@ -146,7 +157,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case sproto.ResourcesAllocated:
 		return c.receiveSchedulerMsg(ctx)
 
-	case task.ProxyIdleTimeoutWatcherTick:
+	case task.IdleTimeoutWatcherTick:
 		return c.idleTimeoutWatcher.ReceiveMsg(ctx)
 
 	case getSummary:
