@@ -358,8 +358,9 @@ class PyTorchTrialController(det.LoopTrialController):
             batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
 
-            with self.prof.record_timing("to_device", accumulate=True):
-                batch = self.context.to_device(batch)
+            if self.context.experimental._auto_to_device:
+                with self.prof.record_timing("to_device", accumulate=True):
+                    batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
             if self.context.is_epoch_start():
@@ -477,7 +478,8 @@ class PyTorchTrialController(det.LoopTrialController):
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
             for idx, batch in enumerate(self.validation_loader):
-                batch = self.trial.to_device(self.context, batch)
+                if self.context.experimental._auto_to_device:
+                    batch = self.context.to_device(batch)
                 num_inputs += self.trial.get_batch_length(batch)
 
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):
@@ -1053,33 +1055,6 @@ class PyTorchTrial(det.Trial):
             batch (Any): input training or validation data batch object.
         """
         return pytorch.data_length(batch)
-
-    def to_device(self, context: pytorch.PyTorchTrialContext, batch: Any) -> Any:
-        """Control how each batch is moved to the GPU.
-
-        Override this method if you need to control what is moved to the GPU
-        and what stays in the CPU.  This is useful for custom data types as well
-        as instances in which the default of moving all items of a list, tuple,
-        and/or dict to the GPU is not desired.  This is called by Determined so
-        you do not need to worry about passing arguments to this method.
-
-        .. code-block:: python
-
-            def to_device(self, context, batch: Dict[str, Any]):
-                new_batch = {}
-                for k, item in batch.items():
-                    if k == "img":
-                        new_batch["img"] = self.context.to_device(batch["img"])
-                    else:
-                        new_batch[k] = batch[k]
-                return new_batch
-
-        Arguments:
-            context (:class:`~determined.pytorch.PyTorchTrialContext`):
-                has allocated device as well as default `to_device` method.
-            batch (Any): input training or validation data batch object.
-        """
-        return context.to_device(batch)
 
 
 def reset_parameters(model: torch.nn.Module) -> None:

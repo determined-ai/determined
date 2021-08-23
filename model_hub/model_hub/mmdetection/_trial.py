@@ -30,6 +30,8 @@ class MMDetTrial(det_torch.PyTorchTrial):
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
         self.cfg = self.build_mmdet_config()
+        # We will control how data is moved to GPU.
+        self.context.experimental.disable_auto_to_device()
 
         # Build model and make sure it's compatible with horovod.
         self.model = mmdet.models.build_detector(self.cfg.model)
@@ -140,6 +142,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         return hooks
 
     def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
+        batch = self.to_device(batch)
         if self.lr_updater is not None:
             self.lr_updater.on_batch_start()
         batch = {key: batch[key].data[0] for key in batch}
@@ -158,6 +161,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
         return metrics
 
     def evaluate_batch(self, batch: Any, batch_idx: int) -> Dict[str, Any]:
+        batch = self.to_device(batch)
         batch = {key: batch[key][0].data for key in batch}
         with torch.no_grad():  # type: ignore
             result = self.model(return_loss=False, rescale=True, **batch)
@@ -220,12 +224,12 @@ class MMDetTrial(det_torch.PyTorchTrial):
             length = len(batch["img"][0].data[0])
         return length
 
-    def to_device(self, context: det_torch.PyTorchTrialContext, batch: Any) -> Dict[str, Any]:
+    def to_device(self, batch: Any) -> Dict[str, Any]:
         new_data = {}
         for k, item in batch.items():
             if isinstance(item, mmcv.parallel.data_container.DataContainer) and not item.cpu_only:
                 new_data[k] = mmcv.parallel.data_container.DataContainer(
-                    context.to_device(item.data),
+                    self.context.to_device(item.data),
                     item.stack,
                     item.padding_value,
                     item.cpu_only,
@@ -240,7 +244,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
             ):
                 new_data[k] = [
                     mmcv.parallel.data_container.DataContainer(
-                        context.to_device(item[0].data),
+                        self.context.to_device(item[0].data),
                         item[0].stack,
                         item[0].padding_value,
                         item[0].cpu_only,
