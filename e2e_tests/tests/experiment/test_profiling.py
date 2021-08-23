@@ -129,9 +129,13 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
         ),
         stream=True,
     ) as r:
+        have_batch = False
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
             validate_gpu_metric_batch(batch)
+            have_batch = True
+        if not have_batch:
+            pytest.fail("no batch metrics at all")
 
 
 def request_profiling_pytorch_timing_metrics(
@@ -176,9 +180,13 @@ def request_profiling_pytorch_timing_metrics(
         stream=True,
     ) as r:
         batch_idx = 0
+        have_batch = False
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
             batch_idx = validate_timing_batch(batch, batch_idx)
+            have_batch = True
+        if not have_batch:
+            pytest.fail("no batch metrics at all")
 
 
 PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
