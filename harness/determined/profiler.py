@@ -212,14 +212,16 @@ class ShutdownMessage:
     pass
 
 
-def yield_timeouts_until(deadline: float) -> Iterator[float]:
-    """Never yield a timeout which is 0 or less; that would cause queue.get() to hang."""
+def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
     while True:
         timeout = deadline - time.time()
         if timeout <= 0:
-            raise StopIteration()
-        else:
-            yield timeout
+            break
+
+        try:
+            yield q.get(timeout=timeout)
+        except queue.Empty:
+            break
 
 
 def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
@@ -740,14 +742,9 @@ class MetricsBatcherThread(threading.Thread):
                 pass
 
         # Send metrics until we are told to shutdown.
-        deadline = time.time() + self.FLUSH_INTERVAL
         while True:
-            for timeout in yield_timeouts_until(deadline):
-                try:
-                    m = self.inbound_queue.get(timeout=timeout)
-                except queue.Empty:
-                    break
-
+            deadline = time.time() + self.FLUSH_INTERVAL
+            for m in pop_until_deadline(self.inbound_queue, deadline):
                 if isinstance(m, ShutdownMessage):
                     self.send_queue.put(self.metrics_batch.consume())
                     return
@@ -774,7 +771,6 @@ class MetricsBatcherThread(threading.Thread):
             # Timeout met.
             if not self.metrics_batch.isempty():
                 self.send_queue.put(self.metrics_batch.consume())
-            deadline = time.time() + self.FLUSH_INTERVAL
 
     def run(self) -> None:
         try:
