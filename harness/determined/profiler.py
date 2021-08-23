@@ -212,6 +212,16 @@ class ShutdownMessage:
     pass
 
 
+def yield_timeouts_until(deadline: float) -> Iterator[float]:
+    """Never yield a timeout which is 0 or less; that would cause queue.get() to hang."""
+    while True:
+        timeout = deadline - time.time()
+        if timeout <= 0:
+            raise StopIteration()
+        else:
+            yield timeout
+
+
 def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
     """
     Return True if there are already profiling metrics for the trial.
@@ -729,24 +739,19 @@ class MetricsBatcherThread(threading.Thread):
                 # Ignore any Timings that are received before StartMessage
                 pass
 
-        batch_start_time = None  # type: Optional[float]
+        # Send metrics until we are told to shutdown.
+        deadline = time.time() + self.FLUSH_INTERVAL
         while True:
-            # Wait for the next Timing to arrive. If it doesn't arrive before the next flush
-            # should happen, we stop waiting for the next Timing and go straight to flushing.
-            timeout = None
-            if batch_start_time is not None:
-                time_since_flush = time.time() - batch_start_time
-                timeout = self.FLUSH_INTERVAL - time_since_flush
+            for timeout in yield_timeouts_until(deadline):
+                try:
+                    m = self.inbound_queue.get(timeout=timeout)
+                except queue.Empty:
+                    break
 
-            try:
-                m = self.inbound_queue.get(timeout=timeout)
                 if isinstance(m, ShutdownMessage):
                     self.send_queue.put(self.metrics_batch.consume())
                     return
                 elif isinstance(m, NamedMeasurement):
-                    if batch_start_time is None:
-                        batch_start_time = time.time()
-
                     if m.accumulated:
                         if m.id in self.accumulating_measurements:
                             self.accumulating_measurements[m.id].measurement += m.measurement
@@ -758,6 +763,7 @@ class MetricsBatcherThread(threading.Thread):
                     for msr in self.accumulating_measurements.values():
                         self.metrics_batch.append(msr.metric_type, msr.metric_name, msr)
                     self.accumulating_measurements = {}
+                    break
                 else:
                     logging.fatal(
                         f"ProfilerAgent.MetricsBatcherThread received a message "
@@ -766,21 +772,10 @@ class MetricsBatcherThread(threading.Thread):
                         f"be a bug in the code."
                     )
 
-            except queue.Empty:
-                pass
-
-            check.is_not_none(
-                batch_start_time,
-                "batch_start_time should never be None. The inbound_queue.get() "
-                "should never return and proceed to this piece of code "
-                "without batch_start_time being updated to a real timestamp. If "
-                "batch_start_time is None, inbound_queue.get() timeout should be "
-                "None and the get() should block until a Timing is received.",
-            )
-            batch_start_time = cast(float, batch_start_time)
-            if time.time() - batch_start_time > self.FLUSH_INTERVAL:
+            # Timeout met, or an explicit flush.
+            if not self.metrics_batch.isempty():
                 self.send_queue.put(self.metrics_batch.consume())
-                batch_start_time = time.time()
+            deadline = time.time() + self.FLUSH_INTERVAL
 
     def run(self) -> None:
         try:
@@ -789,12 +784,14 @@ class MetricsBatcherThread(threading.Thread):
             self.send_queue.put(ShutdownMessage())
 
 
-
 class MetricBatch:
     def __init__(self, trial_id: str, agent_id: str) -> None:
         self.trial_id = trial_id
         self.agent_id = agent_id
         self.batch = {}  # type: Dict[Tuple[MetricType, str, str], List[Measurement]]
+
+    def isempty(self) -> bool:
+        return len(self.batch) == 0
 
     def append(
         self,
