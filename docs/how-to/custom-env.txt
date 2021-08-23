@@ -191,7 +191,50 @@ Determined. This can be done under ``image`` and ``registry_auth`` in the
 :ref:`master-configuration`. Please note that for this to take effect you will have to restart the
 master.
 
-Next Steps
-==========
+.. _virtual-env:
+
+**********************
+ Virtual Environments
+**********************
+
+Virtual environments are commonly used by model developers.
+
+To configure virtual environments using :ref:`custom images <custom-docker-images>`, see an example
+below:
+
+.. code:: bash
+
+   # Determined Image
+   FROM determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.16.4
+
+   # Create a virtual environment
+   RUN conda create -n myenv python=3.6
+   RUN eval "$(conda shell.bash hook)" && \
+      conda activate myenv && \
+      pip install scikit-learn
+
+   # Set the default virtual environment
+   RUN echo 'eval "$(conda shell.bash hook)" && conda activate myenv' >> ~/.bashrc
+
+.. note::
+
+   If we need to ensure the desired virtual environment is activated every time we create a new
+   interactive terminal session in JupyterLab or using Determined Shell, we should update
+   ``~/.bashrc`` with the scripts to activate the desired virtual environment.
+
+To switch to a virtual environment using :ref:`startup hook <startup-hooks>`, see an example below:
+
+.. code:: bash
+
+   # Switch to the desired virtual environment
+   eval "$(conda shell.bash hook)"
+   conda activate myenv
+
+   # Do that for every new interactive terminal session
+   echo 'eval "$(conda shell.bash hook)" && conda activate myenv' >> ~/.bashrc
+
+************
+ Next Steps
+************
 
 -  :ref:`experiment-lifecycle`
