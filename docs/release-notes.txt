@@ -8,6 +8,34 @@
  Version 0.16
 **************
 
+Version 0.16.4
+==============
+
+**Release Date:** August 23, 2021
+
+**New Features**
+
+-  WebUI: Add a trial comparison modal, allowing comparison of information, metrics, and
+   hyperparameters between specific trials within an experiment. This is available from the
+   experiment trials and experiment visualization pages.
+
+-  Scheduling/CLI: Support changing task priorities using the ``det
+   experiment/command/notebook/shell/tensorboard set priority`` commands. See :ref:`scheduling` for
+   more information on task priorities.
+
+-  CLI: Allow command-line config overrides in experiment creation, e.g., ``det e create const.yaml
+   . --config key=value``.
+
+-  WebUI: Allow cluster admins to delete individual experiments.
+
+**Bug Fixes**
+
+-  Cluster: Fix breakage in trial fault tolerance caused by not sending enough state snapshots.
+-  WebUI: Prevent logs from potentially introducing harmful HTML/JS injections via Unicode.
+-  WebUI: Change y-axis of the profiler timing metrics chart from milliseconds to seconds.
+-  WebUI: Prevent the zoom from resetting when chart data series are added.
+-  WebUI: Fix the issue of learning curves not resizing properly.
+
 Version 0.16.3
 ==============
 
