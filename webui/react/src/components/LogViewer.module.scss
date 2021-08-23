@@ -7,7 +7,6 @@
   width: 100%;
 
   .container {
-    // border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
     font-family: 'Source Code Pro', monospace;
     font-size: var(--theme-sizes-font-small);
     height: 100%;
@@ -19,44 +18,6 @@
   .measure {
     display: inline;
     position: absolute;
-    white-space: pre-wrap;
-    word-break: break-all;
-  }
-  .datetimeTooltip {
-    white-space: nowrap;
-  }
-  .line {
-    display: flex;
-    position: absolute;
-    width: 100%;
-  }
-  .line > * { white-space: nowrap; }
-  .line > .number {
-    color: var(--theme-colors-monochrome-10);
-    flex-shrink: 0;
-    text-align: right;
-    user-select: none;
-  }
-  .line > .number::after { content: attr(data-label) '\00a0'; }
-  .line > .level {
-    color: var(--theme-colors-monochrome-10);
-    flex-shrink: 0;
-    padding: 1px;
-  }
-  .line > .level > .levelLabel { font-size: 0; }
-  .line > .critical { color: var(--theme-colors-states-failed); }
-  .line > .debug { color: var(--theme-colors-states-active); }
-  .line > .error { color: var(--theme-colors-states-failed); }
-  .line > .trace { color: var(--theme-colors-states-active); }
-  .line > .warning { color: var(--theme-colors-states-suspended); }
-  .line > .time {
-    color: var(--theme-colors-base-0);
-    flex-shrink: 0;
-  }
-  .line > .time::after { content: '\00a0'; }
-  .line > .message {
-    flex-grow: 1;
-    line-break: anywhere;
     white-space: pre-wrap;
     word-break: break-all;
   }

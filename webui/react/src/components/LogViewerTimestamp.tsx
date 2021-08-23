@@ -1,6 +1,7 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, {
+  forwardRef,
   Reducer, RefObject,
   useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
 } from 'react';
@@ -17,11 +18,12 @@ import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard } from 'utils/dom';
+import { copyToClipboard } from 'utils/dom';
 
+import LogViewerEntry from './LogViewEntry';
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
-import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
+import { ICON_WIDTH } from './LogViewerLevel';
 import Section from './Section';
 
 export interface LogViewerTimestampFilter {
@@ -422,24 +424,14 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const enableTailingClasses = [ css.enableTailing ];
   if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
-  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
-    const log = data[index];
-
-    const messageClasses = [ css.message ];
-    if (log.level) messageClasses.push(css[log.level]);
-
+  const LogViewerInnerElement = forwardRef(test ({ style, ...props }, ref) => {
     return (
-      <div className={css.line} style={style}>
-        <LogViewerLevel logLevel={log.level} />
-        <div className={css.time} style={{ width: dateTimeWidth }}>
-          {log.formattedTime}
-        </div>
-        <div
-          className={messageClasses.join(' ')}
-          dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
-        />
-      </div>
+      <div ref={ref} style={{ ...style }}>{...props}</div>
     );
+  });
+
+  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
+    return <LogViewerEntry style={style} timeStyle={{ width: dateTimeWidth }} {...data[index]} />;
   }, [ dateTimeWidth ]);
 
   return (
@@ -459,6 +451,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         <div className={css.container} ref={container}>
           <VariableSizeList
             height={listMeasure.height}
+            innerElementType={LogViewerInnerElement}
             itemCount={logs.length}
             itemData={logs}
             itemSize={getItemHeight}
