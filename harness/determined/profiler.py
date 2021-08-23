@@ -717,14 +717,13 @@ class MetricsBatcherThread(threading.Thread):
     def send_shutdown_signal(self) -> None:
         self.inbound_queue.put(ShutdownMessage())
 
-    def run(self) -> None:
+    def _run(self) -> None:
         # Do nothing while we wait for a StartMessage
         while True:
             msg = self.inbound_queue.get()
             if isinstance(msg, StartMessage):
                 break
             if isinstance(msg, ShutdownMessage):
-                self.send_queue.put(ShutdownMessage())
                 return
             else:
                 # Ignore any Timings that are received before StartMessage
@@ -743,7 +742,6 @@ class MetricsBatcherThread(threading.Thread):
                 m = self.inbound_queue.get(timeout=timeout)
                 if isinstance(m, ShutdownMessage):
                     self.send_queue.put(self.metrics_batch.consume())
-                    self.send_queue.put(ShutdownMessage())
                     return
                 elif isinstance(m, NamedMeasurement):
                     if batch_start_time is None:
@@ -783,6 +781,13 @@ class MetricsBatcherThread(threading.Thread):
             if time.time() - batch_start_time > self.FLUSH_INTERVAL:
                 self.send_queue.put(self.metrics_batch.consume())
                 batch_start_time = time.time()
+
+    def run(self) -> None:
+        try:
+            self._run()
+        finally:
+            self.send_queue.put(ShutdownMessage())
+
 
 
 class MetricBatch:
