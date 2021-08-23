@@ -1,6 +1,6 @@
-####################
- determined.pytorch
-####################
+###############################
+ Python API determined.pytorch
+###############################
 
 .. _pytorch-trial:
 

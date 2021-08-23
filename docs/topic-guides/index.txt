@@ -8,53 +8,64 @@ guides.
 
 **System Concepts**
 
--  :ref:`det-system-architecture`
--  :ref:`terminology-concepts`
--  :ref:`resource-pools`
--  :ref:`scheduling`
--  :ref:`elastic-infrastructure`
-
-**Deployment**
-
--  :ref:`topic_guide_aws`
--  :ref:`topic_guide_gcp`
--  :ref:`aws-spot`
--  :ref:`determined-on-kubernetes`
-
-**Training**
-
--  :ref:`experiment-lifecycle`
--  :ref:`reproducibility`
--  :ref:`topic-guides_training-units`
-
-**Hyperparameter Tuning**
-
--  :ref:`topic-guides_hp-tuning-basics`
--  :ref:`topic-guides_hp-tuning-det`
--  :ref:`topic-guides_hp-constraints-det`
-
-**Distributed Training**
-
--  :ref:`optimizing-multi-gpu-training`
--  :ref:`effective-distributed-training`
-
-**Model Definitions**
-
--  :ref:`model-definitions`
--  :ref:`model-definitions_trial-api`
--  :ref:`model-definitions_best-practices`
-
-The full list of our topic guides can be found below:
-
 .. toctree::
    :maxdepth: 1
    :glob:
 
    system-concepts/*
+
+**Deployment**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    deployment/*
+
+**Training**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    training/*
-   hp-tuning-det/index
+
+**Hyperparameter Tuning**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   hp-tuning-det/*
+
+**Distributed Training**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    distributed-training/*
+
+**Model Definitions**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    model-definitions/*
+
+**Cluster Configuration**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    cluster-configuration/*
+
+**The rest of our topic guides can be found below:**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    *

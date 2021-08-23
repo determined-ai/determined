@@ -1,6 +1,6 @@
-############
- determined
-############
+#######################
+ Python API determined
+#######################
 
 .. automodule:: determined
    :members: Categorical, Constant, Double, Integer, Log

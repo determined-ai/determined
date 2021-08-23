@@ -1,6 +1,6 @@
-######################
- determined.estimator
-######################
+#################################
+ Python API determined.estimator
+#################################
 
 .. _estimator-trial:
 

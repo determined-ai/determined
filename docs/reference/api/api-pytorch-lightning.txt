@@ -1,6 +1,6 @@
-##############################
- determined.pytorch.lightning
-##############################
+#########################################
+ Python API determined.pytorch.lightning
+#########################################
 
 .. _lightning-adapter:
 

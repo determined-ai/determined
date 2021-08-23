@@ -23,9 +23,9 @@ until the next nightly aggregation.
 .. image:: /assets/images/historical-cluster-usage-data.png
    :width: 100%
 
-########################
+************************
  Command-line Interface
-########################
+************************
 
 Historical cluster usage data are accessible through CLI:
 
