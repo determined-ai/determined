@@ -212,6 +212,18 @@ class ShutdownMessage:
     pass
 
 
+def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
+    while True:
+        timeout = deadline - time.time()
+        if timeout <= 0:
+            break
+
+        try:
+            yield q.get(timeout=timeout)
+        except queue.Empty:
+            break
+
+
 def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
     """
     Return True if there are already profiling metrics for the trial.
@@ -717,38 +729,26 @@ class MetricsBatcherThread(threading.Thread):
     def send_shutdown_signal(self) -> None:
         self.inbound_queue.put(ShutdownMessage())
 
-    def run(self) -> None:
+    def _run(self) -> None:
         # Do nothing while we wait for a StartMessage
         while True:
             msg = self.inbound_queue.get()
             if isinstance(msg, StartMessage):
                 break
             if isinstance(msg, ShutdownMessage):
-                self.send_queue.put(ShutdownMessage())
                 return
             else:
                 # Ignore any Timings that are received before StartMessage
                 pass
 
-        batch_start_time = None  # type: Optional[float]
+        # Send metrics until we are told to shutdown.
         while True:
-            # Wait for the next Timing to arrive. If it doesn't arrive before the next flush
-            # should happen, we stop waiting for the next Timing and go straight to flushing.
-            timeout = None
-            if batch_start_time is not None:
-                time_since_flush = time.time() - batch_start_time
-                timeout = self.FLUSH_INTERVAL - time_since_flush
-
-            try:
-                m = self.inbound_queue.get(timeout=timeout)
+            deadline = time.time() + self.FLUSH_INTERVAL
+            for m in pop_until_deadline(self.inbound_queue, deadline):
                 if isinstance(m, ShutdownMessage):
                     self.send_queue.put(self.metrics_batch.consume())
-                    self.send_queue.put(ShutdownMessage())
                     return
                 elif isinstance(m, NamedMeasurement):
-                    if batch_start_time is None:
-                        batch_start_time = time.time()
-
                     if m.accumulated:
                         if m.id in self.accumulating_measurements:
                             self.accumulating_measurements[m.id].measurement += m.measurement
@@ -768,21 +768,15 @@ class MetricsBatcherThread(threading.Thread):
                         f"be a bug in the code."
                     )
 
-            except queue.Empty:
-                pass
-
-            check.is_not_none(
-                batch_start_time,
-                "batch_start_time should never be None. The inbound_queue.get() "
-                "should never return and proceed to this piece of code "
-                "without batch_start_time being updated to a real timestamp. If "
-                "batch_start_time is None, inbound_queue.get() timeout should be "
-                "None and the get() should block until a Timing is received.",
-            )
-            batch_start_time = cast(float, batch_start_time)
-            if time.time() - batch_start_time > self.FLUSH_INTERVAL:
+            # Timeout met.
+            if not self.metrics_batch.isempty():
                 self.send_queue.put(self.metrics_batch.consume())
-                batch_start_time = time.time()
+
+    def run(self) -> None:
+        try:
+            self._run()
+        finally:
+            self.send_queue.put(ShutdownMessage())
 
 
 class MetricBatch:
@@ -790,6 +784,9 @@ class MetricBatch:
         self.trial_id = trial_id
         self.agent_id = agent_id
         self.batch = {}  # type: Dict[Tuple[MetricType, str, str], List[Measurement]]
+
+    def isempty(self) -> bool:
+        return len(self.batch) == 0
 
     def append(
         self,
