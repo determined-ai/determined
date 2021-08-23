@@ -42,11 +42,11 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
 
-      const cssClass = valueRaw ? css.valueY : css.valueYEmpty;
+      const cssClass = valueRaw != null ? css.valueY : css.valueYEmpty;
       html += `<div class="${cssClass}">`
         + `<span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>`
         + (label ? label + '<br />' : '')
-        + `${serie.label}: ${valueRaw || 'N/A'}`
+        + `${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}`
         + '</div>';
     });
 
@@ -123,7 +123,7 @@ export const tooltipsPlugin = ({ getXTooltipHeader, getXTooltipYLabels }: Props 
 
         if (idx !== displayedIdx) {
           const hasXValue = !!uPlot.series.find((serie, serieId) => (
-            serie.scale !== 'x' && serie.show && !!uPlot.data[serieId][idx]
+            serie.scale !== 'x' && serie.show && uPlot.data[serieId][idx] != null
           ));
           if (hasXValue) {
             showIdx(uPlot, idx);

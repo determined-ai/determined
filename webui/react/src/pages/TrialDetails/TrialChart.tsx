@@ -57,7 +57,7 @@ const TrialChart: React.FC<Props> = ({
     xValues.sort((a, b) => a - b);
 
     const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
-      return xValues.map(xValue => yValue[xValue] || null);
+      return xValues.map(xValue => yValue[xValue] != null ? yValue[xValue] : null);
     });
 
     return [ xValues, ...yValuesArray ];
