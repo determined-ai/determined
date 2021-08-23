@@ -1416,6 +1416,8 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
 
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy:
     parameters:
