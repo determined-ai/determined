@@ -763,7 +763,6 @@ class MetricsBatcherThread(threading.Thread):
                     for msr in self.accumulating_measurements.values():
                         self.metrics_batch.append(msr.metric_type, msr.metric_name, msr)
                     self.accumulating_measurements = {}
-                    break
                 else:
                     logging.fatal(
                         f"ProfilerAgent.MetricsBatcherThread received a message "
@@ -772,7 +771,7 @@ class MetricsBatcherThread(threading.Thread):
                         f"be a bug in the code."
                     )
 
-            # Timeout met, or an explicit flush.
+            # Timeout met.
             if not self.metrics_batch.isempty():
                 self.send_queue.put(self.metrics_batch.consume())
             deadline = time.time() + self.FLUSH_INTERVAL
