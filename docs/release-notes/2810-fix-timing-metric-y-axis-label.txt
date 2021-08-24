@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Update y-axis label of Milliseconds to Seconds for Profiler timing metrics chart.
