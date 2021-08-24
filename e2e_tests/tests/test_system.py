@@ -117,7 +117,8 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        with exp.dump_logs_on_error(experiment_id):
+            exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
         # Checkpoints are not marked as deleted until gc_checkpoint task starts.
         retries = 5

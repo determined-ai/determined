@@ -162,4 +162,5 @@ def test_pytorch_native_api() -> None:
     exp_id = exp.create_native_experiment(
         conf.fixtures_path("pytorch_no_op"), [sys.executable, "model_def.py"]
     )
-    exp.wait_for_experiment_state(exp_id, "COMPLETED")
+    with exp.dump_logs_on_error(exp_id):
+        exp.wait_for_experiment_state(exp_id, "COMPLETED")

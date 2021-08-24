@@ -8,6 +8,7 @@ from .experiment import (
     check_if_string_present_in_trial_logs,
     create_experiment,
     create_native_experiment,
+    dump_logs_on_error,
     experiment_has_active_workload,
     experiment_has_completed_workload,
     wait_for_experiment_active_workload,

@@ -23,43 +23,58 @@ def test_streaming_metrics_api() -> None:
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     )
-    # To fully test the streaming APIs, the requests need to start running immediately after the
-    # experiment, and then stay open until the experiment is complete. To accomplish this with all
-    # of the API calls on a single experiment, we spawn them all in threads.
+    with exp.dump_logs_on_error(experiment_id):
+        # To fully test the streaming APIs, the requests need to start running immediately after the
+        # experiment, and then stay open until the experiment is complete. To accomplish this with
+        # all of the API calls on a single experiment, we spawn them all in threads.
 
-    # The HP importance portion of this test is commented out until the feature is enabled by
-    # default
+        # The HP importance portion of this test is commented out until the feature is enabled by
+        # default
 
-    metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
-    train_metric_batches_thread = pool.apply_async(request_train_metric_batches, (experiment_id,))
-    valid_metric_batches_thread = pool.apply_async(request_valid_metric_batches, (experiment_id,))
-    train_trials_snapshot_thread = pool.apply_async(request_train_trials_snapshot, (experiment_id,))
-    valid_trials_snapshot_thread = pool.apply_async(request_valid_trials_snapshot, (experiment_id,))
-    train_trials_sample_thread = pool.apply_async(request_train_trials_sample, (experiment_id,))
-    valid_trials_sample_thread = pool.apply_async(request_valid_trials_sample, (experiment_id,))
+        metric_names_thread = pool.apply_async(request_metric_names, (experiment_id,))
+        train_metric_batches_thread = pool.apply_async(
+            request_train_metric_batches, (experiment_id,)
+        )
+        valid_metric_batches_thread = pool.apply_async(
+            request_valid_metric_batches, (experiment_id,)
+        )
+        train_trials_snapshot_thread = pool.apply_async(
+            request_train_trials_snapshot, (experiment_id,)
+        )
+        valid_trials_snapshot_thread = pool.apply_async(
+            request_valid_trials_snapshot, (experiment_id,)
+        )
+        train_trials_sample_thread = pool.apply_async(request_train_trials_sample, (experiment_id,))
+        valid_trials_sample_thread = pool.apply_async(request_valid_trials_sample, (experiment_id,))
 
-    metric_names_results = metric_names_thread.get()
-    train_metric_batches_results = train_metric_batches_thread.get()
-    valid_metric_batches_results = valid_metric_batches_thread.get()
-    train_trials_snapshot_results = train_trials_snapshot_thread.get()
-    valid_trials_snapshot_results = valid_trials_snapshot_thread.get()
-    train_trials_sample_results = train_trials_sample_thread.get()
-    valid_trials_sample_results = valid_trials_sample_thread.get()
+        metric_names_results = metric_names_thread.get()
+        train_metric_batches_results = train_metric_batches_thread.get()
+        valid_metric_batches_results = valid_metric_batches_thread.get()
+        train_trials_snapshot_results = train_trials_snapshot_thread.get()
+        valid_trials_snapshot_results = valid_trials_snapshot_thread.get()
+        train_trials_sample_results = train_trials_sample_thread.get()
+        valid_trials_sample_results = valid_trials_sample_thread.get()
 
-    if metric_names_results is not None:
-        pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
-    if train_metric_batches_results is not None:
-        pytest.fail("metric-batches (training): %s. Results: %s" % train_metric_batches_results)
-    if valid_metric_batches_results is not None:
-        pytest.fail("metric-batches (validation): %s. Results: %s" % valid_metric_batches_results)
-    if train_trials_snapshot_results is not None:
-        pytest.fail("trials-snapshot (training): %s. Results: %s" % train_trials_snapshot_results)
-    if valid_trials_snapshot_results is not None:
-        pytest.fail("trials-snapshot (validation): %s. Results: %s" % valid_trials_snapshot_results)
-    if train_trials_sample_results is not None:
-        pytest.fail("trials-sample (training): %s. Results: %s" % train_trials_sample_results)
-    if valid_trials_sample_results is not None:
-        pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
+        if metric_names_results is not None:
+            pytest.fail("metric-names: %s. Results: %s" % metric_names_results)
+        if train_metric_batches_results is not None:
+            pytest.fail("metric-batches (training): %s. Results: %s" % train_metric_batches_results)
+        if valid_metric_batches_results is not None:
+            pytest.fail(
+                "metric-batches (validation): %s. Results: %s" % valid_metric_batches_results
+            )
+        if train_trials_snapshot_results is not None:
+            pytest.fail(
+                "trials-snapshot (training): %s. Results: %s" % train_trials_snapshot_results
+            )
+        if valid_trials_snapshot_results is not None:
+            pytest.fail(
+                "trials-snapshot (validation): %s. Results: %s" % valid_trials_snapshot_results
+            )
+        if train_trials_sample_results is not None:
+            pytest.fail("trials-sample (training): %s. Results: %s" % train_trials_sample_results)
+        if valid_trials_sample_results is not None:
+            pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
 
 
 @pytest.mark.distributed  # type: ignore
@@ -74,13 +89,13 @@ def test_hp_importance_api() -> None:
         conf.fixtures_path("mnist_pytorch/random.yaml"),
         conf.tutorials_path("mnist_pytorch"),
     )
+    with exp.dump_logs_on_error(experiment_id):
+        hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
 
-    hp_importance_thread = pool.apply_async(request_hp_importance, (experiment_id,))
+        hp_importance_results = hp_importance_thread.get()
 
-    hp_importance_results = hp_importance_thread.get()
-
-    if hp_importance_results is not None:
-        pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
+        if hp_importance_results is not None:
+            pytest.fail("hyperparameter-importance: %s. Results: %s" % hp_importance_results)
 
 
 def request_metric_names(experiment_id):  # type: ignore

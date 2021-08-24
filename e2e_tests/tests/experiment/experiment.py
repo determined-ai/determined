@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import logging
 import multiprocessing
@@ -7,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 import dateutil.parser
 import pytest
@@ -141,12 +142,6 @@ def wait_for_experiment_state(
             return
 
         if is_terminal_state(state):
-            # If we expected the experiment to terminate successfully
-            # but it failed instead, then dump trial logs to help assist
-            # debugging.
-            if state == "ERROR" and target_state == "COMPLETED":
-                report_failed_experiment(experiment_id, state)
-
             pytest.fail(
                 f"Experiment {experiment_id} terminated in {state} state, expected {target_state}"
             )
@@ -161,8 +156,11 @@ def wait_for_experiment_state(
 
     else:
         if target_state == "COMPLETED":
+            print(
+                f"Experiment {experiment_id} exceeded {max_wait_secs}s.  Cancelling now...",
+                file=sys.stderr,
+            )
             cancel_experiment(experiment_id)
-            report_failed_experiment(experiment_id, "CANCELED")
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
                 target_state, max_wait_secs
@@ -442,37 +440,29 @@ def run_list_cli_tests(experiment_id: int) -> None:
     )
 
 
-def report_failed_experiment(experiment_id: int, state: str) -> None:
-    print(
-        "Experiment {} terminated in {} state unexpectedly!".format(experiment_id, state),
-        file=sys.stderr,
-    )
-
-    trials = experiment_trials(experiment_id)
-    active_trials = [t for t in trials if t["state"] == "ACTIVE"]
-    error_trials = [t for t in trials if t["state"] == "ERROR"]
-    canceled_trials = [t for t in trials if t["state"] == "CANCELED"]
-
-    print(
-        "Experiment {}: {} trials, {} active trials, {} failed trials, {} canceled trials".format(
-            experiment_id, len(trials), len(active_trials), len(error_trials), len(canceled_trials)
-        ),
-        file=sys.stderr,
-    )
-
-    for trial in error_trials + canceled_trials:
-        print_trial_logs(trial["id"])
+@contextlib.contextmanager
+def dump_logs_on_error(experiment_id: int) -> Iterator[None]:
+    try:
+        yield
+    except Exception:
+        trials = experiment_trials(experiment_id)
+        active_trials = [t for t in trials if t["state"] == "ACTIVE"]
+        error_trials = [t for t in trials if t["state"] == "ERROR"]
+        canceled_trials = [t for t in trials if t["state"] == "CANCELED"]
+        print(
+            f"Experiment {experiment_id}: {len(trials)} trials, "
+            f"{len(active_trials)} active trials, {len(error_trials)} failed trials, "
+            f"{len(canceled_trials)} canceled trials",
+            file=sys.stderr,
+        )
+        for t in trials:
+            print_trial_logs(t["id"], t["state"])
 
 
-def report_failed_trial(trial_id: int, state: str) -> None:
-    print(f"Trial {trial_id} was not COMPLETED but {state}", file=sys.stderr)
-    print_trial_logs(trial_id)
-
-
-def print_trial_logs(trial_id: int) -> None:
-    print("******** Start of logs for trial {} ********".format(trial_id), file=sys.stderr)
+def print_trial_logs(trial_id: int, state: str) -> None:
+    print(f"******** Start of logs for trial {trial_id} in state {state}********", file=sys.stderr)
     print("".join(trial_logs(trial_id)), file=sys.stderr)
-    print("******** End of logs for trial {} ********".format(trial_id), file=sys.stderr)
+    print(f"******** End of logs for trial {trial_id} in state {state}********", file=sys.stderr)
 
 
 def run_basic_test(
@@ -484,12 +474,15 @@ def run_basic_test(
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
-    wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
-    assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials)
+    with dump_logs_on_error(experiment_id):
+        wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
 
-    return experiment_id
+        assert num_active_trials(experiment_id) == 0
+
+        verify_completed_experiment_metadata(experiment_id, expected_trials)
+
+        return experiment_id
 
 
 def verify_completed_experiment_metadata(
@@ -507,7 +500,6 @@ def verify_completed_experiment_metadata(
 
     for trial in trials:
         if trial["state"] != "COMPLETED":
-            report_failed_trial(trial["id"], trial["state"])
             pytest.fail(f"Trial {trial['id']} was not COMPLETED but {trial['state']}")
 
         assert len(trial["steps"]) > 0

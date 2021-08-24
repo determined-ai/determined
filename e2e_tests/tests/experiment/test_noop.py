@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import os
 import shutil
@@ -31,36 +32,52 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, "ACTIVE")
+    with exp.dump_logs_on_error(experiment_id):
+        exp.wait_for_experiment_state(experiment_id, "ACTIVE")
 
-    # Wait for the only trial to get scheduled.
-    exp.wait_for_experiment_active_workload(experiment_id)
+        # Wait for the only trial to get scheduled.
+        exp.wait_for_experiment_active_workload(experiment_id)
 
-    # Wait for the only trial to show progress, indicating the image is built and running.
-    exp.wait_for_experiment_workload_progress(experiment_id)
+        # Wait for the only trial to show progress, indicating the image is built and running.
+        exp.wait_for_experiment_workload_progress(experiment_id)
 
-    # Pause the experiment. Note that Determined does not currently differentiate
-    # between a "stopping paused" and a "paused" state, so we follow this check
-    # up by ensuring the experiment cleared all scheduled workloads.
-    exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, "PAUSED")
-
-    # Wait at most 20 seconds for the experiment to clear all workloads (each
-    # train step should take 5 seconds).
-    for _ in range(20):
-        workload_active = exp.experiment_has_active_workload(experiment_id)
-        if not workload_active:
-            break
-        else:
+        # Wait for the only trial to show progress, indicating the image is built and running.
+        num_steps = 0
+        for _ in range(conf.MAX_TRIAL_BUILD_SECS):
+            trials = exp.experiment_trials(experiment_id)
+            if len(trials) > 0:
+                only_trial = trials[0]
+                num_steps = len(only_trial["steps"])
+                if num_steps > 1:
+                    break
             time.sleep(1)
-    check.true(
-        not workload_active,
-        "The experiment cannot be paused within 20 seconds.",
-    )
+        check.true(
+            num_steps > 1,
+            f"The only trial cannot start training within {conf.MAX_TRIAL_BUILD_SECS} seconds.",
+        )
 
-    # Resume the experiment and wait for completion.
-    exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        # Pause the experiment. Note that Determined does not currently differentiate
+        # between a "stopping paused" and a "paused" state, so we follow this check
+        # up by ensuring the experiment cleared all scheduled workloads.
+        exp.pause_experiment(experiment_id)
+        exp.wait_for_experiment_state(experiment_id, "PAUSED")
+
+        # Wait at most 20 seconds for the experiment to clear all workloads (each
+        # train step should take 5 seconds).
+        for _ in range(20):
+            workload_active = exp.experiment_has_active_workload(experiment_id)
+            if not workload_active:
+                break
+            else:
+                time.sleep(1)
+        check.true(
+            not workload_active,
+            "The experiment cannot be paused within 20 seconds.",
+        )
+
+        # Resume the experiment and wait for completion.
+        exp.activate_experiment(experiment_id)
+        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -77,17 +94,18 @@ def test_noop_pause_of_experiment_without_trials() -> None:
         with open(tf.name, "w") as f:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, "PAUSED")
+    with exp.dump_logs_on_error(experiment_id):
+        exp.pause_experiment(experiment_id)
+        exp.wait_for_experiment_state(experiment_id, "PAUSED")
 
-    exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, "ACTIVE")
+        exp.activate_experiment(experiment_id)
+        exp.wait_for_experiment_state(experiment_id, "ACTIVE")
 
-    for _ in range(5):
-        assert exp.experiment_state(experiment_id) == "ACTIVE"
-        time.sleep(1)
+        for _ in range(5):
+            assert exp.experiment_state(experiment_id) == "ACTIVE"
+            time.sleep(1)
 
-    exp.cancel_single(experiment_id)
+        exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -164,7 +182,8 @@ def test_cancel_one_experiment() -> None:
         conf.fixtures_path("no_op"),
     )
 
-    exp.cancel_single(experiment_id)
+    with exp.dump_logs_on_error(experiment_id):
+        exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -174,14 +193,15 @@ def test_cancel_one_active_experiment_unready() -> None:
         conf.fixtures_path("no_op"),
     )
 
-    for _ in range(15):
-        if exp.experiment_has_active_workload(experiment_id):
-            break
-        time.sleep(1)
-    else:
-        raise AssertionError("no workload active after 15 seconds")
+    with exp.dump_logs_on_error(experiment_id):
+        for _ in range(15):
+            if exp.experiment_has_active_workload(experiment_id):
+                break
+            time.sleep(1)
+        else:
+            raise AssertionError("no workload active after 15 seconds")
 
-    exp.cancel_single_v1(experiment_id, should_have_trial=True)
+        exp.cancel_single_v1(experiment_id, should_have_trial=True)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -192,13 +212,14 @@ def test_cancel_one_active_experiment_ready() -> None:
         conf.tutorials_path("mnist_pytorch"),
     )
 
-    while 1:
-        if exp.experiment_has_completed_workload(experiment_id):
-            break
-        time.sleep(1)
+    with exp.dump_logs_on_error(experiment_id):
+        while True:
+            if exp.experiment_has_completed_workload(experiment_id):
+                break
+            time.sleep(1)
 
-    exp.cancel_single_v1(experiment_id, should_have_trial=True)
-    exp.assert_performed_final_checkpoint(experiment_id)
+        exp.cancel_single_v1(experiment_id, should_have_trial=True)
+        exp.assert_performed_final_checkpoint(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -209,7 +230,8 @@ def test_cancel_one_paused_experiment() -> None:
         ["--paused"],
     )
 
-    exp.cancel_single(experiment_id)
+    with exp.dump_logs_on_error(experiment_id):
+        exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -222,8 +244,12 @@ def test_cancel_ten_experiments() -> None:
         for _ in range(10)
     ]
 
-    for experiment_id in experiment_ids:
-        exp.cancel_single(experiment_id)
+    with contextlib.ExitStack() as exit_stack:
+        for experiment_id in experiment_ids:
+            exit_stack.enter_context(exp.dump_logs_on_error(experiment_id))
+
+        for experiment_id in experiment_ids:
+            exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -237,8 +263,12 @@ def test_cancel_ten_paused_experiments() -> None:
         for _ in range(10)
     ]
 
-    for experiment_id in experiment_ids:
-        exp.cancel_single(experiment_id)
+    with contextlib.ExitStack() as exit_stack:
+        for experiment_id in experiment_ids:
+            exit_stack.enter_context(exp.dump_logs_on_error(experiment_id))
+
+        for experiment_id in experiment_ids:
+            exp.cancel_single(experiment_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -354,6 +384,7 @@ def test_noop_experiment_config_override() -> None:
             conf.fixtures_path("no_op"),
             ["--config", "reproducibility.experiment_seed=8200"],
         )
+    with exp.dump_logs_on_error(experiment_id):
         exp_config = exp.experiment_json(experiment_id)["config"]
         assert exp_config["reproducibility"]["experiment_seed"] == 8200
         exp.cancel_single(experiment_id)

@@ -43,18 +43,22 @@ def test_streaming_observability_metrics_apis(
             model_def_path,
         )
 
-    exp.wait_for_experiment_state(experiment_id, "COMPLETED")
-    trials = exp.experiment_trials(experiment_id)
-    trial_id = trials[0]["id"]
+    with exp.dump_logs_on_error(experiment_id):
+        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
-    gpu_enabled = conf.GPU_ENABLED
+        trials = exp.experiment_trials(experiment_id)
+        trial_id = trials[0]["id"]
 
-    request_profiling_metric_labels(trial_id, framework_timings_enabled, gpu_enabled)
-    if gpu_enabled:
-        request_profiling_system_metrics(trial_id, "gpu_util")
-    if framework_timings_enabled:
-        request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
-        request_profiling_pytorch_timing_metrics(trial_id, "train_batch.backward", accumulated=True)
+        gpu_enabled = conf.GPU_ENABLED
+
+        request_profiling_metric_labels(trial_id, framework_timings_enabled, gpu_enabled)
+        if gpu_enabled:
+            request_profiling_system_metrics(trial_id, "gpu_util")
+        if framework_timings_enabled:
+            request_profiling_pytorch_timing_metrics(trial_id, "train_batch")
+            request_profiling_pytorch_timing_metrics(
+                trial_id, "train_batch.backward", accumulated=True
+            )
 
 
 def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_enabled: bool) -> None:
