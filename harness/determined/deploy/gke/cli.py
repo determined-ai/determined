@@ -1,17 +1,18 @@
 import argparse
 import json
+import subprocess
+import sys
 from multiprocessing.sharedctypes import Value
 from pathlib import Path
-import subprocess
 from typing import Callable, Dict, Union
-import determined
-import sys
+
 from termcolor import cprint
 
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group
-from determined.deploy.gke.constants import defaults
-from determined.common.util import safe_load_yaml_with_exceptions
+import determined
 from determined.common import yaml
+from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group
+from determined.common.util import safe_load_yaml_with_exceptions
+from determined.deploy.gke.constants import defaults
 
 
 def make_spec(task_container_defaults: dict, key: str) -> dict:
@@ -35,6 +36,7 @@ def validate_accelerator_type(s: str) -> None:
             "Accelerator must be one of {}".format(valid_accelerator_types)
         )
 
+
 def validate_location(location: str, isZone: bool = True) -> None:
     try:
         cmd = ["gcloud", "compute"]
@@ -48,6 +50,7 @@ def validate_location(location: str, isZone: bool = True) -> None:
         raise argparse.ArgumentTypeError(
             "The specified {} {} was not found".format("zone" if isZone else "region", location)
         )
+
 
 def validate_machine_type(machine_type: str, zone: str) -> None:
     try:
