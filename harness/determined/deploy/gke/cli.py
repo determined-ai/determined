@@ -23,41 +23,31 @@ def make_spec(task_container_defaults: dict, key: str) -> dict:
     return pod_spec
 
 
-def validate_accelerator_type() -> Callable:
+def validate_accelerator_type(s: str) -> None:
     json_value = subprocess.check_output(
         ["gcloud", "compute", "accelerator-types", "list", "--format=json(name)"]
     )
     json_names = json.loads(json_value)
     valid_accelerator_types = {accelerator["name"] for accelerator in json_names}
 
-    def validate(s: str) -> str:
-        if s in valid_accelerator_types:
-            return s
+    if s not in valid_accelerator_types:
         raise argparse.ArgumentTypeError(
             "Accelerator must be one of {}".format(valid_accelerator_types)
         )
 
-    return validate
-
-
-def validate_location(isZone: bool = True) -> Callable:
-    def validate(location: str) -> str:
-        try:
-            cmd = ["gcloud", "compute"]
-            if isZone:
-                cmd += ["zones"]
-            else:
-                cmd += ["regions"]
-            cmd += ["describe", location]
-            subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
-        except:
-            raise argparse.ArgumentTypeError(
-                "The specified {} {} was not found".format("zone" if isZone else "region", location)
-            )
-        return location
-
-    return validate
-
+def validate_location(location: str, isZone: bool = True) -> None:
+    try:
+        cmd = ["gcloud", "compute"]
+        if isZone:
+            cmd += ["zones"]
+        else:
+            cmd += ["regions"]
+        cmd += ["describe", location]
+        subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
+        raise argparse.ArgumentTypeError(
+            "The specified {} {} was not found".format("zone" if isZone else "region", location)
+        )
 
 def validate_machine_type(machine_type: str, zone: str) -> None:
     try:
@@ -104,6 +94,8 @@ def validate_accelerator_zone(args: argparse.Namespace, zone: str) -> None:
 
 
 def validate_args(args: argparse.Namespace) -> None:
+    validate_location(args.zone, isZone=True)
+    validate_accelerator_type(args.gpu_type)
     if args.master_machine_type != "n1-standard-16":
         validate_machine_type(args.master_machine_type, args.zone)
     if args.agent_machine_type != "n1-standard-32":
@@ -338,6 +330,7 @@ def handle_up(args: argparse.Namespace) -> None:
 
 
 def handle_down(args: argparse.Namespace) -> None:
+    validate_location(args.region, isZone=False)
     cprint(
         (
             "Setting kubectl config to cluster {}. Please make sure to run\n`kubectl config "
@@ -408,7 +401,7 @@ args_description = Cmd(
                     [
                         Arg(
                             "--gpu-type",
-                            type=validate_accelerator_type(),
+                            type=str,
                             default=defaults.GPU_TYPE,
                             required=False,
                             help="accelerator type to use for agents",
@@ -441,7 +434,7 @@ args_description = Cmd(
                         ),
                         Arg(
                             "--zone",
-                            type=validate_location(isZone=True),
+                            type=str,
                             default=defaults.ZONE,
                             help="zone to create cluster in",
                         ),
@@ -543,7 +536,7 @@ args_description = Cmd(
                     [
                         Arg(
                             "--region",
-                            type=validate_location(isZone=False),
+                            type=str,
                             default="us-west1",
                             help="region containing cluster to delete",
                         ),
