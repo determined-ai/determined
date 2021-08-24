@@ -1,5 +1,6 @@
 .base {
   display: flex;
+  padding: 0 var(--theme-sizes-layout-medium);
   position: absolute;
   width: 100%;
 
@@ -12,9 +13,9 @@
   }
   .number::after { content: attr(data-label) '\00a0'; }
   .level {
+    align-items: center;
     color: var(--theme-colors-monochrome-10);
     flex-shrink: 0;
-    padding: 1px;
   }
   .level > .levelLabel { font-size: 0; }
   .critical { color: var(--theme-colors-states-failed); }
