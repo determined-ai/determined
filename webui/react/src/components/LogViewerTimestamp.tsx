@@ -1,7 +1,6 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, {
-  forwardRef,
   Reducer, RefObject,
   useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
 } from 'react';
@@ -20,10 +19,9 @@ import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
 
-import LogViewerEntry from './LogViewEntry';
+import LogViewerEntry, { ICON_WIDTH } from './LogViewEntry';
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
-import { ICON_WIDTH } from './LogViewerLevel';
 import Section from './Section';
 
 export interface LogViewerTimestampFilter {
@@ -150,52 +148,52 @@ const LogViewerTimestamp: React.FC<Props> = ({
     logsDispatch({ type: LogStoreActionType.Clear });
     listRef.current?.resetAfterIndex(0);
     setIsLastReached(false);
-    setIsLoading(true);
   }, [ logsDispatch ]);
 
-  const fetchAndAppendLogs =
-    useCallback((direction: DIRECTIONS, filters: LogViewerTimestampFilter): AbortController => {
-      const canceler = new AbortController();
-      let fetchArgs = null;
-      let isPrepend = false;
+  const fetchAndAppendLogs = useCallback((
+    direction: DIRECTIONS,
+    filters: LogViewerTimestampFilter,
+  ): AbortController => {
+    const canceler = new AbortController();
+    let fetchArgs = null;
+    let isPrepend = false;
 
-      if (direction === DIRECTIONS.BOTTOM_TO_TOP) {
-        fetchArgs = onFetchLogBefore(filters, canceler);
-        isPrepend = true;
-      }
+    if (direction === DIRECTIONS.BOTTOM_TO_TOP) {
+      fetchArgs = onFetchLogBefore(filters, canceler);
+      isPrepend = true;
+    }
 
-      if (direction === DIRECTIONS.TOP_TO_BOTTOM) {
-        fetchArgs = onFetchLogAfter({
-          ...filters,
-          timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
-        }, canceler);
-        isPrepend = false;
-      }
+    if (direction === DIRECTIONS.TOP_TO_BOTTOM) {
+      fetchArgs = onFetchLogAfter({
+        ...filters,
+        timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
+      }, canceler);
+      isPrepend = false;
+    }
 
-      if (fetchArgs) {
-        let buffer: TrialLog[] = [];
-        consumeStream(
-          fetchArgs,
-          event => {
-            const logEntry = fetchToLogConverter(event);
-            direction === DIRECTIONS.TOP_TO_BOTTOM
-              ? buffer.unshift(logEntry) : buffer.push(logEntry);
-          },
-        ).then(() => {
-          if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
-            setIsLastReached(true);
-          }
+    if (fetchArgs) {
+      setIsLoading(true);
 
-          addLogs(buffer, isPrepend);
+      let buffer: TrialLog[] = [];
+      consumeStream(
+        fetchArgs,
+        event => {
+          const logEntry = fetchToLogConverter(event);
+          direction === DIRECTIONS.TOP_TO_BOTTOM
+            ? buffer.unshift(logEntry) : buffer.push(logEntry);
+        },
+      ).then(() => {
+        if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
+          setIsLastReached(true);
+        }
+        addLogs(buffer, isPrepend);
+        setIsLoading(false);
+        buffer = [];
+      });
+    }
 
-          setIsLoading(false);
-
-          buffer = [];
-        });
-      }
-
-      return canceler;
-    }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
+    return canceler;
+  }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
 
   const getItemHeight = useCallback((index: number): number => {
     const log = logs[index];
@@ -250,41 +248,42 @@ const LogViewerTimestamp: React.FC<Props> = ({
     setDirection(DIRECTIONS.TOP_TO_BOTTOM);
   }, []);
 
-  const onItemsRendered =
-    useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
-      setIsOnBottom(visibleStopIndex === (logs.length - 1));
+  const onItemsRendered = useCallback((
+    { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
+  ) => {
+    setIsOnBottom(visibleStopIndex === (logs.length - 1));
 
-      if (isLoading) return;
-      if (isLastReached) return;
-      if (!listRef?.current) return;
+    if (isLoading) return;
+    if (isLastReached) return;
+    if (!listRef?.current) return;
 
-      const logTimes = logs.map(log => log.time).sort();
+    const logTimes = logs.map(log => log.time).sort();
 
-      // Fetch older log when direction=bottom_to_top and scroll is on top.
-      if (direction === DIRECTIONS.BOTTOM_TO_TOP && visibleStartIndex === 0) {
-        const canceler = fetchAndAppendLogs(direction, {
-          ...filter,
-          timestampBefore: dayjs(logTimes.first()),
-        });
-        return () => canceler.abort();
-      }
+    // Fetch older log when direction=bottom_to_top and scroll is on top.
+    if (direction === DIRECTIONS.BOTTOM_TO_TOP && visibleStartIndex === 0) {
+      const canceler = fetchAndAppendLogs(direction, {
+        ...filter,
+        timestampBefore: dayjs(logTimes.first()),
+      });
+      return () => canceler.abort();
+    }
 
-      // Fetch newer log when direction=top_to_bottom and scroll is on bottom.
-      if (direction === DIRECTIONS.TOP_TO_BOTTOM && visibleStopIndex === (logs.length - 1)) {
-        const canceler = fetchAndAppendLogs(direction, {
-          ...filter,
-          timestampAfter: dayjs(logTimes.last()),
-        });
-        return () => canceler.abort();
-      }
-    }, [
-      direction,
-      fetchAndAppendLogs,
-      filter,
-      isLastReached,
-      isLoading,
-      logs,
-    ]);
+    // Fetch newer log when direction=top_to_bottom and scroll is on bottom.
+    if (direction === DIRECTIONS.TOP_TO_BOTTOM && visibleStopIndex === (logs.length - 1)) {
+      const canceler = fetchAndAppendLogs(direction, {
+        ...filter,
+        timestampAfter: dayjs(logTimes.last()),
+      });
+      return () => canceler.abort();
+    }
+  }, [
+    direction,
+    fetchAndAppendLogs,
+    filter,
+    isLastReached,
+    isLoading,
+    logs,
+  ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -384,7 +383,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    */
   useLayoutEffect(() => {
     if (!isOnBottom) return;
-    if (!listRef?.current) return;
+    if (!listRef.current) return;
     if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
 
     listRef.current.scrollToItem(logs.length);
@@ -394,8 +393,10 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Force recomputing messages height when width changes
    */
   useLayoutEffect(() => {
-    listRef.current?.resetAfterIndex(0);
-  }, [ listMeasure.width, listRef ]);
+    const ref = listRef.current;
+    ref?.resetAfterIndex(0);
+    return () => ref?.resetAfterIndex(0);
+  }, [ listMeasure.width ]);
 
   const logOptions = (
     <Space>
@@ -424,12 +425,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const enableTailingClasses = [ css.enableTailing ];
   if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
-  const LogViewerInnerElement = forwardRef(test ({ style, ...props }, ref) => {
-    return (
-      <div ref={ref} style={{ ...style }}>{...props}</div>
-    );
-  });
-
   const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
     return <LogViewerEntry style={style} timeStyle={{ width: dateTimeWidth }} {...data[index]} />;
   }, [ dateTimeWidth ]);
@@ -451,14 +446,12 @@ const LogViewerTimestamp: React.FC<Props> = ({
         <div className={css.container} ref={container}>
           <VariableSizeList
             height={listMeasure.height}
-            innerElementType={LogViewerInnerElement}
             itemCount={logs.length}
             itemData={logs}
             itemSize={getItemHeight}
             ref={listRef}
             width="100%"
-            onItemsRendered={onItemsRendered}
-          >
+            onItemsRendered={onItemsRendered}>
             {LogViewerRow}
           </VariableSizeList>
         </div>
