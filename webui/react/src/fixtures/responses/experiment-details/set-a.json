@@ -694,8 +694,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-2409e48",
-          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-2409e48"
+          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd",
+          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd"
         },
         "pod_spec": null,
         "ports": null
@@ -838,8 +838,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-2409e48",
-          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-2409e48"
+          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd",
+          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd"
         },
         "pod_spec": {
           "metadata": {
@@ -2596,8 +2596,8 @@
       "name": "noop_adaptive",
       "environment": {
         "image": {
-          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-2409e48",
-          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-2409e48"
+          "cpu": "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd",
+          "gpu": "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd"
         },
         "ports": null,
         "pod_spec": null,

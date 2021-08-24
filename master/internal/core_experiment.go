@@ -247,6 +247,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		Resources *struct {
 			MaxSlots api.MaybeInt `json:"max_slots"`
 			Weight   *float64     `json:"weight"`
+			Priority *int         `json:"priority"`
 		} `json:"resources"`
 		CheckpointStorage *struct {
 			SaveExperimentBest int `json:"save_experiment_best"`
@@ -286,6 +287,9 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		}
 		if patch.Resources.Weight != nil {
 			resources.SetWeight(*patch.Resources.Weight)
+		}
+		if patch.Resources.Priority != nil {
+			resources.SetPriority(patch.Resources.Priority)
 		}
 		dbExp.Config.SetResources(resources)
 	}
@@ -329,6 +333,10 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		if patch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
 				sproto.SetGroupWeight{Weight: *patch.Resources.Weight})
+		}
+		if patch.Resources.Priority != nil {
+			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
+				sproto.SetGroupPriority{Priority: patch.Resources.Priority})
 		}
 	}
 

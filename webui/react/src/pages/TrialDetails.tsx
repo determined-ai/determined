@@ -9,7 +9,7 @@ import Spinner from 'components/Spinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
-import TrialDetailsHeader, { Action as TrialAction } from 'pages/TrialDetails/TrialDetailsHeader';
+import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
@@ -19,7 +19,7 @@ import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { terminalRunStates } from 'utils/types';
 
@@ -105,9 +105,9 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const handleActionClick = useCallback((action: TrialAction) => {
+  const handleActionClick = useCallback((action: Action) => {
     switch (action) {
-      case TrialAction.Continue:
+      case Action.ContinueTrial:
         if (experiment && trial) showModal({
           experiment,
           trial,

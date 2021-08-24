@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Add "View Logs" and "Open Tensorboard" actions to experiment trials' list

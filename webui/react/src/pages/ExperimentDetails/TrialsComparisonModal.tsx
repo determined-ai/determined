@@ -1,24 +1,28 @@
-import { Button, Tag, Tooltip } from 'antd';
+import { Select, Tag } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import BadgeTag from 'components/BadgeTag';
-import CheckpointModal from 'components/CheckpointModal';
 import HumanReadableFloat from 'components/HumanReadableFloat';
-import Icon from 'components/Icon';
+import Link from 'components/Link';
+import MetricBadgeTag from 'components/MetricBadgeTag';
+import MetricSelectFilter from 'components/MetricSelectFilter';
+import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import useResize from 'hooks/useResize';
+import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { CheckpointState, CheckpointWorkload,
-  CheckpointWorkloadExtended, ExperimentBase,
-  MetricName, MetricsWorkload, MetricType, TrialDetails } from 'types';
+import {
+  CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
+} from 'types';
 import { humanReadableBytes } from 'utils/string';
-import { getDuration, shortEnglishHumannizer } from 'utils/time';
+import { shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
+
+const { Option } = Select;
 
 interface ModalProps {
   experiment: ExperimentBase;
@@ -60,9 +64,9 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   { trials, experiment, onUnselect }: TableProps,
 ) => {
   const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
-  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointWorkloadExtended>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ canceler ] = useState(new AbortController());
+  const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
+  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
 
   const fetchTrialDetails = useCallback(async (trialId) => {
     try {
@@ -83,23 +87,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
       fetchTrialDetails(trial);
     });
   }, [ fetchTrialDetails, trials ]);
-
-  const handleCheckpointShow = (
-    event: React.MouseEvent,
-    trial: TrialDetails,
-  ) => {
-    if (!trial.bestAvailableCheckpoint) return;
-    const checkpoint = {
-      ...trial.bestAvailableCheckpoint,
-      experimentId: trial.experimentId,
-      trialId: trial.id,
-    };
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-
-  const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
 
@@ -132,6 +119,14 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     });
     return Object.values(nameSet);
   }, [ trialsDetails, trials ]);
+
+  useEffect(() => {
+    setSelectedMetrics(metricNames);
+  }, [ metricNames ]);
+
+  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
+    setSelectedMetrics(selectedMetrics);
+  }, []);
 
   const extractLatestMetrics = useCallback((
     metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
@@ -181,119 +176,112 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     [ trials, trialsDetails ],
   );
 
+  useEffect(() => {
+    setSelectedHyperparameters(hyperparameterNames);
+  }, [ hyperparameterNames ]);
+
+  const onHyperparameterSelect = useCallback((selectedHPs) => {
+    setSelectedHyperparameters(selectedHPs);
+  }, []);
+
   const isLoaded = useMemo(
     () => trials.every(trialId => trialsDetails[trialId])
     , [ trials, trialsDetails ],
   );
 
   return (
-    <>
-      <div className={css.tableContainer}>
-        {isLoaded ?
-          <>
-            <div
-              className={css.headerRow}>
-              <div />
-              {trials.map(trial =>
-                <Tag
-                  className={[ css.trialTag, css.centerVertically ].join(' ')}
-                  closable
-                  key={trial}
-                  onClose={() => handleTrialUnselect(trial)}><p>Trial {trial}</p></Tag>)}</div>
+    <div className={css.base}>
+      {isLoaded ? (
+        <>
+          <div className={css.headerRow}>
+            <div />
+            {trials.map(trial => (
+              <Tag
+                className={[ css.trialTag, css.centerVertically ].join(' ')}
+                closable
+                key={trial}
+                onClose={() => handleTrialUnselect(trial)}>
+                <Link path={paths.trialDetails(trial, experiment.id)}>Trial {trial}</Link>
+              </Tag>
+            ))}
+          </div>
+          <div className={css.tableBody}>
             <div className={css.row}>
               <h3>State</h3>
-              {trials.map(trial =>
+              {trials.map(trial => (
                 <div className={css.centerVertically} key={trial}>
                   <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
-                </div>)}
-            </div>
-            <div className={css.row}>
-              <h3>Start Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(
-                    getDuration({ startTime: trialsDetails[trial].startTime }),
-                  )} ago
-                </p>)}
+                </div>
+              ))}
             </div>
             <div className={css.row}>
               <h3>Training Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.train)}
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Validation Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.validation)}
-                </p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Checkpoint Time</h3>
-              {trials.map(trial =>
-                <p key={trial}>
-                  {shortEnglishHumannizer(durations[trial]?.checkpoint)}
-                </p>)}
+              {trials.map(trial => (
+                <div key={trial}>{shortEnglishHumannizer(durations[trial]?.train)}</div>
+              ))}
             </div>
             <div className={css.row}>
               <h3>Batches Processed</h3>
-              {trials.map(trial => <p key={trial}>{trialsDetails[trial].totalBatchesProcessed}</p>)}
-            </div>
-            <div className={css.row}>
-              <h3>Best Checkpoint</h3>
               {trials.map(trial =>
-                trialsDetails[trial].bestAvailableCheckpoint ?
-                  <Button
-                    className={css.checkpointButton}
-                    key={trial}
-                    onClick={e => handleCheckpointShow(e, trialsDetails[trial])}>
-                    <Icon name="checkpoint" />
-                    <span>Batch {trialsDetails[trial].bestAvailableCheckpoint?.totalBatches}</span>
-                  </Button> : <div />)}
+                <div key={trial}>{trialsDetails[trial].totalBatchesProcessed}</div>)}
             </div>
             <div className={css.row}>
               <h3>Total Checkpoint Size</h3>
-              {trials.map(trial => <p key={trial}>{totalCheckpointsSizes[trial]}</p>)}
+              {trials.map(trial => <div key={trial}>{totalCheckpointsSizes[trial]}</div>)}
             </div>
-            <div className={css.headerRow}><h2>Metrics</h2></div>
-            {metricNames.map(metric =>
+            <div className={css.headerRow}>
+              <h2>Metrics</h2>
+              <MetricSelectFilter
+                defaultMetricNames={metricNames}
+                label=""
+                metricNames={metricNames}
+                multiple
+                value={selectedMetrics}
+                onChange={onMetricSelect}
+              />
+            </div>
+            {metricNames.filter(metric => selectedMetrics.map(m => m.name)
+              .includes(metric.name)).map(metric => (
               <div className={css.row} key={metric.name}>
-                <h3>
-                  <BadgeTag label={metric.name}>
-                    {metric.type === MetricType.Training ?
-                      <Tooltip title="training">T</Tooltip> :
-                      <Tooltip title="validation">V</Tooltip>}
-                  </BadgeTag>
-                </h3>
-                {trials.map(trial => metrics[trial][metric.name] ?
-                  <HumanReadableFloat
-                    key={trial}
-                    num={metrics[trial][metric.name]} />: <div />)}
-              </div>)}
-            <div className={css.headerRow}><h2>Hyperparameters</h2></div>
-            {hyperparameterNames.map(hp =>
+                <h3><MetricBadgeTag metric={metric} /></h3>
+                {trials.map(trial => metrics[trial][metric.name] ? (
+                  <div><HumanReadableFloat key={trial} num={metrics[trial][metric.name]} /></div>
+                ) : <div />)}
+              </div>
+            ))}
+            <div className={css.headerRow}><h2>Hyperparameters</h2>
+              <SelectFilter
+                disableTags
+                dropdownMatchSelectWidth={200}
+                label=""
+                mode="multiple"
+                showArrow
+                value={selectedHyperparameters}
+                onChange={onHyperparameterSelect}>
+                {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
+              </SelectFilter>
+            </div>
+            {selectedHyperparameters.map(hp => (
               <div className={css.row} key={hp}>
                 <h3>{hp}</h3>
-                {trials.map(trial =>
-                  !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ?
-                    <HumanReadableFloat
-                      key={trial}
-                      num={parseFloat(
-                        JSON.stringify(trialsDetails[trial].hyperparameters[hp]),
-                      )} /> :
-                    <p>{trialsDetails[trial].hyperparameters[hp]}</p>)}
-              </div>)}
-          </> : <Spinner spinning={!isLoaded} />}
-      </div>
-      {activeCheckpoint && <CheckpointModal
-        checkpoint={activeCheckpoint}
-        config={experiment.config}
-        show={showCheckpoint}
-        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
-        onHide={handleCheckpointDismiss} />}
-    </>
+                {trials.map(trial => (
+                  !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ? (
+                    <div>
+                      <HumanReadableFloat
+                        key={trial}
+                        num={parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))}
+                      />
+                    </div>
+                  ) : (
+                    <div>{String(trialsDetails[trial].hyperparameters[hp])}</div>
+                  )
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      ) : <Spinner spinning={!isLoaded} />}
+    </div>
   );
 };
 

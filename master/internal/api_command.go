@@ -144,7 +144,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	_ context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
-	err = a.actorRequest("/commands", req, &resp)
+	err = a.actorRequest(commandsAddr, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +154,18 @@ func (a *apiServer) GetCommands(
 
 func (a *apiServer) GetCommand(
 	_ context.Context, req *apiv1.GetCommandRequest) (resp *apiv1.GetCommandResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/commands/%s", req.CommandId), req, &resp)
+	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) KillCommand(
 	_ context.Context, req *apiv1.KillCommandRequest) (resp *apiv1.KillCommandResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/commands/%s", req.CommandId), req, &resp)
+	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
+}
+
+func (a *apiServer) SetCommandPriority(
+	_ context.Context, req *apiv1.SetCommandPriorityRequest,
+) (resp *apiv1.SetCommandPriorityResponse, err error) {
+	return resp, a.actorRequest(commandsAddr.Child(req.CommandId), req, &resp)
 }
 
 func (a *apiServer) LaunchCommand(

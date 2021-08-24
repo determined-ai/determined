@@ -220,6 +220,9 @@ html {
     border-color: var(--theme-colors-action-normal);
     border-style: solid;
   }
+  .ant-table .ant-table-content table > colgroup > col.ant-table-selection-col {
+    width: 46px;
+  }
   .ant-table .ant-table-tbody > tr > td.ant-table-selection-column,
   .ant-table .ant-table-tbody > tr > td.fullCell {
     min-width: var(--theme-sizes-layout-giant);
@@ -242,10 +245,6 @@ html {
 
   .ant-tabs {
     height: 100%;
-
-    @media only screen and (max-width: $breakpoint-mobile) {
-      height: auto;
-    }
   }
   .ant-tabs .ant-tabs-tab {
     padding-top: 0;
@@ -255,20 +254,11 @@ html {
   }
   .ant-tabs > .ant-tabs-content-holder {
     height: 100%;
-
-    @media only screen and (max-width: $breakpoint-mobile) {
-      height: auto;
-    }
   }
   .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
     height: 100%;
     overflow: auto;
     padding: var(--theme-sizes-layout-big) 0;
-
-    @media only screen and (max-width: $breakpoint-mobile) {
-      height: auto;
-      overflow: inherit;
-    }
   }
   .ant-tabs-top > .ant-tabs-nav::before,
   .ant-tabs-bottom > .ant-tabs-nav::before,

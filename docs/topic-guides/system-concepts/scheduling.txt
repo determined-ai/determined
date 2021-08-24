@@ -67,6 +67,20 @@ due to checkpointing low priority tasks, which might be expensive for some model
    Notebooks, tensorboards, shells, and commands are not preemptible. These tasks will continue to
    occupy cluster resources until they complete or are terminated.
 
+The priority of any task can be changed after it is created using one of the following commands:
+
+.. code::
+
+   det experiment set priority <ID> <priority>
+   det command set priority <ID> <priority>
+   det notebook set priority <ID> <priority>
+   det shell set priority <ID> <priority>
+   det tensorboard set priority <ID> <priority>
+
+However, since only experiments are preemptible, changing the priority of any other kind of task
+after it is scheduled has no effect. (It can still be useful to change the priorities of such tasks
+before they are scheduled in order to affect when they ultimately start running.)
+
 Here is an example of how the priority scheduler behaves with preemption enabled:
 
 #. User submits a priority 2 adaptive_asha experiment with max_concurrent_trials 20 and

@@ -28,6 +28,7 @@ class PyTorchTrialController(det.LoopTrialController):
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
+        self.context._set_determined_profiler(self.prof)
         self.callbacks = self.trial.build_callbacks()
 
         check.gt_eq(
@@ -315,7 +316,7 @@ class PyTorchTrialController(det.LoopTrialController):
             batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
 
-            with self.prof.record_timing("to_device"):
+            with self.prof.record_timing("to_device", accumulate=True):
                 batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx

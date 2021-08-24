@@ -67,6 +67,19 @@ message KillCommandResponse {
   determined.command.v1.Command command = 1;
 }
 
+// Set the priority of the requested command.
+message SetCommandPriorityRequest {
+  // The id of the command.
+  string command_id = 1;
+  // The new priority.
+  int32 priority = 2;
+}
+// Response to SetCommandPriorityRequest.
+message SetCommandPriorityResponse {
+  // The requested command.
+  determined.command.v1.Command command = 1;
+}
+
 // Request to launch a command.
 message LaunchCommandRequest {
   // Command config (JSON).

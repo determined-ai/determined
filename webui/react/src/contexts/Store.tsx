@@ -48,8 +48,6 @@ export enum StoreAction {
   SetInfo,
 
   // UI
-  CollapseUIChrome,
-  ExpandUIChrome,
   HideUIChrome,
   HideUISpinner,
   ShowUIChrome,
@@ -71,8 +69,6 @@ export type Action =
 | { type: StoreAction.SetAuth; value: Auth }
 | { type: StoreAction.SetAuthCheck }
 | { type: StoreAction.SetInfo; value: DeterminedInfo }
-| { type: StoreAction.CollapseUIChrome }
-| { type: StoreAction.ExpandUIChrome }
 | { type: StoreAction.HideUIChrome }
 | { type: StoreAction.HideUISpinner }
 | { type: StoreAction.ShowUIChrome }
@@ -177,12 +173,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetInfo:
       if (isEqual(state.info, action.value)) return state;
       return { ...state, info: action.value };
-    case StoreAction.CollapseUIChrome:
-      if (state.ui.chromeCollapsed) return state;
-      return { ...state, ui: { ...state.ui, chromeCollapsed: true } };
-    case StoreAction.ExpandUIChrome:
-      if (!state.ui.chromeCollapsed) return state;
-      return { ...state, ui: { ...state.ui, chromeCollapsed: false } };
     case StoreAction.HideUIChrome:
       if (!state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: false } };

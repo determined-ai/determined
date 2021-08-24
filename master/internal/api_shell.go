@@ -39,7 +39,7 @@ var shellsAddr = actor.Addr("shells")
 func (a *apiServer) GetShells(
 	_ context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
-	err = a.actorRequest("/shells", req, &resp)
+	err = a.actorRequest(shellsAddr, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,18 @@ func (a *apiServer) GetShells(
 
 func (a *apiServer) GetShell(
 	_ context.Context, req *apiv1.GetShellRequest) (resp *apiv1.GetShellResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/shells/%s", req.ShellId), req, &resp)
+	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) KillShell(
 	_ context.Context, req *apiv1.KillShellRequest) (resp *apiv1.KillShellResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/shells/%s", req.ShellId), req, &resp)
+	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
+}
+
+func (a *apiServer) SetShellPriority(
+	_ context.Context, req *apiv1.SetShellPriorityRequest,
+) (resp *apiv1.SetShellPriorityResponse, err error) {
+	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) LaunchShell(

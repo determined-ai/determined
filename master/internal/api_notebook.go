@@ -45,7 +45,7 @@ var notebooksAddr = actor.Addr("notebooks")
 func (a *apiServer) GetNotebooks(
 	_ context.Context, req *apiv1.GetNotebooksRequest,
 ) (resp *apiv1.GetNotebooksResponse, err error) {
-	err = a.actorRequest("/notebooks", req, &resp)
+	err = a.actorRequest(notebooksAddr, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +55,18 @@ func (a *apiServer) GetNotebooks(
 
 func (a *apiServer) GetNotebook(
 	_ context.Context, req *apiv1.GetNotebookRequest) (resp *apiv1.GetNotebookResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
+	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
 	_ context.Context, req *apiv1.KillNotebookRequest) (resp *apiv1.KillNotebookResponse, err error) {
-	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
+	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+}
+
+func (a *apiServer) SetNotebookPriority(
+	_ context.Context, req *apiv1.SetNotebookPriorityRequest,
+) (resp *apiv1.SetNotebookPriorityResponse, err error) {
+	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) NotebookLogs(
@@ -71,7 +77,7 @@ func (a *apiServer) NotebookLogs(
 		return err
 	}
 
-	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
+	cmdManagerAddr := notebooksAddr.Child(req.NotebookId)
 	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
 
 	logRequest := api.BatchRequest{

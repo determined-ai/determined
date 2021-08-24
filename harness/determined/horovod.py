@@ -1,5 +1,6 @@
 import importlib
 import logging
+import os
 import pathlib
 from typing import Any, Dict, List, Optional, cast
 
@@ -68,23 +69,22 @@ class _PolyHorovod:
 
     def cross_rank(self) -> Any:
         """
-        Horovod versions <= v0.21.3 accidentally did not expose cross_rank or cross_size for keras.
-
-        See https://github.com/horovod/horovod/pull/3008.
+        When hvd.cross_rank() is not reliably present (version =< v0.22.1) we fall back to reading
+        HOROVOD_CROSS_RANK, the environment variable set by the gloo controller as far back as
+        v0.17.0.
         """
-        if self._poly_hvd_type == "tensorflow.keras":
-            # The horovod.tensorflow module ultimately provides size/local_size/cross_size.
-            import horovod.tensorflow
-
-            return horovod.tensorflow.cross_rank()
-        return self._poly_hvd_module.cross_rank()
+        if hasattr(self._poly_hvd_module, "cross_rank"):
+            return self._poly_hvd_module.cross_rank()
+        if "HOROVOD_CROSS_RANK" in os.environ:
+            return int(os.environ["HOROVOD_CROSS_RANK"])
+        raise RuntimeError("hvd has no cross_rank() and HOROVOD_CROSS_RANK is not set")
 
     def cross_size(self) -> Any:
-        if self._poly_hvd_type == "tensorflow.keras":
-            import horovod.tensorflow
-
-            return horovod.tensorflow.cross_size()
-        return self._poly_hvd_module.cross_size()
+        if hasattr(self._poly_hvd_module, "cross_size"):
+            return self._poly_hvd_module.cross_size()
+        if "HOROVOD_CROSS_SIZE" in os.environ:
+            return int(os.environ["HOROVOD_CROSS_SIZE"])
+        raise RuntimeError("hvd has no cross_size() and HOROVOD_CROSS_SIZE is not set")
 
 
 hvd = _PolyHorovod()

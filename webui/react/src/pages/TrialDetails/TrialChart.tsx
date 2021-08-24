@@ -14,10 +14,10 @@ import { glasbeyColor } from 'utils/color';
 
 interface Props {
   defaultMetricNames: MetricName[];
-  handleMetricChange: (value: MetricName[]) => void;
   id?: string;
   metricNames: MetricName[];
   metrics: MetricName[];
+  onMetricChange: (value: MetricName[]) => void;
   workloads?: WorkloadWrapper[];
 }
 
@@ -29,9 +29,9 @@ const getChartMetricLabel = (metric: MetricName): string => {
 
 const TrialChart: React.FC<Props> = ({
   defaultMetricNames,
-  handleMetricChange,
   metricNames,
   metrics,
+  onMetricChange,
   workloads,
 }: Props) => {
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
@@ -57,7 +57,7 @@ const TrialChart: React.FC<Props> = ({
     xValues.sort((a, b) => a - b);
 
     const yValuesArray: (number | null)[][] = Object.values(yValues).map(yValue => {
-      return xValues.map(xValue => yValue[xValue] || null);
+      return xValues.map(xValue => yValue[xValue] != null ? yValue[xValue] : null);
     });
 
     return [ xValues, ...yValuesArray ];
@@ -94,7 +94,7 @@ const TrialChart: React.FC<Props> = ({
         metricNames={metricNames}
         multiple
         value={metrics}
-        onChange={handleMetricChange} />
+        onChange={onMetricChange} />
       <ScaleSelectFilter value={scale} onChange={setScale} />
     </ResponsiveFilters>
   );

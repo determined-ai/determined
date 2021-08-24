@@ -18,7 +18,6 @@ Specification to test the experiment list page.
   |Unarchive          |false   |
   |Cancel             |false   |
   |Kill               |false   |
-* Toggle all table row selection
 
 // ## Filter experiments by archived
 

@@ -30,7 +30,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
 	zeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(
-		taskList, mockGroups, "", zeroSlotTaskFilter)
+		taskList, mockGroups, taskFilter("", true))
 
 	tasksInLowerPriority := zeroSlotPendingTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority := []*mockTask{}
@@ -41,7 +41,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 	assertEqualToAllocate(t, tasksInHigherPriority, expectedTasksInHigherPriority)
 
 	nonZeroSlotPendingTasksByPriority, _ := sortTasksByPriorityAndTimestamp(
-		taskList, mockGroups, "", nonZeroSlotTaskFilter)
+		taskList, mockGroups, taskFilter("", false))
 
 	tasksInLowerPriority = nonZeroSlotPendingTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority = []*mockTask{tasks[0], tasks[1]}
@@ -53,7 +53,7 @@ func TestSortTasksByPriorityAndTimestamps(t *testing.T) {
 
 	forceSetTaskAllocations(t, taskList, "task5", 1)
 	_, scheduledTasksByPriority := sortTasksByPriorityAndTimestamp(
-		taskList, mockGroups, "", nonZeroSlotTaskFilter)
+		taskList, mockGroups, taskFilter("", false))
 
 	tasksInLowerPriority = scheduledTasksByPriority[lowerPriority]
 	expectedTasksInLowerPriority = make([]*mockTask, 0)

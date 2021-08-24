@@ -1,14 +1,14 @@
 import { Button, Col, Row } from 'antd';
 import dayjs from 'dayjs';
-import React, { useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Section from 'components/Section';
 import useResize from 'hooks/useResize';
-import useStorage from 'hooks/useStorage';
+import useSettings from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';
+import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
 import ClusterHistoricalUsageChart from './ClusterHistoricalUsageChart';
 import ClusterHistoricalUsageCsvModal from './ClusterHistoricalUsageCsvModal';
 import ClusterHistoricalUsageFilters, {
@@ -21,77 +21,32 @@ export const DEFAULT_RANGE_MONTH = 6;
 export const MAX_RANGE_DAY = 31;
 export const MAX_RANGE_MONTH = 36;
 
-export enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
-
-const STORAGE_PATH = 'cluster/historical-usage';
-const STORAGE_GROUP_BY_KEY = 'group-by';
-
 const ClusterHistoricalUsage: React.FC = () => {
   const [ chartSeries, setChartSeries ] = useState<ResourceAllocationChartSeries>();
   const [ isCsvModalVisible, setIsCsvModalVisible ] = useState<boolean>(false);
-  const [ isUrlParsed, setIsUrlParsed ] = useState<boolean>(false);
   const filterBarRef = useRef<HTMLDivElement>(null);
-  const history = useHistory();
-  const storage = useStorage(STORAGE_PATH);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
-  const [ filters, setFilters ] = useState<ClusterHistoricalUsageFiltersInterface>({
-    afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
-    beforeDate: dayjs().subtract(1, 'day'),
-    groupBy: storage.getWithDefault(STORAGE_GROUP_BY_KEY, GroupBy.Day),
-  });
+  const filters = useMemo(() => {
+    const filters: ClusterHistoricalUsageFiltersInterface = {
+      afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
+      beforeDate: dayjs().subtract(1, 'day'),
+      groupBy: GroupBy.Day,
+    };
 
-  /*
-  * When filters changes update the page URL.
-  */
-  useEffect(() => {
-    if (!isUrlParsed) return;
-
-    const dateFormat = 'YYYY-MM' + (filters.groupBy === GroupBy.Day ? '-DD' : '');
-    const searchParams = new URLSearchParams;
-
-    // after
-    searchParams.append('after', filters.afterDate.format(dateFormat));
-
-    // before
-    searchParams.append('before', filters.beforeDate.format(dateFormat));
-
-    // group-by
-    searchParams.append('group-by', filters.groupBy);
-    storage.set(STORAGE_GROUP_BY_KEY, filters.groupBy);
-
-    history.push('/cluster/historical-usage?' + searchParams.toString());
-  }, [ filters, history, isUrlParsed, storage ]);
-
-  /*
-   * On first load: if filters are specified in URL, override default.
-   */
-  useEffect(() => {
-    if (isUrlParsed) return;
-
-    const urlSearchParams = new URLSearchParams(history.location.search);
-
-    // after
-    const after = dayjs(urlSearchParams.get('after') || '');
-    if (after.isValid() && after.isBefore(dayjs())) {
-      filters.afterDate = after;
+    if (settings.after) {
+      const after = dayjs(settings.after || '');
+      if (after.isValid() && after.isBefore(dayjs())) filters.afterDate = after;
+    }
+    if (settings.before) {
+      const before = dayjs(settings.before || '');
+      if (before.isValid() && before.isBefore(dayjs())) filters.beforeDate = before;
+    }
+    if (settings.groupBy && Object.values(GroupBy).includes(settings.groupBy as GroupBy)) {
+      filters.groupBy = settings.groupBy as GroupBy;
     }
 
-    // before
-    const before = dayjs(urlSearchParams.get('before') || '');
-    if (before.isValid() && before.isBefore(dayjs())) {
-      filters.beforeDate = before;
-    }
-
-    // group-by
-    const groupBy = urlSearchParams.get('group-by');
-    if (groupBy != null && Object.values(GroupBy).includes(groupBy as GroupBy)) {
-      filters.groupBy = groupBy as GroupBy;
-    }
-
-    // check valid dates
+    // Validate filter dates.
     const dateDiff = filters.beforeDate.diff(filters.afterDate, filters.groupBy);
     if (filters.groupBy === GroupBy.Day && (dateDiff >= MAX_RANGE_DAY || dateDiff < 1)) {
       filters.afterDate = filters.beforeDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
@@ -100,9 +55,17 @@ const ClusterHistoricalUsage: React.FC = () => {
       filters.afterDate = filters.beforeDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    setFilters(filters);
-    setIsUrlParsed(true);
-  }, [ filters, history.location.search, isUrlParsed ]);
+    return filters;
+  }, [ settings ]);
+
+  const handleFilterChange = useCallback((newFilter: ClusterHistoricalUsageFiltersInterface) => {
+    const dateFormat = 'YYYY-MM' + (newFilter.groupBy === GroupBy.Day ? '-DD' : '');
+    updateSettings({
+      after: newFilter.afterDate.format(dateFormat),
+      before: newFilter.beforeDate.format(dateFormat),
+      groupBy: newFilter.groupBy,
+    });
+  }, [ updateSettings ]);
 
   /* On first load: make sure filter bar doesn't overlap charts */
   const filterBarResize = useResize(filterBarRef);
@@ -112,7 +75,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   }, [ filterBarRef, filterBarResize ]);
 
   /*
-   * When grouped by month force csv modal to display start/end of month
+   * When grouped by month force csv modal to display start/end of month.
    */
   let csvAfterDate = filters.afterDate;
   let csvBeforeDate = filters.beforeDate;
@@ -125,10 +88,9 @@ const ClusterHistoricalUsage: React.FC = () => {
   }
 
   /*
-   * Load chart data
+   * Load chart data.
    */
   useEffect(() => {
-    if (!isUrlParsed) return;
     setChartSeries(undefined);
 
     (async () => {
@@ -144,17 +106,14 @@ const ClusterHistoricalUsage: React.FC = () => {
         mapResourceAllocationApiToChartSeries(res.resourceEntries, filters.groupBy),
       );
     })();
-  }, [ filters, isUrlParsed ]);
+  }, [ filters ]);
 
   return (
     <>
       <div>
         <Row className={css.filter} justify="end" ref={filterBarRef}>
           <Col>
-            <ClusterHistoricalUsageFilters
-              value={filters}
-              onChange={setFilters}
-            />
+            <ClusterHistoricalUsageFilters value={filters} onChange={handleFilterChange} />
           </Col>
           <Col>
             <Button onClick={() => setIsCsvModalVisible(true)}>

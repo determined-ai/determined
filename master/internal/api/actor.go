@@ -24,15 +24,13 @@ func codeFromHTTPStatus(code int) codes.Code {
 // ProcessActorResponseError checks actor resposne for errors.
 func ProcessActorResponseError(resp *actor.Response) error {
 	if (*resp).Empty() {
-		src := (*resp).Source()
 		msg := "actor not found"
-		if src != nil {
+		if src := (*resp).Source(); src != nil {
 			msg = fmt.Sprintf("actor not found: /api/v1%s", src.Address().String())
 		}
 		return status.Error(codes.NotFound, msg)
 	}
 	if err := (*resp).Error(); err != nil {
-		fmt.Println(err)
 		switch typedErr := err.(type) {
 		case *echo.HTTPError:
 			return status.Error(codeFromHTTPStatus(typedErr.Code), typedErr.Error())

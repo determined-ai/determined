@@ -145,10 +145,16 @@ class NamedMeasurement(Measurement):
         timestamp: datetime,
         batch_idx: int,
         value: float,
+        accumulated: bool = False,
     ):
         super().__init__(timestamp, batch_idx, value)
         self.metric_type = metric_type
         self.metric_name = metric_name
+        self.accumulated = accumulated
+
+    @property
+    def id(self) -> str:
+        return f"{self.metric_type}-{self.metric_name}"
 
 
 class Timing:
@@ -170,7 +176,7 @@ class Timing:
         self.start_time = cast(float, self.start_time)
         self.dur = time.time() - self.start_time
 
-    def to_measurement(self) -> NamedMeasurement:
+    def to_measurement(self, accumulate: bool = False) -> NamedMeasurement:
         check.is_not_none(
             self.start_time,
             "Timing has no start time and to_measurement() was called. You probably didn't "
@@ -190,6 +196,7 @@ class Timing:
             timestamp=start_time_dt,
             batch_idx=self.current_batch_idx,
             value=self.dur,
+            accumulated=accumulate,
         )
 
 
@@ -197,8 +204,24 @@ class StartMessage:
     pass
 
 
+class FinalizeBatchMessage:
+    pass
+
+
 class ShutdownMessage:
     pass
+
+
+def pop_until_deadline(q: queue.Queue, deadline: float) -> Iterator[Any]:
+    while True:
+        timeout = deadline - time.time()
+        if timeout <= 0:
+            break
+
+        try:
+            yield q.get(timeout=timeout)
+        except queue.Empty:
+            break
 
 
 def profiling_metrics_exist(master_url: str, trial_id: str) -> bool:
@@ -306,9 +329,10 @@ class ProfilerAgent:
                 )
 
             num_producers += 1
+
             self.metrics_batcher_queue = (
                 queue.Queue()
-            )  # type: """queue.Queue[Union[NamedMeasurement, StartMessage, ShutdownMessage]]"""
+            )  # type: """queue.Queue[Union[FinalizeBatchMessage, NamedMeasurement, StartMessage, ShutdownMessage]]""" # noqa: E501
             self.metrics_batcher_thread = MetricsBatcherThread(
                 trial_id, agent_id, self.metrics_batcher_queue, self.send_queue
             )
@@ -411,6 +435,9 @@ class ProfilerAgent:
         if self.sysmetrics_is_enabled:
             self.sys_metric_collector_thread.update_batch_idx(self.current_batch_idx)
 
+        if self.timings_is_enabled:
+            self.metrics_batcher_queue.put(FinalizeBatchMessage())
+
         # Check if we should start collecting metrics
         if not self.has_started and self.current_batch_idx >= self.begin_on_batch:
             self._begin_collection()
@@ -439,7 +466,7 @@ class ProfilerAgent:
         )
 
     @contextlib.contextmanager
-    def record_timing(self, metric_name: str) -> Iterator[None]:
+    def record_timing(self, metric_name: str, accumulate: bool = False) -> Iterator[None]:
         if not self.is_enabled or not self.timings_is_enabled or not self.is_active:
             yield
             return
@@ -448,7 +475,7 @@ class ProfilerAgent:
         timing.start()
         yield
         timing.end()
-        self.metrics_batcher_queue.put(timing.to_measurement())
+        self.metrics_batcher_queue.put(timing.to_measurement(accumulate=accumulate))
 
     def cleanup_timer(self) -> None:
         if not self.is_enabled:
@@ -691,6 +718,7 @@ class MetricsBatcherThread(threading.Thread):
     ) -> None:
         self.inbound_queue = inbound_queue
         self.send_queue = send_queue
+        self.accumulating_measurements = {}  # type: Dict[str, NamedMeasurement]
         self.metrics_batch = MetricBatch(trial_id, agent_id)
         super().__init__(daemon=True)
 
@@ -701,61 +729,54 @@ class MetricsBatcherThread(threading.Thread):
     def send_shutdown_signal(self) -> None:
         self.inbound_queue.put(ShutdownMessage())
 
-    def run(self) -> None:
+    def _run(self) -> None:
         # Do nothing while we wait for a StartMessage
         while True:
             msg = self.inbound_queue.get()
             if isinstance(msg, StartMessage):
                 break
             if isinstance(msg, ShutdownMessage):
-                self.send_queue.put(ShutdownMessage())
                 return
             else:
                 # Ignore any Timings that are received before StartMessage
                 pass
 
-        batch_start_time = None  # type: Optional[float]
+        # Send metrics until we are told to shutdown.
         while True:
-            # Wait for the next Timing to arrive. If it doesn't arrive before the next flush
-            # should happen, we stop waiting for the next Timing and go straight to flushing.
-            timeout = None
-            if batch_start_time is not None:
-                time_since_flush = time.time() - batch_start_time
-                timeout = self.FLUSH_INTERVAL - time_since_flush
-
-            try:
-                message = self.inbound_queue.get(timeout=timeout)
-                if isinstance(message, ShutdownMessage):
+            deadline = time.time() + self.FLUSH_INTERVAL
+            for m in pop_until_deadline(self.inbound_queue, deadline):
+                if isinstance(m, ShutdownMessage):
                     self.send_queue.put(self.metrics_batch.consume())
-                    self.send_queue.put(ShutdownMessage())
                     return
-                elif isinstance(message, NamedMeasurement):
-                    if batch_start_time is None:
-                        batch_start_time = time.time()
-                    self.metrics_batch.append(message.metric_type, message.metric_name, message)
+                elif isinstance(m, NamedMeasurement):
+                    if m.accumulated:
+                        if m.id in self.accumulating_measurements:
+                            self.accumulating_measurements[m.id].measurement += m.measurement
+                        else:
+                            self.accumulating_measurements[m.id] = m
+                    else:
+                        self.metrics_batch.append(m.metric_type, m.metric_name, m)
+                elif isinstance(m, FinalizeBatchMessage):
+                    for msr in self.accumulating_measurements.values():
+                        self.metrics_batch.append(msr.metric_type, msr.metric_name, msr)
+                    self.accumulating_measurements = {}
                 else:
                     logging.fatal(
                         f"ProfilerAgent.MetricsBatcherThread received a message "
-                        f"of unexpected type '{type(message)}' from the "
+                        f"of unexpected type '{type(m)}' from the "
                         f"inbound_queue. This should never happen - there must "
                         f"be a bug in the code."
                     )
 
-            except queue.Empty:
-                pass
-
-            check.is_not_none(
-                batch_start_time,
-                "batch_start_time should never be None. The inbound_queue.get() "
-                "should never return and proceed to this piece of code "
-                "without batch_start_time being updated to a real timestamp. If "
-                "batch_start_time is None, inbound_queue.get() timeout should be "
-                "None and the get() should block until a Timing is received.",
-            )
-            batch_start_time = cast(float, batch_start_time)
-            if time.time() - batch_start_time > self.FLUSH_INTERVAL:
+            # Timeout met.
+            if not self.metrics_batch.isempty():
                 self.send_queue.put(self.metrics_batch.consume())
-                batch_start_time = time.time()
+
+    def run(self) -> None:
+        try:
+            self._run()
+        finally:
+            self.send_queue.put(ShutdownMessage())
 
 
 class MetricBatch:
@@ -763,6 +784,9 @@ class MetricBatch:
         self.trial_id = trial_id
         self.agent_id = agent_id
         self.batch = {}  # type: Dict[Tuple[MetricType, str, str], List[Measurement]]
+
+    def isempty(self) -> bool:
+        return len(self.batch) == 0
 
     def append(
         self,

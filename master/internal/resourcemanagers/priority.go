@@ -33,54 +33,27 @@ func (p *priorityScheduler) prioritySchedule(
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	agentsSplitByLabel := splitAgentsByLabel(agents)
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
-	// Since labels are a hard scheduling constraint, process every
-	// label independently.
-	for label, agentsWithLabel := range agentsSplitByLabel {
-		toAllocatedForLabel, toReleaseForLabel := p.priorityScheduleByLabel(
-			taskList, groups, agentsWithLabel, fittingMethod, label)
-		toAllocate = append(toAllocate, toAllocatedForLabel...)
-		toRelease = append(toRelease, toReleaseForLabel...)
+	// Since labels are a hard scheduling constraint, process every label independently.
+	for label, agentsWithLabel := range splitAgentsByLabel(agents) {
+		// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
+		// zero-slot task can be started while a higher priority non-zero-slot task is pending, and
+		// vice versa.
+		for _, zeroSlots := range []bool{false, true} {
+			allocate, release := p.prioritySchedulerWithFilter(
+				taskList, groups, agentsWithLabel, fittingMethod, taskFilter(label, zeroSlots),
+			)
+			toAllocate = append(toAllocate, allocate...)
+			toRelease = append(toRelease, release...)
+		}
 	}
 
 	return toAllocate, toRelease
 }
 
-func (p *priorityScheduler) priorityScheduleByLabel(
-	taskList *taskList,
-	groups map[*actor.Ref]*group,
-	agents map[*actor.Ref]*agentState,
-	fittingMethod SoftConstraint,
-	label string,
-) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	// All pending zero slot tasks get scheduled right away.
-	toAllocate := make([]*sproto.AllocateRequest, 0)
-	toRelease := make([]*actor.Ref, 0)
-
-	// We schedule zero-slot and non-zero-slot tasks independently of each other.
-	// E.g., a lower priority zero-slot task can be started while a higher priority
-	// non-zero-slot task is pending, and vice-versa.
-	zeroSlotTasksToAllocate, zeroSlotTasksToRelease := p.prioritySchedulerWithFilter(
-		taskList, groups, agents, fittingMethod, label, zeroSlotTaskFilter)
-	toAllocate = append(toAllocate, zeroSlotTasksToAllocate...)
-	for zeroSlotTaskToRelease := range zeroSlotTasksToRelease {
-		toRelease = append(toRelease, zeroSlotTaskToRelease)
-	}
-
-	nonZeroSlotTasksToAllocate, nonZeroSlotTasksToRelease := p.prioritySchedulerWithFilter(
-		taskList, groups, agents, fittingMethod, label, nonZeroSlotTaskFilter)
-	toAllocate = append(toAllocate, nonZeroSlotTasksToAllocate...)
-	for nonZeroSlotTaskToRelease := range nonZeroSlotTasksToRelease {
-		toRelease = append(toRelease, nonZeroSlotTaskToRelease)
-	}
-
-	return toAllocate, toRelease
-}
-
-// prioritySchedulerWithFilter defines the logics of each scheduling circle.
+// prioritySchedulerWithFilter defines the logic of each scheduling circle.
 // 1. Schedule pending tasks without preemption.
 // 2. Search if preempting any lower-priority tasks can make space.
 // 3. Back-fill lower-priority pending tasks if there are no tasks to preempt.
@@ -89,16 +62,15 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	groups map[*actor.Ref]*group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
-	label string,
 	filter func(*sproto.AllocateRequest) bool,
-) ([]*sproto.AllocateRequest, map[*actor.Ref]bool) {
+) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make(map[*actor.Ref]bool)
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, label, filter)
+		taskList, groups, filter)
 
 	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
@@ -115,7 +87,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 		successfulAllocations, unSuccessfulAllocations := trySchedulingPendingTasksInPriority(
 			allocationRequests, localAgentsState, fittingMethod)
 
-		// Only start tasks if there are no tasks of higher-priorities to preempt.
+		// Only start tasks if there are no tasks of higher priorities to preempt.
 		if len(toRelease) == 0 {
 			if !backfilling {
 				for _, allocatedTask := range successfulAllocations {
@@ -166,7 +138,11 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 		}
 	}
 
-	return toAllocate, toRelease
+	toReleaseSlice := make([]*actor.Ref, 0)
+	for r := range toRelease {
+		toReleaseSlice = append(toReleaseSlice, r)
+	}
+	return toAllocate, toReleaseSlice
 }
 
 // trySchedulingTaskViaPreemption checks whether preempting lower priority tasks
@@ -186,12 +162,7 @@ func trySchedulingTaskViaPreemption(
 	log.Debugf("trying to schedule task %s by preempting other tasks", allocationRequest.Name)
 
 	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
-		if _, ok := priorityToScheduledTaskMap[priority]; !ok {
-			continue
-		}
-
-		preemptionCandidates := priorityToScheduledTaskMap[priority]
-		for _, preemptionCandidate := range preemptionCandidates {
+		for _, preemptionCandidate := range priorityToScheduledTaskMap[priority] {
 			if preemptionCandidate.NonPreemptible || !filter(preemptionCandidate) {
 				continue
 			}
@@ -244,7 +215,6 @@ func trySchedulingPendingTasksInPriority(
 func sortTasksByPriorityAndTimestamp(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
-	label string,
 	filter func(*sproto.AllocateRequest) bool,
 ) (map[int][]*sproto.AllocateRequest, map[int][]*sproto.AllocateRequest) {
 	// Sort all non-zero slot tasks by priority.
@@ -253,7 +223,7 @@ func sortTasksByPriorityAndTimestamp(
 
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		if req.Label != label || !filter(req) {
+		if !filter(req) {
 			continue
 		}
 
@@ -263,37 +233,23 @@ func sortTasksByPriorityAndTimestamp(
 		}
 
 		assigned := taskList.GetAllocations(req.TaskActor)
-		switch {
-		case assigned == nil || len(assigned.Allocations) == 0:
-			if _, ok := priorityToPendingTasksMap[*priority]; !ok {
-				priorityToPendingTasksMap[*priority] = make([]*sproto.AllocateRequest, 0)
-			}
+		if assigned == nil || len(assigned.Allocations) == 0 {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
-
-		default:
-			if _, ok := priorityToScheduledTaskMap[*priority]; !ok {
-				priorityToScheduledTaskMap[*priority] = make([]*sproto.AllocateRequest, 0)
-			}
+		} else {
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}
 
-	// For each priority sort pending tasks by longest to shortest time of existence.
-	for priority := range priorityToPendingTasksMap {
-		pendingTasks := priorityToPendingTasksMap[priority]
-		sort.Slice(pendingTasks, func(i, j int) bool {
-			first, second := pendingTasks[i], pendingTasks[j]
-			return first.TaskActor.RegisteredTime().Before(second.TaskActor.RegisteredTime())
-		})
-	}
-
-	// For each priority sort scheduled tasks by shortest to longest time of existence.
-	for priority := range priorityToScheduledTaskMap {
-		scheduledTasks := priorityToScheduledTaskMap[priority]
-		sort.Slice(scheduledTasks, func(i, j int) bool {
-			first, second := scheduledTasks[i], scheduledTasks[j]
-			return second.TaskActor.RegisteredTime().Before(first.TaskActor.RegisteredTime())
-		})
+	// For each priority, independently sort pending and scheduled tasks by longest to shortest time of
+	// existence.
+	for _, tasksMap := range []map[int][]*sproto.AllocateRequest{
+		priorityToPendingTasksMap, priorityToScheduledTaskMap,
+	} {
+		for _, tasks := range tasksMap {
+			sort.Slice(tasks, func(i, j int) bool {
+				return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+			})
+		}
 	}
 
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
@@ -357,10 +313,8 @@ func splitAgentsByLabel(agents map[*actor.Ref]*agentState) map[string]map[*actor
 	return agentsSplitByLabel
 }
 
-func nonZeroSlotTaskFilter(request *sproto.AllocateRequest) bool {
-	return request.SlotsNeeded > 0
-}
-
-func zeroSlotTaskFilter(request *sproto.AllocateRequest) bool {
-	return request.SlotsNeeded == 0
+func taskFilter(label string, zeroSlots bool) func(*sproto.AllocateRequest) bool {
+	return func(request *sproto.AllocateRequest) bool {
+		return request.Label == label && (request.SlotsNeeded == 0) == zeroSlots
+	}
 }

@@ -6,7 +6,7 @@ import Message, { MessageType } from 'components/Message';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { glasbeyColor } from 'utils/color';
 
-import { GroupBy } from './ClusterHistoricalUsage';
+import { GroupBy } from './ClusterHistoricalUsage.settings';
 import css from './ClusterHistoricalUsageChart.module.scss';
 
 interface ClusterHistoricalUsageChartProps {

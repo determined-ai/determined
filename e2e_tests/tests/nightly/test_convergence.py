@@ -56,6 +56,31 @@ def test_fashion_mnist_tf_keras() -> None:
 
 
 @pytest.mark.nightly  # type: ignore
+def test_imagenet_pytorch() -> None:
+    config = conf.load_config(conf.tutorials_path("imagenet_pytorch/const_cifar.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.tutorials_path("imagenet_pytorch"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_loss = [
+        step["validation"]["metrics"]["validation_metrics"]["val_loss"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    target_loss = 1.40
+    assert max(validation_loss) < target_loss, (
+        "imagenet_pytorch did not reach minimum target loss {} in {} steps."
+        " full validation accuracy history: {}".format(
+            target_loss, len(trial_metrics["steps"]), validation_loss
+        )
+    )
+
+
+@pytest.mark.nightly  # type: ignore
 def test_cifar10_pytorch_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(

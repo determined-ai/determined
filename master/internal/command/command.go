@@ -148,35 +148,20 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case *notebookv1.Notebook:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			ctx.Respond(notebook)
-		}
+		ctx.Respond(c.toNotebook(ctx))
 
 	case *apiv1.GetNotebookRequest:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			ctx.Respond(&apiv1.GetNotebookResponse{
-				Notebook: notebook,
-				Config:   protoutils.ToStruct(c.Config),
-			})
-		}
+		ctx.Respond(&apiv1.GetNotebookResponse{
+			Notebook: c.toNotebook(ctx),
+			Config:   protoutils.ToStruct(c.Config),
+		})
 
 	case *apiv1.KillNotebookRequest:
-		notebook, err := c.toNotebook(ctx)
-		switch {
-		case err != nil:
-			ctx.Log().Error(err)
-		default:
-			c.terminate(ctx)
-			ctx.Respond(&apiv1.KillNotebookResponse{Notebook: notebook})
-		}
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
+	case *apiv1.SetNotebookPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetNotebookPriorityResponse{Notebook: c.toNotebook(ctx)})
 
 	case *commandv1.Command:
 		ctx.Respond(c.toCommand(ctx))
@@ -190,6 +175,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillCommandRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
+	case *apiv1.SetCommandPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetCommandPriorityResponse{Command: c.toCommand(ctx)})
 
 	case *shellv1.Shell:
 		ctx.Respond(c.toShell(ctx))
@@ -203,6 +191,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillShellRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
+	case *apiv1.SetShellPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetShellPriorityResponse{Shell: c.toShell(ctx)})
 
 	case *tensorboardv1.Tensorboard:
 		ctx.Respond(c.toTensorboard(ctx))
@@ -216,6 +207,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case *apiv1.KillTensorboardRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+	case *apiv1.SetTensorboardPriorityRequest:
+		c.setPriority(ctx, int(msg.Priority))
+		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case sproto.TaskContainerStateChanged:
 		c.container = &msg.Container
@@ -364,6 +358,13 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	}
 }
 
+func (c *command) setPriority(ctx *actor.Context, priority int) {
+	ctx.Tell(sproto.GetRM(ctx.Self().System()), sproto.SetGroupPriority{
+		Priority: &priority,
+		Handler:  ctx.Self(),
+	})
+}
+
 func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {
 	for name, check := range c.readinessChecks {
 		if check(log) {
@@ -398,7 +399,7 @@ func (c *command) State() State {
 	return state
 }
 
-func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
+func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 	exitStatus := protoutils.DefaultStringValue
 	if c.exitStatus != nil {
 		exitStatus = *c.exitStatus
@@ -414,7 +415,7 @@ func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     exitStatus,
-	}, nil
+	}
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {

@@ -223,6 +223,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
 		e.processOperations(ctx, ops, err)
+	case trialSnapshot:
+		// Handled by the defered call at the top.
 	case trialReportEarlyExit:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
 		if err != nil && ctx.ExpectingResponse() {
@@ -281,6 +283,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case sproto.SetGroupWeight:
 		resources := e.Config.Resources()
 		resources.SetWeight(msg.Weight)
+		e.Config.SetResources(resources)
+		msg.Handler = ctx.Self()
+		ctx.Tell(e.rm, msg)
+	case sproto.SetGroupPriority:
+		resources := e.Config.Resources()
+		resources.SetPriority(msg.Priority)
 		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rm, msg)

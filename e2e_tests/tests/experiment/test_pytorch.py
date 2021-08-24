@@ -1,4 +1,5 @@
 import sys
+from typing import Callable
 
 import pytest
 
@@ -9,9 +10,12 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
-def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
+def test_pytorch_11_const(
+    aggregation_frequency: int, using_k8s: bool, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
+    config = conf.set_profiling_enabled(config)
 
     if using_k8s:
         pod_spec = {
@@ -28,12 +32,17 @@ def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
         }
         config = conf.set_pod_spec(config, pod_spec)
 
-    exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.tutorials_path("mnist_pytorch"), 1
+    )
+    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
-def test_pytorch_load() -> None:
+def test_pytorch_load(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.tutorials_path("mnist_pytorch"), 1
@@ -45,6 +54,8 @@ def test_pytorch_load() -> None:
         .top_checkpoint()
         .load(map_location="cpu")
     )
+    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -91,18 +102,26 @@ def test_pytorch_const_warm_start() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.gpu_required  # type: ignore
 @pytest.mark.parametrize("api_style", ["apex", "auto", "manual"])  # type: ignore
-def test_pytorch_const_with_amp(api_style: str) -> None:
+def test_pytorch_const_with_amp(
+    api_style: str, collect_trial_profiles: Callable[[int], None]
+) -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_amp/" + api_style + "_amp.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_profiling_enabled(config)
 
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_amp"), 1)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("pytorch_amp"), 1
+    )
+    trial_id = exp.experiment_trials(experiment_id)[0]["id"]
+    collect_trial_profiles(trial_id)
 
 
 @pytest.mark.parallel  # type: ignore
-def test_pytorch_cifar10_parallel() -> None:
+def test_pytorch_cifar10_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch"), 1
@@ -115,12 +134,15 @@ def test_pytorch_cifar10_parallel() -> None:
         .load(map_location="cpu")
     )
 
+    collect_trial_profiles(trials[0]["id"])
+
 
 @pytest.mark.parallel  # type: ignore
-def test_pytorch_gan_parallel() -> None:
+def test_pytorch_gan_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("gan_mnist_pytorch/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.gan_examples_path("gan_mnist_pytorch"), 1
@@ -132,6 +154,7 @@ def test_pytorch_gan_parallel() -> None:
         .select_checkpoint(latest=True)
         .load(map_location="cpu")
     )
+    collect_trial_profiles(trials[0]["id"])
 
 
 @pytest.mark.e2e_cpu  # type: ignore

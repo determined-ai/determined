@@ -1,49 +1,49 @@
-.experiment {
+.base {
   align-items: center;
-  color: var(--theme-colors-monochrome-17);
   display: flex;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: opacity 0.3s;
-  width: 100%;
 
-  span {
-    display: inline-block;
-    margin-left: 4px;
-    opacity: 0.75;
+  .experiment {
+    color: var(--theme-colors-monochrome-17);
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-  i {
-    margin-left: var(--theme-sizes-layout-medium);
-  }
-  &:hover {
-    color: var(--theme-colors-monochrome-17);
-    opacity: 0.75;
-  }
-}
-.trial {
-  margin-top: var(--theme-sizes-layout-medium);
-}
-.state {
-  border-radius: 100px;
-  display: inline-flex;
-  font-size: var(--theme-sizes-font-micro);
-  font-weight: 600;
-  margin-right: var(--theme-sizes-layout-medium);
-  padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
-  text-transform: uppercase;
-  vertical-align: top;
-}
+    transition: opacity 0.3s;
+    width: 100%;
 
-@media only screen and (min-width: $breakpoint-tablet) {
-  .experiment {
-    font-size: var(--theme-sizes-font-medium);
-    margin-right: var(--theme-sizes-layout-medium);
-    width: auto;
+    &:hover {
+      color: var(--theme-colors-monochrome-17);
+      opacity: 0.75;
+    }
+  }
+  [class*=Icon_base_] {
+    padding: 0 var(--theme-sizes-layout-medium);
   }
   .trial {
-    font-size: var(--theme-sizes-font-medium);
-    margin-top: 0;
+    align-items: center;
+    display: flex;
+  }
+  .state {
+    border-radius: 100px;
+    display: inline-flex;
+    font-size: var(--theme-sizes-font-micro);
+    font-weight: 600;
+    margin-right: var(--theme-sizes-layout-medium);
+    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-medium);
+    text-transform: uppercase;
+    vertical-align: top;
+  }
+
+  @media only screen and (max-width: $breakpoint-tablet) {
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+
+    .experiment {
+      font-size: var(--theme-sizes-font-medium);
+    }
+    [class*=Icon_base_] { display: none; }
+    .trial {
+      font-size: var(--theme-sizes-font-medium);
+      margin-top: var(--theme-sizes-layout-medium);
+    }
   }
 }

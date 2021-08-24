@@ -1,0 +1,103 @@
+/* stylelint-disable no-descending-specificity */
+
+/*
+ * The approach of a dynamic textarea was inspired by article:
+ * https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+ */
+
+.base {
+  .growWrap {
+    /*
+     * Easy way to plot the elements on top of each other and
+     * have them both sized based on the tallest one's height.
+     */
+    display: grid;
+    position: relative;
+  }
+  .growWrap::after {
+    /* Extra space needed to prevent jumpy behavior. */
+    content: attr(data-value) ' ';
+
+    /* Hide from view, clicks and screen readers. */
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+  .growWrap > textarea {
+    background: transparent;
+    cursor: text;
+    outline: 0;
+
+    /* To prevent scrollbar on Firefox on growth. */
+    overflow: hidden;
+
+    /* Prevent user resizing, which ruins auto sizing. */
+    resize: none;
+  }
+  .growWrap > textarea,
+  .growWrap::after {
+    /* Styling must match between textarea and ::after. */
+    border-color: transparent;
+    border-radius: 2px;
+    border-style: solid;
+    border-width: var(--theme-sizes-border-width);
+    font: inherit;
+
+    /* Place on top of each other. */
+    grid-area: 1 / 1 / 2 / 2;
+    line-height: 1.6;
+    padding: 6px;
+  }
+  .growWrap:hover > textarea {
+    border-color: var(--theme-colors-monochrome-14);
+  }
+  .growWrap > .spinner {
+    display: hidden;
+    position: absolute;
+    right: 18px;
+    top: 18px;
+  }
+}
+.base.editable {
+  .growWrap > textarea,
+  .growWrap::after {
+    border-color: var(--theme-colors-monochrome-14);
+  }
+  .growWrap > textarea:focus {
+    box-shadow: var(--theme-outline);
+  }
+}
+.base.editable.maxLength {
+  .growWrap > textarea {
+    border-color: var(--theme-colors-danger-normal);
+  }
+}
+.base.loading {
+  .growWrap > textarea,
+  .growWrap::after {
+    margin-right: 36px;
+  }
+  .growWrap > .spinner { display: block; }
+}
+.base.onDark {
+  .growWrap > textarea,
+  .growWrap::after {
+    color: var(--theme-colors-monochrome-17);
+  }
+  .growWrap:hover > textarea {
+    border-color: var(--theme-colors-monochrome-10);
+  }
+  .growWrap > .spinner :global(.ant-spin) {
+    color: var(--theme-colors-monochrome-17);
+  }
+}
+.base.onDark.editable {
+  .growWrap > textarea,
+  .growWrap::after {
+    border-color: var(--theme-colors-monochrome-17);
+  }
+}
+.base.onDark.editable.maxLength {
+  .growWrap > textarea {
+    border-color: var(--theme-colors-danger-light);
+  }
+}

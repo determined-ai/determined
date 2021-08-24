@@ -8,6 +8,32 @@
  Version 0.16
 **************
 
+Version 0.16.3
+==============
+
+**Release Date:** July 22, 2021
+
+**New Features**
+
+-  Add the ability to use Azure Blob Storage for checkpoint storage.
+-  Add support for Azure Kubernetes Service, including updating Helm to support Azure Blob Storage
+   and adding additional docs for AKS.
+-  WebUI: Add support for nested hyperparameters in experiment config, trial hyperparameters, and
+   hyperparameter visualization.
+-  WebUI: Add the ability to view trial logs and open TensorBoards directly from the trial list
+   view.
+-  WebUI: Enable sorting and filtering trials by state on an experiment's trials page.
+-  WebUI: Add a server availability check on load.
+
+**Bug Fixes**
+
+-  Fix a bug where experiments with model definitions exceeding 50% of the maximum allowable size
+   would cause trials to never start.
+-  WebUI: Prevent hyperparameter visualization from getting stuck showing a spinner after clicking
+   through all the different tabs.
+-  WebUI: Fix the issue of experiments showing incorrect data if they were forked from another
+   experiment or continued from a trial.
+
 Version 0.16.2
 ==============
 

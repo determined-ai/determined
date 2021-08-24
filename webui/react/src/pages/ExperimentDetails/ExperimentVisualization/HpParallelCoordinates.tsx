@@ -7,18 +7,24 @@ import ParallelCoordinates, {
 } from 'components/ParallelCoordinates';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import TableBatch from 'components/TableBatch';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { openOrCreateTensorboard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
 import {
-  ExperimentBase, Hyperparameter, HyperparameterType, MetricName, MetricType,
-  metricTypeParamMap, Primitive, Range,
+  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter,
+  HyperparameterType, MetricName, MetricType, metricTypeParamMap, Primitive, Range,
 } from 'types';
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import { clone, flattenObject } from 'utils/data';
 import { numericSorter } from 'utils/sort';
 import { metricNameToStr } from 'utils/string';
 import { terminalRunStates } from 'utils/types';
+import { openCommand } from 'wait';
+
+import TrialsComparisonModal from '../TrialsComparisonModal';
 
 import css from './HpParallelCoordinates.module.scss';
 import HpTrialTable, { TrialHParams } from './HpTrialTable';
@@ -57,6 +63,8 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
   const [ pageError, setPageError ] = useState<Error>();
   const [ filteredTrialIdMap, setFilteredTrialIdMap ] = useState<Record<number, boolean>>();
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
+  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -134,6 +142,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     setFilteredTrialIdMap(newFilteredTrialIdMap);
   }, [ chartData ]);
+
+  const clearSelected = useCallback(() => {
+    setSelectedRowKeys([]);
+  }, []);
 
   useEffect(() => {
     const canceler = new AbortController();
@@ -214,6 +226,41 @@ const HpParallelCoordinates: React.FC<Props> = ({
     return () => canceler.abort();
   }, [ experiment.id, selectedBatch, selectedBatchMargin, selectedMetric ]);
 
+  const sendBatchActions = useCallback(async (action: Action) => {
+    if (action === Action.OpenTensorBoard) {
+      return await openOrCreateTensorboard({ trialIds: selectedRowKeys });
+    } else if (action === Action.CompareTrials) {
+      return setShowCompareTrials(true);
+    }
+  }, [ selectedRowKeys ]);
+
+  const submitBatchAction = useCallback(async (action: Action) => {
+    try {
+      const result = await sendBatchActions(action);
+      if (action === Action.OpenTensorBoard && result) {
+        openCommand(result as CommandTask);
+      }
+    } catch (e) {
+      const publicSubject = action === Action.OpenTensorBoard ?
+        'Unable to View TensorBoard for Selected Trials' :
+        `Unable to ${action} Selected Trials`;
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject,
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ sendBatchActions ]);
+
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  const handleTrialUnselect = useCallback((trialId: number) =>
+    setSelectedRowKeys(rowKeys => rowKeys.filter(id => id !== trialId)), []);
+
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
@@ -243,12 +290,24 @@ const HpParallelCoordinates: React.FC<Props> = ({
             />
           </div>
           <div>
+            <TableBatch
+              actions={[
+                { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
+                { label: Action.CompareTrials, value: Action.CompareTrials },
+              ]}
+              selectedRowCount={selectedRowKeys.length}
+              onAction={action => submitBatchAction(action as Action)}
+              onClear={clearSelected}
+            />
             <HpTrialTable
               colorScale={colorScale}
               experimentId={experiment.id}
               filteredTrialIdMap={filteredTrialIdMap}
+              handleTableRowSelect={handleTableRowSelect}
               hyperparameters={hyperparameters}
               metric={selectedMetric}
+              selectedRowKeys={selectedRowKeys}
+              selection={true}
               trialHps={trialHps}
               trialIds={chartData?.trialIds || []}
             />
@@ -267,6 +326,13 @@ const HpParallelCoordinates: React.FC<Props> = ({
           </div>
         </div>
       </Section>
+      {showCompareTrials &&
+      <TrialsComparisonModal
+        experiment={experiment}
+        trials={selectedRowKeys}
+        visible={showCompareTrials}
+        onCancel={() => setShowCompareTrials(false)}
+        onUnselect={handleTrialUnselect} />}
     </div>
   );
 };

@@ -65,7 +65,7 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 func (a *apiServer) GetTensorboards(
 	_ context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
-	err = a.actorRequest(tensorboardsAddr.String(), req, &resp)
+	err = a.actorRequest(tensorboardsAddr, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +76,19 @@ func (a *apiServer) GetTensorboards(
 func (a *apiServer) GetTensorboard(
 	_ context.Context, req *apiv1.GetTensorboardRequest,
 ) (resp *apiv1.GetTensorboardResponse, err error) {
-	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
+	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) KillTensorboard(
 	_ context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
-	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
+	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
+}
+
+func (a *apiServer) SetTensorboardPriority(
+	_ context.Context, req *apiv1.SetTensorboardPriorityRequest,
+) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId), req, &resp)
 }
 
 func (a *apiServer) LaunchTensorboard(

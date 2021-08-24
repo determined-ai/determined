@@ -15,9 +15,9 @@ func (a *apiServer) GetResourcePools(
 ) (resp *apiv1.GetResourcePoolsResponse, err error) {
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentRMAddr.String(), req, &resp)
+		err = a.actorRequest(sproto.AgentRMAddr, req, &resp)
 	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.K8sRMAddr.String(), req, &resp)
+		err = a.actorRequest(sproto.K8sRMAddr, req, &resp)
 
 	default:
 		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")

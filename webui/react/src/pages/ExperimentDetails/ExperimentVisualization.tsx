@@ -240,32 +240,36 @@ const ExperimentVisualization: React.FC<Props> = ({
   // Set the default filter batch.
   useEffect(() => {
     if (!batches || batches.length === 0) return;
-    if (filters.batch !== DEFAULT_BATCH) return;
-    setFilters(prev => ({ ...prev, batch: batches.first() }));
-  }, [ batches, filters.batch ]);
+    setFilters(prev => {
+      if (prev.batch !== DEFAULT_BATCH) return prev;
+      return { ...prev, batch: batches.first() };
+    });
+  }, [ batches ]);
 
   // Validate active metric against metrics.
   useEffect(() => {
-    const activeMetricFound = (metrics || []).reduce((acc, metric) => {
-      return acc || (metric.type === activeMetric.type && metric.name === activeMetric.name);
-    }, false);
-    if (!activeMetricFound) setActiveMetric(searcherMetric.current);
-  }, [ activeMetric, metrics ]);
+    setActiveMetric(prev => {
+      const activeMetricFound = (metrics || []).reduce((acc, metric) => {
+        return acc || (metric.type === prev.type && metric.name === prev.name);
+      }, false);
+      return activeMetricFound ? prev : searcherMetric.current;
+    });
+  }, [ metrics ]);
 
   // Update default filter hParams if not previously set.
   useEffect(() => {
     if (!isSupported) return;
-    if (filters.hParams.length !== 0) return;
 
     setFilters(prev => {
-      const map = ((hpImportanceMap || {})[filters.metric.type] || {})[filters.metric.name];
+      if (prev.hParams.length !== 0) return prev;
+      const map = ((hpImportanceMap || {})[prev.metric.type] || {})[prev.metric.name];
       let hParams = fullHParams.current;
       if (hasObjectKeys(map)) {
         hParams = hParams.sortAll((a, b) => hpImportanceSorter(a, b, map));
       }
       return { ...prev, hParams: hParams.slice(0, MAX_HPARAM_COUNT) };
     });
-  }, [ filters, hpImportanceMap, isSupported ]);
+  }, [ hpImportanceMap, isSupported ]);
 
   if (!isSupported) {
     const alertMessage = `

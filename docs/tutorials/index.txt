@@ -13,6 +13,7 @@ Next, follow the tutorial for your preferred deep learning framework:
 
 -  :ref:`pytorch-mnist-tutorial`
 -  :ref:`tf-mnist-tutorial`
+-  :ref:`porting-tutorial`
 
 The full list of our tutorials can be found below:
 

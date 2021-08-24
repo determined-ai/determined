@@ -94,13 +94,4 @@
     height: 100%;
     overflow: auto;
   }
-
-  @media only screen and (max-width: $breakpoint-mobile) {
-    height: auto;
-
-    .body {
-      height: inherit;
-      overflow: inherit;
-    }
-  }
 }
