@@ -1,8 +1,7 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React, {
-  Reducer, RefObject,
-  useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
+  Reducer, useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState,
 } from 'react';
 import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
 import screenfull from 'screenfull';
@@ -39,11 +38,6 @@ interface Props {
   onFetchLogTail: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
 }
 
-export interface ListMeasure {
-  height: number;
-  width: number;
-}
-
 export const TAIL_SIZE = 100;
 
 // Format the datetime to...
@@ -68,25 +62,6 @@ const formatClipboardHeader = (log: TrialLog): string => {
   return sprintf(`%-9s ${format}`, level, datetime);
 };
 
-const useGetListMeasure = (container: RefObject<HTMLDivElement>): ListMeasure => {
-  const containerPaddingInPixel = useMemo(() => {
-    return getComputedStyle(document.documentElement)
-      .getPropertyValue('--theme-sizes-layout-medium');
-  }, []);
-  const scroll = useScroll(container);
-
-  return {
-    height: Math.max(
-      0,
-      (scroll?.viewHeight || 0) - (parseInt(containerPaddingInPixel) * 2),
-    ),
-    width: Math.max(
-      0,
-      (scroll?.viewWidth || 0) - (parseInt(containerPaddingInPixel) * 2),
-    ),
-  };
-};
-
 const LogViewerTimestamp: React.FC<Props> = ({
   fetchToLogConverter,
   FilterComponent,
@@ -101,7 +76,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const listRef = useRef<VariableSizeList>(null);
 
   const charMeasures = useGetCharMeasureInContainer(container);
-  const listMeasure = useGetListMeasure(container);
+  const scroll = useScroll(container);
 
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
 
@@ -202,7 +177,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     }
 
     const maxCharPerLine = Math.floor(
-      (listMeasure.width - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
+      (scroll.viewWidth - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
     );
 
     const lineCount = log.message
@@ -211,7 +186,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       .reduce((acc, count) => acc + count, 0);
 
     return lineCount * charMeasures.height;
-  }, [ charMeasures, dateTimeWidth, listMeasure, logs ]);
+  }, [ charMeasures, dateTimeWidth, logs, scroll.viewWidth ]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
@@ -396,7 +371,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     const ref = listRef.current;
     ref?.resetAfterIndex(0);
     return () => ref?.resetAfterIndex(0);
-  }, [ listMeasure.width ]);
+  }, [ scroll.viewHeight, scroll.viewWidth ]);
 
   const logOptions = (
     <Space>
@@ -445,7 +420,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
       <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={container}>
           <VariableSizeList
-            height={listMeasure.height}
+            height={scroll.viewHeight}
             itemCount={logs.length}
             itemData={logs}
             itemSize={getItemHeight}
