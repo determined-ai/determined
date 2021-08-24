@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Prevent zoom from reseting when chart data series gets added.
--  WebUI: Fix issue of learning curve not resizing properly.
