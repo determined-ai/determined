@@ -4,16 +4,18 @@
 
   .header {
     color: var(--theme-colors-monochrome-7);
+    font-size: var(--theme-sizes-font-large);
     font-weight: 600;
   }
   .info {
     align-items: center;
+    border-top: 1px solid var(--theme-colors-monochrome-13);
     display: flex;
     padding: var(--theme-sizes-layout-medium) 0;
 
     .label {
       align-self: flex-start;
-      color: var(--theme-colors-monochrome-9);
+      color: var(--theme-colors-monochrome-8);
       flex-basis: 34%;
       font-size: var(--theme-sizes-font-small);
       margin-right: var(--theme-sizes-layout-huge);
