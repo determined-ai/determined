@@ -177,6 +177,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     <LogViewerPreview
       fetchLogs={fetchTrialLogs}
       fetchToLogConverter={jsonToTrialLog}
+      hidePreview={tabKey === TabType.Logs}
       onViewLogs={handleViewLogs}>
       <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">

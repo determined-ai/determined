@@ -19,6 +19,7 @@ export interface LogViewerPreviewFilter {
 interface Props {
   fetchLogs: (filters: LogViewerPreviewFilter, canceler: AbortController) => FetchArgs;
   fetchToLogConverter: (data: unknown) => TrialLog,
+  hidePreview?: boolean;
   onViewLogs?: () => void;
 }
 
@@ -28,13 +29,17 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   children,
   fetchLogs,
   fetchToLogConverter,
+  hidePreview = false,
   onViewLogs,
 }: PropsWithChildren<Props>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ logEntry, setLogEntry ] = useState<LogEntry>();
 
+  const classes = [ css.base ];
   const charMeasures = useGetCharMeasureInContainer(containerRef);
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
+
+  if (hidePreview) classes.push(css.hidePreview);
 
   const setupFetch = useCallback(() => {
     const filters = {};
@@ -73,7 +78,7 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   }, [ setupFetch ]);
 
   return (
-    <div className={css.base}>
+    <div className={classes.join(' ')}>
       {children}
       <div className={css.preview} onClick={handleClick}>
         <div className={css.frame}>

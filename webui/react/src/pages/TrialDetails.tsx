@@ -60,7 +60,6 @@ const TrialDetailsComp: React.FC = () => {
   });
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trialId = parseInt(routeParams.trialId);
-
   const trial = trialDetails.data;
 
   const { showModal } = useCreateExperimentModal();
@@ -201,6 +200,7 @@ const TrialDetailsComp: React.FC = () => {
       <LogViewerPreview
         fetchLogs={fetchTrialLogs}
         fetchToLogConverter={jsonToTrialLog}
+        hidePreview={tabKey === TabType.Logs}
         onViewLogs={handleViewLogs}>
         <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">

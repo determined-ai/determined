@@ -1,7 +1,10 @@
 $preview-height: 33px;
+$preview-transition: height 0.1s ease-in-out;
 
 .base {
-  height: calc(100% - #{$preview-height});
+  height: 100%;
+  overflow: hidden;
+  transition: $preview-transition;
 
   .preview {
     background-color: var(--theme-colors-monochrome-17);
@@ -11,6 +14,7 @@ $preview-height: 33px;
     cursor: pointer;
     height: $preview-height;
     position: sticky;
+    transition: $preview-transition;
     width: 100%;
   }
   .frame {
@@ -27,4 +31,7 @@ $preview-height: 33px;
   .icon {
     padding: 6px;
   }
+}
+.base.hidePreview {
+  .preview { height: 0; }
 }
