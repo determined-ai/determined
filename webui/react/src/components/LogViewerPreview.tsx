@@ -1,6 +1,6 @@
 import { Dayjs } from 'dayjs';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { throttle } from 'throttle-debounce';
+import React, { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
+import { debounce } from 'throttle-debounce';
 
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { FetchArgs } from 'services/api-ts-sdk';
@@ -22,13 +22,14 @@ interface Props {
   onViewLogs?: () => void;
 }
 
-const THROTTLE_TIME = 500;
+const DEBOUNCE_TIME = 1000;
 
-const LogViewerPreview: React.FC<Props> = ({
+const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
+  children,
   fetchToLogConverter,
   onFetchLogs,
   onViewLogs,
-}: Props) => {
+}: PropsWithChildren<Props>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [ logEntry, setLogEntry ] = useState<LogEntry>();
 
@@ -40,7 +41,7 @@ const LogViewerPreview: React.FC<Props> = ({
     const canceler = new AbortController();
     let entry: TrialLog;
 
-    const throttleFunc = throttle(THROTTLE_TIME, () => {
+    const debounceFunc = debounce(DEBOUNCE_TIME, () => {
       setLogEntry({
         formattedTime: formatDatetime(entry.time, DATETIME_FORMAT),
         level: entry.level || LogLevel.Info,
@@ -52,11 +53,11 @@ const LogViewerPreview: React.FC<Props> = ({
       onFetchLogs(filters, canceler),
       event => {
         entry = fetchToLogConverter(event);
-        throttleFunc();
+        debounceFunc();
       },
     );
 
-    return { canceler, throttleFunc };
+    return { canceler, debounceFunc };
   }, [ fetchToLogConverter, onFetchLogs ]);
 
   const handleClick = useCallback(() => {
@@ -64,21 +65,26 @@ const LogViewerPreview: React.FC<Props> = ({
   }, [ onViewLogs ]);
 
   useEffect(() => {
-    const { canceler, throttleFunc } = fetchLogs();
+    const { canceler, debounceFunc } = fetchLogs();
     return () => {
       canceler.abort();
-      throttleFunc.cancel();
+      debounceFunc.cancel();
     };
   }, [ fetchLogs ]);
 
   return (
-    <div className={css.base} onClick={handleClick}>
-      <div className={css.frame}>
-        <div className={css.container} ref={containerRef}>
-          {logEntry && <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />}
-        </div>
-        <div className={css.icon}>
-          <Icon name="expand" />
+    <div className={css.base}>
+      {children}
+      <div className={css.preview} onClick={handleClick}>
+        <div className={css.frame}>
+          <div className={css.container} ref={containerRef}>
+            {logEntry && (
+              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
+            )}
+          </div>
+          <div className={css.icon}>
+            <Icon name="expand" />
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import { ExperimentBase, TrialDetails } from 'types';
 import { isObject } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
 
+import css from './TrialDetailsHyperparameters.module.scss';
+
 export interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
@@ -44,12 +46,14 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial }: Props) => {
   }, [ trial.hyperparameters ]);
 
   return (
-    <ResponsiveTable
-      columns={columns}
-      dataSource={dataSource}
-      pagination={false}
-      size="small"
-    />
+    <div className={css.base}>
+      <ResponsiveTable
+        columns={columns}
+        dataSource={dataSource}
+        pagination={false}
+        size="small"
+      />
+    </div>
   );
 };
 

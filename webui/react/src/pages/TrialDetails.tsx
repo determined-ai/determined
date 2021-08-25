@@ -3,7 +3,7 @@ import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import LogViewerPreview from 'components/LogViewerPreview';
+import LogViewerPreview, { LogViewerPreviewFilter } from 'components/LogViewerPreview';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -108,7 +108,10 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const fetchTrialLogs = useCallback((filters, canceler: AbortController) => {
+  const fetchTrialLogs = useCallback((
+    filters: LogViewerPreviewFilter,
+    canceler: AbortController,
+  ) => {
     return detApi.StreamingExperiments.determinedTrialLogs(
       trialId,
       undefined,
@@ -191,24 +194,25 @@ const TrialDetailsComp: React.FC = () => {
       />}
       stickyHeader
       title={`Trial ${trialId}`}>
-      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-        <TabPane key={TabType.Overview} tab="Overview">
-          <TrialDetailsOverview experiment={experiment} trial={trial} />
-        </TabPane>
-        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          {isSingleTrialExperiment(experiment) ?
-            <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
-            <TrialRangeHyperparameters experiment={experiment} trial={trial} />
-          }
-        </TabPane>
-        <TabPane key={TabType.Profiler} tab="Profiler">
-          <TrialDetailsProfiles experiment={experiment} trial={trial} />
-        </TabPane>
-        <TabPane key={TabType.Logs} tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trial} />
-        </TabPane>
-      </Tabs>
-      <LogViewerPreview fetchToLogConverter={jsonToTrialLog} onFetchLogs={fetchTrialLogs} />
+      <LogViewerPreview fetchToLogConverter={jsonToTrialLog} onFetchLogs={fetchTrialLogs}>
+        <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+          <TabPane key={TabType.Overview} tab="Overview">
+            <TrialDetailsOverview experiment={experiment} trial={trial} />
+          </TabPane>
+          <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
+            {isSingleTrialExperiment(experiment) ?
+              <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
+              <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+            }
+          </TabPane>
+          <TabPane key={TabType.Profiler} tab="Profiler">
+            <TrialDetailsProfiles experiment={experiment} trial={trial} />
+          </TabPane>
+          <TabPane key={TabType.Logs} tab="Logs">
+            <TrialDetailsLogs experiment={experiment} trial={trial} />
+          </TabPane>
+        </Tabs>
+      </LogViewerPreview>
     </Page>
   );
 };

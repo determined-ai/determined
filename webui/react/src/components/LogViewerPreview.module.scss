@@ -1,13 +1,18 @@
-.base {
-  background-color: var(--theme-colors-monochrome-17);
-  border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
-  bottom: 0;
-  box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  height: 33px;
-  position: absolute;
-  width: 100%;
+$preview-height: 33px;
 
+.base {
+  height: calc(100% - #{$preview-height});
+
+  .preview {
+    background-color: var(--theme-colors-monochrome-17);
+    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    bottom: 0;
+    box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    height: $preview-height;
+    position: sticky;
+    width: 100%;
+  }
   .frame {
     display: flex;
     height: 100%;
