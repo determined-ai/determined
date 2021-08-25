@@ -1078,9 +1078,13 @@ jobs:
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - run: make -C tools start-db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
-      - run: sudo systemctl restart determined-master
+      - run:
+          command: sudo determined-master
+          background: true
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
-      - run: sudo systemctl restart determined-agent
+      - run:
+          command: sudo determined-agent
+          background: true
       - run: ./.circleci/scripts/sanity.sh
 
   test-e2e-webui:
