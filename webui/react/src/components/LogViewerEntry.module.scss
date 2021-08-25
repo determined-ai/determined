@@ -1,3 +1,5 @@
+$no-wrap-height: 20px;
+
 .base {
   display: flex;
   padding: 0 var(--theme-sizes-layout-medium);
@@ -13,9 +15,9 @@
   }
   .number::after { content: attr(data-label) '\00a0'; }
   .level {
-    align-items: center;
     color: var(--theme-colors-monochrome-10);
     flex-shrink: 0;
+    padding: 2px;
   }
   .level > .levelLabel { font-size: 0; }
   .critical { color: var(--theme-colors-states-failed); }
@@ -36,8 +38,13 @@
   }
 }
 .base.noWrap {
+  height: $no-wrap-height;
+  
+  & > * { height: $no-wrap-height; }
+  .time { line-height: $no-wrap-height; }
   .message {
     line-break: normal;
+    line-height: $no-wrap-height;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

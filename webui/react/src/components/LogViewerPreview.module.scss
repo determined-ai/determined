@@ -1,25 +1,23 @@
 $preview-height: 33px;
-$preview-transition: height 0.1s ease-in-out;
 
 .base {
-  height: 100%;
-  overflow: hidden;
-  transition: $preview-transition;
+  height: calc(100% - #{$preview-height});
+  transition: height 0.1s ease-in-out;
 
   .preview {
     background-color: var(--theme-colors-monochrome-17);
-    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
-    bottom: 0;
-    box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.15);
+    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-11);
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
     cursor: pointer;
     height: $preview-height;
+    overflow: hidden;
     position: sticky;
-    transition: $preview-transition;
+    top: 100%;
+    transition: border-width 0.1s ease-in-out, background-color 0.1s ease-in-out, height 0.1s ease-in-out;
     width: 100%;
   }
-  .frame {
-    display: flex;
-    height: 100%;
+  .preview:hover {
+    background-color: var(--theme-colors-monochrome-15);
   }
   .container {
     flex-grow: 1;
@@ -28,10 +26,12 @@ $preview-transition: height 0.1s ease-in-out;
     padding: 6px 0;
     position: relative;
   }
-  .icon {
-    padding: 6px;
-  }
 }
 .base.hidePreview {
-  .preview { height: 0; }
+  height: 100%;
+
+  .preview {
+    border-width: 0;
+    height: 0;
+  }
 }

@@ -8,7 +8,6 @@ import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
 
-import Icon from './Icon';
 import LogViewerEntry, { DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import css from './LogViewerPreview.module.scss';
 
@@ -81,15 +80,10 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
     <div className={classes.join(' ')}>
       {children}
       <div className={css.preview} onClick={handleClick}>
-        <div className={css.frame}>
-          <div className={css.container} ref={containerRef}>
-            {logEntry && (
-              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
-            )}
-          </div>
-          <div className={css.icon}>
-            <Icon name="expand" />
-          </div>
+        <div className={css.container} ref={containerRef}>
+          {logEntry && (
+            <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
+          )}
         </div>
       </div>
     </div>

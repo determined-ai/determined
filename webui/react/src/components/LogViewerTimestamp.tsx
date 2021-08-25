@@ -366,27 +366,29 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ scroll.viewHeight, scroll.viewWidth ]);
 
   const logOptions = (
-    <Space>
-      <Tooltip placement="bottomRight" title="Copy to Clipboard">
-        <Button
-          aria-label="Copy to Clipboard"
-          disabled={logs.length === 0}
-          icon={<Icon name="clipboard" />}
-          onClick={handleCopyToClipboard} />
-      </Tooltip>
-      <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
-        <Button
-          aria-label="Toggle Fullscreen Mode"
-          icon={<Icon name="fullscreen" />}
-          onClick={handleFullScreen} />
-      </Tooltip>
-      {onDownloadClick && <Tooltip placement="bottomRight" title="Download Logs">
-        <Button
-          aria-label="Download Logs"
-          icon={<Icon name="download" />}
-          onClick={handleDownload} />
-      </Tooltip>}
-    </Space>
+    <div className={css.options}>
+      <Space>
+        <Tooltip placement="bottomRight" title="Copy to Clipboard">
+          <Button
+            aria-label="Copy to Clipboard"
+            disabled={logs.length === 0}
+            icon={<Icon name="clipboard" />}
+            onClick={handleCopyToClipboard} />
+        </Tooltip>
+        <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
+          <Button
+            aria-label="Toggle Fullscreen Mode"
+            icon={<Icon name="fullscreen" />}
+            onClick={handleFullScreen} />
+        </Tooltip>
+        {onDownloadClick && <Tooltip placement="bottomRight" title="Download Logs">
+          <Button
+            aria-label="Download Logs"
+            icon={<Icon name="download" />}
+            onClick={handleDownload} />
+        </Tooltip>}
+      </Space>
+    </div>
   );
 
   const enableTailingClasses = [ css.enableTailing ];
