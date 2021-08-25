@@ -2,6 +2,10 @@
   color: var(--theme-colors-monochrome-9);
   font-size: var(--theme-sizes-layout-big);
 
+  .header {
+    color: var(--theme-colors-monochrome-7);
+    font-weight: 600;
+  }
   .info {
     align-items: center;
     display: flex;
