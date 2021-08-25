@@ -12,10 +12,12 @@
     padding: var(--theme-sizes-layout-medium) 0;
 
     .label {
+      align-self: flex-start;
       color: var(--theme-colors-monochrome-9);
       flex-basis: 34%;
       font-size: var(--theme-sizes-font-small);
-      max-width: 160px;
+      margin-right: var(--theme-sizes-layout-huge);
+      max-width: 200px;
       padding-right: var(--theme-sizes-layout-medium);
     }
     .content {
