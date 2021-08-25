@@ -19,6 +19,8 @@ import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 
+import css from './ExperimentSingleTrialTabs.module.scss';
+
 const { TabPane } = Tabs;
 
 enum TabType {
@@ -46,7 +48,11 @@ export interface Props {
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
-const NoDataAlert = <Alert message="No data available." type="warning" />;
+const NoDataAlert = (
+  <div className={css.base}>
+    <Alert message="No data available." type="warning" />
+  </div>
+);
 
 const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }: Props) => {
   const history = useHistory();
