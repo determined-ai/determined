@@ -329,9 +329,11 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 
 	case sproto.AgentStateRequest:
 		state, ok := rp.agents[msg.Agent]
-		check.Panic(check.True(
-			ok, "error on AgentStateRequest, agent not found: %s", msg.Agent.Address()))
-		ctx.Respond(sproto.AgentStateResponse{Enabled: state.enabled, Draining: state.draining})
+		if ok {
+			ctx.Respond(sproto.AgentStateResponse{Enabled: state.enabled, Draining: state.draining})
+		} else {
+			ctx.Respond(sproto.AgentStateResponse{})
+		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
