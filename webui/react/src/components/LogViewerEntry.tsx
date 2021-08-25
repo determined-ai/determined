@@ -8,25 +8,46 @@ import { capitalize } from 'utils/string';
 import Icon from './Icon';
 import css from './LogViewerEntry.module.scss';
 
-interface Prop {
+export interface LogEntry {
   formattedTime: string;
   level: LogLevel;
   message: string;
+}
+
+interface Prop extends LogEntry {
+  noWrap?: boolean;
   style?: React.CSSProperties;
   timeStyle?: React.CSSProperties;
 }
 
 export const ICON_WIDTH = 26;
 
-const LogViewerEntry: React.FC<Prop> = ({ level, message, style, formattedTime, timeStyle }) => {
+// Format the datetime to...
+const DATETIME_PREFIX = '[';
+const DATETIME_SUFFIX = ']';
+export const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIME_SUFFIX}`;
+
+// Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
+export const MAX_DATETIME_LENGTH = 23;
+
+const LogViewerEntry: React.FC<Prop> = ({
+  level,
+  message,
+  noWrap = false,
+  style,
+  formattedTime,
+  timeStyle,
+}) => {
+  const classes = [ css.base ];
   const logLevel = level ? level : LogLevel.Info;
   const levelClasses = [ css.level, logLevel ];
   const messageClasses = [ css.message ];
 
+  if (noWrap) classes.push(css.noWrap);
   if (logLevel) messageClasses.push(css[logLevel]);
 
   return (
-    <div className={css.base} style={style}>
+    <div className={classes.join(' ')} style={style}>
       <Tooltip placement="top" title={`Level: ${capitalize(logLevel)}`}>
         <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
           <div className={css.levelLabel}>&lt;[{logLevel}]&gt;</div>

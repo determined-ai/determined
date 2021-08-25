@@ -35,3 +35,11 @@
     word-break: break-all;
   }
 }
+.base.noWrap {
+  .message {
+    line-break: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

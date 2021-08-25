@@ -1,6 +1,25 @@
 .base {
-  background-color: red;
+  background-color: var(--theme-colors-monochrome-17);
+  border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
   bottom: 0;
+  box-shadow: 0 -1px 4px 0 rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  height: 33px;
   position: absolute;
   width: 100%;
+
+  .frame {
+    display: flex;
+    height: 100%;
+  }
+  .container {
+    flex-grow: 1;
+    font-family: 'Source Code Pro', monospace;
+    font-size: var(--theme-sizes-font-small);
+    padding: 6px 0;
+    position: relative;
+  }
+  .icon {
+    padding: 6px;
+  }
 }

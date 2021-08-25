@@ -18,6 +18,8 @@ import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { detApi } from 'services/apiConfig';
+import { jsonToTrialLog } from 'services/decoder';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
@@ -106,6 +108,24 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
+  const fetchTrialLogs = useCallback((filters, canceler: AbortController) => {
+    return detApi.StreamingExperiments.determinedTrialLogs(
+      trialId,
+      undefined,
+      true,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
+      'ORDER_BY_ASC',
+      { signal: canceler.signal },
+    );
+  }, [ trialId ]);
+
   const handleActionClick = useCallback((action: Action) => {
     switch (action) {
       case Action.ContinueTrial:
@@ -188,7 +208,7 @@ const TrialDetailsComp: React.FC = () => {
           <TrialDetailsLogs experiment={experiment} trial={trial} />
         </TabPane>
       </Tabs>
-      <LogViewerPreview />
+      <LogViewerPreview fetchToLogConverter={jsonToTrialLog} onFetchLogs={fetchTrialLogs} />
     </Page>
   );
 };

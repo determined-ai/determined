@@ -18,9 +18,9 @@ import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
 
-import LogViewerEntry, { ICON_WIDTH } from './LogViewEntry';
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
+import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import Section from './Section';
 
 export interface LogViewerTimestampFilter {
@@ -39,14 +39,6 @@ interface Props {
 }
 
 export const TAIL_SIZE = 100;
-
-// Format the datetime to...
-const DATETIME_PREFIX = '[';
-const DATETIME_SUFFIX = ']';
-const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIME_SUFFIX}`;
-
-// Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
-const MAX_DATETIME_LENGTH = 23;
 
 const THROTTLE_TIME = 500;
 
