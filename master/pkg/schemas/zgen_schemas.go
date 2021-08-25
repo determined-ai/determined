@@ -1835,6 +1835,13 @@ var (
             ],
             "default": null,
             "minimum": 0
+        },
+        "sync_timings": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
         }
     },
     "compareProperties": {

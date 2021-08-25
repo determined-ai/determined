@@ -35,6 +35,9 @@ class ExperimentConfig(dict):
 
         return self["profiling"]["begin_on_batch"], self["profiling"].get("end_after_batch", None)
 
+    def profiling_sync_timings(self) -> bool:
+        return bool(self.get("profiling", {}).get("sync_timings", True))
+
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])
 
