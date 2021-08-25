@@ -23,36 +23,78 @@ def make_data_loader() -> torch.utils.data.DataLoader:
     return torch.utils.data.DataLoader(make_dataset(), batch_size=1)
 
 
+def test_skip_sampler():
+    skip = 2
+    sampler = torch.utils.data.SequentialSampler(range(15))
+    skip_sampler = samplers.SkipSampler(sampler, skip)
+
+    assert len(skip_sampler) == 15
+
+    for samp, skip_samp in zip(range(skip, 15), iter(skip_sampler)):
+        assert samp == skip_samp
+
+
 def test_skip_batch_sampler():
     skip = 2
-    sampler = torch.utils.data.BatchSampler(
-        torch.utils.data.SequentialSampler(range(15)), batch_size=2, drop_last=False
-    )
-    skip_sampler = samplers.SkipBatchSampler(sampler, skip)
+    sampler = torch.utils.data.SequentialSampler(range(15))
+    batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size=2, drop_last=False)
+    skip_batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip)
 
-    assert len(skip_sampler) == 8
+    assert len(skip_batch_sampler) == 8
 
-    iterator = iter(sampler)
+    iterator = iter(batch_sampler)
 
     # Advance the iterator by skip batches.
     for _ in range(skip):
         next(iterator)
 
-    for samp, skip_samp in zip(iterator, iter(skip_sampler)):
+    for samp, skip_samp in zip(iterator, iter(skip_batch_sampler)):
         assert samp == skip_samp
 
 
-def test_repeat_batch_sampler():
-    sampler = torch.utils.data.BatchSampler(torch.utils.data.SequentialSampler(range(10)), 3, False)
-    repeat_sampler = samplers.RepeatBatchSampler(sampler)
+def test_repeat_sampler():
+    sampler = torch.utils.data.SequentialSampler(range(10))
+    repeat_sampler = samplers.RepeatSampler(sampler)
 
-    assert len(repeat_sampler) == 4
+    assert len(repeat_sampler) == 10
 
     one_pass = list(sampler)
 
     iterator = iter(repeat_sampler)
     for _ in range(3):
         assert one_pass == [next(iterator) for _ in range(len(one_pass))]
+
+
+def test_repeat_batch_sampler():
+    sampler = torch.utils.data.SequentialSampler(range(10))
+    batch_sampler = torch.utils.data.BatchSampler(sampler, 3, False)
+    repeat_batch_sampler = samplers.RepeatBatchSampler(batch_sampler)
+
+    assert len(repeat_batch_sampler) == 4
+
+    one_pass = list(batch_sampler)
+
+    iterator = iter(repeat_batch_sampler)
+    for _ in range(3):
+        assert one_pass == [next(iterator) for _ in range(len(one_pass))]
+
+
+def test_distributed_sampler():
+    sampler = torch.utils.data.SequentialSampler(range(19))
+
+    num_replicas = 4
+
+    expected_samples = []
+    expected_samples.append([0, 4, 8, 12, 16])
+    expected_samples.append([1, 5, 9, 13, 17])
+    expected_samples.append([2, 6, 10, 14, 18])
+    expected_samples.append([3, 7, 11, 15])
+
+    for rank in range(num_replicas):
+        dist_sampler = samplers.DistributedSampler(sampler, 4, rank)
+        samples = list(dist_sampler)
+        assert len(dist_sampler) == len(samples)
+        assert samples == expected_samples[rank]
 
 
 def test_distributed_batch_sampler():
@@ -73,6 +115,23 @@ def test_distributed_batch_sampler():
         samples = list(dist_sampler)
         assert len(dist_sampler) == len(samples)
         assert samples == expected_samples[rank]
+
+
+def test_reproducible_shuffle_sampler():
+    sampler = torch.utils.data.SequentialSampler(range(5))
+    sampler = samplers.ReproducibleShuffleSampler(sampler, 777)
+
+    assert list(sampler) == [0, 4, 1, 2, 3]
+    assert list(sampler) == [2, 0, 1, 3, 4]
+
+
+def test_reproducible_shuffle_batch_sampler():
+    sampler = torch.utils.data.SequentialSampler(range(10))
+    batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size=2, drop_last=False)
+    shuffle_batch_sampler = samplers.ReproducibleShuffleSampler(batch_sampler, 777)
+
+    assert list(shuffle_batch_sampler) == [[0, 1], [8, 9], [2, 3], [4, 5], [6, 7]]
+    assert list(shuffle_batch_sampler) == [[4, 5], [0, 1], [2, 3], [6, 7], [8, 9]]
 
 
 def test_pytorch_adapt_batch_sampler():

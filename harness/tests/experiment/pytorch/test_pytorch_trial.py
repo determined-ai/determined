@@ -48,6 +48,8 @@ class TestPyTorchTrial:
             "learning_rate": 0.5,
             "global_batch_size": 4,
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.MANUAL_STEP.value,
+            "dataloader_type": "determined",
+            "disable_dataset_reproducibility_checks": False,
         }
 
     def test_onevar_single(self) -> None:
@@ -502,6 +504,54 @@ class TestPyTorchTrial:
 
         with pytest.raises(AssertionError, match="with name set but it returned a dict anyway"):
             controller.run()
+
+    def test_require_disable_dataset_reproducibility(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = dict(self.hparams)
+        hparams["dataloader_type"] = "torch"
+        hparams["disable_dataset_reproducibility_checks"] = False
+
+        with pytest.raises(RuntimeError, match="you can disable this check by calling"):
+            _ = utils.make_trial_controller_from_trial_implementation(
+                trial_class=pytorch_onevar_model.OneVarTrial,
+                hparams=hparams,
+                workloads=make_workloads(),
+                trial_seed=self.trial_seed,
+            )
+
+    def test_custom_dataloader(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=100, validation_freq=10)
+            training_metrics, validation_metrics = trainer.result()
+
+            # Check the gradient update at every step.
+            for idx, batch_metrics in enumerate(training_metrics):
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
+
+            # We expect the validation error and training loss to be
+            # monotonically decreasing.
+            for older, newer in zip(training_metrics, training_metrics[1:]):
+                assert newer["loss"] <= older["loss"]
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = dict(self.hparams)
+        hparams["dataloader_type"] = "torch"
+        hparams["disable_dataset_reproducibility_checks"] = True
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
 
 
 def test_create_trial_instance() -> None:
