@@ -56,23 +56,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
+  const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.experimentDetails(experiment.id);
-  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-
-  const [ tabKey, setTabKey ] = useState(defaultTabKey);
-
-  const handleTabChange = useCallback(key => {
-    setTabKey(key);
-    history.replace(`${basePath}/${key}`);
-  }, [ basePath, history ]);
-
-  // Sets the default sub route.
-  useEffect(() => {
-    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
-    }
-  }, [ basePath, history, tab, tabKey ]);
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -145,6 +131,22 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const { stopPolling } = usePolling(fetchTrialDetails);
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
+  const handleTabChange = useCallback(key => {
+    setTabKey(key);
+    history.replace(`${basePath}/${key}`);
+  }, [ basePath, history ]);
+
+  const handleViewLogs = useCallback(() => {
+    handleTabChange(TabType.Logs);
+  }, [ handleTabChange ]);
+
+  // Sets the default sub route.
+  useEffect(() => {
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      history.replace(`${basePath}/${tabKey}`);
+    }
+  }, [ basePath, history, tab, tabKey ]);
+
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
       stopPolling();
@@ -172,8 +174,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
   return (
-    <LogViewerPreview fetchToLogConverter={jsonToTrialLog} onFetchLogs={fetchTrialLogs}>
-      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+    <LogViewerPreview
+      fetchLogs={fetchTrialLogs}
+      fetchToLogConverter={jsonToTrialLog}
+      onViewLogs={handleViewLogs}>
+      <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           {trialDetails
             ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />

@@ -50,8 +50,8 @@ const TrialDetailsComp: React.FC = () => {
   const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
   const routeParams = useParams<Params>();
-
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
+
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
@@ -146,6 +146,10 @@ const TrialDetailsComp: React.FC = () => {
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);
 
+  const handleViewLogs = useCallback(() => {
+    handleTabChange(TabType.Logs);
+  }, [ handleTabChange ]);
+
   const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
@@ -194,8 +198,11 @@ const TrialDetailsComp: React.FC = () => {
       />}
       stickyHeader
       title={`Trial ${trialId}`}>
-      <LogViewerPreview fetchToLogConverter={jsonToTrialLog} onFetchLogs={fetchTrialLogs}>
-        <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
+      <LogViewerPreview
+        fetchLogs={fetchTrialLogs}
+        fetchToLogConverter={jsonToTrialLog}
+        onViewLogs={handleViewLogs}>
+        <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">
             <TrialDetailsOverview experiment={experiment} trial={trial} />
           </TabPane>

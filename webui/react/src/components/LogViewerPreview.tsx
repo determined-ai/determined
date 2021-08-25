@@ -17,8 +17,8 @@ export interface LogViewerPreviewFilter {
 }
 
 interface Props {
+  fetchLogs: (filters: LogViewerPreviewFilter, canceler: AbortController) => FetchArgs;
   fetchToLogConverter: (data: unknown) => TrialLog,
-  onFetchLogs: (filters: LogViewerPreviewFilter, canceler: AbortController) => FetchArgs;
   onViewLogs?: () => void;
 }
 
@@ -26,8 +26,8 @@ const DEBOUNCE_TIME = 1000;
 
 const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   children,
+  fetchLogs,
   fetchToLogConverter,
-  onFetchLogs,
   onViewLogs,
 }: PropsWithChildren<Props>) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,7 +36,7 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   const charMeasures = useGetCharMeasureInContainer(containerRef);
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
 
-  const fetchLogs = useCallback(() => {
+  const setupFetch = useCallback(() => {
     const filters = {};
     const canceler = new AbortController();
     let entry: TrialLog;
@@ -50,7 +50,7 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
     });
 
     consumeStream(
-      onFetchLogs(filters, canceler),
+      fetchLogs(filters, canceler),
       event => {
         entry = fetchToLogConverter(event);
         debounceFunc();
@@ -58,19 +58,19 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
     );
 
     return { canceler, debounceFunc };
-  }, [ fetchToLogConverter, onFetchLogs ]);
+  }, [ fetchLogs, fetchToLogConverter ]);
 
   const handleClick = useCallback(() => {
     if (onViewLogs) onViewLogs();
   }, [ onViewLogs ]);
 
   useEffect(() => {
-    const { canceler, debounceFunc } = fetchLogs();
+    const { canceler, debounceFunc } = setupFetch();
     return () => {
       canceler.abort();
       debounceFunc.cancel();
     };
-  }, [ fetchLogs ]);
+  }, [ setupFetch ]);
 
   return (
     <div className={css.base}>
