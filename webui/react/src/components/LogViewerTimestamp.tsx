@@ -3,14 +3,16 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, {
   Reducer, useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState,
 } from 'react';
-import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
+import {
+  ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
+} from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
-import useScroll from 'hooks/useScroll';
+import useResize from 'hooks/useResize';
 import { LogViewerTimestampFilterComponentProp } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
@@ -65,15 +67,16 @@ const LogViewerTimestamp: React.FC<Props> = ({
   onFetchLogTail,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
-  const container = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
+  const listOffset = useRef<number>(0);
 
-  const charMeasures = useGetCharMeasureInContainer(container);
-  const scroll = useScroll(container);
+  const charMeasures = useGetCharMeasureInContainer(containerRef);
+  const containerSize = useResize(containerRef);
 
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
   const maxCharPerLine = Math.floor(
-    (scroll.viewWidth - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
+    (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
   );
 
   const [ direction, setDirection ] = useState(Direction.BottomToTop);
@@ -203,7 +206,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const handleEnableTailing = useCallback(() => {
     setDirection(Direction.BottomToTop);
-    listRef.current?.scrollToItem(logs.length + 1, 'end');
+    listRef.current?.scrollToItem(logs.length, 'end');
   }, [ listRef, logs.length ]);
 
   const handleFullScreen = useCallback(() => {
@@ -251,6 +254,10 @@ const LogViewerTimestamp: React.FC<Props> = ({
     logs,
   ]);
 
+  const handleScroll = useCallback((event: ListOnScrollProps) => {
+    if (event.scrollOffset) listOffset.current = event.scrollOffset;
+  }, []);
+
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
    * selected content. By default when copying content from a collection of HTML elements, each
@@ -259,9 +266,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * newline from that field.
    */
   useLayoutEffect(() => {
-    if (!container.current) return;
+    if (!containerRef.current) return;
 
-    const target = container.current;
+    const target = containerRef.current;
     const handleCopy = (e: ClipboardEvent): void => {
       const clipboardFormat = 'text/plain';
       const levelValues = Object.values(LogLevel).join('|');
@@ -312,7 +319,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useEffect(() => {
     clearLogs();
     const canceler = fetchAndAppendLogs(direction, filter);
-
     return () => canceler.abort();
   }, [ clearLogs, direction, fetchAndAppendLogs, filter ]);
 
@@ -352,17 +358,23 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (!listRef.current) return;
     if (direction !== Direction.BottomToTop) return;
 
-    listRef.current.scrollToItem(logs.length + 1, 'end');
+    listRef.current.scrollToItem(logs.length, 'end');
   }, [ direction, isOnBottom, listRef, logs ]);
 
   /*
-   * Force recomputing messages height when width changes
+   * Force recomputing messages height when container width changes.
    */
   useLayoutEffect(() => {
     const ref = listRef.current;
     ref?.resetAfterIndex(0);
+
+    // Restore the list offset if applicable.
+    if (listOffset.current) {
+      setTimeout(() => ref?.scrollTo(listOffset.current), 0);
+    }
+
     return () => ref?.resetAfterIndex(0);
-  }, [ scroll.viewHeight, scroll.viewWidth ]);
+  }, [ containerSize.width, containerSize.height ]);
 
   const logOptions = (
     <div className={css.options}>
@@ -416,18 +428,18 @@ const LogViewerTimestamp: React.FC<Props> = ({
         onChange={setFilter}
       />}
       maxHeight
-      options={logOptions}
-    >
+      options={logOptions}>
       <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={container}>
+        <div className={css.container} ref={containerRef}>
           <VariableSizeList
-            height={scroll.viewHeight}
+            height={containerSize.height}
             itemCount={logs.length}
             itemData={logs}
             itemSize={getItemHeight}
             ref={listRef}
             width="100%"
-            onItemsRendered={handleItemsRendered}>
+            onItemsRendered={handleItemsRendered}
+            onScroll={handleScroll}>
             {LogViewerRow}
           </VariableSizeList>
         </div>
@@ -441,8 +453,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={direction === Direction.BottomToTop ? 'Tailing Enabled' : 'Enable Tailing'}
-          >
+            title={direction === Direction.BottomToTop ? 'Tailing Enabled' : 'Enable Tailing'}>
             <Button
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}
