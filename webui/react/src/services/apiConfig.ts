@@ -407,6 +407,16 @@ export const getModels: DetApi<GetModelsParams, Api.V1GetModelsResponse, ModelPa
   ),
 };
 
+export const getModel: DetApi<GetModelParams, Api.V1GetModelResponse, ModelItem | undefined> = {
+  name: 'getModel',
+  postProcess: (response) => {
+    return response.model ? decoder.mapV1Model(response.model) : undefined;
+  },
+  request: (params: GetModelParams) => detApi.Models.determinedGetModel(
+    params.modelName,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<

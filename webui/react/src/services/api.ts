@@ -138,6 +138,10 @@ export const getModels = generateDetApi<
   GetModelsParams, Api.V1GetModelsResponse, ModelPagination
 >(Config.getModels);
 
+export const getModel = generateDetApi<
+  GetModelParams, Api.V1GetModelResponse, ModelItem | undefined
+>(Config.getModel);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

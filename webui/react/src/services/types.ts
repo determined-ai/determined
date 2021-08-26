@@ -113,6 +113,10 @@ export interface GetModelsParams extends PaginationParams {
   | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME';
 }
 
+export interface GetModelParams {
+  modelName: string;
+}
+
 export interface CreateExperimentParams {
   experimentConfig: string;
   parentId: number;
