@@ -1,0 +1,5 @@
+:orphan:
+
+**Fixes**
+
+-  Properly load very old checkpoints with TFKerasTrial (pre-0.13.8).

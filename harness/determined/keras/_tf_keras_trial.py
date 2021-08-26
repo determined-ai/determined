@@ -573,9 +573,7 @@ class TFKerasTrialController(det.LoopTrialController):
         logging.info(f"Restoring optimizer weights from {optimizer_weights_checkpoint_path}.")
         with h5py.File(optimizer_weights_checkpoint_path, "r") as h5file:
             if "optimizer_weights" in h5file:
-                load_optimizer_weights(
-                    self.model, h5file["optimizer_weights"], self.model.optimizer
-                )
+                load_optimizer_weights(self.model, h5file, self.model.optimizer)
                 return
 
             for idx, optimizer in enumerate(self.context._optimizers):

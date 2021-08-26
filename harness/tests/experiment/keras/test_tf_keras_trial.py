@@ -9,7 +9,11 @@ from packaging import version
 import determined as det
 from determined import workload
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import tf_keras_one_var_model, tf_keras_xor_model  # noqa: I100
+from tests.experiment.fixtures import (  # noqa: I100
+    ancient_keras_ckpt,
+    tf_keras_one_var_model,
+    tf_keras_xor_model,
+)
 
 
 def test_executing_eagerly():
@@ -303,6 +307,29 @@ class TestKerasTrial:
             hparams,
             make_workloads(),
             exp_config=exp_config,
+        )
+        controller.run()
+
+    @pytest.mark.parametrize("ckpt_ver", ["0.12.3", "0.13.7", "0.13.8"])
+    def test_ancient_checkpoints(self, ckpt_ver):
+        checkpoint_dir = Path(utils.fixtures_path("ancient-checkpoints"))
+        checkpoint_dir = checkpoint_dir.joinpath(f"{ckpt_ver}-keras")
+
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
+        exp_config = utils.make_default_exp_config(hparams, scheduling_unit=100)
+        exp_config["records_per_epoch"] = 100
+        controller = utils.make_trial_controller_from_trial_implementation(
+            ancient_keras_ckpt.AncientTrial,
+            hparams,
+            make_workloads(),
+            exp_config=exp_config,
+            load_path=checkpoint_dir,
+            trial_seed=self.trial_seed,
         )
         controller.run()
 
