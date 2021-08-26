@@ -3,10 +3,10 @@ import axios from 'axios';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import LogViewerPreview, { LogViewerPreviewFilter } from 'components/LogViewerPreview';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
@@ -18,8 +18,6 @@ import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import TrialRangeHyperparameters from 'pages/TrialDetails/TrialRangeHyperparameters';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
-import { detApi } from 'services/apiConfig';
-import { jsonToTrialLog } from 'services/decoder';
 import { ApiState } from 'services/types';
 import { isAborted } from 'services/utils';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
@@ -107,27 +105,6 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ canceler, trialDetails.error, trialId ]);
 
-  const fetchTrialLogs = useCallback((
-    filters: LogViewerPreviewFilter,
-    canceler: AbortController,
-  ) => {
-    return detApi.StreamingExperiments.determinedTrialLogs(
-      trialId,
-      undefined,
-      true,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-      'ORDER_BY_ASC',
-      { signal: canceler.signal },
-    );
-  }, [ trialId ]);
-
   const handleActionClick = useCallback((action: Action) => {
     switch (action) {
       case Action.ContinueTrial:
@@ -197,10 +174,9 @@ const TrialDetailsComp: React.FC = () => {
       />}
       stickyHeader
       title={`Trial ${trialId}`}>
-      <LogViewerPreview
-        fetchLogs={fetchTrialLogs}
-        fetchToLogConverter={jsonToTrialLog}
+      <TrialLogPreview
         hidePreview={tabKey === TabType.Logs}
+        trialId={trialId}
         onViewLogs={handleViewLogs}>
         <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">
@@ -219,7 +195,7 @@ const TrialDetailsComp: React.FC = () => {
             <TrialDetailsLogs experiment={experiment} trial={trial} />
           </TabPane>
         </Tabs>
-      </LogViewerPreview>
+      </TrialLogPreview>
     </Page>
   );
 };

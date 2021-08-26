@@ -43,9 +43,9 @@ export const TAIL_SIZE = 100;
 const THROTTLE_TIME = 500;
 const PADDING = 8;
 
-enum DIRECTIONS {
-  TOP_TO_BOTTOM, // show oldest logs and infinite-scroll newest ones at the bottom
-  BOTTOM_TO_TOP, // show newest logs and infinite-scroll oldest ones at the top
+enum Direction {
+  TopToBottom = 'top-to-bottom', // show oldest logs and infinite-scroll newest ones at the bottom
+  BottomToTop = 'bottom-to-top', // show newest logs and infinite-scroll oldest ones at the top
 }
 
 const formatClipboardHeader = (log: TrialLog): string => {
@@ -72,8 +72,11 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const scroll = useScroll(container);
 
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
+  const maxCharPerLine = Math.floor(
+    (scroll.viewWidth - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
+  );
 
-  const [ direction, setDirection ] = useState(DIRECTIONS.BOTTOM_TO_TOP);
+  const [ direction, setDirection ] = useState(Direction.BottomToTop);
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
   const [ isLastReached, setIsLastReached ] = useState<boolean>(false);
@@ -119,19 +122,19 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ logsDispatch ]);
 
   const fetchAndAppendLogs = useCallback((
-    direction: DIRECTIONS,
+    direction: Direction,
     filters: LogViewerTimestampFilter,
   ): AbortController => {
     const canceler = new AbortController();
     let fetchArgs = null;
     let isPrepend = false;
 
-    if (direction === DIRECTIONS.BOTTOM_TO_TOP) {
+    if (direction === Direction.BottomToTop) {
       fetchArgs = onFetchLogBefore(filters, canceler);
       isPrepend = true;
     }
 
-    if (direction === DIRECTIONS.TOP_TO_BOTTOM) {
+    if (direction === Direction.TopToBottom) {
       fetchArgs = onFetchLogAfter({
         ...filters,
         timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
@@ -147,7 +150,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         fetchArgs,
         event => {
           const logEntry = fetchToLogConverter(event);
-          direction === DIRECTIONS.TOP_TO_BOTTOM
+          direction === Direction.TopToBottom
             ? buffer.unshift(logEntry) : buffer.push(logEntry);
         },
       ).then(() => {
@@ -167,9 +170,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
     const log = logs[index];
     if (!log) return charMeasures.height;
 
-    const maxCharPerLine = Math.floor(
-      (scroll.viewWidth - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
-    );
     const lineCount = log.message
       .split('\n')
       .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
@@ -177,7 +177,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     const itemHeight = lineCount * charMeasures.height;
 
     return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
-  }, [ charMeasures, dateTimeWidth, logs, scroll.viewWidth ]);
+  }, [ charMeasures, maxCharPerLine, logs ]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
@@ -202,7 +202,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ onDownloadClick ]);
 
   const handleEnableTailing = useCallback(() => {
-    setDirection(DIRECTIONS.BOTTOM_TO_TOP);
+    setDirection(Direction.BottomToTop);
     listRef.current?.scrollToItem(logs.length + 1, 'end');
   }, [ listRef, logs.length ]);
 
@@ -211,7 +211,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, []);
 
   const handleScrollToTop = useCallback(() => {
-    setDirection(DIRECTIONS.TOP_TO_BOTTOM);
+    setDirection(Direction.TopToBottom);
   }, []);
 
   const handleItemsRendered = useCallback((
@@ -225,8 +225,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     const logTimes = logs.map(log => log.time).sort();
 
-    // Fetch older log when direction=bottom_to_top and scroll is on top.
-    if (direction === DIRECTIONS.BOTTOM_TO_TOP && visibleStartIndex === 0) {
+    // Fetch older log when direction=BottomToTop and scroll is on top.
+    if (direction === Direction.BottomToTop && visibleStartIndex === 0) {
       const canceler = fetchAndAppendLogs(direction, {
         ...filter,
         timestampBefore: dayjs(logTimes.first()),
@@ -234,8 +234,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
       return () => canceler.abort();
     }
 
-    // Fetch newer log when direction=top_to_bottom and scroll is on bottom.
-    if (direction === DIRECTIONS.TOP_TO_BOTTOM && visibleStopIndex === (logs.length - 1)) {
+    // Fetch newer log when direction=TopToBottom and scroll is on bottom.
+    if (direction === Direction.TopToBottom && visibleStopIndex === (logs.length - 1)) {
       const canceler = fetchAndAppendLogs(direction, {
         ...filter,
         timestampAfter: dayjs(logTimes.last()),
@@ -320,7 +320,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Fetch Log tail (api follow).
    */
   useEffect(() => {
-    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
+    if (direction !== Direction.BottomToTop) return;
 
     const canceler = new AbortController();
 
@@ -350,7 +350,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useLayoutEffect(() => {
     if (!isOnBottom) return;
     if (!listRef.current) return;
-    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
+    if (direction !== Direction.BottomToTop) return;
 
     listRef.current.scrollToItem(logs.length + 1, 'end');
   }, [ direction, isOnBottom, listRef, logs ]);
@@ -391,11 +391,16 @@ const LogViewerTimestamp: React.FC<Props> = ({
   );
 
   const enableTailingClasses = [ css.enableTailing ];
-  if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
+  if (isOnBottom && direction === Direction.BottomToTop) enableTailingClasses.push(css.enabled);
 
   const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => (
     <LogViewerEntry
-      style={{ ...style, paddingTop: index === 0 ? PADDING : 0 }}
+      style={{
+        ...style,
+        left: parseFloat(`${style.left}`) + PADDING,
+        paddingTop: index === 0 ? PADDING : 0,
+        width: `calc(100% - ${2 * PADDING}px)`,
+      }}
       timeStyle={{ width: dateTimeWidth }}
       {...data[index]}
     />
@@ -436,7 +441,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
+            title={direction === Direction.BottomToTop ? 'Tailing Enabled' : 'Enable Tailing'}
           >
             <Button
               aria-label="Enable Tailing"

@@ -2,15 +2,13 @@ import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import LogViewerPreview, { LogViewerPreviewFilter } from 'components/LogViewerPreview';
 import Spinner from 'components/Spinner';
+import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
 import { getExpTrials, getTrialDetails } from 'services/api';
-import { detApi } from 'services/apiConfig';
-import { jsonToTrialLog } from 'services/decoder';
 import { ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -111,29 +109,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     }
   }, [ canceler, trialId ]);
 
-  const fetchTrialLogs = useCallback((
-    filters: LogViewerPreviewFilter,
-    canceler: AbortController,
-  ) => {
-    if (!trialId) return { options: undefined, url: '' };
-
-    return detApi.StreamingExperiments.determinedTrialLogs(
-      trialId,
-      undefined,
-      true,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-      'ORDER_BY_ASC',
-      { signal: canceler.signal },
-    );
-  }, [ trialId ]);
-
   const { stopPolling } = usePolling(fetchTrialDetails);
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
@@ -180,10 +155,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
   return (
-    <LogViewerPreview
-      fetchLogs={fetchTrialLogs}
-      fetchToLogConverter={jsonToTrialLog}
+    <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
+      trialId={trialId}
       onViewLogs={handleViewLogs}>
       <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
@@ -212,7 +186,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
             : NoDataAlert}
         </TabPane>
       </Tabs>
-    </LogViewerPreview>
+    </TrialLogPreview>
   );
 };
 
