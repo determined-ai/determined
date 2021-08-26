@@ -14,7 +14,7 @@ class StorageMetadata:
         storage_id: str,
         resources: Dict[str, int],
         framework: Optional[str] = None,
-        format: Optional[str] = None,
+        format: Optional[str] = None,  # noqa: A002
     ) -> None:
         check_gt(len(storage_id), 0, "Invalid storage ID")
         self.storage_id = storage_id

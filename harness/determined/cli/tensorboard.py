@@ -49,7 +49,7 @@ def start_tensorboard(args: Namespace) -> None:
                 if args.no_browser:
                     url = api.make_url(args.master, resp["serviceAddress"])
                 else:
-                    url = api.open(args.master, resp["serviceAddress"])
+                    url = api.browser_open(args.master, resp["serviceAddress"])
 
                 print(colored("TensorBoard is running at: {}".format(url), "green"))
                 render_event_stream(msg)
@@ -63,14 +63,14 @@ def open_tensorboard(args: Namespace) -> None:
         "tensorboard"
     ]
     check_eq(resp["state"], "STATE_RUNNING", "TensorBoard must be in a running state")
-    api.open(args.master, resp["serviceAddress"])
+    api.browser_open(args.master, resp["serviceAddress"])
 
 
 # fmt: off
 
 args_description = [
     Cmd("tensorboard", None, "manage TensorBoard instances", [
-        Cmd("list ls", command.list, "list TensorBoard instances", [
+        Cmd("list ls", command.list_tasks, "list TensorBoard instances", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",

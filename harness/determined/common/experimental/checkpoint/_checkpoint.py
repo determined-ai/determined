@@ -52,7 +52,7 @@ class Checkpoint(object):
         metadata: Dict[str, Any],
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
-        format: Optional[str] = None,
+        format: Optional[str] = None,  # noqa: A002
         model_version: Optional[int] = None,
         model_name: Optional[str] = None,
     ):

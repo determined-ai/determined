@@ -241,7 +241,7 @@ def put(
     )
 
 
-def open(host: str, path: str) -> str:
+def browser_open(host: str, path: str) -> str:
     url = make_url(host, path)
     webbrowser.open(url)
     return url

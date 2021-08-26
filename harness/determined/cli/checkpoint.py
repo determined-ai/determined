@@ -60,7 +60,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
 
 @authentication.required
-def list(args: Namespace) -> None:
+def list_checkpoints(args: Namespace) -> None:
     params = {}
     if args.best is not None:
         if args.best < 0:
