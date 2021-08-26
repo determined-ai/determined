@@ -32,8 +32,6 @@ var unauthenticatedMethods = map[string]bool{
 	"/determined.api.v1.Determined/GetTelemetry": true,
 }
 
-var adminMethods = map[string]bool{}
-
 var (
 	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
 	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
@@ -108,14 +106,17 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
 	if unauthenticatedMethods[fullMethod] {
 		return nil
 	}
-	if _, err := GetTaskSession(ctx, db); err == ErrTokenMissing {
-		switch u, _, uErr := GetUser(ctx, db); {
-		case uErr != nil:
-			return uErr
-		case !u.Admin && adminMethods[fullMethod]:
-			return ErrPermissionDenied
-		}
-	} else if err != nil && err != ErrTokenMissing {
+
+	switch _, err := GetTaskSession(ctx, db); err {
+	case ErrTokenMissing:
+		// Try user token.
+	case nil:
+		return nil
+	default:
+		return err
+	}
+
+	if _, _, err := GetUser(ctx, db); err != nil {
 		return err
 	}
 	return nil
