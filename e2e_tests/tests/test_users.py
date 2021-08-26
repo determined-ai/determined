@@ -646,20 +646,23 @@ def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_experiment_delete() -> None:
-    user = create_test_user(ADMIN_CREDENTIALS, False)
+    user = create_test_user(ADMIN_CREDENTIALS)
+    non_owner_user = create_test_user(ADMIN_CREDENTIALS)
 
     with logged_in_user(user):
         experiment_id = exp.run_basic_test(
             conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
         )
 
-        # "det experiment delete" call should fail, because the user is not an admin.
+    with logged_in_user(non_owner_user):
+        # "det experiment delete" call should fail, because the user is not an admin and
+        # doesn't own the experiment.
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
         child.read()
         child.wait()
         assert child.exitstatus > 0
 
-    with logged_in_user(ADMIN_CREDENTIALS):
+    with logged_in_user(user):
         child = det_spawn(["experiment", "delete", str(experiment_id), "--yes"])
         child.read()
         child.wait()
