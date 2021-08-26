@@ -23,7 +23,7 @@ interface Props {
   onViewLogs?: () => void;
 }
 
-const DEBOUNCE_TIME = 1000;
+const DEBOUNCE_TIME = 100;
 
 const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   children,
