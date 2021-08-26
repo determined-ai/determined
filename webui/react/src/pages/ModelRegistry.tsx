@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
+import { modelNameRenderer, relativeTimeRenderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { getModels } from 'services/api';
@@ -34,6 +35,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'name',
         key: V1GetModelsRequestSortBy.NAME,
+        render: modelNameRenderer,
         sorter: true,
         title: 'Model name',
       },
@@ -47,6 +49,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+        render: relativeTimeRenderer,
         sorter: true,
         title: 'Last updated',
       },

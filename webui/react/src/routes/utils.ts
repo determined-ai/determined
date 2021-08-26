@@ -209,6 +209,12 @@ export const paths = {
   masterLogs: (): string => {
     return '/logs';
   },
+  modelDetails: (modelId: number | string): string => {
+    return `/models/${modelId}`;
+  },
+  modelList: (): string => {
+    return '/models';
+  },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },

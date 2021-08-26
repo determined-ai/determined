@@ -11,6 +11,7 @@ import { paths } from 'routes/utils';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
+  ModelItem,
   Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { ConditionalWrapper } from 'utils/react';
@@ -152,6 +153,12 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   return record.progress ? <ProgressBar
     percent={record.progress * 100}
     state={record.state} /> : null;
+};
+
+/* Model Table Column Renderers */
+
+export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
+  return <Link path={paths.modelDetails(0)}>{value === undefined ? '' : value}</Link>;
 };
 
 /* Table Helper Functions */
