@@ -106,6 +106,13 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
   | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED'>;
 }
 
+export interface GetModelsParams extends PaginationParams {
+  description?: string;
+  name?: string;
+  sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'
+  | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME';
+}
+
 export interface CreateExperimentParams {
   experimentConfig: string;
   parentId: number;

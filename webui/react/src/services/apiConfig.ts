@@ -21,6 +21,7 @@ export const detApi = {
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
+  Models: new Api.ModelsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
@@ -378,6 +379,32 @@ export const getTrialDetails: Service.DetApi<
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+};
+
+/* Models */
+
+export const getModels: DetApi<GetModelsParams, Api.V1GetModelsResponse, ModelPagination> = {
+  name: 'getModels',
+  postProcess: (response) => {
+    return {
+      models: (response.models || []).map(model => decoder.mapV1Model(model)),
+      pagination: response.pagination || {
+        endIndex: 0,
+        limit: 0,
+        offset: 0,
+        startIndex: 0,
+        total: 0,
+      },
+    };
+  },
+  request: (params: GetModelsParams) => detApi.Models.determinedGetModels(
+    params.sortBy,
+    params.orderBy,
+    params.offset,
+    params.limit,
+    params.name,
+    params.description,
+  ),
 };
 
 /* Tasks */

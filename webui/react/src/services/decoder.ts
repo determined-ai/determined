@@ -159,6 +159,16 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
 };
 
+export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
+  return {
+    creationTime: model.creationTime as unknown as string,
+    description: model.description,
+    lastUpdatedTime: model.lastUpdatedTime as unknown as string,
+    metadata: model.metadata,
+    name: model.name,
+  };
+};
+
 const ioToHyperparametereter = (
   io: ioTypes.ioTypeHyperparameter,
 ): types.Hyperparameter => {

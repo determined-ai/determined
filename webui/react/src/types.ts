@@ -474,6 +474,18 @@ export enum ExperimentVisualizationType {
   LearningCurve = 'learning-curve',
 }
 
+export interface ModelItem {
+  creationTime: string;
+  description?: string;
+  lastUpdatedTime: string;
+  metadata: RawJson;
+  name: string;
+}
+
+export interface ModelPagination extends WithPagination {
+  models: ModelItem[];
+}
+
 export interface Task {
   id: string;
   name: string;

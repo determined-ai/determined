@@ -132,6 +132,12 @@ export const getExperimentLabels = generateDetApi<
   Service.EmptyParams, Api.V1GetExperimentLabelsResponse, string[]
 >(Config.getExperimentLabels);
 
+/* Models */
+
+export const getModels = generateDetApi<
+  GetModelsParams, Api.V1GetModelsResponse, ModelPagination
+>(Config.getModels);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
