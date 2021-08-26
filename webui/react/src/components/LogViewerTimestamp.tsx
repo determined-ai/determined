@@ -41,6 +41,7 @@ interface Props {
 export const TAIL_SIZE = 100;
 
 const THROTTLE_TIME = 500;
+const PADDING = 8;
 
 enum DIRECTIONS {
   TOP_TO_BOTTOM, // show oldest logs and infinite-scroll newest ones at the bottom
@@ -164,20 +165,18 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const getItemHeight = useCallback((index: number): number => {
     const log = logs[index];
-    if (!log) {
-      return charMeasures.height;
-    }
+    if (!log) return charMeasures.height;
 
     const maxCharPerLine = Math.floor(
       (scroll.viewWidth - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
     );
-
     const lineCount = log.message
       .split('\n')
       .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
       .reduce((acc, count) => acc + count, 0);
+    const itemHeight = lineCount * charMeasures.height;
 
-    return lineCount * charMeasures.height;
+    return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
   }, [ charMeasures, dateTimeWidth, logs, scroll.viewWidth ]);
 
   const handleCopyToClipboard = useCallback(async () => {
@@ -394,9 +393,13 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const enableTailingClasses = [ css.enableTailing ];
   if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
 
-  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
-    return <LogViewerEntry style={style} timeStyle={{ width: dateTimeWidth }} {...data[index]} />;
-  }, [ dateTimeWidth ]);
+  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => (
+    <LogViewerEntry
+      style={{ ...style, paddingTop: index === 0 ? PADDING : 0 }}
+      timeStyle={{ width: dateTimeWidth }}
+      {...data[index]}
+    />
+  ), [ dateTimeWidth ]);
 
   return (
     <Section
