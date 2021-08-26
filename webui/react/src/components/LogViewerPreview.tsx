@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import { Dayjs } from 'dayjs';
 import React, { PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 import { debounce } from 'throttle-debounce';
@@ -38,7 +39,7 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   const charMeasures = useGetCharMeasureInContainer(containerRef);
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
 
-  if (hidePreview) classes.push(css.hidePreview);
+  if (hidePreview || !logEntry) classes.push(css.hidePreview);
 
   const setupFetch = useCallback(() => {
     const filters = {};
@@ -79,13 +80,15 @@ const LogViewerPreview: React.FC<PropsWithChildren<Props>> = ({
   return (
     <div className={classes.join(' ')}>
       {children}
-      <div className={css.preview} onClick={handleClick}>
-        <div className={css.container} ref={containerRef}>
-          {logEntry && (
-            <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
-          )}
+      <Tooltip mouseEnterDelay={0.25} title="View Logs">
+        <div className={css.preview} onClick={handleClick}>
+          <div className={css.container} ref={containerRef}>
+            {logEntry && (
+              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
+            )}
+          </div>
         </div>
-      </div>
+      </Tooltip>
     </div>
   );
 };

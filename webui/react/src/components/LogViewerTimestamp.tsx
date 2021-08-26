@@ -204,7 +204,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const handleEnableTailing = useCallback(() => {
     setDirection(DIRECTIONS.BOTTOM_TO_TOP);
-    listRef.current?.scrollToItem(logs.length);
+    listRef.current?.scrollToItem(logs.length + 1, 'end');
   }, [ listRef, logs.length ]);
 
   const handleFullScreen = useCallback(() => {
@@ -215,7 +215,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     setDirection(DIRECTIONS.TOP_TO_BOTTOM);
   }, []);
 
-  const onItemsRendered = useCallback((
+  const handleItemsRendered = useCallback((
     { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
   ) => {
     setIsOnBottom(visibleStopIndex === (logs.length - 1));
@@ -353,7 +353,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (!listRef.current) return;
     if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
 
-    listRef.current.scrollToItem(logs.length);
+    listRef.current.scrollToItem(logs.length + 1, 'end');
   }, [ direction, isOnBottom, listRef, logs ]);
 
   /*
@@ -400,7 +400,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   return (
     <Section
-      bodyBorder
       bodyNoPadding
       bodyScroll
       filters={FilterComponent && <FilterComponent
@@ -420,7 +419,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
             itemSize={getItemHeight}
             ref={listRef}
             width="100%"
-            onItemsRendered={onItemsRendered}>
+            onItemsRendered={handleItemsRendered}>
             {LogViewerRow}
           </VariableSizeList>
         </div>
