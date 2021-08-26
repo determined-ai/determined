@@ -41,6 +41,8 @@ interface ModalHooks {
   showModal: (props: ShowProps) => void;
 }
 
+const PADDING = 8;
+
 const getExperimentName = (config: RawJson) => {
   return config.name || '';
 };
@@ -249,6 +251,7 @@ const useCreateExperimentModal = (): ModalHooks => {
               language="yaml"
               options={{
                 minimap: { enabled: false },
+                padding: { bottom: PADDING, top: PADDING },
                 scrollBeyondLastLine: false,
                 selectOnLineNumbers: true,
               }}

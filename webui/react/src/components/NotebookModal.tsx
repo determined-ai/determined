@@ -21,6 +21,7 @@ const { Item } = Form;
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 const DEFAULT_SLOT_COUNT = 1;
+const PADDING = 8;
 
 type DispatchFunction =
   (Dispatch<{
@@ -205,6 +206,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
             language="yaml"
             options={{
               minimap: { enabled: false },
+              padding: { bottom: PADDING, top: PADDING },
               scrollBeyondLastLine: false,
               selectOnLineNumbers: true,
               wordWrap: 'on',
