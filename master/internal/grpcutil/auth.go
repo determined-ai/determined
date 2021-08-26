@@ -32,9 +32,7 @@ var unauthenticatedMethods = map[string]bool{
 	"/determined.api.v1.Determined/GetTelemetry": true,
 }
 
-var adminMethods = map[string]bool{
-	"/determined.api.v1.Determined/DeleteExperiment": true,
-}
+var adminMethods = map[string]bool{}
 
 var (
 	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
