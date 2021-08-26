@@ -121,7 +121,7 @@ Command = namedtuple(
 
 
 @authentication.required
-def list(args: Namespace) -> None:
+def list_tasks(args: Namespace) -> None:
     api_path = RemoteTaskNewAPIs[args._command]
     api_full_path = "api/v1/{}".format(api_path)
     table_header = RemoteTaskListTableHeaders[args._command]
@@ -146,17 +146,17 @@ def list(args: Namespace) -> None:
 
 @authentication.required
 def kill(args: Namespace) -> None:
-    ids = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+    task_ids = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
     name = RemoteTaskName[args._command]
 
-    for i, id in enumerate(ids):
+    for i, task_id in enumerate(task_ids):
         try:
-            api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[args._command], id)
+            api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[args._command], task_id)
             api.post(args.master, api_full_path)
-            print(colored("Killed {} {}".format(name, id), "green"))
+            print(colored("Killed {} {}".format(name, task_id), "green"))
         except api.errors.APIException as e:
             if not args.force:
-                for ignored in ids[i + 1 :]:
+                for ignored in task_ids[i + 1 :]:
                     print("Cowardly not killing {}".format(ignored))
                 raise e
             print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
@@ -164,13 +164,15 @@ def kill(args: Namespace) -> None:
 
 @authentication.required
 def set_priority(args: Namespace) -> None:
-    id = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
+    task_id = RemoteTaskGetIDsFunc[args._command](args)  # type: ignore
     name = RemoteTaskName[args._command]
 
     try:
-        api_full_path = "api/v1/{}/{}/set_priority".format(RemoteTaskNewAPIs[args._command], id)
+        api_full_path = "api/v1/{}/{}/set_priority".format(
+            RemoteTaskNewAPIs[args._command], task_id
+        )
         api.post(args.master, api_full_path, {"priority": args.priority})
-        print(colored("Set priority of {} {} to {}".format(name, id, args.priority), "green"))
+        print(colored("Set priority of {} {} to {}".format(name, task_id, args.priority), "green"))
     except api.errors.APIException as e:
         print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
 

@@ -47,15 +47,15 @@ class Workload:
         return self.__dict__
 
     @staticmethod
-    def from_json(dict: Dict[str, Any]) -> "Workload":
-        check.check_in(dict["kind"], Workload.Kind.__members__)
+    def from_json(data: Dict[str, Any]) -> "Workload":
+        check.check_in(data["kind"], Workload.Kind.__members__)
         return Workload(
-            Workload.Kind[dict["kind"]],
-            dict["experiment_id"],
-            dict["trial_id"],
-            dict["step_id"],
-            dict["num_batches"],
-            dict["total_batches_processed"],
+            Workload.Kind[data["kind"]],
+            data["experiment_id"],
+            data["trial_id"],
+            data["step_id"],
+            data["num_batches"],
+            data["total_batches_processed"],
         )
 
 

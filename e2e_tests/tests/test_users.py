@@ -356,7 +356,7 @@ def kill_notebooks(*notebook_ids: str) -> None:
         output = extract_columns(det_run(["notebook", "list", "-a"]), [0, 3])  # id, state
 
         # Get set of running IDs.
-        running_ids = {id for id, state in output if state == "RUNNING"}
+        running_ids = {task_id for task_id, state in output if state == "RUNNING"}
 
         intersection = running_ids & nids
         if not intersection:
@@ -376,7 +376,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
     while tids:
         output = extract_columns(det_run(["tensorboard", "list", "-a"]), [0, 3])
 
-        running_ids = {id for id, state in output if state == "RUNNING"}
+        running_ids = {task_id for task_id, state in output if state == "RUNNING"}
 
         intersection = running_ids & tids
         if not intersection:

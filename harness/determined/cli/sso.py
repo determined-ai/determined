@@ -39,7 +39,7 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
                 print("Error authenticating: {}.".format(e))
                 close_cb(1)
 
-        def log_message(self, format: Any, *args: List[Any]) -> None:
+        def log_message(self, format: Any, *args: List[Any]) -> None:  # noqa: A002
             # Silence server logging.
             return
 

@@ -43,7 +43,7 @@ def run_command(args: Namespace) -> None:
 
 args_description = [
     Cmd("command cmd", None, "manage commands", [
-        Cmd("list ls", command.list, "list commands", [
+        Cmd("list ls", command.list_tasks, "list commands", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",

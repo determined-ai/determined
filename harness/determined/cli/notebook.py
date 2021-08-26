@@ -46,7 +46,7 @@ def start_notebook(args: Namespace) -> None:
     with api.ws(args.master, "notebooks/{}/events".format(obj["id"])) as ws:
         for msg in ws:
             if msg["service_ready_event"] and not args.no_browser:
-                url = api.open(args.master, obj["serviceAddress"])
+                url = api.browser_open(args.master, obj["serviceAddress"])
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
             render_event_stream(msg)
 
@@ -55,14 +55,14 @@ def start_notebook(args: Namespace) -> None:
 def open_notebook(args: Namespace) -> None:
     resp = api.get(args.master, "api/v1/notebooks/{}".format(args.notebook_id)).json()["notebook"]
     check_eq(resp["state"], "STATE_RUNNING", "Notebook must be in a running state")
-    api.open(args.master, resp["serviceAddress"])
+    api.browser_open(args.master, resp["serviceAddress"])
 
 
 # fmt: off
 
 args_description = [
     Cmd("notebook", None, "manage notebooks", [
-        Cmd("list ls", command.list, "list notebooks", [
+        Cmd("list ls", command.list_tasks, "list notebooks", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",

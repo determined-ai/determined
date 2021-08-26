@@ -18,12 +18,12 @@ class _CreateExperimentResponse:
             raise ValueError(f'CreateExperimentResponse["experiment"] must be a dict; got {exp}')
         if "id" not in exp:
             raise ValueError(f'CreateExperimentResponse["experiment"] must have an id; got {exp}')
-        id = exp["id"]
-        if not isinstance(id, int):
+        exp_id = exp["id"]
+        if not isinstance(exp_id, int):
             raise ValueError(
-                f'CreateExperimentResponse["experiment"]["id"] must be a int; got {id}'
+                f'CreateExperimentResponse["experiment"]["id"] must be a int; got {exp_id}'
             )
-        self.id = id
+        self.id = exp_id
 
 
 class Determined:

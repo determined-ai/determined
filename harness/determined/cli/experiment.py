@@ -649,7 +649,7 @@ def experiment_id_completer(prefix: str, parsed_args: Namespace, **kwargs: Any) 
     return [str(e["id"]) for e in r.json()]
 
 
-def experiment_id_arg(help: str) -> Arg:
+def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help, completer=experiment_id_completer)
 
 
@@ -709,7 +709,7 @@ args_description = Cmd(
         ),
         Cmd(
             "list-checkpoints lc",
-            checkpoint.list,
+            checkpoint.list_checkpoints,
             "list checkpoints of experiment",
             [
                 experiment_id_arg("experiment ID"),

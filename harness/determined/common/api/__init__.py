@@ -20,7 +20,7 @@ from determined.common.api.request import (
     do_request,
     get,
     make_url,
-    open,
+    browser_open,
     parse_master_address,
     patch,
     post,
