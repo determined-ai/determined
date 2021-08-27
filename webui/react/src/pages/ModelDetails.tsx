@@ -1,6 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import { DownOutlined } from '@ant-design/icons';
+import { Button, Dropdown, Menu } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Icon from 'components/Icon';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -35,6 +38,28 @@ const ModelDetails: React.FC = () => {
 
   usePolling(fetchModel);
 
+  const versionMenu = useMemo(() => {
+    return <Menu>
+      <Menu.Item key={0}>Version 0</Menu.Item>
+    </Menu>;
+  }, []);
+
+  const detailsHeader = useMemo(() => {
+    return <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '100%',
+    }}
+    ><p style={{ margin: 0 }}>Model Details</p>
+      <div style={{ display: 'flex', gap: 4, height: '100%' }}>
+        <Dropdown overlay={versionMenu}>
+          <Button>
+            Version 0 <DownOutlined />
+          </Button>
+        </Dropdown>
+        <Button><Icon name="overflow-horizontal" size="tiny" /></Button></div></div>;
+  }, [ versionMenu ]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (pageError) {
@@ -49,7 +74,13 @@ const ModelDetails: React.FC = () => {
   return (
     <>
       <ModelHeader model={model} />
-      <Page docTitle="Model Details" id="modelDetails" />
+      <Page docTitle="Model Details" id="modelDetails">
+        <Section
+          divider
+          title={detailsHeader}>
+          {''}
+        </Section>
+      </Page>
     </>
   );
 };
