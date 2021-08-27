@@ -4,11 +4,6 @@
 
 .. toctree::
    :maxdepth: 2
+   :glob:
 
-   determined
-   keras
-   estimator
-   pytorch
-   trial_context
-   lightning_adapter
-   client
+   api-*

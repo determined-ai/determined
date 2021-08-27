@@ -5,23 +5,26 @@
 Reference guides are raw technical references for our product. They describe how to use Determined,
 with the assumption you understand key concepts of the product.
 
-**Model Definitions**
-
--  :ref:`tf-keras-trial`
--  :ref:`pytorch-trial`
--  :ref:`estimator-trial`
-
-**Configurations**
-
--  :ref:`experiment-configuration`
--  :ref:`command-notebook-configuration`
--  :ref:`cluster-configuration`
-
-The full list of reference guides can be found below:
+**Model Development**
 
 .. toctree::
    :maxdepth: 1
    :glob:
 
-   api/index
+   api/*
+
+**Cluster**
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   cluster/*
+
+The rest of reference guides can be found below:
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
    *

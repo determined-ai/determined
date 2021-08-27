@@ -8,27 +8,16 @@ how Determined works but address key use-cases. Below you will find some suggest
 
 **Installation**
 
--  :ref:`install-cli`
--  :ref:`install-cluster`
--  :ref:`dynamic-agents-gcp`
--  :ref:`dynamic-agents-aws`
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   installation/*
 
 **Common Workflows**
-
--  :ref:`multi-gpu-training`
--  :ref:`hyperparameter-tuning`
--  :ref:`model-debug`
--  :ref:`how-to-notebooks`
--  :ref:`how-to-tensorboard`
--  :ref:`use-trained-models`
--  :ref:`rest-api-getting-started`
--  :ref:`how-to-profiling`
-
-The full list of our how-to guides can be found below:
 
 .. toctree::
    :maxdepth: 1
    :glob:
 
    *
-   installation/*

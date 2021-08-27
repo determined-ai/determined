@@ -1,8 +1,8 @@
 .. _trial-context:
 
-#########################
- determined.TrialContext
-#########################
+####################################
+ Python API determined.TrialContext
+####################################
 
 The ``TrialContext`` provides useful methods for writing ``Trial`` subclasses. All ``Trial``
 subclasses receive a ``TrialContext`` object as an argument to their ``__init__()`` method:
