@@ -7,9 +7,11 @@
     font-size: var(--theme-sizes-font-large);
     font-weight: 600;
   }
+  .seperator {
+    border-top: 1px solid var(--theme-colors-monochrome-13);
+  }
   .info {
     align-items: center;
-    border-top: 1px solid var(--theme-colors-monochrome-13);
     display: flex;
     padding: var(--theme-sizes-layout-medium) 0;
 
