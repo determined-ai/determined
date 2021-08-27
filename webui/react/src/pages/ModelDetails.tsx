@@ -1,9 +1,11 @@
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Card, Dropdown, Menu } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Grid from 'components/Grid';
 import Icon from 'components/Icon';
+import InfoBox from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -11,6 +13,7 @@ import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { getModel } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
+import { ShirtSize } from 'themes';
 import { ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
@@ -75,11 +78,26 @@ const ModelDetails: React.FC = () => {
     <>
       <ModelHeader model={model} />
       <Page docTitle="Model Details" id="modelDetails">
-        <Section
-          divider
-          title={detailsHeader}>
-          {''}
-        </Section>
+        <div style={{
+          marginLeft: 20,
+          marginRight: 20,
+        }}>
+          <Section
+            divider
+            title={detailsHeader}>
+            <Grid gap={ShirtSize.big}>
+              <Card style={{ gridColumn: '1 / span 2', gridRow: '1 / span 2' }} title="Source">
+                <InfoBox rows={[]} />
+              </Card>
+              <Card title="Validation Metrics">
+                <InfoBox rows={[]} />
+              </Card>
+              <Card title="Metadata">
+                <InfoBox rows={[]} />
+              </Card>
+            </Grid>
+          </Section>
+        </div>
       </Page>
     </>
   );
