@@ -282,7 +282,7 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
      * 2) query settings do not match current settings
      */
     const currentQuery = settingsToQuery(config, settings);
-    if (!isSameQuery(config, location.search, currentQuery)) {
+    if (currentQuery && !isSameQuery(config, location.search, currentQuery)) {
       history.replace(`${location.pathname}?${currentQuery}`);
     } else {
       // Otherwise read settings from the query string.
