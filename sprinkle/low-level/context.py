@@ -31,13 +31,12 @@ Goals for context objects in the Sprinkle API:
 
 # GENERIC CONTEXT
 # Useful for custom workloads and is the basis for the framework contexts.
-context = det.generic.init()  # args similar to Determined() object, for connecting to a master if
-                              # you are running from off-master
 
-# master data: applies to any job running on-cluster or if you logged in at init()
-context.master.addr
-context.master.port
-context.master.tls
+with det.generic.init(
+    rank_info=...,  # provide info from a custom dtrain backend.
+    session=...,  # provide a session() if you are running off-cluster (future enhancement)
+) as context:  # use a contextmanager so we can start/stop off-thread resources (e.g. profiler)
+    ...
 
 # cluster data: applies to any job running on-cluster (is this actually needed anywhere?)
 context._cluster.container_id
@@ -49,21 +48,15 @@ context._cluster.slot_ids
 context.distributed.rank
 context.distributed.size
 context.distributed.local_rank
-context.distributed.num_agents
+context.distributed.local_size
+context.distributed.cross_rank
+context.distributed.cross_size
 # zmq_allgather is used for barriers or metric reducers of various sorts
 # zmq_allgather is more "consistently available" than "performant"
 context.distributed.zmq_allgather(Any) -> List[Any]
 # async allgather needed for distributed preemption
 context.distributed._start_zmq_allgather(Any) -> GatherID
 context.distributed._finish_zmq_allgather(GatherID) -> List[Any]
-
-# rendezvous data: info about machines and IPs that are participating in distributed jobs.
-# This is configured automatically by the rendezvous info layer in Determined, but can also be
-# configured automatically through an environment variable if you want to use Determined's dtrain
-# features outside of Determined.
-context.rendezvous.num_nodes
-context.rendezvous.node_rank
-context.rendezvous.slots_per_node
 
 # training-related data; only applies to `det e create` workloads
 context.training.experiment_config

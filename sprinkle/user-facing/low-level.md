@@ -127,7 +127,7 @@ BATCH_SIZE=32
 LR=0.00001
 EPOCHS=50
 
-if __name__ == "__main__":
+def main():
     model, loss_fn, opt = build_model(LR)
     train_data, eval_data = build_dataset(BATCH_SIZE)
 
@@ -143,6 +143,10 @@ if __name__ == "__main__":
     # checkpoint model
     path="checkpoint_dir/my_checkpoint"
     torch.save(model.state_dict(), path)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 At this point, by simply submitting your script to the cluster, you already
@@ -203,7 +207,7 @@ Let's look at how to get the following API features:
 
 All you have to do is:
 
-* [x] Initialize a Generic API context: `context = det.generic.init()`
+* [x] Initialize a Generic API context: `with det.generic.init() as context:`
 * [x] Report training metrics: `context.training.report_training_metrics()`
 * [x] Report validation metrics: `context.training.report_validation_metrics()`
 * [x] Report checkpoints to the Checkpoint API: `with
@@ -226,11 +230,8 @@ this demo.
     LR=0.00001
     EPOCHS=50
 
-    if __name__ == "__main__":
-+       # initialize a context object for accessing the Generic API
-+       import determined
-+       context = det.generic.init()
-
+-   def main():
++   def main(context):
         model, loss_fn, opt = build_model(LR)
         train_data, eval_data = build_dataset(BATCH_SIZE)
 
@@ -264,6 +265,13 @@ this demo.
 -       torch.save(model.state_dict(), path)
 +       with context.checkpoint.save_path() as path:
 +           torch.save(model.state_dict(), f"{path]/my_checkpoint")
+
+    if __name__ == "__main__":
+-       main()
++       # initialize a context object for accessing the Generic API
++       import determined as det
++       with det.generic.init() as context:
++           main(context)
 ```
 
 ### Updates to `my_config.yaml`
@@ -321,11 +329,7 @@ for model definitions, including:
 -   LR=0.00001
 -   EPOCHS=50
 
-    if __name__ == "__main__":
-        # initialize a context object for accessing the Generic API
-        import determined
-        context = det.generic.init()
-
+    def main(context):
 +       # seed RNGs based on context-provided seed
 +       seed = context.training.trial_seed
 +       random.seed(seed)
@@ -365,6 +369,12 @@ for model definitions, including:
         # checkpoint model
         with context.checkpoint.save_path() as path:
             torch.save(model.state_dict(), f"{path]/my_checkpoint")
+
+    if __name__ == "__main__":
+        # initialize a context object for accessing the Generic API
+        import determined as det
+        with det.generic.init() as context:
+            main(context)
 ```
 
 

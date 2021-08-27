@@ -23,11 +23,11 @@ trainer.train() (a pattern we refer to as "trainer APIs").
 ## Checklist
 
 * [x] Start by organizing your code into a PyTorchTrial (as usual).
-* [x] Get a pytorch context object with `context = det.pytorch.init()`
-* [x] Create your trial class with `trial = context.build_trial(MyTrialClass)`
-* [x] Invoke training with `context.fit(trial, ...)`
-* [x] Optionally you can override the your trial's data loaders with arguments
-      to `context.fit()`
+* [x] Open a trainer with `with det.pytorch.trainer() as trainer:`
+* [x] Create your trial class with `trial = trainer.build_trial(MyTrialClass)`
+* [x] Invoke training with `trainer.fit(trial, ...)`
+* [x] Optionally you can override your trial's data loaders with arguments
+      to `trainer.fit()`
 
 ## Training Example
 
@@ -61,7 +61,6 @@ class OnesDataset(torch.utils.data.Dataset):
 
 class OneVarPytorchTrial(det.pytorch.PyTorchTrial):
     def __init__(self, context):
-        # Watch out! This is a trial context, not a trainer context like below!
         self.context = context
 
         # Wrap any models with context.wrap_model()
@@ -98,47 +97,51 @@ class OneVarPytorchTrial(det.pytorch.PyTorchTrial):
     # you can also define build_training_data_loader() or
     # build_validation_data_loader() as methods of your PyTorchTrial,
     # but in this example we show how to pass the data loaders in via
-    # the trainer API.
+    # the trainer API instead.
 
 ## Training script ##
 
 if __name__ == "__main__":
 
-    # Watch out! This is a trainer context, not a trial context like above!
-    # (this step will also initialize random seeds automatically)
-    context = det.pytorch.init()
+    # Open a PyTorchTrainer object.
+    with det.pytorch.trainer() as trainer:
+        # Access your hparams from the trainer.
+        hparams = trainer.hparams
+        global_batch_size = hparams["global_batch_size"]
 
-    # Access your hparams from the trainer context.
-    hparams = context.training.hparams
-    global_batch_size = context.training.hparams["global_batch_size"]
+        # Optional for distributed training: cacluate this worker's
+        # batch_size so that the effective batch_size across all workers
+        # remains constant.  If you choose not to use this, the
+        # effective batch_size will be multiplied by the number slots_per_trial.
+        batch_size = trainer.distributed.shard_batch_size(global_batch_size)
 
-    # Optional for distributed training: cacluate this worker's
-    # batch_size so that the effective batch_size across all workers
-    # remains constant.  If you choose not to use this, the
-    # effective batch_size will be multiplied by the number slots_per_trial.
-    batch_size = context.distributed.shard_batch_size(global_batch_size)
+        # det.pytorch.DataLoader is a drop-in replacement for
+        # torch.utils.data.DataLoader for non-iterable Datasets.
+        train_data = det.pytorch.DataLoader(OnesDataset(), batch_size)
+        val_data = det.pytorch.DataLoader(OnesDataset(), batch_size)
 
-    # det.pytorch.DataLoader is a drop-in replacement for
-    # torch.utils.data.DataLoader for non-iterable Datasets.
-    train_data = det.pytorch.DataLoader(OnesDataset(), batch_size)
-    val_data = det.pytorch.DataLoader(OnesDataset(), batch_size)
+        # Create your Trial class.
+        my_trial = trainer.build_trial(OneVarTrial)
 
-    # Create your Trial class.
-    my_trial = context.build_trial(OneVarPytorchTrial)
+        # now train your Trial class!
+        trainer.fit(
+            my_trial,
 
-    # now train your Trial class!
-    metrics = context.train(
-        my_trial,
-        train_data,
-        val_data,
+            # you may override certain parts of the PyTorchTrial here:
+            train_data=train_data,
+            val_data=val_data,
+            callbacks=...
 
-        # configure the trainer's behavior settings
-        min_validation_period=det.Epochs(1),
-        min_checkpoint_period=det.Epochs(1),
+            # many fit-related options are moving here from the exp conf
+            searcher_metric_name=...
+            averaging_training_metrics_enabled=...
+            aggregation_frequenct=...
+            gradient_compression=...
+            grad_updates_size_file=...
 
-        # ignored by cluster training, but honored used when training locally
-        max_length=det.Epochs(10),
-    )
+            # ignored by cluster training, but honored when training locally
+            max_length=det.Epochs(10),
+        )
 ```
 
 ### Configure and Run Training
@@ -169,9 +172,9 @@ det experiment create const.yaml .
 
 Batch Inference is just like training with a couple minor differences:
 
-* You launch it as a generic job (not as a training experient), i.e. `det job
+* You launch it as a generic task (not as a training experient), i.e. `det task
 run ...`
-* `context.training` is not available (since you are not training)
+* `trainer.hparams` is empty (since it is not a training job)
 * There is no fancy tracking or visualizations of batch inference (yet).
 
 ```python
@@ -185,26 +188,25 @@ from torch import nn
 import determined as det
 import determined.pytorch
 
-context = det.pytorch.init()
+with det.pytorch.trainer() as trainer:
+    # you can access values from your config's .data field
+    # which is just a dictionary of arbitrary user data
+    trial_id = trainer.config_data["trial_id"]
 
-# you can access values from your config's .data field
-# which is just a dictionary of arbitrary user data
-trial_id = context.config_data["trial_id"]
+    # load a trial from a checkpoint
+    my_trial = trainer.load_checkpoint_trial(OneVarPytorchTrial, trial_id=trial_id)
 
-# load a trial from a checkpoint
-my_trial = context.load_checkpoint_trial(OneVarPytorchTrial, trial_id=trial_id)
+    # You are still free to shard your batch_size but since we are not training
+    # there isn't any particular need to.
+    batch_size = trainer.config_data["batch_size"]
 
-# You are still free to shard your batch_size but since we are not training
-# there isn't any particular need to.
-batch_size = context.config_data["batch_size"]
+    # build a dataset, same as for training
+    pred_data = det.pytorch.DataLoader(OnesDataset(), batch_size=batch_size)
 
-# build a dataset, same as for training
-pred_data = det.pytorch.DataLoader(OnesDataset(), batch_size=batch_size)
+    predictions = trainer.predict(my_trial, pred_data)
 
-predictions = context.predict(my_trial, pred_data)
-
-# you'll want to upload your predictions to somewhere persistent
-my_upload_fn(predictions)
+    # you'll want to upload your predictions to somewhere persistent
+    my_upload_fn(predictions)
 ```
 
 ### Configure and Run Batch Inference
@@ -222,11 +224,11 @@ resources:
     slots: 8
 ```
 
-Launching is similar to creating experiments, but uses `det job run` instead of
+Launching is similar to creating experiments, but uses `det task run` instead of
 `det experiment create`
 
 ```sh
-det job run batch_inference.yaml .
+det task run batch_inference.yaml .
 ```
 
 ## PyTorchTrial API Reference

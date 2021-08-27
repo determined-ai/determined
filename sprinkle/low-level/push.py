@@ -6,37 +6,30 @@ training.  Advanced features like preemption and hpsearch should also be possibl
 be necessary to deliver basic features.
 """
 
-# Training metrics
-context.training.begin_training()  # optional call, improves webui experience
+# Training-related APIs
+context.training.set_status()  # optional call, improves webui experience
+context.training.get_last_validation()  # for if you checkpoint-then-validate
 context.training.report_training_metrics(
     # rest api details
-    metrics=...         # optional: reduced metrics, shown in webui
+    latest_batch=...    # x-axis for metrics
+    metrics=...         # reduced metrics, shown in webui
     batch_metrics=...   # optional: accessible via python sdk
-    batches_trained=... # optional: epochs/batches/shows in webui
-    records_trained=... # optional: shows in webui
-    start_time=...      # optional: shows in webui
-    end_time=...        # optional: shows in webui
 
     # python-api details
     reducer=...         # optional: for assisted metric reduction across workers
 )
-
-# Validation metrics
-context.training.begin_validation()  # optional call, improves webui experience
 context.training.report_validation_metrics(
-    metrics=...       # required: reduced metrics, shown in webui
-    start_time=...    # optional: shows in webui
-    end_time=...      # optional: shows in webui
+    latest_batch=...    # x-axis for metrics
+    metrics=...         # reduced metrics, shown in webui
+    batch_metrics=...   # optional: accessible via python sdk
 
     # python-api details
     reducer=...         # optional: for assisted metric reduction across workers
 )
+context.training.report_early_exit()  # currently, only INVALID_HP is really necessary
+context.training.get_experiment_best_validation()  # For implementing save_experiment_best:
 
-# For implementing save_experiment_best:
-context.training.get_experiment_best_validation()
-
-# Checkpoints
-context.api._begin_checkpoint()                             # non-user-facing call
+# Checkpointing-related APIs
 context.api._report_checkpoint(uuid, start_time, end_time)  # non-user-facing call
 # user-facing API, just wraps the StorageManagers:
 with context.checkpoint.save_path() as path:
@@ -134,7 +127,7 @@ for op in advanced_searcher.ops():
     def epoch_end_cb():
         nonlocal epochs_complete
         epochs_complete += 1
-        advanced_searcher.report_searcher_progress(epochs_complete)
+        op.report_progress(epochs_complete)
 
     do_training(length=op.epochs, cb=epoch_end_cb)
 
