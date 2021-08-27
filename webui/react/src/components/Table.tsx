@@ -158,7 +158,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 /* Model Table Column Renderers */
 
 export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
-  return <Link path={paths.modelDetails(0)}>{value === undefined ? '' : value}</Link>;
+  return <Link path={paths.modelDetails(0)}>{value}</Link>;
 };
 
 /* Table Helper Functions */
