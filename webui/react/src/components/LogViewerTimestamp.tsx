@@ -1,8 +1,10 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import queryString from 'query-string';
 import React, {
   Reducer, useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState,
 } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
 } from 'react-window';
@@ -71,6 +73,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   const listRef = useRef<VariableSizeList>(null);
   const listOffset = useRef<number>(0);
 
+  const location = useLocation();
   const charMeasures = useGetCharMeasureInContainer(containerRef);
   const containerSize = useResize(containerRef);
 
@@ -349,6 +352,19 @@ const LogViewerTimestamp: React.FC<Props> = ({
       throttleFunc.cancel();
     };
   }, [ addLogs, direction, fetchToLogConverter, filter, onFetchLogTail ]);
+
+  /*
+   * If query param `tail` is set, enable tailing behavior.
+   */
+  useEffect(() => {
+    const { tail } = queryString.parse(location.search);
+    if (tail !== undefined) {
+      setDirection(Direction.BottomToTop);
+      setTimeout(() => {
+        listRef.current?.scrollToItem(logs.length, 'end');
+      }, 0);
+    }
+  }, [ location.search, logs.length ]);
 
   /*
    * Automatically scroll to log tail (if tailing).

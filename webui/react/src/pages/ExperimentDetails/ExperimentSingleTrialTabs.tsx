@@ -118,8 +118,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   }, [ basePath, history ]);
 
   const handleViewLogs = useCallback(() => {
-    handleTabChange(TabType.Logs);
-  }, [ handleTabChange ]);
+    setTabKey(TabType.Logs);
+    history.replace(`${basePath}/${TabType.Logs}?tail`);
+  }, [ basePath, history ]);
 
   // Sets the default sub route.
   useEffect(() => {

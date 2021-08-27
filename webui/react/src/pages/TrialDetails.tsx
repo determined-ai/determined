@@ -123,8 +123,9 @@ const TrialDetailsComp: React.FC = () => {
   }, [ basePath, history ]);
 
   const handleViewLogs = useCallback(() => {
-    handleTabChange(TabType.Logs);
-  }, [ handleTabChange ]);
+    setTabKey(TabType.Logs);
+    history.replace(`${basePath}/${TabType.Logs}?tail`);
+  }, [ basePath, history ]);
 
   const { stopPolling } = usePolling(fetchTrialDetails);
 
