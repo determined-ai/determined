@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import Message, { MessageType } from 'components/Message';
@@ -47,9 +47,10 @@ const ModelDetails: React.FC = () => {
   }
 
   return (
-    <Page docTitle="Model Details" id="modelDetails">
+    <>
       <ModelHeader model={model} />
-    </Page>
+      <Page docTitle="Model Details" id="modelDetails" />
+    </>
   );
 };
 
