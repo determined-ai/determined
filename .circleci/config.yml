@@ -1117,20 +1117,6 @@ jobs:
       - run: make -C webui/tests get-deps
       - run: make -C webui/tests check
 
-  build-react-preview:
-    docker:
-      - image: cimg/node:12.16
-    environment:
-      PUBLIC_URL: /0
-      SERVER_ADDRESS: https://detai.ml/fixed
-    steps:
-      - checkout
-      - react-get-deps
-      - run: make -C webui/react build
-      - store_artifacts:
-          path: webui/react/build
-          destination: /
-
   build-react:
     parameters:
       dev-mode:
@@ -1790,9 +1776,6 @@ workflows:
       - build-bindings:
           requires:
             - build-proto
-      - build-react-preview:
-          requires:
-            - build-bindings
       - build-react:
           dev-mode: true
           requires:
