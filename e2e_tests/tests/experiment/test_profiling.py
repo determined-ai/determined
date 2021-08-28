@@ -164,7 +164,8 @@ def request_profiling_pytorch_timing_metrics(
         if not all(x + 1 == y for x, y in zip(batches, batches[1:])):
             pytest.fail(f"skips in batches sampled: {batch}")
 
-        if accumulated and all(x < y for x, y in zip(values, values[1:])):
+        # 10 is just a threshold at which it would be really strange for a batch to be monotonic.
+        if accumulated and len(values) > 10 and all(x < y for x, y in zip(values, values[1:])):
             pytest.fail(
                 f"per batch accumulated metric was monotonic, which is really fishy: {batch}"
             )
