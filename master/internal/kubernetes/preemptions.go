@@ -62,7 +62,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
 		metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
-		ctx.Log().WithError(err).Error(
+		ctx.Log().WithError(err).Warnf(
 			"error in initializing preemption listener: checking for pods to preempt",
 		)
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
@@ -80,7 +80,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 		},
 	})
 	if err != nil {
-		ctx.Log().WithError(err).Error("error initializing preemption watch")
+		ctx.Log().WithError(err).Warnf("error initializing preemption watch")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
 		return
 	}

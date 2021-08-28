@@ -70,7 +70,7 @@ func (i *informer) Receive(ctx *actor.Context) error {
 func (i *informer) startInformer(ctx *actor.Context) {
 	pods, err := i.podInterface.List(metaV1.ListOptions{LabelSelector: determinedLabel})
 	if err != nil {
-		ctx.Log().WithError(err).Error("error retrieving internal resource version")
+		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startInformer{})
 		return
 	}
@@ -81,7 +81,7 @@ func (i *informer) startInformer(ctx *actor.Context) {
 		},
 	})
 	if err != nil {
-		ctx.Log().WithError(err).Error("error initializing pod retry watcher")
+		ctx.Log().WithError(err).Warnf("error initializing pod retry watcher")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startInformer{})
 		return
 	}
@@ -89,13 +89,13 @@ func (i *informer) startInformer(ctx *actor.Context) {
 	ctx.Log().Info("pod informer is starting")
 	for event := range rw.ResultChan() {
 		if event.Type == watch.Error {
-			ctx.Log().Errorf("pod informer emitted error %+v", event)
+			ctx.Log().Warnf("pod informer emitted error %+v", event)
 			continue
 		}
 
 		pod, ok := event.Object.(*k8sV1.Pod)
 		if !ok {
-			ctx.Log().Errorf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+			ctx.Log().Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
 			continue
 		}
 

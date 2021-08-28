@@ -65,7 +65,7 @@ func (e *eventListener) Receive(ctx *actor.Context) error {
 func (e *eventListener) startEventListener(ctx *actor.Context) {
 	events, err := e.clientSet.CoreV1().Events(e.namespace).List(metaV1.ListOptions{})
 	if err != nil {
-		ctx.Log().WithError(err).Error("error retrieving internal resource version")
+		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startEventListener{})
 		return
 	}
@@ -76,7 +76,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 		},
 	})
 	if err != nil {
-		ctx.Log().WithError(err).Error("error initializing event retry watcher")
+		ctx.Log().WithError(err).Warnf("error initializing event retry watcher")
 		actors.NotifyAfter(ctx, defaultInformerBackoff, startEventListener{})
 		return
 	}

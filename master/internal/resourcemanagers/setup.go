@@ -105,7 +105,7 @@ func setupKubernetesResourceManager(
 	loggingConfig model.LoggingConfig,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
-		actor.Addr(sproto.K8sRMAddr),
+		sproto.K8sRMAddr,
 		newKubernetesResourceManager(config, echo, masterTLSConfig, loggingConfig),
 	)
 	system.Ask(ref, actor.Ping{}).Get()
