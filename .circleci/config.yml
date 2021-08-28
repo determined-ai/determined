@@ -1105,6 +1105,24 @@ jobs:
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
+      - run-e2e-webui-tests
       - dump-local-cluster-logs
       - store_test_results:
           path: webui/tests/reports/xml-report/
