@@ -85,17 +85,19 @@ const ModelDetails: React.FC = () => {
           <Section
             divider
             title={detailsHeader}>
-            <Grid gap={ShirtSize.big}>
-              <Card style={{ gridColumn: '1 / span 2', gridRow: '1 / span 2' }} title="Source">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+              <Card style={{ flexBasis: '66%' }} title="Source">
                 <InfoBox rows={[]} />
               </Card>
-              <Card title="Validation Metrics">
-                <InfoBox rows={[]} />
-              </Card>
-              <Card title="Metadata">
-                <InfoBox rows={[]} />
-              </Card>
-            </Grid>
+              <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, gap: 18 }}>
+                <Card title="Validation Metrics">
+                  <InfoBox rows={[]} />
+                </Card>
+                <Card title="Metadata">
+                  <InfoBox rows={[]} />
+                </Card>
+              </div>
+            </div>
           </Section>
         </div>
       </Page>
