@@ -3,7 +3,6 @@ import { Button, Card, Dropdown, Menu } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import InfoBox from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
@@ -13,10 +12,10 @@ import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { getModel } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
-import { ShirtSize } from 'themes';
 import { ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
+import CollapsableCard from './ModelDetails/CollapsableCard';
 import ModelHeader from './ModelDetails/ModelHeader';
 
 interface Params {
@@ -63,6 +62,12 @@ const ModelDetails: React.FC = () => {
         <Button><Icon name="overflow-horizontal" size="tiny" /></Button></div></div>;
   }, [ versionMenu ]);
 
+  const metadata = useMemo(() => {
+    return Object.entries(model?.metadata || {}).map((pair) => {
+      return ({ content: pair[1], label: pair[0] });
+    });
+  }, [ model?. metadata ]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (pageError) {
@@ -79,9 +84,15 @@ const ModelDetails: React.FC = () => {
       <ModelHeader model={model} />
       <Page docTitle="Model Details" id="modelDetails">
         <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
           marginLeft: 20,
           marginRight: 20,
         }}>
+          <CollapsableCard title={'Metadata'}>
+            <InfoBox rows={metadata} />
+          </CollapsableCard>
           <Section
             divider
             title={detailsHeader}>
