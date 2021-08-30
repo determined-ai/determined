@@ -1,0 +1,12 @@
+:orphan:
+
+**Fixes**
+
+-  Include ``maxval`` in ``int``-type hyperparameter ranges. Previously, the docs said that the
+   endpoints of the hyperparameter were both inclusive, but in reality the upper limit ``maxval``
+   was never actually selected for any trials.
+
+-  **Breaking Change** The reproducibility of hyperparameter selection may differ between Determined
+   v0.16.5 and v0.17.0 for hyperparameter searches containing ``int``-type hyperparameters, due to
+   the above-mentioned fix. However, the reproducibility of model training for any given set of
+   pre-chosen hyperparameters should be unaffected.

@@ -36,7 +36,7 @@ func sampleOne(h expconf.Hyperparameter, rand *nprand.State) interface{} {
 		return p.Val()
 	case h.RawIntHyperparameter != nil:
 		p := h.RawIntHyperparameter
-		return p.Minval() + rand.Intn(p.Maxval()-p.Minval())
+		return p.Minval() + rand.Intn(p.Maxval()-p.Minval()+1)
 	case h.RawDoubleHyperparameter != nil:
 		p := h.RawDoubleHyperparameter
 		return rand.Uniform(p.Minval(), p.Maxval())
