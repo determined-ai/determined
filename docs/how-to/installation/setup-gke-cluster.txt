@@ -11,8 +11,8 @@ node that will host the Determined master and database, and an autoscaling group
 creating a suitable GKE cluster, you can then proceed with the standard :ref:`instructions for
 installing Determined on Kubernetes <install-on-kubernetes>`.
 
-Determined requires the Kubernetes cluster to be running version >= 1.15 and to have GPU-enabled
-nodes.
+Determined requires GPU-enabled nodes and the Kubernetes cluster to be running version >= 1.19 and
+<= 1.21, though later versions may work.
 
 ***************
  Prerequisites

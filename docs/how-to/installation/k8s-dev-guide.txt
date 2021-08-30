@@ -9,8 +9,9 @@
 ***************
 
 Before setting up Determined Master, the user should set up a Kubernetes cluster with GPU enabled
-nodes and Kubernetes version 1.15 or later. You can setup Kubernetes manually, or you can use a
-managed Kubernetes service such as :ref:`GKE <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
+nodes and Kubernetes version >= 1.19 and <= 1.21, though later versions may work. You can setup
+Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
+<setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
 **************************************
  Setting up a Development Environment

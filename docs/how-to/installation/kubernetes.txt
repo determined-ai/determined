@@ -5,7 +5,7 @@
 ##################################
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`__. The
-installation is performed using the :download:`Determined Helm Chart </helm/determined-0.5.0.tgz>`.
+installation is performed using the :download:`Determined Helm Chart </helm/determined-latest.tgz>`.
 For general information about using Determined with Kubernetes, refer the
 :ref:`determined-on-kubernetes` guide.
 
@@ -16,7 +16,8 @@ For general information about using Determined with Kubernetes, refer the
 Before installing Determined on a Kubernetes cluster, please ensure that the following prerequisites
 are satisfied:
 
--  The Kubernetes cluster should be running Kubernetes >= 1.15
+-  The Kubernetes cluster should be running Kubernetes versoin >= 1.19 and <= 1.21, though later
+   versions may work.
 
 -  You should have access to the cluster via `kubectl
    <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
@@ -34,7 +35,7 @@ are satisfied:
    <https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/>`_ enabled.
 
 You should also download a copy of the :download:`Determined Helm Chart
-</helm/determined-0.5.0.tgz>` and extract it on your local machine.
+</helm/determined-latest.tgz>` and extract it on your local machine.
 
 If you do not yet have a Kubernetes cluster deployed and you want to use Determined in a public
 cloud environment, we recommend using a managed Kubernetes offering such as `Google Kubernetes
@@ -353,11 +354,11 @@ ready to be installed. To install Determined run:
    helm install <name for your deployment> determined-helm-chart
 
 ``determined-helm-chart`` is a relative path to where the :download:`Determined Helm Chart
-</helm/determined-0.5.0.tgz>` is located. It may take a few minutes for all resources to come up. If
-you encounter issues during installation please refer to our list of :ref:`useful kubectl commands
-<useful-kubectl-commands>`. Helm will install Determined within the default namespace. If you wish
-to install Determined into a non-default namespace, add ``-n <namespace name>`` to the command shown
-above.
+</helm/determined-latest.tgz>` is located. It may take a few minutes for all resources to come up.
+If you encounter issues during installation please refer to our list of :ref:`useful kubectl
+commands <useful-kubectl-commands>`. Helm will install Determined within the default namespace. If
+you wish to install Determined into a non-default namespace, add ``-n <namespace name>`` to the
+command shown above.
 
 Once the installation has completed, instructions will be displayed for discovering the IP address
 assigned to the Determined master. The IP address can also be discovered by running ``kubectl get
