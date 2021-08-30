@@ -313,7 +313,7 @@ export default class StepImplementation {
   public async actionOnAllTableRows(action: string) {
     await t.click(BATCH_ACTION_TEXT);
     // Wait for the dropdown animation to finish
-    await t.click(action);
+    await t.click(action, t.within(t.$('.ant-select-dropdown')));
     // Wait for the modal to animate in.
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
