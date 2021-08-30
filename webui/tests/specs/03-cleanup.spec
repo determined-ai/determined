@@ -2,10 +2,18 @@
 
 Specification to clean up outstanding experiments and tasks.
 
-## Sign in
+## Kill all experiments
 
-* Sign in
+* Navigate to experiment list page
+* Toggle all table row selection
+* "Kill" all table rows
 
-## Test Taiko
+## Kill all tasks
+
 * Navigate to task list page
-* test taiko
+* Toggle all table row selection
+* "Kill" all table rows
+
+## Sign out
+
+* Sign out
