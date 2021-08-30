@@ -1,3 +1,4 @@
+import contextlib
 import json
 import operator
 import os
@@ -5,7 +6,7 @@ import subprocess
 import tempfile
 import threading
 import time
-from typing import Any, Dict, List, Optional, Set, cast
+from typing import Any, Dict, Iterator, List, Optional, Set, cast
 
 import botocore.exceptions
 import numpy as np
@@ -625,6 +626,21 @@ def _run_zero_slot_command(sleep: int = 30) -> str:
     return subprocess.check_output(command).decode().strip()
 
 
+@contextlib.contextmanager
+def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> Iterator[str]:
+    command = (
+        ["det", "-m", conf.make_master_url(), "agent", "disable"]
+        + (["--drain"] if drain else [])
+        + (["--json"] if json else [])
+        + [agent_id]
+    )
+    try:
+        yield subprocess.check_output(command).decode()
+    finally:
+        command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
+        subprocess.check_call(command)
+
+
 def _get_command_info(command_id: str) -> Dict[str, Any]:
     command = ["det", "-m", conf.make_master_url(), "command", "list", "--json"]
     command_data = json.loads(subprocess.check_output(command).decode())
@@ -655,13 +671,10 @@ def test_disable_agent_zero_slots() -> None:
     # Wait for it to run.
     _wait_for_command_state(command_id, "RUNNING", 30)
 
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", agent_id]
-    subprocess.check_call(command)
     try:
-        _wait_for_command_state(command_id, "TERMINATED", 5)
+        with _disable_agent(agent_id):
+            _wait_for_command_state(command_id, "TERMINATED", 5)
     finally:
-        command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
-        subprocess.check_call(command)
         # Kill the command before failing so it does not linger.
         command = ["det", "-m", conf.make_master_url(), "command", "kill", command_id]
         subprocess.check_call(command)
@@ -687,11 +700,9 @@ def test_drain_agent() -> None:
     exp.wait_for_experiment_active_workload(experiment_id)
     exp.wait_for_experiment_workload_progress(experiment_id)
 
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", "--drain", agent_id]
-    subprocess.check_call(command)
-    # Quickly enable it back.
-    command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
-    subprocess.check_call(command)
+    # Disable and quickly enable it back.
+    with _disable_agent(agent_id, drain=True):
+        pass
 
     # Try to launch another experiment. It shouldn't get scheduled because the
     # slot is still busy with the first experiment.
@@ -703,31 +714,34 @@ def test_drain_agent() -> None:
     time.sleep(5)
     exp.wait_for_experiment_state(experiment_id_no_start, "ACTIVE")
 
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", "--drain", agent_id]
-    subprocess.check_call(command)
+    with _disable_agent(agent_id, drain=True):
+        # Check for 15 seconds it doesn't get scheduled into the same slot.
+        for _ in range(15):
+            trials = exp.experiment_trials(experiment_id_no_start)
+            assert len(trials) == 0
 
-    # Check for 15 seconds it doesn't get scheduled into the same slot.
-    for _ in range(15):
-        trials = exp.experiment_trials(experiment_id_no_start)
-        assert len(trials) == 0
+        # Ensure the first one has finished with the correct number of steps.
+        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        trials = exp.experiment_trials(experiment_id)
+        assert len(trials) == 1
+        assert len(trials[0]["steps"]) == 5
 
-    # Ensure the first one has finished with the correct number of steps.
-    exp.wait_for_experiment_state(experiment_id, "COMPLETED")
-    trials = exp.experiment_trials(experiment_id)
-    assert len(trials) == 1
-    assert len(trials[0]["steps"]) == 5
+        # Ensure the slot is empty.
+        slots = _fetch_slots()
+        assert len(slots) == 1
+        assert slots[0]["enabled"] is False
+        assert slots[0]["draining"] is True
+        assert slots[0]["task_id"] == "FREE"
 
-    # Ensure the slot is empty.
-    slots = _fetch_slots()
-    assert len(slots) == 1
-    assert slots[0]["enabled"] is False
-    assert slots[0]["draining"] is True
-    assert slots[0]["task_id"] == "FREE"
+        # Check agent state.
+        command = ["det", "-m", conf.make_master_url(), "agent", "list", "--json"]
+        output = subprocess.check_output(command).decode()
+        agent_data = cast(List[Dict[str, Any]], json.loads(output))[0]
+        assert agent_data["id"] == agent_id
+        assert agent_data["enabled"] is False
+        assert agent_data["draining"] is True
 
-    exp.cancel_single(experiment_id_no_start)
-
-    command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
-    subprocess.check_call(command)
+        exp.cancel_single(experiment_id_no_start)
 
 
 @pytest.mark.e2e_cpu_2a  # type: ignore
@@ -751,10 +765,7 @@ def test_drain_agent_sched() -> None:
     assert len(used_slots) == 1
     agent_id1 = used_slots[0]["agent_id"]
 
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", "--drain", agent_id1]
-    subprocess.check_call(command)
-
-    try:
+    with _disable_agent(agent_id1, drain=True):
         exp_id2 = exp.create_experiment(
             conf.fixtures_path("no_op/single-medium-train-step.yaml"),
             conf.fixtures_path("no_op"),
@@ -784,10 +795,6 @@ def test_drain_agent_sched() -> None:
         assert len(trials1) == len(trials2) == 1
         assert len(trials1[0]["steps"]) == len(trials2[0]["steps"]) == 5
 
-    finally:
-        command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id1]
-        subprocess.check_call(command)
-
 
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:
     command = ["det", "-m", conf.make_master_url(), "task", "list", "--json"]
@@ -816,24 +823,16 @@ def test_drain_agent_sched_zeroslot() -> None:
     _wait_for_command_state(command_id1, "RUNNING", 10)
     agent_id1 = _task_agents(command_id1)[0]
 
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", "--drain", agent_id1]
-    subprocess.check_call(command)
+    with _disable_agent(agent_id1, drain=True):
+        command_id2 = _run_zero_slot_command(60)
+        _wait_for_command_state(command_id2, "RUNNING", 10)
+        agent_id2 = _task_agents(command_id2)[0]
+        assert agent_id1 != agent_id2
 
-    command_id2 = _run_zero_slot_command(60)
-    _wait_for_command_state(command_id2, "RUNNING", 10)
-    agent_id2 = _task_agents(command_id2)[0]
-    assert agent_id1 != agent_id2
-
-    command = ["det", "-m", conf.make_master_url(), "agent", "disable", "--drain", agent_id2]
-    subprocess.check_call(command)
-
-    for command_id in [command_id1, command_id2]:
-        _wait_for_command_state(command_id, "TERMINATED", 60)
-        assert "success" in _get_command_info(command_id)["exitStatus"]
-
-    for agent_id in [agent_id1, agent_id2]:
-        command = ["det", "-m", conf.make_master_url(), "agent", "enable", agent_id]
-        subprocess.check_call(command)
+        with _disable_agent(agent_id2, drain=True):
+            for command_id in [command_id1, command_id2]:
+                _wait_for_command_state(command_id, "TERMINATED", 60)
+                assert "success" in _get_command_info(command_id)["exitStatus"]
 
     command_id3 = _run_zero_slot_command(1)
     _wait_for_command_state(command_id3, "TERMINATED", 60)

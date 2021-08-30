@@ -113,6 +113,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
 			for cid := range a.containers {
+				// TODO(DET-5916): This kill should not count towards max_restarts.
 				ctx.Tell(ctx.Self(), sproto.KillTaskContainer{ContainerID: cid})
 			}
 		}
