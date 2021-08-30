@@ -5,7 +5,7 @@ import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { openOrCreateTensorboard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentAction as Action, ExperimentBase, RunState, TrialDetails } from 'types';
+import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 import { getWorkload, isMetricsWorkload } from 'utils/workload';
 import { openCommand } from 'wait';
