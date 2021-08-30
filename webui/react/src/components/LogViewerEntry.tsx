@@ -28,7 +28,7 @@ const DATETIME_SUFFIX = ']';
 export const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIME_SUFFIX}`;
 
 // Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
-export const MAX_DATETIME_LENGTH = 23;
+export const MAX_DATETIME_LENGTH = 22;
 
 const LogViewerEntry: React.FC<Prop> = ({
   level,
