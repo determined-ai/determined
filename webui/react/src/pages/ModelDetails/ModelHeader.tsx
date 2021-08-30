@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import InlineEditor from 'components/InlineEditor';
 import { relativeTimeRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { ModelItem } from 'types';
@@ -20,7 +21,7 @@ const ModelHeader: React.FC<Props> = ({ model }: Props) => {
       label: 'Created',
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
-    { content: model.description ? model.description : 'Add description...', label: 'Description' },
+    { content: <InlineEditor placeholder="Add description..." value="" />, label: 'Description' },
     {
       content: <TagList
         ghost={false}
