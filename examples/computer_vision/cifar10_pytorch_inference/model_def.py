@@ -48,9 +48,16 @@ class PredictionsReducer(MetricReducer):
     def update(self, predictions):
         # We are responsible for calling update() as part of our train_batch() and evaluate_batch()
         # methods, which means we can specify any arguments we wish.
+        # XXX: If users wanted to configure streaming writers to start writing predictions as soon
+        #      as any predictions were ready (rather than all at once after all the work is done)
+        #      that would have to be handled here.
         self.predictions += predictions.tolist()
 
     def per_slot_reduce(self):
+        # XXX: This will result in large volumes of network traffic.  If the chief worker must write
+        #      all of the predictions at once, then so be it, but if the predictions can be written
+        #      in shards (every worker uploads its shard of predictions to s3, for instance), it
+        #      would be preferable to upload them here.
         return self.predictions
 
     def cross_slot_reduce(self, per_slot_metrics):
@@ -59,6 +66,8 @@ class PredictionsReducer(MetricReducer):
         predictions = [
             p for slot_predictions in per_slot_metrics for p in slot_predictions
         ]
+        # XXX: With N-gpu agents, this will result in N workers per agent trying to write the same
+        #      file at the same time.
         np.save(self.output_file, predictions)
 
         return {}
@@ -84,6 +93,8 @@ class CIFARTrial(PyTorchTrial):
 
         # TODO: Load your trained model. Below are example approaches.
 
+        # XXX: this is a bad idea; users frequently try to load checkpoints via checkpoint export
+        #      but due to DET-3448 that is highly likely to result in opaque, difficult errors.
         ### Load a checkpoint from the Determined model registry
         # from determined.experimental import client
         # client.login()
@@ -92,6 +103,7 @@ class CIFARTrial(PyTorchTrial):
         # ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
         # model.load_state_dict(ckpt['models_state_dict'][0])
 
+        # XXX: ditto
         ### Load a checkpoint from a previous experiment
         # from determined.experimental import client
         # client.login()
