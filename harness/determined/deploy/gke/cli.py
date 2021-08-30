@@ -149,13 +149,13 @@ def create_cluster(args: argparse.Namespace) -> None:
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
 
 
-def create_nodepools(region: str, args: argparse.Namespace) -> None:
+def create_gpu_nodepool(region: str, args: argparse.Namespace) -> None:
     cmd = [
         "gcloud",
         "container",
         "node-pools",
         "create",
-        args.gpu_node_pool_name,
+        args.agent_node_pool_name,
         "--cluster",
         args.cluster_name,
         "--accelerator",
@@ -187,35 +187,43 @@ def create_nodepools(region: str, args: argparse.Namespace) -> None:
         defaults.K8S_NVIDIA_DAEMON,
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
-    if args.multi_node_pool:
-        cmd = [
-            "gcloud",
-            "container",
-            "node-pools",
-            "create",
-            args.cpu_node_pool_name,
-            "--cluster",
-            args.cluster_name,
-            "--zone",
-            region,
-        ]
-        if args.cpu_coscheduler:
-            cmd += ["--num-nodes={}".format(args.max_cpu_nodes)]
-        else:
-            cmd += [
-                "--num-nodes=0",
-                "--enable-autoscaling",
-                "--min-nodes=0",
-                "--max-nodes={}".format(args.max_cpu_nodes),
-            ]
+
+def create_cpu_nodepool(region: str, args: argparse.Namespace) -> None:
+    cmd = [
+        "gcloud",
+        "container",
+        "node-pools",
+        "create",
+        args.cpu_node_pool_name,
+        "--cluster",
+        args.cluster_name,
+        "--zone",
+        region,
+    ]
+    if args.cpu_coscheduler:
+        cmd += ["--num-nodes={}".format(args.max_cpu_nodes)]
+    else:
         cmd += [
-            "--machine-type={}".format(args.agent_machine_type),
-            "--scopes=storage-full,cloud-platform",
+            "--num-nodes=0",
+            "--enable-autoscaling",
+            "--min-nodes=0",
+            "--max-nodes={}".format(args.max_cpu_nodes),
+        ]
+    cmd += [
+        "--machine-type={}".format(args.agent_machine_type),
+        "--scopes=storage-full,cloud-platform",
+    ]
+    if args.multi_node_pool:
+        cmd += [
             "--node-labels=accelerator_type=cpu",
             "--node-taints=gpuAvailable=False:NoSchedule",
         ]
-        subprocess.check_call(cmd)
+    subprocess.check_call(cmd)
 
+def create_nodepools(region: str, args: argparse.Namespace) -> None:
+    create_gpu_nodepool(region, args)
+    if args.multi_node_pool or args.cpu_only:
+        create_cpu_nodepool(region, args)
 
 def configure_helm(args: argparse.Namespace) -> None:
     helm_dir = Path(args.helm_dir)
@@ -381,7 +389,7 @@ args_description = Cmd(
                             help="a unique name for the gke cluster",
                         ),
                         Arg(
-                            "--gpu-node-pool-name",
+                            "--agent-node-pool-name",
                             "--gpu-name",
                             type=str,
                             default=None,
@@ -408,6 +416,12 @@ args_description = Cmd(
                             default=defaults.GPU_TYPE,
                             required=False,
                             help="accelerator type to use for agents",
+                        ),
+                        Arg(
+                            "--cpu-only",
+                            required=False,
+                            help="Flag to create a CPU Only Determined Instance.",
+                            action="store_true"
                         ),
                         Arg(
                             "--gpus-per-node",

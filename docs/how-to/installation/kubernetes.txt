@@ -147,13 +147,13 @@ or GCS:
    may also optionally configure ``checkpointStorage.endpointUrl`` which specifies the endpoint to
    use for S3 clones (e.g., ``http://<minio-endpoint>:<minio-port|default=9000>``).
 
--  **Microsoft Azure Blob Storage**: To configure Determined to use Microsoft Azure Blob Storage 
-   for checkpoint and TensorBoard storage, users need to set ``checkpointStorage.type`` in 
-   ``values.yaml`` to ``azure`` and set ``checkpointStorage.container`` to the name of the 
-   container to store it in. Users must also specify one of ``connection_string`` - the connection 
-   string associated with the Azure Blob Storage service account to use, or the tuple 
-   ``account_url`` and ``credential`` - where ``account_url`` is the URL for the service account to 
-   use, and ``credential`` is an optional credential.
+-  **Microsoft Azure Blob Storage**: To configure Determined to use Microsoft Azure Blob Storage for
+   checkpoint and TensorBoard storage, users need to set ``checkpointStorage.type`` in
+   ``values.yaml`` to ``azure`` and set ``checkpointStorage.container`` to the name of the container
+   to store it in. Users must also specify one of ``connection_string`` - the connection string
+   associated with the Azure Blob Storage service account to use, or the tuple ``account_url`` and
+   ``credential`` - where ``account_url`` is the URL for the service account to use, and
+   ``credential`` is an optional credential.
 
 -  **GCS**: To configure Determined to use Google Cloud Storage for checkpoints and TensorBoard
    data, users need to set ``checkpointStorage.type`` in ``values.yaml`` to ``gcs`` and set
