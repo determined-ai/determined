@@ -471,4 +471,15 @@ export default class StepImplementation {
       return logs.length > 0;
     });
   }
+
+  @Step('test taiko')
+  public async testTaiko() {
+    await t.waitFor(async () => await t.$('th input[type=checkbox]').exists());
+    await t.click(t.$('th input[type=checkbox]'));
+    while (true) {
+      await t.click(BATCH_ACTION_TEXT);
+      await t.click('Kill');
+      await t.click(BATCH_ACTION_TEXT);
+    }
+  }
 }
