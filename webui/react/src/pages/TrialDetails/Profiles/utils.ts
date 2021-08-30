@@ -10,6 +10,7 @@ import { consumeStream } from 'services/utils';
 
 export enum MetricType {
   System = 'PROFILER_METRIC_TYPE_SYSTEM',
+  Throughput = 'PROFILER_METRIC_TYPE_MISC',
   Timing = 'PROFILER_METRIC_TYPE_TIMING',
 }
 
@@ -57,6 +58,7 @@ export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'gpu_util') return '%';
   if (metricName === 'net_throughput_recv') return 'Gigabit/s';
   if (metricName === 'net_throughput_sent') return 'Gigabit/s';
+  if (metricName === 'samples_per_second') return 'Samples/s';
   return metricName;
 };
 
