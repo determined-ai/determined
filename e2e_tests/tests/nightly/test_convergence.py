@@ -71,7 +71,7 @@ def test_imagenet_pytorch() -> None:
         if step.get("validation")
     ]
 
-    target_loss = 1.40
+    target_loss = 1.55
     assert max(validation_loss) < target_loss, (
         "imagenet_pytorch did not reach minimum target loss {} in {} steps."
         " full validation accuracy history: {}".format(
