@@ -68,6 +68,22 @@ const ModelDetails: React.FC = () => {
     });
   }, [ model?. metadata ]);
 
+  const referenceText = useMemo(() => {
+    return (
+      `from determined.experimental import Determined\n
+model = Determined.getModel("${model?.name}")\n
+ckpt = model.get_version("1234")\n
+ckpt_path = ckpt.download()\n
+ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))\n
+
+# WARNING: From here on out, this might not be possible to automate. Requires research.\n
+from model import build_model\n
+model = build_model()\n
+model.load_state_dict(ckpt['models_state_dict'][0])\n
+
+# If you get this far, you should be able to run \`model.eval()\`\n`);
+  }, [ model?.name ]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (pageError) {
@@ -92,6 +108,10 @@ const ModelDetails: React.FC = () => {
         }}>
           <CollapsableCard title={'Metadata'}>
             <InfoBox rows={metadata} />
+            <Button type="link">add row</Button>
+          </CollapsableCard>
+          <CollapsableCard title={<>How to reference this model <Icon name="info" /></>}>
+            <pre style={{ lineHeight: 1 }}>{referenceText}</pre>
           </CollapsableCard>
           <Section
             divider
