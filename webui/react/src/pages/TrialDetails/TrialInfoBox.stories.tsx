@@ -1,7 +1,7 @@
 import React from 'react';
 
 import {
-  ExperimentBase, ExperimentOld, RunState, TrialDetails, TrialItem,
+  CheckpointState, ExperimentBase, ExperimentOld, RunState, TrialDetails, TrialItem,
 } from 'types';
 import { generateOldExperiment } from 'utils/task';
 
@@ -18,6 +18,7 @@ const sampleTrialItem: TrialItem = {
   bestAvailableCheckpoint: {
     resources: { noOpCheckpoint: 1542 },
     startTime: Date.now.toString(),
+    state: CheckpointState.Completed,
     totalBatches: 10000,
   },
   experimentId: 1,
