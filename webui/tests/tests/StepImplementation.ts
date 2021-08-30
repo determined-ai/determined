@@ -470,4 +470,10 @@ export default class StepImplementation {
       return logs.length > 0;
     });
   }
+
+  /* Dev */
+  @Step('dev')
+  public async dev() {
+    await t.$('body').exists();
+  }
 }
