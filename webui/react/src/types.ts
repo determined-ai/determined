@@ -482,8 +482,20 @@ export interface ModelItem {
   name: string;
 }
 
+export interface ModelVersion {
+  checkpoint: Checkpoint;
+  creationTime: string;
+  model: ModelItem;
+  version: number;
+}
+
 export interface ModelPagination extends WithPagination {
   models: ModelItem[];
+}
+
+export interface ModelDetails extends WithPagination {
+  model: ModelItem;
+  modelVersions: ModelVersion[]
 }
 
 export interface Task {
