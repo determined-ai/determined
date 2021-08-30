@@ -85,8 +85,13 @@ func (a *apiServer) GetExperiment(
 }
 
 func (a *apiServer) DeleteExperiment(
-	_ context.Context, req *apiv1.DeleteExperimentRequest,
+	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db)
+	if err != nil {
+		return nil, err
+	}
+
 	// Avoid loading the experiment config for what may be a very old experiment.
 	e, err := a.m.db.ExperimentWithoutConfigByID(int(req.ExperimentId))
 	switch {
@@ -94,6 +99,12 @@ func (a *apiServer) DeleteExperiment(
 		return nil, status.Errorf(codes.NotFound, "experiment not found")
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment")
+	}
+
+	// AuthZ the request.
+	curUserIsOwner := e.OwnerID == nil || *e.OwnerID == curUser.ID
+	if !curUser.Admin && !curUserIsOwner {
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(int(req.ExperimentId)); {
