@@ -343,6 +343,7 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
     endTime: data.endTime as unknown as string,
     resources,
     startTime: data.startTime as unknown as string,
+    state: decodeCheckpointState(data.state),
     totalBatches: data.totalBatches,
     uuid: data.uuid,
   };
@@ -360,6 +361,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     experimentId: data.experimentId,
     resources,
     startTime: data.startTime as unknown as string,
+    state: decodeCheckpointState(data.state),
     trialId: data.trialId,
     uuid: data.uuid,
     validationMetric: data.searcherMetric,

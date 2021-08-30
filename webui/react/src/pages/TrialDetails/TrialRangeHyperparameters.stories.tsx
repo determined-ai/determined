@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import StoreDecorator from 'storybook/StoreDecorator';
-import { CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
-  HyperparameterType, RunState, TrialDetails } from 'types';
+import { CheckpointState, CheckpointStorageType, ExperimentBase, ExperimentSearcherName,
+  HyperparameterType,
+  RunState, TrialDetails } from 'types';
 
 import TrialRangeHyperparameters from './TrialRangeHyperparameters';
 
@@ -249,6 +250,7 @@ const TrialRangeHyperparametersContainer = () => {
             'state_dict.pth': 13691537,
           },
           startTime: '2021-06-09T15:28:16.109105Z',
+          state: CheckpointState.Completed,
           totalBatches: 58,
           uuid: '08b7345e-1dd8-4ec2-a49c-054814d8929e',
         },
