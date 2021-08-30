@@ -474,6 +474,14 @@ export default class StepImplementation {
   /* Dev */
   @Step('dev')
   public async dev() {
+    await this.navigateToTaskList();
     await t.$('body').exists();
+    await t.$('th input[type=checkbox]').exists();
+    await t.click(t.$('th input[type=checkbox]'));
+    while (true) {
+      await t.click(BATCH_ACTION_TEXT);
+      await t.click('Kill');
+      await t.click(BATCH_ACTION_TEXT);
+    }
   }
 }
