@@ -1,5 +1,5 @@
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Menu, Tooltip } from 'antd';
+import { Button, Card, Dropdown, Empty, Menu, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -111,7 +111,9 @@ model.load_state_dict(ckpt['models_state_dict'][0])
           marginRight: 20,
         }}>
           <CollapsableCard title={'Metadata'}>
-            <InfoBox rows={metadata} />
+            { metadata.length > 0 ?
+              <InfoBox rows={metadata} /> :
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
             <Button type="link">add row</Button>
           </CollapsableCard>
           <CollapsableCard
@@ -128,14 +130,20 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             title={detailsHeader}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
               <Card style={{ flexBasis: '66%' }} title="Source">
-                <InfoBox rows={[]} />
+                { [].length > 0 ?
+                  <InfoBox rows={[]} /> :
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
               </Card>
               <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, gap: 18 }}>
                 <Card title="Validation Metrics">
-                  <InfoBox rows={[]} />
+                  { [].length > 0 ?
+                    <InfoBox rows={[]} /> :
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
                 </Card>
                 <Card title="Metadata">
-                  <InfoBox rows={[]} />
+                  { [].length > 0 ?
+                    <InfoBox rows={[]} /> :
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
                 </Card>
               </div>
             </div>
