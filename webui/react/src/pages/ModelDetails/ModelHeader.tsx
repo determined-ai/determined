@@ -37,6 +37,7 @@ const ModelHeader: React.FC<Props> = ({ model }: Props) => {
       borderBottom: '1px solid var(--theme-colors-monochrome-12)',
       margin: 0,
       padding: 12,
+      width: '100%',
     }}>
       <div style={{
         borderBottom: '1px solid var(--theme-colors-monochrome-12)',

@@ -100,57 +100,57 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   }
 
   return (
-    <>
-      <ModelHeader model={model} />
-      <Page docTitle="Model Details" id="modelDetails">
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          marginLeft: 20,
-          marginRight: 20,
-        }}>
-          <CollapsableCard title={'Metadata'}>
-            { metadata.length > 0 ?
-              <InfoBox rows={metadata} /> :
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-            <Button type="link">add row</Button>
-          </CollapsableCard>
-          <CollapsableCard
-            extra={(
-              <Tooltip title="Copied!" trigger="click">
-                <Button type="link" onClick={handleCopy}>Copy to clipboard</Button>
-              </Tooltip>
-            )}
-            title={<>How to reference this model <Icon name="info" /></>}>
-            <pre>{referenceText}</pre>
-          </CollapsableCard>
-          <Section
-            divider
-            title={detailsHeader}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-              <Card style={{ flexBasis: '66%' }} title="Source">
+    <Page
+      docTitle="Model Details"
+      headerComponent={<ModelHeader model={model} />}
+      id="modelDetails">
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        marginLeft: 20,
+        marginRight: 20,
+      }}>
+        <CollapsableCard title={'Metadata'}>
+          { metadata.length > 0 ?
+            <InfoBox rows={metadata} /> :
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+          <Button type="link">add row</Button>
+        </CollapsableCard>
+        <CollapsableCard
+          extra={(
+            <Tooltip title="Copied!" trigger="click">
+              <Button type="link" onClick={handleCopy}>Copy to clipboard</Button>
+            </Tooltip>
+          )}
+          title={<>How to reference this model <Icon name="info" /></>}>
+          <pre>{referenceText}</pre>
+        </CollapsableCard>
+        <Section
+          divider
+          title={detailsHeader}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+            <Card style={{ flexBasis: '66%' }} title="Source">
+              { [].length > 0 ?
+                <InfoBox rows={[]} /> :
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+            </Card>
+            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, gap: 18 }}>
+              <Card title="Validation Metrics">
                 { [].length > 0 ?
                   <InfoBox rows={[]} /> :
                   <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
               </Card>
-              <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, gap: 18 }}>
-                <Card title="Validation Metrics">
-                  { [].length > 0 ?
-                    <InfoBox rows={[]} /> :
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-                </Card>
-                <Card title="Metadata">
-                  { [].length > 0 ?
-                    <InfoBox rows={[]} /> :
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-                </Card>
-              </div>
+              <Card title="Metadata">
+                { [].length > 0 ?
+                  <InfoBox rows={[]} /> :
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+              </Card>
             </div>
-          </Section>
-        </div>
-      </Page>
-    </>
+          </div>
+        </Section>
+      </div>
+    </Page>
   );
 };
 
