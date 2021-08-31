@@ -728,6 +728,18 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     addresses?: Array<string>;
+    /**
+     * Flag notifying if containers can be scheduled on this agent.
+     * @type {boolean}
+     * @memberof V1Agent
+     */
+    enabled?: boolean;
+    /**
+     * Flag notifying if this agent is in the draining mode: current containers will be allowed to finish but no new ones will be scheduled.
+     * @type {boolean}
+     * @memberof V1Agent
+     */
+    draining?: boolean;
 }
 
 /**
@@ -1244,6 +1256,26 @@ export interface V1Device {
      * @memberof V1Device
      */
     type?: Devicev1Type;
+}
+
+/**
+ * Disable the agent.
+ * @export
+ * @interface V1DisableAgentRequest
+ */
+export interface V1DisableAgentRequest {
+    /**
+     * The id of the agent.
+     * @type {string}
+     * @memberof V1DisableAgentRequest
+     */
+    agentId?: string;
+    /**
+     * If true, wait for running tasks to finish.
+     * @type {boolean}
+     * @memberof V1DisableAgentRequest
+     */
+    drain?: boolean;
 }
 
 /**
@@ -4295,6 +4327,12 @@ export interface V1Slot {
      * @memberof V1Slot
      */
     container?: V1Container;
+    /**
+     * Flag notifying if this slot is in the draining mode: current containers will be allowed to finish but no new ones will be scheduled.
+     * @type {boolean}
+     * @memberof V1Slot
+     */
+    draining?: boolean;
 }
 
 /**
@@ -5339,13 +5377,18 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options: any = {}): FetchArgs {
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedDisableAgent.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedDisableAgent.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -5362,10 +5405,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1DisableAgentRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -5975,11 +6022,12 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableAgent(agentId, options);
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableAgent(agentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -6282,11 +6330,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedDisableAgent(agentId, options)(fetch, basePath);
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+            return ClusterApiFp(configuration).determinedDisableAgent(agentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -6455,12 +6504,13 @@ export class ClusterApi extends BaseAPI {
      * 
      * @summary Disable the agent.
      * @param {string} agentId The id of the agent.
+     * @param {V1DisableAgentRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedDisableAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedDisableAgent(agentId, options)(this.fetch, this.basePath);
+    public determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+        return ClusterApiFp(this.configuration).determinedDisableAgent(agentId, body, options)(this.fetch, this.basePath);
     }
 
     /**

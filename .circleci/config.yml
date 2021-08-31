@@ -331,8 +331,6 @@ commands:
           only_on_branch: master
           test_results_path: <<parameters.junit-path>>
 
-
-
   run-det-deploy-tests:
     parameters:
       mark:
@@ -839,6 +837,15 @@ commands:
       - run: make -C master check
       - run: make -C agent check
 
+  start-devcluster:
+    parameters:
+      devcluster-config:
+        type: string
+    steps:
+      - run: pip install git+https://github.com/determined-ai/devcluster.git@dfd1e46a7daa876ff121b3dd16e63391a3e3d42a#egg=devcluster
+      - run:
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>>
+          background: true
 
 jobs:
   build-helm:
@@ -1369,6 +1376,9 @@ jobs:
         type: string
       parallelism:
         type: integer
+      devcluster-config:
+        type: string
+        default: single.devcluster.yaml
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1379,20 +1389,16 @@ jobs:
           at: .
 
       - setup-python-venv:
-          determined: true
+          determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
       - run:
           name: Get master dependencies
           command: make -C master get-deps
-      - run:
-          name: Start database
-          command: make -C tools start-db
-      - run:
-          name: Start cluster
-          command: make -C tools run
-          background: true
+
+      - start-devcluster:
+          devcluster-config: <<parameters.devcluster-config>>
 
       - pull-task-images:
           tf1: <<parameters.tf1>>
@@ -1402,6 +1408,8 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
 
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy:
     parameters:
@@ -1810,31 +1818,37 @@ workflows:
           name: test-e2e-tf2
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [1]
-              tf2: [true]
-              mark: ["tensorflow2_cpu"]
+          parallelism: 1
+          tf2: true
+          mark: "tensorflow2_cpu"
 
       - test-e2e:
           name: test-e2e-tf1
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [1]
-              tf1: [true]
-              mark: ["tensorflow1_cpu"]
+          parallelism: 1
+          tf1: true
+          mark: "tensorflow1_cpu"
 
       - test-e2e:
           name: test-e2e-cpu
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [4]
-              tf1: [true]
-              mark: ["e2e_cpu"]
+          parallelism: 4
+          tf1: true
+          tf2: true
+          mark: e2e_cpu
+          devcluster-config: single.devcluster.yaml
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: e2e_cpu_2a
+          devcluster-config: double.devcluster.yaml
 
       - test-e2e-webui:
           requires:

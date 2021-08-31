@@ -228,6 +228,7 @@ service Determined {
   rpc DisableAgent(DisableAgentRequest) returns (DisableAgentResponse) {
     option (google.api.http) = {
       post: "/api/v1/agents/{agent_id}/disable"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"

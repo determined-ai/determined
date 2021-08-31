@@ -181,6 +181,36 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
     return False
 
 
+def wait_for_experiment_active_workload(
+    experiment_id: int, max_ticks: int = conf.MAX_TASK_SCHEDULED_SECS
+) -> None:
+    for _ in range(conf.MAX_TASK_SCHEDULED_SECS):
+        if experiment_has_active_workload(experiment_id):
+            return
+
+        time.sleep(1)
+
+    pytest.fail(
+        f"The only trial cannot be scheduled within {max_ticks} seconds.",
+    )
+
+
+def wait_for_experiment_workload_progress(
+    experiment_id: int, max_ticks: int = conf.MAX_TRIAL_BUILD_SECS
+) -> None:
+    for _ in range(conf.MAX_TRIAL_BUILD_SECS):
+        trials = experiment_trials(experiment_id)
+        if len(trials) > 0:
+            only_trial = trials[0]
+            if len(only_trial["steps"]) > 1:
+                return
+        time.sleep(1)
+
+    pytest.fail(
+        f"Trial cannot finish first workload within {max_ticks} seconds.",
+    )
+
+
 def experiment_has_completed_workload(experiment_id: int) -> bool:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)

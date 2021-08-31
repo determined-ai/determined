@@ -31,6 +31,10 @@ type agent struct {
 	containers       map[container.ID]*actor.Ref
 	resourcePoolName string
 	label            string
+	// enabled and draining are duplicated in resourcepool agentState.
+	// TODO(ilia): refactor/dedupe it.
+	enabled  bool
+	draining bool
 
 	// uuid is an anonymous ID that is used when reporting telemetry
 	// information to allow agent connection and disconnection events
@@ -102,10 +106,28 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
+		a.enabled = true
+		a.draining = false
+
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
+		ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.DisableAgentRequest:
-		ctx.Tell(a.slots, patchSlot{Enabled: false})
+		// Update our state.
+		a.enabled = false
+		a.draining = msg.Drain
+
+		// Mark current agent as disabled with RP.
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: msg.Drain})
+		// Update individual slot state.
+		ctx.Tell(a.slots, patchSlot{Enabled: false, Drain: msg.Drain})
+		// Kill both slotted and zero-slot tasks, unless draining.
+		if !msg.Drain {
+			for cid := range a.containers {
+				// TODO(DET-5916): This kill should not count towards max_restarts.
+				ctx.Tell(ctx.Self(), sproto.KillTaskContainer{ContainerID: cid})
+			}
+		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
@@ -206,5 +228,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
 		Addresses:      []string{a.address},
+		Enabled:        a.enabled,
+		Draining:       a.draining,
 	}
 }

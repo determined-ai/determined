@@ -24,6 +24,11 @@ message Agent {
   string resource_pool = 6;
   // The addresses of the agent.
   repeated string addresses = 7;
+  // Flag notifying if containers can be scheduled on this agent.
+  bool enabled = 8;
+  // Flag notifying if this agent is in the draining mode: current containers
+  // will be allowed to finish but no new ones will be scheduled.
+  bool draining = 9;
 }
 
 // Slot wraps a single device on the agent.
@@ -37,4 +42,7 @@ message Slot {
   // Container that is currently running on this agent. It is unset if there is
   // no container currently running on this slot.
   determined.container.v1.Container container = 4;
+  // Flag notifying if this slot is in the draining mode: current containers
+  // will be allowed to finish but no new ones will be scheduled.
+  bool draining = 5;
 }

@@ -36,6 +36,17 @@ type (
 	RemoveAgent struct {
 		Agent *actor.Ref
 	}
+
+	// EnableAgent clears the state set by DisableAgent.
+	EnableAgent struct {
+		Agent *actor.Ref
+	}
+
+	// DisableAgent disables or drains the agent.
+	DisableAgent struct {
+		Agent *actor.Ref
+		Drain bool
+	}
 )
 
 // Message protocol from the default resource manager to an agent actor.

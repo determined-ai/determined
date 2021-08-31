@@ -375,8 +375,7 @@ def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
-        v = vars(namespace)
-        cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=True)
+        cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
         return func(namespace)
 
     return f
@@ -390,9 +389,8 @@ def optional(func: Callable[[argparse.Namespace], Any]) -> Callable[[argparse.Na
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
-        v = vars(namespace)
         try:
-            cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=False)
+            cli_auth = Authentication(namespace.master, namespace.user, try_reauth=False)
         except api.errors.UnauthenticatedException:
             pass
 

@@ -72,6 +72,7 @@ func (a *agents) createAgentActor(
 		resourcePool:     sproto.GetRP(ctx.Self().System(), resourcePool),
 		resourcePoolName: resourcePool,
 		opts:             opts,
+		enabled:          true,
 	})
 	if !ok {
 		return nil, errors.Errorf("agent already connected: %s", id)

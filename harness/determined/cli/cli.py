@@ -3,7 +3,7 @@ import socket
 import ssl
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType, Namespace
-from typing import Any, Dict, List, Union, cast
+from typing import List, cast
 
 import argcomplete
 import argcomplete.completers
@@ -24,6 +24,7 @@ from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
 from determined.cli.sso import args_description as auth_args_description
+from determined.cli.task import args_description as task_args_description
 from determined.cli.template import args_description as template_args_description
 from determined.cli.tensorboard import args_description as tensorboard_args_description
 from determined.cli.trial import args_description as trial_args_description
@@ -44,48 +45,6 @@ from determined.deploy.cli import DEPLOY_CMD_NAME
 from determined.deploy.cli import args_description as deploy_args_description
 
 from .errors import EnterpriseOnlyError
-
-
-@authentication.required
-def list_tasks(args: Namespace) -> None:
-    r = api.get(args.master, "tasks")
-
-    def agent_info(t: Dict[str, Any]) -> Union[str, List[str]]:
-        containers = t.get("containers", [])
-        if not containers:
-            return "unassigned"
-        if len(containers) == 1:
-            agent = containers[0]["agent"]  # type: str
-            return agent
-        return [c["agent"] for c in containers]
-
-    tasks = r.json()
-    headers = [
-        "ID",
-        "Name",
-        "Slots Needed",
-        "Registered Time",
-        "Agent",
-        "Priority",
-        "Resource Pool",
-    ]
-    values = [
-        [
-            task["id"],
-            task["name"],
-            task["slots_needed"],
-            render.format_time(task["registered_time"]),
-            agent_info(task),
-            task["priority"] if task["scheduler_type"] == "priority" else "N/A",
-            task["resource_pool"],
-        ]
-        for task_id, task in sorted(
-            tasks.items(),
-            key=lambda tup: (render.format_time(tup[1]["registered_time"]),),
-        )
-    ]
-
-    render.tabulate_or_csv(headers, values, args.csv)
 
 
 @authentication.required
@@ -158,12 +117,6 @@ args_description = [
 
     checkpoint.args_description,
 
-    Cmd("task", None, "manage tasks (commands, experiments, notebooks, shells, tensorboards)", [
-        Cmd("list", list_tasks, "list tasks in cluster", [
-            Arg("--csv", action="store_true", help="print as CSV"),
-        ], is_default=True),
-    ]),
-
     Cmd("preview-search", preview_search, "preview search", [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
@@ -183,6 +136,7 @@ all_args_description = (
     + notebook_args_description
     + resources_args_description
     + shell_args_description
+    + task_args_description
     + template_args_description
     + tensorboard_args_description
     + trial_args_description
