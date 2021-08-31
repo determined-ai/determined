@@ -294,6 +294,7 @@ class PyTorchTrialController(det.LoopTrialController):
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
+        self.prof.set_training(True)
         check.gt(step_id, 0)
         self.context.reset_reducers()
 
@@ -393,6 +394,7 @@ class PyTorchTrialController(det.LoopTrialController):
             return workload.Skipped()
 
         logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
+        self.prof.set_training(False)
 
         return metrics
 

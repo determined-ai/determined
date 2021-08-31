@@ -295,6 +295,7 @@ class ProfilerAgent:
         self.has_started = False
         self.has_finished = False
         self.disabled_due_to_preexisting_metrics = False
+        self.training = False
 
         self.shutdown_lock = threading.Lock()
 
@@ -412,6 +413,8 @@ class ProfilerAgent:
             return False
         if self.disabled_due_to_preexisting_metrics:
             return False
+        if not self.training:
+            return False
         return self.global_rank == 0
 
     @property
@@ -422,6 +425,14 @@ class ProfilerAgent:
         if not self.is_enabled:
             return False
         return self.has_started and not self.has_finished
+
+    def set_training(self, training: bool) -> None:
+        if not self.is_enabled:
+            return
+
+        self.training = training
+        if not training:
+            self.metrics_batcher_queue.put(FinalizeBatchMessage())
 
     def update_batch_idx(self, new_batch_idx: int) -> None:
         if not self.is_enabled:

@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -457,7 +458,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	}
 
 	return api.NewBatchStreamProcessor(
-		api.BatchRequest{Follow: req.Follow},
+		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
 		fetch,
 		onBatch,
 		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),

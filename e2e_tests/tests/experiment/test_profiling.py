@@ -129,9 +129,13 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
         ),
         stream=True,
     ) as r:
+        have_batch = False
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
             validate_gpu_metric_batch(batch)
+            have_batch = True
+        if not have_batch:
+            pytest.fail("no batch metrics at all")
 
 
 def request_profiling_pytorch_timing_metrics(
@@ -160,7 +164,8 @@ def request_profiling_pytorch_timing_metrics(
         if not all(x + 1 == y for x, y in zip(batches, batches[1:])):
             pytest.fail(f"skips in batches sampled: {batch}")
 
-        if accumulated and all(x < y for x, y in zip(batches, batches[1:])):
+        # 10 is just a threshold at which it would be really strange for a batch to be monotonic.
+        if accumulated and len(values) > 10 and all(x < y for x, y in zip(values, values[1:])):
             pytest.fail(
                 f"per batch accumulated metric was monotonic, which is really fishy: {batch}"
             )
@@ -176,9 +181,13 @@ def request_profiling_pytorch_timing_metrics(
         stream=True,
     ) as r:
         batch_idx = 0
+        have_batch = False
         for line in r.iter_lines():
             batch = simplejson.loads(line)["result"]["batch"]
             batch_idx = validate_timing_batch(batch, batch_idx)
+            have_batch = True
+        if not have_batch:
+            pytest.fail("no batch metrics at all")
 
 
 PROFILER_METRIC_TYPE_SYSTEM = "PROFILER_METRIC_TYPE_SYSTEM"
