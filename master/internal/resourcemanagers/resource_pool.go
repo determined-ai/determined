@@ -228,8 +228,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.RemoveDevice,
 		sproto.RemoveAgent,
 		sproto.EnableAgent,
-		sproto.DisableAgent,
-		sproto.AgentStateRequest:
+		sproto.DisableAgent:
 		return rp.receiveAgentMsg(ctx)
 
 	case
@@ -326,14 +325,6 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		check.Panic(check.True(ok, "error %s agent, agent not found: %s", drainStr, msg.Agent.Address()))
 		state.draining = drain
 		state.enabled = false
-
-	case sproto.AgentStateRequest:
-		state, ok := rp.agents[msg.Agent]
-		if ok {
-			ctx.Respond(sproto.AgentStateResponse{Enabled: state.enabled, Draining: state.draining})
-		} else {
-			ctx.Respond(sproto.AgentStateResponse{})
-		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

@@ -47,17 +47,6 @@ type (
 		Agent *actor.Ref
 		Drain bool
 	}
-
-	// AgentStateRequest asks the cluster for the enabled/draining agent state.
-	AgentStateRequest struct {
-		Agent *actor.Ref
-	}
-
-	// AgentStateResponse is a response to AgentStateRequest.
-	AgentStateResponse struct {
-		Enabled  bool
-		Draining bool
-	}
 )
 
 // Message protocol from the default resource manager to an agent actor.

@@ -31,6 +31,10 @@ type agent struct {
 	containers       map[container.ID]*actor.Ref
 	resourcePoolName string
 	label            string
+	// enabled and draining are duplicated in resourcepool agentState.
+	// TODO(ilia): refactor/dedupe it.
+	enabled  bool
+	draining bool
 
 	// uuid is an anonymous ID that is used when reporting telemetry
 	// information to allow agent connection and disconnection events
@@ -102,10 +106,17 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
+		a.enabled = true
+		a.draining = false
+
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
 		ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.DisableAgentRequest:
+		// Update our state.
+		a.enabled = false
+		a.draining = msg.Drain
+
 		// Mark current agent as disabled with RP.
 		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: msg.Drain})
 		// Update individual slot state.
@@ -209,11 +220,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 }
 
 func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
-	agentState := ctx.Ask(
-		a.resourcePool,
-		sproto.AgentStateRequest{Agent: ctx.Self()},
-	).Get().(sproto.AgentStateResponse)
-
 	return model.AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
@@ -222,7 +228,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
 		Addresses:      []string{a.address},
-		Enabled:        agentState.Enabled,
-		Draining:       agentState.Draining,
+		Enabled:        a.enabled,
+		Draining:       a.draining,
 	}
 }
