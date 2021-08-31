@@ -2,20 +2,6 @@
 clean:
 	rm -rf build/
 
-.PHONY: start-db
-start-db: stop-db
-	docker-compose up -d
-
-.PHONY: stop-db
-stop-db:
-	docker-compose down
-
-.PHONY: psql
-psql:
-	docker exec -it \
-		tools_determined-db_1 \
-		psql determined -U postgres
-
 .PHONY: prep-root
 prep-root:
 	@rm -rf build
@@ -28,10 +14,6 @@ prep-root:
 	@ln -s $(abspath ../webui/react/build/*) build/webui/react
 	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
 
-.PHONY: run
-run: prep-root
-	@python3 run-server.py
-
 .PHONY: fmt
 fmt:
 	isort -y
@@ -42,4 +24,4 @@ check:
 	isort --check-only
 	black . --check
 	flake8
-	mypy . scripts
+	mypy scripts

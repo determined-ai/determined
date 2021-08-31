@@ -1,6 +1,6 @@
 stages:
   - db:
-      data_dir: ~/.postgres
+      name: db
 
   - master:
       pre:
