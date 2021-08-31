@@ -21,6 +21,8 @@ export interface Props {
 
 const CHART_HEIGHT = 300;
 
+const chartStyle: React.CSSProperties = { paddingBottom: 16 };
+
 const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
   const chartSyncKey = useRef(uPlot.sync('time'));
 
@@ -197,6 +199,7 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
         <UPlotChart
           data={chartInfo[MetricType.Throughput].data}
           options={chartInfo[MetricType.Throughput].options}
+          style={chartStyle}
         />
       </Section>
       <Section
@@ -214,6 +217,7 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
           <UPlotChart
             data={chartInfo[MetricType.Timing].data}
             options={chartInfo[MetricType.Timing].options}
+            style={chartStyle}
           />
         )}
       </Section>
@@ -226,6 +230,7 @@ const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
         <UPlotChart
           data={chartInfo[MetricType.System].data}
           options={chartInfo[MetricType.System].options}
+          style={chartStyle}
         />
       </Section>
     </>
