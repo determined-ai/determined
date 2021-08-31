@@ -46,6 +46,13 @@ const ModelDetails: React.FC = () => {
     </Menu>;
   }, []);
 
+  const versionActionMenu = useMemo(() => {
+    return <Menu>
+      <Menu.Item key={0}>Download Version</Menu.Item>
+      <Menu.Item danger={true} key={1}>Deregister Version</Menu.Item>
+    </Menu>;
+  }, []);
+
   const detailsHeader = useMemo(() => {
     return <div style={{
       display: 'flex',
@@ -59,7 +66,10 @@ const ModelDetails: React.FC = () => {
             Version 0 <DownOutlined />
           </Button>
         </Dropdown>
-        <Button><Icon name="overflow-horizontal" size="tiny" /></Button></div></div>;
+        <Dropdown overlay={versionActionMenu}>
+          <Button><Icon name="overflow-horizontal" size="tiny" /></Button>
+        </Dropdown>
+      </div></div>;
   }, [ versionMenu ]);
 
   const metadata = useMemo(() => {
