@@ -1,5 +1,5 @@
 import { DownOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Menu } from 'antd';
+import { Button, Card, Dropdown, Menu, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -70,19 +70,23 @@ const ModelDetails: React.FC = () => {
 
   const referenceText = useMemo(() => {
     return (
-      `from determined.experimental import Determined\n
-model = Determined.getModel("${model?.name}")\n
-ckpt = model.get_version("1234")\n
-ckpt_path = ckpt.download()\n
-ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))\n
+      `from determined.experimental import Determined
+model = Determined.getModel("${model?.name}")
+ckpt = model.get_version("1234")
+ckpt_path = ckpt.download()
+ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
 
-# WARNING: From here on out, this might not be possible to automate. Requires research.\n
-from model import build_model\n
-model = build_model()\n
-model.load_state_dict(ckpt['models_state_dict'][0])\n
+# WARNING: From here on out, this might not be possible to automate. Requires research.
+from model import build_model
+model = build_model()
+model.load_state_dict(ckpt['models_state_dict'][0])
 
-# If you get this far, you should be able to run \`model.eval()\`\n`);
+# If you get this far, you should be able to run \`model.eval()\``);
   }, [ model?.name ]);
+
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(referenceText);
+  }, [ referenceText ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
@@ -110,8 +114,14 @@ model.load_state_dict(ckpt['models_state_dict'][0])\n
             <InfoBox rows={metadata} />
             <Button type="link">add row</Button>
           </CollapsableCard>
-          <CollapsableCard title={<>How to reference this model <Icon name="info" /></>}>
-            <pre style={{ lineHeight: 1 }}>{referenceText}</pre>
+          <CollapsableCard
+            extra={(
+              <Tooltip title="Copied!" trigger="click">
+                <Button type="link" onClick={handleCopy}>Copy to clipboard</Button>
+              </Tooltip>
+            )}
+            title={<>How to reference this model <Icon name="info" /></>}>
+            <pre>{referenceText}</pre>
           </CollapsableCard>
           <Section
             divider
