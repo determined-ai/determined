@@ -46,6 +46,8 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
 
     # Print information about the downloaded step/checkpoint.
     table = [
+        ["Experiment ID", checkpoint.experiment_id],
+        ["Trial ID", checkpoint.trial_id],
         ["Batch #", checkpoint.batch_number],
         ["Start Time", render.format_time(checkpoint.start_time)],
         ["End Time", render.format_time(checkpoint.end_time)],
