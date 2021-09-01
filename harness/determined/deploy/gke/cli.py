@@ -4,18 +4,20 @@ import subprocess
 import sys
 from multiprocessing.sharedctypes import Value
 from pathlib import Path
-from typing import Callable, Dict, Union
+from typing import Dict, Union
 
 from termcolor import cprint
 
 import determined
 from determined.common import yaml
-from determined.common.declarative_argparse import Arg, ArgGroup, Cmd, Group
+from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.common.util import safe_load_yaml_with_exceptions
 from determined.deploy.gke.constants import defaults
 
 
-def make_spec(task_container_defaults: dict, key: str) -> dict:
+def make_spec(
+    task_container_defaults: Dict[str, Union[Dict, str]], key: str
+) -> Dict[str, Union[Dict, str]]:
     pod_spec = task_container_defaults.get(key)
     if not pod_spec:
         pod_spec = {"apiVersion": "v1", "kind": "Pod"}
@@ -32,9 +34,7 @@ def validate_accelerator_type(s: str) -> None:
     valid_accelerator_types = {accelerator["name"] for accelerator in json_names}
 
     if s not in valid_accelerator_types:
-        raise argparse.ArgumentTypeError(
-            "Accelerator must be one of {}".format(valid_accelerator_types)
-        )
+        raise ValueError("Accelerator must be one of {}".format(valid_accelerator_types))
 
 
 def validate_location(location: str, isZone: bool = True) -> None:
@@ -47,7 +47,7 @@ def validate_location(location: str, isZone: bool = True) -> None:
         cmd += ["describe", location]
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except:
-        raise argparse.ArgumentTypeError(
+        raise ValueError(
             "The specified {} {} was not found".format("zone" if isZone else "region", location)
         )
 
@@ -99,42 +99,48 @@ def validate_accelerator_zone(args: argparse.Namespace, zone: str) -> None:
 def validate_args(args: argparse.Namespace) -> None:
     validate_location(args.zone, isZone=True)
     validate_accelerator_type(args.gpu_type)
+
     if args.master_machine_type != "n1-standard-16":
         validate_machine_type(args.master_machine_type, args.zone)
+
     if args.agent_machine_type != "n1-standard-32":
         validate_machine_type(args.agent_machine_type, args.zone)
+
     validate_accelerator_zone(args, args.zone)
+
     if args.multi_node_pool:
         if args.cpu_node_pool_name is None:
             raise ValueError(
                 "--cpu-node-pool-name must be specified if using multiple node pools "
                 + "(--multi-node-pool flag is set).",
             )
+
     if args.gpu_coscheduler and args.preemption:
         raise ValueError(
             "--gpu-coscheduler and --preemptive-scheduler are mutually exclusive and cannot both be"
             " specified",
         )
-    if args.cpu_coscheduler and not args.gpu_coscheduler:
+
+    if args.multi_node_pool and args.cpu_coscheduler and not args.gpu_coscheduler:
         raise ValueError(
             "To enable coscheduling on the CPU Node Pool, coscheduling must be enabled on the GPU"
             " Node Pool. --cpu-coscheduler cannot be specified if --gpu-coscheduler isn't as well."
         )
-    if args.cpu_coscheduler and not args.multi_node_pool:
+    elif args.cpu_coscheduler and not args.cpu_only:
         raise ValueError(
-            "To enable coscheduling on the CPU Node Pool, multiple node pools must be used."
-            + " --cpu-coscheduler cannot be specified if --multi-node-pool isn't as well."
+            "CPU co-scheduling can not be enabled on a GPU Node Pool only instance."
+            + " Please specify one of --cpu-only or --multi-node-pool to create a CPU Node Pool."
         )
 
 
 def create_cluster(args: argparse.Namespace) -> None:
-    region = "-".join(args.zone.split("-")[:-1])
+    region = args.zone.rsplit("-", 1)[0]
     cmd = [
         "gcloud",
         "container",
         "clusters",
         "create",
-        args.cluster_name,
+        args.cluster_id,
         "--region",
         region,
         "--node-locations",
@@ -143,7 +149,9 @@ def create_cluster(args: argparse.Namespace) -> None:
         "--machine-type={}".format(args.master_machine_type),
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
+
     create_nodepools(region, args)
+
     if not args.no_make_bucket:
         cmd = ["gsutil", "mb", "gs://{}".format(args.gcs_bucket)]
         subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
@@ -157,7 +165,7 @@ def create_gpu_nodepool(region: str, args: argparse.Namespace) -> None:
         "create",
         args.agent_node_pool_name,
         "--cluster",
-        args.cluster_name,
+        args.cluster_id,
         "--accelerator",
         "type={},count={}".format(args.gpu_type, args.gpus_per_node),
         "--zone",
@@ -180,13 +188,7 @@ def create_gpu_nodepool(region: str, args: argparse.Namespace) -> None:
     if args.multi_node_pool:
         cmd += ["--node-taints=gpuAvailable=True:NoSchedule"]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
-    cmd = [
-        "kubectl",
-        "apply",
-        "-f",
-        defaults.K8S_NVIDIA_DAEMON,
-    ]
-    subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
+
 
 def create_cpu_nodepool(region: str, args: argparse.Namespace) -> None:
     cmd = [
@@ -194,9 +196,9 @@ def create_cpu_nodepool(region: str, args: argparse.Namespace) -> None:
         "container",
         "node-pools",
         "create",
-        args.cpu_node_pool_name,
+        args.cpu_node_pool_name if args.multi_node_pool else args.agent_node_pool_name,
         "--cluster",
-        args.cluster_name,
+        args.cluster_id,
         "--zone",
         region,
     ]
@@ -220,10 +222,19 @@ def create_cpu_nodepool(region: str, args: argparse.Namespace) -> None:
         ]
     subprocess.check_call(cmd)
 
+
 def create_nodepools(region: str, args: argparse.Namespace) -> None:
     create_gpu_nodepool(region, args)
     if args.multi_node_pool or args.cpu_only:
         create_cpu_nodepool(region, args)
+
+    cmd = [
+        "kubectl",
+        "apply",
+        "-f",
+        defaults.K8S_NVIDIA_DAEMON,
+    ]
+    subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
 
 def configure_helm(args: argparse.Namespace) -> None:
     helm_dir = Path(args.helm_dir)
@@ -286,7 +297,7 @@ def configure_helm(args: argparse.Namespace) -> None:
 def handle_up(args: argparse.Namespace) -> None:
     try:
         validate_args(args)
-    except Exception as e:
+    except ValueError as e:
         exc_str = "Argument Error: {}".format(e)
         cprint(exc_str, "red")
         cprint("Failed to create gke cluster", "red")
@@ -346,10 +357,10 @@ def handle_down(args: argparse.Namespace) -> None:
         (
             "Setting kubectl config to cluster {}. Please make sure to run\n`kubectl config "
             + "set-cluster <other_cluster_name>`\nto interact with other deployed clusters."
-        ).format(args.cluster_name),
+        ).format(args.cluster_id),
         "yellow",
     )
-    cmd = ["kubectl", "config", "set-cluster", args.cluster_name]
+    cmd = ["kubectl", "config", "set-cluster", args.cluster_id]
     subprocess.check_call(cmd)
     cmd = ["helm", "uninstall", "determined-gke"]
     subprocess.check_call(cmd)
@@ -358,13 +369,13 @@ def handle_down(args: argparse.Namespace) -> None:
         "container",
         "clusters",
         "delete",
-        args.cluster_name,
+        args.cluster_id,
         "--region",
         args.region,
         "--quiet",
     ]
     subprocess.check_call(cmd)
-    print("Succesfully deleted GKE Cluster {}".format(args.cluster_name))
+    print("Succesfully deleted GKE Cluster {}".format(args.cluster_id))
 
 
 args_description = Cmd(
@@ -382,7 +393,7 @@ args_description = Cmd(
                     None,
                     [
                         Arg(
-                            "--cluster-name",
+                            "--cluster-id",
                             type=str,
                             default=None,
                             required=True,
@@ -421,7 +432,7 @@ args_description = Cmd(
                             "--cpu-only",
                             required=False,
                             help="Flag to create a CPU Only Determined Instance.",
-                            action="store_true"
+                            action="store_true",
                         ),
                         Arg(
                             "--gpus-per-node",
