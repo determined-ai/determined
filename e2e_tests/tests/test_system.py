@@ -726,7 +726,7 @@ def test_drain_agent() -> None:
         assert len(slots) == 1
         assert slots[0]["enabled"] is False
         assert slots[0]["draining"] is True
-        assert slots[0]["task_id"] == "FREE"
+        assert slots[0]["allocation_id"] == "FREE"
 
         # Check agent state.
         command = ["det", "-m", conf.make_master_url(), "agent", "list", "--json"]
@@ -756,7 +756,7 @@ def test_drain_agent_sched() -> None:
     exp.wait_for_experiment_workload_progress(exp_id1)
 
     slots = _fetch_slots()
-    used_slots = [s for s in slots if s["task_id"] != "FREE"]
+    used_slots = [s for s in slots if s["allocation_id"] != "FREE"]
     assert len(used_slots) == 1
     agent_id1 = used_slots[0]["agent_id"]
 
@@ -772,7 +772,7 @@ def test_drain_agent_sched() -> None:
         for _ in range(20):
             slots = _fetch_slots()
             assert len(slots) == 2
-            used_slots = [s for s in slots if s["task_id"] != "FREE"]
+            used_slots = [s for s in slots if s["allocation_id"] != "FREE"]
             if len(used_slots) == 2:
                 # All good.
                 break
@@ -794,7 +794,8 @@ def test_drain_agent_sched() -> None:
 def _task_data(task_id: str) -> Optional[Dict[str, Any]]:
     command = ["det", "-m", conf.make_master_url(), "task", "list", "--json"]
     tasks_data: Dict[str, Dict[str, Any]] = json.loads(subprocess.check_output(command).decode())
-    return tasks_data.get(task_id)
+    matches = [t for t in tasks_data.values() if t["task_id"] == task_id]
+    return matches[0] if matches else None
 
 
 def _task_agents(task_id: str) -> List[str]:
