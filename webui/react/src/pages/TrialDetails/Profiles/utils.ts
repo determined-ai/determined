@@ -30,25 +30,27 @@ export type MetricsAggregateInterface = {
   names: string[],
 };
 
-export const convertMetricsToUplotData =
-  (data: Record<number, Record<string, number>>, nameList: string[]): AlignedData => {
-    const series: (number | null)[][] = [];
-    const timeSerie: number[] = [];
+export const convertMetricsToUplotData = (
+  data: Record<number, Record<string, number>>,
+  nameList: string[],
+): AlignedData => {
+  const series: (number | null)[][] = [];
+  const timeSerie: number[] = [];
 
-    Object.entries(data).forEach(([ timeString, timeNameList ]) => {
-      timeSerie.push(parseInt(timeString));
+  Object.entries(data).forEach(([ timeString, timeNameList ]) => {
+    timeSerie.push(parseInt(timeString));
 
-      nameList.forEach((name, nameIndex) => {
-        if (!series[nameIndex]) {
-          series[nameIndex] = [];
-        }
+    nameList.forEach((name, nameIndex) => {
+      if (!series[nameIndex]) {
+        series[nameIndex] = [];
+      }
 
-        series[nameIndex].push(name in timeNameList ? timeNameList[name] : null);
-      });
+      series[nameIndex].push(name in timeNameList ? timeNameList[name] : null);
     });
+  });
 
-    return [ timeSerie, ...series ];
-  };
+  return [ timeSerie, ...series ];
+};
 
 export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'cpu_util_simple') return '%';

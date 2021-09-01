@@ -9,40 +9,19 @@ import UPlotChart, { Options } from 'components/UPlotChart';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import {
-  convertMetricsToUplotData, getUnitForMetricName, MetricType, useFetchMetrics,
+  convertMetricsToUplotData, getUnitForMetricName, MetricType,
 } from 'pages/TrialDetails/Profiles/utils';
-import { TrialDetails } from 'types';
 import { glasbeyColor } from 'utils/color';
 import { findFactorOfNumber } from 'utils/number';
-
-export interface Props {
-  trial: TrialDetails;
-}
 
 const CHART_HEIGHT = 300;
 
 const chartStyle: React.CSSProperties = { paddingBottom: 16 };
 
-const ProfilesEnabled: React.FC<Props> = ({ trial }: Props) => {
+const ProfilesEnabled: React.FC = () => {
   const chartSyncKey = useRef(uPlot.sync('time'));
 
-  const { filters, timingMetrics } = useProfilesFilterContext();
-
-  const systemMetrics = useFetchMetrics(
-    trial.id,
-    MetricType.System,
-    filters.name,
-    filters.agentId,
-    filters.gpuUuid,
-  );
-
-  const throughputMetrics = useFetchMetrics(
-    trial.id,
-    MetricType.Throughput,
-    'samples_per_second',
-    undefined,
-    undefined,
-  );
+  const { filters, throughputMetrics, timingMetrics, systemMetrics } = useProfilesFilterContext();
 
   const isLoading = systemMetrics.isLoading || throughputMetrics.isLoading;
   const isEmpty = systemMetrics.isEmpty && throughputMetrics.isEmpty;

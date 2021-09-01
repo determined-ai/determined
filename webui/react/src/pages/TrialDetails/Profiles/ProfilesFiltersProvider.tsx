@@ -18,7 +18,9 @@ export interface ProfilesFiltersInterface {
 export interface ProfilesFiltersContextInterface {
   filters: ProfilesFiltersInterface,
   setFilters: (value: ProfilesFiltersInterface) => void,
+  systemMetrics: MetricsAggregateInterface,
   systemSeries: AvailableSeriesType,
+  throughputMetrics: MetricsAggregateInterface,
   timingMetrics: MetricsAggregateInterface,
 }
 
@@ -41,8 +43,23 @@ interface Props {
 const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) => {
   const [ filters, setFilters ] = useState<FiltersInterface>({});
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
+
   const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
+  const systemMetrics = useFetchMetrics(
+    trial.id,
+    MetricType.System,
+    filters.name,
+    filters.agentId,
+    filters.gpuUuid,
+  );
+  const throughputMetrics = useFetchMetrics(
+    trial.id,
+    MetricType.Throughput,
+    'samples_per_second',
+    undefined,
+    undefined,
+  );
 
   const canRender = filters.agentId && filters.name && systemSeries;
 
@@ -152,9 +169,11 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   const context = useMemo<ProfilesFiltersContextInterface>(() => ({
     filters,
     setFilters,
+    systemMetrics,
     systemSeries,
+    throughputMetrics,
     timingMetrics,
-  }), [ filters, systemSeries, timingMetrics ]);
+  }), [ filters, systemMetrics, systemSeries, throughputMetrics, timingMetrics ]);
 
   if (!canRender || !isUrlParsed) {
     return <Alert message="No data available." type="warning" />;
