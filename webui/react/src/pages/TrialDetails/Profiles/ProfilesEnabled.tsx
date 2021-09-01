@@ -23,7 +23,9 @@ const ProfilesEnabled: React.FC = () => {
 
   const { filters, throughputMetrics, timingMetrics, systemMetrics } = useProfilesFilterContext();
 
-  const isLoading = systemMetrics.isLoading || throughputMetrics.isLoading;
+  const isLoading = (
+    systemMetrics.isLoading && throughputMetrics.isLoading && timingMetrics.isLoading
+  );
   const isEmpty = systemMetrics.isEmpty && throughputMetrics.isEmpty;
 
   const chartInfo = useMemo(() => {
@@ -163,7 +165,7 @@ const ProfilesEnabled: React.FC = () => {
   }, [ filters.name, systemMetrics, throughputMetrics, timingMetrics ]);
 
   if (isLoading) {
-    return <Spinner spinning={isLoading} tip="Fetching system metrics..." />;
+    return <Spinner spinning tip="Fetching system metrics..." />;
   } else if (isEmpty) {
     return <Alert message="No data available." type="warning" />;
   }
