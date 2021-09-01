@@ -24,7 +24,7 @@ def test_test_one_batch() -> None:
 
 
 def test_pytorch_from_config() -> None:
-    config = {"hyperparameters": {"global_batch_size": 4}}
+    config = {"hyperparameters": {"global_batch_size": 4, "dataloader_type": "determined"}}
     context = pytorch.PyTorchTrialContext.from_config(config)
     trial = pytorch_onevar_model.OneVarTrial(context)
 

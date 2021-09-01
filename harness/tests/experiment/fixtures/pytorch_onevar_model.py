@@ -224,6 +224,7 @@ if __name__ == "__main__":
     description: test-native-api-local-test-mode
     hyperparameters:
       global_batch_size: 32
+      dataloader_type: determined
     scheduling_unit: 1
     searcher:
       name: single
