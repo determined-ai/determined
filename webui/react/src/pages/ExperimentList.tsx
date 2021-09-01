@@ -134,7 +134,16 @@ const ExperimentList: React.FC = () => {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
       setIsLoading(false);
     }
-  }, [ canceler, settings ]);
+  }, [ canceler,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user ]);
 
   const fetchLabels = useCallback(async () => {
     try {
