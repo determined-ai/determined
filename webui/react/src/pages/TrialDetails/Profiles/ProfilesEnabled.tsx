@@ -8,11 +8,11 @@ import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlotChart';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
-import {
-  convertMetricsToUplotData, getUnitForMetricName, MetricType,
-} from 'pages/TrialDetails/Profiles/utils';
+import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
 import { glasbeyColor } from 'utils/color';
-import { findFactorOfNumber } from 'utils/number';
+
+import css from './ProfilesEnabled.module.scss';
+import { MetricType } from './types';
 
 const CHART_HEIGHT = 300;
 
@@ -51,113 +51,80 @@ const ProfilesEnabled: React.FC = () => {
       tzDate,
     };
 
+    const timeAxis: uPlot.Axis = {
+      label: 'Time',
+      space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
+        const rangeMs = scaleMax - scaleMin;
+        const msPerSec = plotDim / rangeMs;
+        return Math.max(60, msPerSec * 10 * 1000);
+      },
+      values: (self, splits) => {
+        return splits.map(i => dayjs.utc(i).format('HH:mm:ss'));
+      },
+    };
+    const metricAxis = (filterName = '') => ({
+      label: getUnitForMetricName(filterName),
+      scale: 'metric',
+      size: (self: uPlot, values: string[]) => {
+        if (!values) return 50;
+        const maxChars = Math.max(...values.map(el => el.toString().length));
+        return 25 + Math.max(25, maxChars * 8);
+      },
+    });
+    const timeSeries: uPlot.Series = {
+      label: 'Time',
+      value: (self, rawValue) => {
+        return dayjs.utc(rawValue).format('HH:mm:ss.SSS');
+      },
+    };
+    const batchSeries: uPlot.Series = { class: css.batchLegend, label: 'Batch', show: false };
+
+    const seriesMapping = (name: string, index: number) => ({
+      label: name,
+      points: { show: false },
+      scale: 'metric',
+      spanGaps: true,
+      stroke: glasbeyColor(index),
+      width: 2,
+    });
+
     return {
       [MetricType.System]: {
-        data: convertMetricsToUplotData(systemMetrics.dataByUnixTime, systemMetrics.names),
+        data: convertMetricsToUplotData(systemMetrics.dataByTime, systemMetrics.names),
         options: {
           ...sharedOptions,
-          axes: [
-            {
-              label: 'Time',
-              space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-                const rangeMs = scaleMax - scaleMin;
-                const msPerSec = plotDim / rangeMs;
-                return Math.max(60, msPerSec * 10 * 1000);
-              },
-              values: (self, splits) => {
-                return splits.map(i => dayjs.utc(i).format('HH:mm:ss'));
-              },
-            },
-            {
-              label: getUnitForMetricName(filters.name || ''),
-              size: (self: uPlot, values: string[]) => {
-                if (!values) return 50;
-                const maxChars = Math.max(...values.map(el => el.toString().length));
-                return 25 + Math.max(25, maxChars * 8);
-              },
-            },
-          ],
+          axes: [ timeAxis, metricAxis(filters.name) ],
           series: [
-            {
-              label: 'Time',
-              value: (self, rawValue) => {
-                return dayjs.utc(rawValue).format('HH:mm:ss.SSS');
-              },
-            },
-            ...systemMetrics.names.map((name, index) => ({
-              label: name,
-              points: { show: false },
-              stroke: glasbeyColor(index),
-              width: 2,
-            })),
+            timeSeries,
+            batchSeries,
+            ...(systemMetrics.names.slice(1)).map(seriesMapping),
           ],
         } as Options,
       },
       [MetricType.Throughput]: {
-        data: convertMetricsToUplotData(throughputMetrics.dataByUnixTime, throughputMetrics.names),
+        data: convertMetricsToUplotData(throughputMetrics.dataByTime, throughputMetrics.names),
         options: {
           ...sharedOptions,
-          axes: [
-            {
-              label: 'Time',
-              space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-                const rangeMs = scaleMax - scaleMin;
-                const msPerSec = plotDim / rangeMs;
-                return Math.max(60, msPerSec * 10 * 1000);
-              },
-              values: (self, splits) => {
-                return splits.map(i => dayjs.utc(i).format('HH:mm:ss'));
-              },
-            },
-            {
-              label: getUnitForMetricName('samples_per_second'),
-              size: (self: uPlot, values: string[]) => {
-                if (!values) return 50;
-                const maxChars = Math.max(...values.map(el => el.toString().length));
-                return 25 + Math.max(25, maxChars * 8);
-              },
-            },
-          ],
+          axes: [ timeAxis, metricAxis('samples_per_second') ],
           series: [
-            {
-              label: 'Time',
-              value: (self, rawValue) => {
-                return dayjs.utc(rawValue).format('HH:mm:ss.SSS');
-              },
-            },
-            ...throughputMetrics.names.map((name, index) => ({
-              label: name,
-              points: { show: false },
-              stroke: glasbeyColor(index),
-              width: 2,
-            })),
+            timeSeries,
+            batchSeries,
+            ...(throughputMetrics.names.slice(1)).map(seriesMapping),
           ],
         } as Options,
       },
       [MetricType.Timing]: {
-        data: convertMetricsToUplotData(timingMetrics.dataByBatch, timingMetrics.names),
+        data: convertMetricsToUplotData(timingMetrics.dataByTime, timingMetrics.names),
         options: {
           ...sharedOptions,
           axes: [
-            {
-              label: 'Batch',
-              space: (self, axisIdx, scaleMin, scaleMax, plotDim) => {
-                const range = scaleMax - scaleMin + 1;
-                const factor = findFactorOfNumber(range).reverse()
-                  .find(factor => plotDim / factor > 35);
-                return factor ? Math.min(70, (plotDim / factor)) : 35;
-              },
-            },
-            { label: 'Seconds' },
+            timeAxis,
+            { label: 'Seconds', scale: 'metric' },
           ],
           series: [
-            { label: 'Batch' },
-            ...timingMetrics.names.map((name, index) => ({
-              label: name,
-              points: { show: false },
-              stroke: glasbeyColor(index),
-              width: 2,
-            })),
+            timeSeries,
+            batchSeries,
+            ...(timingMetrics.names.slice(1)).map(seriesMapping),
           ],
         } as Options,
       },

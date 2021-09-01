@@ -2,12 +2,12 @@ import { Alert } from 'antd';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { FiltersInterface } from 'pages/TrialDetails/Profiles/SystemMetricFilter';
-import {
-  AvailableSeriesType, MetricsAggregateInterface, MetricType, useFetchAvailableSeries,
-  useFetchMetrics,
-} from 'pages/TrialDetails/Profiles/utils';
 import { parseUrl } from 'routes/utils';
 import { TrialDetails } from 'types';
+
+import { AvailableSeriesType, MetricsAggregateInterface, MetricType } from './types';
+import { useFetchAvailableSeries } from './useFetchAvailableSeries';
+import { useFetchMetrics } from './useFetchMetrics';
 
 export interface ProfilesFiltersInterface {
   agentId?: string;

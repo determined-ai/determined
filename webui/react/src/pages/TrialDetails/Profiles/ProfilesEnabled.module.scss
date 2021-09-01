@@ -1,0 +1,5 @@
+.batchLegend {
+  pointer-events: none;
+  user-select: none;
+}
+.batchLegend:global(.u-off) > * { opacity: 1; }
