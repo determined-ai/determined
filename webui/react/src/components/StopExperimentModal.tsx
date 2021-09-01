@@ -1,6 +1,6 @@
-import { Button, Modal } from 'antd';
+import { Checkbox, Modal } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ExperimentBase } from 'types';
@@ -17,8 +17,9 @@ interface Props extends Omit<ModalFuncProps, 'type'> {
 }
 
 const StopExperimentModal: React.FC<Props> = ({ experiment, onClose }: Props) => {
+  const [ type, setType ] = useState<ActionType>(ActionType.Kill);
 
-  const onOk = useCallback(async (type: ActionType) => {
+  const onOk = useCallback(async () => {
     if (type === ActionType.Cancel) {
       await cancelExperiment({ experimentId: experiment.id });
     }
@@ -26,23 +27,21 @@ const StopExperimentModal: React.FC<Props> = ({ experiment, onClose }: Props) =>
       await killExperiment({ experimentId: experiment.id });
     }
     onClose(type);
-  }, [ experiment.id, onClose ]);
+  }, [ experiment.id, onClose, type ]);
 
   return (
     <Modal
-      footer={(<>
-        <Button onClick={() => onClose(ActionType.None)}>Cancel</Button>
-        <Button type="primary" onClick={() => onOk(ActionType.Kill)}>Stop Now</Button>
-        <Button
-          type="primary"
-          onClick={() => onOk(ActionType.Cancel)}>Save Checkpoint and Stop
-        </Button>
-      </>)}
+      okText="Stop Experiment"
       title={`Stop Experiment ${experiment.id}`}
       visible={true}
       onCancel={() => onClose(ActionType.None)}
+      onOk={onOk}
     >
       <p>Confirm stopping experiment {experiment.id}.</p>
+      <Checkbox
+        checked={type === ActionType.Cancel}
+        onChange={(e) => setType(e.target.checked ? ActionType.Cancel : ActionType.Kill)}
+      >Save checkpoint before stopping experiment</Checkbox>
     </Modal>
   );
 };
