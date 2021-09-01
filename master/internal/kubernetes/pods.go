@@ -139,6 +139,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startEventListener(ctx)
 		p.startPreemptionListener(ctx)
 
+	case actor.PostStop:
+
 	case sproto.StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err

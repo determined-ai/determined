@@ -1,9 +1,12 @@
 package kubernetes
 
 import (
-	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,9 +45,7 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self(), startPreemptionListener{})
 
 	case startPreemptionListener:
-		if err := p.startPreemptionListener(ctx); err != nil {
-			return err
-		}
+		p.startPreemptionListener(ctx)
 
 	case actor.PostStop:
 
@@ -56,36 +57,49 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) error {
+func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	// check if there are pods to preempt on startup
 	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
-		metaV1.ListOptions{LabelSelector: "determined-preemption"})
+		metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
-		return errors.Wrap(err,
-			"error in initializing preemption listener: checking for pods to preempt")
+		ctx.Log().WithError(err).Warnf(
+			"error in initializing preemption listener: checking for pods to preempt",
+		)
+		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
+		return
 	}
+
 	for _, pod := range pods.Items {
 		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
 	}
 
-	watch, err := p.clientSet.CoreV1().Pods(p.namespace).Watch(
-		metaV1.ListOptions{LabelSelector: "determined-preemption"})
+	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
+		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
+			return p.clientSet.CoreV1().Pods(p.namespace).Watch(
+				metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
+		},
+	})
 	if err != nil {
-		return errors.Wrap(err, "error initializing preemption watch")
+		ctx.Log().WithError(err).Warnf("error initializing preemption watch")
+		actors.NotifyAfter(ctx, defaultInformerBackoff, startPreemptionListener{})
+		return
 	}
 
 	ctx.Log().Info("preemption listener is starting")
-	for pod := range watch.ResultChan() {
-		newPod, ok := pod.Object.(*k8sV1.Pod)
-		if !ok {
-			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", pod, pod)
+	for e := range rw.ResultChan() {
+		if e.Type == watch.Error {
+			ctx.Log().WithField("error", e.Object).Warnf("preemption listener encountered error")
 			continue
 		}
-		ctx.Tell(p.podsHandler, podPreemption{podName: newPod.Name})
+
+		pod, ok := e.Object.(*k8sV1.Pod)
+		if !ok {
+			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
+			continue
+		}
+		ctx.Tell(p.podsHandler, podPreemption{podName: pod.Name})
 	}
 
 	ctx.Log().Warn("preemption listener stopped unexpectedly")
 	ctx.Tell(ctx.Self(), startPreemptionListener{})
-
-	return nil
 }
