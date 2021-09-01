@@ -1852,7 +1852,6 @@ workflows:
 
       - test-e2e-webui:
           requires:
-            - build-bindings
             - package-and-push-system-local
 
       - deploy:
