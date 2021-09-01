@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Callable, Dict, Optional, Union, cast
 
 from determined import pytorch, util
@@ -14,6 +15,7 @@ class PyTorchExperimentalContext:
     def __init__(self, parent: Any) -> None:
         self._parent = parent
         self._auto_amp = False
+        self._data_repro_checks_disabled = False
 
     def use_amp(self) -> None:
         """
@@ -27,6 +29,31 @@ class PyTorchExperimentalContext:
         """
         self._parent.wrap_scaler(amp.GradScaler())  # type: ignore
         self._auto_amp = True
+
+    def disable_dataset_reproducibility_checks(self) -> None:
+        """
+        ``disable_dataset_reproducibility_checks()`` allows you to return an arbitrary
+        ``DataLoader`` from :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` or
+        :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`.
+
+        Normally you would be required to return a ``det.pytorch.DataLoader`` instead, which would
+        guarantee that an appropriate ``Sampler`` is used that ensures:
+
+        - When ``shuffle=True``, the shuffle is reproducible.
+        - The dataset will start at the right location, even after pausing/continuing.
+        - Proper sharding is used during distributed training.
+
+        However, there may be cases where either reproducibility of the dataset is not needed or
+        where the nature of the dataset may cause the ``det.pytorch.DataLoader`` to be unsuitable.
+
+        In those cases, you may call ``disable_dataset_reproducibility_checks()`` and you will be
+        free to return any ``torch.utils.data.DataLoader`` you like.  Dataset reproducibility will
+        still be possible, but it will be your responsibility.  If desired, you may find the
+        ``Sampler`` classes in :mod:`determined.pytorch.samplers` to be helpful.
+        """
+
+        self._data_repro_checks_disabled = True
+        logging.info("disabled dataset reproducibility checks")
 
     @util.deprecated(
         "context.experimental.reset_reducers() is deprecated since 0.15.2 and will be removed in a "
