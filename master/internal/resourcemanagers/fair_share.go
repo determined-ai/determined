@@ -135,9 +135,9 @@ func calculateGroupStates(
 				allocated := taskList.GetAllocations(req.TaskActor)
 				state.slotDemand += req.SlotsNeeded
 				switch {
-				case allocated == nil || len(allocated.Allocations) == 0:
+				case allocated == nil || len(allocated.Reservations) == 0:
 					state.pendingReqs = append(state.pendingReqs, req)
-				case len(allocated.Allocations) > 0:
+				case len(allocated.Reservations) > 0:
 					if req.NonPreemptible {
 						state.presubscribedSlots += req.SlotsNeeded
 					}

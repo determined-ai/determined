@@ -36,7 +36,7 @@ func TestFindFits(t *testing.T) {
 	testCases := []testCase{
 		{
 			Name: "0-slot multiple fits, idle agents",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -46,7 +46,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, idle agents, out-of-order",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent2", "", 4, 0, 100, 0),
 				newMockAgent("agent1", "", 4, 0, 100, 0),
@@ -56,7 +56,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, in-use agents",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 2),
 				newMockAgent("agent2", "", 4, 0, 100, 2),
@@ -66,7 +66,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, in-use agents, out-of-order",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent2", "", 4, 0, 100, 2),
 				newMockAgent("agent1", "", 4, 0, 100, 2),
@@ -76,7 +76,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, max zero slot containers",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 2, 0),
 				newMockAgent("agent2", "", 4, 0, 4, 2),
@@ -86,7 +86,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, max zero slot containers, out-of-order",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent2", "", 4, 0, 4, 2),
 				newMockAgent("agent1", "", 4, 0, 2, 0),
@@ -96,7 +96,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot multiple fits, label hard constraint",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0, Label: "label2"},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0, Label: "label2"},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "label1", 4, 0, 100, 0),
 				newMockAgent("agent2", "label2", 4, 0, 100, 0),
@@ -106,7 +106,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot single fit",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 1),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -116,7 +116,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "0-slot single fit, max zero slot containers",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 0},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 0},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 2, 1),
 				newMockAgent("agent2", "", 4, 0, 2, 0),
@@ -126,7 +126,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "2-slot multiple fits",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 2},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 2, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -136,7 +136,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "1-slot multiple fits",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 1, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -146,7 +146,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "1-slot out-of-order multiple fits",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 1, 0, 100, 0),
@@ -156,7 +156,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot single fit",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 4},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 1, 0, 100, 0),
@@ -166,7 +166,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot multiple fits",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -176,7 +176,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "2-slot multiple fits, in-use agents",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 2},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 2, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 2, 100, 0),
@@ -186,7 +186,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "1-slot multiple fits, in-use agents",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 2, 1, 100, 0),
 				newMockAgent("agent2", "", 4, 1, 100, 0),
@@ -196,7 +196,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "1-slot multiple fits, in-use agents, out of order",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 1, 100, 0),
 				newMockAgent("agent2", "", 2, 1, 100, 0),
@@ -206,7 +206,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "1-slot multiple fits, in-use-agents, odd numbers",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 1},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 1},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 2, 1, 100, 0),
 				newMockAgent("agent2", "", 5, 3, 100, 0),
@@ -216,7 +216,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "2-slot multiple fits, in-use-agents, odd numbers",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 2},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 2, 0, 100, 0),
 				newMockAgent("agent2", "", 5, 3, 100, 0),
@@ -226,7 +226,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot multiple fits, unoccupied",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 4},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -236,7 +236,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot multiple fits, one exact",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 4},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 4},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 8, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -247,8 +247,8 @@ func TestFindFits(t *testing.T) {
 		{
 			Name: "4-slot multiple fits, one exact, single agent",
 			Task: sproto.AllocateRequest{
-				ID:          "task1",
-				SlotsNeeded: 4,
+				AllocationID: "task1",
+				SlotsNeeded:  4,
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: true,
 				},
@@ -262,7 +262,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "4-slot multiple fits, label hard constraint",
-			Task: sproto.AllocateRequest{ID: "task1", Label: "label2", SlotsNeeded: 4},
+			Task: sproto.AllocateRequest{AllocationID: "task1", Label: "label2", SlotsNeeded: 4},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "label1", 4, 0, 100, 0),
 				newMockAgent("agent2", "label2", 4, 0, 100, 0),
@@ -272,7 +272,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "2-slot multiple inexact fits",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 2},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 4, 0, 100, 0),
 				newMockAgent("agent2", "", 4, 0, 100, 0),
@@ -283,8 +283,8 @@ func TestFindFits(t *testing.T) {
 		{
 			Name: "2-slot multiple inexact fits, single agent",
 			Task: sproto.AllocateRequest{
-				ID:          "task1",
-				SlotsNeeded: 2,
+				AllocationID: "task1",
+				SlotsNeeded:  2,
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: true,
 				},
@@ -299,8 +299,8 @@ func TestFindFits(t *testing.T) {
 		{
 			Name: "2-slot fit, single agent",
 			Task: sproto.AllocateRequest{
-				ID:          "task1",
-				SlotsNeeded: 2,
+				AllocationID: "task1",
+				SlotsNeeded:  2,
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: true,
 				},
@@ -314,7 +314,7 @@ func TestFindFits(t *testing.T) {
 		},
 		{
 			Name: "2-slot fit, no single agent requirement",
-			Task: sproto.AllocateRequest{ID: "task1", SlotsNeeded: 2},
+			Task: sproto.AllocateRequest{AllocationID: "task1", SlotsNeeded: 2},
 			Agents: []*mockAgent{
 				newMockAgent("agent1", "", 1, 0, 100, 0),
 				newMockAgent("agent2", "", 3, 0, 100, 0),

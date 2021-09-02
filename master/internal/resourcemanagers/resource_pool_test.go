@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"testing"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/google/uuid"
 
 	"gotest.tools/assert"
@@ -20,7 +22,8 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
+	taskSummaries := system.Ask(
+		ref, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowError{})
@@ -42,7 +45,8 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
+	taskSummaries := system.Ask(
+		ref, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, ThrowPanic{})
@@ -64,7 +68,8 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
+	taskSummaries := system.Ask(
+		ref, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	assert.NilError(t, taskRef.StopAndAwaitTermination())
@@ -85,7 +90,8 @@ func TestCleanUpTaskWhenTaskActorReleaseResources(t *testing.T) {
 
 	taskRef := system.Get(actor.Addr("task"))
 	system.Ask(taskRef, SendRequestResourcesToResourceManager{}).Get()
-	taskSummaries := system.Ask(ref, sproto.GetTaskSummaries{}).Get().(map[sproto.TaskID]TaskSummary)
+	taskSummaries := system.Ask(
+		ref, sproto.GetTaskSummaries{}).Get().(map[model.AllocationID]TaskSummary)
 	assert.Equal(t, len(taskSummaries), 1)
 
 	system.Ask(taskRef, sproto.ReleaseResources{}).Get()

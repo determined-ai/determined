@@ -65,12 +65,12 @@ def list_slots(args: argparse.Namespace) -> None:
     agent_res = api.get(args.master, "agents")
 
     agents = agent_res.json()
-    tasks = task_res.json()
+    allocations = task_res.json()
 
     c_names = {}
-    for task in tasks.values():
-        for cont in task["containers"]:
-            c_names[cont["id"]] = {"name": task["name"], "id": task["id"]}
+    for a in allocations.values():
+        for cont in a["containers"]:
+            c_names[cont["id"]] = {"name": a["name"], "allocation_id": a["allocation_id"]}
 
     slots = [
         OrderedDict(
@@ -81,8 +81,10 @@ def list_slots(args: argparse.Namespace) -> None:
                 ("enabled", slot["enabled"]),
                 ("draining", slot.get("draining", False)),
                 (
-                    "task_id",
-                    c_names[slot["container"]["id"]]["id"] if slot["container"] else "FREE",
+                    "allocation_id",
+                    c_names[slot["container"]["id"]]["allocation_id"]
+                    if slot["container"]
+                    else "FREE",
                 ),
                 (
                     "task_name",
@@ -102,7 +104,7 @@ def list_slots(args: argparse.Namespace) -> None:
         "Slot ID",
         "Enabled",
         "Draining",
-        "Task ID",
+        "Allocation ID",
         "Task Name",
         "Type",
         "Device",

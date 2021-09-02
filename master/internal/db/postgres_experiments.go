@@ -615,14 +615,17 @@ func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
 	}
 
 	var metric float32
-	if err := db.sql.QueryRowx(fmt.Sprintf(`
+	switch err := db.sql.QueryRowx(fmt.Sprintf(`
 SELECT (v.metrics->'validation_metrics'->>$2)::float8
 FROM validations v, trials t
 WHERE v.trial_id = t.id
   AND t.experiment_id = $1
   AND v.state = 'COMPLETED'
 ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s 
-LIMIT 1`, metricOrdering), id, metricName).Scan(&metric); err != nil {
+LIMIT 1`, metricOrdering), id, metricName).Scan(&metric); {
+	case errors.Is(err, sql.ErrNoRows):
+		return 0, ErrNotFound
+	case err != nil:
 		return 0, errors.Wrap(err, "querying best experiment validation")
 	}
 	return metric, nil

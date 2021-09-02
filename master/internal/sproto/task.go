@@ -1,9 +1,8 @@
 package sproto
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -11,7 +10,8 @@ import (
 type (
 	// AllocateRequest notifies resource managers to assign resources to a task.
 	AllocateRequest struct {
-		ID                  TaskID
+		TaskID              model.TaskID
+		AllocationID        model.AllocationID
 		Name                string
 		Group               *actor.Ref
 		SlotsNeeded         int
@@ -25,8 +25,10 @@ type (
 	ResourcesReleased struct {
 		TaskActor *actor.Ref
 	}
+	// GetTaskHandler returns a ref to the handler for the specified task.
+	GetTaskHandler struct{ ID model.AllocationID }
 	// GetTaskSummary returns the summary of the specified task.
-	GetTaskSummary struct{ ID *TaskID }
+	GetTaskSummary struct{ ID *model.AllocationID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
 	GetTaskSummaries struct{}
 	// SetTaskName sets the name of the task.
@@ -70,28 +72,26 @@ func ValidateRPResources(system *actor.System, resourcePoolName string, slots in
 type (
 	// ResourcesAllocated notifies the task actor of assigned resources.
 	ResourcesAllocated struct {
-		ID           TaskID
+		ID           model.AllocationID
 		ResourcePool string
-		Allocations  []Allocation
+		Reservations []Reservation
 	}
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
 		ResourcePool string
 	}
+	// ReservationRuntimeInfo is all the inforamation provided at runtime to make a task spec.
+	ReservationRuntimeInfo struct {
+		Token        string
+		AgentRank    int
+		IsMultiAgent bool
+	}
 )
 
-// TaskID is the ID of a task.
-type TaskID string
-
-// NewTaskID returns a new unique task id.
-func NewTaskID() TaskID {
-	return TaskID(uuid.New().String())
-}
-
-// Allocation is an interface that provides function for task actors
+// Reservation is an interface that provides function for task actors
 // to start tasks on assigned resources.
-type Allocation interface {
+type Reservation interface {
 	Summary() ContainerSummary
-	Start(ctx *actor.Context, spec tasks.TaskSpec, rank int)
+	Start(ctx *actor.Context, spec tasks.TaskSpec, rri ReservationRuntimeInfo)
 	Kill(ctx *actor.Context)
 }

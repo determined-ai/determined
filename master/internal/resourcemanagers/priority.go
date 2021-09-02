@@ -233,7 +233,7 @@ func sortTasksByPriorityAndTimestamp(
 		}
 
 		assigned := taskList.GetAllocations(req.TaskActor)
-		if assigned == nil || len(assigned.Allocations) == 0 {
+		if assigned == nil || len(assigned.Reservations) == 0 {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
@@ -273,8 +273,8 @@ func removeTaskFromAgents(
 	agents map[*actor.Ref]*agentState,
 	resourcesAllocated *sproto.ResourcesAllocated,
 ) {
-	for _, allocation := range resourcesAllocated.Allocations {
-		allocation := allocation.(*containerAllocation)
+	for _, allocation := range resourcesAllocated.Reservations {
+		allocation := allocation.(*containerReservation)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
 			delete(agents[allocation.agent.handler].zeroSlotContainers, allocation.container.id)

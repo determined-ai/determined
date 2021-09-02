@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -62,6 +64,13 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 
 	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority:
 		a.forwardToAllPools(ctx, msg)
+
+	case sproto.GetTaskHandler:
+		if handler, err := a.aggregateTaskHandler(a.forwardToAllPools(ctx, msg)); err != nil {
+			ctx.Respond(err)
+		} else {
+			ctx.Respond(handler)
+		}
 
 	case sproto.GetTaskSummary:
 		if summary := a.aggregateTaskSummary(a.forwardToAllPools(ctx, msg)); summary != nil {
@@ -169,6 +178,17 @@ func (a *agentResourceManager) forwardToAllPools(
 	return nil
 }
 
+func (a *agentResourceManager) aggregateTaskHandler(
+	resps map[*actor.Ref]actor.Message,
+) (*actor.Ref, error) {
+	for _, resp := range resps {
+		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
+			return typed, nil
+		}
+	}
+	return nil, errors.New("task handler not found on any resource pool")
+}
+
 func (a *agentResourceManager) aggregateTaskSummary(
 	resps map[*actor.Ref]actor.Message,
 ) *TaskSummary {
@@ -183,11 +203,11 @@ func (a *agentResourceManager) aggregateTaskSummary(
 
 func (a *agentResourceManager) aggregateTaskSummaries(
 	resps map[*actor.Ref]actor.Message,
-) map[sproto.TaskID]TaskSummary {
-	summaries := make(map[sproto.TaskID]TaskSummary)
+) map[model.AllocationID]TaskSummary {
+	summaries := make(map[model.AllocationID]TaskSummary)
 	for _, resp := range resps {
 		if resp != nil {
-			typed := resp.(map[sproto.TaskID]TaskSummary)
+			typed := resp.(map[model.AllocationID]TaskSummary)
 			for id, summary := range typed {
 				summaries[id] = summary
 			}

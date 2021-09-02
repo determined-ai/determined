@@ -20,10 +20,10 @@ import (
 
 const (
 	// nolint:gosec // These are not potential hardcoded credentials.
-	gatewayTokenHeader = "grpcgateway-authorization"
-	taskTokenHeader    = "x-task-token"
-	userTokenHeader    = "x-user-token"
-	cookieName         = "auth"
+	gatewayTokenHeader    = "grpcgateway-authorization"
+	allocationTokenHeader = "x-allocation-token"
+	userTokenHeader       = "x-user-token"
+	cookieName            = "auth"
 )
 
 var unauthenticatedMethods = map[string]bool{
@@ -41,13 +41,13 @@ var (
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
 
-// GetTaskSession returns the currently running task.
-func GetTaskSession(ctx context.Context, d *db.PgDB) (*model.TaskSession, error) {
+// GetAllocationSession returns the currently running task.
+func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, ErrTokenMissing
 	}
-	tokens := md[taskTokenHeader]
+	tokens := md[allocationTokenHeader]
 	if len(tokens) == 0 {
 		return nil, ErrTokenMissing
 	}
@@ -58,7 +58,7 @@ func GetTaskSession(ctx context.Context, d *db.PgDB) (*model.TaskSession, error)
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	switch session, err := d.TaskSessionByToken(token); err {
+	switch session, err := d.AllocationSessionByToken(token); err {
 	case nil:
 		return session, nil
 	case db.ErrNotFound:
@@ -107,7 +107,7 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
 		return nil
 	}
 
-	switch _, err := GetTaskSession(ctx, db); err {
+	switch _, err := GetAllocationSession(ctx, db); err {
 	case ErrTokenMissing:
 		// Try user token.
 	case nil:

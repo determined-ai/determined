@@ -8,6 +8,7 @@ FROM
           t.hparams,
           t.seed,
           t.warm_start_checkpoint_id,
+          t.runner_state,
 
      (SELECT COALESCE(jsonb_agg(r2
                                 ORDER BY r2.id ASC), '[]'::JSONB)

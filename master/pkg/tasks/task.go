@@ -63,11 +63,14 @@ type TaskSpec struct {
 	UseHostMode bool
 	ShmSize     int64
 
+	// The parent task of an allocation.
+	TaskID string
+
 	// Fields that are set on the per-allocation basis.
-	TaskID      string
-	TaskToken   string
-	ContainerID string
-	Devices     []device.Device
+	AllocationID           string
+	AllocationSessionToken string
+	ContainerID            string
+	Devices                []device.Device
 }
 
 // Archives returns all the archives.
@@ -87,9 +90,10 @@ func (t TaskSpec) EnvVars() map[string]string {
 	e := map[string]string{
 		// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 		// the user inside the container.
-		"PYTHONUSERBASE": userPythonBaseDir,
-		"DET_TASK_ID":    t.TaskID,
-		"DET_TASK_TOKEN": t.TaskToken,
+		"PYTHONUSERBASE":               userPythonBaseDir,
+		"DET_TASK_ID":                  t.TaskID,
+		"DET_ALLOCATION_ID":            t.AllocationID,
+		"DET_ALLOCATION_SESSION_TOKEN": t.AllocationSessionToken,
 	}
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
@@ -107,6 +111,8 @@ func (t TaskSpec) EnvVars() map[string]string {
 	if t.MasterCert != nil {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
+	} else {
+		e["DET_USE_TLS"] = "false"
 	}
 
 	for k, v := range t.ExtraEnvVars {

@@ -20,7 +20,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -284,7 +283,7 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, errors.Wrapf(err, "cannot find Tensorboard manager actor")
 	}
 
-	tensorboardID := tensorboardIDFut.Get().(sproto.TaskID)
+	tensorboardID := tensorboardIDFut.Get().(model.TaskID)
 	tensorboard := a.m.system.AskAt(
 		tensorboardsAddr.Child(tensorboardID), &tensorboardv1.Tensorboard{})
 	if err = api.ProcessActorResponseError(&tensorboard); err != nil {

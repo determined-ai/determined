@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"strings"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/emirpasic/gods/sets/treeset"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -13,7 +15,7 @@ import (
 type taskList struct {
 	taskByTime    *treeset.Set
 	taskByHandler map[*actor.Ref]*sproto.AllocateRequest
-	taskByID      map[sproto.TaskID]*sproto.AllocateRequest
+	taskByID      map[model.AllocationID]*sproto.AllocateRequest
 	allocations   map[*actor.Ref]*sproto.ResourcesAllocated
 }
 
@@ -21,7 +23,7 @@ func newTaskList() *taskList {
 	return &taskList{
 		taskByTime:    treeset.NewWith(taskComparator),
 		taskByHandler: make(map[*actor.Ref]*sproto.AllocateRequest),
-		taskByID:      make(map[sproto.TaskID]*sproto.AllocateRequest),
+		taskByID:      make(map[model.AllocationID]*sproto.AllocateRequest),
 		allocations:   make(map[*actor.Ref]*sproto.ResourcesAllocated),
 	}
 }
@@ -39,7 +41,7 @@ func (l *taskList) GetTaskByHandler(handler *actor.Ref) (*sproto.AllocateRequest
 	return req, ok
 }
 
-func (l *taskList) GetTaskByID(id sproto.TaskID) (*sproto.AllocateRequest, bool) {
+func (l *taskList) GetTaskByID(id model.AllocationID) (*sproto.AllocateRequest, bool) {
 	req, ok := l.taskByID[id]
 	return req, ok
 }
@@ -51,7 +53,7 @@ func (l *taskList) AddTask(req *sproto.AllocateRequest) bool {
 
 	l.taskByTime.Add(req)
 	l.taskByHandler[req.TaskActor] = req
-	l.taskByID[req.ID] = req
+	l.taskByID[req.AllocationID] = req
 	return true
 }
 
@@ -63,7 +65,7 @@ func (l *taskList) RemoveTaskByHandler(handler *actor.Ref) *sproto.AllocateReque
 
 	l.taskByTime.Remove(req)
 	delete(l.taskByHandler, handler)
-	delete(l.taskByID, req.ID)
+	delete(l.taskByID, req.AllocationID)
 	delete(l.allocations, handler)
 	return req
 }
@@ -97,5 +99,5 @@ func taskComparator(a interface{}, b interface{}) int {
 		}
 		return 1
 	}
-	return strings.Compare(string(t1.ID), string(t2.ID))
+	return strings.Compare(string(t1.AllocationID), string(t2.AllocationID))
 }

@@ -65,7 +65,7 @@ func TestNestedSampling(t *testing.T) {
 	hpTarget["type"] = "adam"
 	hpTarget["learning_rate"] = 0.01
 	hpTarget["momentum"] = 0.9
-	target := make(hparamSample)
+	target := make(HParamSample)
 	target["optimizer"] = hpTarget
 	assert.DeepEqual(t, sample, target)
 }

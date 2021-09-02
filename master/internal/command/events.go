@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -40,7 +42,7 @@ type event struct {
 	Seq      int       `json:"seq"`
 	Time     time.Time `json:"time"`
 
-	ScheduledEvent *sproto.TaskID `json:"scheduled_event"`
+	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
 	AssignedEvent *sproto.ResourcesAllocated `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.

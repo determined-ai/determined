@@ -355,7 +355,7 @@ func TestPrioritySchedulingPreemptionDisabledTaskFinished(t *testing.T) {
 	AllocateTasks(toAllocate, agentMap, taskList)
 	ok := RemoveTask(4, toAllocate[0].TaskActor, taskList, true)
 	if !ok {
-		t.Errorf("Failed to remove task %s", toAllocate[0].ID)
+		t.Errorf("Failed to remove task %s", toAllocate[0].AllocationID)
 	}
 
 	newTasks := []*mockTask{
@@ -624,9 +624,9 @@ func AllocateTasks(
 			container := newContainer(req, fit.Agent, fit.Slots)
 			devices := fit.Agent.allocateFreeDevices(fit.Slots, container.id)
 			allocated := &sproto.ResourcesAllocated{
-				ID: req.ID,
-				Allocations: []sproto.Allocation{
-					&containerAllocation{
+				ID: req.AllocationID,
+				Reservations: []sproto.Reservation{
+					&containerReservation{
 						req:       req,
 						agent:     fit.Agent,
 						container: container,
@@ -650,7 +650,7 @@ func AddUnallocatedTasks(
 		assert.Assert(t, created)
 
 		req := &sproto.AllocateRequest{
-			ID:             mockTask.id,
+			AllocationID:   mockTask.id,
 			SlotsNeeded:    mockTask.slotsNeeded,
 			Label:          mockTask.label,
 			TaskActor:      ref,
@@ -664,8 +664,8 @@ func AddUnallocatedTasks(
 }
 
 func RemoveTask(slots int, toRelease *actor.Ref, taskList *taskList, delete bool) bool {
-	for _, alloc := range taskList.GetAllocations(toRelease).Allocations {
-		alloc, ok := alloc.(*containerAllocation)
+	for _, alloc := range taskList.GetAllocations(toRelease).Reservations {
+		alloc, ok := alloc.(*containerReservation)
 		if !ok {
 			return false
 		}

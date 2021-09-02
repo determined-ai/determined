@@ -1,5 +1,7 @@
 package ptrs
 
+import "time"
+
 // BoolPtr is the "&true" you always wanted.
 func BoolPtr(val bool) *bool {
 	tmp := val
@@ -22,4 +24,9 @@ func Float64Ptr(val float64) *float64 {
 func StringPtr(val string) *string {
 	tmp := val
 	return &tmp
+}
+
+// TimePtr is the &time.Now().UTC() you always wanted.
+func TimePtr(val time.Time) *time.Time {
+	return &val
 }

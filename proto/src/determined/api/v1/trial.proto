@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
@@ -273,19 +274,44 @@ message PostTrialProfilerMetricsBatchRequest {
 // Response to PostTrialProfilerMetricsBatchRequest
 message PostTrialProfilerMetricsBatchResponse {}
 
-// Long poll for updates to the preemption status for a trial.
-message TrialPreemptionSignalRequest {
+// Long poll for updates to the preemption status for an allocation.
+message AllocationPreemptionSignalRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
+    json_schema: { required: [ "allocation_id" ] }
   };
-  // The requested trial's id.
-  int32 trial_id = 1;
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The timeout in seconds.
+  int32 timeout_seconds = 2;
 }
-// Response to TrialPreemptionSignalRequest.
-message TrialPreemptionSignalResponse {
+// Response to AllocationPreemptionSignalRequest.
+message AllocationPreemptionSignalResponse {
   // True if signaling preempt, otherwise just a synchronization marker.
   bool preempt = 1;
 }
+// Acknowledge the receipt of some stop signal.
+message AckAllocationPreemptionSignalRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id" ] }
+  };
+  // The allocation that is acknowledging the request.
+  string allocation_id = 1;
+}
+// Response to AckAllocationPreemptionSignalRequest.
+message AckAllocationPreemptionSignalResponse {}
+
+// Mark some reservation as a daemon.
+message MarkAllocationReservationDaemonRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "container_id" ] }
+  };
+  // The allocation ID for the reservation.
+  string allocation_id = 1;
+  // The container ID for the reservation.
+  string container_id = 2;
+}
+// Response to MarkAllocationReservationDaemonRequest.
+message MarkAllocationReservationDaemonResponse {}
 
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
@@ -299,6 +325,8 @@ message GetCurrentTrialSearcherOperationRequest {
 message GetCurrentTrialSearcherOperationResponse {
   // The current searcher operation.
   determined.experiment.v1.SearcherOperation op = 1;
+  // The status of the searcher operation.
+  bool completed = 2;
 }
 
 // Reports to the searcher that the trial has completed the current requested
@@ -316,7 +344,7 @@ message CompleteTrialSearcherValidationRequest {
 // Response to CompleteTrialSearcherValidationRequest
 message CompleteTrialSearcherValidationResponse {}
 
-// Report a voluntary early exit to the searcher.
+// Report a voluntary, permanent early exit to the searcher.
 message ReportTrialSearcherEarlyExitRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "trial_id", "reason" ] }
@@ -350,7 +378,7 @@ message ReportTrialTrainingMetricsRequest {
     json_schema: { required: [ "training_metrics" ] }
   };
   // The training metrics to persist.
-  determined.trial.v1.TrainingMetrics training_metrics = 1;
+  determined.trial.v1.TrialMetrics training_metrics = 1;
 }
 // Response to ReportTrialTrainingMetricsRequest
 message ReportTrialTrainingMetricsResponse {}
@@ -361,7 +389,7 @@ message ReportTrialValidationMetricsRequest {
     json_schema: { required: [ "validation_metrics" ] }
   };
   // The training metrics to persist.
-  determined.trial.v1.ValidationMetrics validation_metrics = 1;
+  determined.trial.v1.TrialMetrics validation_metrics = 1;
 }
 // Response to ReportTrialValidationMetricsRequest
 message ReportTrialValidationMetricsResponse {}
@@ -377,21 +405,34 @@ message ReportTrialCheckpointMetadataRequest {
 // Response to ReportTrialCheckpointMetadataRequest
 message ReportTrialCheckpointMetadataResponse {}
 
-// Gathers the rendezvous info for the trial.
-message GetTrialRendezvousInfoRequest {
+// Gathers the rendezvous info for an allocation.
+message AllocationRendezvousInfoRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "container_id" ] }
+    json_schema: { required: [ "allocation_id", "container_id" ] }
   };
-  // The id of the trial.
-  int32 trial_id = 1;
-  // The id of the container. Used to verify all containers are connected.
+  // The id of the allocation.
+  string allocation_id = 1;
+  // The id of the allocation. Used to verify all allocations are connected.
   string container_id = 2;
 }
-// Response to GetTrialRendezvousInfoRequest
-message GetTrialRendezvousInfoResponse {
+// Response to AllocationRendezvousInfoRequest
+message AllocationRendezvousInfoResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "rendezvous_info" ] }
   };
   // The rendezvous information.
   determined.trial.v1.RendezvousInfo rendezvous_info = 1;
 }
+
+// Partially update the trial metadata.
+message PostTrialRunnerMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "trial_id", "metadata" ] }
+  };
+  // The id of the trial.
+  int32 trial_id = 1;
+  // The state for the trial runner.
+  determined.trial.v1.TrialRunnerMetadata metadata = 2;
+}
+// Response to PatchTrialMetadataRequest
+message PostTrialRunnerMetadataResponse {}

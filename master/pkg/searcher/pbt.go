@@ -17,7 +17,7 @@ type (
 		RoundsCompleted      int                              `json:"rounds_completed"`
 		Metrics              map[model.RequestID]float64      `json:"metrics"`
 		TrialRoundsCompleted map[model.RequestID]int          `json:"trial_rounds_completed"`
-		TrialParams          map[model.RequestID]hparamSample `json:"trial_params"`
+		TrialParams          map[model.RequestID]HParamSample `json:"trial_params"`
 
 		// EarlyExitTrials contains trials that exited early that are still considered in the search.
 		EarlyExitTrials map[model.RequestID]bool `json:"early_exit_trials"`
@@ -41,7 +41,7 @@ func newPBTSearch(config expconf.PBTConfig, smallerIsBetter bool) SearchMethod {
 		pbtSearchState: pbtSearchState{
 			Metrics:              make(map[model.RequestID]float64),
 			TrialRoundsCompleted: make(map[model.RequestID]int),
-			TrialParams:          make(map[model.RequestID]hparamSample),
+			TrialParams:          make(map[model.RequestID]HParamSample),
 			EarlyExitTrials:      make(map[model.RequestID]bool),
 			SearchMethodType:     PBTSearch,
 		},
@@ -165,8 +165,8 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID model.RequestID) ([]Oper
 // exploreParams modifies a hyperparameter sample to produce a different one that is "nearby": it
 // resamples some parameters anew, and perturbs the rest from their previous values by some
 // multiplicative factor.
-func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
-	params := make(hparamSample)
+func (s *pbtSearch) exploreParams(ctx context, old HParamSample) HParamSample {
+	params := make(HParamSample)
 	ctx.hparams.Each(func(name string, sampler expconf.Hyperparameter) {
 		if ctx.rand.UnitInterval() < s.ExploreFunction().ResampleProbability {
 			params[name] = sampleOne(sampler, ctx.rand)

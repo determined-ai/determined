@@ -18,7 +18,7 @@ type (
 	// in a shim if needed.
 	gridSearchState struct {
 		PendingTrials    int              `json:"pending_trials"`
-		RemainingTrials  []hparamSample   `json:"remaining_trials"`
+		RemainingTrials  []HParamSample   `json:"remaining_trials"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 	// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
@@ -36,7 +36,7 @@ func newGridSearch(config expconf.GridConfig) SearchMethod {
 		GridConfig: config,
 		gridSearchState: gridSearchState{
 			SearchMethodType: GridSearch,
-			RemainingTrials:  make([]hparamSample, 0),
+			RemainingTrials:  make([]HParamSample, 0),
 		},
 	}
 }
@@ -105,10 +105,10 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 	return ops, nil
 }
 
-func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
+func newHyperparameterGrid(params expconf.Hyperparameters) []HParamSample {
 	hpToInd, valueSets := getHPsValueSets(params)
 	values := cartesianProduct(valueSets)
-	var samples []hparamSample
+	var samples []HParamSample
 	for _, val := range values {
 		samples = append(samples, createHparamSample(params, hpToInd, val))
 	}
@@ -130,7 +130,7 @@ func getHPValueSet(h expconf.Hyperparameter) [][]interface{} {
 
 // Returns the gridded values for all hyperparameters in valueSets.
 // hpToInd maps each Hyperparameter to the corresponding index in valueSets
-// so we will know how to parse those values into hparamSample later.
+// so we will know how to parse those values into HParamSample later.
 func getHPsValueSets(params expconf.Hyperparameters) (
 	map[expconf.Hyperparameter]int, [][]interface{}) {
 	var results [][]interface{}
@@ -162,13 +162,13 @@ func hpToVal(
 	return values[ind]
 }
 
-// Create a hparamSample for a given generated set of values in the
+// Create a HParamSample for a given generated set of values in the
 // gridded space.
 func createHparamSample(
 	hparams expconf.Hyperparameters,
 	hpToInd map[expconf.Hyperparameter]int,
-	values []interface{}) hparamSample {
-	sample := make(hparamSample)
+	values []interface{}) HParamSample {
+	sample := make(HParamSample)
 	hparams.Each(func(name string, param expconf.Hyperparameter) {
 		sample[name] = hpToVal(param, hpToInd, values)
 	})

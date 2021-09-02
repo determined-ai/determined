@@ -120,7 +120,8 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
       AND s.state = 'COMPLETED'
     ORDER BY s.total_batches DESC
     LIMIT 1
-  ) AS total_batches_processed
+  ) AS total_batches_processed,
+   t.runner_state
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

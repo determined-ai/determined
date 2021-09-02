@@ -141,7 +141,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("agent disconnected")
 		for cid := range a.containers {
 			stopped := aproto.ContainerError(
-				aproto.AgentFailed, errors.New("agent failed while container was running"))
+				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
 			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
 				Container: container.Container{
 					ID:    cid,
@@ -208,7 +208,9 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 			Addresses: sc.ContainerStarted.Addresses(),
 		}
 	case container.Terminated:
-		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
+		ctx.Log().
+			WithError(sc.ContainerStopped.Failure).
+			Infof("container %s terminated", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
 		rsc.ContainerStopped = &sproto.TaskContainerStopped{
 			ContainerStopped: *sc.ContainerStopped,

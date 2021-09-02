@@ -41,11 +41,10 @@ type terminateForGC struct{}
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
+	taskID model.TaskID,
 	spec tasks.GenericCommandSpec,
 	readinessCheck map[string]readinessCheck,
 ) error {
-	taskID := sproto.NewTaskID()
-
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	cmd := &command{
@@ -92,14 +91,15 @@ type command struct {
 
 	tasks.GenericCommandSpec
 
-	taskID         sproto.TaskID
+	taskID         model.TaskID
+	allocationID   model.AllocationID
 	serviceAddress *string
 
 	readinessMessageSent bool
 	registeredTime       time.Time
 	task                 *sproto.AllocateRequest
 	container            *container.Container
-	allocation           sproto.Allocation
+	reservation          sproto.Reservation
 	proxyNames           []string
 	exitStatus           *string
 	addresses            []container.Address
@@ -115,8 +115,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
+		// Since command tasks a single allocation, allocation ID is just the taskID with a 1.
+		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.task = &sproto.AllocateRequest{
-			ID:             c.taskID,
+			TaskID:         c.taskID,
+			AllocationID:   c.allocationID,
 			Name:           c.Config.Description,
 			SlotsNeeded:    c.Config.Resources.Slots,
 			Label:          c.Config.Resources.AgentLabel,
@@ -134,7 +137,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Priority: c.Config.Resources.Priority,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
+		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.allocationID})
 
 	case actor.PostStop:
 		c.terminate(ctx)
@@ -230,7 +233,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 					continue
 				}
 
-				// We are keying on task ID instead of container ID. Revisit this when we need to
+				// We are keying on allocation id instead of container id. Revisit this when we need to
 				// proxy multi-container tasks or when containers are created prior to being
 				// assigned to an agent.
 				ctx.Ask(c.proxy, proxy.Register{
@@ -245,7 +248,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 			if assignedPort == nil && len(names) > 0 {
 				ctx.Log().Error("expected to not proxy any ports but proxied one anyway")
-			} else if len(names) != 1 {
+			} else if assignedPort != nil && len(names) != 1 {
 				ctx.Log().Errorf(
 					"expected to proxy exactly 1 port but proxied %v instead", len(names),
 				)
@@ -290,22 +293,27 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.ResourcesAllocated:
 		// Ignore this message if the command has exited.
-		if c.task == nil || msg.ID != c.task.ID {
+		if c.task == nil || msg.ID != c.task.AllocationID {
 			ctx.Log().Info("ignoring resource allocation since the command has exited.")
 			return nil
 		}
 
-		check.Panic(check.Equal(len(msg.Allocations), 1,
+		check.Panic(check.Equal(len(msg.Reservations), 1,
 			"Command should only receive an allocation of one container"))
 
-		taskToken, err := c.db.StartTaskSession(string(c.task.ID))
+		allocationToken, err := c.db.StartAllocationSession(c.task.AllocationID)
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session")
 		}
 
-		c.allocation = msg.Allocations[0]
+		c.reservation = msg.Reservations[0]
 
-		msg.Allocations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, taskToken), 0)
+		msg.Reservations[0].Start(ctx, c.ToTaskSpec(c.GenericCommandSpec.Keys, allocationToken),
+			sproto.ReservationRuntimeInfo{
+				Token:        allocationToken,
+				AgentRank:    0,
+				IsMultiAgent: false,
+			})
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -329,11 +337,11 @@ func (c *command) terminate(ctx *actor.Context) {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
 
-	if c.allocation == nil {
+	if c.reservation == nil {
 		c.exit(ctx, "task is aborted without being scheduled")
 	} else {
 		ctx.Log().Info("task forcible terminating")
-		c.allocation.Kill(ctx)
+		c.reservation.Kill(ctx)
 	}
 }
 
@@ -352,7 +360,7 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
 	if c.task != nil {
-		if err := c.db.DeleteTaskSessionByTaskID(string(c.task.ID)); err != nil {
+		if err := c.db.DeleteAllocationSession(c.task.AllocationID); err != nil {
 			ctx.Log().WithError(err).Error("cannot delete task session for a command")
 		}
 	}

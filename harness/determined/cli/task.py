@@ -23,7 +23,8 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
         return
 
     headers = [
-        "ID",
+        "Task ID",
+        "Allocation ID",
         "Name",
         "Slots Needed",
         "Registered Time",
@@ -33,7 +34,8 @@ def render_tasks(args: Namespace, tasks: Dict[str, Dict[str, Any]]) -> None:
     ]
     values = [
         [
-            task["id"],
+            task["task_id"],
+            task["allocation_id"],
             task["name"],
             task["slots_needed"],
             render.format_time(task["registered_time"]),

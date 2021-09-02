@@ -166,6 +166,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
+		taskID: model.TaskID(uuid.New().String()),
 		GCCkptSpec: tasks.GCCkptSpec{
 			Base:               taskSpec,
 			ExperimentID:       exp.ID,
@@ -354,7 +355,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_RECORDS,
+						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -367,7 +368,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_BATCHES,
+						Unit:   experimentv1.TrainingLength_UNIT_BATCHES,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -380,7 +381,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_EPOCHS,
+						Unit:   experimentv1.TrainingLength_UNIT_EPOCHS,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -1258,7 +1259,10 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	}
 
 	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
-	if err != nil {
+	switch {
+	case errors.Cause(err) == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "no validations for experiment")
+	case err != nil:
 		return nil, err
 	}
 
