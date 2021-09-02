@@ -66,6 +66,7 @@ class PyTorchExperimentalContext:
         as in the example below.
 
         .. code-block:: python
+
             # PyTorchTrial methods.
             def __init__(context): # PyTorchTrial init
                 self.context.experimental.disable_auto_to_device()

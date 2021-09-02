@@ -40,7 +40,7 @@ searcher:
   smaller_is_better: false
 max_restarts: 0
 environment:
-  image: 
+  image:
     gpu: determinedai/model-hub-mmdetection
   environment_variables:
       - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
