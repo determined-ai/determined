@@ -26,6 +26,7 @@ type (
 		RegisteredTime time.Time              `json:"registered_time"`
 		Owner          commandOwner           `json:"owner"`
 		ID             model.TaskID           `json:"id"`
+		AllocationID   model.AllocationID     `json:"allocation_id"`
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`

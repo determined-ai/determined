@@ -400,6 +400,7 @@ func (c containerReservation) Start(
 	spec.ContainerID = string(c.container.id)
 	spec.AllocationID = string(c.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
+	spec.TaskID = string(c.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskContainer{

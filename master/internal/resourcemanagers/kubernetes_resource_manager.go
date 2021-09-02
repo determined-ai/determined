@@ -357,6 +357,7 @@ func (p k8sPodReservation) Start(
 	spec.ContainerID = string(p.container.id)
 	spec.AllocationID = string(p.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
+	spec.TaskID = string(p.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
 	ctx.Tell(handler, sproto.StartTaskPod{
 		TaskActor: p.req.TaskActor,

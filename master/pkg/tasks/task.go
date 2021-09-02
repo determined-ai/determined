@@ -63,6 +63,9 @@ type TaskSpec struct {
 	UseHostMode bool
 	ShmSize     int64
 
+	// The parent task of an allocation.
+	TaskID string
+
 	// Fields that are set on the per-allocation basis.
 	AllocationID           string
 	AllocationSessionToken string
@@ -88,6 +91,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 		// the user inside the container.
 		"PYTHONUSERBASE":               userPythonBaseDir,
+		"DET_TASK_ID":                  t.TaskID,
 		"DET_ALLOCATION_ID":            t.AllocationID,
 		"DET_ALLOCATION_SESSION_TOKEN": t.AllocationSessionToken,
 	}
