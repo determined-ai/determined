@@ -18,7 +18,7 @@ searcher:
     batches: 200
   smaller_is_better: false
 environment:
-  image: 
+  image:
     gpu: determinedai/model-hub-mmdetection
 bind_mounts:
     - host_path: /tmp

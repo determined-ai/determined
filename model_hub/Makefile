@@ -75,7 +75,7 @@ build-transformers-dev:
 		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
 		--build-arg MODEL_HUB_VERSION=$(VERSION) \
 		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		. 
+		.
 
 .PHONY: publish-transformers-dev
 publish-transformers-dev:
@@ -160,5 +160,3 @@ build-docker: build-transformers build-mmdetection
 
 .PHONY: publish-docker
 publish-docker: publish-transformers publish-mmdetection
-
-

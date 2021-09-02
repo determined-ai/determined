@@ -22,7 +22,7 @@ ARG MMDETECTION_VERSION
 RUN git checkout tags/v${MMDETECTION_VERSION}
 ENV FORCE_CUDA="1"
 RUN pip install -r requirements/build.txt
-RUN pip install --no-cache-dir -e . 
+RUN pip install --no-cache-dir -e .
 ENV MMDETECTION_CONFIG_DIR=/mmdetection/configs
 
 # Wheel must be built before building the docker image
