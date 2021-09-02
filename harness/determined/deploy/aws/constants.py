@@ -61,6 +61,7 @@ class cloudformation:
     LOG_GROUP_PREFIX = "LogGroupPrefix"
     RETAIN_LOG_GROUP = "RetainLogGroup"
     IMAGE_REPO_PREFIX = "ImageRepoPrefix"
+    MASTER_CONFIG_TEMPLATE = "MasterConfigTemplate"
 
 
 class misc:

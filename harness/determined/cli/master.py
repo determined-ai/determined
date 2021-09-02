@@ -5,7 +5,7 @@ from typing import Any, List
 
 from requests import Response
 
-from determined.common import api
+from determined.common import api, yaml
 from determined.common.api import authentication
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
@@ -14,7 +14,12 @@ from determined.common.declarative_argparse import Arg, Cmd
 @authentication.required
 def config(args: Namespace) -> None:
     response = api.get(args.master, "config")
-    print(json.dumps(response.json(), indent=4))
+    if args.output == "json":
+        print(json.dumps(response.json(), indent=4))
+    elif args.output == "yaml":
+        print(yaml.safe_dump(response.json(), default_flow_style=False))
+    else:
+        raise ValueError(f"Bad output format: {args.output}")
 
 
 @authentication.required
@@ -56,7 +61,10 @@ def logs(args: Namespace) -> None:
 
 args_description = [
     Cmd("m|aster", None, "manage master", [
-        Cmd("config", config, "fetch master config as JSON", []),
+        Cmd("config", config, "fetch master config", [
+            Arg("-o", "--output", type=str, default="yaml",
+                help="Output format, one of json|yaml")
+        ]),
         Cmd("logs", logs, "fetch master logs", [
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of master, similar to tail -f"),

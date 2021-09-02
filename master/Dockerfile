@@ -9,6 +9,7 @@ COPY packaging/master.yaml /etc/determined/master.yaml
 COPY packaging/LICENSE /usr/share/doc/determined-master/copyright
 COPY build /usr/share/determined/master
 COPY static /usr/share/determined/master/static
+COPY determined-gotmpl /usr/bin/determined-gotmpl
 COPY determined-master /usr/bin/determined-master
 
 EXPOSE 8080

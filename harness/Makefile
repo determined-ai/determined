@@ -12,7 +12,7 @@ fmt:
 	black .
 
 .PHONY: check
-check: gen
+check: check-gen
 	isort --check-only
 	black . --check
 	flake8
@@ -43,10 +43,12 @@ clean:
 	rm -rf build/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
+AWS_TEMPLATES_PATH := determined/deploy/aws/templates
+
 .PHONY: upload-try-now-template
 upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml
 upload-try-now-template: TRY_NOW_URL := s3://determined-ai-public/$(TRY_NOW_TEMPLATE)
-upload-try-now-template: TEMPLATE_PATH := determined/deploy/aws/templates/$(TRY_NOW_TEMPLATE)
+upload-try-now-template: TEMPLATE_PATH := $(AWS_TEMPLATES_PATH)/$(TRY_NOW_TEMPLATE)
 upload-try-now-template:
 	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
 
@@ -65,10 +67,11 @@ force-gen:
 	touch ../schemas/gen.py
 
 .PHONY: check-gen
-check-gen: force-gen $(GENERATED_COMMITTED)
+check-gen: force-gen aws-master-config-inject $(GENERATED_COMMITTED)
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
+	test -z "$(shell git status --porcelain $(AWS_TEMPLATES_PATH))"
 
 determined/common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
 	../schemas/gen.py python\
@@ -78,3 +81,7 @@ determined/common/schemas/expconf/_gen.py: $(GENERATION_INPUTS)
 .PHONY: gen-deploy-aws-vcpu-mapping
 gen-deploy-aws-vcpu-mapping:
 	python -m determined.deploy.aws.gen_vcpu_mapping determined/deploy/aws/vcpu_mapping.yaml
+
+.PHONY: aws-master-config-inject
+aws-master-config-inject:
+	python -m determined.deploy.aws.master_config_inject

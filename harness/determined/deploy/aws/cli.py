@@ -2,7 +2,8 @@ import argparse
 import base64
 import re
 import sys
-from typing import Callable, Dict, Type, Union
+from pathlib import Path
+from typing import Callable, Dict, Type
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -13,7 +14,7 @@ from determined.deploy.errors import MasterTimeoutExpired
 
 from . import aws, constants
 from .deployment_types import base, govcloud, secure, simple, vpc
-from .preflight import check_quotas
+from .preflight import check_quotas, get_default_cf_parameter
 
 
 def validate_spot_max_price() -> Callable:
@@ -50,6 +51,18 @@ def error_no_credentials() -> None:
         "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html",
     )
     sys.exit(1)
+
+
+def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment]:
+    deployment_type_map = {
+        constants.deployment_types.SIMPLE: simple.Simple,
+        constants.deployment_types.SECURE: secure.Secure,
+        constants.deployment_types.VPC: vpc.VPC,
+        constants.deployment_types.EFS: vpc.EFS,
+        constants.deployment_types.FSX: vpc.FSx,
+        constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
+    }  # type: Dict[str, Type[base.DeterminedDeployment]]
+    return deployment_type_map[deployment_type]
 
 
 def deploy_aws(command: str, args: argparse.Namespace) -> None:
@@ -110,15 +123,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         print("If a CPU or GPU environment image is specified, both should be.")
         sys.exit(1)
 
-    deployment_type_map = {
-        constants.deployment_types.SIMPLE: simple.Simple,
-        constants.deployment_types.SECURE: secure.Secure,
-        constants.deployment_types.VPC: vpc.VPC,
-        constants.deployment_types.EFS: vpc.EFS,
-        constants.deployment_types.FSX: vpc.FSx,
-        constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
-    }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
-
     if args.deployment_type != constants.deployment_types.SIMPLE:
         if args.agent_subnet_id is not None:
             raise ValueError(
@@ -173,7 +177,15 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
     }
 
-    deployment_object = deployment_type_map[args.deployment_type](det_configs)
+    if args.master_config_template_path:
+        if not args.master_config_template_path.exists():
+            raise ValueError(
+                f"Input master config template doesn't exist: {args.master_config_template_path}"
+            )
+        with args.master_config_template_path.open("r") as fin:
+            det_configs[constants.cloudformation.MASTER_CONFIG_TEMPLATE] = fin.read()
+
+    deployment_object = get_deployment_class(args.deployment_type)(det_configs)
 
     if not args.no_preflight_checks:
         check_quotas(det_configs, deployment_object)
@@ -222,6 +234,14 @@ def handle_up(args: argparse.Namespace) -> None:
 
 def handle_down(args: argparse.Namespace) -> None:
     return deploy_aws("down", args)
+
+
+def handle_dump_master_config_template(args: argparse.Namespace) -> None:
+    deployment_object = get_deployment_class(args.deployment_type)({})
+    default_template = get_default_cf_parameter(
+        deployment_object, constants.cloudformation.MASTER_CONFIG_TEMPLATE
+    )
+    print(default_template)
 
 
 args_description = Cmd(
@@ -431,6 +451,27 @@ args_description = Cmd(
                     const="true",
                     help="whether to retain CloudWatch log group after the stack is deleted"
                     " (only available for the simple template)",
+                ),
+                Arg(
+                    "--master-config-template-path",
+                    type=Path,
+                    default=None,
+                    help="path to master yaml template",
+                ),
+            ],
+        ),
+        Cmd(
+            "dump-master-config-template",
+            handle_dump_master_config_template,
+            "dump default master config template",
+            [
+                Arg(
+                    "--deployment-type",
+                    type=str,
+                    choices=constants.deployment_types.DEPLOYMENT_TYPES,
+                    default=constants.defaults.DEPLOYMENT_TYPE,
+                    help=f"deployment type - "
+                    f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
                 ),
             ],
         ),

@@ -20,6 +20,14 @@ builds:
       - amd64
       # Before supporting more architectures than amd64, the inclusion of the
       # growforest binary would need to be refactored to support the new arch.
+  - main: ./cmd/determined-gotmpl
+    id: determined-gotmpl
+    binary: determined-gotmpl
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
 
 archives:
   - wrap_in_directory: true
@@ -72,3 +80,6 @@ dockers:
       - "packaging/LICENSE"
       - "build"
       - "static"
+    binaries:
+      - determined-master
+      - determined-gotmpl

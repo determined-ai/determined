@@ -139,7 +139,7 @@ Optional Arguments:
    -  -  ``--keypath``
       -  The path to the service account JSON key file if using a service account. Including this
          flag will supersede default Google Cloud user credentials.
-      -  *none*
+      -  Not set
 
    -  -  ``--preemptible``
       -  Whether to use preemptible dynamic agent instances.
@@ -220,6 +220,11 @@ Optional Arguments:
          clusters at the same time.
       -  Current working directory
 
+   -  -  ``--master-config-template-path``
+      -  Path to the custom ``master.yaml`` template. Default template can be obtained using ``det
+         deploy gcp dump-master-config-template``.
+      -  Not set
+
 The following ``gcloud`` commands will help to validate your configuration, including resource
 availability in your desired region and zone:
 
@@ -268,6 +273,78 @@ up``:
 directory to determine which resources to destroy. If you deployed with a service account JSON key
 file, the same credentials file will be used for deprovisioning. Otherwise, default Google Cloud
 credentials are used.
+
+.. _gcp-master-yaml-template:
+
+******************************
+ Custom master.yaml templates
+******************************
+
+Similarly to a corresponding :ref:`AWS feature <aws-master-yaml-template>`, advanced users who
+require a deep customization of master settings (i.e., the ``master.yaml`` config file) can use the
+``master.yaml`` templating feature. Since ``det deploy gcp`` fills in plenty of
+infrastructure-related values such as subnetwork ids or boot disk images, we provide a simplified
+templating solution, similar to :ref:`helm charts in kubernetes <install-on-kubernetes>`. Template
+language is based on golang templates, and includes ``sprig`` helper library and ``toYaml``
+serialization helper.
+
+Example workflow:
+
+#. Get the default template using
+
+   .. code::
+
+      det deploy gcp dump-master-config-template > /path/to/master.yaml.tmpl
+
+#. Customize the template as you see fit by editing it in any text editor. For example, let's say a
+   user wants to utilize (default) 4-GPU instances for the default compute pool, but they also often
+   run single-GPU notebook jobs, for which a single-GPU instance would be perfect. So, you want to
+   add a third pool ``compute-pool-solo`` with a customized instance type.
+
+   Start with the default template, and find the ``resource_pools`` section:
+
+   .. code:: yaml
+
+      resource_pools:
+      - pool_name: aux-pool
+        max_aux_containers_per_agent: {{ .resource_pools.pools.aux_pool.max_aux_containers_per_agent }}
+        provider:
+          instance_type:
+            {{- toYaml .resource_pools.pools.aux_pool.instance_type | nindent 8 }}
+          {{- toYaml .resource_pools.gcp | nindent 6}}
+
+      - pool_name: compute-pool
+        max_aux_containers_per_agent: 0
+        provider:
+          instance_type:
+            {{- toYaml .resource_pools.pools.compute_pool.instance_type | nindent 8 }}
+          cpu_slots_allowed: true
+          {{- toYaml .resource_pools.gcp | nindent 6}}:
+
+   Then, append a new section:
+
+   .. code:: yaml
+
+      - pool_name: compute-pool-solo
+        max_aux_containers_per_agent: 0
+        provider:
+          instance_type:
+             machine_type: n1-standard-4
+             gpu_type: nvidia-tesla-k80
+             gpu_num: 1
+             preemptible: false
+       {{- toYaml .resource_pools.gcp | nindent 6}}
+
+#. Use the new template:
+
+   .. code::
+
+      det deploy gcp <ALL PREVIOUSLY USED FLAGS> --master-config-template-path /path/to/edited/master.yaml.tmpl
+
+#. All set! Check the `Cluster` page in WebUI to ensure your cluster has 3 resource pools. In case
+   of errors, ssh to the master instance as instructed by ``det deploy gcp`` output, and check
+   ``sudo journalctl -u google-startup-scripts.service``, ``/var/log/cloud-init-output.log``, or
+   ``sudo docker logs determined-master``.
 
 **********
  Appendix
