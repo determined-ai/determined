@@ -17,11 +17,9 @@ export interface ProfilesFiltersInterface {
 
 export interface ProfilesFiltersContextInterface {
   filters: ProfilesFiltersInterface,
+  metrics: Record<MetricType, MetricsAggregateInterface>,
   setFilters: (value: ProfilesFiltersInterface) => void,
-  systemMetrics: MetricsAggregateInterface,
   systemSeries: AvailableSeriesType,
-  throughputMetrics: MetricsAggregateInterface,
-  timingMetrics: MetricsAggregateInterface,
 }
 
 export const ProfilesFiltersContext =
@@ -45,7 +43,6 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
   const [ isUrlParsed, setIsUrlParsed ] = useState(false);
 
   const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
-  const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
   const systemMetrics = useFetchMetrics(
     trial.id,
     MetricType.System,
@@ -60,6 +57,7 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
     undefined,
     undefined,
   );
+  const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
 
   const canRender = filters.agentId && filters.name && systemSeries;
 
@@ -168,11 +166,13 @@ const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) =>
 
   const context = useMemo<ProfilesFiltersContextInterface>(() => ({
     filters,
+    metrics: {
+      [MetricType.System]: systemMetrics,
+      [MetricType.Throughput]: throughputMetrics,
+      [MetricType.Timing]: timingMetrics,
+    },
     setFilters,
-    systemMetrics,
     systemSeries,
-    throughputMetrics,
-    timingMetrics,
   }), [ filters, systemMetrics, systemSeries, throughputMetrics, timingMetrics ]);
 
   if (!canRender || !isUrlParsed) {
