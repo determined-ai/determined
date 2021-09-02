@@ -1760,13 +1760,7 @@ workflows:
   test-unit:
     jobs:
       - test-unit-go
-      - build-proto
-      - build-bindings:
-          requires:
-            - build-proto
-      - test-unit-react:
-          requires:
-            - build-bindings
+      - test-unit-react
       - test-unit-harness
       - test-unit-harness-tf2
       - test-unit-model-hub
@@ -1786,11 +1780,7 @@ workflows:
             - build-proto
       - build-react:
           dev-mode: true
-          requires:
-            - build-bindings
-      - build-storybook:
-          requires:
-            - build-bindings
+      - build-storybook
       - build-docs:
           requires:
             - build-helm
@@ -2312,13 +2302,7 @@ workflows:
           filters: *release-and-rc-filters
       - build-proto:
           filters: *release-and-rc-filters
-      - build-bindings:
-          requires:
-            - build-proto
-          filters: *release-and-rc-filters
       - build-react:
-          requires:
-            - build-bindings
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:
