@@ -328,7 +328,6 @@ const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorklo
     endTime: data.endTime as unknown as string,
     metrics: data.metrics ? filterNonScalarMetrics(data.metrics) : undefined,
     startTime: data.startTime as unknown as string,
-    state: decodeExperimentState(data.state),
     totalBatches: data.totalBatches,
   };
 };
@@ -398,8 +397,11 @@ export const decodeTrialResponseToTrialDetails = (
     }));
   }
 
+  const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
+
   return {
     ...trialItem,
+    runnerState: EMPTY_STATES.has(data.trial.runnerState) ? undefined : data.trial.runnerState,
     workloads: workloads || [],
   };
 };

@@ -18,8 +18,8 @@ import {
 } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
-import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricValue } from 'utils/trial';
+import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings, TrialWorkloadFilter } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';

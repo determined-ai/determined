@@ -86,25 +86,6 @@ const ioMetricValue = io.any;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
-export const ioValidationMetrics = io.type({
-  num_inputs: io.number,
-  validation_metrics: ioMetric,
-});
-export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
-
-const startEndTimeDef = {
-  end_time: optional(io.string),
-  start_time: io.string,
-};
-
-export const ioValidation = io.type({
-  ...startEndTimeDef,
-  id: io.number,
-  metrics: optional(ioValidationMetrics),
-  state: runStatesIoType,
-});
-export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
-
 /* Experiments */
 
 const checkpointStorageTypes: Record<string, null> = Object
