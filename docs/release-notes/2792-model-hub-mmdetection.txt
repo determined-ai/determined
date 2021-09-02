@@ -1,0 +1,9 @@
+:orphan:
+
+**New Features**
+
+-  Easily train object detection models using `model_hub` support for the
+   [mmdetection](https://github.com/open-mmlab/mmdetection) library. mmdetection provides efficient
+   implementations of popular object detection methods like Mask-RCNN, Faster-RCNN, and DETR on par
+   with Detectron2. In addition, cutting edge approaches from academia are regularly added to the
+   library.

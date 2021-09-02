@@ -193,6 +193,11 @@ class PyTorchTrialController(det.TrialController):
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
             with self.prof:
+                for callback in self.callbacks.values():
+                    with self.prof.record_timing(
+                        f"callbacks.{callback.__class__.__name__}.on_training_start"
+                    ):
+                        callback.on_training_start()
                 self._run()
 
         finally:
@@ -350,8 +355,9 @@ class PyTorchTrialController(det.TrialController):
             batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
 
-            with self.prof.record_timing("to_device", accumulate=True):
-                batch = self.context.to_device(batch)
+            if self.context.experimental._auto_to_device:
+                with self.prof.record_timing("to_device", accumulate=True):
+                    batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
             if self.context.is_epoch_start():
@@ -469,7 +475,8 @@ class PyTorchTrialController(det.TrialController):
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
             for idx, batch in enumerate(self.validation_loader):
-                batch = self.context.to_device(batch)
+                if self.context.experimental._auto_to_device:
+                    batch = self.context.to_device(batch)
                 num_inputs += self.trial.get_batch_length(batch)
 
                 if has_param(self.trial.evaluate_batch, "batch_idx", 2):

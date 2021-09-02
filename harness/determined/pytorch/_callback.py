@@ -85,6 +85,12 @@ class PyTorchCallback:
         """
         pass
 
+    def on_training_start(self) -> None:
+        """
+        Run after checkpoint loads and before training begins.
+        """
+        pass
+
     def on_training_epoch_start(self) -> None:
         """
         Run on start of a new training epoch

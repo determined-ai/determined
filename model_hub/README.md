@@ -6,10 +6,13 @@ Determined features (e.g., distributed training, experiment tracking, hyperparam
 
 ## Supported Libraries
 Model-Hub currently supports 
-[Huggingface transformers](https://github.com/huggingface/transformers).
+* [Huggingface transformers](https://github.com/huggingface/transformers)
+* [MMDetection](https://github.com/open-mmlab/mmdetection)
+
+Please refer to [our documentation](https://docs.determined.ai/latest/model-hub/index.html) for
+more information on how to use these libraries with Determined.
 
 Libraries we are working to support in the future include:
-* [MMDetection](https://github.com/open-mmlab/mmdetection)
 * [detectron2](https://github.com/facebookresearch/detectron2)
 
 If there is a library you want us to support for use with Determined, please open an issue

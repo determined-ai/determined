@@ -241,6 +241,9 @@ commands:
       - when:
           condition: <<parameters.model-hub>>
           steps:
+            - run:
+                name: Install mmdetection dependencies
+                command: sudo apt-get install -y ffmpeg libsm6 libxext6 
             - install-wheel:
                 package-name: model-hub
                 package-location: ~/project/model_hub
@@ -1319,7 +1322,7 @@ jobs:
       - setup-python-venv:
           determined: true
           model-hub: true
-          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C model_hub test
@@ -1974,23 +1977,43 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - request-model-hub-tests:
+      - request-model-hub-transformers-tests:
           type: approval
           filters: *upstream-feature-branch
 
       - test-e2e-aws:
-          name: test-e2e-model-hub
+          name: test-e2e-model-hub-transformers
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-model-hub-tests
+            - request-model-hub-transformers-tests
             - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["model-hub"]
-              mark: ["model_hub"]
+              mark: ["model_hub_transformers"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      - request-model-hub-mmdetection-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-model-hub-mmdetection
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-model-hub-mmdetection-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["model-hub"]
+              mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 

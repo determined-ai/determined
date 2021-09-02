@@ -5,6 +5,7 @@
 -e model_hub
 -r docs/requirements.txt
 -r harness/tests/requirements.txt
+-r model_hub/tests/requirements.txt
 -r e2e_tests/tests/requirements.txt
 -r webui/tests/requirements.txt
 
