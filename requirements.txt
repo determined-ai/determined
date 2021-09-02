@@ -23,3 +23,4 @@ mypy==0.780
 bump2version>=1.0.1
 # Earlier versions had different type annotations
 pyzmq>=22
+devcluster>=1,<2

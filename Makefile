@@ -76,3 +76,7 @@ test-%:
 	$(MAKE) -C $(subst -,/,$*) test
 .PHONY: test
 test: test-harness test-cli test-common test-model_hub test-master test-agent test-webui 
+
+.PHONY: devcluster
+devcluster:
+	devcluster -c tools/devcluster.yaml
