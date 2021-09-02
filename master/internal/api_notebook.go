@@ -3,6 +3,7 @@ package internal
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -12,6 +13,7 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -33,6 +35,7 @@ const (
 	jupyterDataDir    = "/run/determined/jupyter/data"
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -55,6 +58,13 @@ func (a *apiServer) GetNotebooks(
 func (a *apiServer) GetNotebook(
 	_ context.Context, req *apiv1.GetNotebookRequest) (resp *apiv1.GetNotebookResponse, err error) {
 	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+}
+
+func (a *apiServer) IdleNotebook(
+	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
+	log.Info("HIT THIS")
+	log.Info(req.Idle)
+	return nil, nil
 }
 
 func (a *apiServer) KillNotebook(
@@ -133,8 +143,13 @@ func (a *apiServer) LaunchNotebook(
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minNotebookPort, maxNotebookPort)
+	configBytes, err := json.Marshal(spec.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
+	}
 	spec.Base.ExtraEnvVars = map[string]string{
-		"NOTEBOOK_PORT": strconv.Itoa(port),
+		"NOTEBOOK_PORT":   strconv.Itoa(port),
+		"NOTEBOOK_CONFIG": string(configBytes),
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}
@@ -153,6 +168,12 @@ func (a *apiServer) LaunchNotebook(
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterEntrypoint,
 			etc.MustStaticFile(etc.NotebookEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterIdleCheck,
+			etc.MustStaticFile(etc.NotebookIdleCheckResource),
 			0700,
 			tar.TypeReg,
 		),

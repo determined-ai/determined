@@ -717,6 +717,16 @@ service Determined {
       tags: "Notebooks"
     };
   }
+  // Send notebook idle data to master
+  rpc IdleNotebook(IdleNotebookRequest) returns (IdleNotebookResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/notebooks/{notebook_id}/report_idle"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Kill the requested notebook.
   rpc KillNotebook(KillNotebookRequest) returns (KillNotebookResponse) {
     option (google.api.http) = {
