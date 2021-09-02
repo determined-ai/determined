@@ -93,6 +93,7 @@
       enabled: true
       begin_on_batch: 0
       end_after_batch: 1
+      sync_timings: false
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
@@ -193,6 +194,7 @@
       enabled: false
       begin_on_batch: 0
       end_after_batch: null
+      sync_timings: true
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"
