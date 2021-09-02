@@ -3,7 +3,6 @@ module github.com/determined-ai/determined/proto
 go 1.16
 
 require (
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/bufbuild/buf v0.42.1
 	github.com/golang/protobuf v1.4.4-0.20210303013846-acacf8158c9a
 	github.com/grpc-ecosystem/grpc-gateway v1.14.6
