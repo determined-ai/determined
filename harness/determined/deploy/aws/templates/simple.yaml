@@ -684,7 +684,7 @@ Resources:
                 --network determined \
                 --restart unless-stopped \
                 --log-driver=awslogs \
-                --log-opt awslogs-group=${LogGroup} \
+                --log-opt awslogs-group=/${LogGroupPrefix}/${AWS::StackName} \
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
                 -v /usr/local/determined/etc/:/etc/determined/ \
@@ -750,7 +750,7 @@ Outputs:
 
   LogGroup:
     Description: The Log Group for Determined Logs
-    Value: !Ref LogGroup
+    Value: !Sub /${LogGroupPrefix}/${AWS::StackName}
 
   Region:
     Description: The AWS Region the stack is deployed in
