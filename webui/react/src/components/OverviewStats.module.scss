@@ -13,8 +13,9 @@
   .info {
     color: var(--theme-colors-monochrome-0);
     font-size: var(--theme-sizes-font-big);
-    line-height: 1;
-    padding-top: var(--theme-sizes-layout-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     & > small { font-size: var(--theme-sizes-font-medium); }
   }
