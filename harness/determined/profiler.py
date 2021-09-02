@@ -276,6 +276,7 @@ class ProfilerAgent:
         global_rank: int,
         local_rank: int,
         begin_on_batch: int,
+        sync_timings: bool,
         end_after_batch: Optional[int] = None,
         send_batch_fn: SendBatchFnType = api.post_trial_profiler_metrics_batches,
         check_data_exists_fn: CheckDataExistsFnType = profiling_metrics_exist,
@@ -289,6 +290,7 @@ class ProfilerAgent:
         self.local_rank = local_rank
         self.begin_on_batch = begin_on_batch
         self.end_after_batch = end_after_batch
+        self.sync_timings = sync_timings
         self.send_batch_fn = send_batch_fn
         self.check_data_already_exists_fn = check_data_exists_fn
 
@@ -296,6 +298,8 @@ class ProfilerAgent:
         self.has_finished = False
         self.disabled_due_to_preexisting_metrics = False
         self.training = False
+
+        self.sync_device = None  # type: Optional[Callable[[], None]]
 
         self.shutdown_lock = threading.Lock()
 
@@ -342,6 +346,9 @@ class ProfilerAgent:
                 self.send_queue, self.master_url, num_producers, self.send_batch_fn
             )
 
+    def _set_sync_device(self, sync_device: Callable[[], None]) -> None:
+        self.sync_device = sync_device
+
     @staticmethod
     def from_env(env: det.EnvContext, global_rank: int, local_rank: int) -> "ProfilerAgent":
         begin_on_batch, end_after_batch = env.experiment_config.profiling_interval()
@@ -354,6 +361,7 @@ class ProfilerAgent:
             local_rank=local_rank,
             begin_on_batch=begin_on_batch,
             end_after_batch=end_after_batch,
+            sync_timings=env.experiment_config.profiling_sync_timings(),
         )
 
     # Launch the children threads. This does not mean 'start collecting metrics'
@@ -477,14 +485,23 @@ class ProfilerAgent:
         )
 
     @contextlib.contextmanager
-    def record_timing(self, metric_name: str, accumulate: bool = False) -> Iterator[None]:
-        if not self.is_enabled or not self.timings_is_enabled or not self.is_active:
+    def record_timing(
+        self, metric_name: str, accumulate: bool = False, requires_sync: bool = True
+    ) -> Iterator[None]:
+        if (
+            not self.is_enabled
+            or not self.timings_is_enabled
+            or not self.is_active
+            or (requires_sync != self.sync_timings)
+        ):
             yield
             return
 
         timing = Timing(metric_name, self.current_batch_idx)
         timing.start()
         yield
+        if self.sync_timings and self.sync_device:
+            self.sync_device()
         timing.end()
         self.metrics_batcher_queue.put(timing.to_measurement(accumulate=accumulate))
 

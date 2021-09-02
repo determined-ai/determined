@@ -31,6 +31,8 @@ class PyTorchTrialController(det.TrialController):
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
         self.context._set_determined_profiler(self.prof)
+        if torch.cuda.is_available():
+            self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
 
         check.gt_eq(
@@ -810,6 +812,9 @@ class PyTorchTrialController(det.TrialController):
         if self.wlsq is not None:
             with path.joinpath("workload_sequencer.pkl").open("wb") as f:
                 pickle.dump(self.wlsq.get_state(), f)
+
+    def _sync_device(self) -> None:
+        torch.cuda.synchronize(self.context.device)
 
 
 class PyTorchTrial(det.Trial):

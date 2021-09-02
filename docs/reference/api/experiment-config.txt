@@ -922,6 +922,11 @@ The ``profiling`` section specifies configuration options related to profiling e
    ``end_after_batch``
       Specifies the batch after which profiling should end.
 
+   ``sync_timings``
+      Specifies whether Determined should wait for all GPU kernel streams before considering a
+      timing as ended. Defaults to 'true'. Applies only for frameworks that collect timing metrics
+      (currently just PyTorch).
+
 .. _data-layer_exp_config:
 
 ************

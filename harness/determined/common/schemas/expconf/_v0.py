@@ -116,6 +116,7 @@ class ProfilingConfigV0(schemas.SchemaBase):
     enabled: Optional[bool] = None
     begin_on_batch: Optional[int] = None
     end_after_batch: Optional[int] = None
+    sync_timings: Optional[bool] = None
 
     @schemas.auto_init
     def __init__(
@@ -123,6 +124,7 @@ class ProfilingConfigV0(schemas.SchemaBase):
         enabled: Optional[bool] = None,
         begin_on_batch: Optional[int] = None,
         end_after_batch: Optional[int] = None,
+        sync_timings: Optional[bool] = None,
     ) -> None:
         pass
 
