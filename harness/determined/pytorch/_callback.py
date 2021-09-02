@@ -19,12 +19,6 @@ class PyTorchCallback:
         GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
 
-    def on_run_start(self) -> None:
-        """
-        Run after checkpoint loads and before training begins.
-        """
-        pass
-
     def on_validation_start(self) -> None:
         """
         Run before every validation begins.
@@ -88,6 +82,12 @@ class PyTorchCallback:
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         """
         Load the state of this using the deserialized ``state_dict``.
+        """
+        pass
+
+    def on_training_start(self) -> None:
+        """
+        Run after checkpoint loads and before training begins.
         """
         pass
 

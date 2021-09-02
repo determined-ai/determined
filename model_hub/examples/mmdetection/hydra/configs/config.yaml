@@ -16,11 +16,7 @@ environment:
   image: 
     gpu: determinedai/model-hub-mmdetection
   environment_variables:
-      - OMP_NUM_THREADS=1
-
-bind_mounts:
-    - host_path: /tmp
-      container_path: /data
+      - OMP_NUM_THREADS=1 # Following pytorch dtrain, this environment variable is set to 1 to avoid overloading the system.
 
 resources:
   slots_per_trial: 8 # max number of GPUs a trial is allowed to individually use

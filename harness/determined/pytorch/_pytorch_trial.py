@@ -181,9 +181,9 @@ class PyTorchTrialController(det.LoopTrialController):
             with self.prof:
                 for callback in self.callbacks.values():
                     with self.prof.record_timing(
-                        f"callbacks.{callback.__class__.__name__}.on_run_start"
+                        f"callbacks.{callback.__class__.__name__}.on_training_start"
                     ):
-                        callback.on_run_start()
+                        callback.on_training_start()
                 self._run()
 
         finally:

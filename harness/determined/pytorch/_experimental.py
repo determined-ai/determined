@@ -78,6 +78,7 @@ class PyTorchExperimentalContext:
                 ...
         """
         self._auto_to_device = False
+        logging.info("disabled automatically moving data to device")
 
     @util.deprecated(
         "context.experimental.reset_reducers() is deprecated since 0.15.2 and will be removed in a "
