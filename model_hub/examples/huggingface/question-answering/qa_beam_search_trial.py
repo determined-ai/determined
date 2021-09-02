@@ -36,6 +36,13 @@ import model_hub.huggingface as hf
 
 class QABeamSearchTrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial calls utility functions provided as part of model_hub support for transformers
+        to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
@@ -89,6 +96,15 @@ class QABeamSearchTrial(hf.BaseTransformerTrial):
 
         self.config = transformers.XLNetConfig.from_pretrained(**self.config_kwargs)
         self.tokenizer = transformers.XLNetTokenizerFast.from_pretrained(**self.tokenizer_kwargs)
+
+        # Set the collator function which may require the tokenizer.
+        if self.data_config.pad_to_max_length:
+            self.collator = transformers.default_data_collator
+        else:
+            collator = transformers.DataCollatorWithPadding(
+                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
+            )
+            self.collator = lambda x: collator(x).data
 
         # We need to use XLNetForQuestionAnswering instead of XLNetForQuestionAnsweringSimple
         # which is the default returned by AutoModelForQuestionAnswering.
@@ -181,13 +197,6 @@ class QABeamSearchTrial(hf.BaseTransformerTrial):
                 load_from_cache_file=not self.data_config.overwrite_cache,
             )
             hf.remove_unused_columns(self.model, tokenized_datasets[split])
-        if self.data_config.pad_to_max_length:
-            self.collator = transformers.default_data_collator
-        else:
-            collator = transformers.DataCollatorWithPadding(
-                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
-            )
-            self.collator = lambda x: collator(x).data
         return tokenized_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

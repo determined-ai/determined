@@ -33,6 +33,14 @@ import model_hub.huggingface as hf
 
 class PLMTrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         super(PLMTrial, self).__init__(context)
         self.logger.info(self.config)
@@ -63,6 +71,11 @@ class PLMTrial(hf.BaseTransformerTrial):
                     train_length, self.exp_config["records_per_epoch"]
                 )
             )
+        self.collator = transformers.DataCollatorForPermutationLanguageModeling(
+            tokenizer=self.tokenizer,
+            plm_probability=self.data_config.plm_probability,
+            max_span_length=self.data_config.max_span_length,
+        )
 
         self.reducer = self.context.experimental.wrap_reducer(
             lambda losses: np.exp(np.mean(losses)), name="perplexity", for_training=False
@@ -149,11 +162,6 @@ class PLMTrial(hf.BaseTransformerTrial):
         for _, data in tokenized_datasets.items():
             hf.remove_unused_columns(self.model, data)
 
-        self.collator = transformers.DataCollatorForPermutationLanguageModeling(
-            tokenizer=self.tokenizer,
-            plm_probability=self.data_config.plm_probability,
-            max_span_length=self.data_config.max_span_length,
-        )
         return tokenized_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

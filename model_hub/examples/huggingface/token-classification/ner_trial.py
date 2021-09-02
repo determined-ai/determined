@@ -12,6 +12,14 @@ import model_hub.huggingface as hf
 
 class NERTrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())

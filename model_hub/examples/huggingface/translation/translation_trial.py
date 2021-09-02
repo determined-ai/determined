@@ -45,6 +45,14 @@ MULTILINGUAL_TOKENIZERS = [
 
 class TranslationTrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
@@ -98,6 +106,19 @@ class TranslationTrial(hf.BaseTransformerTrial):
                     train_length, self.exp_config["records_per_epoch"]
                 )
             )
+        label_pad_token_id = (
+            -100 if self.data_config.ignore_pad_token_for_loss else self.tokenizer.pad_token_id
+        )
+        if self.data_config.pad_to_max_length:
+            collator = transformers.default_data_collator
+        else:
+            collator = transformers.DataCollatorForSeq2Seq(
+                self.tokenizer,
+                model=self.model,
+                label_pad_token_id=label_pad_token_id,
+                pad_to_multiple_of=8 if self.hparams.use_apex_amp else None,
+            )
+        self.collator = lambda x: collator(x).data
 
         # Create metric reducer
         self.metric = datasets.load_metric("sacrebleu")
@@ -247,20 +268,6 @@ class TranslationTrial(hf.BaseTransformerTrial):
             )
             hf.remove_unused_columns(self.model, tokenized_datasets[split])
 
-        # Data collator
-        label_pad_token_id = (
-            -100 if self.data_config.ignore_pad_token_for_loss else self.tokenizer.pad_token_id
-        )
-        if self.data_config.pad_to_max_length:
-            collator = transformers.default_data_collator
-        else:
-            collator = transformers.DataCollatorForSeq2Seq(
-                self.tokenizer,
-                model=self.model,
-                label_pad_token_id=label_pad_token_id,
-                pad_to_multiple_of=8 if self.hparams.use_apex_amp else None,
-            )
-        self.collator = lambda x: collator(x).data
         return tokenized_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

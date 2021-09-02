@@ -33,6 +33,14 @@ import model_hub.huggingface as hf
 
 class CLMTrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         super(CLMTrial, self).__init__(context)
         self.logger.info(self.config)
@@ -137,22 +145,20 @@ class CLMTrial(hf.BaseTransformerTrial):
         for _, data in tokenized_datasets.items():
             hf.remove_unused_columns(self.model, data)
 
-        self.collator = transformers.default_data_collator
-
         return lm_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:
         return det_torch.DataLoader(
             self.tokenized_datasets["train"],
             batch_size=self.context.get_per_slot_batch_size(),
-            collate_fn=self.collator,
+            collate_fn=transformers.default_data_collator,
         )
 
     def build_validation_data_loader(self) -> det_torch.DataLoader:
         return det_torch.DataLoader(
             self.tokenized_datasets["validation"],
             batch_size=self.context.get_per_slot_batch_size(),
-            collate_fn=self.collator,
+            collate_fn=transformers.default_data_collator,
         )
 
     def evaluate_batch(self, batch: det_torch.TorchData, batch_idx: int) -> Dict:

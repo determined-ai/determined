@@ -47,6 +47,14 @@ task_to_keys = {
 
 class GLUETrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
@@ -111,6 +119,15 @@ class GLUETrial(hf.BaseTransformerTrial):
                     train_length, self.exp_config["records_per_epoch"]
                 )
             )
+        # Data collator will default to DataCollatorWithPadding, so we change it if we already
+        # did the padding.
+        if self.data_config.pad_to_max_length:
+            self.collator = transformers.default_data_collator
+        elif self.hparams.use_apex_amp:
+            collator = transformers.DataCollatorWithPadding(self.tokenizer, pad_to_multiple_of=8)
+            self.collator = lambda x: collator(x).data
+        else:
+            self.collator = None
 
         # Create metric reducer
         metric = datasets.load_metric("glue", self.hparams.finetuning_task)
@@ -216,15 +233,6 @@ class GLUETrial(hf.BaseTransformerTrial):
         for _, data in tokenized_datasets.items():
             hf.remove_unused_columns(self.model, data)
 
-        # Data collator will default to DataCollatorWithPadding, so we change it if we already
-        # did the padding.
-        if self.data_config.pad_to_max_length:
-            self.collator = transformers.default_data_collator
-        elif self.hparams.use_apex_amp:
-            collator = transformers.DataCollatorWithPadding(self.tokenizer, pad_to_multiple_of=8)
-            self.collator = lambda x: collator(x).data
-        else:
-            self.collator = None
         return tokenized_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

@@ -33,6 +33,14 @@ import model_hub.huggingface as hf
 
 class QATrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial uses BaseTransformerTrials's initialization to create, among other objects,
+        the config, model, and tokenizer.  It also calls utility functions provided as part of
+        model_hub support for transformers to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         super(QATrial, self).__init__(context)
         self.logger.info(self.config)
@@ -87,6 +95,13 @@ class QATrial(hf.BaseTransformerTrial):
                     train_length, self.exp_config["records_per_epoch"]
                 )
             )
+        if self.data_config.pad_to_max_length:
+            self.collator = transformers.default_data_collator
+        else:
+            collator = transformers.DataCollatorWithPadding(
+                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
+            )
+            self.collator = lambda x: collator(x).data
 
         # Create metric reducer
         metric = datasets.load_metric(
@@ -124,13 +139,6 @@ class QATrial(hf.BaseTransformerTrial):
                 load_from_cache_file=not self.data_config.overwrite_cache,
             )
             hf.remove_unused_columns(self.model, tokenized_datasets[split])
-        if self.data_config.pad_to_max_length:
-            self.collator = transformers.default_data_collator
-        else:
-            collator = transformers.DataCollatorWithPadding(
-                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
-            )
-            self.collator = lambda x: collator(x).data
         return tokenized_datasets
 
     def build_training_data_loader(self) -> det_torch.DataLoader:

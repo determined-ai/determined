@@ -36,6 +36,13 @@ import model_hub.utils as utils
 
 class XNLITrial(hf.BaseTransformerTrial):
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        """
+        This trial calls utility functions provided as part of model_hub support for transformers
+        to facilitate writing Determined trial definitions.
+
+        Please reference https://docs.determined.ai/latest/model-hub/transformers/api.html
+        for more details.
+        """
         self.logger = logging.getLogger(__name__)
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
@@ -73,6 +80,13 @@ class XNLITrial(hf.BaseTransformerTrial):
                     train_length, self.exp_config["records_per_epoch"]
                 )
             )
+        if self.data_config.pad_to_max_length:
+            self.collator = transformers.default_data_collator
+        else:
+            collator = transformers.DataCollatorWithPadding(
+                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
+            )
+            self.collator = lambda x: collator(x).data
 
         # Create metric reducer
         metric = datasets.load_metric("xnli", timeout=200)
@@ -120,14 +134,6 @@ class XNLITrial(hf.BaseTransformerTrial):
             batched=True,
             load_from_cache_file=not self.data_config.overwrite_cache,
         )
-
-        if self.data_config.pad_to_max_length:
-            self.collator = transformers.default_data_collator
-        else:
-            collator = transformers.DataCollatorWithPadding(
-                self.tokenizer, pad_to_multiple_of=8 if self.hparams.use_apex_amp else None
-            )
-            self.collator = lambda x: collator(x).data
 
         return {"train": train_dataset, "validation": eval_dataset}
 
