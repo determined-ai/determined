@@ -17,9 +17,10 @@ from tensorflow.python.util import function_utils
 from tensorflow_estimator.python.estimator.training import _NewCheckpointListenerForEvaluate
 
 import determined as det
-from determined import estimator, horovod, monkey_patch, tensorboard, workload
+from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check
+from determined.common import check, experimental, storage
+from determined.common.api import certs
 from determined.horovod import hvd
 
 VERY_LARGE_NUMBER = 9999999999999999
@@ -101,9 +102,7 @@ class DeterminedControlHook(estimator.RunHook):
     ) -> tf.estimator.SessionRunArgs:
         # On resuming from checkpoint, _current_global_step is None for one batch
         if self._current_global_step is None:
-            self.prof.update_batch_idx(
-                self.estimator_trial_controller.env.initial_workload.total_batches_processed
-            )
+            self.prof.update_batch_idx(self.estimator_trial_controller.env.latest_batch)
         else:
             self.prof.update_batch_idx(self._current_global_step)
         return tf.estimator.SessionRunArgs(
@@ -154,17 +153,16 @@ class DeterminedControlHook(estimator.RunHook):
 
         # Send the result of the training step back to the main process.
         check.is_not_none(self.train_response_func, "no response_func at end of train_for_step")
-        self.train_response_func = cast(workload.ResponseFunc, self.train_response_func)
+        assert self.train_response_func is not None
         if self.estimator_trial_controller.is_chief:
             response = {
                 "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
                 "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
-                "invalid_hp": False,
-                "init_invalid_hp": False,
-            }
-            self.train_response_func(response)
+            }  # type: workload.Response
         else:
-            self.train_response_func(workload.Skipped())
+            response = {}
+
+        self.train_response_func(response)
 
         # Reset step counter and clear the step metrics from memory.
         self.train_response_func = None
@@ -209,12 +207,7 @@ class DeterminedControlHook(estimator.RunHook):
         self._saver = savers[0]
         return savers[0]
 
-    def _checkpoint_model(self, checkpoint_path: pathlib.Path) -> workload.Response:
-        self._save_model()
-
-        if not self.estimator_trial_controller.is_chief:
-            return workload.Skipped()
-
+    def _checkpoint_model(self, checkpoint_path: pathlib.Path) -> None:
         self._copy_latest_checkpoint(checkpoint_path=checkpoint_path)
         self._save_serving_input_receiver_fns(checkpoint_path=str(checkpoint_path))
 
@@ -224,11 +217,12 @@ class DeterminedControlHook(estimator.RunHook):
             if isinstance(callback, estimator.RunHook):
                 callback.on_checkpoint_end(str(checkpoint_path))
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_model"}
+        if self.estimator_trial_controller.wlsq is not None:
+            with checkpoint_path.joinpath("workload_sequencer.pkl").open("wb") as f:
+                pickle.dump(self.estimator_trial_controller.wlsq.get_state(), f)
 
     def _save_model(self) -> None:
-        # Only save when we have performed training since the last
-        # time we saved.
+        # Only save when we have performed training since the last time we saved.
         started_training = self._current_global_step is not None
         checkpoint_exists = self._global_step_of_last_checkpoint is not None
         if not started_training or (
@@ -278,48 +272,56 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        for wkld, args, response_func in self.estimator_trial_controller.workloads:
-            logging.debug(f"Received wkld {wkld.kind} with args {args}.")
+        _generic = self.estimator_trial_controller._generic
 
-            if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Store values for the training loop.
-                self.num_batches = wkld.num_batches
-                self.train_response_func = response_func
-                # Break out of the control loop so that the train process
-                # re-enters the train_and_evaluate() loop.
-                break
-            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                try:
-                    response_func(
-                        det.util.wrap_metrics(
-                            self._compute_validation_metrics(),
-                            self.estimator_trial_controller.context.get_stop_requested(),
-                            invalid_hp=False,
-                            init_invalid_hp=False,
-                        )
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
-                    )
-                    response_func(
-                        det.util.wrap_metrics(
-                            {},
-                            self.estimator_trial_controller.context.get_stop_requested(),
-                            invalid_hp=True,
-                            init_invalid_hp=False,
-                        )
-                    )
-            elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], pathlib.Path)
-                path = cast(pathlib.Path, args[0])
-                response_func(self._checkpoint_model(path))
-            elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                self.estimator_trial_controller.exit_response_func = response_func
-                raise det.errors.WorkerFinishedGracefully("Exiting normally.")
-            else:
-                raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
+        assert self.estimator_trial_controller.workloads is not None
+        for wkld, response_func in self.estimator_trial_controller.workloads:
+            logging.debug(f"Received wkld {wkld.kind}.")
+
+            try:
+                if wkld.kind == workload.Workload.Kind.RUN_STEP:
+                    # Store values for the training loop.
+                    self.num_batches = wkld.num_batches
+                    self.train_response_func = response_func
+                    # Break out of the control loop so that the train process
+                    # re-enters the train_and_evaluate() loop.
+                    return
+
+                elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    action = "validation"
+                    response = {
+                        "metrics": self._compute_validation_metrics(),
+                        "stop_requested": (
+                            self.estimator_trial_controller.context.get_stop_requested()
+                        ),
+                    }  # type: workload.Response
+
+                elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    action = "checkpointing"
+                    self._save_model()
+                    if self.estimator_trial_controller.is_chief:
+                        with _generic._storage_mgr.store_path() as (storage_id, path):
+                            self._checkpoint_model(pathlib.Path(path))
+                            response = {
+                                "uuid": storage_id,
+                                "resources": storage.StorageManager._list_directory(path),
+                                "framework": f"tensorflow-{tf.__version__}",
+                                "format": "saved_model",
+                            }
+                    else:
+                        response = {}
+
+                else:
+                    raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
+
+            except det.InvalidHP as e:
+                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                response = workload.InvalidHP()
+
+            response_func(response)
+
+        # End-of-training.
+        raise det.errors.WorkerFinishedGracefully("Exiting normally.")
 
     def on_checkpoint_load(self, checkpoint_dir: str) -> None:
         self.load_rng_state_from_checkpoint(checkpoint_dir)
@@ -349,7 +351,7 @@ class DeterminedControlHook(estimator.RunHook):
             pickle.dump(rng_state, f)
 
 
-class EstimatorTrialController(det.LoopTrialController):
+class EstimatorTrialController(det.TrialController):
     def __init__(
         self,
         estimator: tf.estimator.Estimator,
@@ -360,7 +362,7 @@ class EstimatorTrialController(det.LoopTrialController):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        super().__init__(context, *args, **kwargs)  # type: ignore
+        super().__init__(context, *args, **kwargs)
 
         # Catch if the estimator has been configured to use a tf.distribute.Strategy
         # as this can conflict with Determined's distributed training and lead to
@@ -388,8 +390,12 @@ class EstimatorTrialController(det.LoopTrialController):
         self.val_spec = val_spec
         self.serving_input_receiver_fns = serving_input_receiver_fns
 
-        # Used to send Terminate response following post-trial close callback.
-        self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
+        self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
+        if self.workloads is None:
+            session = experimental.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
 
         self._init_model()
 
@@ -692,9 +698,6 @@ class EstimatorTrialController(det.LoopTrialController):
                     if isinstance(callback, estimator.RunHook):
                         callback.on_trial_close()
 
-        if self.exit_response_func:
-            self.exit_response_func({} if self.is_chief else workload.Skipped())
-
     def _init_paths(self) -> None:
         """
         Create a unique model directory for each training process. If
@@ -706,24 +709,32 @@ class EstimatorTrialController(det.LoopTrialController):
 
         # Add suffix so that horovod processes don't overwrite each other.
         suffix = str(0) if not self.hvd_config.use else str(hvd.local_rank())
-        if self.load_path is None:
+
+        if self.env.latest_checkpoint is None:
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
-        for callback in self.train_hooks:
-            if isinstance(callback, estimator.RunHook):
-                callback.on_checkpoint_load(str(self.load_path))
+        with self._generic._download_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+            for callback in self.train_hooks:
+                if isinstance(callback, estimator.RunHook):
+                    callback.on_checkpoint_load(str(load_path))
 
-        self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
-        if self.estimator_dir.exists():
-            shutil.rmtree(str(self.estimator_dir))
-        logging.debug(f"Copying from {self.load_path} to {self.estimator_dir}.")
-        shutil.copytree(str(self.load_path), str(self.estimator_dir))
+            self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
+            if self.estimator_dir.exists():
+                shutil.rmtree(str(self.estimator_dir))
+            logging.debug(f"Copying from {load_path} to {self.estimator_dir}.")
+            shutil.copytree(str(load_path), str(self.estimator_dir))
 
-        # Calibrate the CheckpointState metadata file to the new location.
-        estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
-        logging.debug(f"Load path set to {self.estimator_dir}.")
+            # Calibrate the CheckpointState metadata file to the new location.
+            estimator._update_checkpoint_path_in_state_file(self.estimator_dir)
+            logging.debug(f"Load path set to {self.estimator_dir}.")
+
+            # Load WorkloadSequencer state.
+            wlsq_path = os.path.join(load_path, "workload_sequencer.pkl")
+            if self.wlsq is not None and os.path.exists(wlsq_path):
+                with open(wlsq_path, "rb") as f:
+                    self.wlsq.load_state(pickle.load(f))
 
     def compute_validation_metrics(self) -> workload.Response:
         steps = self.eval_spec.steps if not self.env.test_mode else 1
@@ -744,7 +755,7 @@ class EstimatorTrialController(det.LoopTrialController):
         self.context._reset_allgather_ops()
 
         if not self.is_chief:
-            return workload.Skipped()
+            return {}
 
         return {"validation_metrics": metrics}
 

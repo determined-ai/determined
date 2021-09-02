@@ -43,7 +43,7 @@ def describe_template(args: Namespace) -> None:
 def set_template(args: Namespace) -> None:
     with args.template_file:
         body = util.safe_load_yaml_with_exceptions(args.template_file)
-        api.put(args.master, path="templates/" + args.template_name, body=body)
+        api.put(args.master, path="templates/" + args.template_name, json=body)
         print(colored("Set template {}".format(args.template_name), "green"))
 
 

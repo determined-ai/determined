@@ -43,7 +43,7 @@ if __name__ == "__main__":
         config={
             "description": "keras_runtime_error",
             "hyperparameters": {"global_batch_size": det.Constant(1)},
-            "searcher": {"metric": "accuracy"},
+            "searcher": {"metric": "val_accuracy"},
             "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
         },
         local=True,

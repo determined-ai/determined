@@ -30,7 +30,7 @@ def start_tensorboard(args: Namespace) -> None:
     if args.context is not None:
         req_body["files"], _ = context.read_context(args.context, constants.MAX_CONTEXT_SIZE)
 
-    resp = api.post(args.master, "api/v1/tensorboards", body=req_body).json()["tensorboard"]
+    resp = api.post(args.master, "api/v1/tensorboards", json=req_body).json()["tensorboard"]
 
     if args.detach:
         print(resp["id"])

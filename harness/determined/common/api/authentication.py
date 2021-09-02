@@ -17,11 +17,11 @@ Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-_cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
+_cur_allocation_token = os.environ.get("DET_ALLOCATION_SESSION_TOKEN", "")
 
 
-def get_task_token() -> str:
-    return _cur_task_token
+def get_allocation_token() -> str:
+    return _cur_allocation_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -124,7 +124,7 @@ def do_login(
     r = api.post(
         master_address,
         "login",
-        body={"username": username, "password": password},
+        json={"username": username, "password": password},
         authenticated=False,
         cert=cert,
     )

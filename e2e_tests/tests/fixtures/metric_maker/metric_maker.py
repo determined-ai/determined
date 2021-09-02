@@ -1,10 +1,14 @@
 import pathlib
+import pickle
 from typing import Any, Dict
 
 import numpy as np
 
 import determined as det
-from determined import horovod
+from determined import horovod, layers, workload
+from determined.common import storage
+from determined.common.api import certs
+from determined.experimental import client
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -54,7 +58,7 @@ def structure_equal(a: Any, b: Any) -> bool:
     return a == b
 
 
-class MetricMaker(det.CallbackTrialController):
+class MetricMaker(det.TrialController):
     """
     MetricMaker is a class designed to test that metrics reported from a trial
     are faithfully passed to the master and stored in the database.
@@ -76,6 +80,19 @@ class MetricMaker(det.CallbackTrialController):
         self.validation_structure = self.env.hparams["validation_structure"]
         self.gain_per_batch = self.env.hparams["gain_per_batch"]
 
+        self.wlsq = None
+        if self.workloads is None:
+            session = client.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
+
+        if self.env.latest_checkpoint is not None:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
+                self.load(pathlib.Path(load_path))
+
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
         return MetricMaker(*args, **kwargs)
@@ -83,6 +100,24 @@ class MetricMaker(det.CallbackTrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         pass
+
+    def run(self) -> None:
+        for w, response_func in self.workloads:
+            if w.kind == workload.Workload.Kind.RUN_STEP:
+                response = self.train_for_step(w.step_id, w.num_batches)
+            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                response = self.compute_validation_metrics(w.step_id)
+            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                with self._generic._storage_mgr.store_path() as (storage_id, path):
+                    self.save(pathlib.Path(path))
+                    response = {
+                        "uuid": storage_id,
+                        "resources": storage.StorageManager._list_directory(path),
+                    }
+            else:
+                raise AssertionError("Unexpected workload: {}".format(w.kind))
+
+            response_func(response)
 
     def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         # Get the base value for each batch
@@ -120,9 +155,19 @@ class MetricMaker(det.CallbackTrialController):
         with path.joinpath("checkpoint_file").open("w") as f:
             f.write(str(self.value))
 
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None:
+            with wlsq_path.open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
+
     def load(self, path: pathlib.Path) -> None:
         with path.joinpath("checkpoint_file").open("r") as f:
             self.value = float(f.read())
+
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
 
 class MetricMakerTrial(det.Trial):

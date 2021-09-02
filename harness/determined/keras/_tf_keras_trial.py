@@ -15,9 +15,10 @@ from tensorflow.keras.models import Model
 from tensorflow.python.framework.ops import EagerTensor
 
 import determined as det
-from determined import horovod, keras, util, workload
+from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check
+from determined.common import check, experimental, storage
+from determined.common.api import certs
 from determined.horovod import hvd
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
@@ -154,7 +155,7 @@ class TrialControllerMultiplexer(keras.callbacks._MultiplexerBase):
         super().on_train_end(logs)
 
 
-class TFKerasTrialController(det.LoopTrialController):
+class TFKerasTrialController(det.TrialController):
     @staticmethod
     def supports_averaging_training_metrics() -> bool:
         return True
@@ -253,10 +254,9 @@ class TFKerasTrialController(det.LoopTrialController):
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
-        workloads: workload.Stream,
-        load_path: Optional[pathlib.Path],
         rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
+        workloads: Optional[workload.Stream] = None,
     ) -> det.TrialController:
         check.is_instance(
             context, keras.TFKerasTrialContext, "TFKerasTrialController needs a TFKerasTrialContext"
@@ -296,10 +296,9 @@ class TFKerasTrialController(det.LoopTrialController):
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
             context,
             env,
-            workloads,
-            load_path,
             rendezvous_info,
             hvd_config,
+            workloads,
         )
 
     def __init__(
@@ -343,8 +342,22 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.enqueuers = []  # type: List[keras._Enqueuer]
 
+        self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
+        if self.workloads is None:
+            session = experimental.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session,
+                self.env,
+                self.context.distributed,
+            )
+
         # If a load path is provided, load weights and restore the data location.
-        self._load()
+        self.multiplexer_load_state = None  # type: Optional[Dict]
+        if self.env.latest_checkpoint is not None:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
+                self._load(pathlib.Path(load_path))
 
         self._configure_callbacks(train_config.callbacks)
 
@@ -528,10 +541,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.callback_list.model.stop_training = False
 
-    def _save_checkpoint(self, path: pathlib.Path) -> workload.Response:
-        if not self.is_chief:
-            return workload.Skipped()
-
+    def _save_checkpoint(self, path: pathlib.Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
         # Save model weights. We use `tf` format because `h5` does not support
@@ -563,7 +573,9 @@ class TFKerasTrialController(det.LoopTrialController):
 
         self.multiplexer._checkpoint_end(path)
 
-        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_weights"}
+        if self.wlsq is not None:
+            with path.joinpath("workload_sequencer.pkl").open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
 
     def _load_model_weights(self, model_weights_checkpoint_path: pathlib.Path) -> None:
         logging.info(f"Restoring model weights from {model_weights_checkpoint_path}.")
@@ -580,39 +592,30 @@ class TFKerasTrialController(det.LoopTrialController):
                 if f"optimizer-{idx}" in h5file:
                     load_optimizer_weights(self.model, h5file[f"optimizer-{idx}"], optimizer)
 
-    def _load_model_and_optimizer_weights_v1(self) -> None:
-        self.load_path = cast(pathlib.Path, self.load_path)
-        self._load_model_weights(self.load_path.joinpath("determined-keras-model"))
-        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model"))
+    def _load_model_and_optimizer_weights_v1(self, load_path: pathlib.Path) -> None:
+        self._load_model_weights(load_path.joinpath("determined-keras-model"))
+        self._load_optimizers_weights(load_path.joinpath("determined-keras-model"))
 
-    def _load_model_and_optimizer_weights_v2(self) -> None:
-        self.load_path = cast(pathlib.Path, self.load_path)
-        self._load_model_weights(self.load_path.joinpath("determined-keras-model.h5"))
-        self._load_optimizers_weights(self.load_path.joinpath("determined-keras-model.h5"))
+    def _load_model_and_optimizer_weights_v2(self, load_path: pathlib.Path) -> None:
+        self._load_model_weights(load_path.joinpath("determined-keras-model.h5"))
+        self._load_optimizers_weights(load_path.joinpath("determined-keras-model.h5"))
 
-    def _load_model_and_optimizer_weights_v3(self) -> None:
-        self.load_path = cast(pathlib.Path, self.load_path)
-        self._load_model_weights(self.load_path.joinpath("determined-keras-model-weights"))
-        self._load_optimizers_weights(
-            self.load_path.joinpath("determined-keras-optimizer-weights.h5")
-        )
+    def _load_model_and_optimizer_weights_v3(self, load_path: pathlib.Path) -> None:
+        self._load_model_weights(load_path.joinpath("determined-keras-model-weights"))
+        self._load_optimizers_weights(load_path.joinpath("determined-keras-optimizer-weights.h5"))
 
-    def _load(self) -> None:
-        self.multiplexer_load_state = None  # type: Optional[Dict]
-        if not self.load_path:
-            return
-
+    def _load(self, load_path: pathlib.Path) -> None:
         # Find model code path, we check multiple naming conventions for backwards compatibility.
-        if self.load_path.joinpath("determined-keras-model.h5").exists():
-            self._load_model_and_optimizer_weights_v2()
-        elif self.load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
-            self._load_model_and_optimizer_weights_v3()
+        if load_path.joinpath("determined-keras-model.h5").exists():
+            self._load_model_and_optimizer_weights_v2(load_path)
+        elif load_path.joinpath("determined-keras-optimizer-weights.h5").exists():
+            self._load_model_and_optimizer_weights_v3(load_path)
         else:
-            self._load_model_and_optimizer_weights_v1()
+            self._load_model_and_optimizer_weights_v1(load_path)
 
         # Load RNG state.
         try:
-            with open(self.load_path.joinpath("rng_state.pkl"), "rb") as f:
+            with open(load_path.joinpath("rng_state.pkl"), "rb") as f:
                 rng_state = pickle.load(f)
 
             set_rng_state(rng_state)
@@ -620,10 +623,16 @@ class TFKerasTrialController(det.LoopTrialController):
             logging.warning("Checkpoint did not include RNG state.")
 
         # Load callbacks.
-        cb_state_path = self.load_path.joinpath("determined-callbacks.v1.pkl")
+        cb_state_path = load_path.joinpath("determined-callbacks.v1.pkl")
         if cb_state_path.exists():
             with cb_state_path.open("rb") as f:
                 self.multiplexer_load_state = pickle.load(f)
+
+        # Load WorkloadSequencer state.
+        wlsq_path = load_path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
     def run(self) -> None:
         with self.prof:
@@ -649,7 +658,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 repeat=True,
                 shuffle=self.context._fit_shuffle,
                 shuffle_seed=self.context.get_trial_seed(),
-                prior_batches_trained=self.env.initial_workload.total_batches_processed,
+                prior_batches_trained=self.env.latest_batch,
             )
             enqueuer.start()
             self.enqueuers.append(enqueuer)
@@ -755,49 +764,52 @@ class TFKerasTrialController(det.LoopTrialController):
         return metrics
 
     def _control_loop(self) -> None:
-        for wkld, args, response_func in self.workloads:
-            logging.debug(f"Received wkld {wkld.kind} with args {args}.")
-            if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                # Configure the state for a training step.
-                self.train_response_func = response_func
-                self.train_workload_batches = 0
-                self.train_workload_metrics = []
-                self.train_workload_len = wkld.num_batches
-                self.multiplexer.set_batches_requested(wkld.num_batches)
-                break
-            elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                try:
-                    response_func(
-                        det.util.wrap_metrics(
-                            self._compute_validation_metrics(),
-                            self.context.get_stop_requested(),
-                            invalid_hp=False,
-                            init_invalid_hp=False,
-                        )
-                    )
-                except det.InvalidHP as e:
-                    logging.info(
-                        "Invalid hyperparameter exception in trial validation step: {}".format(e)
-                    )
-                    response_func(
-                        util.wrap_metrics(
-                            {},
-                            self.context.get_stop_requested(),
-                            invalid_hp=True,
-                            init_invalid_hp=False,
-                        )
-                    )
-            elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], pathlib.Path)
-                path = cast(pathlib.Path, args[0])
-                response_func(self._save_checkpoint(path))
-            elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                response_func({} if self.is_chief else workload.Skipped())
-                self.multiplexer._corrected_train_end()
-                raise det.errors.WorkerFinishedGracefully
-            else:
-                raise AssertionError(f"Unknown workload kind {wkld.kind}.")
+        assert self.workloads is not None
+        for wkld, response_func in self.workloads:
+            logging.debug(f"Received wkld {wkld.kind}.")
+
+            try:
+                if wkld.kind == workload.Workload.Kind.RUN_STEP:
+                    # Configure the state for a training step.
+                    self.train_response_func = response_func
+                    self.train_workload_batches = 0
+                    self.train_workload_metrics = []
+                    self.train_workload_len = wkld.num_batches
+                    self.multiplexer.set_batches_requested(wkld.num_batches)
+                    return
+
+                elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                    action = "validation"
+                    response = {
+                        "metrics": self._compute_validation_metrics(),
+                        "stop_requested": self.context.get_stop_requested(),
+                    }  # type: workload.Response
+
+                elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                    action = "checkpointing"
+                    if self.is_chief:
+                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                            self._save_checkpoint(pathlib.Path(path))
+                            response = {
+                                "uuid": storage_id,
+                                "resources": storage.StorageManager._list_directory(path),
+                                "framework": f"tensorflow-{tf.__version__}",
+                                "format": "saved_weights",
+                            }
+                    else:
+                        response = {}
+
+                else:
+                    raise AssertionError(f"Unknown workload kind {wkld.kind}.")
+
+            except det.InvalidHP as e:
+                logging.info(f"Invalid hyperparameter exception during {action}: {e}")
+                response = workload.InvalidHP()
+            response_func(response)
+
+        # End-of-training.
+        self.multiplexer._corrected_train_end()
+        raise det.errors.WorkerFinishedGracefully()
 
     def _allreduce_logs(self, logs: Dict) -> Dict:
         if not self.hvd_config.use:
@@ -870,8 +882,6 @@ class TFKerasTrialController(det.LoopTrialController):
         self._stop_training_check()
 
         if self.is_chief:
-            # Don't use det.util.make_metrics, because our batch metrics are not raw metrics.
-
             response = {
                 "metrics": {
                     "num_inputs": num_inputs,
@@ -879,13 +889,11 @@ class TFKerasTrialController(det.LoopTrialController):
                     "avg_metrics": final_metrics,
                 },
                 "stop_requested": self.context.get_stop_requested(),
-                "invalid_hp": False,
-                "init_invalid_hp": False,
-            }
-            self.train_response_func(response)
+            }  # type: workload.Response
         else:
-            self.train_response_func(workload.Skipped())
+            response = {}
 
+        self.train_response_func(response)
         self.train_response_func = None
 
         self._control_loop()
@@ -914,7 +922,7 @@ class TFKerasTrialController(det.LoopTrialController):
         self.multiplexer._test_end(metrics)
 
         if not self.is_chief:
-            return workload.Skipped()
+            return {}
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 

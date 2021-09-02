@@ -27,7 +27,7 @@ def add_client(parsed_args: Namespace) -> None:
         client = api.post(
             parsed_args.master,
             "oauth2/clients",
-            body={"domain": parsed_args.domain, "name": parsed_args.name},
+            json={"domain": parsed_args.domain, "name": parsed_args.name},
         ).json()
     except api.errors.NotFoundException:
         raise EnterpriseOnlyError("API not found: oauth2/clients")

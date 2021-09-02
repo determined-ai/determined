@@ -44,7 +44,7 @@ def post_trial_profiler_metrics_batches(
     api.post(
         master_url,
         "/api/v1/trials/profiler/metrics",
-        body={"batches": [b.__dict__ for b in batches]},
+        json={"batches": [b.__dict__ for b in batches]},
     )
 
 

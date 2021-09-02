@@ -210,7 +210,7 @@ class Checkpoint(object):
 
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            body={"checkpoint": {"metadata": self.metadata}},
+            json={"checkpoint": {"metadata": self.metadata}},
         )
 
     def remove_metadata(self, keys: List[str]) -> None:
@@ -228,7 +228,7 @@ class Checkpoint(object):
 
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            body={"checkpoint": {"metadata": self.metadata}},
+            json={"checkpoint": {"metadata": self.metadata}},
         )
 
     @staticmethod

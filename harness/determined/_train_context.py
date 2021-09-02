@@ -1,4 +1,6 @@
 import abc
+import contextlib
+import functools
 import logging
 import shutil
 import socket
@@ -87,6 +89,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
             managed_training=False,
             test_mode=False,
             config=config,
+            checkpoint_dir="/tmp",
             limit_gpus=1,
         )
         return cls(env_context, hvd_config, rendezvous_info)
@@ -177,7 +180,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self._stop_requested = stop_requested
 
     def get_initial_batch(self) -> int:
-        return self.env.initial_workload.total_batches_processed
+        return self.env.latest_batch
 
 
 class TrialContext(_TrainContext):
@@ -312,7 +315,12 @@ class DistributedContext:
             self._chief_zmq.safe_start(lambda: None)
 
         else:
-            chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+            if self._info.cross_rank > 0:
+                # Contact the chief via its rendezvous info.
+                chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
+            else:
+                # Contact the chief as localhost.
+                chief_ip_address = "127.0.0.1"
             logging.debug(
                 f"Non-Chief {self._info.rank} setting up comm to "
                 f"{chief_ip_address} w/ ports "
@@ -517,7 +525,7 @@ class DistributedContext:
 
     def _zmq_broadcast_local(self, stuff: Any = None) -> Any:
         """
-        Every local worker gets the value sent by the local chief.
+        Every worker gets the value sent by the local chief.
         """
         if self._info.local_size < 2:
             return stuff
@@ -526,3 +534,37 @@ class DistributedContext:
         else:
             stuff = self._local_worker_zmq.recv()
         return stuff
+
+    def _local_chief_contextmanager(self, fn: Callable) -> Callable:
+        """
+        Wrap a contextmanager such that the real context manager only runs on the chief, but the
+        results are distributed to all the local workers.
+        """
+        if self._is_local_chief:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*args: Any, **kwargs: Any) -> Any:
+                with fn(*args, **kwargs) as out:
+                    # broadcast to local workers
+                    _ = self._zmq_broadcast_local(out)
+                    try:
+                        yield out
+                    finally:
+                        # wait for local workers
+                        _ = self._zmq_gather_local(None)
+
+        else:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*__: Any, **___: Any) -> Any:
+                # wait for local chief
+                out = self._zmq_broadcast_local(None)
+                try:
+                    yield out
+                finally:
+                    # wait for local workers
+                    _ = self._zmq_gather_local(None)
+
+        return _fn

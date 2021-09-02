@@ -1,7 +1,6 @@
 import contextlib
 import json
 import logging
-import pathlib
 import runpy
 import sys
 from typing import Any, Iterator, List, Optional, Type, cast
@@ -129,10 +128,9 @@ def get_trial_from_native(
 
 def load_native(
     env: det.EnvContext,
-    workloads: workload.Stream,
-    load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    workloads: Optional[workload.Stream] = None,
 ) -> det.TrialController:
     check.true(
         env.experiment_config.native_enabled(),
@@ -144,8 +142,7 @@ def load_native(
     return load.load_trial(
         trial_class=trial_class,
         env=env,
-        workloads=workloads,
-        load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        workloads=workloads,
     )

@@ -18,7 +18,8 @@ def test_test_one_batch() -> None:
         experimental.test_one_batch(
             trial_class=pytorch_xor_model.XORTrial,
             config={
-                "hyperparameters": {"hidden_size": 2, "learning_rate": 0.5, "global_batch_size": 4}
+                "hyperparameters": {"hidden_size": 2, "learning_rate": 0.5, "global_batch_size": 4},
+                "searcher": {"metric": "loss"},
             },
         )
 
@@ -60,7 +61,8 @@ def test_keras_from_config() -> None:
     data_len = 10
     lr = 0.001
     config = {
-        "hyperparameters": {"global_batch_size": 1, "learning_rate": lr, "dataset_range": data_len}
+        "hyperparameters": {"global_batch_size": 1, "learning_rate": lr, "dataset_range": data_len},
+        "searcher": {"metric": "val_loss"},
     }
     context = keras.TFKerasTrialContext.from_config(config)
     trial = tf_keras_one_var_model.OneVarTrial(context)

@@ -54,6 +54,7 @@ from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentState,
 )
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
+from determined.common.experimental.session import Session  # noqa: F401
 from determined.common.experimental.trial import TrialReference
 
 _determined = None  # type: Optional[Determined]

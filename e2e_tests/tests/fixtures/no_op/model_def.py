@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pathlib
+import pickle
 import random
 import time
 from typing import Any, Dict, Optional
@@ -10,11 +11,13 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 import determined as det
-from determined import horovod
-from determined.common import check
+from determined import horovod, layers, workload
+from determined.common import check, storage
+from determined.common.api import certs
+from determined.experimental import client
 
 
-class NoOpTrialController(det.CallbackTrialController):
+class NoOpTrialController(det.TrialController):
     """
     A trial class which does nothing (except for maybe sleep) during training
     and validation.  For testing purposes.
@@ -59,10 +62,20 @@ class NoOpTrialController(det.CallbackTrialController):
 
         self.request_stop = self.env.hparams.get("request_stop", False)
 
-        if self.load_path is None:
-            self.trained_steps = collections.Counter()
+        self.wlsq = None
+        if self.workloads is None:
+            session = client.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
+
+        if self.env.latest_checkpoint is not None:
+            with self._generic._download_initial_checkpoint(
+                self.env.latest_checkpoint
+            ) as load_path:
+                self.load(pathlib.Path(load_path))
         else:
-            self.load(self.load_path)
+            self.trained_steps = collections.Counter()
 
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
@@ -71,6 +84,24 @@ class NoOpTrialController(det.CallbackTrialController):
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         np.random.seed(env.trial_seed)
+
+    def run(self) -> None:
+        for w, response_func in self.workloads:
+            if w.kind == workload.Workload.Kind.RUN_STEP:
+                response = self.train_for_step(w.step_id, w.num_batches)
+            elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
+                response = self.compute_validation_metrics(w.step_id)
+            elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
+                with self._generic._storage_mgr.store_path() as (storage_id, path):
+                    self.save(pathlib.Path(path))
+                    response = {
+                        "uuid": storage_id,
+                        "resources": storage.StorageManager._list_directory(path),
+                    }
+            else:
+                raise AssertionError("Unexpected workload: {}".format(w.kind))
+
+            response_func(response)
 
     def steps_trained(self) -> int:
         return sum(self.trained_steps.values())
@@ -143,6 +174,11 @@ class NoOpTrialController(det.CallbackTrialController):
         path.chmod(0o777)
         fpath.chmod(0o777)
 
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None:
+            with wlsq_path.open("wb") as f:
+                pickle.dump(self.wlsq.get_state(), f)
+
     def load(self, path: pathlib.Path) -> None:
         self.chaos_failure(self.chaos_probability_checkpoint)
         time.sleep(self.load_secs)
@@ -157,6 +193,11 @@ class NoOpTrialController(det.CallbackTrialController):
             logging.info(
                 "Loaded checkpoint {}, steps_trained {}".format(fpath, self.steps_trained())
             )
+
+        wlsq_path = path.joinpath("workload_sequencer.pkl")
+        if self.wlsq is not None and wlsq_path.exists():
+            with wlsq_path.open("rb") as f:
+                self.wlsq.load_state(pickle.load(f))
 
     def chaos_failure(self, probability: Optional[float]) -> None:
         if probability is None:
