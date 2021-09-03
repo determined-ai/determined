@@ -2,9 +2,7 @@ FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        unattended-upgrades \
-    && unattended-upgrades \
+    && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yq --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # For non-CUDA based images, these variables must be explicitly set for the Nvidia runtime to expose

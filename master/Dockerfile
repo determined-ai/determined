@@ -2,10 +2,9 @@ FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yq --no-install-recommends
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         ca-certificates \
-        unattended-upgrades \
-    && unattended-upgrades \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packaging/master.yaml /etc/determined/master.yaml
