@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Add the ability to disable agents while allowing currently running tasks to finish using ``det
-   agent disable --drain AGENT_ID``.
