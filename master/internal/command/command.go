@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"net/url"
 	"time"
 
@@ -57,11 +58,25 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
-	if spec.WatchProxyIdleTimeout && spec.Config.IdleTimeout != nil {
-		cmd.idleTimeoutWatcher = &task.IdleTimeoutWatcher{
-			TickInterval: 5 * time.Second,
-			Timeout:      time.Duration(*spec.Config.IdleTimeout),
-			GetLastActivity: func(ctx *actor.Context) *time.Time {
+	if spec.Config.IdleTimeout != nil {
+		var getLastActivity func(ctx *actor.Context) *time.Time
+		switch {
+		case spec.WatchProxyIdleTimeout && spec.WatchRunnerIdleTimeout:
+			getLastActivity = func(ctx *actor.Context) *time.Time {
+				proxyRef := ctx.Self().System().Get(actor.Addr("proxy"))
+				services := ctx.Ask(proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
+				service, ok := services[string(taskID)]
+				if !ok {
+					return nil
+				}
+
+				if cmd.lastActivity != nil && cmd.lastActivity.After(service.LastRequested) {
+					return cmd.lastActivity
+				}
+				return &service.LastRequested
+			}
+		case spec.WatchProxyIdleTimeout:
+			getLastActivity = func(ctx *actor.Context) *time.Time {
 				proxyRef := ctx.Self().System().Get(actor.Addr("proxy"))
 				services := ctx.Ask(proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
 				service, ok := services[string(taskID)]
@@ -69,10 +84,15 @@ func createGenericCommandActor(
 					return nil
 				}
 				return &service.LastRequested
-			},
+			}
+		}
+		cmd.idleTimeoutWatcher = &task.IdleTimeoutWatcher{
+			TickInterval:    5 * time.Second,
+			Timeout:         time.Duration(*spec.Config.IdleTimeout),
+			GetLastActivity: getLastActivity,
 			Action: func(ctx *actor.Context) {
 				ctx.Log().Infof("killing %s due to inactivity", spec.Config.Description)
-				ctx.Tell(ctx.Self(), &apiv1.KillTensorboardRequest{})
+				ctx.Tell(ctx.Self(), task.IdleKill{})
 			},
 		}
 	}
@@ -103,6 +123,7 @@ type command struct {
 	allocationID   model.AllocationID
 	serviceAddress *string
 
+	lastActivity         *time.Time
 	readinessMessageSent bool
 	registeredTime       time.Time
 	task                 *sproto.AllocateRequest
@@ -165,6 +186,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(newSummary(c))
 		}
 
+	case task.IdleKill:
+		c.terminate(ctx)
+
 	case *notebookv1.Notebook:
 		ctx.Respond(c.toNotebook(ctx))
 
@@ -173,7 +197,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Notebook: c.toNotebook(ctx),
 			Config:   protoutils.ToStruct(c.Config),
 		})
-
+	case *apiv1.IdleNotebookRequest:
+		if !msg.Idle {
+			c.lastActivity = ptrs.TimePtr(time.Now())
+		}
+		ctx.Respond(&apiv1.IdleNotebookResponse{})
 	case *apiv1.KillNotebookRequest:
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})

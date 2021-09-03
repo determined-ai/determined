@@ -7,8 +7,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
 
-// IdleTimeoutWatcherTick is the incoming message that should be handled.
-type IdleTimeoutWatcherTick struct{}
+type (
+	// IdleTimeoutWatcherTick is the incoming message that should be handled.
+	IdleTimeoutWatcherTick struct{}
+	// IdleKill is the message for killing an idle task.
+	IdleKill struct{}
+)
 
 // IdleTimeoutWatcher watches the proxy activity to handle a task actor idle timeout.
 type IdleTimeoutWatcher struct {
@@ -29,6 +33,7 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 	case IdleTimeoutWatcherTick:
 		lastActivity := p.GetLastActivity(ctx)
 		if lastActivity == nil {
+			actors.NotifyAfter(ctx, p.TickInterval, IdleTimeoutWatcherTick{})
 			return nil
 		}
 

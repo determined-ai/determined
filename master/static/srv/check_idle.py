@@ -29,14 +29,16 @@ def get_execution_state(request_address):
 def main():
     while True:
         sleep(1)
-        url = "http://127.0.0.1:" + str(os.environ["NOTEBOOK_PORT"]) + "/proxy/"+ str(os.environ["DET_TASK_ID"])
+        port = str(os.environ["NOTEBOOK_PORT"])
+        notebook_id = str(os.environ["DET_TASK_ID"])
+        notebook_server = f"http://127.0.0.1:{port}/proxy/{notebook_id}"
         try:
             api.put(
                 str(os.environ["DET_MASTER_HOST"]),
-                "/api/v1/notebooks/{notebook_id}/report_idle",
+                f"/api/v1/notebooks/{notebook_id}/report_idle",
                 {
-                    "notebook_id": str(os.environ["DET_TASK_ID"]),
-                    "idle": get_execution_state(url),
+                    "notebook_id": notebook_id,
+                    "idle": get_execution_state(notebook_server),
                 },
             )
         except Exception as e:
