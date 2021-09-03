@@ -2,7 +2,11 @@ FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -yq --no-install-recommends
+    && apt-get upgrade -s \
+        | grep "^Inst" \
+        | grep -e "Debian" -e "Debian-Security" \
+        | awk -F " " {'print $2'} \
+        | DEBIAN_FRONTEND=noninteractive xargs apt-get upgrade -yq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
