@@ -41,8 +41,6 @@ interface ModalHooks {
   showModal: (props: ShowProps) => void;
 }
 
-const PADDING = 8;
-
 const getExperimentName = (config: RawJson) => {
   return config.name || '';
 };
@@ -74,7 +72,7 @@ const trialContinueConfig = (
   };
 };
 
-const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
+const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const useCreateExperimentModal = (): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
@@ -248,14 +246,6 @@ const useCreateExperimentModal = (): ModalHooks => {
             fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
             <MonacoEditor
               height="40vh"
-              language="yaml"
-              options={{
-                minimap: { enabled: false },
-                padding: { bottom: PADDING, top: PADDING },
-                scrollBeyondLastLine: false,
-                selectOnLineNumbers: true,
-              }}
-              theme="vs-light"
               value={configString}
               onChange={handleEditorChange}
             />

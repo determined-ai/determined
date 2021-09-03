@@ -13,15 +13,12 @@ import Link from './Link';
 import css from './NotebookModal.module.scss';
 import Spinner from './Spinner';
 
-const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
-
 const { Option } = Select;
 const { Item } = Form;
 
 const STORAGE_PATH = 'notebook-launch';
 const STORAGE_KEY = 'notebook-config';
 const DEFAULT_SLOT_COUNT = 1;
-const PADDING = 8;
 
 type DispatchFunction =
   (Dispatch<{
@@ -77,6 +74,8 @@ interface ResourceInfo {
   hasCompute: boolean;
   maxSlots: number | undefined;
 }
+
+const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const NotebookModal: React.FC<NotebookModalProps> = (
   { visible = false, onLaunch, ...props }: NotebookModalProps,
@@ -202,13 +201,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
             },
           ]}>
           <MonacoEditor
-            height={430}
-            language="yaml"
+            height="40vh"
             options={{
-              minimap: { enabled: false },
-              padding: { bottom: PADDING, top: PADDING },
-              scrollBeyondLastLine: false,
-              selectOnLineNumbers: true,
               wordWrap: 'on',
               wrappingIndent: 'indent',
             }}
