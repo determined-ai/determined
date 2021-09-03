@@ -1775,9 +1775,6 @@ workflows:
     jobs:
       - build-proto
       - build-helm
-      - build-bindings:
-          requires:
-            - build-proto
       - build-react:
           dev-mode: true
       - build-storybook
