@@ -7,7 +7,7 @@ RUN apt-get update -yq \
         | grep -e "Debian" -e "Debian-Security" \
         | awk -F " " {'print $2'} \
         | DEBIAN_FRONTEND=noninteractive xargs apt-get upgrade -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
