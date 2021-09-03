@@ -99,8 +99,10 @@ func NewAllocation(req sproto.AllocateRequest, db db.DB, rm *actor.Ref) actor.Ac
 
 		req: req,
 		model: model.Allocation{
-			TaskID:       req.TaskID,
 			AllocationID: req.AllocationID,
+			TaskID:       req.TaskID,
+			Slots:        req.SlotsNeeded,
+			AgentLabel:   req.Name,
 			ResourcePool: req.ResourcePool,
 			StartTime:    time.Now().UTC(),
 		},
@@ -163,14 +165,6 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 // Cleanup ensures an allocation is properly closed. It tries to do everything before failing and
 // ensures we don't leave any resources running.
 func (a *Allocation) Cleanup(ctx *actor.Context) {
-	if len(a.reservations) > 0 {
-		if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
-			ctx.Log().WithError(err).Error("error delete allocation session")
-		}
-		if err := a.db.CompleteAllocation(&a.model); err != nil {
-			ctx.Log().WithError(err).Error("failed to mark allocation completed")
-		}
-	}
 	// Just in-case code.
 	if !a.exited {
 		ctx.Log().Info("exit did not run properly")
@@ -179,6 +173,9 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 				ctx.Log().Infof("allocation exited with unterminated reservation: %v", r.Summary())
 				r.Kill(ctx)
 			}
+		}
+		if len(a.reservations) > 0 {
+			a.markResourcesReleased(ctx)
 		}
 		ctx.Tell(a.rm, sproto.ResourcesReleased{TaskActor: ctx.Self()})
 	}
@@ -375,6 +372,7 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 	if len(a.reservations) == 0 {
 		return
 	}
+	defer a.markResourcesReleased(ctx)
 
 	defer a.preemption.Close()
 	defer a.rendezvous.Close()
@@ -418,6 +416,17 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 
 	default:
 		panic("allocation exited without being killed, preempted or having a container exit")
+	}
+}
+
+// markResourcesReleased persists completion information.
+func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
+	a.model.EndTime = ptrs.TimePtr(time.Now().UTC())
+	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
+		ctx.Log().WithError(err).Error("error delete allocation session")
+	}
+	if err := a.db.CompleteAllocation(&a.model); err != nil {
+		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}
 }
 
