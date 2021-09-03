@@ -2,7 +2,10 @@ FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
-    && apt-get install -y ca-certificates perl-base \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        unattended-upgrades \
+    && unattended-upgrades \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packaging/master.yaml /etc/determined/master.yaml
