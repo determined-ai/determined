@@ -57,6 +57,16 @@ message GetNotebookResponse {
   google.protobuf.Struct config = 2;
 }
 
+// Kill the requested notebook if idle.
+message IdleNotebookRequest {
+  // The id of the notebook.
+  string notebook_id = 1;
+  // The value of idle timeout
+  bool idle = 2;
+}
+// Response to IdleNotebookRequest.
+message IdleNotebookResponse {}
+
 // Kill the requested notebook.
 message KillNotebookRequest {
   // The id of the notebook.

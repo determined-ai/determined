@@ -24,6 +24,8 @@ const (
 	NotebookTemplateResource = "notebook-template.ipynb"
 	// NotebookEntrypointResource is the script to set up a notebook.
 	NotebookEntrypointResource = "notebook-entrypoint.sh"
+	// NotebookIdleCheckResource is the script to check if a notebook is idle.
+	NotebookIdleCheckResource = "check_idle.py"
 	// TensorboardEntryScriptResource is the script to set up TensorBoard.
 	TensorboardEntryScriptResource = "tensorboard-entrypoint.sh"
 	// TrialEntrypointScriptResource is the script to set up a trial.

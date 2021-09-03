@@ -2427,6 +2427,34 @@ export interface V1GetUsersResponse {
 }
 
 /**
+ * Kill the requested notebook if idle.
+ * @export
+ * @interface V1IdleNotebookRequest
+ */
+export interface V1IdleNotebookRequest {
+    /**
+     * The id of the notebook.
+     * @type {string}
+     * @memberof V1IdleNotebookRequest
+     */
+    notebookId?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1IdleNotebookRequest
+     */
+    idle?: boolean;
+}
+
+/**
+ * Response to IdleNotebookRequest.
+ * @export
+ * @interface V1IdleNotebookResponse
+ */
+export interface V1IdleNotebookResponse {
+}
+
+/**
  * Response to KillCommandRequest.
  * @export
  * @interface V1KillCommandResponse
@@ -9609,6 +9637,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'notebookId' is not null or undefined
+            if (notebookId === null || notebookId === undefined) {
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedIdleNotebook.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedIdleNotebook.');
+            }
+            const localVarPath = `/api/v1/notebooks/{notebookId}/report_idle`
+                .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PUT' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1IdleNotebookRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
@@ -10456,6 +10530,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedIdleNotebook(notebookId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
@@ -10832,6 +10926,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+            return InternalApiFp(configuration).determinedIdleNotebook(notebookId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
          * @param {string} allocationId The allocation ID for the reservation.
          * @param {string} containerId The container ID for the reservation.
@@ -11119,6 +11224,19 @@ export class InternalApi extends BaseAPI {
      */
     public determinedGetTelemetry(options?: any) {
         return InternalApiFp(this.configuration).determinedGetTelemetry(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Send notebook idle data to master
+     * @param {string} notebookId The id of the notebook.
+     * @param {V1IdleNotebookRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+        return InternalApiFp(this.configuration).determinedIdleNotebook(notebookId, body, options)(this.fetch, this.basePath);
     }
 
     /**
