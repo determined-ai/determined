@@ -4,7 +4,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type context struct {
@@ -33,7 +32,7 @@ type SearchMethod interface {
 	progress(map[model.RequestID]model.PartialUnits) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(
-		ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+		ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 	) ([]Operation, error)
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
@@ -101,7 +100,7 @@ func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, e
 }
 
 func (defaultSearchMethod) trialExitedEarly( //nolint: unused
-	context, model.RequestID, workload.ExitedReason) ([]Operation, error) {
+	context, model.RequestID, model.ExitedReason) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }
 

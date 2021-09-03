@@ -7,8 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
@@ -284,7 +282,7 @@ func simulateOperationComplete(
 	}
 
 	if trial.EarlyExit != nil && opIndex == *trial.EarlyExit {
-		ops, err := method.trialExitedEarly(ctx, operation.RequestID, workload.UserCanceled)
+		ops, err := method.trialExitedEarly(ctx, operation.RequestID, model.UserCanceled)
 		if err != nil {
 			return nil, errors.Wrap(err, "trainCompleted")
 		}
