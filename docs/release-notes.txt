@@ -8,6 +8,34 @@
  Version 0.16
 **************
 
+Version 0.16.5
+==============
+
+**Release Date:** September 3, 2021
+
+**New Features**
+
+-  Support custom PyTorch data loaders with ``PyTorchTrial``. You may now call
+   :meth:`context.experimental.disable_dataset_reproducibility_checks()
+   <determined.pytorch.PyTorchExperimentalContext.disable_dataset_reproducibility_checks>` in your
+   trial's ``__init__()`` method, which will allow you to return arbitrary ``DataLoader`` objects
+   from :meth:`~determined.pytorch.PyTorchTrial.build_training_data_loader` and
+   :meth:`~determined.pytorch.PyTorchTrial.build_validation_data_loader`. This is desirable when
+   your data loader is not compatible with Determined's ``det.pytorch.DataLoader``. The usual
+   dataset reproducibility that ``det.pytorch.DataLoader`` provides is still possible to achieve,
+   but it is your responsibility. You may find the ``Sampler`` classes in
+   :mod:`determined.pytorch.samplers` to be helpful.
+
+**Improvements**
+
+-  Add the ability to disable agents while allowing currently running tasks to finish using ``det
+   agent disable --drain AGENT_ID``.
+
+**Bug Fixes**
+
+-  WebUI: Show metrics with a value of 0 in graphs.
+-  Properly load very old (pre-0.13.8) checkpoints with ``TFKerasTrial``.
+
 Version 0.16.4
 ==============
 
