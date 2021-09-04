@@ -118,7 +118,15 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
+	spec.WatchProxyIdleTimeout = true
+
 	// Postprocess the spec.
+	if spec.Config.IdleTimeout == nil {
+		masterTensorBoardIdleTimeout := model.Duration(
+			time.Duration(a.m.config.TensorBoardTimeout) * time.Second)
+		spec.Config.IdleTimeout = &masterTensorBoardIdleTimeout
+	}
+
 	spec.Config.Description = fmt.Sprintf(
 		"TensorBoard (%s)",
 		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),

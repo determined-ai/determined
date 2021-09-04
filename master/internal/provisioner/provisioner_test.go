@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type TestInstanceType struct {
@@ -202,7 +203,7 @@ func TestProvisionerScaleDown(t *testing.T) {
 			NumSlots: 4,
 		},
 		Config: &Config{
-			MaxIdleAgentPeriod: Duration(50 * time.Millisecond),
+			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
 			MaxInstances:       100,
 		},
 		initInstances: []*Instance{
@@ -252,8 +253,8 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			NumSlots: 4,
 		},
 		Config: &Config{
-			MaxAgentStartingPeriod: Duration(100 * time.Millisecond),
-			MaxIdleAgentPeriod:     Duration(100 * time.Millisecond),
+			MaxAgentStartingPeriod: model.Duration(100 * time.Millisecond),
+			MaxIdleAgentPeriod:     model.Duration(100 * time.Millisecond),
 			MaxInstances:           100,
 		},
 		initInstances: []*Instance{
@@ -310,8 +311,8 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			NumSlots: 4,
 		},
 		Config: &Config{
-			MaxAgentStartingPeriod: Duration(3 * time.Minute),
-			MaxIdleAgentPeriod:     Duration(50 * time.Millisecond),
+			MaxAgentStartingPeriod: model.Duration(3 * time.Minute),
+			MaxIdleAgentPeriod:     model.Duration(50 * time.Millisecond),
 			MaxInstances:           100,
 		},
 		initInstances: []*Instance{

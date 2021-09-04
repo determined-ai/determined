@@ -10,38 +10,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/union"
 	"github.com/determined-ai/determined/master/version"
 )
 
-// Duration is a JSON (un)marshallable version of time.Duration.
-type Duration time.Duration
-
 const defaultMasterPort = "8080"
-
-// MarshalJSON implements the json.Marshaler interface.
-func (d Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).String())
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch value := v.(type) {
-	case string:
-		tmp, err := time.ParseDuration(value)
-		if err != nil {
-			return errors.Wrap(err, "error parsing duration")
-		}
-		*d = Duration(tmp)
-		return nil
-	default:
-		return errors.Errorf("invalid duration: %s", b)
-	}
-}
 
 // Config describes config for provisioner.
 type Config struct {
@@ -55,8 +29,8 @@ type Config struct {
 	AgentFluentImage       string            `json:"agent_fluent_image"`
 	AWS                    *AWSClusterConfig `union:"type,aws" json:"-"`
 	GCP                    *GCPClusterConfig `union:"type,gcp" json:"-"`
-	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
-	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
+	MaxIdleAgentPeriod     model.Duration    `json:"max_idle_agent_period"`
+	MaxAgentStartingPeriod model.Duration    `json:"max_agent_starting_period"`
 	MinInstances           int               `json:"min_instances"`
 	MaxInstances           int               `json:"max_instances"`
 }
@@ -68,8 +42,8 @@ func DefaultConfig() *Config {
 		AgentDockerNetwork:     "default",
 		AgentDockerImage:       fmt.Sprintf("determinedai/determined-agent:%s", version.Version),
 		AgentFluentImage:       "fluent/fluent-bit:1.6",
-		MaxIdleAgentPeriod:     Duration(20 * time.Minute),
-		MaxAgentStartingPeriod: Duration(20 * time.Minute),
+		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
+		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
 		MinInstances:           0,
 		MaxInstances:           5,
 	}

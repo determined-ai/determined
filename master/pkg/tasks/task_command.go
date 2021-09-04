@@ -23,6 +23,9 @@ type GenericCommandSpec struct {
 
 	Port     *int
 	ProxyTCP bool
+
+	WatchProxyIdleTimeout  bool
+	WatchRunnerIdleTimeout bool
 }
 
 // ToTaskSpec generates a TaskSpec.

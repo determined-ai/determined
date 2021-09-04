@@ -13,7 +13,6 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -62,9 +61,7 @@ func (a *apiServer) GetNotebook(
 
 func (a *apiServer) IdleNotebook(
 	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
-	log.Info("HIT THIS")
-	log.Info(req.Idle)
-	return nil, nil
+	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
@@ -126,6 +123,9 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
+
+	spec.WatchProxyIdleTimeout = true
+	spec.WatchRunnerIdleTimeout = true
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {

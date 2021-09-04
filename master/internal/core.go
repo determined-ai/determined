@@ -824,8 +824,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.echo,
 		m.db,
-		m.proxy,
-		m.config.TensorBoardTimeout,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
