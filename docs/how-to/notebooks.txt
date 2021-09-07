@@ -124,6 +124,7 @@ In addition to the ``--config`` flag, configuration may also be supplied via a Y
    bind_mounts:
      - host_path: /data/notebook_scratch
        container_path: /scratch
+   idle_timeout: 30m
    EOL
    $ det notebook start --config-file config.yaml
 
