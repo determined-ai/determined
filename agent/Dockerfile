@@ -1,7 +1,14 @@
 FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
 
-RUN apt-get update && apt-get install -y perl-base
+RUN apt-get update -yq \
+    && apt-get upgrade -s \
+        | grep "^Inst" \
+        | grep -e "Debian" -e "Debian-Security" \
+        | awk -F " " {'print $2'} \
+        | DEBIAN_FRONTEND=noninteractive xargs apt-get upgrade -yq \
+    && rm -rf /var/lib/apt/lists/*
+
 # For non-CUDA based images, these variables must be explicitly set for the Nvidia runtime to expose
 # the GPUs and `nvidia-smi` binary inside the container. See
 # https://github.com/NVIDIA/nvidia-container-runtime#environment-variables-oci-spec.
