@@ -212,7 +212,7 @@ commands:
             sudo apt-get install -y python3-venv
             /usr/bin/python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
-            /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools\<58
+            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       - run:
           name: Write cache key
@@ -231,7 +231,7 @@ commands:
 
       - restore_cache:
           keys:
-            - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+            - det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -260,7 +260,7 @@ commands:
               pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
-          key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+          key: det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
       - run: python --version
