@@ -52,6 +52,12 @@ const clickAndCloseTab = async (selector: t.SearchElement | t.MouseCoordinates) 
   await t.closeTab();
 };
 
+const sleep = (ms = 1000) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+};
+
 const checkTextContentFor = async (keywords: string[], shouldExist: boolean, timeout = 1500) => {
   const promises = keywords.map(async (text) => await t.text(text).exists(undefined, timeout));
   const misses = [];
@@ -305,12 +311,11 @@ export default class StepImplementation {
 
   @Step('<action> all table rows')
   public async actionOnAllTableRows(action: string) {
-    await t.click(t.text(BATCH_ACTION_TEXT));
-    await t.waitFor(async () => {
-      return await t.text(action, t.within(t.$('.ant-select-dropdown'))).exists();
-    });
-    await t.click(t.text(action, t.within(t.$('.ant-select-dropdown'))));
-    // Wait for the modal to animate in
+    await t.click(BATCH_ACTION_TEXT);
+    // Wait for the dropdown animation to finish
+    await sleep(500);
+    await t.click(action, t.within(t.$('.ant-select-dropdown')));
+    // Wait for the modal to animate in.
     await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
     await t.click(t.button(action, t.within(t.$('.ant-modal-body'))));
     // Wait for the modal to animate away
@@ -465,5 +470,13 @@ export default class StepImplementation {
       const logs = await getElements('[class*=LogViewer_line]');
       return logs.length > 0;
     });
+  }
+
+  /* Dev */
+  // use the steps here to test out Taiko behavior on Determined
+
+  @Step('dev')
+  public async dev() {
+    await t.$('body').exists();
   }
 }
