@@ -10,6 +10,17 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/log/v1/log.proto";
 import "determined/master/v1/master.proto";
 
+// Describe one SSO provider.
+message SSOProvider {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name", "sso_url" ] }
+  };
+  // A descriptive name for this provider.
+  string name = 1;
+  // The URL to use for SSO with this provider.
+  string sso_url = 2;
+}
+
 // Get master information.
 message GetMasterRequest {}
 // Response to GetMasterRequest.
@@ -29,6 +40,8 @@ message GetMasterResponse {
   string cluster_name = 4;
   // Telemetry status.
   bool telemetry_enabled = 5;
+  // SSO providers.
+  repeated SSOProvider sso_providers = 6;
 }
 
 // Get telemetry information.
