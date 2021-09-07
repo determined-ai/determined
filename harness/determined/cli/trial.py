@@ -48,8 +48,7 @@ def describe_trial(args: Namespace) -> None:
     headers = [
         "# of Batches",
         "State",
-        "Start Time",
-        "End Time",
+        "Report Time",
         "Checkpoint",
         "Checkpoint UUID",
         "Checkpoint Metadata",
@@ -63,7 +62,6 @@ def describe_trial(args: Namespace) -> None:
         [
             s["total_batches"],
             s["state"],
-            render.format_time(s["start_time"]),
             render.format_time(s["end_time"]),
             *format_checkpoint(s["checkpoint"]),
             *format_validation(s["validation"]),
