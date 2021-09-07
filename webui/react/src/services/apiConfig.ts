@@ -119,7 +119,7 @@ export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[
 
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
-  postProcess: (response) => decoder.jsonToDeterminedInfo(response),
+  postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.determinedGetMaster(),
 };
 

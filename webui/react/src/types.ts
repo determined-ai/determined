@@ -33,11 +33,17 @@ export interface Auth {
   user?: DetailedUser;
 }
 
+export interface SsoProvider {
+  name: string;
+  ssoUrl: string;
+}
+
 export interface DeterminedInfo {
   clusterId: string;
   clusterName: string;
   isTelemetryEnabled: boolean;
   masterId: string;
+  ssoProviders?: SsoProvider[];
   version: string;
 }
 

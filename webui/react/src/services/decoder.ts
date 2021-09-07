@@ -20,12 +20,17 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
-export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+  const ssoData = data as unknown as { ssoProviders?: types.SsoProvider[] };
+  const ssoProviders = ssoData.ssoProviders
+    ? ssoData.ssoProviders.map(provider => ({ name: provider.name, ssoUrl: provider.ssoUrl }))
+    : undefined;
   return {
     clusterId: data.clusterId,
     clusterName: data.clusterName,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
+    ssoProviders,
     version: data.version,
   };
 };
