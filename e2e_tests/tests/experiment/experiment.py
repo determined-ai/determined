@@ -512,10 +512,9 @@ def verify_completed_experiment_metadata(
 
         assert len(trial["steps"]) > 0
 
-        # Check that steps appear in increasing order of step ID.
-        # Step IDs should start at 0 or 1 and have no gaps.
-        step_ids = [s["id"] for s in trial["steps"]]
-        assert step_ids == list(range(1, len(step_ids) + 1))
+        # Check that batches appear in increasing order.
+        batch_ids = [s["id"] for s in trial["total_batches"]]
+        assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
         for step in trial["steps"]:
             assert step["state"] == "COMPLETED"

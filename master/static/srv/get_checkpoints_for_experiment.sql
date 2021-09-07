@@ -22,4 +22,4 @@ LEFT JOIN validations v ON v.total_batches = c.total_batches AND v.trial_id = c.
 JOIN trials t ON c.trial_id = t.id
 JOIN experiments e ON t.experiment_id = e.id
 WHERE e.id = $1
-ORDER BY start_time DESC
+ORDER BY end_time DESC
