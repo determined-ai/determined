@@ -473,20 +473,10 @@ export default class StepImplementation {
   }
 
   /* Dev */
+  // use the steps here to test out Taiko behavior on Determined
+
   @Step('dev')
   public async dev() {
-    await this.navigateToTaskList();
     await t.$('body').exists();
-    await t.$('th input[type=checkbox]').exists();
-    await t.click(t.$('th input[type=checkbox]'));
-    while (true) {
-      await t.click(BATCH_ACTION_TEXT);
-      // FIXME can't pass a selector to click
-      // await t.click(t.$(`//div[contains(text(),"Kill")]`), {force: true});
-      // await t.click(t.$(`//div[@class="ant-select-dropdown"]//div[contains(text(),"Kill")]`), {force: true});
-      // await t.click(t.$('body button'));
-      await t.click('Kill', { force: true }, t.within(t.$('.ant-select-dropdown')));
-      await t.click(BATCH_ACTION_TEXT);
-    }
   }
 }
