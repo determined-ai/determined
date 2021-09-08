@@ -200,7 +200,7 @@ Once set, any tasks created by the target user will be run as the specified user
 
 The default user and group that will be used when a Determined user is not explicitly linked to a
 user and group on an agent can be configured in the ``master.yaml`` file located at
-``/usr/local/determined/etc`` on the Determined master instance:
+``/etc/determined/`` on the Determined master instance:
 
 .. code:: yaml
 

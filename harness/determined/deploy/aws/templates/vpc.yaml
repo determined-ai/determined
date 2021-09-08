@@ -681,22 +681,22 @@ Resources:
             Content-Disposition: attachment; filename="userdata.txt"
 
             #!/bin/bash
-            mkdir -p /usr/local/determined/etc
+            mkdir -p /etc/determined
 
             scheme=http
             port=8080
             if [ -n "${MasterTLSCert}" ] && [ -n "${MasterTLSKey}" ]; then
               scheme=https
               port=8443
-              base64 -d <<<"${MasterTLSCert}" | tee /usr/local/determined/etc/master.crt
-              base64 -d <<<"${MasterTLSKey}" | tee /usr/local/determined/etc/master.key
+              base64 -d <<<"${MasterTLSCert}" | tee /etc/determined/master.crt
+              base64 -d <<<"${MasterTLSKey}" | tee /etc/determined/master.key
             fi
 
-            cat << 'EOF' > /usr/local/determined/etc/master.yaml.tmpl
+            cat << 'EOF' > /etc/determined/master.yaml.tmpl
             ${MasterConfigTemplate}
             EOF
 
-            cat << EOF > /usr/local/determined/etc/master.yaml.context
+            cat << EOF > /etc/determined/master.yaml.context
             checkpoint_storage:
               bucket: ${CheckpointBucket}
 
@@ -765,18 +765,18 @@ Resources:
             apt-get install -y docker-ce docker-ce-cli containerd.io
 
             curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
-              /usr/local/determined/etc/db_ssl_root_cert.pem
+              /etc/determined/db_ssl_root_cert.pem
 
             docker network create determined
 
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
 
-            touch /usr/local/determined/etc/master.yaml
+            touch /etc/determined/master.yaml
             docker run \
                 --name determined-master-configurator \
                 --rm \
-                -v /usr/local/determined/etc/:/etc/determined/ \
+                -v /etc/determined/:/etc/determined/ \
                 --entrypoint /bin/bash \
                 ${ImageRepoPrefix}/determined-master:${Version} \
                 -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
@@ -790,7 +790,7 @@ Resources:
                 --log-opt awslogs-group=${LogGroup} \
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
-                -v /usr/local/determined/etc/:/etc/determined/ \
+                -v /etc/determined/:/etc/determined/ \
                 ${ImageRepoPrefix}/determined-master:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]

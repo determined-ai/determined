@@ -365,15 +365,14 @@ To modify an already deployed cluster you have a few options:
 #. If you want more control over the master configuration while minimizing downtime, you can SSH
    into the master instance using the private key from the keypair that was used to provision the
    cluster. Once you're successfully connected, you can modify ``master.yaml`` under
-   ``/usr/local/determined/etc`` and restart the master Docker container for your changes to take
-   effect:
+   ``/etc/determined/`` and restart the master Docker container for your changes to take effect:
 
    .. code:: bash
 
       sudo docker container restart determined-master
 
    For example, if you want to add or modify resource pools you can edit the master configuration
-   file at ``/usr/local/determined/etc/master.yaml`` and add a new resource pool entry.
+   file at ``/etc/determined/master.yaml`` and add a new resource pool entry.
 
 .. _aws-manual-deployment:
 

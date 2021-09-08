@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chmod +x /usr/local/determined/container_startup_script
-/usr/local/determined/container_startup_script
+chmod +x /etc/determined/container_startup_script
+/etc/determined/container_startup_script
 
 /usr/bin/determined-agent "$@"

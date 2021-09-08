@@ -26,13 +26,13 @@ resource "google_compute_instance" "master_instance" {
   allow_stopping_for_update = true
 
   metadata_startup_script = <<-EOT
-    mkdir -p /usr/local/determined/etc
+    mkdir -p /etc/determined
 
-    cat << 'EOF' > /usr/local/determined/etc/master.yaml.tmpl
+    cat << 'EOF' > /etc/determined/master.yaml.tmpl
     ${var.master_config_template}
     EOF
 
-    cat << EOF > /usr/local/determined/etc/master.yaml.context
+    cat << EOF > /etc/determined/master.yaml.context
     checkpoint_storage:
       bucket: "${var.gcs_bucket}"
 
@@ -96,7 +96,7 @@ resource "google_compute_instance" "master_instance" {
     EOF
 
     if [ -n "${var.filestore_address}" ]; then
-      cat << EOF >> /usr/local/determined/etc/master.yaml.context
+      cat << EOF >> /etc/determined/master.yaml.context
         startup_script: |
                         apt-get -y update && apt-get -y install nfs-common
                         mkdir -p /mnt/shared_fs
@@ -125,17 +125,17 @@ resource "google_compute_instance" "master_instance" {
     apt-get update
     apt-get install -y docker-ce docker-ce-cli containerd.io
 
-    cat << EOF > /usr/local/determined/etc/db_ssl_root_cert.pem
+    cat << EOF > /etc/determined/db_ssl_root_cert.pem
     ${var.database_ssl_root_cert}
     EOF
 
     docker network create ${var.master_docker_network}
 
-    touch /usr/local/determined/etc/master.yaml
+    touch /etc/determined/master.yaml
     docker run \
         --name determined-master-configurator \
         --rm \
-        -v /usr/local/determined/etc/:/etc/determined/ \
+        -v /etc/determined/:/etc/determined/ \
         --entrypoint /bin/bash \
         ${var.image_repo_prefix}/determined-master:${var.det_version} \
         -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
@@ -147,7 +147,7 @@ resource "google_compute_instance" "master_instance" {
         --restart unless-stopped \
         --log-driver=gcplogs \
         -p ${var.port}:${var.port} \
-        -v /usr/local/determined/etc/:/etc/determined/ \
+        -v /etc/determined/:/etc/determined/ \
         ${var.image_repo_prefix}/determined-master:${var.det_version}
 
   EOT
