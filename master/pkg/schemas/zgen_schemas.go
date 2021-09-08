@@ -446,6 +446,7 @@ var (
         "container_path": true,
         "credential": true,
         "endpoint_url": true,
+        "prefix": true,
         "hdfs_path": true,
         "hdfs_url": true,
         "host_path": true,
@@ -2060,6 +2061,37 @@ var (
                 "string",
                 "null"
             ],
+            "default": null
+        },
+        "prefix": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "checks": {
+                "prefix cannot contain /../": {
+                    "not": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "/\\.\\./"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "^\\.\\./"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "/\\.\\.$"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": "^\\.\\.$"
+                            }
+                        ]
+                    }
+                }
+            },
             "default": null
         },
         "save_experiment_best": {

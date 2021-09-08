@@ -806,6 +806,7 @@ class S3ConfigV0(schemas.SchemaBase):
     bucket: str
     access_key: Optional[str] = None
     endpoint_url: Optional[str] = None
+    prefix: Optional[str] = None
     save_experiment_best: Optional[int] = None
     save_trial_best: Optional[int] = None
     save_trial_latest: Optional[int] = None
@@ -817,6 +818,7 @@ class S3ConfigV0(schemas.SchemaBase):
         bucket: str,
         access_key: Optional[str] = None,
         endpoint_url: Optional[str] = None,
+        prefix: Optional[str] = None,
         save_experiment_best: Optional[int] = None,
         save_trial_best: Optional[int] = None,
         save_trial_latest: Optional[int] = None,

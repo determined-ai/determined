@@ -1,5 +1,7 @@
 import copy
+import os
 import pathlib
+from typing import Optional
 
 import pytest
 from _pytest import monkeypatch
@@ -11,7 +13,6 @@ from tests.tensorboard import test_util
 
 BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
-
 default_conf = {
     "type": "s3",
     "bucket": "s3_bucket",
@@ -21,11 +22,12 @@ default_conf = {
 }
 
 
-def test_s3_build() -> None:
+@pytest.mark.parametrize("prefix", [None, "my/test/prefix/"])
+def test_s3_build(prefix: Optional[str]) -> None:
     env = test_util.get_dummy_env()
-    manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, default_conf
-    )
+    conf = copy.deepcopy(default_conf)
+    conf["prefix"] = prefix
+    manager = tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
     assert isinstance(manager, tensorboard.S3TensorboardManager)
 
 
@@ -38,20 +40,35 @@ def test_s3_build_missing_param() -> None:
         tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
 
 
-def test_s3_lifecycle(monkeypatch: monkeypatch.MonkeyPatch) -> None:
+@pytest.mark.parametrize("prefix", [None, "my/test/prefix/"])
+def test_s3_lifecycle(monkeypatch: monkeypatch.MonkeyPatch, prefix: Optional[str]) -> None:
     monkeypatch.setattr("boto3.client", s3.s3_client)
     env = test_util.get_dummy_env()
-    manager = tensorboard.build(
-        env.det_cluster_id, env.det_experiment_id, env.det_trial_id, default_conf
-    )
+    conf = copy.deepcopy(default_conf)
+    conf["prefix"] = prefix
+    manager = tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
     assert isinstance(manager, tensorboard.S3TensorboardManager)
 
+    tfevents_path = "uuid-123/tensorboard/experiment/1/trial/1/events.out.tfevents.example"
+
     manager.sync()
+    if prefix is not None:
+        tfevents_path = os.path.join(os.path.normpath(prefix).lstrip("/"), tfevents_path)
+
     expected = (
         "s3_bucket",
-        "uuid-123/tensorboard/experiment/1/trial/1/events.out.tfevents.example",
+        tfevents_path,
     )
     assert expected in manager.client.objects
+
+
+def test_invalid_prefix(monkeypatch: monkeypatch.MonkeyPatch) -> None:
+    env = test_util.get_dummy_env()
+    conf = copy.deepcopy(default_conf)
+    conf["prefix"] = "my/invalid/../prefix"
+
+    with pytest.raises(ValueError):
+        tensorboard.build(env.det_cluster_id, env.det_experiment_id, env.det_trial_id, conf)
 
 
 def test_s3_faulty_lifecycle(monkeypatch: monkeypatch.MonkeyPatch) -> None:
