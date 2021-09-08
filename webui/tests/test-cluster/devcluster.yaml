@@ -37,6 +37,7 @@ stages:
         master_port: 8081
         container_master_host: $DOCKER_LOCALHOST
         agent_id: agent3
+        slot_type: cpu
         fluent:
           port: 24226  # default value is 24224
           container_name: determined-fluent-3
