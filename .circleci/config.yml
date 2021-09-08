@@ -218,6 +218,7 @@ commands:
           name: Write cache key
           command: |
             echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
             fi
