@@ -20,22 +20,20 @@ enum State {
   STATE_SCHEDULED_BACKFILLED
 }
 
-message JobStatus {
+message JobSummary {
   string job_id
   State state
   // only applicable if state != queued.
+  // Position of the job in its queue. TODO -1 represents a scheduled job? or we just
+  // don't present scheduled jobs. unless we're reusing the message elsewhere.
+  // TODO is this kept once the job is scheduled?
   int32 queue_position
 }
 
 // TODO should this represent a scheduled job or any job
-// this could incorporate JobStatus somehow
-message QueuedJob {
-  // ID
-  string job_id = 0;
-  // Position of the job in its queue. TODO -1 represents a scheduled job? or we just
-  // don't present scheduled jobs. unless we're reusing the message elsewhere.
-  // TODO is this kept once the job is scheduled?
-  int32 queue_position = 1;
+// this could incorporate JobSummary somehow
+message Job {
+  JobSummary summary;
   int32 priority
   int32 weight
   Type type
@@ -83,7 +81,7 @@ message GetTypeXStatusRequest {
   string id
 }
 message GetTypeXStatusResponse {
-  JobStatus status
+  JobSummary status
 }
 
 // /jobs/queue-ctl
