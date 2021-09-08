@@ -11,6 +11,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
 
@@ -29,8 +30,6 @@ message GetExperimentResponse {
   // The experiment config.
   google.protobuf.Struct config = 2;
   // Associated job summary.
-  // TODO same with NTbCS if they had singular endpoints.
-  // maybe add to their list endpoints?
   determined.job.v1.JobSummary job_summary = 3;
 }
 

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package determined.api.v1;
+
+import "determined/job/v1/job.proto";
+import "determined/api/v1/pagination.proto";
+
+// Get a list of jobs.
+message GetJobsRequest {
+  // Request to paginate the resposne.
+  PaginationRequest pagination = 1;
+  // Filter the results based on a set of resource pools.
+  repeated string resource_pools = 2;
+}
+// Response to GetJobsRequest.
+message GetJobsResponse {
+  // Pagination information of the full dataset.
+  Pagination pagination = 1;
+  // List of the request jobs.
+  repeated determined.job.v1.Job jobs = 2;
+}
+
+// Get job stats.
+message GetQueueStatsRequest {
+  // Filter the results based on a set of resource pools.
+  repeated string resource_pools = 1;
+}
+// Response to GetQueueStatsRequest.
+message GetQueueStatsResponse {
+  // List of queue stats per resource pool.
+  repeated message {
+    QueueStats stats = 1;
+    string resource_pool = 2;
+  }
+}
+
+// Request to update the job queue.
+message UpdateQueueRequest {
+  // List of job queue control requests.
+  repeated QueueControl updates = 1;
+}
+// Response to UpdateQueueRequest.
+message UpdateQueueResponse {
+}
+
