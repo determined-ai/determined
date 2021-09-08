@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package determined.job.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/jobv1";
+
+import "google/protobuf/timestamp.proto";
+import "determined/api/v1/pagination.proto";
+
+enum Type {
+  TYPE_EXPERIMENT
+  TYPE_NOTEBOOK
+  TYPE_SHELL
+  TYPE_COMMAND
+  TYPE_TENSORBOARD
+}
+
+enum State {
+  STATE_QUEUED
+  STATE_SCHEDULED
+  STATE_SCHEDULED_BACKFILLED
+}
+
+message JobStatus {
+  string job_id
+  State state
+  // only applicable if state != queued.
+  int32 queue_position
+}
+
+// TODO should this represent a scheduled job or any job
+// this could incorporate JobStatus somehow
+message QueuedJob {
+  // ID
+  string job_id = 0;
+  // Position of the job in its queue. TODO -1 represents a scheduled job? or we just
+  // don't present scheduled jobs. unless we're reusing the message elsewhere.
+  // TODO is this kept once the job is scheduled?
+  int32 queue_position = 1;
+  int32 priority
+  int32 weight
+  Type type
+  google.protobuf.Timestamp submission_time
+  string user
+  string resource-pool
+  bool is-preemptible
+}
+
+message PaginationRequest {
+  offset
+  limit
+}
+
+// /jobs
+message GetJobsRequest {
+  OrderBy order_by
+  string sort_by
+  PaginationRequest pagination
+  // optional
+  repeated string resource_pools
+}
+message GetJobsResponse {
+  repeated QueuedJob jobs;
+  Pagination pagination = 2;
+}
+
+// /jobs/stats or /resource-pools/id/jobs/stats
+message GetJobStatsRequest {
+  repeated string resource_pools
+}
+message GetJobStatsResponse {
+  repeated {
+    string resource_pool
+    int32 queued_count
+    int32 scheduled_count
+    // TODO is this one as useful? what can one answer
+    // from this
+    int32 preemptible_count
+  }
+}
+
+// /:jobtype/:id o /:jobtype/:id/queue
+message GetTypeXStatusRequest {
+  string id
+}
+message GetTypeXStatusResponse {
+  JobStatus status
+}
+
+// /jobs/queue-ctl
+message QueueControl {
+  string job_id
+  int32 queue_position
+  int32 priority
+  int32 weight
+  string resource_pool
+}
+message PostQueueRequest {
+  repeated QueueControl updates
+}
+message PatchQueueResponse {
+  // list of targetd jobs? other jobs would be affected by this change too. maybe just an ok status
+  repeated QueuedJob
+}
+
+// TODO resource_pools/:id for k8 priorityclass list
