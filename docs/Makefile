@@ -3,6 +3,7 @@ export VERSION := $(shell cat ../VERSION)
 
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build
+SPHINXWRAPPER = ./sphinx-wrapper.py
 
 .PHONY: build-examples
 build-examples:
@@ -57,4 +58,4 @@ check:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 .PHONY: ALWAYS
 sp-%: ALWAYS
-	@$(SPHINXBUILD) -M $* . site $(SPHINXOPTS) $(O)
+	@$(SPHINXWRAPPER) $(SPHINXBUILD) -M $* . site $(SPHINXOPTS) $(O)

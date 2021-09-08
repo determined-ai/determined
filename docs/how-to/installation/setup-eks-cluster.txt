@@ -11,8 +11,8 @@ node that will host the Determined master and database, and an autoscaling group
 creating a suitable EKS cluster, you can then proceed with the standard :ref:`instructions for
 installing Determined on Kubernetes <install-on-kubernetes>`.
 
-Determined requires the Kubernetes cluster to be running version >= 1.15 and to have GPU-enabled
-nodes.
+Determined requires GPU-enabled nodes and the Kubernetes cluster to be running version >= 1.19 and
+<= 1.21, though later versions may work.
 
 ***************
  Prerequisites
@@ -60,7 +60,7 @@ GPU node group for workers. To fill in the template, insert the cluster name and
    metadata:
      name: <cluster-name> # Specify your cluster name here
      region: us-west-2 # The default region is us-west-2
-     version: "1.15" # 1.16 and 1.17 are also supported
+     version: "1.19" # 1.20 and 1.21 are also supported
 
    # Cluster availability zones must be explicitly named in order for single availability zone node groups to work.
    availabilityZones:
@@ -209,6 +209,17 @@ command to install the plugin:
 Lastly, EKS requires manual deployment of an autoscaler. Save the following configuration in a new
 file such as ``determined-autoscaler.yaml``:
 
+You will need to update the `<cluster-autoscaler-image>` to match the major and minor numbers of
+your Kubernetes version. For example, if you are using Kubernetes 1.20, use the cluster-autoscaler
+version 1.20 image found here: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.20.0
+
+For a full list of cluster-autoscaler releases see here:
+https://github.com/kubernetes/autoscaler/releases
+
+After finding the particular release you want, click on the release and scroll to the bottom to see
+a list of image URLs. Example:
+https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.20.0
+
 .. code:: YAML
 
    apiVersion: apps/v1
@@ -238,7 +249,7 @@ file such as ``determined-autoscaler.yaml``:
              value: "true"
              effect: NoSchedule
          containers:
-           - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.17.3
+           - image: <cluster-autoscaler-image>  # See, https://github.com/kubernetes/autoscaler/releases
              name: cluster-autoscaler
              resources:
                limits:

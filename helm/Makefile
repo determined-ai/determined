@@ -2,6 +2,7 @@
 build: clean
 	mkdir -p build/
 	helm package --destination build charts/determined
+	ln -rs build/determined-*.tgz build/determined-latest.tgz
 
 fmt:
 	helm lint charts/determined/
