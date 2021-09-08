@@ -29,8 +29,6 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
-        auto_bind_mount=args.auto_bind_mount,
-        no_auto_bind_mount=args.no_auto_bind_mount,
     )
 
 
@@ -53,8 +51,6 @@ def handle_master_up(args: argparse.Namespace) -> None:
         db_password=args.db_password,
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
-        auto_bind_mount=args.auto_bind_mount,
-        no_auto_bind_mount=args.no_auto_bind_mount,
         cluster_name=args.cluster_name,
     )
 
@@ -161,17 +157,6 @@ args_description = Cmd(
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
-                Arg(
-                    "--auto-bind-mount",
-                    type=str,
-                    default=None,
-                    help="directory to mount into task containers (default: user's home directory)",
-                ),
-                Arg(
-                    "--no-auto-bind-mount",
-                    help="disable mounting user's home directory into task containers",
-                    action="store_true",
-                ),
             ],
         ),
         Cmd(
@@ -233,17 +218,6 @@ args_description = Cmd(
                 Arg(
                     "--no-autorestart",
                     help="disable container auto-restart (recommended for local development)",
-                    action="store_true",
-                ),
-                Arg(
-                    "--auto-bind-mount",
-                    type=str,
-                    default=str(Path.home()),
-                    help="directory to mount into task containers (default: user's home directory)",
-                ),
-                Arg(
-                    "--no-auto-bind-mount",
-                    help="disable mounting user's home directory into task containers",
                     action="store_true",
                 ),
                 Arg(
