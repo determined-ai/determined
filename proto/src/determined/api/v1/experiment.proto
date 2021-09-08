@@ -28,6 +28,10 @@ message GetExperimentResponse {
   determined.experiment.v1.Experiment experiment = 1;
   // The experiment config.
   google.protobuf.Struct config = 2;
+  // Associated job summary.
+  // TODO same with NTbCS if they had singular endpoints.
+  // maybe add to their list endpoints?
+  determined.job.v1.JobSummary job_summary = 3;
 }
 
 // Get a list of experiments.

@@ -41,4 +41,5 @@ message Notebook {
   string resource_pool = 12;
   // The exit status;
   string exit_status = 13;
+  JobSummary job_summary = 14;
 }
