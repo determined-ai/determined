@@ -234,13 +234,13 @@ args_description = Cmd(
                             type=str,
                             default="",
                             help="the address of an existing Filestore in the format of "
-                            "'ip-address:/file-share'; if not provided, a new Filestore "
-                            "instance will be created",
+                            "'ip-address:/file-share'; if not provided and the no-filestore "
+                            "flag is not set, a new Filestore instance will be created",
                         ),
                         Arg(
                             "--no-filestore",
-                            help="whether to create a new Filestore if no filestore "
-                            "address is provided",
+                            help="whether to create a new Filestore if filestore-address "
+                            "parameter is not set",
                             action="store_true",
                         ),
                         Arg(

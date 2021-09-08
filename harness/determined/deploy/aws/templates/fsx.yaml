@@ -170,6 +170,11 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+  MountFSxId:
+    Type: String
+    Description: preexisting FSx ID to mount
+    Default: ""
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -240,6 +245,7 @@ Parameters:
   ### END INJECT CODE
 
 Conditions:
+  CreateFSx: !Equals [!Ref MountFSxId, ""]
   UseTLS: !And
     - !Not [!Equals [!Ref MasterTLSCert, ""]]
     - !Not [!Equals [!Ref MasterTLSKey, ""]]
@@ -443,6 +449,7 @@ Resources:
 
   FSxIngressAgent1:
     Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateFSx
     Properties:
       GroupId: !GetAtt FSxSecurityGroup.GroupId
       IpProtocol: tcp
@@ -452,6 +459,7 @@ Resources:
 
   FSxIngressAgent2:
     Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateFSx
     Properties:
       GroupId: !GetAtt FSxSecurityGroup.GroupId
       IpProtocol: tcp
@@ -461,6 +469,7 @@ Resources:
 
   FSxIngressSelf1:
     Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateFSx
     Properties:
       GroupId: !GetAtt FSxSecurityGroup.GroupId
       IpProtocol: tcp
@@ -470,6 +479,7 @@ Resources:
 
   FSxIngressSelf2:
     Type: AWS::EC2::SecurityGroupIngress
+    Condition: CreateFSx
     Properties:
       GroupId: !GetAtt FSxSecurityGroup.GroupId
       IpProtocol: tcp
@@ -479,6 +489,7 @@ Resources:
 
   FSxSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Condition: CreateFSx
     Properties:
       GroupDescription: Security Group For FSX
       VpcId: !Ref VPC
@@ -547,6 +558,7 @@ Resources:
 
   FSx:
     Type: AWS::FSx::FileSystem
+    Condition: CreateFSx
     Properties:
       FileSystemType: LUSTRE
       StorageCapacity: 1200
@@ -803,7 +815,7 @@ Resources:
                   bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
                   apt install -y lustre-client-modules-4.4.0-1109-aws
                   mkdir /mnt/fsx
-                  mount -t lustre -o noatime,flock ${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName} /mnt/fsx
+                  mount -t lustre -o noatime,flock ${FSxVal} /mnt/fsx
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
@@ -860,6 +872,7 @@ Resources:
                 ${ImageRepoPrefix}/determined-master:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
+            FSxVal: !If [CreateFSx, !Sub "${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName}", !Ref MountFSxId]
 
       Tags:
         - Key: user

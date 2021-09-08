@@ -175,6 +175,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.LOG_GROUP_PREFIX: args.log_group_prefix,
         constants.cloudformation.RETAIN_LOG_GROUP: args.retain_log_group,
         constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
+        constants.cloudformation.MOUNT_EFS_ID: args.efs_id,
     }
 
     if args.master_config_template_path:
@@ -457,6 +458,20 @@ args_description = Cmd(
                     type=Path,
                     default=None,
                     help="path to master yaml template",
+                ),
+                Arg(
+                    "--efs-id",
+                    type=str,
+                    help="preexisting EFS that will be mounted into the task containers; "
+                    "if not provided, a new EFS instance will be created.  Note that you need"
+                    "to ensure that the agents can connect to the EFS instance.",
+                ),
+                Arg(
+                    "--fsx-id",
+                    type=str,
+                    help="preexisting FSx that will be mounted into the task containers; "
+                    "if not provided, a new FSx instance will be created.  Note that you need"
+                    "to ensure that the agents can connect to the FSx instance.",
                 ),
             ],
         ),

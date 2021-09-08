@@ -212,6 +212,22 @@ Spinning up or updating the Cluster
          deploy aws dump-master-config-template``.
       -  Not set
 
+   -  -  ``efs-id``
+
+      -  Preexisting EFS that will be mounted into the task containers; if not provided, a new EFS
+         instance will be created. Note that you need to ensure that the agents can connect to the
+         EFS instance.
+
+      -  Not set
+
+   -  -  ``fsx-id``
+
+      -  Preexisting FSx that will be mounted into the task containers; if not provided, a new FSx
+         instance will be created. Note that you need to ensure that the agents can connect to the
+         FSx instance.
+
+      -  Not set
+
 Tearing Down the Cluster
 ------------------------
 
