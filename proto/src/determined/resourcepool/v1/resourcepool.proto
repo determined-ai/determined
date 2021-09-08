@@ -316,6 +316,12 @@ message ResourcePoolGcpDetail {
   float operation_timeout_period = 18;
 }
 
+// A kubernetes priority class
+message K8PriorityClass {
+  string priority_class = 1;
+  int32 priority_value  = 2;
+}
+
 // Details related to the priority scheduler. This will only be present if the
 // schedulerType=priority
 message ResourcePoolPrioritySchedulerDetail {
@@ -328,4 +334,7 @@ message ResourcePoolPrioritySchedulerDetail {
   // The priority that is assigned to tasks that do not explicitly specify a
   // priority.
   int32 default_priority = 2;
+
+  // List of available priorities for K8 (if applicable).
+  repeated K8PriorityClass k8_priorities = 3;
 }

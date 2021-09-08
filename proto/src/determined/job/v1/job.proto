@@ -17,9 +17,9 @@ enum Type {
 // Job state.
 enum State {
   // Job is queued and waiting to be schedlued.
-  STATE_QUEUED               = 0;
+  STATE_QUEUED = 0;
   // Job is scheduled.
-  STATE_SCHEDULED            = 1;
+  STATE_SCHEDULED = 1;
   // Job is scheduled as a backfill.
   STATE_SCHEDULED_BACKFILLED = 2;
 }
@@ -29,27 +29,28 @@ message JobSummary {
   // Job id.
   string job_id = 1;
   // The scheduling state of the job.
-  State state   = 2;
+  State state = 2;
   // The relative position of the job in its queue.
   // Only applicable if state != queued.
-  // TODO do we use this to represent scheduled jobs as well? what would this value be
   int32 queue_position = 3;
 }
 
-// TODO should this represent a scheduled job or any job
+// TODO should this represent a scheduled job or any job?
+// What would queue position be for scheduled jobs. Would it
+// stay with the job until it's in a terminal state?
 // this could incorporate JobSummary somehow
 message Job {
   // Job summary.
-  JobSummary summary                        = 1;
+  JobSummary summary = 1;
   // Job type.
   Type type                                 = 2;
   google.protobuf.Timestamp submission_time = 3;
   // The username of the user who submitted the job.
-  string user                               = 4;
-  string resource_pool                      = 5;
-  bool is_preemptible                       = 6;
-  int32 priority                            = 7;
-  int32 weight                              = 8;
+  string user          = 4;
+  string resource_pool = 5;
+  bool is_preemptible  = 6;
+  int32 priority       = 7;
+  int32 weight         = 8;
 }
 
 // Describes a message to control jobs in a queue.
@@ -58,24 +59,21 @@ message QueueControl {
   string job_id        = 1;
   int32 queue_position = 2;
   // Name of the target resource_pool to move the job to.
-  // TODO we don't want to allow this to be set at the same time as the other fields..
-  // should we do a one_of type?
+  // TODO we don't want to allow this to be set at the same time as the other
+  // fields.. should we do a one_of type?
   string resource_pool = 3;
-  // TODO same with priority and weight. only one of these two can be specified at a time.
-  // based on the scheduler. maybe a unitless scheduling value?
-  int32 priority       = 4;
-  int32 weight         = 5;
+  // TODO same with priority and weight. only one of these two can be specified
+  // at a time. based on the scheduler. maybe a unitless scheduling value?
+  int32 priority = 4;
+  int32 weight   = 5;
 }
 
 // Statistics for (part of) a queue.
 message QueueStats {
   // Number of queued jobs in the queue.
-  int32 queued_count    = 1;
+  int32 queued_count = 1;
   // Number of scheduled jobs in the queue.
   int32 scheduled_count = 2;
-  // TODO is this one as useful? what can one answer
-  // from this
+  // Number of preemptible jobs in the queue.
   int32 preemptible_count = 3;
 }
-
-// TODO resource_pools/:id for k8 priorityclass list

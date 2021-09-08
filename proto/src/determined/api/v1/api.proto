@@ -664,7 +664,6 @@ service Determined {
 
   /* Jobs */
 
-  // TODO jobs that are actively waiting to get scheduled.
   // Get a list of jobs in queue.
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
