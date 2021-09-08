@@ -177,7 +177,7 @@ const TrialDetailsComp: React.FC = () => {
       title={`Trial ${trialId}`}>
       <TrialLogPreview
         hidePreview={tabKey === TabType.Logs}
-        trialId={trialId}
+        trial={trial}
         onViewLogs={handleViewLogs}>
         <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
           <TabPane key={TabType.Overview} tab="Overview">

@@ -6,7 +6,7 @@ import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
 import { consumeStream } from 'services/utils';
-import { LogLevel } from 'types';
+import { LogLevel, RunState, TrialDetails } from 'types';
 import { formatDatetime } from 'utils/date';
 
 import LogViewerEntry, { DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH } from './LogViewerEntry';
@@ -15,16 +15,17 @@ import css from './TrialLogPreview.module.scss';
 interface Props {
   hidePreview?: boolean;
   onViewLogs?: () => void;
-  trialId?: number;
+  trial?: TrialDetails;
 }
 
 const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
   children,
   hidePreview = false,
   onViewLogs,
-  trialId,
+  trial,
 }: PropsWithChildren<Props>) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const nonEmptyLogFound = useRef(false);
   const [ logEntry, setLogEntry ] = useState<LogEntry>();
 
   const classes = [ css.base ];
@@ -61,11 +62,15 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
     );
   }, []);
 
-  const fetchLatestTrialLog = useCallback((trialId: number, canceler: AbortController) => {
+  const fetchLatestTrialLog = useCallback((
+    trialId: number,
+    trialState: RunState,
+    canceler: AbortController,
+  ) => {
     consumeStream(
       detApi.StreamingExperiments.determinedTrialLogs(
         trialId,
-        1,
+        100,
         false,
         undefined,
         undefined,
@@ -80,7 +85,16 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
       ),
       event => {
         const entry = jsonToTrialLog(event);
-        fetchTrialLogs(trialId, entry.time, canceler);
+
+        /*
+         * Hoping within the 100 log lines we are able to find a log
+         * entry that is not empty, so there is something we can show
+         * as a baseline.
+         */
+        if (!nonEmptyLogFound.current && entry.message) {
+          nonEmptyLogFound.current = true;
+          fetchTrialLogs(trialId, entry.time, canceler);
+        }
       },
     );
   }, [ fetchTrialLogs ]);
@@ -90,12 +104,13 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
   }, [ onViewLogs ]);
 
   useEffect(() => {
-    if (!trialId) return;
+    if (!trial?.id && trial?.state !== RunState.Completed) return;
 
     const canceler = new AbortController();
-    fetchLatestTrialLog(trialId, canceler);
+    fetchLatestTrialLog(trial.id, trial.state, canceler);
+
     return () => canceler.abort();
-  }, [ fetchLatestTrialLog, trialId ]);
+  }, [ fetchLatestTrialLog, trial?.id, trial?.state ]);
 
   return (
     <div className={classes.join(' ')}>
@@ -104,7 +119,12 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
         <div className={css.preview} onClick={handleClick}>
           <div className={css.container} ref={containerRef}>
             {logEntry && (
-              <LogViewerEntry noWrap timeStyle={{ width: dateTimeWidth }} {...logEntry} />
+              <LogViewerEntry
+                noWrap
+                style={{ position: 'relative' }}
+                timeStyle={{ width: dateTimeWidth }}
+                {...logEntry}
+              />
             )}
           </div>
         </div>

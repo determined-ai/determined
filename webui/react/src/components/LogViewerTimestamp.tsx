@@ -39,7 +39,7 @@ interface Props {
   onFetchLogAfter: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogFilter: (canceler: AbortController) => FetchArgs;
-  onFetchLogTail: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
+  onFetchLogTail?: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
 }
 
 export const TAIL_SIZE = 100;
@@ -329,7 +329,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Fetch Log tail (api follow).
    */
   useEffect(() => {
-    if (direction !== Direction.BottomToTop) return;
+    if (direction !== Direction.BottomToTop || !onFetchLogTail) return;
 
     const canceler = new AbortController();
 
