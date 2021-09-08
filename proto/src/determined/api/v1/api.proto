@@ -695,8 +695,6 @@ service Determined {
     };
   }
 
-
-
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
     option (google.api.http) = {

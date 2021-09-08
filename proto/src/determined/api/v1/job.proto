@@ -29,7 +29,7 @@ message GetQueueStatsRequest {
 message GetQueueStatsResponse {
   // List of queue stats per resource pool.
   repeated message {
-    QueueStats stats = 1;
+    QueueStats stats     = 1;
     string resource_pool = 2;
   }
 }
@@ -40,6 +40,4 @@ message UpdateQueueRequest {
   repeated QueueControl updates = 1;
 }
 // Response to UpdateQueueRequest.
-message UpdateQueueResponse {
-}
-
+message UpdateQueueResponse {}

@@ -7,27 +7,28 @@ import "google/protobuf/timestamp.proto";
 
 // Job type.
 enum Type {
-  TYPE_EXPERIMENT = 1;
-  TYPE_NOTEBOOK = 2;
+  TYPE_EXPERIMENT  = 1;
+  TYPE_NOTEBOOK    = 2;
   TYPE_TENSORBOARD = 3;
-  TYPE_SHELL = 4;
-  TYPE_COMMAND = 5;
+  TYPE_SHELL       = 4;
+  TYPE_COMMAND     = 5;
 }
 
 // Job state.
 enum State {
-  STATE_QUEUED = 1;
-  STATE_SCHEDULED = 2;
+  STATE_QUEUED               = 1;
+  STATE_SCHEDULED            = 2;
   STATE_SCHEDULED_BACKFILLED = 3;
 }
 
 // Job summary.
 message JobSummary {
   string job_id = 1;
-  State state = 2;
+  State state   = 2;
   // only applicable if state != queued.
-  // Position of the job in its queue. TODO -1 represents a scheduled job? or we just
-  // don't present scheduled jobs. unless we're reusing the message elsewhere.
+  // Position of the job in its queue. TODO -1 represents a scheduled job? or we
+  // just don't present scheduled jobs. unless we're reusing the message
+  // elsewhere.
   // TODO is this kept once the job is scheduled?
   int32 queue_position = 3;
 }
@@ -35,32 +36,32 @@ message JobSummary {
 // TODO should this represent a scheduled job or any job
 // this could incorporate JobSummary somehow
 message Job {
-  JobSummary summary = 1;
-  Type type = 2;
-  google.protobuf.Timestamp submission_time = 3
-  string user = 4;
-  string resource-pool = 5;
-  bool is-preemptible = 6
-  int32 priority = 7;
-  int32 weight = 8;
+  JobSummary summary                        = 1;
+  Type type                                 = 2;
+  google.protobuf.Timestamp submission_time = 3;
+  string user                               = 4;
+  string resource_pool                      = 5;
+  bool is_preemptible                       = 6;
+  int32 priority                            = 7;
+  int32 weight                              = 8;
 }
 
 // Describes a message to control jobs in a queue.
 message QueueControl {
-  string job_id
-  int32 queue_position
-  int32 priority
-  int32 weight
-  string resource_pool
+  string job_id        = 1;
+  int32 queue_position = 2;
+  string resource_pool = 3;
+  int32 priority       = 4;
+  int32 weight         = 5;
 }
 
 // Statistics for (part of) a queue.
 message QueueStats {
-  int32 queued_count
-  int32 scheduled_count
+  int32 queued_count    = 1;
+  int32 scheduled_count = 2;
   // TODO is this one as useful? what can one answer
   // from this
-  int32 preemptible_count
+  int32 preemptible_count = 3;
 }
 
 // TODO resource_pools/:id for k8 priorityclass list
