@@ -94,10 +94,10 @@ message QueueControl {
   int32 weight
   string resource_pool
 }
-message PostQueueRequest {
+message PostQueueControlRequest {
   repeated QueueControl updates
 }
-message PatchQueueResponse {
+message PostQueueControlResponse {
   // list of targetd jobs? other jobs would be affected by this change too. maybe just an ok status
   repeated QueuedJob
 }

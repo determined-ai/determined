@@ -661,6 +661,41 @@ service Determined {
     };
   }
 
+  /* Jobs */
+
+  // Get a list of jobs in queue.
+  // TODO jobs that are actively waiting to get scheduled.
+  rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/jobs"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Jobs"
+    };
+  }
+
+  // Control the job queue.
+  rpc PostQueueControl(PostQueueControlRequest) returns (PostQueueControlResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/jobs/queue-ctl"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Jobs"
+    };
+  }
+
+  // Get job queue stats for a resource pool.
+  rpc GetJobStats(GetJobStatsRequest) returns (GetJobStatssResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/jobs/stats/{resource_pool}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Jobs"
+    };
+  }
+
+
+
   // Get a list of templates.
   rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
     option (google.api.http) = {
