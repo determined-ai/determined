@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -50,6 +51,11 @@ func (w WebSocketConnected) Accept(
 	a, _ := ctx.ActorOf("websocket-"+uuid.New().String(), WrapSocket(conn, msgType, usePing))
 	ctx.Respond(a)
 	return a, true
+}
+
+// IsReconnect checks if agent is reconnecting after a network failure.
+func (w *WebSocketConnected) IsReconnect() (bool, error) {
+	return strconv.ParseBool(w.Ctx.QueryParam("reconnect"))
 }
 
 // WriteMessage is a message to a websocketActor asking it to write out the

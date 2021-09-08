@@ -45,6 +45,11 @@ type (
 		ContainerStopped *TaskContainerStopped
 	}
 
+	// GetTaskContainerState requests cproto.Container state.
+	GetTaskContainerState struct {
+		ContainerID cproto.ID
+	}
+
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.
 	SetGroupMaxSlots struct {
 		MaxSlots     *int

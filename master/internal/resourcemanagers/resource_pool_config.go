@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/provisioner"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -13,6 +14,8 @@ func defaultRPConfig() ResourcePoolConfig {
 	return ResourcePoolConfig{
 		MaxAuxContainersPerAgent: 100,
 		MaxCPUContainersPerAgent: -1,
+		AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
+		AgentReattachEnabled:     false,
 	}
 }
 
@@ -24,6 +27,13 @@ type ResourcePoolConfig struct {
 	Scheduler                *SchedulerConfig                   `json:"scheduler,omitempty"`
 	MaxAuxContainersPerAgent int                                `json:"max_aux_containers_per_agent"`
 	TaskContainerDefaults    *model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	// AgentReattachEnabled defines if master & agent try to recover
+	// running containers after a clean restart.
+	AgentReattachEnabled bool `json:"agent_reattach_enabled"`
+	// AgentReconnectWait define the time master will wait for agent
+	// before abandoning it.
+	AgentReconnectWait model.Duration `json:"agent_reconnect_wait"`
+
 	// Deprecated: Use MaxAuxContainersPerAgent instead.
 	MaxCPUContainersPerAgent int `json:"max_cpu_containers_per_agent,omitempty"`
 }

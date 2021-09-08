@@ -167,6 +167,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		}
 	case sproto.TaskContainerStateChanged:
 		a.TaskContainerStateChanged(ctx, msg)
+	case sproto.GetTaskContainerState:
+		if v, ok := a.reservations[msg.ContainerID]; ok {
+			ctx.Respond(*v.container)
+		} else {
+			ctx.Respond(errors.New(fmt.Sprintf("unknown container %s", msg.ContainerID)))
+		}
 	case sproto.ReleaseResources:
 		a.Terminate(ctx)
 	case actor.PostStop:

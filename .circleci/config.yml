@@ -848,6 +848,11 @@ commands:
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+      - run:
+          command: |
+            if ! [ -x "$(command -v socat)" ]; then
+              apt update && apt install -y socat
+            fi
 
   start-devcluster:
     parameters:
