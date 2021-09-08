@@ -676,7 +676,8 @@ service Determined {
   }
 
   // Get job queue stats for a resource pool.
-  rpc GetJobQueueStats(GetQueueStatsRequest) returns (GetQueueStatsResponse) {
+  rpc GetJobQueueStats(GetJobQueueStatsRequest)
+      returns (GetJobQueueStatsResponse) {
     option (google.api.http) = {
       get: "/api/v1/jobs/stats/{resource_pools}"
     };
@@ -686,7 +687,7 @@ service Determined {
   }
 
   // Control the job queue.
-  rpc UpdateJobQueue(UpdateQueueRequest) returns (UpdateQueueResponse) {
+  rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
       post: "/api/v1/jobs/queue-ctl"
     };

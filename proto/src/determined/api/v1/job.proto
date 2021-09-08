@@ -22,12 +22,12 @@ message GetJobsResponse {
 }
 
 // Request to update the job queue.
-message UpdateQueueRequest {
+message UpdateJobQueueRequest {
   // List of job queue control requests.
   repeated determined.job.v1.QueueControl updates = 1;
 }
-// Response to UpdateQueueRequest.
-message UpdateQueueResponse {}
+// Response to UpdateJobQueueRequest.
+message UpdateJobQueueResponse {}
 
 // TODO the following feels like it could sit under resource pools
 
@@ -39,12 +39,12 @@ message RPQueueStat {
   string resource_pool = 2;
 }
 // Get job stats.
-message GetQueueStatsRequest {
+message GetJobQueueStatsRequest {
   // Filter the results based on a set of resource pools.
   repeated string resource_pools = 1;
 }
-// Response to GetQueueStatsRequest.
-message GetQueueStatsResponse {
+// Response to GetJobQueueStatsRequest.
+message GetJobQueueStatsResponse {
   // List of queue stats per resource pool.
   repeated RPQueueStat results = 1;
 }
