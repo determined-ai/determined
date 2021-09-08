@@ -7,18 +7,18 @@ import "google/protobuf/timestamp.proto";
 
 // Job type.
 enum Type {
-  TYPE_EXPERIMENT  = 1;
-  TYPE_NOTEBOOK    = 2;
-  TYPE_TENSORBOARD = 3;
-  TYPE_SHELL       = 4;
-  TYPE_COMMAND     = 5;
+  TYPE_EXPERIMENT  = 0;
+  TYPE_NOTEBOOK    = 1;
+  TYPE_TENSORBOARD = 2;
+  TYPE_SHELL       = 3;
+  TYPE_COMMAND     = 4;
 }
 
 // Job state.
 enum State {
-  STATE_QUEUED               = 1;
-  STATE_SCHEDULED            = 2;
-  STATE_SCHEDULED_BACKFILLED = 3;
+  STATE_QUEUED               = 0;
+  STATE_SCHEDULED            = 1;
+  STATE_SCHEDULED_BACKFILLED = 2;
 }
 
 // Job summary.

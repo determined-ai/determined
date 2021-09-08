@@ -678,7 +678,7 @@ service Determined {
   // Get job queue stats for a resource pool.
   rpc GetJobQueueStats(GetQueueStatsRequest) returns (GetQueueStatsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/jobs/stats/{resource_pool}"
+      get: "/api/v1/jobs/stats/{resource_pools}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"

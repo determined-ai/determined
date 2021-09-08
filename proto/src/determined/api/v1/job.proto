@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/job/v1/job.proto";
 import "determined/api/v1/pagination.proto";
@@ -20,6 +21,23 @@ message GetJobsResponse {
   repeated determined.job.v1.Job jobs = 2;
 }
 
+// Request to update the job queue.
+message UpdateQueueRequest {
+  // List of job queue control requests.
+  repeated determined.job.v1.QueueControl updates = 1;
+}
+// Response to UpdateQueueRequest.
+message UpdateQueueResponse {}
+
+// TODO the following feels like it could sit under resource pools
+
+// Job stats for a resource pool
+message RPQueueStat {
+  // Job queue stats.
+  determined.job.v1.QueueStats stats = 1;
+  // Resource pool.
+  string resource_pool = 2;
+}
 // Get job stats.
 message GetQueueStatsRequest {
   // Filter the results based on a set of resource pools.
@@ -28,16 +46,5 @@ message GetQueueStatsRequest {
 // Response to GetQueueStatsRequest.
 message GetQueueStatsResponse {
   // List of queue stats per resource pool.
-  repeated message {
-    QueueStats stats     = 1;
-    string resource_pool = 2;
-  }
+  repeated RPQueueStat results = 1;
 }
-
-// Request to update the job queue.
-message UpdateQueueRequest {
-  // List of job queue control requests.
-  repeated QueueControl updates = 1;
-}
-// Response to UpdateQueueRequest.
-message UpdateQueueResponse {}
