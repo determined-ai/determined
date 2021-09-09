@@ -1092,7 +1092,7 @@ jobs:
   test-e2e-webui:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: large
+    resource_class: medium+
     steps:
       - checkout
       - attach_workspace:
