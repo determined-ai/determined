@@ -28,12 +28,19 @@
     h3:first-child {
       margin-right: 5px;
     }
+    & > *:first-child {
+      background-color: var(--theme-colors-monochrome-17);
+      left: 16px;
+      position: sticky
+    }
 
     @extend %tableRow;
   }
   .headerRow {
     background-color: var(--theme-colors-monochrome-16);
     border-bottom: 1px solid var(--theme-colors-monochrome-14);
+    left: 0;
+    position: sticky;
 
     @extend %tableRow;
   }
