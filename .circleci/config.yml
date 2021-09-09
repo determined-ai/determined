@@ -140,7 +140,9 @@ commands:
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - run: make -C tools start-db
+      - start-devcluster:
+          target-stage: elastic
+          devcluster-config: elastic.devcluster.yaml
 
   go-get-deps:
     steps:
@@ -683,13 +685,6 @@ commands:
           make -C webui/tests get-deps
       - run: docker pull determinedai/gauge-taiko-ts
 
-  setup-local-cluster:
-    parameters:
-      det-version:
-        type: string
-    steps:
-      - run: det deploy local cluster-up --no-gpu --delete-db --det-version <<parameters.det-version>>
-
   dump-local-cluster-logs:
     steps:
       - run:
@@ -705,9 +700,9 @@ commands:
           mkdir -p webui/tests/reports/videos
           docker run \
             --name e2e_gauge \
-            --network=determined_default \
             --mount type=bind,source=$(pwd)/webui,target=/webui \
             -w /webui/tests \
+            --add-host=determined-master:host-gateway \
             --env DET_MASTER=determined-master:8080 \
             determinedai/gauge-taiko-ts
           rm -f webui/tests/reports/videos/*.jpeg
@@ -845,10 +840,14 @@ commands:
     parameters:
       devcluster-config:
         type: string
+        default: double.devcluster.yaml
+      target-stage:
+        type: string
+        default: agent1
     steps:
-      - run: pip install git+https://github.com/determined-ai/devcluster.git@dfd1e46a7daa876ff121b3dd16e63391a3e3d42a#egg=devcluster
+      - run: pip install git+https://github.com/determined-ai/devcluster.git@1b9749e26271bbfae8a672f1ffe4ba82884bb9f7#egg=devcluster
       - run:
-          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>>
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
           background: true
 
 jobs:
@@ -1080,7 +1079,10 @@ jobs:
       - run: sudo apt-get install -y $(pwd)/agent/dist/determined-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
-      - run: make -C tools start-db
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
+      - start-devcluster:
+          target-stage: db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
@@ -1095,16 +1097,17 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
 
       - install-webui-test-deps
       - setup-python-venv:
           determined: true
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
+
+      - run: make -C master get-deps
+      - start-devcluster
+      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
+
       - run-e2e-webui-tests
       - dump-local-cluster-logs
       - store_test_results:
@@ -1233,6 +1236,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
       - setup-go-intg-deps
       - run: make -C master test-intg
 
@@ -1245,6 +1250,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
       - setup-go-intg-deps
       - run: make -C agent test-intg
 
@@ -1382,7 +1389,10 @@ jobs:
         type: integer
       devcluster-config:
         type: string
-        default: single.devcluster.yaml
+        default: double.devcluster.yaml
+      target-stage:
+        type: string
+        default: agent1
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1403,6 +1413,7 @@ jobs:
 
       - start-devcluster:
           devcluster-config: <<parameters.devcluster-config>>
+          target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
           tf1: <<parameters.tf1>>
@@ -1829,7 +1840,6 @@ workflows:
           tf1: true
           tf2: true
           mark: e2e_cpu
-          devcluster-config: single.devcluster.yaml
 
       - test-e2e:
           name: test-e2e-cpu-double
@@ -1839,11 +1849,12 @@ workflows:
           tf1: false
           tf2: true
           mark: e2e_cpu_2a
-          devcluster-config: double.devcluster.yaml
+          target-stage: agent2
 
       - test-e2e-webui:
           requires:
-            - package-and-push-system-local
+            - build-react
+            - build-go
 
       - deploy:
           enable-cors: true

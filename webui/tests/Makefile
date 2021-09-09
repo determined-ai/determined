@@ -28,4 +28,6 @@ fmt:
 
 .PHONY: dev-tests
 dev-tests:
+	-docker kill determined_db_webui
+	-docker container rm determined_db_webui
 	python ./bin/e2e-tests.py dev-tests
