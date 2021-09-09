@@ -193,7 +193,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     <div className={css.base}>
       {isLoaded ? (
         <>
-          <div className={css.headerRow}>
+          <div className={css.idRow}>
             <div />
             {trials.map(trial => (
               <Tag
@@ -205,80 +205,78 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               </Tag>
             ))}
           </div>
-          <div className={css.tableBody}>
-            <div className={css.row}>
-              <h3>State</h3>
-              {trials.map(trial => (
-                <div className={css.centerVertically} key={trial}>
-                  <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
-                </div>
-              ))}
-            </div>
-            <div className={css.row}>
-              <h3>Training Time</h3>
-              {trials.map(trial => (
-                <div key={trial}>{shortEnglishHumannizer(durations[trial]?.train)}</div>
-              ))}
-            </div>
-            <div className={css.row}>
-              <h3>Batches Processed</h3>
-              {trials.map(trial =>
-                <div key={trial}>{trialsDetails[trial].totalBatchesProcessed}</div>)}
-            </div>
-            <div className={css.row}>
-              <h3>Total Checkpoint Size</h3>
-              {trials.map(trial => <div key={trial}>{totalCheckpointsSizes[trial]}</div>)}
-            </div>
-            <div className={css.headerRow}>
-              <h2>Metrics</h2>
-              <MetricSelectFilter
-                defaultMetricNames={metricNames}
-                label=""
-                metricNames={metricNames}
-                multiple
-                value={selectedMetrics}
-                onChange={onMetricSelect}
-              />
-            </div>
-            {metricNames.filter(metric => selectedMetrics.map(m => m.name)
-              .includes(metric.name)).map(metric => (
-              <div className={css.row} key={metric.name}>
-                <h3><MetricBadgeTag metric={metric} /></h3>
-                {trials.map(trial => metrics[trial][metric.name] ? (
-                  <div><HumanReadableNumber key={trial} num={metrics[trial][metric.name]} /></div>
-                ) : <div />)}
-              </div>
-            ))}
-            <div className={css.headerRow}><h2>Hyperparameters</h2>
-              <SelectFilter
-                disableTags
-                dropdownMatchSelectWidth={200}
-                label=""
-                mode="multiple"
-                showArrow
-                value={selectedHyperparameters}
-                onChange={onHyperparameterSelect}>
-                {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
-              </SelectFilter>
-            </div>
-            {selectedHyperparameters.map(hp => (
-              <div className={css.row} key={hp}>
-                <h3>{hp}</h3>
-                {trials.map(trial => (
-                  !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ? (
-                    <div>
-                      <HumanReadableNumber
-                        key={trial}
-                        num={parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))}
-                      />
-                    </div>
-                  ) : (
-                    <div>{String(trialsDetails[trial].hyperparameters[hp])}</div>
-                  )
-                ))}
+          <div className={css.row}>
+            <h3>State</h3>
+            {trials.map(trial => (
+              <div className={css.centerVertically} key={trial}>
+                <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
               </div>
             ))}
           </div>
+          <div className={css.row}>
+            <h3>Training Time</h3>
+            {trials.map(trial => (
+              <div key={trial}>{shortEnglishHumannizer(durations[trial]?.train)}</div>
+            ))}
+          </div>
+          <div className={css.row}>
+            <h3>Batches Processed</h3>
+            {trials.map(trial =>
+              <div key={trial}>{trialsDetails[trial].totalBatchesProcessed}</div>)}
+          </div>
+          <div className={css.row}>
+            <h3>Total Checkpoint Size</h3>
+            {trials.map(trial => <div key={trial}>{totalCheckpointsSizes[trial]}</div>)}
+          </div>
+          <div className={css.headerRow}>
+            <h2>Metrics</h2>
+            <MetricSelectFilter
+              defaultMetricNames={metricNames}
+              label=""
+              metricNames={metricNames}
+              multiple
+              value={selectedMetrics}
+              onChange={onMetricSelect}
+            />
+          </div>
+          {metricNames.filter(metric => selectedMetrics.map(m => m.name)
+            .includes(metric.name)).map(metric => (
+            <div className={css.row} key={metric.name}>
+              <h3><MetricBadgeTag metric={metric} /></h3>
+              {trials.map(trial => metrics[trial][metric.name] ? (
+                <div><HumanReadableFloat key={trial} num={metrics[trial][metric.name]} /></div>
+              ) : <div />)}
+            </div>
+          ))}
+          <div className={css.headerRow}><h2>Hyperparameters</h2>
+            <SelectFilter
+              disableTags
+              dropdownMatchSelectWidth={200}
+              label=""
+              mode="multiple"
+              showArrow
+              value={selectedHyperparameters}
+              onChange={onHyperparameterSelect}>
+              {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
+            </SelectFilter>
+          </div>
+          {selectedHyperparameters.map(hp => (
+            <div className={css.row} key={hp}>
+              <h3>{hp}</h3>
+              {trials.map(trial => (
+                !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ? (
+                  <div>
+                    <HumanReadableFloat
+                      key={trial}
+                      num={parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))}
+                    />
+                  </div>
+                ) : (
+                  <div>{String(trialsDetails[trial].hyperparameters[hp])}</div>
+                )
+              ))}
+            </div>
+          ))}
         </>
       ) : <Spinner spinning={!isLoaded} />}
     </div>
