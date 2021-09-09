@@ -1,11 +1,12 @@
 import { Alert } from 'antd';
 import dayjs from 'dayjs';
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import UPlotChart, { Options } from 'components/UPlotChart';
+import useScroll from 'hooks/useScroll';
 import { useProfilesFilterContext } from 'pages/TrialDetails/Profiles/ProfilesFiltersProvider';
 import SystemMetricFilter from 'pages/TrialDetails/Profiles/SystemMetricFilter';
 import { convertMetricsToUplotData, getUnitForMetricName } from 'pages/TrialDetails/Profiles/utils';
@@ -65,8 +66,11 @@ const seriesMapping = (name: string, index: number) => ({
 const fillerMapping = () => ({ class: css.hiddenLegend, scale: 'y', show: false });
 
 const ProfilesEnabled: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const chartSyncKey = useRef(uPlot.sync('x'));
-  const { filters, metrics } = useProfilesFilterContext();
+  const { metrics, settings } = useProfilesFilterContext();
+  const scroll = useScroll(containerRef);
+  const scrollTop = useRef(0);
 
   const isLoading = (
     metrics[MetricType.System].isLoading &&
@@ -99,7 +103,7 @@ const ProfilesEnabled: React.FC = () => {
     // Convert metrics into uPlot-friendly data and define chart specific configs.
     const config = {
       [MetricType.System]: {
-        axes: [ timeAxis, metricAxis(filters.name) ],
+        axes: [ timeAxis, metricAxis(settings.name) ],
         data: convertMetricsToUplotData(
           metrics[MetricType.System].dataByTime,
           metrics[MetricType.System].names,
@@ -132,12 +136,12 @@ const ProfilesEnabled: React.FC = () => {
         if (seriesKey === key) {
           acc.push(...seriesData);
         } else {
-          const fillerData = new Array(times.length).fill(null) ?? [];
-          const filler = new Array(seriesData.length).fill(fillerData) ?? [];
+          const fillerData = new Array(times.length).fill(null) || [];
+          const filler = new Array(seriesData.length).fill(fillerData) || [];
           acc.push(...filler);
         }
         return acc;
-      }, [ times ?? [], batches ?? [] ]);
+      }, [ times || [], batches || [] ]);
 
       // Pad the series config with blank series where applicable.
       const series = metricKeys.reduce((acc, seriesKey) => {
@@ -158,7 +162,18 @@ const ProfilesEnabled: React.FC = () => {
     }, {} as Record<MetricType, { data: AlignedData, options: Options }>);
 
     return uPlotData;
-  }, [ filters.name, metrics ]);
+  }, [ metrics, settings.name ]);
+
+  /*
+   * Preserve and restore scroll position upon re-render.
+   */
+  useEffect(() => {
+    if (containerRef.current && scroll.scrollTop === 0 && scrollTop.current !== 0) {
+      containerRef.current.scrollTop = scrollTop.current;
+    } else {
+      scrollTop.current = scroll.scrollTop;
+    }
+  }, [ scroll ]);
 
   if (isLoading) {
     return <Spinner spinning tip="Fetching system metrics..." />;
@@ -167,7 +182,7 @@ const ProfilesEnabled: React.FC = () => {
   }
 
   return (
-    <>
+    <div className={css.base} ref={containerRef}>
       <Section
         bodyBorder
         bodyNoPadding
@@ -210,7 +225,7 @@ const ProfilesEnabled: React.FC = () => {
           style={CHART_STYLE}
         />
       </Section>
-    </>
+    </div>
   );
 };
 

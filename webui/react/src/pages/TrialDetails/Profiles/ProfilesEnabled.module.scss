@@ -1,3 +1,8 @@
+.base {
+  height: 100%;
+  overflow: auto;
+}
+
 /*
  * disabledLegend is used to disable any user interactions
  * on the uPlot chart for the series. We want to keep the series in the
