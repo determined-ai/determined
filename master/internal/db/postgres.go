@@ -1309,8 +1309,8 @@ WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
 				strings.Join(toUpdate, ", "), id)
 		}
 
-		if model.TerminalStates[newState] {
-			return completeTask(tx, trial.TaskID, trial.EndTime)
+		if model.TerminalStates[newState] && trial.EndTime != nil {
+			return completeTask(tx, trial.TaskID, *trial.EndTime)
 		}
 
 		return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -41,6 +42,8 @@ const (
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
 )
+
+var tensorboardReadinessPattern = regexp.MustCompile("TensorBoard contains metrics")
 
 var tensorboardsAddr = actor.Addr("tensorboard")
 
@@ -119,6 +122,8 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	spec.WatchProxyIdleTimeout = true
+
+	spec.LogReadinessCheck = tensorboardReadinessPattern
 
 	// Postprocess the spec.
 	if spec.Config.IdleTimeout == nil {

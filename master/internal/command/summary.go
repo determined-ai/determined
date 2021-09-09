@@ -3,6 +3,10 @@ package command
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -40,7 +44,24 @@ type (
 )
 
 // newSummary returns a new summary of the command.
-func newSummary(c *command) summary {
+func newSummary(c *command, ctx *actor.Context) summary {
+	var exitStatus *string
+	if c.exitStatus != nil {
+		exitStatus = ptrs.StringPtr(c.exitStatus.Err.Error())
+	}
+
+	resp, _ := ctx.Ask(c.allocation, task.AllocationState{}).GetOrElseTimeout(
+		task.AllocationState{},
+		5*time.Second,
+	)
+	state := resp.(task.AllocationState)
+
+	var addresses []container.Address
+	for _, cAddrs := range state.Addresses {
+		addresses = append(addresses, cAddrs...)
+		break
+	}
+
 	return summary{
 		RegisteredTime: c.registeredTime,
 		Owner: commandOwner{
@@ -49,12 +70,12 @@ func newSummary(c *command) summary {
 		},
 		ID:             c.taskID,
 		Config:         c.Config,
-		State:          c.State().String(),
+		State:          state.State.String(),
 		ServiceAddress: c.serviceAddress,
-		Addresses:      c.addresses,
-		ExitStatus:     c.exitStatus,
+		Addresses:      addresses,
+		ExitStatus:     exitStatus,
 		Misc:           c.Metadata,
-		IsReady:        c.readinessMessageSent,
+		IsReady:        state.Ready,
 		AgentUserGroup: c.Base.AgentUserGroup,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 	}

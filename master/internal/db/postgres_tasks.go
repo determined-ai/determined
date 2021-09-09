@@ -1,9 +1,11 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
@@ -16,9 +18,21 @@ func (db *PgDB) initAllocationSessions() error {
 	return err
 }
 
-// addTask persists the existence of a task from a tx.
-func addTask(tx *sqlx.Tx, t *model.Task) error {
-	if _, err := tx.NamedExec(`
+// queryHandler is an interface for a query handler to use tx/db for same queries.
+type queryHandler interface {
+	sqlx.Queryer
+	sqlx.Execer
+	// Unfortunately database/sql doesn't expose an interface for this like sqlx.
+	NamedExec(query string, arg interface{}) (sql.Result, error)
+}
+
+// AddTask persists the existence of a task.
+func (db *PgDB) AddTask(t *model.Task) error {
+	return addTask(db.sql, t)
+}
+
+func addTask(q queryHandler, t *model.Task) error {
+	if _, err := q.NamedExec(`
 INSERT INTO tasks (task_id, task_type, start_time)
 VALUES (:task_id, :task_type, :start_time)
 `, t); err != nil {
@@ -27,8 +41,13 @@ VALUES (:task_id, :task_type, :start_time)
 	return nil
 }
 
-func completeTask(tx *sqlx.Tx, tID model.TaskID, endTime *time.Time) error {
-	if _, err := tx.Exec(`
+// CompleteTask persists the completion of a task.
+func (db *PgDB) CompleteTask(tID model.TaskID, endTime time.Time) error {
+	return completeTask(db.sql, tID, endTime)
+}
+
+func completeTask(ex sqlx.Execer, tID model.TaskID, endTime time.Time) error {
+	if _, err := ex.Exec(`
 UPDATE tasks
 SET end_time = $2
 WHERE task_id = $1

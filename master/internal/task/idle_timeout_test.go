@@ -18,7 +18,7 @@ func (m *MockIdleTimeoutWatchee) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		m.idleTimeoutWatcher.PreStart(ctx)
 	case IdleTimeoutWatcherTick:
-		return m.idleTimeoutWatcher.ReceiveMsg(ctx)
+		return m.idleTimeoutWatcher.Receive(ctx)
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -33,10 +33,9 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 
 	m := MockIdleTimeoutWatchee{
 		idleTimeoutWatcher: IdleTimeoutWatcher{
-			Timeout: tickInterval,
-			GetLastActivity: func(ctx *actor.Context) *time.Time {
-				return &lastActivity
-			},
+			Timeout:              tickInterval,
+			UseRunnerState:       true,
+			lastExplicitActivity: &lastActivity,
 			Action: func(ctx *actor.Context) {
 				actionDone = true
 			},

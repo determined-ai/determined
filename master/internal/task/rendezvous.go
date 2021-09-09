@@ -5,11 +5,12 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	apiutils "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -62,21 +63,26 @@ type (
 	Rendezvous struct {
 		allocationID      model.AllocationID
 		watchers          map[cproto.ID]chan<- RendezvousInfoOrError
-		ranks             map[cproto.ID]int
-		addresses         map[cproto.ID][]cproto.Address
+		reservations      reservations
 		lastWatchTime     time.Time
 		allReadySucceeded bool
 	}
 )
 
 // NewRendezvous returns a new rendezvous component.
-func NewRendezvous(allocationID model.AllocationID, ranks map[cproto.ID]int) *Rendezvous {
+func NewRendezvous(allocationID model.AllocationID, rs reservations) *Rendezvous {
 	return &Rendezvous{
 		allocationID: allocationID,
-		ranks:        ranks,
-		addresses:    map[cproto.ID][]cproto.Address{},
+		reservations: rs,
 		watchers:     map[cproto.ID]chan<- RendezvousInfoOrError{},
 	}
+}
+
+// PreStart just steps up the rendezvous watcher.
+func (r *Rendezvous) PreStart(ctx *actor.Context) {
+	actors.NotifyAfter(ctx, RendezvousTimeoutDuration, RendezvousTimeout{
+		AllocationID: r.allocationID,
+	})
 }
 
 // Receive implements actor.Receive.
@@ -104,21 +110,13 @@ func (r *Rendezvous) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func ranksFromReservations(allocations []sproto.Reservation) map[cproto.ID]int {
-	ranks := map[cproto.ID]int{}
-	for rank, a := range allocations {
-		ranks[a.Summary().ID] = rank
-	}
-	return ranks
-}
-
 func (r *Rendezvous) watch(
 	allocationID model.AllocationID, id cproto.ID,
 ) (RendezvousWatcher, error) {
 	if r.allocationID != allocationID {
 		err := ErrStaleAllocation{Received: allocationID, Actual: r.allocationID}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
-	} else if _, ok := r.ranks[id]; !ok {
+	} else if _, ok := r.reservations[id]; !ok {
 		err := ErrStaleContainer{ID: id}
 		return RendezvousWatcher{}, apiutils.AsValidationError(err.Error())
 	} else if _, ok := r.watchers[id]; ok {
@@ -144,19 +142,11 @@ func (r *Rendezvous) unwatch(id cproto.ID) {
 	delete(r.watchers, id)
 }
 
-func (r *Rendezvous) containerStarted(id cproto.ID, addresses []cproto.Address) {
-	r.addresses[id] = addresses
+func (r *Rendezvous) try() bool {
 	if r.ready() {
 		r.push()
 	}
-}
-
-func (r *Rendezvous) containerTerminated(id cproto.ID) {
-	delete(r.addresses, id)
-}
-
-func (r Rendezvous) rank(id cproto.ID) int {
-	return r.ranks[id]
+	return r.ready()
 }
 
 // ready returns true if and only if all the containers are reported to be started with the
@@ -165,16 +155,21 @@ func (r Rendezvous) rank(id cproto.ID) int {
 // trial, once all the containers are ready this function will return true afterward because this
 // function is used in deciding if the trial should be forcibly killed when terminating.
 func (r *Rendezvous) ready() bool {
+	if r == nil {
+		return false
+	}
+
 	// If a trial has passed allReady it can never return to a state of not ready until the
 	// current containers are all taskTerminated.
 	if r.allReadySucceeded {
 		return true
 	}
 
-	allAddressesArrived := len(r.addresses) == len(r.ranks)
-	allWaiting := len(r.watchers) == len(r.ranks)
+	anyExited := len(r.reservations.exited()) > 0
+	allAddressesArrived := len(r.reservations.started()) == len(r.reservations)
+	allWaiting := len(r.watchers) == len(r.reservations)
 
-	r.allReadySucceeded = allAddressesArrived && allWaiting
+	r.allReadySucceeded = !anyExited && allAddressesArrived && allWaiting
 	return r.allReadySucceeded
 }
 
@@ -190,7 +185,7 @@ func (r Rendezvous) push() bool {
 		w <- RendezvousInfoOrError{
 			Info: &trialv1.RendezvousInfo{
 				Addresses: raddrs,
-				Rank:      int32(r.ranks[caddr.id]),
+				Rank:      int32(r.reservations[caddr.id].rank),
 			},
 			Err: err,
 		}
@@ -240,11 +235,11 @@ type cAddress struct {
 
 func (r *Rendezvous) info() ([]cAddress, []string, error) {
 	var caddrs []cAddress
-	for id, rank := range r.ranks {
+	for id, r := range r.reservations {
 		caddr := cAddress{
 			id:        id,
-			addresses: r.addresses[id],
-			ordinal:   rank,
+			addresses: r.start.Addresses,
+			ordinal:   r.rank,
 		}
 		caddrs = append(caddrs, caddr)
 
