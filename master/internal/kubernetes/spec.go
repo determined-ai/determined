@@ -418,7 +418,6 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			Command:         fluentArgs,
 			Image:           "fluent/fluent-bit:1.6",
 			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
-			SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 			VolumeMounts:    loggingMounts,
 			WorkingDir:      fluentBaseDir,
 		})
