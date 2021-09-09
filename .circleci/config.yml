@@ -1975,42 +1975,58 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - request-model-hub-transformers-tests:
+      - request-transformers-tests:
           type: approval
           filters: *upstream-feature-branch
 
       - test-e2e-aws:
-          name: test-e2e-model-hub-transformers
+          name: test-e2e-transformers
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-model-hub-transformers-tests
+            - request-transformers-tests
             - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["model-hub"]
+              cluster-id-prefix: ["transformers"]
               mark: ["model_hub_transformers"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
-      - request-model-hub-mmdetection-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
       - test-e2e-aws:
-          name: test-e2e-model-hub-mmdetection
+          name: test-e2e-transformers-amp
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-model-hub-mmdetection-tests
+            - request-transformers-tests
             - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["model-hub"]
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      - request-mmdetection-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-mmdetection
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-mmdetection-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
@@ -2265,12 +2281,36 @@ workflows:
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
       - test-e2e-aws:
-          name: test-e2e-gpu-model-hub
+          name: test-e2e-gpu-transformers
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["model-hub"]
-              mark: ["model_hub"]
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-transformers-amp
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-mmdetection
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]

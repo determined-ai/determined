@@ -27,6 +27,7 @@ _INTEG_MARKERS = {
     "parallel",
     "nightly",
     "model_hub_transformers",
+    "model_hub_transformers_amp",
     "model_hub_mmdetection",
 }
 
