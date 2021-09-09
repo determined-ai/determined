@@ -212,12 +212,13 @@ commands:
             sudo apt-get install -y python3-venv
             /usr/bin/python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
-            /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools\<58
+            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       - run:
           name: Write cache key
           command: |
             echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
             fi
@@ -231,7 +232,7 @@ commands:
 
       - restore_cache:
           keys:
-            - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+            - det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -260,12 +261,12 @@ commands:
               pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
-          key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+          key: det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
       - run: python --version
       - run: pip --version
-      - run: pip freeze
+      - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
 
@@ -1356,14 +1357,14 @@ jobs:
       # LMDB also has special requirements that only apply to windows (patch-ng).
       - run: sh -c "if which conda ; then conda install cryptography patch-ng --yes ; fi"
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
-      - run: pip freeze
+      - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
       - run: pip install -r harness/tests/requirements.txt
-      - run: pip freeze
+      - run: pip freeze --all
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
 
