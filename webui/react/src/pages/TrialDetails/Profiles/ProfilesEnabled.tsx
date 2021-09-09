@@ -132,12 +132,12 @@ const ProfilesEnabled: React.FC = () => {
         if (seriesKey === key) {
           acc.push(...seriesData);
         } else {
-          const fillerData = new Array(times.length).fill(null) || [];
-          const filler = new Array(seriesData.length).fill(fillerData) || [];
+          const fillerData = new Array(times.length).fill(null) ?? [];
+          const filler = new Array(seriesData.length).fill(fillerData) ?? [];
           acc.push(...filler);
         }
         return acc;
-      }, [ times || [], batches || [] ]);
+      }, [ times ?? [], batches ?? [] ]);
 
       // Pad the series config with blank series where applicable.
       const series = metricKeys.reduce((acc, seriesKey) => {
