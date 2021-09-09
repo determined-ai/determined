@@ -114,11 +114,17 @@ def do_request(
     except requests.exceptions.RequestException as e:
         raise errors.BadRequestException(str(e))
 
+    def _get_message(r: requests.models.Response) -> str:
+        try:
+            return str(simplejson.loads(r.text).get("message"))
+        except Exception:
+            return ""
+
     if r.status_code == 403:
         username = ""
         if auth is not None:
             username = auth.get_session_user()
-        raise errors.UnauthenticatedException(username=username)
+        raise errors.ForbiddenException(username=username, message=_get_message(r))
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
     elif r.status_code >= 300:

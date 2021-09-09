@@ -85,7 +85,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 		switch err {
 		case nil:
 			if !user.Active {
-				return echo.NewHTTPError(http.StatusForbidden)
+				return echo.NewHTTPError(http.StatusForbidden, "user not active")
 			}
 			// Set data on the request context that might be useful to
 			// event handlers.
@@ -134,12 +134,9 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	malformedRequestError := echo.NewHTTPError(http.StatusBadRequest)
-	badCredentialsError := echo.NewHTTPError(http.StatusForbidden, "invalid credentials")
-
 	var params request
 	if err = json.Unmarshal(body, &params); err != nil {
-		return nil, malformedRequestError
+		return nil, echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	// Get the user from the database.
@@ -147,19 +144,19 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		return nil, badCredentialsError
+		return nil, echo.NewHTTPError(http.StatusForbidden, "user not found")
 	default:
 		return nil, err
 	}
 
 	// The user must be active.
 	if !user.Active {
-		return nil, badCredentialsError
+		return nil, echo.NewHTTPError(http.StatusForbidden, "user not active")
 	}
 
 	var token string
 	if !user.ValidatePassword(params.Password) {
-		return nil, badCredentialsError
+		return nil, echo.NewHTTPError(http.StatusForbidden, "invalid credentials")
 	}
 
 	token, err = s.db.StartUserSession(user)
@@ -225,7 +222,10 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	forbiddenError := echo.NewHTTPError(http.StatusForbidden)
+	forbiddenError := echo.NewHTTPError(
+		http.StatusForbidden,
+		"user not authorized")
+
 	authenticatedUser := c.(*context.DetContext).MustGetUser()
 	user, err := s.db.UserByUsername(args.Username)
 	switch err {
@@ -236,7 +236,7 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 				http.StatusBadRequest,
 				fmt.Sprintf("failed to get user '%s'", args.Username))
 		}
-		return nil, forbiddenError
+		return nil, echo.NewHTTPError(http.StatusForbidden, "user not found")
 	default:
 		return nil, err
 	}
@@ -319,7 +319,8 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	forbiddenError := echo.NewHTTPError(http.StatusForbidden)
+	forbiddenError := echo.NewHTTPError(http.StatusForbidden,
+		"user not authorized")
 	authenticatedUser := c.(*context.DetContext).MustGetUser()
 	if !authenticatedUser.Admin {
 		return nil, forbiddenError
