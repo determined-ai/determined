@@ -104,7 +104,7 @@ const TrialLogPreview: React.FC<PropsWithChildren<Props>> = ({
   }, [ onViewLogs ]);
 
   useEffect(() => {
-    if (!trial?.id && trial?.state !== RunState.Completed) return;
+    if (!trial?.id || trial?.state === RunState.Completed) return;
 
     const canceler = new AbortController();
     fetchLatestTrialLog(trial.id, trial.state, canceler);
