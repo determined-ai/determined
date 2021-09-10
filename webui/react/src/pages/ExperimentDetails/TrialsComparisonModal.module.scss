@@ -42,8 +42,6 @@
   .headerRow {
     background-color: var(--theme-colors-monochrome-16);
     border-bottom: 1px solid var(--theme-colors-monochrome-14);
-    left: 0;
-    position: sticky;
 
     @extend %tableRow;
   }

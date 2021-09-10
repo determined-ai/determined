@@ -238,6 +238,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               value={selectedMetrics}
               onChange={onMetricSelect}
             />
+            {Array(trials.length-1).fill(null).map((_, idx) => <div key={idx} />)}
           </div>
           {metricNames.filter(metric => selectedMetrics.map(m => m.name)
             .includes(metric.name)).map(metric => (
@@ -259,6 +260,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               onChange={onHyperparameterSelect}>
               {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
             </SelectFilter>
+            {Array(trials.length-1).fill(null).map((_, idx) => <div key={idx} />)}
           </div>
           {selectedHyperparameters.map(hp => (
             <div className={css.row} key={hp}>
