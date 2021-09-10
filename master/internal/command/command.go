@@ -2,9 +2,10 @@ package command
 
 import (
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"net/url"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
