@@ -155,7 +155,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props
   }, []);
 
   return (
-    <div ref={chartDivRef} style={style}>
+    <div ref={chartDivRef} style={{ ...style, height: options?.height ?? 'auto' }}>
       {!hasData && <Message title="No data to plot." type={MessageType.Empty} />}
     </div>
   );
