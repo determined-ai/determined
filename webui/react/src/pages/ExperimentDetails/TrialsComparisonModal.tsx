@@ -1,9 +1,9 @@
 import { Select, Tag } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import HumanReadableFloat from 'components/HumanReadableFloat';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';
@@ -245,7 +245,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
               <div className={css.row} key={metric.name}>
                 <h3><MetricBadgeTag metric={metric} /></h3>
                 {trials.map(trial => metrics[trial][metric.name] ? (
-                  <div><HumanReadableFloat key={trial} num={metrics[trial][metric.name]} /></div>
+                  <div><HumanReadableNumber key={trial} num={metrics[trial][metric.name]} /></div>
                 ) : <div />)}
               </div>
             ))}
@@ -267,7 +267,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 {trials.map(trial => (
                   !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ? (
                     <div>
-                      <HumanReadableFloat
+                      <HumanReadableNumber
                         key={trial}
                         num={parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))}
                       />

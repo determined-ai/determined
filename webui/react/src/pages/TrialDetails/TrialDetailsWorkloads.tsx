@@ -1,10 +1,10 @@
 import { Button, Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
-import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -77,7 +77,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     const metricRenderer = (metricName: MetricName) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
-        return value != null ? <HumanReadableFloat num={value} /> : undefined;
+        return value != null ? <HumanReadableNumber num={value} /> : undefined;
       };
       return metricCol;
     };

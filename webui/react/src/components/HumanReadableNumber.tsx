@@ -9,7 +9,11 @@ interface Props extends CommonProps {
   tooltipPrefix?: string;
 }
 
-const HumanReadableFloat: React.FC<Props> = ({ num, precision = 6, tooltipPrefix = '' }: Props) => {
+const HumanReadableNumber: React.FC<Props> = ({
+  num,
+  precision = 6,
+  tooltipPrefix = '',
+}: Props) => {
   const stringNum = num.toString();
   let content: string = stringNum;
 
@@ -33,4 +37,4 @@ const HumanReadableFloat: React.FC<Props> = ({ num, precision = 6, tooltipPrefix
   );
 };
 
-export default HumanReadableFloat;
+export default HumanReadableNumber;

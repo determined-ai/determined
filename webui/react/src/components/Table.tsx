@@ -1,10 +1,10 @@
 import { Tooltip } from 'antd';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
-import HumanReadableFloat from 'components/HumanReadableFloat';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { paths } from 'routes/utils';
@@ -66,8 +66,8 @@ export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
   return shortEnglishHumannizer(getDuration(times));
 };
 
-export const humanReadableFloatRenderer = (num: number): React.ReactNode => {
-  return <HumanReadableFloat num={num} />;
+export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
+  return <HumanReadableNumber num={num} />;
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {
