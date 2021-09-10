@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useMemo } from 'react';
 
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Section from 'components/Section';
 import {
   ExperimentBase, HyperparameterType, TrialDetails,

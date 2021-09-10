@@ -1,9 +1,9 @@
 import { Select, Tag } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelectFilter from 'components/MetricSelectFilter';

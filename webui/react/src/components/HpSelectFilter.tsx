@@ -1,8 +1,8 @@
 import { Select } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useCallback, useMemo } from 'react';
 
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import { ALL_VALUE, HpImportance } from 'types';
 import { clone, isObject } from 'utils/data';
 import { hpImportanceSorter } from 'utils/sort';

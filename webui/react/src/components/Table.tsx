@@ -1,10 +1,10 @@
 import { Tooltip } from 'antd';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
 import Badge, { BadgeType } from 'components/Badge';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import { paths } from 'routes/utils';
