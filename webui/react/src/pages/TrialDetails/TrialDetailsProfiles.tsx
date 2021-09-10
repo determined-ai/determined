@@ -22,7 +22,7 @@ const Profiler: React.FC<Props> = ({ experiment, trial }: Props) => {
   } else {
     return (
       <ProfilesFiltersProvider trial={trial}>
-        <ProfilesEnabled trial={trial} />
+        <ProfilesEnabled />
       </ProfilesFiltersProvider>
     );
   }

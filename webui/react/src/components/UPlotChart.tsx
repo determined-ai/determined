@@ -20,11 +20,12 @@ interface Props {
   data?: AlignedData;
   focusIndex?: number;
   options?: Options;
+  style?: React.CSSProperties;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
 
-const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
+const UPlotChart: React.FC<Props> = ({ data, focusIndex, options, style }: Props) => {
   const chartRef = useRef<uPlot>();
   const chartDivRef = useRef<HTMLDivElement>(null);
   const scalesRef = useRef<Record<RecordKey, uPlot.Scale>>();
@@ -154,8 +155,14 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
   }, []);
 
   return (
-    <div ref={chartDivRef}>
-      {!hasData && <Message title="No data to plot." type={MessageType.Empty} />}
+    <div ref={chartDivRef} style={style}>
+      {!hasData && (
+        <Message
+          style={{ height: options?.height ?? 'auto' }}
+          title="No data to plot."
+          type={MessageType.Empty}
+        />
+      )}
     </div>
   );
 };

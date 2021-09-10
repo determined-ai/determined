@@ -1,13 +1,13 @@
 import { Alert } from 'antd';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 
-import { FiltersInterface } from 'pages/TrialDetails/Profiles/SystemMetricFilter';
-import {
-  AvailableSeriesType, MetricsAggregateInterface, MetricType, useFetchAvailableSeries,
-  useFetchMetrics,
-} from 'pages/TrialDetails/Profiles/utils';
-import { parseUrl } from 'routes/utils';
+import useSettings from 'hooks/useSettings';
 import { TrialDetails } from 'types';
+
+import settingsConfig, { Settings } from './ProfilesFiltersProvider.settings';
+import { AvailableSeriesType, MetricsAggregateInterface, MetricType } from './types';
+import { useFetchAvailableSeries } from './useFetchAvailableSeries';
+import { useFetchMetrics } from './useFetchMetrics';
 
 export interface ProfilesFiltersInterface {
   agentId?: string;
@@ -16,10 +16,10 @@ export interface ProfilesFiltersInterface {
 }
 
 export interface ProfilesFiltersContextInterface {
-  filters: ProfilesFiltersInterface,
-  setFilters: (value: ProfilesFiltersInterface) => void,
+  metrics: Record<MetricType, MetricsAggregateInterface>,
+  settings: Settings,
   systemSeries: AvailableSeriesType,
-  timingMetrics: MetricsAggregateInterface,
+  updateSettings: (newSettings: Partial<Settings>, push?: boolean) => void;
 }
 
 export const ProfilesFiltersContext =
@@ -39,124 +39,59 @@ interface Props {
 }
 
 const ProfilesFiltersProvider: React.FC<Props> = ({ children, trial }: Props) => {
-  const [ filters, setFilters ] = useState<FiltersInterface>({});
-  const [ isUrlParsed, setIsUrlParsed ] = useState(false);
+  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const systemSeries = useFetchAvailableSeries(trial.id)[MetricType.System];
+  const systemMetrics = useFetchMetrics(
+    trial.id,
+    MetricType.System,
+    settings.name,
+    settings.agentId,
+    settings.gpuUuid,
+  );
+  const throughputMetrics = useFetchMetrics(
+    trial.id,
+    MetricType.Throughput,
+    'samples_per_second',
+    undefined,
+    undefined,
+  );
   const timingMetrics = useFetchMetrics(trial.id, MetricType.Timing);
 
-  const canRender = filters.agentId && filters.name && systemSeries;
+  const canRender = !!settings.agentId && !!settings.name && !!systemSeries;
 
   /*
-   * Set default filters
+   * Set default filter settings.
    */
   useEffect(() => {
-    if (!systemSeries || (filters.agentId && filters.name)) return;
+    if (!systemSeries || (settings.agentId && settings.name)) return;
 
-    const newFilters: FiltersInterface = {
-      agentId: filters.agentId,
-      name: filters.name,
-    };
+    const newSettings: Partial<Settings> = {};
 
-    if (!filters.name) {
-      if (Object.keys(systemSeries).includes('gpu_util')) newFilters.name = 'gpu_util';
-      else if (Object.keys(systemSeries).includes('cpu_util')) newFilters.name = 'cpu_util';
-      else newFilters.name = Object.keys(systemSeries)[0];
+    if (!settings.name) {
+      if (Object.keys(systemSeries).includes('gpu_util')) newSettings.name = 'gpu_util';
+      else if (Object.keys(systemSeries).includes('cpu_util')) newSettings.name = 'cpu_util';
+      else newSettings.name = Object.keys(systemSeries)[0];
     }
 
-    if (!filters.agentId) {
-      newFilters.agentId = Object.keys(systemSeries[newFilters.name as unknown as string])[0];
+    if (!settings.agentId) {
+      newSettings.agentId = Object.keys(systemSeries[newSettings.name as unknown as string])[0];
     }
 
-    setFilters(newFilters);
-  }, [ systemSeries, filters.agentId, filters.name ]);
-
-  /*
-   * When filters changes update the page URL.
-   */
-  useEffect(() => {
-    if (!isUrlParsed) return;
-
-    const searchParams = new URLSearchParams;
-    const url = parseUrl(window.location.href);
-
-    // name
-    if (filters.name) {
-      searchParams.append('name', filters.name);
-    }
-
-    // agentId
-    if (filters.agentId) {
-      searchParams.append('agentId', filters.agentId);
-    }
-
-    // gpuUuid
-    if (filters.gpuUuid) {
-      searchParams.append('gpuUuid', filters.gpuUuid);
-    }
-
-    window.history.pushState(
-      {},
-      '',
-      url.origin + url.pathname + '?' + searchParams.toString(),
-    );
-  }, [ filters, isUrlParsed ]);
-
-  /*
-   * On first load: if filters are specified in URL, override default.
-   */
-  useEffect(() => {
-    if (!canRender || isUrlParsed) return;
-
-    // If search params are not set, we default to user preferences
-    const url = parseUrl(window.location.href);
-    if (url.search === '') {
-      setIsUrlParsed(true);
-      return;
-    }
-
-    const newFilters = { ...filters };
-    const urlSearchParams = url.searchParams;
-
-    // name
-    const name = urlSearchParams.get('name');
-    if (name != null && Object.keys(systemSeries).includes(name)) {
-      newFilters.name = name;
-    }
-
-    // agentId
-    const agentId = urlSearchParams.get('agentId');
-    if (
-      agentId != null
-      && newFilters.name
-      && Object.keys(systemSeries[newFilters.name]).includes(agentId)
-    ) {
-      newFilters.agentId = agentId;
-    }
-
-    // gpuUuid
-    const gpuUuid = urlSearchParams.get('gpuUuid');
-    if (
-      agentId != null
-      && gpuUuid != null
-      && newFilters.name
-      && newFilters.agentId
-      && systemSeries[newFilters.name][newFilters.agentId].includes(gpuUuid)
-    ) {
-      newFilters.gpuUuid = gpuUuid;
-    }
-
-    setIsUrlParsed(true);
-    setFilters(newFilters);
-  }, [ canRender, filters, isUrlParsed, systemSeries ]);
+    if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
+  }, [ settings.agentId, settings.name, systemSeries, updateSettings ]);
 
   const context = useMemo<ProfilesFiltersContextInterface>(() => ({
-    filters,
-    setFilters,
+    metrics: {
+      [MetricType.System]: systemMetrics,
+      [MetricType.Throughput]: throughputMetrics,
+      [MetricType.Timing]: timingMetrics,
+    },
+    settings,
     systemSeries,
-    timingMetrics,
-  }), [ filters, systemSeries, timingMetrics ]);
+    updateSettings,
+  }), [ settings, systemMetrics, systemSeries, throughputMetrics, timingMetrics, updateSettings ]);
 
-  if (!canRender || !isUrlParsed) {
+  if (!canRender) {
     return <Alert message="No data available." type="warning" />;
   }
 
