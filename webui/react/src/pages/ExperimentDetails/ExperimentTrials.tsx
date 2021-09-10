@@ -315,7 +315,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       {settings.compare &&
       <TrialsComparisonModal
         experiment={experiment}
-        trials={settings.row || []}
+        trials={settings.row ?? []}
         visible={settings.compare}
         onCancel={handleTrialCompareCancel}
         onUnselect={handleTrialUnselect} />}
