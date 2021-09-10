@@ -16,6 +16,7 @@
     grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
     justify-content: space-between;
     min-height: 50px;
+    min-width: fit-content;
     padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-big);
 
     & > * { margin: 0; }
@@ -30,8 +31,10 @@
     }
     & > *:first-child {
       background-color: var(--theme-colors-monochrome-17);
-      left: 16px;
-      position: sticky
+      border-right: 1px solid var(--theme-colors-monochrome-14);
+      left: 0;
+      padding-left: 8px;
+      position: sticky;
     }
 
     @extend %tableRow;
@@ -50,6 +53,14 @@
     position: sticky;
     top: 0;
     z-index: 9999;
+
+    & > *:first-child {
+      background-color: var(--theme-colors-monochrome-16);
+      height: 30px;
+      left: 0;
+      padding-left: 8px;
+      position: sticky
+    }
 
     @extend %tableRow;
   }
