@@ -5,6 +5,7 @@ import uPlot, { AlignedData } from 'uplot';
 import Message, { MessageType } from 'components/Message';
 import useResize from 'hooks/useResize';
 import { RecordKey } from 'types';
+import { distance } from 'utils/chart';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
   width?: number;
@@ -30,7 +31,7 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
   const scalesRef = useRef<Record<RecordKey, uPlot.Scale>>();
   const scalesZoomData = useRef<Record<string, ScaleZoomData>>({});
   const isZoomed = useRef<boolean>(false);
-  const mousePosition = useRef<[number, number]>([ 0, 0 ]);
+  const mousePosition = useRef<[number, number]>();
 
   const [ hasData, normalizedData ] = useMemo(() => {
     const chartData: unknown[][] = data || [];
@@ -73,11 +74,19 @@ const UPlotChart: React.FC<Props> = ({ data, focusIndex, options }: Props) => {
             },
             mouseup: (_uPlot: uPlot, _target: EventTarget, handler: (e: Event) => void) => {
               return (e: MouseEvent) => {
-                const distX = e.clientX-mousePosition.current[0];
-                const distY = e.clientY-mousePosition.current[1];
-                if (Math.sqrt(distX**2 + distY**2) > 5) {
+                if (!mousePosition.current) {
+                  handler(e);
+                  return;
+                }
+                if (distance(
+                  e.clientX,
+                  e.clientY,
+                  mousePosition.current[0],
+                  mousePosition.current[1],
+                ) > 5) {
                   isZoomed.current = true;
                 }
+                mousePosition.current = undefined;
                 handler(e);
               };
             },
