@@ -3,8 +3,6 @@ import { metricNameSorter } from 'utils/sort';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
 
-import { getDuration } from './time';
-
 export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] => {
   const trainingNames: Set<string> = workloads
     .filter(wl => wl.training?.metrics)
@@ -91,25 +89,4 @@ export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
   if (parts.length === 2) return { name: parts[1], type: parts[0] as MetricType };
   return undefined;
-};
-
-export interface TrialDurations {
-  checkpoint: number;
-  train: number;
-  validation: number;
-}
-
-export const trialDurations = (wlWrappers: WorkloadWrapper[]): TrialDurations => {
-  const initialDurations: TrialDurations = {
-    checkpoint: 0,
-    train: 0,
-    validation: 0,
-  };
-
-  return wlWrappers.reduce((acc: TrialDurations, cur: WorkloadWrapper) => {
-    if (cur.training) acc.train += getDuration(cur.training);
-    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
-    if (cur.validation) acc.validation += getDuration(cur.validation);
-    return acc;
-  }, initialDurations);
 };

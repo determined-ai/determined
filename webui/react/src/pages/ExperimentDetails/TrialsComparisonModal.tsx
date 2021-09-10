@@ -17,8 +17,7 @@ import {
 } from 'types';
 import { isNumber } from 'utils/data';
 import { humanReadableBytes } from 'utils/string';
-import { shortEnglishHumannizer } from 'utils/time';
-import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
+import { extractMetricNames } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -90,12 +89,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, [ fetchTrialDetails, trials ]);
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
-
-  const durations: Record<string, TrialDurations> = useMemo(
-    () => Object.fromEntries(Object.values(trialsDetails)
-      .map(trial => [ trial.id, trialDurations(trial.workloads) ]))
-    , [ trialsDetails ],
-  );
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
     const totalBytes = trial.workloads
@@ -212,16 +205,6 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             {trials.map(trial => (
               <div className={css.cell} key={trial}>
                 <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
-              </div>
-            ))}
-          </div>
-          <div className={css.row}>
-            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
-              Training Time
-            </div>
-            {trials.map(trial => (
-              <div className={css.cell} key={trial}>
-                {shortEnglishHumannizer(durations[trial]?.train)}
               </div>
             ))}
           </div>
