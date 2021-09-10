@@ -13,8 +13,6 @@ import Link from './Link';
 import css from './NotebookModal.module.scss';
 import Spinner from './Spinner';
 
-const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
-
 const { Option } = Select;
 const { Item } = Form;
 
@@ -76,6 +74,8 @@ interface ResourceInfo {
   hasCompute: boolean;
   maxSlots: number | undefined;
 }
+
+const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const NotebookModal: React.FC<NotebookModalProps> = (
   { visible = false, onLaunch, ...props }: NotebookModalProps,
@@ -201,12 +201,8 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
             },
           ]}>
           <MonacoEditor
-            height={430}
-            language="yaml"
+            height="40vh"
             options={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              selectOnLineNumbers: true,
               wordWrap: 'on',
               wrappingIndent: 'indent',
             }}

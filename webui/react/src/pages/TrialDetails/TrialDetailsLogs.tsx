@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import LogViewerTimestamp, { TAIL_SIZE } from 'components/LogViewerTimestamp';
 import handleError, { ErrorType } from 'ErrorHandler';
@@ -8,8 +8,10 @@ import TrialLogFilters, { TrialLogFiltersInterface } from 'pages/TrialDetails/Lo
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { jsonToTrialLog } from 'services/decoder';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, RunState, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
+
+import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -19,54 +21,12 @@ export interface Props {
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
 
-  const fetchLogAfter =
-    useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
-      return detApi.StreamingExperiments.determinedTrialLogs(
-        trial.id,
-        TAIL_SIZE,
-        false,
-        filters.agentIds,
-        filters.containerIds,
-        filters.rankIds,
-        filters.levels,
-        filters.stdtypes,
-        filters.sources,
-        filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
-        filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-        'ORDER_BY_ASC',
-        { signal: canceler.signal },
-      );
-    }, [ trial.id ]);
-
-  const fetchLogBefore =
-    useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
-      return detApi.StreamingExperiments.determinedTrialLogs(
-        trial.id,
-        TAIL_SIZE,
-        false,
-        filters.agentIds,
-        filters.containerIds,
-        filters.rankIds,
-        filters.levels,
-        filters.stdtypes,
-        filters.sources,
-        filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
-        filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
-        'ORDER_BY_DESC',
-        { signal: canceler.signal },
-      );
-    }, [ trial.id ]);
-
-  const fetchLogFilter = useCallback((canceler: AbortController) => {
-    return detApi.StreamingExperiments.determinedTrialLogsFields(
-      trial.id,
-      true,
-      { signal: canceler.signal },
-    );
-  }, [ trial.id ]);
-
-  const fetchLogTail =
-    useCallback((filters: TrialLogFiltersInterface, canceler: AbortController) => {
+  const fetchLogTail = useMemo(() => {
+    if (trial.state === RunState.Completed) return undefined;
+    return (
+      filters: TrialLogFiltersInterface,
+      canceler: AbortController,
+    ) => {
       return detApi.StreamingExperiments.determinedTrialLogs(
         trial.id,
         0,
@@ -82,7 +42,58 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         'ORDER_BY_ASC',
         { signal: canceler.signal },
       );
-    }, [ trial.id ]);
+    };
+  }, [ trial.id, trial.state ]);
+
+  const fetchLogAfter = useCallback((
+    filters: TrialLogFiltersInterface,
+    canceler: AbortController,
+  ) => {
+    return detApi.StreamingExperiments.determinedTrialLogs(
+      trial.id,
+      TAIL_SIZE,
+      false,
+      filters.agentIds,
+      filters.containerIds,
+      filters.rankIds,
+      filters.levels,
+      filters.stdtypes,
+      filters.sources,
+      filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
+      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
+      'ORDER_BY_ASC',
+      { signal: canceler.signal },
+    );
+  }, [ trial.id ]);
+
+  const fetchLogBefore = useCallback((
+    filters: TrialLogFiltersInterface,
+    canceler: AbortController,
+  ) => {
+    return detApi.StreamingExperiments.determinedTrialLogs(
+      trial.id,
+      TAIL_SIZE,
+      false,
+      filters.agentIds,
+      filters.containerIds,
+      filters.rankIds,
+      filters.levels,
+      filters.stdtypes,
+      filters.sources,
+      filters.timestampBefore ? filters.timestampBefore.toDate() : undefined,
+      filters.timestampAfter ? filters.timestampAfter.toDate() : undefined,
+      'ORDER_BY_DESC',
+      { signal: canceler.signal },
+    );
+  }, [ trial.id ]);
+
+  const fetchLogFilter = useCallback((canceler: AbortController) => {
+    return detApi.StreamingExperiments.determinedTrialLogsFields(
+      trial.id,
+      true,
+      { signal: canceler.signal },
+    );
+  }, [ trial.id ]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (downloadModal) {
@@ -125,15 +136,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [ experiment.id, handleDownloadConfirm, trial.id ]);
 
   return (
-    <LogViewerTimestamp
-      fetchToLogConverter={jsonToTrialLog}
-      FilterComponent={TrialLogFilters}
-      onDownloadClick={handleDownloadLogs}
-      onFetchLogAfter={fetchLogAfter}
-      onFetchLogBefore={fetchLogBefore}
-      onFetchLogFilter={fetchLogFilter}
-      onFetchLogTail={fetchLogTail}
-    />
+    <div className={css.base}>
+      <LogViewerTimestamp
+        fetchToLogConverter={jsonToTrialLog}
+        FilterComponent={TrialLogFilters}
+        onDownloadClick={handleDownloadLogs}
+        onFetchLogAfter={fetchLogAfter}
+        onFetchLogBefore={fetchLogBefore}
+        onFetchLogFilter={fetchLogFilter}
+        onFetchLogTail={fetchLogTail}
+      />
+    </div>
   );
 };
 

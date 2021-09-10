@@ -1,27 +1,30 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import queryString from 'query-string';
 import React, {
-  Reducer, RefObject,
-  useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
+  Reducer, useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState,
 } from 'react';
-import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
+import { useLocation } from 'react-router-dom';
+import {
+  ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
+} from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
-import useScroll from 'hooks/useScroll';
+import useResize from 'hooks/useResize';
 import { LogViewerTimestampFilterComponentProp } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard } from 'utils/dom';
+import { copyToClipboard } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
 import { LogStoreAction, LogStoreActionType, logStoreReducer, ViewerLog } from './LogViewer.store';
-import LogViewerLevel, { ICON_WIDTH } from './LogViewerLevel';
+import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
 import Section from './Section';
 
 export interface LogViewerTimestampFilter {
@@ -36,29 +39,17 @@ interface Props {
   onFetchLogAfter: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogFilter: (canceler: AbortController) => FetchArgs;
-  onFetchLogTail: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
-}
-
-export interface ListMeasure {
-  height: number;
-  width: number;
+  onFetchLogTail?: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
 }
 
 export const TAIL_SIZE = 100;
 
-// Format the datetime to...
-const DATETIME_PREFIX = '[';
-const DATETIME_SUFFIX = ']';
-const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD HH:mm:ss${DATETIME_SUFFIX}`;
-
-// Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
-const MAX_DATETIME_LENGTH = 23;
-
 const THROTTLE_TIME = 500;
+const PADDING = 8;
 
-enum DIRECTIONS {
-  TOP_TO_BOTTOM, // show oldest logs and infinite-scroll newest ones at the bottom
-  BOTTOM_TO_TOP, // show newest logs and infinite-scroll oldest ones at the top
+enum Direction {
+  TopToBottom = 'top-to-bottom', // show oldest logs and infinite-scroll newest ones at the bottom
+  BottomToTop = 'bottom-to-top', // show newest logs and infinite-scroll oldest ones at the top
 }
 
 const formatClipboardHeader = (log: TrialLog): string => {
@@ -66,25 +57,6 @@ const formatClipboardHeader = (log: TrialLog): string => {
   const level = `<${log.level || ''}>`;
   const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
   return sprintf(`%-9s ${format}`, level, datetime);
-};
-
-const useGetListMeasure = (container: RefObject<HTMLDivElement>): ListMeasure => {
-  const containerPaddingInPixel = useMemo(() => {
-    return getComputedStyle(document.documentElement)
-      .getPropertyValue('--theme-sizes-layout-medium');
-  }, []);
-  const scroll = useScroll(container);
-
-  return {
-    height: Math.max(
-      0,
-      (scroll?.viewHeight || 0) - (parseInt(containerPaddingInPixel) * 2),
-    ),
-    width: Math.max(
-      0,
-      (scroll?.viewWidth || 0) - (parseInt(containerPaddingInPixel) * 2),
-    ),
-  };
 };
 
 const LogViewerTimestamp: React.FC<Props> = ({
@@ -97,15 +69,20 @@ const LogViewerTimestamp: React.FC<Props> = ({
   onFetchLogTail,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
-  const container = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
+  const listOffset = useRef<number>(0);
 
-  const charMeasures = useGetCharMeasureInContainer(container);
-  const listMeasure = useGetListMeasure(container);
+  const location = useLocation();
+  const charMeasures = useGetCharMeasureInContainer(containerRef);
+  const containerSize = useResize(containerRef);
 
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
+  const maxCharPerLine = Math.floor(
+    (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
+  );
 
-  const [ direction, setDirection ] = useState(DIRECTIONS.BOTTOM_TO_TOP);
+  const [ direction, setDirection ] = useState(Direction.BottomToTop);
   const [ filter, setFilter ] = useState<LogViewerTimestampFilter>({});
   const [ filterOptions, setFilterOptions ] = useState<LogViewerTimestampFilter>({});
   const [ isLastReached, setIsLastReached ] = useState<boolean>(false);
@@ -148,70 +125,65 @@ const LogViewerTimestamp: React.FC<Props> = ({
     logsDispatch({ type: LogStoreActionType.Clear });
     listRef.current?.resetAfterIndex(0);
     setIsLastReached(false);
-    setIsLoading(true);
   }, [ logsDispatch ]);
 
-  const fetchAndAppendLogs =
-    useCallback((direction: DIRECTIONS, filters: LogViewerTimestampFilter): AbortController => {
-      const canceler = new AbortController();
-      let fetchArgs = null;
-      let isPrepend = false;
+  const fetchAndAppendLogs = useCallback((
+    direction: Direction,
+    filters: LogViewerTimestampFilter,
+  ): AbortController => {
+    const canceler = new AbortController();
+    let fetchArgs = null;
+    let isPrepend = false;
 
-      if (direction === DIRECTIONS.BOTTOM_TO_TOP) {
-        fetchArgs = onFetchLogBefore(filters, canceler);
-        isPrepend = true;
-      }
+    if (direction === Direction.BottomToTop) {
+      fetchArgs = onFetchLogBefore(filters, canceler);
+      isPrepend = true;
+    }
 
-      if (direction === DIRECTIONS.TOP_TO_BOTTOM) {
-        fetchArgs = onFetchLogAfter({
-          ...filters,
-          timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
-        }, canceler);
-        isPrepend = false;
-      }
+    if (direction === Direction.TopToBottom) {
+      fetchArgs = onFetchLogAfter({
+        ...filters,
+        timestampAfter: filters.timestampAfter?.subtract(1, 'millisecond'),
+      }, canceler);
+      isPrepend = false;
+    }
 
-      if (fetchArgs) {
-        let buffer: TrialLog[] = [];
-        consumeStream(
-          fetchArgs,
-          event => {
-            const logEntry = fetchToLogConverter(event);
-            direction === DIRECTIONS.TOP_TO_BOTTOM
-              ? buffer.unshift(logEntry) : buffer.push(logEntry);
-          },
-        ).then(() => {
-          if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
-            setIsLastReached(true);
-          }
+    if (fetchArgs) {
+      setIsLoading(true);
 
-          addLogs(buffer, isPrepend);
+      let buffer: TrialLog[] = [];
+      consumeStream(
+        fetchArgs,
+        event => {
+          const logEntry = fetchToLogConverter(event);
+          direction === Direction.TopToBottom
+            ? buffer.unshift(logEntry) : buffer.push(logEntry);
+        },
+      ).then(() => {
+        if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
+          setIsLastReached(true);
+        }
+        addLogs(buffer, isPrepend);
+        setIsLoading(false);
+        buffer = [];
+      });
+    }
 
-          setIsLoading(false);
-
-          buffer = [];
-        });
-      }
-
-      return canceler;
-    }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
+    return canceler;
+  }, [ addLogs, fetchToLogConverter, onFetchLogAfter, onFetchLogBefore ]);
 
   const getItemHeight = useCallback((index: number): number => {
     const log = logs[index];
-    if (!log) {
-      return charMeasures.height;
-    }
-
-    const maxCharPerLine = Math.floor(
-      (listMeasure.width - ICON_WIDTH - dateTimeWidth) / charMeasures.width,
-    );
+    if (!log) return charMeasures.height;
 
     const lineCount = log.message
       .split('\n')
       .map(line => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
       .reduce((acc, count) => acc + count, 0);
+    const itemHeight = lineCount * charMeasures.height;
 
-    return lineCount * charMeasures.height;
-  }, [ charMeasures, dateTimeWidth, listMeasure, logs ]);
+    return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
+  }, [ charMeasures, maxCharPerLine, logs ]);
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
@@ -236,8 +208,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ onDownloadClick ]);
 
   const handleEnableTailing = useCallback(() => {
-    setDirection(DIRECTIONS.BOTTOM_TO_TOP);
-    listRef.current?.scrollToItem(logs.length);
+    setDirection(Direction.BottomToTop);
+    listRef.current?.scrollToItem(logs.length, 'end');
   }, [ listRef, logs.length ]);
 
   const handleFullScreen = useCallback(() => {
@@ -245,44 +217,49 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, []);
 
   const handleScrollToTop = useCallback(() => {
-    setDirection(DIRECTIONS.TOP_TO_BOTTOM);
+    setDirection(Direction.TopToBottom);
   }, []);
 
-  const onItemsRendered =
-    useCallback(({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
-      setIsOnBottom(visibleStopIndex === (logs.length - 1));
+  const handleItemsRendered = useCallback((
+    { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
+  ) => {
+    setIsOnBottom(visibleStopIndex === (logs.length - 1));
 
-      if (isLoading) return;
-      if (isLastReached) return;
-      if (!listRef?.current) return;
+    if (isLoading) return;
+    if (isLastReached) return;
+    if (!listRef?.current) return;
 
-      const logTimes = logs.map(log => log.time).sort();
+    const logTimes = logs.map(log => log.time).sort();
 
-      // Fetch older log when direction=bottom_to_top and scroll is on top.
-      if (direction === DIRECTIONS.BOTTOM_TO_TOP && visibleStartIndex === 0) {
-        const canceler = fetchAndAppendLogs(direction, {
-          ...filter,
-          timestampBefore: dayjs(logTimes.first()),
-        });
-        return () => canceler.abort();
-      }
+    // Fetch older log when direction=BottomToTop and scroll is on top.
+    if (direction === Direction.BottomToTop && visibleStartIndex === 0) {
+      const canceler = fetchAndAppendLogs(direction, {
+        ...filter,
+        timestampBefore: dayjs(logTimes.first()),
+      });
+      return () => canceler.abort();
+    }
 
-      // Fetch newer log when direction=top_to_bottom and scroll is on bottom.
-      if (direction === DIRECTIONS.TOP_TO_BOTTOM && visibleStopIndex === (logs.length - 1)) {
-        const canceler = fetchAndAppendLogs(direction, {
-          ...filter,
-          timestampAfter: dayjs(logTimes.last()),
-        });
-        return () => canceler.abort();
-      }
-    }, [
-      direction,
-      fetchAndAppendLogs,
-      filter,
-      isLastReached,
-      isLoading,
-      logs,
-    ]);
+    // Fetch newer log when direction=TopToBottom and scroll is on bottom.
+    if (direction === Direction.TopToBottom && visibleStopIndex === (logs.length - 1)) {
+      const canceler = fetchAndAppendLogs(direction, {
+        ...filter,
+        timestampAfter: dayjs(logTimes.last()),
+      });
+      return () => canceler.abort();
+    }
+  }, [
+    direction,
+    fetchAndAppendLogs,
+    filter,
+    isLastReached,
+    isLoading,
+    logs,
+  ]);
+
+  const handleScroll = useCallback((event: ListOnScrollProps) => {
+    if (event.scrollOffset) listOffset.current = event.scrollOffset;
+  }, []);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -292,9 +269,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * newline from that field.
    */
   useLayoutEffect(() => {
-    if (!container.current) return;
+    if (!containerRef.current) return;
 
-    const target = container.current;
+    const target = containerRef.current;
     const handleCopy = (e: ClipboardEvent): void => {
       const clipboardFormat = 'text/plain';
       const levelValues = Object.values(LogLevel).join('|');
@@ -345,7 +322,6 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useEffect(() => {
     clearLogs();
     const canceler = fetchAndAppendLogs(direction, filter);
-
     return () => canceler.abort();
   }, [ clearLogs, direction, fetchAndAppendLogs, filter ]);
 
@@ -353,7 +329,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Fetch Log tail (api follow).
    */
   useEffect(() => {
-    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
+    if (direction !== Direction.BottomToTop || !onFetchLogTail) return;
 
     const canceler = new AbortController();
 
@@ -378,73 +354,88 @@ const LogViewerTimestamp: React.FC<Props> = ({
   }, [ addLogs, direction, fetchToLogConverter, filter, onFetchLogTail ]);
 
   /*
+   * If query param `tail` is set, enable tailing behavior.
+   */
+  useEffect(() => {
+    const { tail } = queryString.parse(location.search);
+    if (tail !== undefined) {
+      setDirection(Direction.BottomToTop);
+      setTimeout(() => {
+        listRef.current?.scrollToItem(logs.length, 'end');
+      }, 0);
+    }
+  }, [ location.search, logs.length ]);
+
+  /*
    * Automatically scroll to log tail (if tailing).
    */
   useLayoutEffect(() => {
     if (!isOnBottom) return;
-    if (!listRef?.current) return;
-    if (direction !== DIRECTIONS.BOTTOM_TO_TOP) return;
+    if (!listRef.current) return;
+    if (direction !== Direction.BottomToTop) return;
 
-    listRef.current.scrollToItem(logs.length);
+    listRef.current.scrollToItem(logs.length, 'end');
   }, [ direction, isOnBottom, listRef, logs ]);
 
   /*
-   * Force recomputing messages height when width changes
+   * Force recomputing messages height when container width changes.
    */
   useLayoutEffect(() => {
-    listRef.current?.resetAfterIndex(0);
-  }, [ listMeasure.width, listRef ]);
+    const ref = listRef.current;
+    ref?.resetAfterIndex(0);
+
+    // Restore the list offset if applicable.
+    if (listOffset.current) {
+      setTimeout(() => ref?.scrollTo(listOffset.current), 0);
+    }
+
+    return () => ref?.resetAfterIndex(0);
+  }, [ containerSize.width, containerSize.height ]);
 
   const logOptions = (
-    <Space>
-      <Tooltip placement="bottomRight" title="Copy to Clipboard">
-        <Button
-          aria-label="Copy to Clipboard"
-          disabled={logs.length === 0}
-          icon={<Icon name="clipboard" />}
-          onClick={handleCopyToClipboard} />
-      </Tooltip>
-      <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
-        <Button
-          aria-label="Toggle Fullscreen Mode"
-          icon={<Icon name="fullscreen" />}
-          onClick={handleFullScreen} />
-      </Tooltip>
-      {onDownloadClick && <Tooltip placement="bottomRight" title="Download Logs">
-        <Button
-          aria-label="Download Logs"
-          icon={<Icon name="download" />}
-          onClick={handleDownload} />
-      </Tooltip>}
-    </Space>
+    <div className={css.options}>
+      <Space>
+        <Tooltip placement="bottomRight" title="Copy to Clipboard">
+          <Button
+            aria-label="Copy to Clipboard"
+            disabled={logs.length === 0}
+            icon={<Icon name="clipboard" />}
+            onClick={handleCopyToClipboard} />
+        </Tooltip>
+        <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
+          <Button
+            aria-label="Toggle Fullscreen Mode"
+            icon={<Icon name="fullscreen" />}
+            onClick={handleFullScreen} />
+        </Tooltip>
+        {onDownloadClick && <Tooltip placement="bottomRight" title="Download Logs">
+          <Button
+            aria-label="Download Logs"
+            icon={<Icon name="download" />}
+            onClick={handleDownload} />
+        </Tooltip>}
+      </Space>
+    </div>
   );
 
   const enableTailingClasses = [ css.enableTailing ];
-  if (isOnBottom && direction === DIRECTIONS.BOTTOM_TO_TOP) enableTailingClasses.push(css.enabled);
+  if (isOnBottom && direction === Direction.BottomToTop) enableTailingClasses.push(css.enabled);
 
-  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => {
-    const log = data[index];
-
-    const messageClasses = [ css.message ];
-    if (log.level) messageClasses.push(css[log.level]);
-
-    return (
-      <div className={css.line} style={style}>
-        <LogViewerLevel logLevel={log.level} />
-        <div className={css.time} style={{ width: dateTimeWidth }}>
-          {log.formattedTime}
-        </div>
-        <div
-          className={messageClasses.join(' ')}
-          dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
-        />
-      </div>
-    );
-  }, [ dateTimeWidth ]);
+  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => (
+    <LogViewerEntry
+      style={{
+        ...style,
+        left: parseFloat(`${style.left}`) + PADDING,
+        paddingTop: index === 0 ? PADDING : 0,
+        width: `calc(100% - ${2 * PADDING}px)`,
+      }}
+      timeStyle={{ width: dateTimeWidth }}
+      {...data[index]}
+    />
+  ), [ dateTimeWidth ]);
 
   return (
     <Section
-      bodyBorder
       bodyNoPadding
       bodyScroll
       filters={FilterComponent && <FilterComponent
@@ -453,19 +444,18 @@ const LogViewerTimestamp: React.FC<Props> = ({
         onChange={setFilter}
       />}
       maxHeight
-      options={logOptions}
-    >
+      options={logOptions}>
       <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={container}>
+        <div className={css.container} ref={containerRef}>
           <VariableSizeList
-            height={listMeasure.height}
+            height={containerSize.height}
             itemCount={logs.length}
             itemData={logs}
             itemSize={getItemHeight}
             ref={listRef}
             width="100%"
-            onItemsRendered={onItemsRendered}
-          >
+            onItemsRendered={handleItemsRendered}
+            onScroll={handleScroll}>
             {LogViewerRow}
           </VariableSizeList>
         </div>
@@ -479,8 +469,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
           </Tooltip>
           <Tooltip
             placement="left"
-            title={direction === DIRECTIONS.BOTTOM_TO_TOP ? 'Tailing Enabled' : 'Enable Tailing'}
-          >
+            title={direction === Direction.BottomToTop ? 'Tailing Enabled' : 'Enable Tailing'}>
             <Button
               aria-label="Enable Tailing"
               className={enableTailingClasses.join(' ')}

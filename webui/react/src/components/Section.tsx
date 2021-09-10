@@ -18,7 +18,7 @@ interface Props {
   loading?: boolean;
   maxHeight?: boolean;
   options?: React.ReactNode;
-  title?: string | React.ReactElement;
+  title?: string | React.ReactNode;
 }
 
 const defaultProps = { divider: false };

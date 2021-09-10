@@ -1,13 +1,13 @@
 .base {
   align-items: center;
   display: flex;
+  width: 100%;
 
   .experiment {
     color: var(--theme-colors-monochrome-17);
     overflow: hidden;
     text-overflow: ellipsis;
     transition: opacity 0.3s;
-    width: 100%;
 
     &:hover {
       color: var(--theme-colors-monochrome-17);

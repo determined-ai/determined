@@ -275,16 +275,23 @@ const ExperimentVisualization: React.FC<Props> = ({
     const alertMessage = `
       Hyperparameter visualizations are not applicable for single trial or PBT experiments.
     `;
-    return <Alert
-      description={<>
-      Learn about&nbsp;
-        <Link
-          external
-          path={paths.docs('/reference/experiment-config.html#searcher')}
-          popout>how to run a hyperparameter search</Link>.
-      </>}
-      message={alertMessage}
-      type="warning" />;
+    return (
+      <div className={css.alert}>
+        <Alert
+          description={(
+            <>
+              Learn about&nbsp;
+              <Link
+                external
+                path={paths.docs('/reference/experiment-config.html#searcher')}
+                popout>how to run a hyperparameter search</Link>.
+            </>
+          )}
+          message={alertMessage}
+          type="warning"
+        />
+      </div>
+    );
   } else if (pageError) {
     return <Message title={PAGE_ERROR_MESSAGES[pageError]} type={MessageType.Alert} />;
   } else if (!hasLoaded && experiment.state !== RunState.Paused) {
@@ -293,7 +300,7 @@ const ExperimentVisualization: React.FC<Props> = ({
     return (isExperimentTerminal || experiment.state === RunState.Paused) ? (
       <Message title="No data to plot." type={MessageType.Empty} />
     ) : (
-      <div className={css.waiting}>
+      <div className={css.alert}>
         <Alert
           description="Please wait until the experiment is further along."
           message="Not enough data points to plot." />
@@ -320,7 +327,6 @@ const ExperimentVisualization: React.FC<Props> = ({
     <div className={css.base}>
       <Tabs
         activeKey={typeKey}
-        className={css.base}
         destroyInactiveTabPane
         type="card"
         onChange={handleTabChange}>

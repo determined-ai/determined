@@ -57,7 +57,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = (
   }, [ basePath, history, tab, tabKey ]);
 
   return (
-    <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
+    <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
       <TabPane key="visualization" tab="Visualization">
         <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
           <ExperimentVisualization

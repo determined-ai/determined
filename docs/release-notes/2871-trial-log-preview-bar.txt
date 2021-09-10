@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Add a log preview bar at the bottom of the trial pages that shows the latest log entry
+   available for the trial. This is applicable to both the single trial experiment and also the
+   trials for a multi-trial experiment. .. image::
+   https://user-images.githubusercontent.com/220971/131391658-4be1a1f4-1d46-4766-a737-7eb8efcb65b4.png

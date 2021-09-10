@@ -40,13 +40,15 @@ const TrialRangeHyperparameters: React.FC<Props> = ({ experiment, trial }: Props
   }, [ experiment.hyperparameters, trial.hyperparameters ]);
 
   return (
-    <Section bodyBorder bodyScroll>
-      <div className={css.container}>
-        {hyperparameters.map(hp => <div key={hp.name}>
-          <HyperparameterRange hp={hp} />
-        </div>)}
-      </div>
-    </Section>
+    <div className={css.base}>
+      <Section bodyBorder bodyScroll>
+        <div className={css.container}>
+          {hyperparameters.map(hp => <div key={hp.name}>
+            <HyperparameterRange hp={hp} />
+          </div>)}
+        </div>
+      </Section>
+    </div>
   );
 };
 

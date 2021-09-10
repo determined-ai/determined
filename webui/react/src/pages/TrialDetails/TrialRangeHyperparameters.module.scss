@@ -1,102 +1,106 @@
-.container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--theme-sizes-layout-large);
-  justify-content: center;
-}
-.hpContainer {
-  align-self: center;
-  display: flex;
-  flex-direction: column;
-  min-width: 200px;
-}
-.title {
-  align-self: center;
-  margin: 0;
-}
-.innerContainer {
-  display: flex;
-  height: 300px;
-  justify-content: center;
-  margin-top: var(--theme-sizes-layout-tiny);
-}
-.valuesTrack {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  justify-content: space-between;
-  max-width: 45%;
-  text-align: right;
-}
-.text {
-  color: black;
-  margin: 0
-}
-.blueTrack,
-.grayTrack,
-.constantTrack {
-  align-self: center;
-  border-radius: 5px;
-  display: flex;
-  flex-direction: column;
-  height: 95%;
-  justify-content: space-between;
-  margin: 0 5px;
-  width: 5px;
-}
-.blueTrack {
-  background-color: var(--theme-colors-action-normal);
-}
-.grayTrack {
-  background-color: lightgray;
-}
-.constantTrack {
-  justify-content: center;
-}
-.trackOption {
-  background-color: var(--theme-colors-action-normal);
-  border-radius: 100%;
-  height: 10px;
-  left: -50%;
-  position: relative;
-  width: 10px;
-}
-.tick {
-  background-color: var(--theme-colors-action-normal);
-  height: 2px;
-  left: -100%;
-  position: relative;
-  width: 15px;
-}
-.pointerTrack {
-  flex-grow: 1;
-  max-width: 45%;
-}
-.pointerContainer {
-  display: flex;
-}
-.pointerArrow {
-  align-self: center;
-  border-color: transparent white transparent transparent;
-  border-style: solid;
-  border-width: 5px 8.7px 5px 0;
-  filter: drop-shadow(-2px 2px 5px gray);
-  height: 0;
-}
-.pointerText {
-  background-color: white;
-  border-radius: 2px;
-  box-shadow: 3px 2px 5px lightgray;
-  padding: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium);
+.base {
+  padding: var(--theme-sizes-layout-big);
 
-  &::after {
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--theme-sizes-layout-large);
+    justify-content: center;
+  }
+  .hpContainer {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+  }
+  .title {
+    align-self: center;
+    margin: 0;
+  }
+  .innerContainer {
+    display: flex;
+    height: 300px;
+    justify-content: center;
+    margin-top: var(--theme-sizes-layout-tiny);
+  }
+  .valuesTrack {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    max-width: 45%;
+    text-align: right;
+  }
+  .text {
+    color: black;
+    margin: 0
+  }
+  .blueTrack,
+  .grayTrack,
+  .constantTrack {
+    align-self: center;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+    justify-content: space-between;
+    margin: 0 5px;
+    width: 5px;
+  }
+  .blueTrack {
+    background-color: var(--theme-colors-action-normal);
+  }
+  .grayTrack {
+    background-color: lightgray;
+  }
+  .constantTrack {
+    justify-content: center;
+  }
+  .trackOption {
+    background-color: var(--theme-colors-action-normal);
+    border-radius: 100%;
+    height: 10px;
+    left: -50%;
+    position: relative;
+    width: 10px;
+  }
+  .tick {
+    background-color: var(--theme-colors-action-normal);
+    height: 2px;
+    left: -100%;
+    position: relative;
+    width: 15px;
+  }
+  .pointerTrack {
+    flex-grow: 1;
+    max-width: 45%;
+  }
+  .pointerContainer {
+    display: flex;
+  }
+  .pointerArrow {
+    align-self: center;
+    border-color: transparent white transparent transparent;
+    border-style: solid;
+    border-width: 5px 8.7px 5px 0;
+    filter: drop-shadow(-2px 2px 5px gray);
+    height: 0;
+  }
+  .pointerText {
     background-color: white;
     border-radius: 2px;
-    content: '';
-    height: 100%;
-    left: 8.5px;
-    position: absolute;
-    top: 0;
-    width: 8px;
+    box-shadow: 3px 2px 5px lightgray;
+    padding: var(--theme-sizes-layout-micro) var(--theme-sizes-layout-medium);
+
+    &::after {
+      background-color: white;
+      border-radius: 2px;
+      content: '';
+      height: 100%;
+      left: 8.5px;
+      position: absolute;
+      top: 0;
+      width: 8px;
+    }
   }
 }

@@ -16,6 +16,11 @@
     width: 100%;
   }
 }
+.bodyNoPadding {
+  .body {
+    padding: 0;
+  }
+}
 .stickyHeader {
   overflow: inherit;
 
