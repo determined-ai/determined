@@ -1,8 +1,8 @@
 import { Modal } from 'antd';
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import { paths } from 'routes/utils';
 import { CheckpointDetail, CheckpointStorageType, CheckpointWorkload, CheckpointWorkloadExtended,
   ExperimentConfig, RunState } from 'types';

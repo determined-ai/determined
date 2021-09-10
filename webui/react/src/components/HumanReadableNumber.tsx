@@ -4,7 +4,7 @@ import React from 'react';
 import { CommonProps } from 'types';
 
 interface Props extends CommonProps {
-  num: number;
+  num?: number | null;
   precision?: number;
   tooltipPrefix?: string;
 }
@@ -14,6 +14,8 @@ const HumanReadableNumber: React.FC<Props> = ({
   precision = 6,
   tooltipPrefix = '',
 }: Props) => {
+  if (num == null) return null;
+
   const stringNum = num.toString();
   let content: string = stringNum;
 

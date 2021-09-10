@@ -1,6 +1,6 @@
-import HumanReadableNumber from 'components/HumanReadableNumber';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -83,7 +83,7 @@ const HpTrialTable: React.FC<Props> = ({
     const idColumn = { key: 'id', render: idRenderer, sorter: idSorter, title: 'Trial ID' };
 
     const metricRenderer = (_: string, record: TrialHParams) => {
-      return record.metric ? <HumanReadableNumber num={record.metric} /> : null;
+      return <HumanReadableNumber num={record.metric} />;
     };
     const metricSorter = (recordA: TrialHParams, recordB: TrialHParams): number => {
       return numericSorter(recordA.metric || undefined, recordB.metric || undefined);
