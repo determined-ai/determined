@@ -14,17 +14,19 @@ export enum MessageType {
 
 interface Props {
   message?: string;
+  style?: React.CSSProperties;
   title: string;
   type?: MessageType;
 }
 
 const Message: React.FC<Props> = ({
   message,
+  style,
   title,
   type = MessageType.Alert,
 }: Props) => {
   return (
-    <div className={css.base}>
+    <div className={css.base} style={style}>
       {type === MessageType.Empty && Empty.PRESENTED_IMAGE_SIMPLE}
       {type === MessageType.Alert && <img src={iconAlert} />}
       {type === MessageType.Warning && <img src={iconWarning} />}

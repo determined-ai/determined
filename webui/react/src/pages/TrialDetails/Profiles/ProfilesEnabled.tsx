@@ -16,7 +16,7 @@ import css from './ProfilesEnabled.module.scss';
 import { MetricType } from './types';
 
 const CHART_HEIGHT = 300;
-const CHART_STYLE: React.CSSProperties = { paddingBottom: 16 };
+const CHART_STYLE: React.CSSProperties = { height: '100%', paddingBottom: 16 };
 
 /*
  * Shared uPlot chart options.
@@ -182,7 +182,7 @@ const ProfilesEnabled: React.FC = () => {
   }
 
   return (
-    <div className={css.base} ref={containerRef}>
+    <div ref={containerRef}>
       <Section
         bodyBorder
         bodyNoPadding
