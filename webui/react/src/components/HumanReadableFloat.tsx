@@ -9,19 +9,18 @@ interface Props extends CommonProps {
   tooltipPrefix?: string;
 }
 
-const defaultProps: Props = {
-  num: 0,
-  precision: 6,
-};
-
-const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix = '' }: Props) => {
-  const isInteger = Number.isInteger(num);
-  const absoluteNum = Math.abs(num);
+const HumanReadableFloat: React.FC<Props> = ({ num, precision = 6, tooltipPrefix = '' }: Props) => {
   const stringNum = num.toString();
   let content: string = stringNum;
 
-  if (!isInteger) {
+  if (isNaN(num)) {
+    content = 'NaN';
+  } else if (!Number.isFinite(num)) {
+    content = `${num < 0 ? '-' : ''}Infinity`;
+  } else if (!Number.isInteger(num)) {
     content = num.toFixed(precision);
+
+    const absoluteNum = Math.abs(num);
     if (absoluteNum < 0.01 || absoluteNum > 999) {
       content = num.toExponential(precision);
     }
@@ -33,7 +32,5 @@ const HumanReadableFloat: React.FC<Props> = ({ num, precision, tooltipPrefix = '
     </Tooltip>
   );
 };
-
-HumanReadableFloat.defaultProps = defaultProps;
 
 export default HumanReadableFloat;
