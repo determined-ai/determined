@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import sys
@@ -9,9 +8,12 @@ import boto3
 import requests
 
 
-def set_s3_region(bucket: str) -> None:
-    endpoint_url = os.environ.get("DET_S3_ENDPOINT", None)
+def set_s3_region() -> None:
+    bucket = os.environ.get("AWS_BUCKET")
+    if bucket is None:
+        return
 
+    endpoint_url = os.environ.get("DET_S3_ENDPOINT_URL", None)
     client = boto3.client("s3", endpoint_url=endpoint_url)
     bucketLocation = client.get_bucket_location(Bucket=bucket)
 
@@ -60,31 +62,6 @@ def wait_for_tensorboard(max_seconds: float, url: str, still_alive_fn: Callable[
             if len(val):
                 print("TensorBoard contains metrics")
                 return True
-
-
-def main(args: List[str]) -> int:
-    with open("/run/determined/workdir/experiment_config.json") as f:
-        exp_conf = json.load(f)
-
-    if exp_conf["checkpoint_storage"]["type"] == "s3":
-        set_s3_region(exp_conf["checkpoint_storage"]["bucket"])
-
-    task_id = os.environ["DET_TASK_ID"]
-    port = os.environ["TENSORBOARD_PORT"]
-    tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
-    url = f"{tensorboard_addr}/data/plugin/scalars/tags"
-    tensorboard_args = get_tensorboard_args(args)
-
-    print(f"Running: {tensorboard_args}")
-    p = subprocess.Popen(tensorboard_args)
-
-    def still_alive() -> bool:
-        return p.poll() is None
-
-    if not wait_for_tensorboard(600, url, still_alive):
-        p.kill()
-
-    return p.wait()
 
 
 def get_tensorboard_version(version: str) -> Tuple[str, str]:
@@ -142,6 +119,27 @@ def get_tensorboard_args(args: List[str]) -> List[str]:
 
     tensorboard_args.append(f"--logdir={logdir}")
     return tensorboard_args
+
+
+def main(args: List[str]) -> int:
+    set_s3_region()
+
+    task_id = os.environ["DET_TASK_ID"]
+    port = os.environ["TENSORBOARD_PORT"]
+    tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
+    url = f"{tensorboard_addr}/data/plugin/scalars/tags"
+    tensorboard_args = get_tensorboard_args(args)
+
+    print(f"Running: {tensorboard_args}")
+    p = subprocess.Popen(tensorboard_args)
+
+    def still_alive() -> bool:
+        return p.poll() is None
+
+    if not wait_for_tensorboard(600, url, still_alive):
+        p.kill()
+
+    return p.wait()
 
 
 if __name__ == "__main__":
