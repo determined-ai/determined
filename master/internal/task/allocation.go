@@ -522,17 +522,20 @@ func (a *Allocation) registerProxies(ctx *actor.Context, msg sproto.TaskContaine
 }
 
 func (a *Allocation) unregisterProxies(ctx *actor.Context) {
-	if cfg := a.req.ProxyPort; cfg != nil {
-		if len(a.reservations) > 1 {
-			// Can't proxy more than one reservation, so we never would've made them.
-			return
-		}
+	cfg := a.req.ProxyPort
+	if cfg == nil {
+		return
+	}
 
-		for _, serviceID := range a.proxies {
-			ctx.Tell(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Unregister{
-				ServiceID: serviceID,
-			})
-		}
+	if len(a.reservations) > 1 {
+		// Can't proxy more than one reservation, so we never would've made them.
+		return
+	}
+
+	for _, serviceID := range a.proxies {
+		ctx.Tell(ctx.Self().System().Get(actor.Addr("proxy")), proxy.Unregister{
+			ServiceID: serviceID,
+		})
 	}
 }
 
