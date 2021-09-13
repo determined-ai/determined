@@ -513,7 +513,7 @@ def verify_completed_experiment_metadata(
         assert len(trial["steps"]) > 0
 
         # Check that batches appear in increasing order.
-        batch_ids = [s["id"] for s in trial["total_batches"]]
+        batch_ids = [s["total_batches"] for s in trial["steps"]]
         assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
         for step in trial["steps"]:
