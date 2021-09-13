@@ -15,7 +15,7 @@ allocs_in_range AS (
             FROM
                 -- `*` computes the intersection of the two ranges.
                 upper(const.period * a.range) - lower(const.period * a.range)
-        ) * (a.slots) :: float AS seconds
+        ) * a.slots :: float AS seconds
     FROM
         (
             SELECT
@@ -28,7 +28,6 @@ allocs_in_range AS (
     WHERE
         -- `&&` determines whether the ranges overlap.
         const.period && a.range
-        AND upper(a.range) IS NOT NULL
 ),
 user_agg AS (
     SELECT

@@ -6,7 +6,7 @@ SET
 INSERT INTO
     tasks (
         SELECT
-            'backported.' || t.id :: text AS task_id,
+            t.task_id,
             'TRIAL' AS task_type,
             -- Tasks are inserted when trial_id is not set, so we won't conflict trials with steps.
             t.start_time AS start_time
@@ -20,16 +20,16 @@ WITH today AS (
 ),
 const AS (
     SELECT
-        tstzrange(today.ts, (today.ts + interval '1 day')) AS period
+        tstzrange(today.ts, today.ts + interval '1 day') AS period
     FROM
         today
 )
 INSERT INTO
     allocations (
         SELECT
-            -- Make the trial ID _some_ predefined well know string so we can link public.trials easily.
-            'backported.' || t.id :: text AS task_id,
-            'backported.' || t.id :: text || '.' || all_workloads.kind || '.' || all_workloads.id :: text AS allocation_id,
+            -- Make the trial ID _some_ predefined well-known string so we can link public.trials easily.
+            t.task_id,
+            t.task_id || '.' || all_workloads.kind || '.' || all_workloads.id :: text AS allocation_id,
             coalesce(
                 e.config #>> '{resources, resource_pool}',
                 'default'
