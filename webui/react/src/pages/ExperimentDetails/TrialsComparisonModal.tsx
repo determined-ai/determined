@@ -1,4 +1,4 @@
-import { Select, Tag } from 'antd';
+import { Select, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -15,6 +15,7 @@ import { getTrialDetails } from 'services/api';
 import {
   CheckpointState, CheckpointWorkload, ExperimentBase, MetricName, MetricsWorkload, TrialDetails,
 } from 'types';
+import { isNumber } from 'utils/data';
 import { humanReadableBytes } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { extractMetricNames, trialDurations, TrialDurations } from 'utils/trial';
@@ -286,13 +287,17 @@ const TrialsComparisonTable: React.FC<TableProps> = (
           {selectedHyperparameters.map(hp => (
             <div className={css.row} key={hp}>
               <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>{hp}</div>
-              {trials.map(trialId => (
-                <div className={css.cell} key={trialId}>
-                  <HumanReadableNumber
-                    num={parseFloat(JSON.stringify(trialsDetails[trialId].hyperparameters[hp]))}
-                  />
-                </div>
-              ))}
+              {trials.map(trialId => {
+                const value = trialsDetails[trialId].hyperparameters[hp];
+                const stringValue = JSON.stringify(value);
+                return (
+                  <div className={css.cell} key={trialId}>
+                    {isNumber(value) ? <HumanReadableNumber num={value} /> : (
+                      <Tooltip title={stringValue}>{stringValue}</Tooltip>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </>
