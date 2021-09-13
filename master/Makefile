@@ -52,7 +52,7 @@ get-deps:
 	# For hyperparameter importance computation
 	go get github.com/ryanbressler/CloudForest
 	go install github.com/ryanbressler/CloudForest/growforest
-	go get github.com/vektra/mockery/v2/.../
+	go get github.com/vektra/mockery/v2/.../@v2.9.2
 
 .PHONY: build
 build: gen
