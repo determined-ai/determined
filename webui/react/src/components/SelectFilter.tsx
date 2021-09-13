@@ -74,8 +74,6 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
     return isOpen ? [ 0, '' ] : [ 0, placeholder ];
   }, [ disableTags, isOpen, optionsCount, props.maxTagPlaceholder, props.value ]);
 
-  const getPopupContainer = useCallback((triggerNode) => triggerNode, []);
-
   const handleDropdownVisibleChange = useCallback((open: boolean) => {
     setIsOpen(open);
   }, []);
@@ -106,7 +104,6 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = forwardRef(function Sel
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
         filterOption={enableSearchFilter ? handleFilter : true}
-        getPopupContainer={getPopupContainer}
         maxTagCount={maxTagCount}
         maxTagPlaceholder={maxTagPlaceholder}
         ref={ref}
