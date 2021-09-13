@@ -1,5 +1,4 @@
 import { MetricName, MetricType, WorkloadWrapper } from 'types';
-import { isNumber } from 'utils/data';
 import { metricNameSorter } from 'utils/sort';
 
 import handleError, { DaError, ErrorLevel, ErrorType } from '../ErrorHandler';
@@ -16,7 +15,7 @@ export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] =
       return acc;
     }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
 
-  const trainingMetrics: MetricName[]= Array.from(trainingNames).map(name => ({
+  const trainingMetrics: MetricName[] = Array.from(trainingNames).map(name => ({
     name,
     type: MetricType.Training,
   }));
@@ -30,7 +29,7 @@ export const extractMetricNames = (workloads: WorkloadWrapper[]): MetricName[] =
       return acc;
     }, new Set<string>()) as Set<string>; // this "as" shouldn't be needed.
 
-  const validationMetrics: MetricName[]= Array.from(validationNames).map(name => ({
+  const validationMetrics: MetricName[] = Array.from(validationNames).map(name => ({
     name,
     type: MetricType.Validation,
   }));
@@ -45,10 +44,9 @@ export const extractMetricValue = (
   wl: WorkloadWrapper,
   metricName: MetricName,
 ): number | undefined => {
-  const source = (metricName.type === MetricType.Training
-    ? wl.training?.metrics : wl.validation?.metrics) || {};
-  if (isNumber(source[metricName.name])) return source[metricName.name];
-  return undefined;
+  const isTrainingMetric = metricName.type === MetricType.Training;
+  const source = (isTrainingMetric ? wl.training?.metrics : wl.validation?.metrics) ?? {};
+  return source[metricName.name];
 };
 
 export const metricNameFromValue = (metricValue: string): MetricName | undefined => {

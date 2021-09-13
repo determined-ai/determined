@@ -1,0 +1,5 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Add support for displaying NaN and Infinity metric values.

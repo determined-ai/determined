@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
-import HumanReadableFloat from 'components/HumanReadableFloat';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -88,7 +88,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         const value = getMetricValue((record as any)[key], metric);
-        return value && <HumanReadableFloat num={value} />;
+        return <HumanReadableNumber num={value} />;
       };
     };
 
