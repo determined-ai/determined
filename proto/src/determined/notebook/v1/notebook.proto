@@ -43,6 +43,5 @@ message Notebook {
   // The exit status.
   string exit_status = 13;
   // The associated job summary.
-  // TODO apply to the rest of NTbCS
   determined.job.v1.JobSummary job_summary = 14;
 }
