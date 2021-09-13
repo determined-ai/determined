@@ -384,7 +384,7 @@ func (c *command) terminate(ctx *actor.Context) {
 	if c.reservation == nil {
 		c.exit(ctx, "task is aborted without being scheduled")
 	} else {
-		ctx.Log().Info("task forcible terminating")
+		ctx.Log().Info("task forcibly terminating")
 		c.reservation.Kill(ctx)
 	}
 }
