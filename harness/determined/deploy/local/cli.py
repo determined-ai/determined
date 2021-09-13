@@ -3,14 +3,10 @@ import sys
 from pathlib import Path
 from typing import Callable, Dict
 
-import appdirs
-
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 from . import cluster_utils
 from .preflight import check_docker_install
-
-DEFAULT_STORAGE_HOST_PATH = Path(appdirs.user_data_dir("determined"))
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
@@ -29,6 +25,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
+        auto_work_dir=args.auto_work_dir,
     )
 
 
@@ -52,6 +49,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
         cluster_name=args.cluster_name,
+        auto_work_dir=args.auto_work_dir,
     )
 
 
@@ -115,7 +113,7 @@ args_description = Cmd(
                     Arg(
                         "--storage-host-path",
                         type=Path,
-                        default=DEFAULT_STORAGE_HOST_PATH,
+                        default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
@@ -157,6 +155,12 @@ args_description = Cmd(
                     help="disable container auto-restart (recommended for local development)",
                     action="store_true",
                 ),
+                Arg(
+                    "--auto-work-dir",
+                    type=Path,
+                    default=None,
+                    help="the default work dir, used for interactive jobs",
+                ),
             ],
         ),
         Cmd(
@@ -192,7 +196,7 @@ args_description = Cmd(
                     Arg(
                         "--storage-host-path",
                         type=str,
-                        default=DEFAULT_STORAGE_HOST_PATH,
+                        default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
@@ -225,6 +229,12 @@ args_description = Cmd(
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
+                ),
+                Arg(
+                    "--auto-work-dir",
+                    type=Path,
+                    default=None,
+                    help="the default work dir, used for interactive jobs",
                 ),
             ],
         ),
