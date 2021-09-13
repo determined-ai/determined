@@ -193,89 +193,105 @@ const TrialsComparisonTable: React.FC<TableProps> = (
     <div className={css.base}>
       {isLoaded ? (
         <>
-          <div className={css.idRow}>
-            <div />
-            {trials.map(trial => (
-              <Tag
-                className={[ css.trialTag, css.centerVertically ].join(' ')}
-                closable
-                key={trial}
-                onClose={() => handleTrialUnselect(trial)}>
-                <Link path={paths.trialDetails(trial, experiment.id)}>Trial {trial}</Link>
-              </Tag>
+          <div className={[ css.row, css.header, css.sticky ].join(' ')}>
+            <div className={[ css.cell, css.blank, css.header, css.sticky ].join(' ')} />
+            {trials.map(trialId => (
+              <div className={css.cell} key={trialId}>
+                <Tag
+                  className={css.trialTag}
+                  closable
+                  onClose={() => handleTrialUnselect(trialId)}>
+                  <Link path={paths.trialDetails(trialId, experiment.id)}>Trial {trialId}</Link>
+                </Tag>
+              </div>
             ))}
           </div>
           <div className={css.row}>
-            <h3>State</h3>
+            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>State</div>
             {trials.map(trial => (
-              <div className={css.centerVertically} key={trial}>
+              <div className={css.cell} key={trial}>
                 <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
               </div>
             ))}
           </div>
           <div className={css.row}>
-            <h3>Training Time</h3>
+            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+              Training Time
+            </div>
             {trials.map(trial => (
-              <div key={trial}>{shortEnglishHumannizer(durations[trial]?.train)}</div>
+              <div className={css.cell} key={trial}>
+                {shortEnglishHumannizer(durations[trial]?.train)}
+              </div>
             ))}
           </div>
           <div className={css.row}>
-            <h3>Batches Processed</h3>
-            {trials.map(trial =>
-              <div key={trial}>{trialsDetails[trial].totalBatchesProcessed}</div>)}
+            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+              Batched Processed
+            </div>
+            {trials.map(trialId => (
+              <div className={css.cell} key={trialId}>
+                {trialsDetails[trialId].totalBatchesProcessed}
+              </div>
+            ))}
           </div>
           <div className={css.row}>
-            <h3>Total Checkpoint Size</h3>
-            {trials.map(trial => <div key={trial}>{totalCheckpointsSizes[trial]}</div>)}
+            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+              Total Checkpoint Size
+            </div>
+            {trials.map(trialId => (
+              <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId]}</div>
+            ))}
           </div>
-          <div className={css.headerRow}>
-            <h2>Metrics</h2>
-            <MetricSelectFilter
-              defaultMetricNames={metricNames}
-              label=""
-              metricNames={metricNames}
-              multiple
-              value={selectedMetrics}
-              onChange={onMetricSelect}
-            />
-            {Array(trials.length-1).fill(null).map((_, idx) => <div key={idx} />)}
+          <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
+            <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
+              Metrics
+              <MetricSelectFilter
+                defaultMetricNames={metricNames}
+                label=""
+                metricNames={metricNames}
+                multiple
+                value={selectedMetrics}
+                onChange={onMetricSelect}
+              />
+            </div>
           </div>
           {metricNames.filter(metric => selectedMetrics.map(m => m.name)
             .includes(metric.name)).map(metric => (
             <div className={css.row} key={metric.name}>
-              <h3><MetricBadgeTag metric={metric} /></h3>
-              {trials.map(trial => metrics[trial][metric.name] ? (
-                <div><HumanReadableFloat key={trial} num={metrics[trial][metric.name]} /></div>
-              ) : <div />)}
+              <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+                <MetricBadgeTag metric={metric} />
+              </div>
+              {trials.map(trialId => (
+                <div className={css.cell} key={trialId}>
+                  <HumanReadableNumber num={metrics[trialId][metric.name]} />
+                </div>
+              ))}
             </div>
           ))}
-          <div className={css.headerRow}><h2>Hyperparameters</h2>
-            <SelectFilter
-              disableTags
-              dropdownMatchSelectWidth={200}
-              label=""
-              mode="multiple"
-              showArrow
-              value={selectedHyperparameters}
-              onChange={onHyperparameterSelect}>
-              {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
-            </SelectFilter>
-            {Array(trials.length-1).fill(null).map((_, idx) => <div key={idx} />)}
+          <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
+            <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
+              Hyperparameters
+              <SelectFilter
+                disableTags
+                dropdownMatchSelectWidth={200}
+                label=""
+                mode="multiple"
+                showArrow
+                value={selectedHyperparameters}
+                onChange={onHyperparameterSelect}>
+                {hyperparameterNames.map(hp => <Option key={hp} value={hp}>{hp}</Option>)}
+              </SelectFilter>
+            </div>
           </div>
           {selectedHyperparameters.map(hp => (
             <div className={css.row} key={hp}>
-              <h3>{hp}</h3>
-              {trials.map(trial => (
-                !isNaN(parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))) ? (
-                  <div>
-                    <HumanReadableFloat
-                      key={trial}
-                      num={parseFloat(JSON.stringify(trialsDetails[trial].hyperparameters[hp]))}
-                    />
-                  </div>
-                ) : (
-                  <div>{String(trialsDetails[trial].hyperparameters[hp])}</div>
-                )
+              <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>{hp}</div>
+              {trials.map(trialId => (
+                <div className={css.cell} key={trialId}>
+                  <HumanReadableNumber
+                    num={parseFloat(JSON.stringify(trialsDetails[trialId].hyperparameters[hp]))}
+                  />
+                </div>
               ))}
             </div>
           ))}
