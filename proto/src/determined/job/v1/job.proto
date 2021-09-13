@@ -7,21 +7,30 @@ import "google/protobuf/timestamp.proto";
 
 // Job type.
 enum Type {
-  TYPE_EXPERIMENT  = 0;
-  TYPE_NOTEBOOK    = 1;
-  TYPE_TENSORBOARD = 2;
-  TYPE_SHELL       = 3;
-  TYPE_COMMAND     = 4;
+  // Unspecified state.
+  TYPE_UNSPECIFIED = 0;
+  // Experiement Job.
+  TYPE_EXPERIMENT = 1;
+  // Jupyter Notebook Job.
+  TYPE_NOTEBOOK = 2;
+  // TensorBoard Job.
+  TYPE_TENSORBOARD = 3;
+  // Shell Job.
+  TYPE_SHELL = 4;
+  // Command Job.
+  TYPE_COMMAND = 5;
 }
 
 // Job state.
 enum State {
+  // Unspecified state.
+  STATE_UNSPECIFIED = 0;
   // Job is queued and waiting to be schedlued.
-  STATE_QUEUED = 0;
+  STATE_QUEUED = 1;
   // Job is scheduled.
-  STATE_SCHEDULED = 1;
+  STATE_SCHEDULED = 2;
   // Job is scheduled as a backfill.
-  STATE_SCHEDULED_BACKFILLED = 2;
+  STATE_SCHEDULED_BACKFILLED = 3;
 }
 
 // Job summary.
@@ -41,7 +50,8 @@ message Job {
   // Job summary.
   JobSummary summary = 1;
   // Job type.
-  Type type                                 = 2;
+  Type type = 2;
+  // The time when the job was submitted by the user.
   google.protobuf.Timestamp submission_time = 3;
   // The username of the user who submitted the job.
   string user = 4;

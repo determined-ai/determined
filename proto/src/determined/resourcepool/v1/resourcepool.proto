@@ -318,8 +318,10 @@ message ResourcePoolGcpDetail {
 
 // A kubernetes priority class
 message K8PriorityClass {
+  // Priority class name.
   string priority_class = 1;
-  int32 priority_value  = 2;
+  // Priority class value.
+  int32 priority_value = 2;
 }
 
 // Details related to the priority scheduler. This will only be present if the
