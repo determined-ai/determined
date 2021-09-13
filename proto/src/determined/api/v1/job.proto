@@ -40,8 +40,6 @@ message UpdateJobQueueRequest {
 // Response to UpdateJobQueueRequest.
 message UpdateJobQueueResponse {}
 
-// TODO the following feels like it could sit under resource pools
-
 // Job stats for a resource pool
 message RPQueueStat {
   // Job queue stats.

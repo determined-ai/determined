@@ -35,10 +35,8 @@ message JobSummary {
   int32 queue_position = 3;
 }
 
-// TODO should this represent a scheduled job or any job?
-// What would queue position be for scheduled jobs. Would it
-// stay with the job until it's in a terminal state?
-// this could incorporate JobSummary somehow
+// Job represents a user submitted work that is not in a terminal
+// state.
 message Job {
   // Job summary.
   JobSummary summary = 1;
@@ -59,12 +57,13 @@ message QueueControl {
   string job_id        = 1;
   int32 queue_position = 2;
   // Name of the target resource_pool to move the job to.
-  // TODO we don't want to allow this to be set at the same time as the other
-  // fields.. should we do a one_of type?
+  // TODO one of type
   string resource_pool = 3;
-  // TODO same with priority and weight. only one of these two can be specified
-  // at a time. based on the scheduler. maybe a unitless scheduling value?
+  // The desired job priority in priority scheduler.
+  // This cannot be set at the same time as weight.
   int32 priority = 4;
+  // The desired job weight in fairshare scheduler.
+  // This cannot be set at the same time as priority.
   int32 weight   = 5;
 }
 
