@@ -177,7 +177,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
       fields={field}
       onFieldsChange={handleConfigChange}>
       <div className={css.note}>
-        <Link external path="/docs/reference/command-notebook-config.html">
+        <Link external path="/docs/reference/api/command-notebook-config.html">
         Read about notebook settings
         </Link>
       </div>
