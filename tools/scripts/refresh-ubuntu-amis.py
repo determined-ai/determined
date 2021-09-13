@@ -77,14 +77,14 @@ if __name__ == "__main__":
 
     for image_type, subconf in conf.items():
         if image_type.endswith("_master_ami"):
-            region = image_type.rstrip("_master_ami").replace("_", "-")
+            region = image_type[: -len("_master_ami")].replace("_", "-")
             # Master AMIs are based on Focal.
             new_ami = get_ubuntu_ami("focal", region)
             if new_ami is not None:
                 update_tag_for_image_type(subconf, new_ami)
 
         if image_type.endswith("_bastion_ami"):
-            region = image_type.rstrip("_bastion_ami").replace("_", "-")
+            region = image_type[: -len("_bastion_ami")].replace("_", "-")
             # Bastion AMIs are based on Focal.
             new_ami = get_ubuntu_ami("focal", region)
             if new_ami is not None:
