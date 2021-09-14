@@ -4,7 +4,6 @@ from typing import Any, Optional
 
 import determined as det
 from determined import _generic, horovod, profiler, workload
-from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 from determined.horovod import hvd
 
@@ -19,7 +18,7 @@ class TrialController(metaclass=abc.ABCMeta):
         self,
         context: Any,
         env: det.EnvContext,
-        rendezvous_info: RendezvousInfo,
+        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> None:
@@ -32,7 +31,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
-            rendezvous_info.get_rank(),
+            rendezvous_info.container_rank,
             context.distributed.get_rank(),
         )
 
@@ -69,7 +68,7 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        rendezvous_info: RendezvousInfo,
+        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> "TrialController":

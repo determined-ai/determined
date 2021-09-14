@@ -38,7 +38,8 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	if ports == nil {
 		ports = make(map[string]int)
 	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
+	// TODO: remove this, but without breaking rendezvous api.
+	ports["trial"] = 1734
 	env.SetPorts(ports)
 	res.Environment = env
 
@@ -99,18 +100,16 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
 
-	portOffset := trialUniquePortOffset(s.Base.Devices)
-	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
-		"DET_EXPERIMENT_ID":            strconv.Itoa(s.ExperimentID),
-		"DET_TRIAL_ID":                 strconv.Itoa(s.TrialID),
-		"DET_TRIAL_RUN_ID":             strconv.Itoa(s.TrialRunID),
-		"DET_TRIAL_SEED":               strconv.FormatUint(uint64(s.TrialSeed), 10),
-		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
-		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_LATEST_BATCH":             strconv.Itoa(s.LatestBatch),
-		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
-		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
+		"DET_EXPERIMENT_ID":      strconv.Itoa(s.ExperimentID),
+		"DET_TRIAL_ID":           strconv.Itoa(s.TrialID),
+		"DET_TRIAL_RUN_ID":       strconv.Itoa(s.TrialRunID),
+		"DET_TRIAL_SEED":         strconv.FormatUint(uint64(s.TrialSeed), 10),
+		"DET_EXPERIMENT_CONFIG":  jsonify(s.ExperimentConfig),
+		"DET_HPARAMS":            jsonify(s.HParams),
+		"DET_LATEST_BATCH":       strconv.Itoa(s.LatestBatch),
+		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
+		"DET_TASK_TYPE":          model.TaskTypeTrial,
 	}
 	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
 		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID

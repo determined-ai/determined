@@ -276,7 +276,7 @@ func (r *Rendezvous) info() ([]cAddress, []string, error) {
 		}
 
 		if len(addrs) == 1 {
-			raddrs = append(raddrs, formatAddress(addrs[0]))
+			raddrs = append(raddrs, addrs[0].HostIP)
 		} else {
 			err = multierror.Append(err, fmt.Errorf(
 				"found %d rendezvous addresses instead of 1 for container %s; dropping rendezvous addresses %v",
@@ -284,8 +284,4 @@ func (r *Rendezvous) info() ([]cAddress, []string, error) {
 		}
 	}
 	return caddrs, raddrs, err.ErrorOrNil()
-}
-
-func formatAddress(p cproto.Address) string {
-	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
 }

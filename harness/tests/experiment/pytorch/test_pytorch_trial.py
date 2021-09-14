@@ -113,7 +113,6 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.usefixtures("expose_gpus")
     def test_xor_nonscalar_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
@@ -130,6 +129,7 @@ class TestPyTorchTrial:
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
+            expose_gpus=True,
         )
         controller.run()
 
@@ -210,7 +210,6 @@ class TestPyTorchTrial:
 
         utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
 
-    @pytest.mark.usefixtures("expose_gpus")
     def test_custom_eval(self) -> None:
         training_metrics = {}
         validation_metrics = {}
@@ -236,6 +235,7 @@ class TestPyTorchTrial:
             hparams=self.hparams,
             workloads=make_workloads("B"),
             trial_seed=self.trial_seed,
+            expose_gpus=True,
         )
         controller.run()
 
