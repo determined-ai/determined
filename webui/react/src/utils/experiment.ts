@@ -1,7 +1,8 @@
 import {
-  ExperimentBase, ExperimentSearcherName, HyperparameterBase,
-  Hyperparameters, HyperparameterType, TrialHyperparameters,
+  ExperimentBase, ExperimentSearcherName, Hyperparameters, HyperparameterType, TrialHyperparameters,
 } from 'types';
+
+import { unflattenObject } from './data';
 
 export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => {
   return experiment?.config.searcher.name === ExperimentSearcherName.Single
@@ -11,22 +12,14 @@ export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => 
 export const trialHParamsToExperimentHParams = (
   trialHParams: TrialHyperparameters,
 ): Hyperparameters => {
-  const experimentHParams: Hyperparameters = {};
-  Object.entries(trialHParams).forEach(([ paramPath, value ]) => {
-    let key = paramPath;
-    let matches = key.match(/^([^.]+)\.(.+)$/);
-    let pathRef: Hyperparameters | HyperparameterBase = experimentHParams;
-    while (matches?.length === 3) {
-      const prefix = matches[1];
-      key = matches[2];
-      (pathRef as Hyperparameters)[prefix] = (pathRef as Hyperparameters)[prefix] ?? {};
-      pathRef = (pathRef as Hyperparameters)[prefix];
-      matches = key.match(/^([^.]+)\.(.+)$/);
-    }
-    (pathRef as Hyperparameters)[key] = {
-      type: HyperparameterType.Constant,
-      val: value as number,
+  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
+    return {
+      ...acc,
+      [key]: {
+        type: HyperparameterType.Constant,
+        val: trialHParams[key] as number,
+      },
     };
-  });
-  return experimentHParams;
+  }, {} as Record<keyof TrialHyperparameters, unknown>);
+  return unflattenObject(hParams) as Hyperparameters;
 };
