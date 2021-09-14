@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
 import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
-import { flattenHyperparameters } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -262,14 +261,16 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeGetV1ExperimentRespToExperimentBase = (
+export const mapV1GetExperimentResponse = (
   { experiment: exp, config }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
-  const hyperparameters = flattenHyperparameters(
-    ioConfig.hyperparameters as types.Hyperparameters,
-  );
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    ioConfig.hyperparameters,
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   return {
     archived: exp.archived,
     config: ioToExperimentConfig(ioConfig),
