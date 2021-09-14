@@ -17,6 +17,7 @@ import {
   isSet,
   isSyncFunction,
   setPathList,
+  unflattenObject,
 } from './data';
 
 enum Type {
@@ -63,7 +64,7 @@ const asyncFn = async (): Promise<boolean> => {
 const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
 
 describe('data utility', () => {
-  describe('flattenObject', () => {
+  describe('flattenObject and unflattenObject', () => {
     const continueFn = (value: unknown) => !(value as { type: string }).type;
     const tests = [
       {
@@ -124,6 +125,11 @@ describe('data utility', () => {
     it('should flatten object', () => {
       tests.forEach(test => {
         expect(flattenObject(test.input, test.options)).toStrictEqual(test.output);
+      });
+    });
+    it('should unflatten object', () => {
+      tests.forEach(test => {
+        expect(unflattenObject(test.output, test.options?.delimiter)).toStrictEqual(test.input);
       });
     });
   });

@@ -50,6 +50,29 @@ export const flattenObject = <T = Primitive>(
   }, {} as Record<RecordKey, T>);
 };
 
+export const unflattenObject = <T = unknown>(
+  object: Record<RecordKey, T>,
+  delimiter = '.',
+): UnknownRecord => {
+  const unflattened: UnknownRecord = {};
+  const regexSafeDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`^(.+?)${regexSafeDelimiter}(.+)$`);
+  Object.entries(object).forEach(([ paramPath, value ]) => {
+    let key = paramPath;
+    let matches = key.match(regex);
+    let pathRef = unflattened;
+    while (matches?.length === 3) {
+      const prefix = matches[1];
+      key = matches[2];
+      pathRef[prefix] = pathRef[prefix] ?? {};
+      pathRef = pathRef[prefix] as UnknownRecord;
+      matches = key.match(regex);
+    }
+    pathRef[key] = value;
+  });
+  return unflattened;
+};
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const clone = (data: any, deep = true): any => {
   if (isPrimitive(data)) return data;
