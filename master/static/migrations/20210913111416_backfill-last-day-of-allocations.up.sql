@@ -9,7 +9,8 @@ INSERT INTO
             t.task_id,
             'TRIAL' AS task_type,
             -- Tasks are inserted when trial_id is not set, so we won't conflict trials with steps.
-            t.start_time AS start_time
+            t.start_time AS start_time,
+            t.end_time AS end_time
         FROM
             trials t
     );
@@ -44,6 +45,7 @@ INSERT INTO
                 -- works just fine (as far as the rollup knows, this could be true).
                 SELECT
                     id,
+                    state::text,
                     't' AS kind,
                     trial_id,
                     tstzrange(start_time, end_time) AS range
@@ -52,6 +54,7 @@ INSERT INTO
                 UNION ALL
                 SELECT
                     id,
+                    state::text,
                     'v' AS kind,
                     trial_id,
                     tstzrange(start_time, end_time) AS range
@@ -60,6 +63,7 @@ INSERT INTO
                 UNION ALL
                 SELECT
                     id,
+                    state::text,
                     'c' AS kind,
                     trial_id,
                     tstzrange(start_time, end_time) AS range
@@ -71,6 +75,9 @@ INSERT INTO
             const
         WHERE
             const.period && all_workloads.range
+            -- If they're ACTIVE, we run the risk of including dangling steps, we no end time
+            -- that are stuck in ACTIVE, which makes the calculation non-sense.
+            AND all_workloads.state != 'ACTIVE'
             AND all_workloads.trial_id = t.id
             AND t.experiment_id = e.id
     );
