@@ -210,6 +210,5 @@ func containerEnvVars(cont cproto.Container) []string {
 	return []string{
 		fmt.Sprintf("DET_CONTAINER_ID=%s", cont.ID),
 		fmt.Sprintf("DET_SLOT_IDS=[%s]", strings.Join(slotIds, ",")),
-		fmt.Sprintf("DET_USE_GPU=%t", len(cont.GPUDeviceUUIDs()) > 0),
 	}
 }

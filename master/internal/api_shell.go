@@ -108,6 +108,8 @@ func (a *apiServer) LaunchShell(
 		),
 	}
 
+	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeShell}
+
 	var keys ssh.PrivateAndPublicKeys
 	if len(req.Data) > 0 {
 		var data map[string]interface{}

@@ -660,7 +660,7 @@ class EstimatorTrialController(det.TrialController):
         self._init_session_config(session_config, self.env, self.hvd_config)
 
         if not self.hvd_config.use and len(self.env.container_gpus) > 1:
-            check.true(len(self.rendezvous_info.get_addrs()) == 1)
+            check.true(len(self.rendezvous_info.container_addrs) == 1)
             train_distribute = tf.distribute.MirroredStrategy()
             eval_distribute = tf.distribute.MirroredStrategy()
 
