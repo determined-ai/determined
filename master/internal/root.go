@@ -6,8 +6,7 @@ import (
 )
 
 const clusterCrashMessage = `Detected a resource manager crashed. Please manually restart the
-Determined master. If this is a cloud deployment that is not k8s, you may want to ensure stray
-resources are cleaned up.`
+Determined master. It is recommended you check that stray resources are cleaned up properly.`
 
 // root manages the lifecycle of all actors in the Determined master and
 // defines a supervision strategy specifically for the master.
