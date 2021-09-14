@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
+	scheduleV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -201,11 +202,33 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	if scheduler == coscheduler || scheduler == preemptionScheduler {
+	if p.taskSpec.Description == gcTask {
+		if newPod.Spec.PriorityClassName != "" {
+			log.Warnf(
+				"GC Priority is currently using priority class: %s. "+
+					"It will be reset to determined-system-priority",
+				newPod.Spec.PriorityClassName,
+			)
+		}
+		newPod.Spec.PriorityClassName = "determined-system-priority"
+	} else if scheduler == coscheduler || scheduler == preemptionScheduler {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
 		p.configureCoscheduler(newPod, scheduler)
+	}
+
+	if newPod.Spec.PriorityClassName == "" && p.taskSpec.ResourcesConfig.Priority() != nil {
+		priority := int32(*p.taskSpec.ResourcesConfig.Priority())
+		name := fmt.Sprintf("%s-priorityclass", p.taskSpec.ContainerID)
+
+		err := p.createPriorityClass(name, priority)
+
+		if err == nil {
+			newPod.Spec.PriorityClassName = name
+		}
+	} else if newPod.Spec.PriorityClassName == "" {
+		newPod.Spec.PriorityClassName = "determined-medium-priority"
 	}
 }
 
@@ -217,26 +240,12 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	resources := p.taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.taskSpec.Description == gcTask {
-		if newPod.Spec.PriorityClassName != "" {
-			log.Warnf(
-				"GC Priority is currently using priority class: %s. "+
-					"It will be reset to determined-system-priority",
-				newPod.Spec.PriorityClassName,
-			)
-		}
-		newPod.Spec.PriorityClassName = "determined-system-priority"
-	}
-
 	if p.slotType != device.GPU {
 		minAvailable = 0
 	} else {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
-	if newPod.Spec.PriorityClassName == "" {
-		newPod.Spec.PriorityClassName = "determined-medium-priority"
-	}
 	if newPod.APIVersion == "" {
 		newPod.APIVersion = "v1"
 	}
@@ -253,6 +262,24 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
 			minAvailable)
 	}
+}
+
+func (p *pod) createPriorityClass(name string, priority int32) error {
+	preemptionPolicy := k8sV1.PreemptNever
+
+	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(&scheduleV1.PriorityClass{
+		TypeMeta: metaV1.TypeMeta{},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      name,
+			Namespace: "",
+		},
+		Value:            priority,
+		GlobalDefault:    false,
+		Description:      "temporary priorityClass for determined",
+		PreemptionPolicy: &preemptionPolicy,
+	})
+
+	return err
 }
 
 func (p *pod) configurePodSpec(
