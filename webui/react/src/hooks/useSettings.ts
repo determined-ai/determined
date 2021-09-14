@@ -267,15 +267,18 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
      * 2) there are no user specified query settings set
      *    (ignores defaults values since they are not user triggered)
      */
+    const locationSearch = location.search.substr(/^\?/.test(location.search) ? 1 : 0);
     const currentQuery = settingsToQuery(config, settings);
-    const searchSettings = queryToSettings(config, location.search);
+    const searchSettings = queryToSettings(config, locationSearch);
     if (currentQuery && !hasObjectKeys(searchSettings)) {
-      history.replace(`${location.pathname}?${currentQuery}`);
+      const newQueries = [ currentQuery ];
+      if (locationSearch) newQueries.unshift(locationSearch);
+      history.replace(`${location.pathname}?${newQueries.join('&')}`);
     } else {
       // Otherwise read settings from the query string.
       setSettings(prevSettings => {
         const defaultSettings = getDefaultSettings<T>(config, storage);
-        const querySettings = queryToSettings<Partial<T>>(config, location.search);
+        const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }
