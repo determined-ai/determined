@@ -183,7 +183,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case getSummary:
 		if msg.userFilter == "" || c.Base.Owner.Username == msg.userFilter {
-			ctx.Respond(newSummary(c, ctx))
+			ctx.Respond(c.summary(ctx))
 		}
 
 	case *notebookv1.Notebook:

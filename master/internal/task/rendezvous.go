@@ -85,8 +85,8 @@ func (r *Rendezvous) PreStart(ctx *actor.Context) {
 	})
 }
 
-// Receive implements actor.Receive.
-func (r *Rendezvous) Receive(ctx *actor.Context) error {
+// ReceiveMsg receives rendezvous-specific messages.
+func (r *Rendezvous) ReceiveMsg(ctx *actor.Context) error {
 	if r == nil {
 		return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", ctx.Message())}
 	}

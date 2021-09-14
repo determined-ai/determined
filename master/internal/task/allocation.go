@@ -200,7 +200,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		if err := a.rendezvous.Receive(ctx); err != nil {
+		if err := a.rendezvous.ReceiveMsg(ctx); err != nil {
 			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
 			a.Error(ctx, err)
 		}
@@ -211,7 +211,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		if err := a.preemption.Receive(ctx); err != nil {
+		if err := a.preemption.ReceiveMsg(ctx); err != nil {
 			ctx.Tell(ctx.Self(), sproto.ContainerLog{AuxMessage: ptrs.StringPtr(err.Error())})
 			a.Error(ctx, err)
 		}
@@ -222,7 +222,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			}
 			return nil
 		}
-		if err := a.idleTimeoutWatcher.Receive(ctx); err != nil {
+		if err := a.idleTimeoutWatcher.ReceiveMsg(ctx); err != nil {
 			a.Error(ctx, err)
 		}
 

@@ -18,7 +18,7 @@ func (m *MockIdleTimeoutWatchee) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		m.idleTimeoutWatcher.PreStart(ctx)
 	case IdleTimeoutWatcherTick:
-		return m.idleTimeoutWatcher.Receive(ctx)
+		return m.idleTimeoutWatcher.ReceiveMsg(ctx)
 	case actor.PostStop:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

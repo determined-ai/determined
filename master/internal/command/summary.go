@@ -43,8 +43,8 @@ type (
 	}
 )
 
-// newSummary returns a new summary of the command.
-func newSummary(c *command, ctx *actor.Context) summary {
+// summary returns a new summary of the command.
+func (c *command) summary(ctx *actor.Context) summary {
 	var exitStatus *string
 	if c.exitStatus != nil {
 		exitStatus = ptrs.StringPtr(c.exitStatus.Err.Error())

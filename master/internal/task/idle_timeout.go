@@ -53,8 +53,8 @@ func (p *IdleTimeoutWatcher) PreStart(ctx *actor.Context) {
 	actors.NotifyAfter(ctx, p.TickInterval, IdleTimeoutWatcherTick{})
 }
 
-// Receive should be called on receiving related messages.
-func (p *IdleTimeoutWatcher) Receive(ctx *actor.Context) error {
+// ReceiveMsg should be called on receiving related messages.
+func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case IdleTimeoutWatcherTick:
 		var lastActivity *time.Time
