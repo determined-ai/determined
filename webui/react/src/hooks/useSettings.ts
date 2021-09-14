@@ -50,7 +50,7 @@ export interface SettingsHookOptions {
   storagePath?: string;
 }
 
-interface SettingsHook<T> {
+export interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
   settings: T;
