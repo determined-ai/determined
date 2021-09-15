@@ -3,6 +3,7 @@ package grpcutil
 import (
 	"context"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -88,7 +89,15 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	switch user, session, err := d.UserByToken(token); err {
+	var user *model.User
+	var session *model.UserSession
+	var err error
+	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+		user, session, err = d.UserByExternalToken(token)
+	} else {
+		user, session, err = d.UserByToken(token)
+	}
+	switch err {
 	case nil:
 		if !user.Active {
 			return nil, nil, ErrPermissionDenied

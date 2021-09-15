@@ -2,15 +2,20 @@ package db
 
 import (
 	"crypto/ed25519"
+	"crypto/rsa"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -20,6 +25,10 @@ const SessionDuration = 7 * 24 * time.Hour
 
 // StartUserSession creates a row in the user_sessions table.
 func (db *PgDB) StartUserSession(user *model.User) (string, error) {
+	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+		return "", errors.New("authentication is configured to be external")
+	}
+
 	userSession := &model.UserSession{
 		UserID: user.ID,
 		Expiry: time.Now().Add(SessionDuration),
@@ -70,6 +79,76 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 	}
 
 	return &user, &session, nil
+}
+
+type externalToken struct {
+	*jwt.StandardClaims
+	Email string
+}
+
+// UserByExternalToken returns a user session derived from an external authentication token.
+func (db *PgDB) UserByExternalToken(tokenText string) (*model.User, *model.UserSession, error) {
+	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
+		func(token *jwt.Token) (interface{}, error) {
+			publicKeyText := os.Getenv("EXTERNAL_JWT_KEY")
+			var publicKey rsa.PublicKey
+			err := json.Unmarshal([]byte(publicKeyText), &publicKey)
+			if err != nil {
+				log.Errorf("error parsing JWT key: %s", err.Error())
+				return nil, err
+			}
+			return &publicKey, nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	claims := token.Claims.(*externalToken)
+
+	// TODO access control
+
+	tx, err := db.sql.Beginx()
+	defer func() {
+		if tx == nil {
+			return
+		}
+
+		if rErr := tx.Rollback(); rErr != nil {
+			log.Errorf("error during rollback: %v", rErr)
+		}
+	}()
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+	user, err := db.UserByUsername(claims.Email)
+	if err != nil {
+		if err != ErrNotFound {
+			return nil, nil, err
+		}
+		user = &model.User{
+			Username:     claims.Email,
+			PasswordHash: null.NewString("", false),
+			Admin:        true,
+			Active:       true,
+		}
+		userID, err := addUser(tx, user)
+		if err != nil {
+			return nil, nil, errors.WithStack(err)
+		}
+		user.ID = userID
+		if err := tx.Commit(); err != nil {
+			return nil, nil, errors.WithStack(err)
+		}
+		tx = nil
+	}
+
+	session := &model.UserSession{
+		ID:     model.SessionID(user.ID),
+		UserID: user.ID,
+		Expiry: time.Unix(claims.ExpiresAt, 0),
+	}
+
+	return user, session, nil
 }
 
 // DeleteUserSessionByID deletes the user session with the given ID.

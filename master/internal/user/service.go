@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -57,31 +58,64 @@ func New(db *db.PgDB, system *actor.System) (*Service, error) {
 	return &Service{db, system}, nil
 }
 
-// ProcessAuthentication is a middleware processing function that attempts
-// to authenticate incoming HTTP requests.  Note that the middleware looks
-// for an authentication in three places (in the following order):
+// The middleware looks for a token in two places (in this order):
 // 1. The HTTP Authorization header.
 // 2. A cookie named "auth".
-// 3. A Query parameter named "_auth".
+func (s *Service) extractToken(c echo.Context) (string, error) {
+	authRaw := c.Request().Header.Get("Authorization")
+	if authRaw != "" {
+		// We attempt to parse out the token, which should be
+		// transmitted as a Bearer authentication token.
+		if !strings.HasPrefix(authRaw, "Bearer ") {
+			return "", echo.ErrUnauthorized
+		}
+		return strings.TrimPrefix(authRaw, "Bearer "), nil
+	} else if cookie, err := c.Cookie("auth"); err == nil {
+		return cookie.Value, nil
+	}
+	// If we found no token, then abort the request with an HTTP 401.
+	return "", echo.NewHTTPError(http.StatusUnauthorized)
+}
+
+// ProcessAuthentication is a middleware processing function that attempts
+// to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authRaw := c.Request().Header.Get("Authorization")
-		var token string
-		if authRaw != "" {
-			// We attempt to parse out the token, which should be
-			// transmitted as a Bearer authentication token.
-			if !strings.HasPrefix(authRaw, "Bearer ") {
-				return echo.ErrUnauthorized
-			}
-			token = strings.TrimPrefix(authRaw, "Bearer ")
-		} else if cookie, err := c.Cookie("auth"); err == nil {
-			token = cookie.Value
-		} else {
-			// If we found no token, then abort the request with an HTTP 401.
-			return echo.NewHTTPError(http.StatusUnauthorized)
+		token, err := s.extractToken(c)
+		if err != nil {
+			return err
 		}
 
-		user, userSession, err := s.db.UserByToken(token)
+		user, session, err := s.db.UserByToken(token)
+		switch err {
+		case nil:
+			if !user.Active {
+				return echo.NewHTTPError(http.StatusForbidden, "user not active")
+			}
+			// Set data on the request context that might be useful to
+			// event handlers.
+			c.(*context.DetContext).SetUser(*user)
+			c.(*context.DetContext).SetUserSession(*session)
+			return next(c)
+		case db.ErrNotFound:
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		default:
+			return err
+		}
+	}
+}
+
+// ProcessExternalAuthentication is a middleware processing function that attempts
+// to authenticate incoming HTTP requests. It does not use the sessions table but relies entirely
+// on a JWT issued by an external source.
+func (s *Service) ProcessExternalAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		token, err := s.extractToken(c)
+		if err != nil {
+			return err
+		}
+
+		user, userSession, err := s.db.UserByExternalToken(token)
 		switch err {
 		case nil:
 			if !user.Active {
@@ -119,6 +153,11 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) postLogin(c echo.Context) (interface{}, error) {
+	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+		return nil, echo.NewHTTPError(http.StatusMisdirectedRequest,
+			"authentication is configured to be external")
+	}
+
 	type (
 		request struct {
 			Username string `json:"username"`

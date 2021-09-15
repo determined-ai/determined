@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha512"
 	"fmt"
+	"os"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,6 +30,10 @@ func replicateClientSideSaltAndHash(password string) string {
 
 func (a *apiServer) Login(
 	_ context.Context, req *apiv1.LoginRequest) (*apiv1.LoginResponse, error) {
+	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+		return nil, status.Error(codes.FailedPrecondition, "authentication is configured to be external")
+	}
+
 	if req.Username == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}

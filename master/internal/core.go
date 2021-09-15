@@ -619,7 +619,12 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize user manager")
 	}
-	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
+	var authFuncs []echo.MiddlewareFunc
+	if len(os.Getenv("EXTERNAL_JWT_KEY")) == 0 {
+		authFuncs = []echo.MiddlewareFunc{userService.ProcessAuthentication}
+	} else {
+		authFuncs = []echo.MiddlewareFunc{userService.ProcessExternalAuthentication}
+	}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 

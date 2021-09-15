@@ -2125,6 +2125,38 @@ func (_m *DB) UpsertTemplate(tpl *model.Template) error {
 	return r0
 }
 
+// UserByExternalToken provides a mock function with given fields: token
+func (_m *DB) UserByExternalToken(token string) (*model.User, *model.UserSession, error) {
+	ret := _m.Called(token)
+
+	var r0 *model.User
+	if rf, ok := ret.Get(0).(func(string) *model.User); ok {
+		r0 = rf(token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.User)
+		}
+	}
+
+	var r1 *model.UserSession
+	if rf, ok := ret.Get(1).(func(string) *model.UserSession); ok {
+		r1 = rf(token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*model.UserSession)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(token)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // UserByID provides a mock function with given fields: userID
 func (_m *DB) UserByID(userID model.UserID) (*model.FullUser, error) {
 	ret := _m.Called(userID)

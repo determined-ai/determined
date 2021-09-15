@@ -23,8 +23,8 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
   return {
     clusterId: data.clusterId,
     clusterName: data.clusterName,
-    externalLoginUri: undefined, // TODO: set it to `data.externalLoginUri` once supported
-    externalLogoutUri: undefined, // TODO: set it to `data.externalLogoutUri` once supported
+    externalLoginUri: data.externalLoginUri,
+    externalLogoutUri: data.externalLogoutUri,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     ssoProviders: data.ssoProviders,

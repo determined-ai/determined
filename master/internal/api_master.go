@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"os"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -19,11 +20,13 @@ import (
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
-		Version:          a.m.Version,
-		MasterId:         a.m.MasterID,
-		ClusterId:        a.m.ClusterID,
-		ClusterName:      a.m.config.ClusterName,
-		TelemetryEnabled: a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		Version:           a.m.Version,
+		MasterId:          a.m.MasterID,
+		ClusterId:         a.m.ClusterID,
+		ClusterName:       a.m.config.ClusterName,
+		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		ExternalLoginUri:  os.Getenv("EXTERNAL_LOGIN_URI"),
+		ExternalLogoutUri: os.Getenv("EXTERNAL_LOGOUT_URI"),
 	}, nil
 }
 
