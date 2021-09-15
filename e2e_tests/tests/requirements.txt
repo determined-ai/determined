@@ -3,9 +3,9 @@ appdirs
 pytest>=6.0.1
 pytest-timeout
 pexpect
-torch==1.7.1
-torchvision==0.8.2
-tensorflow==2.4.1
+torch==1.9.0
+torchvision==0.10.0
+tensorflow==2.4.3
 pandas
 pyyaml
 docker

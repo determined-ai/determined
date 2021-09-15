@@ -61,7 +61,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
-        self.profiler = None
+        self.profiler = None  # type: Any
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -264,7 +264,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         when training.
         """
         self.profiler = torch.profiler.profile(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(str(get_base_path({}))),
             *args,
             **kwargs,
         )
