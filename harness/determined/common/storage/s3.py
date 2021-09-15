@@ -6,6 +6,7 @@ from typing import Iterator, Optional
 
 import boto3
 import requests
+from .boto3_credential_manager import initialize_boto3
 
 from determined.common import util
 from determined.common.storage.base import StorageManager, StorageMetadata
@@ -26,6 +27,7 @@ class S3StorageManager(StorageManager):
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         self.bucket = bucket
+        initialize_boto3()
         self.client = boto3.client(
             "s3",
             endpoint_url=endpoint_url,
@@ -124,3 +126,4 @@ class S3StorageManager(StorageManager):
         for chunk in util.chunks(objects, 1000):
             logging.debug("Deleting {} objects from S3".format(len(chunk)))
             self.client.delete_objects(Bucket=self.bucket, Delete={"Objects": chunk})
+
