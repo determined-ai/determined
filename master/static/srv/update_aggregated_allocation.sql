@@ -5,67 +5,44 @@ WITH const AS (
             ($1 :: timestamptz + interval '1 day')
         ) AS period
 ),
--- Workloads that had any overlap with the target interval, along with the length of the overlap of
+-- Allocations that had any overlap with the target interval, along with the length of the overlap of
 -- their time with the requested period.
-workloads AS (
+allocs_in_range AS (
     SELECT
-        all_workloads.trial_id,
+        a.*,
         extract(
             epoch
             FROM
                 -- `*` computes the intersection of the two ranges.
-                upper(const.period * range) - lower(const.period * range)
-        ) * (
-            experiments.config -> 'resources' ->> 'slots_per_trial'
-        ) :: float AS seconds
+                upper(const.period * a.range) - lower(const.period * a.range)
+        ) * a.slots :: float AS seconds
     FROM
         (
             SELECT
-                trial_id,
+                *,
                 tstzrange(start_time, end_time) AS range
             FROM
-                steps
-            UNION ALL
-            SELECT
-                trial_id,
-                tstzrange(start_time, end_time) AS range
-            FROM
-                validations
-            UNION ALL
-            SELECT
-                trial_id,
-                tstzrange(start_time, end_time) AS range
-            FROM
-                checkpoints
-        ) AS all_workloads,
-        trials,
-        experiments,
+                allocations
+        ) AS a,
         const
     WHERE
         -- `&&` determines whether the ranges overlap.
-        const.period && all_workloads.range
-        AND all_workloads.trial_id = trials.id
-        AND trials.experiment_id = experiments.id
-        AND (
-            -- Sometimes experiments end uncleanly, leaving workloads permanently without end
-            -- times. Anything in that state must be excluded or it'll show up in all the statistics
-            -- forevermore.
-            upper(all_workloads.range) IS NOT NULL
-            OR experiments.state = 'ACTIVE'
-        )
+        const.period && a.range
 ),
 user_agg AS (
     SELECT
         'username' AS aggregation_type,
         users.username AS aggregation_key,
-        sum(workloads.seconds) AS seconds
+        sum(allocs_in_range.seconds) AS seconds
     FROM
-        workloads,
+        allocs_in_range,
         trials,
         experiments,
+        -- Since a job is a user submission by definition, eventually user information
+        -- should live in the generic job table and this can use that.
         users
     WHERE
-        workloads.trial_id = trials.id
+        allocs_in_range.task_id = trials.task_id
         AND trials.experiment_id = experiments.id
         AND experiments.owner_id = users.id
     GROUP BY
@@ -77,11 +54,12 @@ label_agg AS (
         -- This seems to be the most convenient way to convert from a JSONB string value to a normal
         -- string value.
         labels.label #>> '{}' AS aggregation_key,
-        sum(workloads.seconds) AS seconds
+        sum(allocs_in_range.seconds) AS seconds
     FROM
-        workloads,
+        allocs_in_range,
         trials,
         -- An exploded view of experiment labels (one row for each label for each experiment).
+        -- If we want this to work for generic jobs, we will likely need to rethink labels.
         (
             SELECT
                 id,
@@ -95,7 +73,7 @@ label_agg AS (
                 experiments
         ) AS labels
     WHERE
-        workloads.trial_id = trials.id
+        allocs_in_range.task_id = trials.task_id
         AND trials.experiment_id = labels.id
     GROUP BY
         labels.label
@@ -103,44 +81,22 @@ label_agg AS (
 pool_agg AS (
     SELECT
         'resource_pool' AS aggregation_type,
-        experiments.aggregation_key,
-        sum(workloads.seconds) AS seconds
+        allocs_in_range.resource_pool,
+        sum(allocs_in_range.seconds) AS seconds
     FROM
-        workloads,
-        trials,
-        (
-            SELECT
-                id,
-                coalesce(config #>> '{resources, resource_pool}', 'default') AS aggregation_key
-            FROM
-                experiments
-        ) experiments
-    WHERE
-        workloads.trial_id = trials.id
-        AND trials.experiment_id = experiments.id
+        allocs_in_range
     GROUP BY
-        experiments.aggregation_key
+        allocs_in_range.resource_pool
 ),
 agent_label_agg AS (
     SELECT
         'agent_label' AS aggregation_type,
-        experiments.aggregation_key,
-        sum(workloads.seconds) AS seconds
+        allocs_in_range.agent_label,
+        sum(allocs_in_range.seconds) AS seconds
     FROM
-        workloads,
-        trials,
-        (
-            SELECT
-                id,
-                coalesce(config #>> '{resources, agent_label}', '') AS aggregation_key
-            FROM
-                experiments
-        ) experiments
-    WHERE
-        workloads.trial_id = trials.id
-        AND trials.experiment_id = experiments.id
+        allocs_in_range
     GROUP BY
-        experiments.aggregation_key
+        allocs_in_range.agent_label
 ),
 all_aggs AS (
     SELECT
@@ -166,9 +122,9 @@ all_aggs AS (
     SELECT
         'total' AS aggregation_type,
         'total' AS aggregation_key,
-        coalesce(sum(workloads.seconds), 0) AS seconds
+        coalesce(sum(allocs_in_range.seconds), 0) AS seconds
     FROM
-        workloads
+        allocs_in_range
 )
 INSERT INTO
     resource_aggregates (
