@@ -28,6 +28,7 @@ class LRScheduler:
         STEP_EVERY_EPOCH = 1
         STEP_EVERY_BATCH = 2
         MANUAL_STEP = 3
+        STEP_EVERY_OPTIMIZER_STEP = 4
 
     def __init__(
         self,
