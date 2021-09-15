@@ -875,7 +875,7 @@ jobs:
       - helm/install-helm-client
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.8.1"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1284,7 +1284,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.8.1"
+          extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1305,7 +1305,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
@@ -1317,7 +1317,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1"
+          extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
