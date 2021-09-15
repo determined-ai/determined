@@ -88,6 +88,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
+			JobID:     model.JobID(c.taskID), // Building on the existing cmd single allocation assumption
 			TaskType:  c.taskType,
 			StartTime: c.registeredTime,
 		}); err != nil {

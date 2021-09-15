@@ -61,6 +61,7 @@ const (
 // Task is the model for a task in the database.
 type Task struct {
 	TaskID    TaskID     `db:"task_id"`
+	JobID     JobID      `db:"job_id"`
 	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
