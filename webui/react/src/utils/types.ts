@@ -82,6 +82,13 @@ export const terminalRunStates: Set<RunState> = new Set([
   RunState.Deleted,
 ]);
 
+export const deletableRunStates: Set<RunState> = new Set([
+  RunState.Canceled,
+  RunState.Completed,
+  RunState.Errored,
+  RunState.DeleteFailed,
+]);
+
 export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Active]: 'Active',
   [RunState.Canceled]: 'Canceled',

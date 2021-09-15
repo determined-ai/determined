@@ -39,7 +39,7 @@ import { isBoolean, isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import {
-  cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
+  cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -94,7 +94,7 @@ const ExperimentList: React.FC = () => {
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
-      const isDeletable = terminalRunStates.has(experiment.state) && user?.isAdmin;
+      const isDeletable = deletableRunStates.has(experiment.state) && user?.isAdmin;
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = experiment.state === RunState.Active;
