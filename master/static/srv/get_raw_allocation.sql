@@ -25,23 +25,51 @@ workloads AS (
                 kind,
                 trial_id,
                 tstzrange(start_time, end_time) AS range
-            FROM (
-                     SELECT
-                         kind,
-                         trial_id,
-                         LAG(end_time, 1) OVER (PARTITION BY trial_id ORDER BY end_time) AS start_time,
-                         end_time
-                     FROM (
-                              SELECT '' AS kind, id AS trial_id, start_time AS end_time FROM trials
-                              UNION ALL
-                              SELECT 'training' AS kind, trial_id, end_time FROM raw_steps
-                              UNION ALL
-                              SELECT 'validation' AS kind, trial_id, end_time FROM raw_validations
-                              UNION ALL
-                              SELECT 'checkpointing' AS kind, trial_id, end_time FROM raw_checkpoints
-                          ) metric_reports
-                 ) derived_workload_spans
-            WHERE start_time IS NOT NULL
+            FROM
+                (
+                    SELECT
+                        kind,
+                        trial_id,
+                        -- Here lies an implicit assumption that one workload started when the previous ended.
+                        LAG(end_time, 1) OVER (
+                            PARTITION BY trial_id
+                            ORDER BY
+                                end_time
+                        ) AS start_time,
+                        end_time
+                    FROM
+                        (
+                            SELECT
+                                '' AS kind,
+                                id AS trial_id,
+                                start_time AS end_time
+                            FROM
+                                trials
+                            UNION ALL
+                            SELECT
+                                'training' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_steps
+                            UNION ALL
+                            SELECT
+                                'validation' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_validations
+                            UNION ALL
+                            SELECT
+                                'checkpointing' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_checkpoints
+                        ) metric_reports
+                ) derived_workload_spans
+            WHERE
+                start_time IS NOT NULL
         ) AS all_workloads,
         const
     WHERE
