@@ -16,6 +16,18 @@ import model_hub.utils as utils
 
 
 class S3Backend(mmcv.fileio.BaseStorageBackend):  # type: ignore
+    """
+    To use a S3 bucket as the storage backend, set ``data.file_client_args`` field of
+    the experiment config as follows:
+
+    .. code-block:: yaml
+
+        data:
+          file_client_args:
+            backend: s3
+            bucket_name: <FILL IN>
+    """
+
     def __init__(self, bucket_name: str):
         self._storage_client = boto3.client("s3")
         self._bucket = bucket_name
@@ -33,6 +45,18 @@ mmcv.fileio.FileClient.register_backend("s3", S3Backend)
 
 
 class GCSBackend(mmcv.fileio.BaseStorageBackend):  # type: ignore
+    """
+    To use a Google Storage bucket as the storage backend, set ``data.file_client_args`` field of
+    the experiment config as follows:
+
+    .. code-block:: yaml
+
+        data:
+          file_client_args:
+            backend: gcs
+            bucket_name: <FILL IN>
+    """
+
     def __init__(self, bucket_name: str):
         self._storage_client = gcs.storage.Client()
         self._bucket = self._storage_client.bucket(bucket_name)
@@ -82,11 +106,12 @@ def sub_backend(
     cfg: Union[mmcv.utils.config.Config, mmcv.utils.config.ConfigDict, List],
 ) -> None:
     """
-    Recurses through the mmcv.Config to replace the `file_client_args` field of calls to
-    `LoadImageFromFile` with the provided argument.  `file_client_args` should be a dictionary
-    with a `backend` specified along with keyword arguments to instantiate the backend.
+    Recurses through the mmcv.Config to replace the ``file_client_args`` field of calls to
+    ``LoadImageFromFile`` with the provided argument.  ``file_client_args`` should be a dictionary
+    with a ``backend`` specified along with keyword arguments to instantiate the backend.
 
     .. code-block:: python
+
         # Using gcs backend
         file_client_args = {'backend': 'gcs', 'bucket_name': 'mydatabucket'}
         # Using s3 backend
