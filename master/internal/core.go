@@ -591,7 +591,14 @@ func (m *Master) Run(ctx context.Context) error {
 	//     +- Experiment (internal.experiment: <experiment-id>)
 	//         +- Trial (internal.trial: <trial-request-id>)
 	//             +- Websocket (actors.WebSocket: <remote-address>)
-	m.system = actor.NewSystem("master")
+	m.system = actor.NewSystemWithRoot("master", actor.ActorFunc(root))
+
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		sErr := m.system.Ref.AwaitTermination()
+		log.WithError(sErr).Error("actor system exited")
+		cancel()
+	}()
 
 	switch {
 	case m.config.Logging.DefaultLoggingConfig != nil:
