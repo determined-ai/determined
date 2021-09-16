@@ -39,12 +39,26 @@ workloads AS (
                         end_time
                     FROM
                         (
+                            -- Start of first is the start of the trial
                             SELECT
-                                '' AS kind,
+                                NULL AS kind,
                                 id AS trial_id,
                                 start_time AS end_time
                             FROM
                                 trials
+                            UNION ALL
+                            -- Or more accurately of late, start of the allocation.
+                            SELECT
+                                NULL AS kind,
+                                tr.id AS trial_id,
+                                a.start_time AS end_time
+                            FROM
+                                allocations a,
+                                tasks t,
+                                trials tr
+                            WHERE
+                                a.task_id = t.task_id
+                                AND t.task_id = tr.task_id
                             UNION ALL
                             SELECT
                                 'training' AS kind,
@@ -70,6 +84,8 @@ workloads AS (
                 ) derived_workload_spans
             WHERE
                 start_time IS NOT NULL
+                AND end_time IS NOT NULL
+                AND kind IS NOT NULL
         ) AS all_workloads,
         const
     WHERE
