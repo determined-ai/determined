@@ -3,8 +3,10 @@ package resourcemanagers
 import (
 	"sort"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type roundRobinScheduler struct{}
@@ -17,6 +19,10 @@ func NewRoundRobinScheduler() Scheduler {
 
 func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return roundRobinSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	return make(map[model.JobID]*job.RMJobInfo)
 }
 
 func roundRobinSchedule(

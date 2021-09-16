@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
@@ -238,10 +239,17 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
+		sproto.SetGroupOrder,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
+
+	case
+		job.GetJobQ,
+		job.SetJobOrder,
+		job.GetJobQStats:
+		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
 		reschedule = false
@@ -273,6 +281,12 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 			}
 			rp.sendScalingInfo(ctx)
 		}
+		// jobQ := rp.scheduler.JobQInfo(rp) // OPTIMIZE: integrate into Schedule() call
+		// // FIXME why can't we TellAt on Context?
+		// ctx.Self().System().TellAt(job.JobsActorAddr, job.SetJobQ{
+		// 	Identifier: rp.config.PoolName,
+		// 	Queue:      jobQ,
+		// })
 		rp.reschedule = false
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
@@ -338,6 +352,48 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 	return nil
 }
 
+func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case job.SetJobOrder:
+		for it := rp.taskList.iterator(); it.next(); {
+			req := it.value()
+			// TODO nit: early break instead nesting?
+			if req.JobID != nil && *req.JobID == msg.JobID {
+				group := rp.getOrCreateGroup(ctx, req.Group)
+				if msg.QPosition > 0 {
+					group.qPosition = msg.QPosition
+					ctx.Tell(req.Group, sproto.SetGroupOrder{
+						QPosition: msg.QPosition,
+						Handler:   ctx.Self(),
+					})
+				}
+				if *msg.Priority > 0 {
+					group.priority = msg.Priority
+					ctx.Tell(req.Group, sproto.SetGroupPriority{
+						Priority: msg.Priority,
+						Handler:  ctx.Self(),
+					})
+				}
+				if msg.Weight > 0 {
+					group.weight = msg.Weight
+					ctx.Tell(req.Group, sproto.SetGroupWeight{
+						Weight:  msg.Weight,
+						Handler: ctx.Self(),
+					})
+				}
+			}
+		}
+		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
+	case job.GetJobQStats:
+		ctx.Respond(*jobStats(rp))
+	case job.GetJobQ:
+		ctx.Respond(rp.scheduler.JobQInfo(rp))
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
 func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case groupActorStopped:
@@ -358,6 +414,12 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		if rp.config.Scheduler.Priority != nil {
 			ctx.Log().Infof("setting priority for group of %s to %d",
 				msg.Handler.Address().String(), *group.priority)
+		}
+
+	case sproto.SetGroupOrder:
+		group := rp.getOrCreateGroup(ctx, msg.Handler)
+		if msg.QPosition != 0 {
+			group.qPosition = msg.QPosition
 		}
 
 	case sproto.SetTaskName:

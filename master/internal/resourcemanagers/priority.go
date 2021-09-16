@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -16,6 +17,12 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
+// AllocReqs is an alias for a list of Allocation Requests.
+type AllocReqs = []*sproto.AllocateRequest
+
+// REMOVEME can't replace groups identifier with job id since not all groups are
+// associated with a job, eg GC tasks that aren't related to a job.
+
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -25,6 +32,61 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+func (p *priorityScheduler) createJobQInfo(
+	pending map[int]AllocReqs,
+	scheduled map[int]AllocReqs,
+) (job.AQueue, map[model.JobID]*actor.Ref) {
+	reqs := make(AllocReqs, 0)
+	// FIXME there is gotta be a friendlier version of this.
+	// can we stick to slices together quickly in Go?
+	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
+		if out == nil {
+			panic("missing output array. (nil pointer)")
+		}
+		priorities := getOrderedPriorities(aMap)
+		for _, priority := range priorities {
+			*out = append(*out, aMap[priority]...)
+		}
+	}
+
+	readFromPrioToTask(scheduled, &reqs)
+	readFromPrioToTask(pending, &reqs)
+	jobQInfo, jobActors := mergeToJobQInfo(reqs)
+	return jobQInfo, jobActors
+}
+
+func (p *priorityScheduler) reportJobQInfo(pending map[int]AllocReqs, scheduled map[int]AllocReqs) {
+	jobQInfo, jobActors := p.createJobQInfo(pending, scheduled)
+	for jobID, jobActor := range jobActors {
+		jobActor.System().Tell(jobActor, jobQInfo[jobID])
+	}
+}
+
+func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	/*
+		compute a single numerical ordering for allocationreuqests that can be modified.
+		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
+		of priority. do we completely hide these from the user? discussed: we shouldn't show these to
+		the user
+		. either way we
+		1. get a total ordering of allocation requests
+		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
+		maphallocationrequests to their jobid, per job id only keep the first occurrence
+		3. convert the resulting ordered list of jobids into a Job type for job apis
+
+		Once jobs carry a queue position attribute with them it'll be what
+		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
+	*/
+	// WARN scheduled here means that resources are allocated.
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(
+			rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
+
+	jobQInfo, _ := p.createJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
+
+	return jobQInfo
 }
 
 func (p *priorityScheduler) prioritySchedule(
@@ -49,6 +111,13 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
+	if len(agents) == 0 { // report queue state if no agents are available
+		for _, zeroSlots := range []bool{false, true} {
+			priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+				sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
+			p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
+		}
+	}
 
 	return toAllocate, toRelease
 }
@@ -69,10 +138,10 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, filter)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
-	// Make a local copy of the agent state that we will modify.
+	p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -100,6 +169,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
+					allocatedTask.State = job.SchedulingStateScheduledBackfilled
 					toAllocate = append(toAllocate, allocatedTask)
 				}
 			}
@@ -209,10 +279,10 @@ func trySchedulingPendingTasksInPriority(
 	return successfulAllocations, unSuccessfulAllocations
 }
 
-// sortTasksByPriorityAndTimestamp sorts all pending and scheduled tasks
+// sortTasksByPriorityAndPositionAndTimestamp sorts all pending and scheduled tasks
 // separately by priority. Within each priority, tasks are ordered
-// based on their creation time.
-func sortTasksByPriorityAndTimestamp(
+// based on their queue position and then creation time.
+func sortTasksByPriorityAndPositionAndTimestamp(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
 	filter func(*sproto.AllocateRequest) bool,
@@ -223,6 +293,7 @@ func sortTasksByPriorityAndTimestamp(
 
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
+
 		if !filter(req) {
 			continue
 		}
@@ -234,8 +305,10 @@ func sortTasksByPriorityAndTimestamp(
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
+			req.State = job.SchedulingStateQueued
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
+			req.State = job.SchedulingStateScheduled
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}
@@ -247,12 +320,84 @@ func sortTasksByPriorityAndTimestamp(
 	} {
 		for _, tasks := range tasksMap {
 			sort.Slice(tasks, func(i, j int) bool {
-				return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				compareVal := comparePositions(tasks[i], tasks[j], groups)
+				switch compareVal {
+				case 1:
+					return true
+				case -1:
+					return false
+				default:
+					return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				}
 			})
 		}
 	}
 
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
+}
+
+// comparePositions returns the following:
+// 1 if a is in front of b.
+// 0 if a is equal to b in position.
+// -1 if a is behind b.
+func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group) int {
+	aPosition := groups[a.Group].qPosition
+	bPosition := groups[b.Group].qPosition
+	switch {
+	case aPosition == bPosition:
+		return 0
+	case aPosition < 0 || bPosition < 0:
+		if aPosition > 0 {
+			return 1
+		}
+		return -1
+	case aPosition < bPosition:
+		return 1
+	default:
+		return -1
+	}
+}
+
+func sortTasksWithPosition(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+) ([]*sproto.AllocateRequest, bool) {
+	var reqs []*sproto.AllocateRequest
+	isPositionSet := false
+
+	for it := taskList.iterator(); it.next(); {
+		if groups[it.value().Group].qPosition != -1 {
+			isPositionSet = true
+		}
+		reqs = append(reqs, it.value())
+	}
+
+	sort.Slice(reqs, func(i, j int) bool {
+		p1 := *groups[reqs[i].Group].priority
+		p2 := *groups[reqs[j].Group].priority
+		switch {
+		case p1 > p2:
+			return true
+		case p2 > p1:
+			return false
+		}
+
+		if isPositionSet {
+			pos1 := groups[reqs[i].Group].qPosition
+			pos2 := groups[reqs[j].Group].qPosition
+			switch {
+			case pos1 > 0 && pos2 < 0:
+				return true
+			case pos1 < 0 && pos2 > 0:
+				return false
+			case pos1 < pos2:
+				return true
+			}
+		}
+		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
+	})
+
+	return reqs, isPositionSet
 }
 
 func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {

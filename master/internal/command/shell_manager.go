@@ -33,7 +33,10 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
-		return createGenericCommandActor(ctx, s.db, taskID, model.TaskTypeShell, model.JobTypeShell, msg)
+		jobID := model.NewJobID()
+		return createGenericCommandActor(
+			ctx, s.db, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
+		)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
