@@ -1,0 +1,6 @@
+:orphan:
+
+**Changes**
+
+-  WebUI: Trial detail will no longer show workload-based start time info, which include Training
+   Time, Validation Time and Checkpoint Time.
