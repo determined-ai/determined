@@ -139,7 +139,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       downloadModel: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
-        label: 'Download Model',
+        label: 'Download Experiment Code',
         onClick: (e) => {
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
