@@ -187,8 +187,12 @@ This plugin is also in beta and is not enabled by default. Similar to the cosche
 enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is not supported
 and Determined can only automatically set labels for GPU experiments.
 
-If using a cluster with tainted nodes or labels, users must specify the tolerations or node
-selectors in the experiment config:
+Determined provides a default priority class, ``determined-medium-priority`` that has a priority of
+``50`` and is used for all tasks. If users want to set a different priority level for an experiment,
+they may either specify a priority in the ``resources`` field of the experiment config or create a
+priorityclass and specify it in the ``pod_spec`` of the config, as shown below. Also, if using a
+cluster with tainted nodes or labels, users must specify the tolerations or node selectors in the
+``pod_spec``:
 
 .. code:: yaml
 
@@ -207,7 +211,4 @@ selectors in the experiment config:
                effect: "NoSchedule"
 
 We recommend using both tolerations and node selectors to better constrain where your experiments
-can run, especially on clusters that contain multiple GPU types. Lastly, Determined provides low,
-medium, and high priority classes by default, named ``determined-low-priority``,
-``determined-medium-priority``, and ``determined-high-priority``. Users may make their own priority
-classes for finer grained control if they wish.
+can run, especially on clusters that contain multiple GPU types.
