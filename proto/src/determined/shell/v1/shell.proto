@@ -9,6 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 import "determined/task/v1/task.proto";
+import "determined/job/v1/job.proto";
 
 // Shell is an ssh server in a containerized environment.
 message Shell {
@@ -48,4 +49,6 @@ message Shell {
   repeated google.protobuf.Struct addresses = 13;
   // The agent user group;
   google.protobuf.Struct agent_user_group = 14;
+  // The associated job summary.
+  determined.job.v1.JobSummary job_summary = 15;
 }

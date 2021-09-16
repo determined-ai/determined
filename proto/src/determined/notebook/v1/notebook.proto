@@ -8,6 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 import "determined/task/v1/task.proto";
+import "determined/job/v1/job.proto";
 
 // Notebook is a Jupyter notebook in a containerized environment.
 message Notebook {
@@ -37,8 +38,10 @@ message Notebook {
   string username = 10;
   // The service address.
   string service_address = 11;
-  // The name of the resource pool the Notebook was created in
+  // The name of the resource pool the Notebook was created in.
   string resource_pool = 12;
-  // The exit status;
+  // The exit status.
   string exit_status = 13;
+  // The associated job summary.
+  determined.job.v1.JobSummary job_summary = 14;
 }
