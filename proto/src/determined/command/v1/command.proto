@@ -8,6 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 import "determined/task/v1/task.proto";
+import "determined/job/v1/job.proto";
 
 // Command is a single container running the configured command.
 message Command {
@@ -39,4 +40,6 @@ message Command {
   string resource_pool = 11;
   // The exit status;
   string exit_status = 12;
+  // The associated job summary.
+  determined.job.v1.JobSummary job_summary = 13;
 }

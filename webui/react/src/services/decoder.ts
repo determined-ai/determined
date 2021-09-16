@@ -491,7 +491,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
     });
 };
 
-export const mapV1DeviceType = (data: Sdk.Devicev1Type): types.ResourceType => {
+export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {
   return types.ResourceType[
     data.toString().toUpperCase()
       .replace('TYPE_', '') as keyof typeof types.ResourceType
