@@ -1933,6 +1933,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     telemetryEnabled?: boolean;
+    /**
+     * SSO providers.
+     * @type {Array<V1SSOProvider>}
+     * @memberof V1GetMasterResponse
+     */
+    ssoProviders?: Array<V1SSOProvider>;
 }
 
 /**
@@ -4138,6 +4144,26 @@ export enum V1RunnableType {
     UNSPECIFIED = <any> 'RUNNABLE_TYPE_UNSPECIFIED',
     TRAIN = <any> 'RUNNABLE_TYPE_TRAIN',
     VALIDATE = <any> 'RUNNABLE_TYPE_VALIDATE'
+}
+
+/**
+ * Describe one SSO provider.
+ * @export
+ * @interface V1SSOProvider
+ */
+export interface V1SSOProvider {
+    /**
+     * A descriptive name for this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    name: string;
+    /**
+     * The URL to use for SSO with this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    ssoUrl: string;
 }
 
 /**
