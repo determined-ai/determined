@@ -23,6 +23,7 @@ class LRScheduler:
             STEP_EVERY_EPOCH
             STEP_EVERY_BATCH
             MANUAL_STEP
+            STEP_EVERY_OPTIMIZER_STEP
         """
 
         STEP_EVERY_EPOCH = 1
@@ -53,6 +54,8 @@ class LRScheduler:
                 3. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
+
+                4. ``STEP_EVERY_OPTIMIZER_STEP``: Deter will call scheduler.step()git
             frequency:
                 Sets the frequency at which the batch and epoch step modes get triggered.
         """
