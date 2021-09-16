@@ -5,6 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/goombaio/orderedset"
 )
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
@@ -15,7 +16,7 @@ import (
 // the overhead of restarting a preempted task.
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
-	// TODO add one that returns jobs in order
+	// OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
@@ -30,4 +31,16 @@ func MakeScheduler(config *SchedulerConfig) Scheduler {
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", config.GetType()))
 	}
+}
+
+// allocReqsToJobOrder convertes sorted allocation requests to job order.
+func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet {
+	jobSet := orderedset.NewOrderedSet()
+	for _, req := range reqs {
+		if req.JobID == "" {
+			continue
+		}
+		jobSet.Add(req.JobID)
+	}
+	return jobSet
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/goombaio/orderedset"
 )
 
 type priorityScheduler struct {
@@ -26,6 +25,55 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+type AllocReqs = []*sproto.AllocateRequest
+
+// sorts by expected execution order at this point excluding backfills
+func (p *priorityScheduler) OrderedAllocations(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	filter func(*sproto.AllocateRequest) bool,
+) (reqs []*sproto.AllocateRequest) {
+	/*
+		compute a single numerical ordering for allocationreuqests that can be modified.
+		this could be similar across scheduler types or scheduler type specific. eg in priority we could modify the priority and then intro
+		a new unit32 to order allocation requests within a priority or rewrite to translate priority into a single uint and do away with priority.
+		TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
+		. either way we
+		1. get a total ordering of allocation requests
+		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
+		3. convert the resulting ordered list of jobids into a Job type for job apis
+	*/
+	fmt.Printf("total tasks time tree %d\n", taskList.taskByTime.Size())
+	fmt.Printf("total tasks by handler %d\n", len(taskList.taskByHandler))
+	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
+		taskList, groups, filter)
+
+	// for _, req := range taskList.taskByHandler {
+	// 	fmt.Printf("alloc req %s address, %s \n", req.Name, req.TaskActor.Address())
+	// 	reqs = append(reqs, req)
+	// }
+
+	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
+		if out == nil {
+			panic("nope TODO")
+		}
+		priorities := getOrderedPriorities(aMap)
+		for _, priority := range priorities {
+			for _, req := range aMap[priority] {
+				// fmt.Printf("alloc req %s address, %s \n", req.Name, req.TaskActor.Address())
+				*out = append(*out, req)
+			}
+		}
+	}
+
+	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
+	fmt.Println("scheduled job order", allocReqsToJobOrder(reqs))
+	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
+
+	fmt.Println("job order", allocReqsToJobOrder(reqs))
+	return reqs
 }
 
 func (p *priorityScheduler) prioritySchedule(
@@ -73,8 +121,8 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		taskList, groups, filter)
 
-	totalOrder(priorityToPendingTasksMap)
-	totalOrder(priorityToScheduledTaskMap)
+	// TODO remove me. for testing only.
+	p.OrderedAllocations(taskList, groups, filter)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -255,40 +303,6 @@ func sortTasksByPriorityAndTimestamp(
 	}
 
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
-}
-
-// FIXME probably wants a signatures like sortTasksByPriorityAndTimestamp
-// sorts by expected execution order at this point excluding backfills
-func totalOrder(priorityToTask map[int][]*sproto.AllocateRequest) []*sproto.AllocateRequest {
-	sortedReqs := make([]*sproto.AllocateRequest, 0)
-	priorities := getOrderedPriorities(priorityToTask)
-	for _, priority := range priorities {
-		// TODO do something similar to sortTasksByPriorityAndTimestamp. across all tasks
-		for _, req := range priorityToTask[priority] {
-			fmt.Printf("alloc req %s address, %s \n", req.Name, req.TaskActor.Address())
-		}
-	}
-	return sortedReqs
-	/*
-		compute a single numerical ordering for allocationreuqests that can be modified.
-		this could be similar across scheduler types or scheduler type specific. eg in priority we could modify the priority and then intro
-		a new unit32 to order allocation requests within a priority or rewrite to translate priority into a single uint and do away with priority.
-		TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
-		. either way we
-		1. get a total ordering of allocation requests
-		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
-		3. convert the resulting ordered list of jobids into a Job type for job apis
-	*/
-}
-
-func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) orderedset.OrderedSet {
-	jobSet := orderedset.NewOrderedSet()
-	for _, req := range reqs {
-		if req.JobID == "" {
-			continue
-		}
-		jobSet.Add(req.JobID)
-	}
 }
 
 func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {
