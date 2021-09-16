@@ -8,6 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/container/v1/container.proto";
 import "determined/task/v1/task.proto";
+import "determined/job/v1/job.proto";
 
 // Tensorboard is a tensorboard instance in a containerized environment.
 message Tensorboard {
@@ -45,4 +46,6 @@ message Tensorboard {
   string resource_pool = 12;
   // The exit status;
   string exit_status = 13;
+  // The associated job summary.
+  determined.job.v1.JobSummary job_summary = 14;
 }
