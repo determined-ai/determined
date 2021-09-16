@@ -664,10 +664,11 @@ service Determined {
 
   /* Jobs */
 
+  // TODO move these closer to resourcepools
   // Get a list of jobs in queue.
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/jobs"
+      get: "/api/v1/resource-pools/{pool_id}/queue"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
@@ -678,7 +679,9 @@ service Determined {
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/jobs/stats/{resource_pools}"
+      // FIXME could be queue-stats
+      // TODO how do we get stats for multiple resource pools? we have view that needs it
+      get: "/api/v1/resource-pools/{pool_id}/queue/stats"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
@@ -688,7 +691,7 @@ service Determined {
   // Control the job queue.
   rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
-      post: "/api/v1/jobs/queue-ctl"
+      post: "/api/v1/resource-pools/{pool_id}/queue-ctl"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
