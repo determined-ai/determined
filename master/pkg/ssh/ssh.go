@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	trialKeySize      = 1024
+	trialKeySize      = 2048
 	trialPEMBlockType = "RSA PRIVATE KEY"
 )
 
