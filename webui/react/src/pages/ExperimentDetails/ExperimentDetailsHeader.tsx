@@ -19,7 +19,7 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { terminalRunStates } from 'utils/types';
+import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -189,7 +189,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       terminalRunStates.has(experiment.state) && (
         experiment.archived ? options.archive : options.unarchive
       ),
-      curUser?.isAdmin && terminalRunStates.has(experiment.state) && options.delete,
+      deletableRunStates.has(experiment.state) && curUser?.isAdmin && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
     deleteExperimentHandler,

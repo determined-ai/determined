@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Add support for batch delete on experiment list page. .. image::
+   https://user-images.githubusercontent.com/220971/133659677-aea0d1bc-95ce-4652-8218-92b97d114358.png
