@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/job/v1/job.proto";
+import "determined/api/v1/pagination.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Get a list of jobs.
+message GetJobsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool" ] }
+  };
+  // Request to paginate the resposne.
+  PaginationRequest pagination = 1;
+  // The target resource-pool.
+  string resource_pool = 2;
+  // Sort results by the given field.
+  // enum SortBy {
+  //   // Returns checkpoints in an unsorted list.
+  //   SORT_BY_UNSPECIFIED = 0;
+  //   // Returns checkpoints sorted by UUID.
+  //   SORT_BY_QUEUE_POSITION = 1;
+  // }
+  // Sort results by the given field.
+  // SortBy sort_by = 3;
+  // Order results in either ascending or descending order.
+  OrderBy order_by = 4;
+}
+
+// Response to GetJobsRequest.
+message GetJobsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "jobs", "pagination" ] }
+  };
+  // Pagination information of the full dataset.
+  Pagination pagination = 1;
+  // List of the request jobs.
+  repeated determined.job.v1.Job jobs = 2;
+}
+
+// Request to update the job queue.
+message UpdateJobQueueRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "updates" ] }
+  };
+  // List of job queue control requests.
+  repeated determined.job.v1.QueueControl updates = 1;
+}
+// Response to UpdateJobQueueRequest.
+message UpdateJobQueueResponse {}
+
+// Job stats for a resource pool.
+message RPQueueStat {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "stats", "resource_pool" ] }
+  };
+  // Job queue stats.
+  determined.job.v1.QueueStats stats = 1;
+  // Resource pool.
+  string resource_pool = 2;
+}
+// Get job stats.
+message GetJobQueueStatsRequest {
+  // Filter the results based on a set of resource pools.
+  repeated string resource_pools = 1;
+}
+// Response to GetJobQueueStatsRequest.
+message GetJobQueueStatsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+  // List of queue stats per resource pool.
+  repeated RPQueueStat results = 1;
+}

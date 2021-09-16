@@ -63,7 +63,7 @@ type pods struct {
 	preemptionListener           *actor.Ref
 	resourceRequestQueue         *actor.Ref
 	podNameToPodHandler          map[string]*actor.Ref
-	containerIDToPodHandler      map[string]*actor.Ref
+	containerIDToPodName         map[string]string
 	podHandlerToMetadata         map[*actor.Ref]podMetadata
 	nodeToSystemResourceRequests map[string]int64
 
@@ -101,7 +101,7 @@ func Initialize(
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
 		podNameToPodHandler:          make(map[string]*actor.Ref),
-		containerIDToPodHandler:      make(map[string]*actor.Ref),
+		containerIDToPodName:         make(map[string]string),
 		podHandlerToMetadata:         make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources:     leaveKubernetesResources,
 		slotType:                     slotType,
@@ -144,6 +144,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
+
+	case GetTaskInfo:
+		// TODO query the kubernetes API for additional information
 
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
@@ -326,7 +329,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	}
 
 	p.podNameToPodHandler[newPodHandler.podName] = ref
-	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
+	p.containerIDToPodName[msg.Spec.ContainerID] = newPodHandler.podName
 	p.podHandlerToMetadata[ref] = podMetadata{
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
@@ -380,11 +383,18 @@ func (p *pods) receivePodPreemption(ctx *actor.Context, msg podPreemption) {
 }
 
 func (p *pods) receiveKillPod(ctx *actor.Context, msg KillTaskPod) {
-	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
+	name, ok := p.containerIDToPodName[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the chief pod exits, the scheduler
 		// will request to terminate pods all other pods that have
 		// notified the scheduler that they have exited.
+		ctx.Log().WithField("pod-id", msg.PodID).Info(
+			"received stop pod command for unregistered container id")
+		return
+	}
+
+	ref, ok := p.podNameToPodHandler[name]
+	if !ok {
 		ctx.Log().WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
@@ -411,7 +421,7 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	ctx.Log().WithField("pod", podInfo.podName).WithField(
 		"handler", podHandler.Address()).Infof("de-registering pod handler")
 	delete(p.podNameToPodHandler, podInfo.podName)
-	delete(p.containerIDToPodHandler, podInfo.containerID)
+	delete(p.containerIDToPodName, podInfo.containerID)
 	delete(p.podHandlerToMetadata, podHandler)
 
 	return nil

@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -107,6 +108,18 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			summaries = append(summaries, summary)
 		}
 		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
+		ctx.Respond(resp)
+
+	// case sproto.GetJobQInfo, sproto.GetJobQStats, sproto.SetJobOrder:
+	// could I look at ResourcePool here?
+	case job.GetJobQ:
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
+		ctx.Respond(resp)
+	case job.GetJobQStats:
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
+		ctx.Respond(resp)
+	case job.SetJobOrder:
+		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
 
 	default:

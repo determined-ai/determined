@@ -1,6 +1,8 @@
 package resourcemanagers
 
-import "github.com/determined-ai/determined/master/pkg/actor"
+import (
+	"github.com/determined-ai/determined/master/pkg/actor"
+)
 
 // groupActorStopped notifies that the group actor is stopped.
 type groupActorStopped struct {
@@ -10,8 +12,10 @@ type groupActorStopped struct {
 // group manages the common state for a set of tasks that all share the same scheduling restrictions
 // (e.g. max slots or fair share weight).
 type group struct {
-	handler  *actor.Ref
-	maxSlots *int
-	weight   float64
-	priority *int
+	handler *actor.Ref
+	// job      *sproto.JobSummary
+	maxSlots  *int
+	weight    float64 // QUESTION why is prio a ptr but weight is not.
+	priority  *int
+	qPosition float64
 }

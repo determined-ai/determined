@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/job"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -23,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // Experiment-specific actor messages.
@@ -82,6 +85,9 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
+		rmJobInfo             *job.RMJobInfo
+		isPreemptible         bool
+		mConfig               *config.Config
 	}
 )
 
@@ -131,6 +137,12 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
+	isPreemptible := ReadPreemptionStatus(
+		master.config,
+		expModel.Config.Resources().ResourcePool(),
+		model.TaskTypeTrial,
+	)
+
 	return &experiment{
 		Experiment:          expModel,
 		rm:                  master.rm,
@@ -147,6 +159,8 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
+		isPreemptible: isPreemptible,
+		mConfig:       master.config,
 	}, nil
 }
 
@@ -247,14 +261,45 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources := e.Config.Resources()
 		resources.SetWeight(msg.Weight)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
 	case sproto.SetGroupPriority:
 		resources := e.Config.Resources()
 		resources.SetPriority(msg.Priority)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
+	case sproto.SetGroupOrder:
+		job := model.Job{
+			JobID: e.JobID,
+			QPos:  msg.QPosition,
+		}
+		err := e.db.UpdateJob(&job)
+		if err != nil {
+			return err
+		}
+		if !e.isRP(msg.Handler) {
+			ctx.Tell(e.rm, msg)
+		}
+		// TODO persist in memory as well (on new and on restore)
+
+	case *apiv1.GetJobsRequest:
+		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
+		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
+			ctx.Respond(nil)
+			return nil
+		}
+		ctx.Respond(e.toV1Job())
+
+	case *job.RMJobInfo:
+		e.rmJobInfo = msg
+
+	case job.GetJobSummary:
+		ctx.Respond(e.toV1Job().Summary)
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -329,6 +374,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
+		e.clearJobInfo()
 
 	case *apiv1.CancelExperimentRequest:
 		switch {
@@ -343,6 +389,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
 
 	case *apiv1.KillExperimentRequest:
 		switch {
@@ -357,6 +404,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
+		e.clearJobInfo()
+
+	default:
+		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
 	}
 
 	return nil
@@ -509,6 +560,20 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 	return nil
 }
 
+// isRP determines whether or not the message originated from an RP; if so we will NOT forward the
+// message to a resource manager.
+func (e *experiment) isRP(handler *actor.Ref) bool {
+	if handler == nil {
+		return false
+	}
+	for _, child := range e.rm.Children() {
+		if child.Address() == handler.Address() {
+			return true
+		}
+	}
+	return false
+}
+
 func checkpointFromTrialIDOrUUID(
 	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
 ) (*model.Checkpoint, error) {
@@ -538,4 +603,28 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
+}
+
+func (e *experiment) toV1Job() *jobv1.Job {
+	j := jobv1.Job{
+		JobId:          e.JobID.String(),
+		EntityId:       fmt.Sprint(e.ID),
+		Type:           jobv1.Type_TYPE_EXPERIMENT,
+		IsPreemptible:  e.isPreemptible,
+		ResourcePool:   e.Config.Resources().ResourcePool(),
+		SubmissionTime: timestamppb.New(e.StartTime),
+		Weight:         e.Config.Resources().Weight(),
+		Username:       fmt.Sprintf("%d-userid", e.OwnerID),
+		Name:           e.Config.Name().String(),
+	}
+
+	j.Priority = int32(ReadPriority(e.mConfig, j.ResourcePool, e))
+	job.UpdateJobQInfo(&j, e.rmJobInfo)
+
+	return &j
+}
+
+// clearJobInfo clears the job info from the experiment.
+func (e *experiment) clearJobInfo() {
+	e.rmJobInfo = nil
 }

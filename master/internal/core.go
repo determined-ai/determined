@@ -24,6 +24,8 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/job"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -712,6 +714,9 @@ func (m *Master) Run(ctx context.Context) error {
 	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
+	m.system.ActorOf(job.JobsActorAddr, &job.Jobs{
+		RMRef: sproto.GetCurrentRM(m.system),
+	})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
@@ -863,4 +868,38 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	return m.startServers(ctx, cert)
+}
+
+// TODO these would go in a config package
+
+// ReadPreemptionStatus resolves the preemption status for a task type.
+func ReadPreemptionStatus(config *config.Config, rpName string, taskType model.TaskType) bool {
+	return true
+	// TODO
+	/*
+		does this task allow preemption?
+		k8 or agent
+		if k8:
+			can the selected scheduler preempt? is it set to?
+		if agent:
+			can the default scheduler preempt? is it set to?
+			can this task's rp preempt? is it set to?
+	*/
+}
+
+// ReadPriority resolves the priority value for a job.
+func ReadPriority(config *config.Config, rpName string, jobI interface{}) int {
+	var prio *int
+	switch job := jobI.(type) {
+	case *experiment:
+		prio = job.Config.Resources().Priority()
+	case *tasks.GenericCommandSpec:
+		prio = job.Config.Resources.Priority
+	default:
+		// TODO find the RM config or RP config and lookup the priorities in order
+	}
+	if prio == nil { // until this is implemented
+		return 42
+	}
+	return *prio
 }

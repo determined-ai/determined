@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -18,6 +19,7 @@ import (
 
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
+const kubernetesDefaultPriority = 50
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -104,6 +106,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetTaskHandler:
 		reschedule = false
 		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
+
+	case
+		job.GetJobQ,
+		job.SetJobOrder:
+		return k.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskSummary:
 		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, kubernetesScheduler); resp != nil {
@@ -231,6 +238,53 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	k.reqList.AddTask(&msg)
 }
 
+func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case job.GetJobQ:
+		ctx.Respond(k.jobQInfo())
+		return actor.ErrUnexpectedMessage(ctx)
+
+	case job.SetJobOrder:
+		for it := k.reqList.iterator(); it.next(); {
+			req := it.value()
+			if req.JobID != nil && *req.JobID == msg.JobID {
+				group := k.getOrCreateGroup(ctx, req.Group)
+				if msg.QPosition > 0 {
+					group.qPosition = msg.QPosition
+					ctx.Tell(req.Group, sproto.SetGroupOrder{
+						QPosition: msg.QPosition,
+						Handler:   ctx.Self(),
+					})
+				}
+				if *msg.Priority > 0 {
+					group.priority = msg.Priority
+					ctx.Tell(req.Group, sproto.SetGroupPriority{
+						Priority: msg.Priority,
+						Handler:  ctx.Self(),
+					})
+				}
+				if msg.Weight > 0 {
+					group.weight = msg.Weight
+					ctx.Tell(req.Group, sproto.SetGroupWeight{
+						Weight:  msg.Weight,
+						Handler: ctx.Self(),
+					})
+				}
+			}
+		}
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+// CHECK should this be on the resourcepool struct?
+func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*job.RMJobInfo {
+	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
+	jobQinfo, _ := mergeToJobQInfo(reqs)
+	return jobQinfo
+}
+
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
 	if task, found := k.reqList.GetTaskByHandler(msg.TaskHandler); found {
 		task.Name = msg.Name
@@ -307,7 +361,8 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	defaultPriority := kubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &defaultPriority}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
