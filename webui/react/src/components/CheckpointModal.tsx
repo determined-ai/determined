@@ -126,7 +126,6 @@ const CheckpointModal: React.FC<Props> = (
             <HumanReadableNumber num={searcherMetric} /> {`(${config.searcher.metric})`}
           </>,
         )}
-        {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
         {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow('Total Size', totalSize)}
         {resources.length !== 0 && renderRow(
