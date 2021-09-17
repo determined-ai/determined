@@ -678,7 +678,6 @@ service Determined {
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {
     option (google.api.http) = {
-      // FIXME could be queue-stats
       get: "/api/v1/resource-pools/queue/stats"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -689,7 +688,7 @@ service Determined {
   // Control the job queue.
   rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
-      post: "/api/v1/resource-pools/queue/queue-ctl"
+      patch: "/api/v1/resource-pools/queue"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
