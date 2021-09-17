@@ -23,7 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
-	scheduleV1 "k8s.io/api/scheduling/v1"
+	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -267,7 +267,7 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 func (p *pod) createPriorityClass(name string, priority int32) error {
 	preemptionPolicy := k8sV1.PreemptNever
 
-	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(&scheduleV1.PriorityClass{
+	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(&schedulingV1.PriorityClass{
 		TypeMeta: metaV1.TypeMeta{},
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      name,
