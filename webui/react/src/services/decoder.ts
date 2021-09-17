@@ -19,12 +19,13 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
-export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   return {
     clusterId: data.clusterId,
     clusterName: data.clusterName,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
+    ssoProviders: data.ssoProviders,
     version: data.version,
   };
 };
