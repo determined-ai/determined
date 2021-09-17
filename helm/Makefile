@@ -2,7 +2,7 @@
 build: clean
 	mkdir -p build/
 	helm package --destination build charts/determined
-	pushd build/ && ln -s determined-*.tgz determined-latest.tgz && popd
+	cd build/ && ln -s determined-*.tgz determined-latest.tgz && cd ..
 
 fmt:
 	helm lint charts/determined/
