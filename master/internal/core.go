@@ -186,6 +186,7 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 // @Success 200 {} string "A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
 //nolint:godot
 // @Router /allocation/raw [get]
+// @Deprecated
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
