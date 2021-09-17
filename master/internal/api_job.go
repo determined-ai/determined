@@ -7,11 +7,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/goombaio/orderedset"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
-	"github.com/goombaio/orderedset"
 )
 
 var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
