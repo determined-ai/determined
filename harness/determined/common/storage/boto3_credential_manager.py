@@ -77,7 +77,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
         if now < self._check_time:
             return
         with self._lock:
-            # Real time check after acquiring lockg
+            # Real time check after acquiring lock
             if now < self._check_time:
                 return
             self._check_time = now + self._check_every
@@ -87,7 +87,8 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
 
     def get_frozen_credentials(self) -> ReadOnlyCredentials:
         self._refresh()
-        return ReadOnlyCredentials(self._access_key, self._secret_key, self._token)
+        with self._lock:
+            return ReadOnlyCredentials(self._access_key, self._secret_key, self._token)
 
     @property
     def access_key(self) -> Any:
