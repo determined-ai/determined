@@ -10,7 +10,7 @@ import requests
 from determined.common import util
 from determined.common.storage.base import StorageManager, StorageMetadata
 
-from .boto3_credential_manager import initialize_boto3
+from .boto3_credential_manager import initialize_boto3_credential_providers
 
 
 class S3StorageManager(StorageManager):
@@ -28,7 +28,7 @@ class S3StorageManager(StorageManager):
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         self.bucket = bucket
-        initialize_boto3()
+        initialize_boto3_credential_providers()
         self.client = boto3.client(
             "s3",
             endpoint_url=endpoint_url,
