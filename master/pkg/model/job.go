@@ -1,7 +1,5 @@
 package model
 
-import "time"
-
 // JobID is the unique ID of a job among all jobs.
 type JobID string
 
@@ -21,8 +19,6 @@ const (
 
 // Job is the model for a job in the database.
 type Job struct {
-	JobID     JobID      `db:"job_id"`
-	JobType   JobType    `db:"job_type"`
-	StartTime time.Time  `db:"start_time"`
-	EndTime   *time.Time `db:"end_time"`
+	JobID   JobID   `db:"job_id"`
+	JobType JobType `db:"job_type"`
 }
