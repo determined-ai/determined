@@ -28,32 +28,31 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	p.repr(rp)
+	// TODO remove me. for testing only.
+	p.OrderedAllocations(rp)
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
 func (p *priorityScheduler) repr(rp *ResourcePool) {
-	log.Debugf("total tasks time tree %d, ", rp.taskList.taskByTime.Size())
-	log.Debugf("by handler %d\n", len(rp.taskList.taskByHandler))
+	log.Debugf("total tasks by time %d", rp.taskList.taskByTime.Size())
 }
 
-// sorts by expected execution order at this point excluding backfills
+// OrderedAllocations sorts by expected allocation order at this point excluding backfills.
 func (p *priorityScheduler) OrderedAllocations(
-	taskList *taskList,
-	groups map[*actor.Ref]*group,
-	filter func(*sproto.AllocateRequest) bool,
+	rp *ResourcePool,
 ) (reqs []*sproto.AllocateRequest) {
 	/*
-				compute a single numerical ordering for allocationreuqests that can be modified.
-				TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
-				. either way we
-				1. get a total ordering of allocation requests
-				2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
-				3. convert the resulting ordered list of jobids into a Job type for job apis
+		compute a single numerical ordering for allocationreuqests that can be modified.
+		TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
+		. either way we
+		1. get a total ordering of allocation requests
+		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
+		3. convert the resulting ordered list of jobids into a Job type for job apis
 
 		Once jobs carry a queue position attribute with them it'll be what sortTasksByPriorityAndTimestamp uses for returning tasks in order.
 	*/
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, filter)
+		rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
 
 	// FIXME there is gotta be a friendlier version of this.
 	// can we stick to slices together quickly in Go?
@@ -70,9 +69,11 @@ func (p *priorityScheduler) OrderedAllocations(
 	}
 
 	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
-	log.Debugf("scheduled job order", allocReqsToJobOrder(reqs))
+	log.Debugf("scheduled tasks", priorityToScheduledTaskMap)
+	log.Debugf("scheduled job order", allocReqsToJobOrder(reqs).Values())
 	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
-	log.Debugf("job order", allocReqsToJobOrder(reqs))
+	log.Debugf("pendings tasks", priorityToPendingTasksMap)
+	log.Debugf("job order", allocReqsToJobOrder(reqs).Values())
 	return reqs
 }
 
@@ -85,6 +86,7 @@ func (p *priorityScheduler) prioritySchedule(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
+	// TODO consider agent labels
 	// Since labels are a hard scheduling constraint, process every label independently.
 	for label, agentsWithLabel := range splitAgentsByLabel(agents) {
 		// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
@@ -121,8 +123,6 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		taskList, groups, filter)
 
-	// TODO remove me. for testing only.
-	p.OrderedAllocations(taskList, groups, filter)
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
