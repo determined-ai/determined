@@ -51,6 +51,12 @@ func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*ac
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
+func (p *fairShare) OrderedAllocations(
+	rp *ResourcePool,
+) (reqs []*sproto.AllocateRequest) {
+	return reqs
+}
+
 func fairshareSchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,

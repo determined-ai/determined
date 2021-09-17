@@ -243,6 +243,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
 
+	case
+		GetJobOrder:
+		return rp.receiveJobQueueMsg(ctx)
+
 	case sproto.GetTaskHandler:
 		reschedule = false
 		ctx.Respond(getTaskHandler(rp.taskList, msg.ID))
@@ -332,6 +336,17 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		state.draining = drain
 		state.enabled = false
 
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch ctx.Message().(type) {
+	case GetJobOrder:
+		allocations := rp.scheduler.OrderedAllocations(rp)
+		ctx.Respond(*allocReqsToJobOrder(allocations))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

@@ -17,7 +17,7 @@ import (
 // the overhead of restarting a preempted task.
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
-	// OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest // Optional until we implement this for other schedulers
+	OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
