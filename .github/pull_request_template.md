@@ -26,7 +26,7 @@ You may intentionally leave this section blank and remove the title.
 
 
 ## Checklist
-
+- [ ] Changes have been manually QA'd
 - [ ] User-facing API changes need the "User-facing API Change" label.
 - [ ] Release notes should be added as a separate file under `docs/release-notes/`.
 See [Release Note](../docs/release-notes/README.md) for details.
