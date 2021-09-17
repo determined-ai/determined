@@ -662,9 +662,8 @@ service Determined {
     };
   }
 
-  /* Jobs */
+  /* Jobs Queue */
 
-  // TODO move these closer to resourcepools
   // Get a list of jobs in queue.
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
