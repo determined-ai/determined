@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -8,6 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
@@ -23,14 +24,18 @@ interface Queries {
 
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
-  const { auth } = useStore();
+  const { auth, info } = useStore();
   const storeDispatch = useStoreDispatch();
-  const queries: Queries = queryString.parse(location.search);
   const [ canceler ] = useState(new AbortController());
+
+  const queries: Queries = queryString.parse(location.search);
+  const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
+  const ssoQueryString = queryString.stringify(ssoQueries);
+  const samlSso = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
 
   /*
    * Check every so often to see if the user is authenticated.
-   * For example, the user can authenticate in a different session,
+   * For example, the user can authenticate in a different session,info
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
@@ -82,6 +87,14 @@ const SignIn: React.FC = () => {
         <div className={css.content}>
           <Logo type={LogoTypes.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
+          {samlSso && (
+            <Button
+              className={css.ssoButton}
+              href={samlUrl(samlSso.ssoUrl, ssoQueryString)}
+              type="primary">
+              Sign in with Okta
+            </Button>
+          )}
         </div>
       </div>
     </Page>

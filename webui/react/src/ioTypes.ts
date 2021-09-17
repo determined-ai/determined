@@ -27,11 +27,17 @@ const optional = (x: io.Mixed) => io.union([ x, io.null, io.undefined ]);
 
 /* Info */
 
+const ioSsoProvider = io.type({
+  name: io.string,
+  sso_url: io.string,
+});
+
 export const ioDeterminedInfo = io.type({
   cluster_id: io.string,
   cluster_name: io.string,
   isTelemetryEnabled: io.boolean,
   master_id: io.string,
+  sso_providers: optional(io.array(ioSsoProvider)),
   version: io.string,
 });
 
