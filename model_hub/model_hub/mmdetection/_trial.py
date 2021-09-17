@@ -35,6 +35,7 @@ import numpy as np
 import torch
 
 import determined.pytorch as det_torch
+from determined.common import set_logger
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
@@ -99,6 +100,10 @@ class MMDetTrial(det_torch.PyTorchTrial):
                 self.cfg.optimizer_config.grad_clip.max_norm,
                 self.cfg.optimizer_config.grad_clip.norm_type,
             )
+
+        # mmdet sets loggers in the package that interrupt with Determined logging.
+        # We reset the root logger after mmdet models are initialized.
+        set_logger(bool(self.context.env.experiment_config.get("debug", False)))
 
     def build_mmdet_config(self) -> mmcv.Config:
         """
