@@ -35,11 +35,10 @@ import (
 )
 
 const (
-	expConfPath = "/run/determined/workdir/experiment_config.json"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
-	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
+	tensorboardEntrypointFile = "/run/determined/tensorboard/tensorboard-entrypoint.sh"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -187,7 +186,7 @@ func (a *apiServer) LaunchTensorboard(
 
 				// The TensorBoard container needs access to the original URL
 				// and the URL in "host:port" form.
-				uniqEnvVars["DET_S3_ENDPOINT"] = *c.EndpointURL()
+				uniqEnvVars["DET_S3_ENDPOINT_URL"] = *c.EndpointURL()
 				uniqEnvVars["S3_ENDPOINT"] = endpoint.Host
 
 				uniqEnvVars["S3_USE_HTTPS"] = "0"
@@ -278,7 +277,6 @@ func (a *apiServer) LaunchTensorboard(
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg),
 	}
 
 	if err = check.Validate(req.Config); err != nil {

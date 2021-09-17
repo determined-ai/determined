@@ -35,39 +35,40 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
+				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"storage_config.json",
+					"checkpoint_gc/storage_config.json",
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
 					0600,
 					tar.TypeReg,
 				),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoints_to_delete.json",
+					"checkpoint_gc/checkpoints_to_delete.json",
 					[]byte(jsonify(g.ToDelete)),
 					0600,
 					tar.TypeReg,
 				),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					etc.GCCheckpointsEntrypointResource,
+					filepath.Join("checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 					0700,
 					tar.TypeReg,
 				),
 			},
-			ContainerWorkDir,
+			runDir,
 		),
 	}
 
 	res.Description = "gc"
 
 	res.Entrypoint = []string{
-		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
+		filepath.Join("/run/determined/checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
 		"--storage-config",
-		"storage_config.json",
+		"/run/determined/checkpoint_gc/storage_config.json",
 		"--delete",
-		"checkpoints_to_delete.json",
+		"/run/determined/checkpoint_gc/checkpoints_to_delete.json",
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
