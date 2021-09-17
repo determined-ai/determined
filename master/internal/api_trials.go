@@ -772,7 +772,7 @@ func (a *apiServer) AllocationRendezvousInfo(
 	select {
 	case rsp := <-w.C:
 		if rsp.Err != nil {
-			return nil, err
+			return nil, rsp.Err
 		}
 		return &apiv1.AllocationRendezvousInfoResponse{RendezvousInfo: rsp.Info}, nil
 	case <-ctx.Done():
