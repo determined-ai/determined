@@ -26,7 +26,7 @@ require (
 	github.com/golangci/golangci-lint v1.28.3
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.1.2
-	github.com/goombaio/orderedset v0.0.0-20180925151225-8e67b20a9b77 // indirect
+	github.com/goombaio/orderedset v0.0.0-20180925151225-8e67b20a9b77
 	github.com/goreleaser/goreleaser v0.140.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4

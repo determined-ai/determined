@@ -16,6 +16,9 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
+// AllocReqs is an alias for a list of Allocation Requests.
+type AllocReqs = []*sproto.AllocateRequest
+
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -24,10 +27,14 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	p.repr(rp)
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
-type AllocReqs = []*sproto.AllocateRequest
+func (p *priorityScheduler) repr(rp *ResourcePool) {
+	log.Debugf("total tasks time tree %d, ", rp.taskList.taskByTime.Size())
+	log.Debugf("by handler %d\n", len(rp.taskList.taskByHandler))
+}
 
 // sorts by expected execution order at this point excluding backfills
 func (p *priorityScheduler) OrderedAllocations(
@@ -36,43 +43,36 @@ func (p *priorityScheduler) OrderedAllocations(
 	filter func(*sproto.AllocateRequest) bool,
 ) (reqs []*sproto.AllocateRequest) {
 	/*
-		compute a single numerical ordering for allocationreuqests that can be modified.
-		this could be similar across scheduler types or scheduler type specific. eg in priority we could modify the priority and then intro
-		a new unit32 to order allocation requests within a priority or rewrite to translate priority into a single uint and do away with priority.
-		TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
-		. either way we
-		1. get a total ordering of allocation requests
-		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
-		3. convert the resulting ordered list of jobids into a Job type for job apis
+				compute a single numerical ordering for allocationreuqests that can be modified.
+				TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
+				. either way we
+				1. get a total ordering of allocation requests
+				2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
+				3. convert the resulting ordered list of jobids into a Job type for job apis
+
+		Once jobs carry a queue position attribute with them it'll be what sortTasksByPriorityAndTimestamp uses for returning tasks in order.
 	*/
-	fmt.Printf("total tasks time tree %d\n", taskList.taskByTime.Size())
-	fmt.Printf("total tasks by handler %d\n", len(taskList.taskByHandler))
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		taskList, groups, filter)
 
-	// for _, req := range taskList.taskByHandler {
-	// 	fmt.Printf("alloc req %s address, %s \n", req.Name, req.TaskActor.Address())
-	// 	reqs = append(reqs, req)
-	// }
-
+	// FIXME there is gotta be a friendlier version of this.
+	// can we stick to slices together quickly in Go?
 	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
 		if out == nil {
-			panic("nope TODO")
+			panic("missing output array. (nil pointer)")
 		}
 		priorities := getOrderedPriorities(aMap)
 		for _, priority := range priorities {
 			for _, req := range aMap[priority] {
-				// fmt.Printf("alloc req %s address, %s \n", req.Name, req.TaskActor.Address())
 				*out = append(*out, req)
 			}
 		}
 	}
 
 	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
-	fmt.Println("scheduled job order", allocReqsToJobOrder(reqs))
+	log.Debugf("scheduled job order", allocReqsToJobOrder(reqs))
 	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
-
-	fmt.Println("job order", allocReqsToJobOrder(reqs))
+	log.Debugf("job order", allocReqsToJobOrder(reqs))
 	return reqs
 }
 

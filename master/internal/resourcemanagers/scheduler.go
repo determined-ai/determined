@@ -3,9 +3,10 @@ package resourcemanagers
 import (
 	"fmt"
 
+	"github.com/goombaio/orderedset"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/goombaio/orderedset"
 )
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
@@ -16,7 +17,7 @@ import (
 // the overhead of restarting a preempted task.
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
-	// OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
+	// OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest // Optional until we implement this for other schedulers
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
