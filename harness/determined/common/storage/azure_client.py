@@ -26,28 +26,24 @@ class AzureStorageClient(object):
         elif account_url:
             self.client = BlobServiceClient(account_url, credential)
 
-        logging.info("Trying to create Azure Blob Storage Container: {}.".format(container))
+        logging.info(f"Trying to create Azure Blob Storage Container: {container}.")
         try:
             self.client.create_container(container.split("/")[0])
-            logging.info("Successfully created container {}.".format(container))
+            logging.info(f"Successfully created container {container}.")
         except ResourceExistsError:
             logging.info(
-                "Container {} already exists, and will be used to store checkpoints.".format(
-                    container
-                )
+                f"Container {container} already exists, and will be used to store checkpoints."
             )
         except HttpResponseError as e:
             if e.error_code == StorageErrorCode.invalid_uri:  # type: ignore
                 logging.warning(
-                    (
-                        "The storage client raised the following HttpResponseError:\n{}\nPlease "
-                        "ignore this warning if this is because the account url provided points "
-                        "to a container instead of a storage account; otherwise, it may be "
-                        "necessary to fix your config.yaml."
-                    ).format(e)
+                    f"The storage client raised the following HttpResponseError:\n{e}\nPlease "
+                    "ignore this warning if this is because the account url provided points to a "
+                    "container instead of a storage account; otherwise, it may be necessary to fix "
+                    "your config.yaml."
                 )
             else:
-                logging.error("Failed while trying to create container {}.".format(container))
+                logging.error(f"Failed while trying to create container {container}.")
                 raise e
 
     @util.preserve_random_state

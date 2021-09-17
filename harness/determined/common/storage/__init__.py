@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Type
 
 from determined.common.check import check_eq, check_in, check_type
 
-from .base import StorageManager, StorageMetadata
+from .base import StorageManager
 from .azure import AzureStorageManager
 from .gcs import GCSStorageManager
 from .hdfs import HDFSStorageManager
@@ -16,7 +16,6 @@ __all__ = [
     "AzureStorageManager",
     "GCSStorageManager",
     "StorageManager",
-    "StorageMetadata",
     "S3StorageManager",
     "SharedFSStorageManager",
 ]
@@ -97,24 +96,23 @@ def validate_manager(manager: StorageManager) -> None:
         """
 
         def __init__(self) -> None:
-            self.uuid = str(uuid.uuid4())
+            self.storage_id = str(uuid.uuid4())
 
         def save(self, storage_dir: str) -> None:
             os.makedirs(storage_dir)
             with open(os.path.join(storage_dir, "VALIDATE.txt"), "w") as fp:
-                fp.write(self.uuid)
+                fp.write(self.storage_id)
 
         def load(self, storage_dir: str) -> None:
             with open(os.path.join(storage_dir, "VALIDATE.txt"), "r") as fp:
-                check_eq(fp.read(), self.uuid, "Unable to properly load from storage")
+                check_eq(fp.read(), self.storage_id, "Unable to properly load from storage")
 
     validater = Validater()
     with manager.store_path() as (storage_id, path):
         validater.save(path)
-        metadata = StorageMetadata(storage_id, StorageManager._list_directory(path))
-    with manager.restore_path(metadata) as path:
+    with manager.restore_path(storage_id) as path:
         validater.load(path)
-    manager.delete(metadata)
+    manager.delete(storage_id)
 
 
 def validate_config(config: Dict[str, Any], container_path: Optional[str]) -> None:

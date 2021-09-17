@@ -76,17 +76,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			rootDir,
 		),
 		wrapArchive(additionalFiles, rootDir),
-		wrapArchive(
-			archive.Archive{
-				s.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint.json",
-					[]byte(jsonify(s.LatestCheckpoint)),
-					0600,
-					tar.TypeReg,
-				),
-			},
-			trainDir,
-		),
 	}
 
 	res.Description = fmt.Sprintf(
@@ -116,10 +105,13 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
 		"DET_HPARAMS":                  jsonify(s.HParams),
 		"DET_LATEST_BATCH":             strconv.Itoa(s.LatestBatch),
-		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
 		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
 		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
 	}
+	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
+		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID
+	}
+
 	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{

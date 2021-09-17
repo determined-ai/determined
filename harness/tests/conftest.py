@@ -1,13 +1,22 @@
 import os
-from typing import Any, Generator, List
+from typing import Any, Iterator, List
 
 import pytest
+from _pytest.fixtures import SubRequest
 
 from determined import gpu
 
 
 def pytest_addoption(parser: Any) -> None:
     parser.addoption("--runslow", action="store_true", default=False, help="run slow tests")
+    parser.addoption(
+        "--require-secrets", action="store_true", help="fail tests when storage access fails"
+    )
+
+
+@pytest.fixture
+def require_secrets(request: SubRequest) -> Iterator[bool]:
+    yield bool(request.config.getoption("--require-secrets"))
 
 
 def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
@@ -21,7 +30,7 @@ def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
 
 
 @pytest.fixture(scope="function")
-def expose_gpus() -> Generator:
+def expose_gpus() -> Iterator[None]:
     """
     Set the environment variables to mimic what the agent uses to control which
     GPUs will be used in the harness code. Using this fixture will enforce that
