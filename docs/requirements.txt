@@ -1,10 +1,7 @@
 # pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
 docutils==0.15.2
-# 0.5.1 raises an error in import during docs bulids.
-torchmetrics==0.5.0
 
 pillow
-pytorch-lightning==1.3.5
 rstfmt==0.0.9
 sphinx-argparse>=0.2.5
 sphinx-copybutton
@@ -12,14 +9,3 @@ sphinx-sitemap>=2.2.0
 sphinx==2.4.4
 
 git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
-
-# model-hub requirements
-# install transformers and datasets
-transformers==4.8.2
-datasets==1.9.0
-
-# install mmcv and mmdet
-mmdet==2.16.0
-# The pytorch version needs to match the env used for build-docs in circleci.
--f https://download.openmmlab.com/mmcv/dist/cpu/torch1.9.0/index.html
-mmcv-full==1.3.12
