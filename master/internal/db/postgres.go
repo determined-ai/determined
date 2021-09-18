@@ -713,18 +713,29 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
-	err := db.namedGet(&experiment.ID, `
-INSERT INTO experiments
-(state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
-VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-        :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-        :notes)
-RETURNING id`, experiment)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
-	}
-	return nil
+	return db.withTransaction("add_trial", func(tx *sqlx.Tx) error {
+
+		job := model.Job{
+			JobID:   experiment.JobID,
+			JobType: "EXPERIMENT",
+		}
+		if err := addJob(tx, &job); err != nil {
+			// Assume the foreign key constraint is handled by the database.
+			return errors.Wrapf(err, "error inserting job %v", job)
+		}
+		err := db.namedGet(&experiment.ID, `
+	INSERT INTO experiments
+	(state, config, model_definition, start_time, end_time, archived,
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
+	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
+					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
+					:notes)
+	RETURNING id`, experiment)
+		if err != nil {
+			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
+		}
+		return nil
+	})
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.
