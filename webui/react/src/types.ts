@@ -41,6 +41,7 @@ export interface SsoProvider {
 export interface DeterminedInfo {
   clusterId: string;
   clusterName: string;
+  externalAuthUri?: string;
   isTelemetryEnabled: boolean;
   masterId: string;
   ssoProviders?: SsoProvider[];

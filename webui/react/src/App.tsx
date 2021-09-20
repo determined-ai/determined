@@ -23,6 +23,7 @@ import { checkServerAlive, paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
+  const [ isAlive, setIsAlive ] = useState<boolean>(true);
   const [ canceler ] = useState(new AbortController());
   const { info, ui } = useStore();
   const storeDispatch = useStoreDispatch();
@@ -87,18 +88,14 @@ const AppView: React.FC = () => {
     };
   }, [ ui.omnibar.isShowing, storeDispatch ]);
 
-  // Correct the viewport height size when window resize occurs.
-  useLayoutEffect(() => correctViewportHeight(), [ resize ]);
-
-  const [ isAlive, setIsAlive ] = useState<boolean>(true);
-
   useEffect(() => {
-    checkServerAlive().then(aIsAlive => {
-      if (!aIsAlive) {
-        setIsAlive(false);
-      }
+    checkServerAlive().then(serverIsAlive => {
+      if (!serverIsAlive) setIsAlive(false);
     });
   }, []);
+
+  // Correct the viewport height size when window resize occurs.
+  useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
   const UnreachableServerMessage = (
     <PageMessage title="Server Unreachable">
