@@ -16,7 +16,7 @@ from botocore.credentials import (
 from botocore.session import get_session
 
 
-class RefreshedCredentialProvider(CredentialProvider):  # type: ignore
+class RefreshableCredentialProvider(CredentialProvider):  # type: ignore
     """
     Creates a refreshable credential provider class given an existing credential provider in
     the boto3 credential chain.
@@ -121,7 +121,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
 def register_credential_provider(session: session, provider_name: str) -> None:
     credential_resolver = session.get_component("credential_provider")
     credential_provider = credential_resolver.get_provider(provider_name)
-    managed_credential_provider = RefreshedCredentialProvider(
+    managed_credential_provider = RefreshableCredentialProvider(
         check_every=2, credential_provider=credential_provider
     )
     credential_resolver.insert_before(
