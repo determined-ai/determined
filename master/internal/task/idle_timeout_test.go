@@ -33,10 +33,9 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 
 	m := MockIdleTimeoutWatchee{
 		idleTimeoutWatcher: IdleTimeoutWatcher{
-			Timeout: tickInterval,
-			GetLastActivity: func(ctx *actor.Context) *time.Time {
-				return &lastActivity
-			},
+			Timeout:              tickInterval,
+			UseRunnerState:       true,
+			lastExplicitActivity: &lastActivity,
 			Action: func(ctx *actor.Context) {
 				actionDone = true
 			},

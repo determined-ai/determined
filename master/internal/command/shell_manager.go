@@ -1,14 +1,11 @@
 package command
 
 import (
-	"strings"
-
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -38,11 +35,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, s.db, taskID, msg, map[string]readinessCheck{
-			"shell": func(log sproto.ContainerLog) bool {
-				return strings.Contains(log.String(), "Server listening on")
-			},
-		})
+		return createGenericCommandActor(ctx, s.db, taskID, model.TaskTypeShell, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

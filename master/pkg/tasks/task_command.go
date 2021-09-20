@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"regexp"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
@@ -26,15 +27,15 @@ type GenericCommandSpec struct {
 
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
+
+	LogReadinessCheck *regexp.Regexp
 }
 
 // ToTaskSpec generates a TaskSpec.
 func (s GenericCommandSpec) ToTaskSpec(
-	keys *ssh.PrivateAndPublicKeys, allocationToken string,
+	keys *ssh.PrivateAndPublicKeys,
 ) TaskSpec {
 	res := s.Base
-
-	res.AllocationSessionToken = allocationToken
 
 	if keys != nil {
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{

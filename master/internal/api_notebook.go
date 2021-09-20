@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -112,6 +113,8 @@ func (a *apiServer) NotebookLogs(
 	).AwaitTermination()
 }
 
+var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
@@ -126,6 +129,7 @@ func (a *apiServer) LaunchNotebook(
 
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
+	spec.LogReadinessCheck = jupyterReadyPattern
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {

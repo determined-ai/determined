@@ -203,31 +203,32 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
 	}
 
-	req := sproto.AllocateRequest{
-		TaskID:         t.taskID,
-		AllocationID:   model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
-		Name:           name,
-		Group:          ctx.Self().Parent(),
-		SlotsNeeded:    t.config.Resources().SlotsPerTrial(),
-		NonPreemptible: false,
-		Label:          t.config.Resources().AgentLabel(),
-		ResourcePool:   t.config.Resources().ResourcePool(),
+	ctx.Log().Info("decided to allocate trial")
+	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
+		AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
+		TaskID:       t.taskID,
+		Name:         name,
+		TaskActor:    ctx.Self(),
+		Group:        ctx.Self().Parent(),
+
+		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
+		Label:        t.config.Resources().AgentLabel(),
+		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: false,
 		},
-		TaskActor: ctx.Self(),
-	}
 
-	ctx.Log().Info("decided to allocate trial")
-	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(req, t.db, t.rm))
+		Preemptible:  true,
+		DoRendezvous: true,
+	}, t.db, t.rm))
 	return nil
 }
 
-func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
+func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	if t.generatedKeys == nil {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to generate keys for trial")
+			return tasks.TaskSpec{}, errors.Wrap(err, "failed to generate keys for trial")
 		}
 		t.generatedKeys = &generatedKeys
 	}
@@ -241,7 +242,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
 			t.warmStartCheckpoint,
 			int64(t.searcher.Create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
-			return nil, errors.Wrap(err, "failed to save trial to database")
+			return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial to database")
 		}
 		t.id = modelTrial.ID
 		t.idSet = true
@@ -255,20 +256,21 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
 
 	t.runID++
 	if err := t.db.UpdateTrialRunID(t.id, t.runID); err != nil {
-		return nil, errors.Wrap(err, "failed to save trial run ID")
+		return tasks.TaskSpec{}, errors.Wrap(err, "failed to save trial run ID")
 	}
 
 	var latestBatch int
 	latestCheckpoint, err := t.db.LatestCheckpointForTrial(t.id)
 	switch {
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to query latest checkpoint for trial")
+		return tasks.TaskSpec{}, errors.Wrapf(err, "failed to query latest checkpoint for trial")
 	case latestCheckpoint == nil:
 		latestCheckpoint = t.warmStartCheckpoint
 	default:
 		latestBatch = latestCheckpoint.TotalBatches
 	}
-	spec := tasks.TrialSpec{
+
+	return tasks.TrialSpec{
 		Base: *t.taskSpec,
 
 		ExperimentID:     t.experimentID,
@@ -279,8 +281,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (*tasks.TaskSpec, error) {
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		LatestBatch:      latestBatch,
 		LatestCheckpoint: latestCheckpoint,
-	}.ToTaskSpec(t.generatedKeys)
-	return &spec, nil
+	}.ToTaskSpec(t.generatedKeys), nil
 }
 
 // allocationExited cleans up after an allocation exit and exits permanently or reallocates.
