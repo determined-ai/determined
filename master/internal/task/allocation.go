@@ -262,7 +262,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	if !a.exited {
 		ctx.Log().Info("exit did not run properly")
 		for _, r := range a.reservations {
-			if r.exit != nil {
+			if r.exit == nil {
 				ctx.Log().Infof("allocation exited with unterminated reservation: %v", r.Summary())
 				r.Kill(ctx)
 			}
