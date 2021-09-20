@@ -1,4 +1,4 @@
-import { Button, Menu, Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -8,9 +8,9 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
-import { getModel } from 'services/api';
+import { getModelDetails } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
-import { ModelItem } from 'types';
+import { ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 
 import CollapsableCard from './ModelDetails/CollapsableCard';
@@ -21,7 +21,7 @@ interface Params {
 }
 
 const ModelDetails: React.FC = () => {
-  const [ model, setModel ] = useState<ModelItem>();
+  const [ model, setModel ] = useState<ModelVersions>();
   const { modelId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
 
@@ -29,7 +29,7 @@ const ModelDetails: React.FC = () => {
 
   const fetchModel = useCallback(async () => {
     try {
-      const modelData = await getModel({ modelName: 'mnist' });
+      const modelData = await getModelDetails({ modelName: 'mnist', sortBy: 'SORT_BY_VERSION' });
       if (!isEqual(modelData, model)) setModel(modelData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
@@ -39,15 +39,15 @@ const ModelDetails: React.FC = () => {
   usePolling(fetchModel);
 
   const metadata = useMemo(() => {
-    return Object.entries(model?.metadata || {}).map((pair) => {
+    return Object.entries(model?.model.metadata || {}).map((pair) => {
       return ({ content: pair[1], label: pair[0] });
     });
-  }, [ model?. metadata ]);
+  }, [ model?.model. metadata ]);
 
   const referenceText = useMemo(() => {
     return (
       `from determined.experimental import Determined
-model = Determined.getModel("${model?.name}")
+model = Determined.getModel("${model?.model.name}")
 ckpt = model.get_version("1234")
 ckpt_path = ckpt.download()
 ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
@@ -58,7 +58,7 @@ model = build_model()
 model.load_state_dict(ckpt['models_state_dict'][0])
 
 # If you get this far, you should be able to run \`model.eval()\``);
-  }, [ model?.name ]);
+  }, [ model?.model.name ]);
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(referenceText);
@@ -78,7 +78,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   return (
     <Page
       docTitle="Model Details"
-      headerComponent={<ModelHeader model={model} />}
+      headerComponent={<ModelHeader model={model.model} />}
       id="modelDetails">
       <div style={{
         display: 'flex',

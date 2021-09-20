@@ -169,6 +169,33 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
   };
 };
 
+export const mapV1ModelVersion = (
+  modelVersion: Sdk.V1ModelVersion,
+): types.ModelVersion | undefined => {
+  if (!modelVersion.checkpoint || ! modelVersion.creationTime ||
+    !modelVersion.model || !modelVersion.version) return;
+  return {
+    checkpoint: decodeCheckpoint(modelVersion.checkpoint),
+    creationTime: modelVersion.creationTime as unknown as string,
+    model: mapV1Model(modelVersion.model),
+    version: modelVersion.version,
+  };
+};
+
+export const mapV1ModelDetails = (
+  modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
+): types.ModelVersions | undefined => {
+  if (!modelDetailsResponse.model ||
+    !modelDetailsResponse.modelVersions ||
+    !modelDetailsResponse.pagination) return;
+  return {
+    model: mapV1Model(modelDetailsResponse.model),
+    modelVersions: modelDetailsResponse.modelVersions.map(version =>
+      mapV1ModelVersion(version) as types.ModelVersion),
+    pagination: modelDetailsResponse.pagination,
+  };
+};
+
 const ioToHyperparametereter = (
   io: ioTypes.ioTypeHyperparameter,
 ): types.Hyperparameter => {

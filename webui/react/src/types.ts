@@ -493,7 +493,7 @@ export interface ModelPagination extends WithPagination {
   models: ModelItem[];
 }
 
-export interface ModelDetails extends WithPagination {
+export interface ModelVersions extends WithPagination {
   model: ModelItem;
   modelVersions: ModelVersion[]
 }

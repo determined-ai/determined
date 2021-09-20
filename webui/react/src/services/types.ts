@@ -117,6 +117,11 @@ export interface GetModelParams {
   modelName: string;
 }
 
+export interface GetModelDetailsParams extends PaginationParams {
+  modelName: string;
+  sortBy: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+}
+
 export interface CreateExperimentParams {
   experimentConfig: string;
   parentId: number;
