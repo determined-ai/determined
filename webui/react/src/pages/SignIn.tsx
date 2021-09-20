@@ -19,6 +19,7 @@ import css from './SignIn.module.scss';
 
 interface Queries {
   cli?: boolean;
+  jwt?: string;
   redirect?: string;
 }
 
@@ -77,11 +78,19 @@ const SignIn: React.FC = () => {
   }, [ canceler ]);
 
   /*
+   * Don't render sign in page if...
+   * 1. jwt query param detected
+   * 2. cluster has `externalAuthUri` defined
+   * 3. authentication hasn't occurred yet
+   */
+  if (queries.jwt || info.externalAuthUri || !auth.checked) return null;
+
+  /*
    * Before showing the sign in form, make sure one auth check is done.
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  return auth.checked ? (
+  return (
     <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
@@ -98,7 +107,7 @@ const SignIn: React.FC = () => {
         </div>
       </div>
     </Page>
-  ) : null;
+  );
 };
 
 export default SignIn;
