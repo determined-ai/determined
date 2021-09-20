@@ -33,7 +33,9 @@ const ModelDetails: React.FC = () => {
 
   const fetchModel = useCallback(async () => {
     try {
-      const modelData = await getModelDetails({ modelName: 'mnist', sortBy: 'SORT_BY_VERSION' });
+      const modelData = await getModelDetails(
+        { modelName: 'mnist-prod', sortBy: 'SORT_BY_VERSION' },
+      );
       if (!isEqual(modelData, model)) setModel(modelData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
@@ -140,7 +142,9 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             <ResponsiveTable
               columns={columns}
               dataSource={model.modelVersions}
-              showSorterTooltip={false} />
+              pagination={{ hideOnSinglePage: true }}
+              showSorterTooltip={false}
+            />
         }
         {metadata.length > 0 &&
         <CollapsableCard title={'Metadata'}>

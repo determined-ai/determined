@@ -6,6 +6,7 @@ import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
+import { V1Model } from './api-ts-sdk';
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
@@ -172,12 +173,11 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
 export const mapV1ModelVersion = (
   modelVersion: Sdk.V1ModelVersion,
 ): types.ModelVersion | undefined => {
-  if (!modelVersion.checkpoint || ! modelVersion.creationTime ||
-    !modelVersion.model || !modelVersion.version) return;
+  if (!modelVersion.checkpoint || !modelVersion.version) return;
   return {
     checkpoint: decodeCheckpoint(modelVersion.checkpoint),
     creationTime: modelVersion.creationTime as unknown as string,
-    model: mapV1Model(modelVersion.model),
+    model: modelVersion.model ? mapV1Model(modelVersion.model): undefined,
     version: modelVersion.version,
   };
 };

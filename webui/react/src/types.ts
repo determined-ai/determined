@@ -485,7 +485,7 @@ export interface ModelItem {
 export interface ModelVersion {
   checkpoint: Checkpoint;
   creationTime: string;
-  model: ModelItem;
+  model?: ModelItem;
   version: number;
 }
 
