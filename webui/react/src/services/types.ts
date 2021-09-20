@@ -1,5 +1,6 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
+import { string } from 'fp-ts';
 
 import { CommandType, DetailedUser } from 'types';
 
@@ -120,6 +121,11 @@ export interface GetModelParams {
 export interface GetModelDetailsParams extends PaginationParams {
   modelName: string;
   sortBy: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
+}
+
+export interface GetModelVersionParams {
+  modelName: string;
+  versionId: number;
 }
 
 export interface CreateExperimentParams {

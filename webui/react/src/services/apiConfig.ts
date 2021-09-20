@@ -430,6 +430,19 @@ GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
   ),
 };
 
+export const getModelVersion: DetApi<
+GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
+> = {
+  name: 'getModelVersion',
+  postProcess: (response) => {
+    return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
+  },
+  request: (params: GetModelVersionParams) => detApi.Models.determinedGetModelVersion(
+    params.modelName,
+    params.versionId,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<

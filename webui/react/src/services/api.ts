@@ -146,6 +146,10 @@ export const getModelDetails = generateDetApi<
   GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
 >(Config.getModelDetails);
 
+export const getModelVersion = generateDetApi<
+  GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
+>(Config.getModelVersion);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
