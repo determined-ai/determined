@@ -11,7 +11,6 @@ import { paths } from 'routes/utils';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
-  ModelItem,
   Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { ConditionalWrapper } from 'utils/react';
@@ -157,7 +156,11 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 
 /* Model Table Column Renderers */
 
-export const modelNameRenderer = (value: string, record: ModelItem): React.ReactNode => {
+export const modelNameRenderer = (value: string): React.ReactNode => {
+  return <Link path={paths.modelDetails(0)}>{value}</Link>;
+};
+
+export const modelVersionNameRenderer = (value: string): React.ReactNode => {
   return <Link path={paths.modelDetails(0)}>{value}</Link>;
 };
 

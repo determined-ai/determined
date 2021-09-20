@@ -1,4 +1,5 @@
 import { Button, Tooltip } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -6,11 +7,14 @@ import Icon from 'components/Icon';
 import InfoBox from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
+import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
+import { modelVersionNameRenderer, relativeTimeRenderer } from 'components/Table';
 import usePolling from 'hooks/usePolling';
 import { getModelDetails } from 'services/api';
+import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound } from 'services/utils';
-import { ModelVersions } from 'types';
+import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 
 import CollapsableCard from './ModelDetails/CollapsableCard';
@@ -37,6 +41,35 @@ const ModelDetails: React.FC = () => {
   }, [ model, pageError ]);
 
   usePolling(fetchModel);
+
+  const columns = useMemo(() => {
+    const tableColumns: ColumnsType<ModelVersion> = [
+      {
+        dataIndex: 'version',
+        key: V1GetModelVersionsRequestSortBy.VERSION,
+        sorter: true,
+        title: 'Version',
+      },
+      {
+        dataIndex: 'name',
+        render: modelVersionNameRenderer,
+        title: 'Name',
+      },
+      {
+        dataIndex: 'description',
+        title: 'Description',
+      },
+      {
+        dataIndex: 'lastUpdatedTime',
+        render: relativeTimeRenderer,
+        sorter: true,
+        title: 'Last updated',
+      },
+      { dataIndex: 'tags', title: 'Tags' },
+    ];
+
+    return tableColumns;
+  }, []);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {
@@ -86,7 +119,29 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         gap: 12,
         marginLeft: 20,
         marginRight: 20,
-      }}>
+      }}>{
+          model.modelVersions.length === 0 ?
+            <div style={{
+              alignItems: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              margin: 'var(--theme-sizes-layout-huge)',
+            }}>
+              <p>No Model Versions</p>
+              <p style={{
+                color: 'var(--theme-colors-monochrome-9)',
+                fontSize: 'var(--theme-sizes-font-medium',
+                maxWidth: '370px',
+                textAlign: 'center',
+              }}>
+                Register a checkpoint from an experiment to add it to this model
+              </p>
+            </div> :
+            <ResponsiveTable
+              columns={columns}
+              dataSource={model.modelVersions}
+              showSorterTooltip={false} />
+        }
         {metadata.length > 0 &&
         <CollapsableCard title={'Metadata'}>
           <InfoBox rows={metadata} />
