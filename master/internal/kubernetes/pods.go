@@ -401,7 +401,11 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	}
 
 	name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
-	_ = p.clientSet.SchedulingV1().PriorityClasses().Delete(name, &metaV1.DeleteOptions{})
+	err := p.clientSet.SchedulingV1().PriorityClasses().Delete(name, &metaV1.DeleteOptions{})
+	if err != nil {
+		ctx.Log().Infof("Deletion of PriorityClass %s failed. This is expected if you are using the "+
+			"default determined priorityclass", name)
+	}
 
 	ctx.Log().WithField("pod", podInfo.podName).WithField(
 		"handler", podHandler.Address()).Infof("de-registering pod handler")
