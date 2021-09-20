@@ -34,7 +34,6 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
   return (
     <header style={{
       backgroundColor: 'var(--theme-colors-monochrome-17)',
-      borderBottom: '1px solid var(--theme-colors-monochrome-12)',
       margin: 0,
       padding: 12,
       width: '100%',
@@ -44,7 +43,7 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
         paddingBottom: 8,
       }}>
         <Breadcrumb separator="">
-          <Breadcrumb.Item href="det/models">
+          <Breadcrumb.Item href={`det/models/${modelVersion.model?.name}`}>
             <LeftOutlined style={{ marginRight: 10 }} />
           </Breadcrumb.Item>
           <Breadcrumb.Item href="det/models">Model Registry</Breadcrumb.Item>
@@ -70,13 +69,8 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
             <h1>Version {modelVersion.version}</h1>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <Dropdown overlay={<Menu />}>
-              <Button>
-              Open in <DownOutlined />
-              </Button>
-            </Dropdown>
             <Button>Download Model</Button>
-            <Button><Icon name="overflow-horizontal" size="tiny" /></Button>
+            <Button type="text"><Icon name="overflow-horizontal" size="tiny" /></Button>
           </div>
         </div>
         <InfoBox rows={infoRows} seperator={false} />
