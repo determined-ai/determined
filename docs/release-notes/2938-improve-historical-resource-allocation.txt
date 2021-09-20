@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+-  API: The aggregated historical resource allocation APIs
+   ``/api/v1/resources/allocation/aggregated`` and ``/allocation/aggregated`` now account for all
+   resources, not just those allocated to experiments.
