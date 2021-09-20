@@ -189,15 +189,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       terminalRunStates.has(experiment.state) && (
         experiment.archived ? options.archive : options.unarchive
       ),
-      deletableRunStates.has(experiment.state) && curUser?.isAdmin && options.delete,
+      deletableRunStates.has(experiment.state) &&
+        curUser && (curUser.isAdmin || curUser.username === experiment.username) && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
+    curUser,
     deleteExperimentHandler,
     isRunningDelete,
-    curUser?.isAdmin,
     experiment.archived,
     experiment.id,
     experiment.state,
+    experiment.username,
     fetchExperimentDetails,
     isRunningArchive,
     isRunningTensorboard,

@@ -94,7 +94,8 @@ const ExperimentList: React.FC = () => {
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
-      const isDeletable = deletableRunStates.has(experiment.state) && user?.isAdmin;
+      const isDeletable = deletableRunStates.has(experiment.state) &&
+        user && (user.isAdmin || user.username === experiment.username);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = experiment.state === RunState.Active;
@@ -107,7 +108,7 @@ const ExperimentList: React.FC = () => {
       if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
     }
     return tracker;
-  }, [ experimentMap, settings.row, user?.isAdmin ]);
+  }, [ experimentMap, settings.row, user ]);
 
   const fetchUsers = useFetchUsers(canceler);
 

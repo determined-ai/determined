@@ -46,8 +46,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
-  const isDeletable = curUser?.isAdmin && isExperimentTask(task) ?
-    deletableRunStates.has(task.state) : false;
+  const isDeletable = (
+    isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
+  ) ? deletableRunStates.has(task.state) : false;
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
