@@ -69,7 +69,7 @@ class RefreshableSharedCredentials(Credentials):  # type: ignore
         return os.stat(credentials_file).st_mtime
 
     def _refresh_needed(self) -> bool:
-        return self._credentials_modified_time() > self._last_loaded
+        return self._credentials_modified_time() != self._last_loaded
 
     def _refresh(self) -> None:
         now = time.time()
