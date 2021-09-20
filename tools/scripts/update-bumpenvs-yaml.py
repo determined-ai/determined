@@ -124,7 +124,6 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
     """Parse the output of packer's -machine-readable format, strange though it may be."""
     out = {}
 
-    print(packer_log)
     lines = packer_log.strip().split("\n")
     fields = [line.split(",") for line in lines]
     # We only care about artifact lines with exactly six fields.
