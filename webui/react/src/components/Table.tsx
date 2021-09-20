@@ -11,7 +11,7 @@ import { paths } from 'routes/utils';
 import {
   CheckpointState,
   CommandState, CommandTask, CommandType, ExperimentItem,
-  Pagination, RunState, StartEndTimes, TrialItem,
+  ModelVersion, Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { ConditionalWrapper } from 'utils/react';
 import { canBeOpened } from 'utils/task';
@@ -160,8 +160,10 @@ export const modelNameRenderer = (value: string): React.ReactNode => {
   return <Link path={paths.modelDetails(0)}>{value}</Link>;
 };
 
-export const modelVersionNameRenderer = (value: string): React.ReactNode => {
-  return <Link path={paths.modelDetails(0)}>{value}</Link>;
+export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => {
+  return <Link path={paths.modelVersionDetails(0, record.version)}>
+    {value ? value : 'Version ' + record.version}
+  </Link>;
 };
 
 /* Table Helper Functions */

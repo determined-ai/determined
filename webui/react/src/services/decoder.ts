@@ -6,7 +6,6 @@ import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
-import { V1Model } from './api-ts-sdk';
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {

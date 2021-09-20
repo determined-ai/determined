@@ -215,6 +215,9 @@ export const paths = {
   modelList: (): string => {
     return '/models';
   },
+  modelVersionDetails: (modelId: number | string, versionId: number | string): string => {
+    return `/models/${modelId}/versions/${versionId}`;
+  },
   reload: (path: string): string => {
     return `/reload?${queryString.stringify({ path })}`;
   },
