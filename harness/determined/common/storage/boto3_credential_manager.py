@@ -31,7 +31,7 @@ class RefreshedCredentialProvider(CredentialProvider):  # type: ignore
         self.credential_provider = credential_provider
 
     def load(self) -> Credentials:
-        return RefreshableSharedCredentials(
+        return self.credential_provider.load() and RefreshableSharedCredentials(
             credentials_provider=self.credential_provider, check_every=self.check_every
         )
 
