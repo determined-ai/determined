@@ -1,3 +1,4 @@
+import logging
 import os
 import selectors
 import signal
@@ -682,12 +683,24 @@ class PIDServer:
                 # Let things finish logging, exiting on their own, etc.
                 time.sleep(grace_period)
                 p.send_signal(on_fail)
+                if on_fail != signal.SIGKILL:
+                    try:
+                        return p.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        logging.error(f"killing worker which didn't exit after {on_fail.name}")
+                        p.send_signal(signal.SIGKILL)
             return p.wait()
 
         # All workers exited normally.
         if on_exit is not None:
             time.sleep(grace_period)
             p.send_signal(on_exit)
+            if on_exit != signal.SIGKILL:
+                try:
+                    return p.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    logging.error(f"killing worker which didn't exit after {on_exit.name}")
+                    p.send_signal(signal.SIGKILL)
         return p.wait()
 
 
