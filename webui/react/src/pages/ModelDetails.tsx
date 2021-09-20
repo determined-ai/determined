@@ -1,5 +1,4 @@
-import { DownOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Empty, Menu, Tooltip } from 'antd';
+import { Button, Menu, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -7,7 +6,6 @@ import Icon from 'components/Icon';
 import InfoBox from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
-import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { getModel } from 'services/api';
@@ -34,43 +32,11 @@ const ModelDetails: React.FC = () => {
       const modelData = await getModel({ modelName: 'mnist' });
       if (!isEqual(modelData, model)) setModel(modelData);
     } catch (e) {
-      if (!pageError && !isAborted(e)) setPageError(e);
+      if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
   }, [ model, pageError ]);
 
   usePolling(fetchModel);
-
-  const versionMenu = useMemo(() => {
-    return <Menu>
-      <Menu.Item key={0}>Version 0</Menu.Item>
-    </Menu>;
-  }, []);
-
-  const versionActionMenu = useMemo(() => {
-    return <Menu>
-      <Menu.Item key={0}>Download Version</Menu.Item>
-      <Menu.Item danger={true} key={1}>Deregister Version</Menu.Item>
-    </Menu>;
-  }, []);
-
-  const detailsHeader = useMemo(() => {
-    return <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      width: '100%',
-    }}
-    ><p style={{ margin: 0 }}>Model Details</p>
-      <div style={{ display: 'flex', gap: 4, height: '100%' }}>
-        <Dropdown overlay={versionMenu}>
-          <Button>
-            Version 0 <DownOutlined />
-          </Button>
-        </Dropdown>
-        <Dropdown overlay={versionActionMenu}>
-          <Button><Icon name="overflow-horizontal" size="tiny" /></Button>
-        </Dropdown>
-      </div></div>;
-  }, [ versionMenu ]);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.metadata || {}).map((pair) => {
@@ -121,12 +87,12 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         marginLeft: 20,
         marginRight: 20,
       }}>
+        {metadata.length > 0 &&
         <CollapsableCard title={'Metadata'}>
-          { metadata.length > 0 ?
-            <InfoBox rows={metadata} /> :
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+          <InfoBox rows={metadata} />
           <Button type="link">add row</Button>
         </CollapsableCard>
+        }
         <CollapsableCard
           extra={(
             <Tooltip title="Copied!" trigger="click">
@@ -136,29 +102,6 @@ model.load_state_dict(ckpt['models_state_dict'][0])
           title={<>How to reference this model <Icon name="info" /></>}>
           <pre>{referenceText}</pre>
         </CollapsableCard>
-        <Section
-          divider
-          title={detailsHeader}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-            <Card style={{ flexBasis: '66%' }} title="Source">
-              { [].length > 0 ?
-                <InfoBox rows={[]} /> :
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-            </Card>
-            <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, gap: 18 }}>
-              <Card title="Validation Metrics">
-                { [].length > 0 ?
-                  <InfoBox rows={[]} /> :
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-              </Card>
-              <Card title="Metadata">
-                { [].length > 0 ?
-                  <InfoBox rows={[]} /> :
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
-              </Card>
-            </div>
-          </div>
-        </Section>
       </div>
     </Page>
   );
