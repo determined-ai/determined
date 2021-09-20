@@ -33,13 +33,7 @@ enum State {
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [
-        "start_time",
-        "experiment_id",
-        "trial_id",
-        "batch_number",
-        "state"
-      ]
+      required: [ "experiment_id", "trial_id", "batch_number", "state" ]
     }
   };
   // UUID of the checkpoint.
@@ -54,9 +48,8 @@ message Checkpoint {
   google.protobuf.Struct hparams = 5;
   // Batch number of this checkpoint.
   int32 batch_number = 6;
-  // Timestamp when the checkpoint began being saved to persistent storage.
-  google.protobuf.Timestamp start_time = 7;
-  // Timestamp when the checkpoint completed being saved to persistent storage.
+  // Timestamp when the checkpoint was reported as being saved to persistent
+  // storage.
   google.protobuf.Timestamp end_time = 8;
   // Dictionary of file paths to file sizes in bytes of all files in the
   // checkpoint.

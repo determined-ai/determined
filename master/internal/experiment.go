@@ -23,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -40,7 +39,7 @@ type (
 	}
 	trialReportEarlyExit struct {
 		requestID model.RequestID
-		reason    workload.ExitedReason
+		reason    model.ExitedReason
 	}
 	trialReportProgress struct {
 		requestID model.RequestID

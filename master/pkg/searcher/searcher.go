@@ -7,8 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -89,16 +87,16 @@ func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) 
 
 // TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
 func (s *Searcher) TrialExitedEarly(
-	requestID model.RequestID, exitedReason workload.ExitedReason,
+	requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	if s.Exits[requestID] {
 		return nil, api.AsValidationError("trial %d reported an exit twice", requestID)
 	}
 
 	switch exitedReason {
-	case workload.InvalidHP, workload.InitInvalidHP:
+	case model.InvalidHP, model.InitInvalidHP:
 		delete(s.TrialProgress, requestID)
-	case workload.Errored:
+	case model.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).
 		s.Failures[requestID] = true

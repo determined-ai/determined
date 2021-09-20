@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
 
@@ -317,7 +316,7 @@ func (t *trial) allocationExited(ctx *actor.Context, exit *task.AllocationExited
 	case exit.UserRequestedStop:
 		ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 			requestID: t.searcher.Create.RequestID,
-			reason:    workload.UserCanceled,
+			reason:    model.UserCanceled,
 		})
 		return t.transition(ctx, model.CompletedState)
 	}
@@ -388,7 +387,7 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 		if t.state == model.ErrorState {
 			ctx.Tell(ctx.Self().Parent(), trialReportEarlyExit{
 				requestID: t.searcher.Create.RequestID,
-				reason:    workload.Errored,
+				reason:    model.Errored,
 			})
 		}
 		ctx.Self().Stop()

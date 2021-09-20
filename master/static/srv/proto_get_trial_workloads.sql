@@ -2,7 +2,6 @@ WITH validations_vt AS (
   SELECT row_to_json(r1) AS validation, total_batches
   FROM (
       SELECT 'STATE_' || v.state as state,
-        v.start_time,
         v.end_time,
         v.total_batches,
         v.metrics->'num_inputs' as num_inputs,
@@ -16,8 +15,7 @@ WITH validations_vt AS (
 trainings_vt AS (
   SELECT row_to_json(r1) AS training, total_batches
   FROM (
-      SELECT s.start_time,
-        s.end_time,
+      SELECT s.end_time,
         'STATE_' || s.state as state,
         s.metrics->'avg_metrics' as metrics,
         s.metrics->'num_inputs' as num_inputs,
@@ -30,7 +28,6 @@ checkpoints_vt AS (
   SELECT row_to_json(r1) AS checkpoint, total_batches
   FROM (
       SELECT 'STATE_' || c.state as state,
-        c.start_time,
         c.end_time,
         c.uuid,
         c.total_batches,

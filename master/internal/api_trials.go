@@ -21,8 +21,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/hashicorp/go-multierror"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -683,7 +681,7 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 
 	if err = a.ask(exp, trialReportEarlyExit{
 		requestID: rID,
-		reason:    workload.ExitedReasonFromProto(req.EarlyExit.Reason),
+		reason:    model.ExitedReasonFromProto(req.EarlyExit.Reason),
 	}, nil); err != nil {
 		return nil, err
 	}

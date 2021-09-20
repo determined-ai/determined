@@ -61,24 +61,27 @@ def test_metric_gathering() -> None:
 
     # Check training metrics.
     full_trial_metrics = exp.trial_metrics(trials[0]["id"])
+    batches_trained = 0
     for step in full_trial_metrics["steps"]:
         metrics = step["metrics"]
 
         actual = metrics["batch_metrics"]
         assert len(actual) == scheduling_unit
 
-        first_base_value = base_value + (step["id"] - 1) * scheduling_unit
+        first_base_value = base_value + batches_trained
         batch_values = first_base_value + gain_per_batch * np.arange(scheduling_unit)
         expected = [structure_to_metrics(value, training_structure) for value in batch_values]
         assert structure_equal(expected, actual)
+        batches_trained = step["total_batches"]
 
     # Check validation metrics.
     for step in trials[0]["steps"]:
         validation = step["validation"]
         metrics = validation["metrics"]
         actual = metrics["validation_metrics"]
+        batches_trained = step["total_batches"]
 
-        value = base_value + step["id"] * scheduling_unit
+        value = base_value + batches_trained
         expected = structure_to_metrics(value, validation_structure)
         assert structure_equal(expected, actual)
 

@@ -1,0 +1,7 @@
+:orphan:
+
+**Changes**
+
+-  **Breaking Change:** APIs no longer return the start time of workloads (training, validation or
+   checkpointing). This is part of a longer move to model metrics and workloads separately, for the
+   upcoming generic API.

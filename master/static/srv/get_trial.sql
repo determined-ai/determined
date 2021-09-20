@@ -16,7 +16,6 @@ FROM
         (SELECT s.id,
                 s.trial_id,
                 s.state,
-                s.start_time,
                 s.end_time,
                 s.total_batches,
 
@@ -26,7 +25,6 @@ FROM
                       c.trial_id,
                       c.total_batches,
                       c.state,
-                      c.start_time,
                       c.end_time,
                       c.uuid,
                       c.resources,
@@ -41,7 +39,6 @@ FROM
                       v.trial_id,
                       v.total_batches,
                       v.state,
-                      v.start_time,
                       v.end_time,
                       v.metrics
                FROM validations v

@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type (
@@ -74,7 +73,7 @@ func (s *gridSearch) progress(trialProgress map[model.RequestID]model.PartialUni
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
 func (s *gridSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
 	var ops []Operation

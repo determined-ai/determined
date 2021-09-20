@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // PBTSearch implements population-based training (PBT). See https://arxiv.org/abs/1711.09846 for
@@ -209,7 +208,7 @@ func (s *pbtSearch) progress(trialProgress map[model.RequestID]model.PartialUnit
 }
 
 func (s *pbtSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.EarlyExitTrials[requestID] = true
 	s.Metrics[requestID] = pbtExitedMetricValue

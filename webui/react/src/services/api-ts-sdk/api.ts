@@ -897,13 +897,7 @@ export interface V1Checkpoint {
      */
     batchNumber: number;
     /**
-     * Timestamp when the checkpoint began being saved to persistent storage.
-     * @type {Date}
-     * @memberof V1Checkpoint
-     */
-    startTime: Date;
-    /**
-     * Timestamp when the checkpoint completed being saved to persistent storage.
+     * Timestamp when the checkpoint was reported as being saved to persistent storage.
      * @type {Date}
      * @memberof V1Checkpoint
      */
@@ -1032,12 +1026,6 @@ export interface V1CheckpointWorkload {
      * @memberof V1CheckpointWorkload
      */
     uuid?: string;
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1CheckpointWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}
@@ -2954,12 +2942,6 @@ export interface V1Metrics {
  * @interface V1MetricsWorkload
  */
 export interface V1MetricsWorkload {
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1MetricsWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}

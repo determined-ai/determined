@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // AsyncHalvingStoppingSearch implements a modified version of the asynchronous successive
@@ -216,9 +215,9 @@ func (s *asyncHalvingStoppingSearch) progress(map[model.RequestID]model.PartialU
 }
 
 func (s *asyncHalvingStoppingSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
-	if exitedReason == workload.InvalidHP || exitedReason == workload.InitInvalidHP {
+	if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
 		var ops []Operation
 		s.EarlyExitTrials[requestID] = true
 		ops = append(ops, NewClose(requestID))

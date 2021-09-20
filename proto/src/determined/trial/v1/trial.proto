@@ -12,12 +12,10 @@ import "protoc-gen-swagger/options/annotations.proto";
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "start_time", "state", "total_batches" ] }
+    json_schema: { required: [ "state", "total_batches" ] }
   };
   // UUID of the checkpoint.
   string uuid = 1;
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 2;
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 3;
   // The state of the checkpoint.
@@ -32,12 +30,8 @@ message CheckpointWorkload {
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "start_time", "state", "num_inputs", "total_batches" ]
-    }
+    json_schema: { required: [ "state", "num_inputs", "total_batches" ] }
   };
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 1;
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
   // The current validation state.
