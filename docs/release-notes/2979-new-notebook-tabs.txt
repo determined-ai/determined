@@ -1,0 +1,5 @@
+:orphan:
+
+**Changes**
+
+-  WebUI: Change the task list page to open new tabs when user clicks on task links.
