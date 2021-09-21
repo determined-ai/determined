@@ -1322,6 +1322,18 @@ jobs:
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
 
+  test-unit-storage:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: true
+          extras-requires: "tensorflow==2.4.3"
+          extra-requirements-file: "harness/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
+
   test-unit-model-hub:
     docker:
       - image: determinedai/cimg-base:stable
@@ -1780,6 +1792,9 @@ workflows:
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-examples
+      - test-unit-storage:
+          context: storage-unit-tests
+          filters: *upstream-feature-branch
 
   test-intg:
     jobs:
