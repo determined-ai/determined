@@ -1,3 +1,4 @@
+import { CopyOutlined, EditOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -156,22 +157,30 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         defaultActiveKey="1"
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}>
         <TabPane key="1" tab="Overview">
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            padding: 36,
-          }}>
+          <div className={css.base}>
             {metadata.length > 0 &&
-        <Card title={'Metadata'}>
-          <InfoBox rows={metadata} />
-          <Button type="link">add row</Button>
-        </Card>
+              <Card title={'Metadata'}>
+                <InfoBox rows={metadata} />
+                <Button type="link">add row</Button>
+              </Card>
             }
             <Card
               extra={(
+                <Tooltip title="Edit">
+                  <EditOutlined onClick={() => { null ; }} />
+                </Tooltip>
+              )}
+              title="Notes">
+              {
+                null ?
+                  null :
+                  <p className={css.placeholder}>Add detailed description of this model...</p>
+              }
+            </Card>
+            <Card
+              extra={(
                 <Tooltip title="Copied!" trigger="click">
-                  <Button type="link" onClick={handleCopy}>Copy to clipboard</Button>
+                  <CopyOutlined onClick={handleCopy} />
                 </Tooltip>
               )}
               title={<>How to reference this model <Icon name="info" /></>}>
@@ -180,12 +189,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
           </div>
         </TabPane>
         <TabPane key="2" tab="Checkpoint Details">
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            padding: 36,
-          }}>
+          <div className={css.base}>
             <Card title="Source">
               <InfoBox rows = {checkpointInfo} seperator />
             </Card>

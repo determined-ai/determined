@@ -1,5 +1,5 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button } from 'antd';
+import { Breadcrumb, Button, Dropdown, Menu } from 'antd';
 import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
@@ -49,10 +49,7 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
           <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
-      <div style={{
-        marginLeft: 24,
-        marginRight: 24,
-      }}>
+      <div className={css.headerContent}>
         <div className={css.mainRow}>
           <div className={css.title}>
             <div className={css.versionBox}>
@@ -62,7 +59,16 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
           </div>
           <div className={css.buttons}>
             <Button>Download Model</Button>
-            <Button type="text"><Icon name="overflow-horizontal" size="tiny" /></Button>
+            <Dropdown overlay={(
+              <Menu>
+                <Menu.Item>Add Metadata</Menu.Item>
+                <Menu.Item danger>Deregister Version</Menu.Item>
+              </Menu>
+            )}>
+              <Button type="text">
+                <Icon name="overflow-horizontal" size="tiny" />
+              </Button>
+            </Dropdown>
           </div>
         </div>
         <InfoBox rows={infoRows} seperator={false} />
