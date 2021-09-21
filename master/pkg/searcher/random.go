@@ -7,7 +7,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type (
@@ -81,10 +80,10 @@ func (s *randomSearch) progress(trialProgress map[model.RequestID]model.PartialU
 // trialExitedEarly creates a new trial upon receiving an InvalidHP workload.
 // Otherwise, it does nothing since actions are not taken based on search status.
 func (s *randomSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	if exitedReason == workload.InvalidHP || exitedReason == workload.InitInvalidHP {
+	if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
 		var ops []Operation
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)

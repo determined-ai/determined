@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -61,6 +62,8 @@ func (a *apiServer) SetShellPriority(
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
 	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
 }
+
+var shellReadinessPattern = regexp.MustCompile("Server listening on")
 
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
@@ -129,6 +132,8 @@ func (a *apiServer) LaunchShell(
 	spec.Keys = &keys
 
 	spec.ProxyTCP = true
+
+	spec.LogReadinessCheck = shellReadinessPattern
 
 	// Launch a Shell actor.
 	shellIDFut := a.m.system.AskAt(shellsAddr, *spec)

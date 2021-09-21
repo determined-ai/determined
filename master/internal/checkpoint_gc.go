@@ -36,8 +36,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskActor:      ctx.Self(),
-			NonPreemptible: true,
+			TaskActor: ctx.Self(),
 		}
 		ctx.Tell(t.rm, *t.task)
 

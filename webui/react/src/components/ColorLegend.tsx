@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { ColorScale } from 'utils/color';
 
 import css from './ColorLegend.module.scss';
-import HumanReadableFloat from './HumanReadableFloat';
+import HumanReadableNumber from './HumanReadableNumber';
 
 interface Props {
   colorScale: ColorScale[];
@@ -20,8 +20,8 @@ const ColorLegend: React.FC<Props> = ({ colorScale, title }: Props) => {
       {title && <div className={css.title}>{title}</div>}
       <div className={css.gradient} style={gradientStyle} />
       <div className={css.labels}>
-        <HumanReadableFloat num={colorScale[0].scale} />
-        <HumanReadableFloat num={colorScale[1].scale} />
+        <HumanReadableNumber num={colorScale[0].scale} />
+        <HumanReadableNumber num={colorScale[1].scale} />
       </div>
     </div>
   );

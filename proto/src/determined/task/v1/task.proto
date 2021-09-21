@@ -20,4 +20,6 @@ enum State {
   STATE_RUNNING = 5;
   // The task has exited or has been aborted.
   STATE_TERMINATED = 6;
+  // The task has begun to exit.
+  STATE_TERMINATING = 7;
 }

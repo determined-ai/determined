@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import HumanReadableFloat from 'components/HumanReadableFloat';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import { ALL_VALUE, HpImportance } from 'types';
 import { clone, isObject } from 'utils/data';
 import { hpImportanceSorter } from 'utils/sort';
@@ -78,7 +78,7 @@ const HpSelectFilter: React.FC<Props> = ({
           <Option className={css.option} key={hParam} value={hParam}>
             {hParam}
             {importance && (
-              <HumanReadableFloat num={importance} precision={1} tooltipPrefix="Importance: " />
+              <HumanReadableNumber num={importance} precision={1} tooltipPrefix="Importance: " />
             )}
           </Option>
         );

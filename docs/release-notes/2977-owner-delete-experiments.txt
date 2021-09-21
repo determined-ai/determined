@@ -1,0 +1,6 @@
+:orphan:
+
+**New Features**
+
+-  WebUI: Allow experiment owners to be able to delete their own experiments. .. image::
+   https://user-images.githubusercontent.com/220971/134048799-cd663a75-cb24-4f44-9a8a-c2ff23222cef.png

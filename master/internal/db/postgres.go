@@ -284,7 +284,7 @@ FROM (
                        (SELECT row_to_json(bc)
                         FROM (
                             SELECT c.id, c.uuid, c.trial_id, c.total_batches, c.state,
-                                   c.start_time, c.end_time, c.resources, c.metadata,
+                                   c.end_time, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
                             FROM checkpoints c LEFT JOIN validations v
@@ -381,7 +381,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.total_batches,
+                     SELECT s.end_time, s.id, s.state, s.trial_id, s.total_batches,
                      -- Drop batch_metrics field from metrics column because it
                      -- can be very large and compute average on the fly for legacy
                      -- metrics.
@@ -405,14 +405,14 @@ FROM (
                       END) AS metrics,
                      (SELECT row_to_json(c)
                       FROM (
-                          SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
+                          SELECT c.end_time, c.id, c.metadata, c.resources, c.state,
                                  c.total_batches, c.trial_id, c.uuid
                           FROM checkpoints c
                           WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
+                          SELECT v.end_time, v.id, v.metrics, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -499,15 +499,15 @@ FROM (
                 -- We can't use a computed column in a WHERE clause for the same query, which we
                 -- would like to do here with the "steps" column, so do this subquery.
                 SELECT * FROM (
-                    SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time, c.end_time,
+                    SELECT c.id, c.trial_id, c.total_batches, c.state, c.end_time,
                            c.uuid, c.resources, c.metadata,
                            (SELECT row_to_json(s)
                             FROM (
-                                SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                                SELECT s.end_time, s.id, s.state, s.trial_id,
                                     s.total_batches,
                                     (SELECT row_to_json(v)
                                     FROM (
-                                        SELECT v.end_time, v.id, v.metrics, v.start_time,
+                                        SELECT v.end_time, v.id, v.metrics,
                                             v.state, v.total_batches, v.trial_id
                                         FROM validations v
                                         WHERE v.trial_id = s.trial_id
@@ -598,17 +598,17 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,  s.total_batches,
+                     SELECT s.end_time, s.id, s.state, s.trial_id,  s.total_batches,
                      (SELECT row_to_json(c)
                       FROM (
-                          SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
+                          SELECT c.end_time, c.id, c.metadata, c.resources, c.state,
                                  c.total_batches, c.trial_id, c.uuid
                           FROM checkpoints c
                           WHERE c.trial_id = t.id AND c.total_batches = s.total_batches
                       ) c) AS checkpoint,
                      (SELECT row_to_json(v)
                       FROM (
-                          SELECT v.end_time, v.id, v.metrics, v.start_time, v.state,
+                          SELECT v.end_time, v.id, v.metrics, v.state,
                                  v.total_batches, v.trial_id
                           FROM validations v
                           WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -1048,15 +1048,15 @@ WHERE id = $1`, id)
 	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
 }
 
-// ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
+// ExperimentTotalStepTime returns the total elapsed time for all allocations of the experiment
 // with the given ID. Any step with a NULL end_time does not contribute. Elapsed time is
 // expressed as a floating point number of seconds.
 func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
-SELECT coalesce(extract(epoch from sum(s.end_time - s.start_time)), 0)
-FROM raw_steps s, trials t
-WHERE t.experiment_id = $1 AND s.trial_id = t.id
+SELECT coalesce(extract(epoch from sum(a.end_time - a.start_time)), 0)
+FROM allocations a, trials t
+WHERE t.experiment_id = $1 AND a.task_id = t.task_id
 `, id); err != nil {
 		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
 	}
@@ -1162,15 +1162,15 @@ WITH const AS (
                    ORDER BY total_batches DESC
                ) AS trial_order_rank
         FROM (
-            SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time, c.end_time, c.uuid,
+            SELECT c.id, c.trial_id, c.total_batches, c.state, c.end_time, c.uuid,
                    c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
-                        SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                        SELECT s.end_time, s.id, s.state, s.trial_id,
                             s.total_batches,
                             (SELECT row_to_json(v)
                             FROM (
-                                SELECT v.end_time, v.id, v.metrics, v.start_time,
+                                SELECT v.end_time, v.id, v.metrics,
                                     v.state, v.total_batches, v.trial_id
                                     FROM validations v
                                     WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
@@ -1309,8 +1309,8 @@ WHERE id = :id`, setClause(toUpdate)), trial); err != nil {
 				strings.Join(toUpdate, ", "), id)
 		}
 
-		if model.TerminalStates[newState] {
-			return completeTask(tx, trial.TaskID, trial.EndTime)
+		if model.TerminalStates[newState] && trial.EndTime != nil {
+			return completeTask(tx, trial.TaskID, *trial.EndTime)
 		}
 
 		return nil
@@ -1388,7 +1388,7 @@ FROM (
            ) AS total_batches_processed,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
-                SELECT s.end_time, s.id, s.state, s.start_time, s.total_batches,
+                SELECT s.end_time, s.id, s.state, s.total_batches,
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
@@ -1400,7 +1400,7 @@ FROM (
                         END) AS avg_metrics,
                        (SELECT row_to_json(r4)
                         FROM (
-                            SELECT v.end_time, v.id, v.metrics, v.state, v.start_time
+                            SELECT v.end_time, v.id, v.metrics, v.state,
                             FROM validations v
                             WHERE v.trial_id = t.id AND v.total_batches = s.total_batches
                                   AND v.metrics IS NOT NULL
@@ -1408,7 +1408,7 @@ FROM (
                        ) AS validation,
                        (SELECT row_to_json(r5)
                         FROM (
-                            SELECT c.id, c.trial_id, c.total_batches, c.state, c.start_time,
+                            SELECT c.id, c.trial_id, c.total_batches, c.state,
                                    c.end_time, c.uuid, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
@@ -1497,33 +1497,17 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving checkpoints")
 		}
 
-		// TODO(DET-5210): This can go away when step ID does.
-		var id int
-		if err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(max(id), 0) + 1
-FROM raw_steps
-WHERE trial_id = $1`, m.TrialId).Scan(&id); err != nil {
-			return errors.Wrap(err, "querying next step id")
-		}
-
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
-		if err != nil {
-			return err
-		}
-
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, id, trial_run_id, state, start_time,
+	(trial_id, trial_run_id, state,
 	 end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :id, :trial_run_id, :state, :start_time,
+	(:trial_id, :trial_run_id, :state,
 	 now(), :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
-			ID:         id,
 			TrialRunID: int(m.TrialRunId),
 			State:      model.CompletedState,
-			StartTime:  startTime,
 			Metrics: map[string]interface{}{
 				"avg_metrics":   m.Metrics,
 				"batch_metrics": m.BatchMetrics,
@@ -1556,29 +1540,23 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving validations")
 		}
 
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
-		if err != nil {
-			return err
-		}
-
 		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch), startTime,
+			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch),
 		); err != nil {
 			return err
 		}
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
-	(trial_id, trial_run_id, state, start_time, end_time,
+	(trial_id, trial_run_id, state, end_time,
 	 metrics, total_batches)
 VALUES
-	(:trial_id, :trial_run_id, :state, :start_time, now(),
+	(:trial_id, :trial_run_id, :state, now(),
 	 :metrics, :total_batches)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
 			State:      model.CompletedState,
-			StartTime:  startTime,
 			Metrics: map[string]interface{}{
 				"validation_metrics": m.Metrics,
 			},
@@ -1599,33 +1577,22 @@ VALUES
 // This is used to make sure there is at least a dummy step for each validation or checkpoint,
 // in the event one comes without (e.g. perform_initial_validation).
 func (db *PgDB) ensureStep(
-	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID,
-	latestBatch int, startTime time.Time,
+	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, latestBatch int,
 ) error {
-	var id int
-	if err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(max(id), 0) + 1
-FROM raw_steps
-WHERE trial_id = $1`, trialID).Scan(&id); err != nil {
-		return errors.Wrap(err, "querying next step id")
-	}
-
 	if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
-	(trial_id, id, trial_run_id, state, start_time,
+	(trial_id, trial_run_id, state,
 	 end_time, metrics, total_batches)
 VALUES
-	(:trial_id, :id, :trial_run_id, :state, :start_time,
+	(:trial_id, :trial_run_id, :state,
 	 :end_time, :metrics, :total_batches)
 ON CONFLICT (trial_id, trial_run_id, total_batches)
 DO NOTHING
 `, model.TrialMetrics{
 		TrialID:    trialID,
-		ID:         id,
 		TrialRunID: trialRunID,
 		State:      model.CompletedState,
-		StartTime:  startTime,
-		EndTime:    ptrs.TimePtr(startTime),
+		EndTime:    ptrs.TimePtr(time.Now().UTC()),
 		Metrics: map[string]interface{}{
 			"avg_metrics":   struct{}{},
 			"batch_metrics": []struct{}{},
@@ -1655,29 +1622,23 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving checkpoints")
 		}
 
-		startTime, err := derivePriorWorkloadEndTime(ctx, tx, m.TrialId)
-		if err != nil {
-			return err
-		}
-
 		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch), startTime,
+			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.LatestBatch),
 		); err != nil {
 			return err
 		}
 
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_checkpoints
-	(trial_id, trial_run_id, state, start_time, end_time, total_batches,
+	(trial_id, trial_run_id, state, end_time, total_batches,
 	 uuid, resources, framework, format, determined_version)
 VALUES
-	(:trial_id, :trial_run_id, :state, :start_time, now(), :total_batches,
+	(:trial_id, :trial_run_id, :state, now(), :total_batches,
 	 :uuid, :resources, :framework, :format, :determined_version)
 `, model.Checkpoint{
 			TrialID:           int(m.TrialId),
 			TrialRunID:        int(m.TrialRunId),
 			State:             model.CompletedState,
-			StartTime:         startTime,
 			TotalBatches:      int(m.LatestBatch),
 			UUID:              &m.Uuid,
 			Resources:         model.JSONObjFromMapStringInt64(m.Resources),
@@ -1689,29 +1650,6 @@ VALUES
 		}
 		return nil
 	})
-}
-
-// derivePriorWorkloadEndTime approximates the start time of currently reported metrics since
-// resource allocation uses these times.
-func derivePriorWorkloadEndTime(
-	ctx context.Context, tx *sqlx.Tx, trialID int32,
-) (time.Time, error) {
-	var endTime time.Time
-	if err := tx.QueryRowxContext(ctx, `
-SELECT coalesce(greatest(
-    (SELECT max(end_time) FROM raw_steps WHERE trial_id = $1),
-    (SELECT max(end_time) FROM raw_validations WHERE trial_id = $1),
-    (SELECT max(end_time) FROM raw_checkpoints WHERE trial_id = $1),
-    (SELECT max(a.start_time)
-     FROM allocations a, trials t
-     WHERE a.task_id = t.task_id AND t.id = $1),
-    (SELECT max(tk.start_time)
-     FROM tasks tk, trials t
-     WHERE tk.task_id = t.task_id AND t.id = $1)), now())
-`, trialID).Scan(&endTime); err != nil {
-		return time.Time{}, errors.Wrap(err, "deriving start time")
-	}
-	return endTime, nil
 }
 
 func checkTrialRunID(ctx context.Context, tx *sqlx.Tx, trialID, runID int32) error {
@@ -1735,7 +1673,7 @@ WHERE id = $1
 func (db *PgDB) ValidationByTotalBatches(trialID, totalBatches int) (*model.TrialMetrics, error) {
 	var validation model.TrialMetrics
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, start_time, end_time, metrics
+SELECT id, trial_id, total_batches, state, end_time, metrics
 FROM validations
 WHERE trial_id = $1
 AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
@@ -1752,7 +1690,7 @@ AND total_batches = $2`, &validation, trialID, totalBatches); errors.Cause(err) 
 func (db *PgDB) CheckpointByTotalBatches(trialID, totalBatches int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
+SELECT id, trial_id, total_batches, state, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE trial_id = $1
 AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) == ErrNotFound {
@@ -1768,7 +1706,7 @@ AND total_batches = $2`, &checkpoint, trialID, totalBatches); errors.Cause(err) 
 func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, total_batches, state, start_time, end_time, uuid, resources, metadata
+SELECT id, trial_id, total_batches, state, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
@@ -1784,7 +1722,7 @@ func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error)
 	var checkpoint model.Checkpoint
 	if err := db.query(`
 SELECT
-	id, trial_id, state, start_time, end_time, uuid, resources, metadata, format,
+	id, trial_id, state, end_time, uuid, resources, metadata, format,
 	framework, determined_version, total_batches, trial_run_id
 FROM checkpoints
 WHERE trial_id = $1 AND state = 'COMPLETED'
@@ -2021,7 +1959,7 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 	if lastDatePtr == nil {
 		var firstDatePtr *time.Time
 		err := db.sql.QueryRow(
-			`SELECT date_trunc('day', min(start_time)) FROM raw_steps`,
+			`SELECT date_trunc('day', min(start_time)) FROM allocations`,
 		).Scan(&firstDatePtr)
 		if err != nil {
 			return errors.Wrap(err, "failed to find first step")

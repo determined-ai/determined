@@ -287,11 +287,9 @@ def describe(args: Namespace) -> None:
         + t_metrics_headers
         + [
             "Checkpoint State",
-            "Checkpoint Start Time",
-            "Checkpoint End Time",
+            "Checkpoint Report Time",
             "Validation State",
-            "Validation Start Time",
-            "Validation End Time",
+            "Validation Report Time",
         ]
         + v_metrics_headers
     )

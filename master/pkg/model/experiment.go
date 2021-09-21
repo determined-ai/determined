@@ -386,7 +386,6 @@ type TrialMetrics struct {
 	TrialRunID   int        `db:"trial_run_id" json:"-"`
 	TotalBatches int        `db:"total_batches" json:"total_batches"`
 	State        State      `db:"state" json:"state"`
-	StartTime    time.Time  `db:"start_time" json:"start_time"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
@@ -398,7 +397,6 @@ type Checkpoint struct {
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
 	State             State      `db:"state" json:"state"`
-	StartTime         time.Time  `db:"start_time" json:"start_time"`
 	EndTime           *time.Time `db:"end_time" json:"end_time"`
 	UUID              *string    `db:"uuid" json:"uuid"`
 	Resources         JSONObj    `db:"resources" json:"resources"`
@@ -650,5 +648,36 @@ func (hpi *ExperimentHPImportance) GetMetricHPImportance(metricName string, metr
 		return MetricHPImportance{}
 	default:
 		panic("Invalid metric type!")
+	}
+}
+
+// ExitedReason defines why a workload exited early.
+type ExitedReason string
+
+const (
+	// Errored signals the searcher that the workload errored out.
+	Errored ExitedReason = "ERRORED"
+	// UserCanceled signals the searcher that the user requested a cancelation.
+	UserCanceled ExitedReason = "USER_CANCELED"
+	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
+	InvalidHP ExitedReason = "INVALID_HP"
+	// InitInvalidHP signals the searcher that the user raised an InvalidHP exception
+	// in the trial init.
+	InitInvalidHP ExitedReason = "INIT_INVALID_HP"
+)
+
+// ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
+func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
+	switch r {
+	case trialv1.TrialEarlyExit_EXITED_REASON_UNSPECIFIED:
+		return Errored
+	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
+		return InvalidHP
+	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
+		return UserCanceled
+	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
+		return InitInvalidHP
+	default:
+		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}
 }

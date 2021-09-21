@@ -76,7 +76,7 @@ func TestAllocation(t *testing.T) {
 			db.On("AddAllocation", mock.Anything).Return(nil)
 			db.On("StartAllocationSession", a.req.AllocationID).Return("", nil)
 			trialImpl.Expect(fmt.Sprintf("%T", BuildTaskSpec{}), actors.MockResponse{
-				Msg: &tasks.TaskSpec{},
+				Msg: tasks.TaskSpec{},
 			})
 			require.NoError(t, system.Ask(rm, actors.ForwardThroughMock{
 				To: self,
@@ -153,6 +153,12 @@ func TestAllocation(t *testing.T) {
 			require.NoError(t, self.AwaitTermination())
 			require.True(t, a.exited)
 			system.Ask(trial, sproto.ContainerLog{}).Get() // sync)
+			for _, m := range trialImpl.Messages {
+				// Just clear the state since it's really hard to check (has random stuff in it).
+				if exit, ok := m.(*AllocationExited); ok {
+					exit.FinalState = AllocationState{}
+				}
+			}
 			require.Contains(t, trialImpl.Messages, tc.exit)
 			require.True(t, db.AssertExpectations(t))
 		})
@@ -186,6 +192,8 @@ func setup(t *testing.T) (
 			TaskID:       taskID,
 			AllocationID: model.AllocationID(fmt.Sprintf("%s.0", taskID)),
 			SlotsNeeded:  2,
+			Preemptible:  true,
+			DoRendezvous: true,
 			// ...
 		},
 		db,

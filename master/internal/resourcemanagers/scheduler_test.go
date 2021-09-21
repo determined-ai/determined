@@ -66,13 +66,13 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
-			AllocationID:   t.id,
-			Name:           string(t.id),
-			SlotsNeeded:    t.slotsNeeded,
-			NonPreemptible: t.nonPreemptible,
-			Label:          t.label,
-			ResourcePool:   t.resourcePool,
-			TaskActor:      ctx.Self(),
+			AllocationID: t.id,
+			Name:         string(t.id),
+			SlotsNeeded:  t.slotsNeeded,
+			Preemptible:  !t.nonPreemptible,
+			Label:        t.label,
+			ResourcePool: t.resourcePool,
+			TaskActor:    ctx.Self(),
 		}
 		if t.group == nil {
 			task.Group = ctx.Self()
@@ -237,8 +237,8 @@ func newFakeAgentState(
 
 	if slotsUsed > 0 {
 		req := &sproto.AllocateRequest{
-			SlotsNeeded:    slotsUsed,
-			NonPreemptible: false,
+			SlotsNeeded: slotsUsed,
+			Preemptible: true,
 		}
 		container := newContainer(req, state, req.SlotsNeeded)
 		state.allocateFreeDevices(req.SlotsNeeded, container.id)
@@ -350,11 +350,11 @@ func setupSchedulerStates(
 		groups[ref] = &group{handler: ref}
 
 		req := &sproto.AllocateRequest{
-			AllocationID:   mockTask.id,
-			SlotsNeeded:    mockTask.slotsNeeded,
-			Label:          mockTask.label,
-			TaskActor:      ref,
-			NonPreemptible: mockTask.nonPreemptible,
+			AllocationID: mockTask.id,
+			SlotsNeeded:  mockTask.slotsNeeded,
+			Label:        mockTask.label,
+			TaskActor:    ref,
+			Preemptible:  !mockTask.nonPreemptible,
 		}
 		if mockTask.group == nil {
 			req.Group = ref

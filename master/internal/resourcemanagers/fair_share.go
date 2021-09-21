@@ -138,7 +138,7 @@ func calculateGroupStates(
 				case allocated == nil || len(allocated.Reservations) == 0:
 					state.pendingReqs = append(state.pendingReqs, req)
 				case len(allocated.Reservations) > 0:
-					if req.NonPreemptible {
+					if !req.Preemptible {
 						state.presubscribedSlots += req.SlotsNeeded
 					}
 					state.allocatedReqs = append(state.allocatedReqs, req)
@@ -301,7 +301,7 @@ func assignTasks(
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
 			for _, req := range state.allocatedReqs {
-				if !req.NonPreemptible {
+				if req.Preemptible {
 					toRelease = append(toRelease, req.TaskActor)
 					state.activeSlots -= req.SlotsNeeded
 					if state.activeSlots <= state.offered {

@@ -37,11 +37,11 @@ For detailed instructions, check out the documentation for your Model Hub librar
 
 Released libraries
 
--  :ref:`Model Hub Transformers <model-hub-transformers>`
+-  :ref:`Huggingface Transformers <model-hub-transformers>`
+-  :ref:`MMDetection <model-hub-mmdetection>`
 
 Future libraries on our roadmap
 
--  `mmdetection <https://github.com/open-mmlab/mmdetection>`_
 -  `detectron2 <https://github.com/facebookresearch/detectron2>`_
 
 Our initial release of **model-hub** includes support for the `Huggingface transformers library
@@ -51,10 +51,9 @@ see supported in **model-hub** please let us know by filing an issue on `GitHub
 <https://github.com/determined-ai/determined>`_ or reaching out on our community `Slack.
 <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_
 
-For next steps, learn more about :ref:`Model Hub Transformers <model-hub-transformers>`!
-
 .. toctree::
    :maxdepth: 1
    :hidden:
 
    transformers/index
+   mmdetection/index

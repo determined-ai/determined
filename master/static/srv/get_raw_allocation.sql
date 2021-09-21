@@ -22,25 +22,70 @@ workloads AS (
             -- be a CTE, but I think that would cause PostgreSQL <12 to insert an optimization fence
             -- and have to fully scan all three tables, which could be bad.
             SELECT
-                'training' AS kind,
+                kind,
                 trial_id,
                 tstzrange(start_time, end_time) AS range
             FROM
-                raw_steps
-            UNION ALL
-            SELECT
-                'validation' AS kind,
-                trial_id,
-                tstzrange(start_time, end_time) AS range
-            FROM
-                raw_validations
-            UNION ALL
-            SELECT
-                'checkpoint' AS kind,
-                trial_id,
-                tstzrange(start_time, end_time) AS range
-            FROM
-                raw_checkpoints
+                (
+                    SELECT
+                        kind,
+                        trial_id,
+                        -- Here lies an implicit assumption that one workload started when the previous ended.
+                        LAG(end_time, 1) OVER (
+                            PARTITION BY trial_id
+                            ORDER BY
+                                end_time
+                        ) AS start_time,
+                        end_time
+                    FROM
+                        (
+                            -- Start of first is the start of the trial
+                            SELECT
+                                NULL AS kind,
+                                id AS trial_id,
+                                start_time AS end_time
+                            FROM
+                                trials
+                            UNION ALL
+                            -- Or more accurately of late, start of the allocation.
+                            SELECT
+                                NULL AS kind,
+                                tr.id AS trial_id,
+                                a.start_time AS end_time
+                            FROM
+                                allocations a,
+                                tasks t,
+                                trials tr
+                            WHERE
+                                a.task_id = t.task_id
+                                AND t.task_id = tr.task_id
+                            UNION ALL
+                            SELECT
+                                'training' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_steps
+                            UNION ALL
+                            SELECT
+                                'validation' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_validations
+                            UNION ALL
+                            SELECT
+                                'checkpointing' AS kind,
+                                trial_id,
+                                end_time
+                            FROM
+                                raw_checkpoints
+                        ) metric_reports
+                ) derived_workload_spans
+            WHERE
+                start_time IS NOT NULL
+                AND end_time IS NOT NULL
+                AND kind IS NOT NULL
         ) AS all_workloads,
         const
     WHERE

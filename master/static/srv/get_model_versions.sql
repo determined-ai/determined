@@ -14,7 +14,6 @@ c AS (
     t.id AS trial_id,
     t.hparams as hparams,
     s.total_batches AS batch_number,
-    s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,
     COALESCE(c.metadata, '{}') AS metadata,

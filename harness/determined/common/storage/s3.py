@@ -45,11 +45,12 @@ class S3StorageManager(StorageManager):
             except ConnectionError:
                 pass
             else:
-                logging.info(
-                    "MinIO backend detected.  To work around a boto3 bug, empty directories will "
-                    "not be uploaded in checkpoints."
-                )
-                self._use_minio_workaround = r.headers.get("Server", "").lower() == "minio"
+                if r.headers.get("Server", "").lower() == "minio":
+                    self._use_minio_workaround = True
+                    logging.info(
+                        "MinIO backend detected.  To work around a boto3 bug, empty directories"
+                        "will not be uploaded in checkpoints."
+                    )
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to s3 and deletes the original files."""

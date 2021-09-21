@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
-import HumanReadableFloat from 'components/HumanReadableFloat';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Section from 'components/Section';
 import {
   ExperimentBase, HyperparameterType, TrialDetails,
@@ -174,7 +174,7 @@ const ParsedHumanReadableValue: React.FC<PHRVProps> = ({ hp }: PHRVProps) => {
     case HyperparameterType.Double:
       return (
         <p className={css.text}>
-          <HumanReadableFloat num={parseFloat(hp.val as string)} precision={3} />
+          <HumanReadableNumber num={parseFloat(hp.val as string)} precision={3} />
         </p>
       );
     case HyperparameterType.Int:

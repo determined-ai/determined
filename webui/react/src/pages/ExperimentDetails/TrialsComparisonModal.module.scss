@@ -1,63 +1,73 @@
+$border-color: var(--theme-colors-monochrome-13);
+
 .base {
-  border: 1px solid var(--theme-colors-monochrome-14);
+  border: 1px solid $border-color;
   border-radius: var(--theme-sizes-border-radius);
   display: flex;
   flex-direction: column;
-  grid-auto-flow: row;
+  flex-shrink: 0;
   height: 75vh;
-  overflow-x: scroll;
+  overflow: auto;
 
-  %tableRow {
+  .row {
     align-items: center;
-    border-bottom: 1px solid var(--theme-colors-monochrome-14);
+    border-bottom: 1px solid $border-color;
     display: grid;
     grid-auto-columns: minmax(160px, 1fr);
     grid-auto-flow: column;
     grid-template-columns: 170px repeat(auto-fill, minmax(160px, 1fr));
-    height: 50px;
     justify-content: space-between;
-    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-big);
-
-    & > * { margin: 0; }
+    min-width: fit-content;
   }
-  h2,
-  h3 {
-    font-size: 14px;
+  .row.header {
+    background-color: var(--theme-colors-monochrome-14);
   }
-  .row {
-    h3:first-child {
-      margin-right: 5px;
-    }
-
-    @extend %tableRow;
+  .row.sticky {
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
-  .tableBody {
-    overflow: auto;
-  }
-  .headerRow {
-    background-color: var(--theme-colors-monochrome-16);
-    border-bottom: 1px solid var(--theme-colors-monochrome-14);
-
-    @extend %tableRow;
-  }
-  .centerVertically {
-    align-items: center;
+  .row.spanAll {
     display: flex;
+    left: 0;
+    position: sticky;
   }
-  .checkpointButton {
-    display: inline-flex;
-    gap: 5px;
-    justify-content: center;
-    width: fit-content;
+  .cell {
+    align-items: center;
+    background-color: var(--theme-colors-monochrome-17);
+    display: flex;
+    overflow: hidden;
+    padding: var(--theme-sizes-layout-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    & > * { max-width: 100%; }
+  }
+  .cell.blank {
+    height: 100%;
+  }
+  .cell.header {
+    background-color: var(--theme-colors-monochrome-16);
+  }
+  .cell.sticky {
+    border-right: 1px solid $border-color;
+    left: 0;
+    position: sticky;
+  }
+  .cell.indent {
+    padding-left: var(--theme-sizes-layout-huge);
+  }
+  .cell.spanAll {
+    border-right: 0;
+    left: 0;
+    position: sticky;
+  }
+  .row.header > .cell {
+    background-color: var(--theme-colors-monochrome-14);
   }
   .trialTag {
     font-size: 14px;
-    width: fit-content;
 
-    a {
-      margin: 0;
-      padding-right: var(--theme-sizes-layout-small);
-    }
     :hover {
       color: var(--theme-colors-action-normal);
     }

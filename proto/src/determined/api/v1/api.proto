@@ -1100,6 +1100,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
     };
+    option deprecated = true;
   }
 
   // Get an aggregated view of resource allocation during the given time period.

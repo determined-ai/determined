@@ -17,7 +17,9 @@ import {
 } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
-import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
+import {
+  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
+} from 'utils/types';
 import { openCommand } from 'wait';
 
 import Link from './Link';
@@ -44,8 +46,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
-  const isDeletable = curUser?.isAdmin && isExperimentTask(task) ?
-    terminalRunStates.has(task.state) : false;
+  const isDeletable = (
+    isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
+  ) ? deletableRunStates.has(task.state) : false;
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();

@@ -1,25 +1,25 @@
 import {
-  ExperimentBase, ExperimentSearcherName, Hyperparameter,
-  Hyperparameters, HyperparametersFlattened,
+  ExperimentBase, ExperimentSearcherName, Hyperparameters, HyperparameterType, TrialHyperparameters,
 } from 'types';
 
-export const flattenHyperparameters = (
-  hyperparams: Hyperparameters,
-  keys: string[] = [],
-): HyperparametersFlattened => {
-  return Object.keys(hyperparams).reduce((acc, key) => {
-    const hp = hyperparams[key];
-    const keyPath = [ ...keys, key ].join('.');
-    if (hp.type) {
-      acc[keyPath] = hp as Hyperparameter;
-    } else {
-      acc = { ...acc, ...flattenHyperparameters(hp as Hyperparameters, [ ...keys, key ]) };
-    }
-    return acc;
-  }, {} as HyperparametersFlattened);
-};
+import { unflattenObject } from './data';
 
 export const isSingleTrialExperiment = (experiment: ExperimentBase): boolean => {
   return experiment?.config.searcher.name === ExperimentSearcherName.Single
-        || experiment?.config.searcher.max_trials === 1;
+      || experiment?.config.searcher.max_trials === 1;
+};
+
+export const trialHParamsToExperimentHParams = (
+  trialHParams: TrialHyperparameters,
+): Hyperparameters => {
+  const hParams = Object.keys(trialHParams).reduce((acc, key) => {
+    return {
+      ...acc,
+      [key]: {
+        type: HyperparameterType.Constant,
+        val: trialHParams[key] as number,
+      },
+    };
+  }, {} as Record<keyof TrialHyperparameters, unknown>);
+  return unflattenObject(hParams) as Hyperparameters;
 };

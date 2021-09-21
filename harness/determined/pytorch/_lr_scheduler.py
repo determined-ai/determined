@@ -23,11 +23,13 @@ class LRScheduler:
             STEP_EVERY_EPOCH
             STEP_EVERY_BATCH
             MANUAL_STEP
+            STEP_EVERY_OPTIMIZER_STEP
         """
 
         STEP_EVERY_EPOCH = 1
         STEP_EVERY_BATCH = 2
         MANUAL_STEP = 3
+        STEP_EVERY_OPTIMIZER_STEP = 4
 
     def __init__(
         self,
@@ -48,8 +50,18 @@ class LRScheduler:
 
                 2. ``STEP_EVERY_BATCH``: Determined will call scheduler.step() after every
                    ``frequency`` training batch(es). No arguments will be passed to step().
+                   This option does not take into account gradient aggregation;
+                   ``STEP_EVERY_OPTIMIZER_STEP`` which does is recommended.
 
-                3. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
+                3. ``STEP_EVERY_OPTIMIZER_STEP``: Determined will call scheduler.step() in sync
+                   with optimizer steps. With ``optimizations.aggregation_frequency`` unset, this
+                   is equivalent to ``STEP_EVERY_BATCH``; when it is set, it ensures the LR
+                   scheduler is stepped every _effective_ batch.
+
+                   If the option ``frequency`` is set to some value N, Determined will step the LR
+                   scheduler every N optimizer steps.
+
+                4. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
             frequency:

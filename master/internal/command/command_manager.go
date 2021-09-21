@@ -34,7 +34,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, c.db, taskID, msg, nil)
+		return createGenericCommandActor(ctx, c.db, taskID, model.TaskTypeCommand, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

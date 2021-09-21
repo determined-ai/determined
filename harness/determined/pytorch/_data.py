@@ -202,7 +202,7 @@ class DataLoader:
             collate_fn=self.collate_fn,
             pin_memory=self.pin_memory,
             timeout=self.timeout,
-            worker_init_fn=self.worker_init_fn,  # type: ignore
+            worker_init_fn=self.worker_init_fn,
         )
 
     def __iter__(self) -> Iterator:

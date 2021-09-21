@@ -126,7 +126,7 @@ export enum Determinedexperimentv1State {
 }
 
 /**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.
  * @export
  * @enum {string}
  */
@@ -137,7 +137,8 @@ export enum Determinedtaskv1State {
     PULLING = <any> 'STATE_PULLING',
     STARTING = <any> 'STATE_STARTING',
     RUNNING = <any> 'STATE_RUNNING',
-    TERMINATED = <any> 'STATE_TERMINATED'
+    TERMINATED = <any> 'STATE_TERMINATED',
+    TERMINATING = <any> 'STATE_TERMINATING'
 }
 
 /**
@@ -897,13 +898,7 @@ export interface V1Checkpoint {
      */
     batchNumber: number;
     /**
-     * Timestamp when the checkpoint began being saved to persistent storage.
-     * @type {Date}
-     * @memberof V1Checkpoint
-     */
-    startTime: Date;
-    /**
-     * Timestamp when the checkpoint completed being saved to persistent storage.
+     * Timestamp when the checkpoint was reported as being saved to persistent storage.
      * @type {Date}
      * @memberof V1Checkpoint
      */
@@ -1032,12 +1027,6 @@ export interface V1CheckpointWorkload {
      * @memberof V1CheckpointWorkload
      */
     uuid?: string;
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1CheckpointWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}
@@ -1933,6 +1922,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     telemetryEnabled?: boolean;
+    /**
+     * SSO providers.
+     * @type {Array<V1SSOProvider>}
+     * @memberof V1GetMasterResponse
+     */
+    ssoProviders?: Array<V1SSOProvider>;
 }
 
 /**
@@ -2948,12 +2943,6 @@ export interface V1Metrics {
  * @interface V1MetricsWorkload
  */
 export interface V1MetricsWorkload {
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1MetricsWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}
@@ -4138,6 +4127,26 @@ export enum V1RunnableType {
     UNSPECIFIED = <any> 'RUNNABLE_TYPE_UNSPECIFIED',
     TRAIN = <any> 'RUNNABLE_TYPE_TRAIN',
     VALIDATE = <any> 'RUNNABLE_TYPE_VALIDATE'
+}
+
+/**
+ * Describe one SSO provider.
+ * @export
+ * @interface V1SSOProvider
+ */
+export interface V1SSOProvider {
+    /**
+     * A descriptive name for this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    name: string;
+    /**
+     * The URL to use for SSO with this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    ssoUrl: string;
 }
 
 /**

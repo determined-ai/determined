@@ -119,7 +119,7 @@ export const getUsers: DetApi<EmptyParams, Api.V1GetUsersResponse, DetailedUser[
 
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, DeterminedInfo> = {
   name: 'getInfo',
-  postProcess: (response) => decoder.jsonToDeterminedInfo(response),
+  postProcess: (response) => decoder.mapV1MasterInfo(response),
   request: () => detApi.Cluster.determinedGetMaster(),
 };
 
@@ -209,7 +209,7 @@ export const createExperiment: DetApi<
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder.decodeGetV1ExperimentRespToExperimentBase(resp);
+    return decoder.mapV1GetExperimentResponse(resp);
   },
   request: (params: CreateExperimentParams, options) => {
     return detApi.Internal.determinedCreateExperiment(
@@ -302,7 +302,7 @@ export const getExperimentDetails: DetApi<
   ExperimentDetailsParams, Api.V1GetExperimentResponse, ExperimentBase
 > = {
   name: 'getExperimentDetails',
-  postProcess: (response) => decoder.decodeGetV1ExperimentRespToExperimentBase(response),
+  postProcess: (response) => decoder.mapV1GetExperimentResponse(response),
   request: (params, options) => detApi.Experiments.determinedGetExperiment(params.id, options),
 };
 

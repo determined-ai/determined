@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+-  WebUI: Fix continuing trials for trials with nested hyperparameters.

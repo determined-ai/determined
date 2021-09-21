@@ -19,7 +19,7 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { terminalRunStates } from 'utils/types';
+import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -139,7 +139,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       downloadModel: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
-        label: 'Download Model',
+        label: 'Download Experiment Code',
         onClick: (e) => {
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
@@ -189,15 +189,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       terminalRunStates.has(experiment.state) && (
         experiment.archived ? options.archive : options.unarchive
       ),
-      curUser?.isAdmin && terminalRunStates.has(experiment.state) && options.delete,
+      deletableRunStates.has(experiment.state) &&
+        curUser && (curUser.isAdmin || curUser.username === experiment.username) && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
+    curUser,
     deleteExperimentHandler,
     isRunningDelete,
-    curUser?.isAdmin,
     experiment.archived,
     experiment.id,
     experiment.state,
+    experiment.username,
     fetchExperimentDetails,
     isRunningArchive,
     isRunningTensorboard,

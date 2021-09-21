@@ -308,7 +308,7 @@ def launch_command(
 
 
 def render_event_stream(event: Any) -> None:
-    description = event["snapshot"]["config"]["description"]
+    description = event["description"]
     if event["scheduled_event"] is not None:
         print(
             colored("Scheduling {} (id: {})...".format(description, event["parent_id"]), "yellow")

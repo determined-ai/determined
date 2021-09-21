@@ -51,3 +51,19 @@ type ErrStaleContainer struct {
 func (e ErrStaleContainer) Error() string {
 	return fmt.Sprintf("stale container %s", e.ID)
 }
+
+// All behaviors for allocations.
+const (
+	rendezvous  = "rendezvous"
+	preemption  = "preemption"
+	idleWatcher = "idle_watcher"
+)
+
+// ErrBehaviorDisabled is returned an operation is tried without the behavior being enabled.
+type ErrBehaviorDisabled struct {
+	Behavior string
+}
+
+func (e ErrBehaviorDisabled) Error() string {
+	return fmt.Sprintf("%s not enabled for this allocation", e.Behavior)
+}

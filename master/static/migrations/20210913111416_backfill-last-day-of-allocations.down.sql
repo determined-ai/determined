@@ -1,0 +1,2 @@
+-- Nothing to do for down, the tables didn't exist prior to this version and they are dropped
+-- by other migrations.
