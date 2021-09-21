@@ -732,7 +732,7 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		if err = addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
 		}
-		err := db.namedGet(&experiment.ID, `
+		err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
