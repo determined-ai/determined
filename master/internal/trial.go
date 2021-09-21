@@ -80,7 +80,7 @@ func newTrial(
 ) *trial {
 	return &trial{
 		taskID:       taskID,
-		jobID:        jobID,
+		jobID:        jobID, // TODO restoring from an experiment w/o jobID use model.JobID(experimentID)
 		experimentID: experimentID,
 		state:        initialState,
 		searcher:     searcher,
