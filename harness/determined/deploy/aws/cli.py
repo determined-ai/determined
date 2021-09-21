@@ -105,6 +105,16 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         sys.exit(1)
 
     if command == "down":
+        if not args.no_prompt:
+            val = input(
+                "Deleting an AWS stack will lose all your data, including the created network "
+                "file system. Please back up the file system before deleting it. Do you still "
+                "want to delete the stack? [y/n]"
+            )
+            if val.lower() != "y":
+                print("Delete cancelled.")
+                return
+
         try:
             aws.delete(args.cluster_id, boto3_session)
         except NoCredentialsError:
@@ -288,6 +298,11 @@ args_description = Cmd(
                     help="AWS region",
                 ),
                 Arg("--profile", type=str, default=None, help="AWS profile"),
+                Arg(
+                    "--no-prompt",
+                    action="store_true",
+                    help="no prompt when deleting resources",
+                ),
             ],
         ),
         Cmd(
