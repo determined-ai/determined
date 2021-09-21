@@ -2,8 +2,9 @@ import contextlib
 import os
 from typing import Any, Dict, Iterator, Optional
 
+from determined import errors
 from determined.common import check
-from determined.common.storage.base import StorageManager, StorageMetadata
+from determined.common.storage.base import StorageManager
 
 
 def _full_storage_path(
@@ -49,19 +50,19 @@ class SharedFSStorageManager(StorageManager):
         return cls(base_path)
 
     @contextlib.contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
+    def restore_path(self, storage_id: str) -> Iterator[str]:
         """
         Prepare a local directory exposing the checkpoint. Do some simple checks to make sure the
         configuration seems reasonable.
         """
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
         check.true(
-            os.path.exists(storage_dir),
-            "Storage directory does not exist: {}. Please verify "
-            "that you are using the correct configuration value for "
-            "checkpoint_storage.host_path".format(storage_dir),
+            os.path.exists(self._base_path),
+            f"Storage directory does not exist: {self._base_path}. Please verify that you are "
+            "using the correct configuration value for checkpoint_storage.host_path",
         )
-        check.true(
-            os.path.isdir(storage_dir), "Checkpoint path is not a directory: {}".format(storage_dir)
-        )
+        storage_dir = os.path.join(self._base_path, storage_id)
+        if not os.path.exists(storage_dir):
+            raise errors.CheckpointNotFound(
+                f"Did not find checkpoint {storage_id} in shared_fs storage"
+            )
         yield storage_dir

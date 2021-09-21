@@ -14,6 +14,7 @@ func DefaultConfig(taskContainerDefaults *TaskContainerDefaultsConfig) CommandCo
 		Resources:   expConf.Resources,
 		Environment: expConf.Environment,
 		BindMounts:  expConf.BindMounts,
+		WorkDir:     taskContainerDefaults.WorkDir,
 	}
 }
 
@@ -27,6 +28,7 @@ type CommandConfig struct {
 	Entrypoint      []string         `json:"entrypoint"`
 	TensorBoardArgs []string         `json:"tensorboard_args,omitempty"`
 	IdleTimeout     *Duration        `json:"idle_timeout"`
+	WorkDir         *string          `json:"work_dir"`
 }
 
 // Validate implements the check.Validatable interface.

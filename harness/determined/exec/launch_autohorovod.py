@@ -37,7 +37,6 @@ ENVIRONMENT_VARIABLE_KEYS = {
     "DET_TRIAL_SEED",
     "DET_EXPERIMENT_CONFIG",
     "DET_HPARAMS",
-    "DET_LATEST_CHECKPOINT",
     "DET_LATEST_BATCH",
     "DET_RENDEZVOUS_PORT",
     "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
@@ -73,8 +72,7 @@ def main() -> int:
     cert = certs.default_load(master_url)
     certs.cli_cert = cert
 
-    with open(os.environ["DET_LATEST_CHECKPOINT"], "r") as f:
-        latest_checkpoint = json.load(f)
+    latest_checkpoint = os.environ.get("DET_LATEST_CHECKPOINT")
 
     latest_batch = int(os.environ["DET_LATEST_BATCH"])
 

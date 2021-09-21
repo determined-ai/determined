@@ -36,6 +36,7 @@ type TaskContainerDefaultsConfig struct {
 	Devices          DevicesConfig `json:"devices"`
 
 	BindMounts BindMountsConfig `json:"bind_mounts"`
+	WorkDir    *string          `json:"work_dir"`
 }
 
 func validatePortRange(portRange string) []error {

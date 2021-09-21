@@ -47,28 +47,10 @@ def test_full_storage_path() -> None:
 
 
 def test_checkpoint_lifecycle(manager: storage.SharedFSStorageManager) -> None:
-    assert len(os.listdir(manager._base_path)) == 0
+    def post_delete_cb(storage_id: str) -> None:
+        assert storage_id not in os.listdir(manager._base_path)
 
-    checkpoints = []
-    for index in range(5):
-        with manager.store_path() as (storage_id, path):
-            # Ensure no checkpoint directories exist yet.
-            assert len(os.listdir(manager._base_path)) == index
-            util.create_checkpoint(path)
-            metadata = storage.StorageMetadata(storage_id, manager._list_directory(path))
-            checkpoints.append(metadata)
-            assert set(metadata.resources) == set(util.EXPECTED_FILES.keys())
-
-    assert len(os.listdir(manager._base_path)) == 5
-
-    for index in reversed(range(5)):
-        metadata = checkpoints[index]
-        assert metadata.storage_id in os.listdir(manager._base_path)
-        with manager.restore_path(metadata) as path:
-            util.validate_checkpoint(path)
-        manager.delete(metadata)
-        assert metadata.storage_id not in os.listdir(manager._base_path)
-        assert len(os.listdir(manager._base_path)) == index
+    util.run_storage_lifecycle_test(manager, post_delete_cb)
 
 
 def test_validate(manager: storage.SharedFSStorageManager) -> None:

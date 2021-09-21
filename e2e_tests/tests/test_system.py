@@ -8,12 +8,12 @@ import threading
 import time
 from typing import Any, Dict, Iterator, List, Optional, Set, cast
 
-import botocore.exceptions
 import numpy as np
 import pytest
 import yaml
 
-from determined.common import check, storage
+from determined import errors
+from determined.common import storage
 from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
@@ -156,26 +156,17 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             for config, checkpoints in all_checkpoints:
                 checkpoint_config = config["checkpoint_storage"]
 
-                if checkpoint_config["type"] == "shared_fs":
-                    deleted_exception = check.CheckFailedError
-                elif checkpoint_config["type"] == "s3":
-                    deleted_exception = botocore.exceptions.ClientError
-                else:
-                    raise NotImplementedError(
-                        f'unsupported storage type {checkpoint_config["type"]}'
-                    )
-
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 for checkpoint in checkpoints:
-                    metadata = storage.StorageMetadata.from_json(checkpoint)
+                    storage_id = checkpoint["uuid"]
                     if checkpoint["state"] == "COMPLETED":
-                        with storage_manager.restore_path(metadata):
+                        with storage_manager.restore_path(storage_id):
                             pass
                     elif checkpoint["state"] == "DELETED":
                         try:
-                            with storage_manager.restore_path(metadata):
+                            with storage_manager.restore_path(storage_id):
                                 raise AssertionError("checkpoint not deleted")
-                        except deleted_exception:
+                        except errors.CheckpointNotFound:
                             pass
         except AssertionError:
             if i == max_checks - 1:

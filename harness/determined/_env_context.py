@@ -16,7 +16,7 @@ class EnvContext:
         container_id: str,
         experiment_config: Dict[str, Any],
         hparams: Dict[str, Any],
-        latest_checkpoint: Optional[Dict[str, Any]],
+        latest_checkpoint: Optional[str],
         latest_batch: int,
         use_gpu: bool,
         container_gpus: List[str],

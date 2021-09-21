@@ -465,7 +465,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
   return io
     .filter(log => !log.service_ready_event)
     .map(log => {
-      const description = log.snapshot.config.description || '';
+      const description = log.description || '';
       let message = '';
       if (log.scheduled_event) {
         message = `Scheduling ${log.parent_id} (id: ${description})...`;

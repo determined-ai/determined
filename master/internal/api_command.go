@@ -95,6 +95,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
+	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
@@ -131,6 +132,14 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var userFiles archive.Archive
 	if len(req.Files) > 0 {
 		userFiles = filesToArchive(req.Files)
+
+		workdirSetInReq := config.WorkDir != nil &&
+			(workDirInDefaults == nil || *workDirInDefaults != *config.WorkDir)
+		if workdirSetInReq {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"cannot set work_dir and context directory at the same time")
+		}
+		config.WorkDir = nil
 	}
 
 	return &tasks.GenericCommandSpec{

@@ -432,7 +432,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
+		WorkingDir:      spec.WorkDir,
 	}
 
 	p.pod = p.configurePodSpec(

@@ -79,3 +79,9 @@ class InvalidModelException(InvalidExperimentException):
     InvalidModelException indicates that the model is inavlid or is (partially)
     unsupported
     """
+
+
+class CheckpointNotFound(Exception):
+    """
+    CheckpointNotFoundException indicates a checkpoint could not be found in checkpoint storage.
+    """
