@@ -29,7 +29,8 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	p.repr(rp)
 	// TODO remove me. for testing only.
-	p.OrderedAllocations(rp)
+	ar := p.OrderedAllocations(rp)
+	printAllocRequests(ar)
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
@@ -69,6 +70,7 @@ func (p *priorityScheduler) OrderedAllocations(
 	}
 
 	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
+	// TODO remove logs
 	log.Debugf("scheduled tasks", priorityToScheduledTaskMap)
 	log.Debugf("scheduled job order", allocReqsToJobOrder(reqs).Values())
 	readFromPrioToTask(priorityToPendingTasksMap, &reqs)

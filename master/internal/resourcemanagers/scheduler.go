@@ -45,3 +45,12 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet 
 	}
 	return jobSet
 }
+
+func printAllocRequests(reqs []*sproto.AllocateRequest) {
+	var str string
+	for _, req := range reqs {
+		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.JobID)
+		// str = fmt.Sprintf("%s, AID %s, JID %s | ", str, req.AllocationID, req.JobID)
+	}
+	fmt.Println("allocRequests" + str)
+}
