@@ -11,6 +11,8 @@ from determined import errors
 from determined.common import util
 from determined.common.storage.base import StorageManager
 
+from .boto3_credential_manager import initialize_boto3_credential_providers
+
 
 class S3StorageManager(StorageManager):
     """
@@ -26,6 +28,7 @@ class S3StorageManager(StorageManager):
         temp_dir: Optional[str] = None,
     ) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
+        initialize_boto3_credential_providers()
         self.bucket_name = bucket
         self.s3 = boto3.resource(
             "s3",
