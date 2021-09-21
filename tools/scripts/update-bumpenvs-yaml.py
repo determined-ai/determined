@@ -46,7 +46,7 @@ JOB_SUFFIXES = [
 
 EXPECT_JOBS = {
     "publish-cloud-images",
-    *[f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES],
+    *(f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES),
 }
 
 PACKER_ARTIFACTS = {
@@ -205,10 +205,12 @@ if __name__ == "__main__":
     artifacts = get_all_artifacts(builds)
 
     tag_list = [
-        parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS
-    ] + [yaml.safe_load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS]
+        *(parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS),
+        *(yaml.safe_load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS),
+    ]
 
-    new_tags = {k: d[k] for d in tag_list for k in d}
+    # Flatten tag_list dicts into one dict.
+    new_tags = {k: v for d in tag_list for (k, v) in d.items()}
 
     saw_change = False
     for image_type, new_tag in new_tags.items():
