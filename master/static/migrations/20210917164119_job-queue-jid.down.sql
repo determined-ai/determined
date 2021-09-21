@@ -1,6 +1,9 @@
 ALTER TABLE public.tasks
-    DROP COLUMN job_id,
-DROP TYPE public.jobs;
-DROP TYPE public.job_type;
+    DROP COLUMN job_id;
 
--- TODO sync with .up
+ALTER TABLE public.experiments
+    DROP COLUMN job_id;
+
+DROP TABLE public.jobs;
+
+DROP TYPE public.job_type;
