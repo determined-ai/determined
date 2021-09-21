@@ -131,6 +131,10 @@ The following configuration settings are supported:
       <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
       the bind-mount. Defaults to ``rprivate``.
 
+-  ``work_dir``: Working directory. This can include ``$AGENT_USER`` or ``$DET_USER``, which will be
+   replaced with the actual agent user id or determined user id. This cannot be set if submitting a
+   context directory. Defaults to null.
+
 -  ``tensorboard_args``: Lists optional arguments for launching TensorBoard. Each element of the
    list should be a string of the form ``NAME=VALUE``.
 
