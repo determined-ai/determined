@@ -1,4 +1,4 @@
-import { Button, Card, Tabs, Tooltip } from 'antd';
+import { Breadcrumb, Button, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
@@ -8,12 +8,13 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
+import { paths } from 'routes/utils';
 import { getModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
 import { humanReadableBytes } from 'utils/string';
-import { checkpointSize } from 'utils/types';
+import { checkpointSize, getBatchNumber } from 'utils/types';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
@@ -91,8 +92,28 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     const resources = Object.keys(modelVersion.checkpoint.resources || {})
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
-    const model = resources.pop() || { name: '', size: '' };
-    return [ { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
+    const totalBatchesProcessed = getBatchNumber(modelVersion.checkpoint);
+    return [
+      {
+        content: <Breadcrumb className={css.link}>
+          <Breadcrumb.Item
+            className={css.link}
+            href={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
+            Experiment {modelVersion.checkpoint.experimentId}
+          </Breadcrumb.Item>
+          <Breadcrumb.Item
+            className={css.link}
+            href={paths.trialDetails(
+              modelVersion.checkpoint.trialId,
+              modelVersion.checkpoint.experimentId,
+            )}>
+          Trial {modelVersion.checkpoint.trialId}
+          </Breadcrumb.Item>
+          <Breadcrumb.Item className={css.link}>Batch {totalBatchesProcessed}</Breadcrumb.Item>
+        </Breadcrumb>,
+        label: 'Checkpoint',
+      },
+      { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
       {
         content: humanReadableBytes(checkpointSize(modelVersion.checkpoint)),
         label: 'Total Size',
@@ -100,11 +121,16 @@ model.load_state_dict(ckpt['models_state_dict'][0])
       {
         content: resources.map(resource => renderResource(resource.name, resource.size)),
         label: 'Code',
-      },
-      {
-        content: renderResource(model?.name, model?.size),
-        label: 'Model',
       } ];
+  }, [ modelVersion?.checkpoint ]);
+
+  const validationMetrics = useMemo(() => {
+    if (!modelVersion?.checkpoint) return [];
+    const metrics = Object.entries(modelVersion?.checkpoint.metrics?.validationMetrics || {});
+    return metrics.map(metric => ({
+      content: metric[1],
+      label: metric[0],
+    }));
   }, [ modelVersion?.checkpoint ]);
 
   if (isNaN(parseInt(modelId))) {
@@ -161,7 +187,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             padding: 36,
           }}>
             <Card title="Source">
-              <InfoBox rows ={checkpointInfo} seperator />
+              <InfoBox rows = {checkpointInfo} seperator />
+            </Card>
+            <Card title="Validation Metrics">
+              <InfoBox rows = {validationMetrics} seperator />
             </Card>
           </div>
         </TabPane>

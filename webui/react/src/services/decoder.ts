@@ -410,6 +410,7 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     batch: data.batchNumber,
     endTime: data.endTime && data.endTime as unknown as string,
     experimentId: data.experimentId,
+    metrics: data.metrics,
     resources,
     state: decodeCheckpointState(data.state),
     trialId: data.trialId,

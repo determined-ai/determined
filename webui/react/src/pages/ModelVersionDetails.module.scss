@@ -15,3 +15,6 @@
   flex-shrink: 0;
   padding-left: var(--theme-sizes-layout-small);
 }
+.link a {
+  color: var(--theme-colors-action-normal) !important;
+}

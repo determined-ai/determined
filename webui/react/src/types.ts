@@ -400,9 +400,16 @@ export interface Step extends WorkloadWrapper, StartEndTimes {
   training: MetricsWorkload;
 }
 
+export interface Metrics {
+  numInputs?: number;
+  validationMetrics?: Record<string, number>;
+}
+
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
+  metadata?: RawJson;
+  metrics?: Metrics;
 }
 
 export interface TrialPagination extends WithPagination {
@@ -483,7 +490,7 @@ export interface ModelItem {
 }
 
 export interface ModelVersion {
-  checkpoint: Checkpoint;
+  checkpoint: CheckpointDetail;
   creationTime: string;
   model?: ModelItem;
   version: number;
