@@ -24,8 +24,10 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from tabulate import tabulate
 
+from detectron2_files.utils import *
+
 import detectron2.utils.comm as comm
-from detectron2.data import MetadataCatalog
+from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.data.datasets.coco import convert_to_coco_json
 from detectron2.structures import Boxes, BoxMode, pairwise_iou
 from detectron2.utils.logger import create_small_table
@@ -39,7 +41,7 @@ class COCOEvaluator(DatasetEvaluator):
     outputs using COCO's metrics and APIs.
     """
 
-    def __init__(self, dataset_name, cfg, distributed, output_dir=None):
+    def __init__(self, dataset_name, cfg, distributed, output_dir=None, fake=False):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -65,18 +67,33 @@ class COCOEvaluator(DatasetEvaluator):
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
 
-        self._metadata = MetadataCatalog.get(dataset_name)
-        if not hasattr(self._metadata, "json_file"):
-            self._logger.warning(
-                f"json_file was not found in MetaDataCatalog for '{dataset_name}'."
-                " Trying to convert it to COCO format ..."
-            )
+        if fake:
+            mask = eval_make_mask()
+            DatasetCatalog.register("test_dataset", lambda: eval_make_dataset_dicts(mask))
+            MetadataCatalog.get("test_dataset").set(thing_classes=["test_label"])
 
-            cache_path = os.path.join(output_dir, f"{dataset_name}_coco_format.json")
-            self._metadata.json_file = cache_path
-            convert_to_coco_json(dataset_name, cache_path)
+            # Dump to json.
+            json_dict = convert_to_coco_dict("test_dataset")
+            with tempfile.TemporaryDirectory() as tmpdir:
+                json_file_name = "test.json"
+                with open(json_file_name, "w") as f:
+                    json.dump(json_dict, f)
+                # Load from json.
+                dicts = load_coco_json(json_file_name, "")
+                json_file = json_file_name
+        else:
+            self._metadata = MetadataCatalog.get(dataset_name)
+            if not hasattr(self._metadata, "json_file"):
+                self._logger.warning(
+                    f"json_file was not found in MetaDataCatalog for '{dataset_name}'."
+                    " Trying to convert it to COCO format ..."
+                )
 
-        json_file = PathManager.get_local_path(self._metadata.json_file)
+                cache_path = os.path.join(output_dir, f"{dataset_name}_coco_format.json")
+                self._metadata.json_file = cache_path
+                convert_to_coco_json(dataset_name, cache_path)
+
+            json_file = PathManager.get_local_path(self._metadata.json_file)
         with contextlib.redirect_stdout(io.StringIO()):
             self._coco_api = COCO(json_file)
 
@@ -86,6 +103,7 @@ class COCOEvaluator(DatasetEvaluator):
         self._do_evaluation = "annotations" in self._coco_api.dataset
         self.evaluator_name = "CocoEvaluator"
         self.reset()
+        self.fake = fake
 
     def reset(self):
         self._predictions = []
@@ -134,6 +152,8 @@ class COCOEvaluator(DatasetEvaluator):
         return None        
 
     def evaluate(self):
+        if self.fake:
+            return {'bbox': {'AP': 1}}
         predictions = self._predictions
         if len(predictions) == 0:
             self._logger.warning("[COCOEvaluator] Did not receive valid predictions.")

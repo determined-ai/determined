@@ -285,7 +285,7 @@ class EvaluatorReducer(MetricReducer):
                 fmt_results[new_key] = value
         return fmt_results
 
-def get_evaluator(cfg, dataset_name, output_folder=None):
+def get_evaluator(cfg, dataset_name, output_folder=None, fake=False):
     """
     This is a slightly altered detectron2 function. Below are original comments:
 
@@ -310,7 +310,7 @@ def get_evaluator(cfg, dataset_name, output_folder=None):
             )
         )
     if evaluator_type in ["coco", "coco_panoptic_seg"]:
-        evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
+        evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder, fake))
     if evaluator_type == "coco_panoptic_seg":
         evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
     if len(evaluator_list) == 0:

@@ -40,7 +40,7 @@ class DetectronTrial(PyTorchTrial):
         self.scheduler = self.context.wrap_lr_scheduler(self.scheduler,LRScheduler.StepMode.STEP_EVERY_BATCH)
 
         self.dataset_name = self.cfg.DATASETS.TEST[0]
-        self.evaluators = get_evaluator(self.cfg, self.dataset_name, self.context.get_hparam("output_dir"))
+        self.evaluators = get_evaluator(self.cfg, self.dataset_name, self.context.get_hparam("output_dir"), self.context.get_hparam('fake_data'))
         self.val_reducer = self.context.experimental.wrap_reducer(EvaluatorReducer(self.evaluators), for_training=False)
 
         self.context.experimental.disable_dataset_reproducibility_checks()
