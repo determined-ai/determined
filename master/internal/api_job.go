@@ -30,7 +30,7 @@ func (a *apiServer) GetJobs(
 
 	// TODO loop over all resource pools in the request
 	if len(req.ResourcePools) < 1 {
-		return nil, notImplementedError // FIXME
+		return nil, status.Error(codes.InvalidArgument, "missing resource_pools parameter") // FIXME
 	}
 
 	switch {

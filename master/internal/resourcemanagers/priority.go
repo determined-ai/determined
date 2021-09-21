@@ -43,7 +43,7 @@ func (p *priorityScheduler) OrderedAllocations(
 ) (reqs []*sproto.AllocateRequest) {
 	/*
 		compute a single numerical ordering for allocationreuqests that can be modified.
-		TODO how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user?
+		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user? discussed: we shouldn't show these to the user
 		. either way we
 		1. get a total ordering of allocation requests
 		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance

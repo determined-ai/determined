@@ -720,7 +720,7 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
-	return db.withTransaction("add_trial", func(tx *sqlx.Tx) error {
+	return db.withTransaction("add_experiment", func(tx *sqlx.Tx) error {
 
 		if err = deferConstraints(tx); err != nil {
 			return err
