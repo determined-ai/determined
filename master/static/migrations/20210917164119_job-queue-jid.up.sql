@@ -19,10 +19,12 @@ CREATE TABLE public.jobs (
 );
 
 
--- TODO existing tasks that had jobs? do we care
-ALTER TABLE public.tasks
-    ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id);
-
+-- TODO existing entities that had jobs? do we care?  only nonterminal
 -- FIXME maybe we allow nulls for old experiments?
+-- 	RETURNING id: ERROR: insert or update on table "experiments" violates foreign key constraint "experiments_job_id_fkey" (SQLSTATE 23503)
 ALTER TABLE public.experiments
-    ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id);
+    ADD COLUMN job_id text; --  FIXME NOT NULL REFERENCES public.jobs(job_id);
+
+ALTER TABLE public.tasks
+    -- 	RETURNING id: ERROR: insert or update on table "experiments" violates foreign key constraint "experiments_job_id_fkey" (SQLSTATE 23503)
+    ADD COLUMN job_id text; -- NOT NULL REFERENCES public.jobs(job_id);

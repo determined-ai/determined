@@ -708,28 +708,37 @@ FROM (
 ) descs`, skipArchived, skipInactive, username)
 }
 
+func deferConstraints(tx *sqlx.Tx) error {
+	if _, err := tx.Exec(`SET CONSTRAINTS ALL DEFERRED`); err != nil {
+		return errors.Wrap(err, "deferring constraints")
+	}
+	return nil
+}
+
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
+func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
 	return db.withTransaction("add_trial", func(tx *sqlx.Tx) error {
 
+		if err = deferConstraints(tx); err != nil {
+			return err
+		}
 		job := model.Job{
 			JobID:   experiment.JobID,
 			JobType: "EXPERIMENT",
 		}
-		if err := addJob(tx, &job); err != nil {
-			// Assume the foreign key constraint is handled by the database.
+		if err = addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
 		}
 		err := db.namedGet(&experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived,
-	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
 	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
 					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes)
+					:notes, :job_id)
 	RETURNING id`, experiment)
 		if err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
