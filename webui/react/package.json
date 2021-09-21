@@ -29,7 +29,7 @@
     "js-sha512": "^0.8.0",
     "js-yaml": "^4.1.0",
     "omnibar": "github:hamidzr/omnibar",
-    "plotly.js": "^1.56.0",
+    "plotly.js": "^1.58.5",
     "portable-fetch": "^3.0.0",
     "pretty-bytes": "^5.6.0",
     "query-string": "^7.0.1",
