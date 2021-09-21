@@ -824,7 +824,7 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
 	if err == sql.ErrNoRows {
