@@ -12,7 +12,10 @@ import { getModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
+import { humanReadableBytes } from 'utils/string';
+import { checkpointSize } from 'utils/types';
 
+import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 
 const { TabPane } = Tabs;
@@ -72,6 +75,38 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     return ({ content: pair[1], label: pair[0] } as InfoRow);
   });
 
+  const renderResource = (resource: string, size: string): React.ReactNode => {
+    return (
+      <div className={css.resource} key={resource}>
+        <div className={css.resourceName}>{resource}</div>
+        <div className={css.resourceSpacer} />
+        <div className={css.resourceSize}>{size}</div>
+      </div>
+    );
+  };
+
+  const checkpointInfo = useMemo(() => {
+    if (!modelVersion?.checkpoint) return [];
+    const checkpointResources = modelVersion.checkpoint.resources || {};
+    const resources = Object.keys(modelVersion.checkpoint.resources || {})
+      .sort((a, b) => checkpointResources[a] - checkpointResources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
+    const model = resources.pop() || { name: '', size: '' };
+    return [ { content: modelVersion.checkpoint.uuid, label: 'Checkpoint UUID' },
+      {
+        content: humanReadableBytes(checkpointSize(modelVersion.checkpoint)),
+        label: 'Total Size',
+      },
+      {
+        content: resources.map(resource => renderResource(resource.name, resource.size)),
+        label: 'Code',
+      },
+      {
+        content: renderResource(model?.name, model?.size),
+        label: 'Model',
+      } ];
+  }, [ modelVersion?.checkpoint ]);
+
   if (isNaN(parseInt(modelId))) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (isNaN(parseInt(versionId))) {
@@ -123,9 +158,12 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
-            marginLeft: 20,
-            marginRight: 20,
-          }} />
+            padding: 36,
+          }}>
+            <Card title="Source">
+              <InfoBox rows ={checkpointInfo} seperator />
+            </Card>
+          </div>
         </TabPane>
       </Tabs>
     </Page>

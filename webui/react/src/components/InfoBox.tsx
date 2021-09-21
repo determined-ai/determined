@@ -21,12 +21,12 @@ export const renderRow = ({ label, content, seperator }: InfoRowProps): React.Re
   if (content == null) return null;
   return (
     <div className={[ css.info, seperator ? css.seperator : null ].join(' ')} key={label}>
-      <div className={css.label}>{label}</div>
+      <dt className={css.label}>{label}</dt>
       {Array.isArray(content) ?
-        <div className={css.contentList}>
+        <dd className={css.contentList}>
           {content.map((item, idx) => <div className={css.content} key={idx}>{item}</div>)}
-        </div> :
-        <div className={css.content}>{content}</div>
+        </dd> :
+        <dd className={css.content}>{content}</dd>
       }
 
     </div>
@@ -35,10 +35,10 @@ export const renderRow = ({ label, content, seperator }: InfoRowProps): React.Re
 
 const InfoBox: React.FC<Props> = ({ header, rows, seperator = true }: Props) => {
   return (
-    <div className={css.base}>
+    <dl className={css.base}>
       {header != null ? <div className={css.header}>{header}</div>: null}
       {rows.map((row) => renderRow({ ...row, seperator }))}
-    </div>
+    </dl>
   );
 };
 

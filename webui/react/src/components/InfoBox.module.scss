@@ -13,8 +13,11 @@
   .info {
     align-items: center;
     display: flex;
-    padding: var(--theme-sizes-layout-medium) 0;
+    padding: var(--theme-sizes-layout-tiny) 0;
 
+    &:first-of-type {
+      border-top: none;
+    }
     .label {
       align-self: flex-start;
       color: var(--theme-colors-monochrome-8);
@@ -25,6 +28,12 @@
       padding-right: var(--theme-sizes-layout-medium);
     }
     .content {
+      color: var(--theme-colors-monochrome-6);
+      flex-basis: 66%;
+      flex-grow: 1;
+      font-size: var(--theme-sizes-font-medium);
+    }
+    .contentList {
       color: var(--theme-colors-monochrome-6);
       flex-basis: 66%;
       flex-grow: 1;
