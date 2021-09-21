@@ -339,7 +339,7 @@ export default class StepImplementation {
 
   @Step('Filter table header <label> with option <option>')
   public async filterTable(label: string, option: string) {
-    await t.click(t.$('.ant-table-filter-trigger-container', t.near(label)));
+    await t.click(t.$('.ant-table-filter-trigger', t.near(label)));
     await t.click(option, t.within(t.$('.ant-table-filter-dropdown')));
     await t.click(t.button('Ok'), t.within(t.$('.ant-table-filter-dropdown')));
   }
@@ -430,11 +430,11 @@ export default class StepImplementation {
     for (var row of table.getTableRows()) {
       const ariaLabel = row.getCell('aria-label');
       const count = row.getCell('count');
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
       await t.click(t.text(ariaLabel, t.within(t.$('.ant-table-filter-dropdown'))));
       await t.click(t.$('[aria-label="Apply Filter"]'));
       await this.checkTableRowCount(count);
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger-container'));
+      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
       await t.click(t.$('[aria-label="Reset Filter"]'));
     }
   }
