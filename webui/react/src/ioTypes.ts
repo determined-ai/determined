@@ -199,6 +199,7 @@ export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 const ioTaskLog = io.type({
   assigned_event: io.unknown,
   container_started_event: io.unknown,
+  description: io.string,
   exited_event: optional(io.string),
   id: io.string,
   log_event: optional(io.string),
@@ -206,7 +207,6 @@ const ioTaskLog = io.type({
   scheduled_event: optional(io.string),
   seq: io.number,
   service_ready_event: optional(io.type({})),
-  snapshot: io.type({ config: io.type({ description: io.string }) }),
   terminate_request_event: optional(io.string),
   time: io.string,
 });
