@@ -8,7 +8,8 @@ import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
-import { modelVersionNameRenderer, relativeTimeRenderer } from 'components/Table';
+import { modelVersionNameRenderer, modelVersionNumberRenderer,
+  relativeTimeRenderer } from 'components/Table';
 import usePolling from 'hooks/usePolling';
 import { getModelDetails } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
@@ -48,8 +49,10 @@ const ModelDetails: React.FC = () => {
       {
         dataIndex: 'version',
         key: V1GetModelVersionsRequestSortBy.VERSION,
+        render: modelVersionNumberRenderer,
         sorter: true,
         title: 'Version',
+        width: 1,
       },
       {
         dataIndex: 'name',

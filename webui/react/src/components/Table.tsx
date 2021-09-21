@@ -166,6 +166,13 @@ export const modelVersionNameRenderer = (value: string, record: ModelVersion): R
   </Link>;
 };
 
+export const modelVersionNumberRenderer =
+(value: string, record: ModelVersion): React.ReactNode => {
+  return <Link className={css.versionBox} path={paths.modelVersionDetails(0, record.version)}>
+    V{record.version}
+  </Link>;
+};
+
 /* Table Helper Functions */
 
 /*
