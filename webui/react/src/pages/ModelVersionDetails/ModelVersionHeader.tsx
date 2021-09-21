@@ -1,5 +1,5 @@
-import { DownOutlined, LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu } from 'antd';
+import { LeftOutlined } from '@ant-design/icons';
+import { Breadcrumb, Button } from 'antd';
 import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
@@ -52,7 +52,7 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
             {modelVersion.model?.name}
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item>{modelVersion.version}</Breadcrumb.Item>
+          <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
       <div style={{

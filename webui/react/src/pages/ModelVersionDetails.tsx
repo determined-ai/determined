@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Icon from 'components/Icon';
+import InfoBox, { InfoRow } from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -59,6 +60,18 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     await navigator.clipboard.writeText(referenceText);
   }, [ referenceText ]);
 
+  /*
+  const metadata = useMemo(() => {
+    return Object.entries(model?.model.metadata || {}).map((pair) => {
+      return ({ content: pair[1], label: pair[0] });
+    });
+  }, [ modelVersion.metadata ]);
+  */
+
+  const metadata = Object.entries({}).map((pair) => {
+    return ({ content: pair[1], label: pair[0] } as InfoRow);
+  });
+
   if (isNaN(parseInt(modelId))) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (isNaN(parseInt(versionId))) {
@@ -88,6 +101,12 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             gap: 12,
             padding: 36,
           }}>
+            {metadata.length > 0 &&
+        <Card title={'Metadata'}>
+          <InfoBox rows={metadata} />
+          <Button type="link">add row</Button>
+        </Card>
+            }
             <Card
               extra={(
                 <Tooltip title="Copied!" trigger="click">
