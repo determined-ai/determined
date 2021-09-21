@@ -77,7 +77,7 @@ func registerConfig() {
 	defaults := internal.DefaultConfig()
 
 	// Register flags and environment variables, and set default values for the flags.
-	flags := rootCmd.Flags()
+	flags := rootCmd.PersistentFlags()
 	name := func(components ...string) configKey { return components }
 
 	registerString(flags, name("config-file"),
