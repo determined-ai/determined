@@ -141,7 +141,7 @@ class TestKerasTrial:
                     interceptor = workload.WorkloadResponseInterceptor()
                     yield from interceptor.send(workload.checkpoint_workload())
                     nonlocal latest_checkpoint, latest_batch
-                    latest_checkpoint = interceptor.metrics_result()
+                    latest_checkpoint = interceptor.metrics_result()["uuid"]
                     # latest_batch is unused, but can't be 0.
                     latest_batch = 1
                     break
@@ -222,7 +222,7 @@ class TestKerasTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
         controller = xor_trial_controller(
@@ -333,7 +333,7 @@ class TestKerasTrial:
     @pytest.mark.parametrize("ckpt_ver", ["0.12.3", "0.13.7", "0.13.8"])
     def test_ancient_checkpoints(self, ckpt_ver):
         checkpoint_dir = Path(utils.fixtures_path("ancient-checkpoints"))
-        latest_checkpoint = {"uuid": f"{ckpt_ver}-keras", "resources": {}}
+        latest_checkpoint = f"{ckpt_ver}-keras"
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()

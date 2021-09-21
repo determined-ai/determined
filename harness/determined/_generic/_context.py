@@ -1,7 +1,7 @@
 import contextlib
 import logging
 import pathlib
-from typing import Dict, Iterator
+from typing import Iterator
 
 import determined as det
 from determined.common import constants, storage
@@ -26,15 +26,14 @@ class Context:
         )
 
     @contextlib.contextmanager
-    def _download_initial_checkpoint(self, checkpoint: Dict) -> Iterator[pathlib.Path]:
+    def _download_initial_checkpoint(self, storage_id: str) -> Iterator[pathlib.Path]:
         """
         Wrap a storage_mgr.restore_path() context manager, but only download/cleanup on the
         local chief.
         """
 
-        metadata = storage.StorageMetadata.from_json(checkpoint)
-        logging.info("Restoring trial from checkpoint {}".format(metadata.storage_id))
+        logging.info("Restoring trial from checkpoint {}".format(storage_id))
 
         restore_path = self._dist._local_chief_contextmanager(self._storage_mgr.restore_path)
-        with restore_path(metadata) as path:
+        with restore_path(storage_id) as path:
             yield path

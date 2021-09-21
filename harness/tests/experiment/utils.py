@@ -118,7 +118,7 @@ def make_default_env_context(
     hparams: Dict[str, Any],
     experiment_config: Dict,
     trial_seed: int = 0,
-    latest_checkpoint: Optional[Dict[str, Any]] = None,
+    latest_checkpoint: Optional[str] = None,
     latest_batch: int = 0,
 ) -> det.EnvContext:
     # TODO(ryan): Fix the parameter passing so that this doesn't read from environment variables,
@@ -239,7 +239,7 @@ def make_trial_controller_from_trial_implementation(
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
     checkpoint_dir: Optional[str] = None,
-    latest_checkpoint: Optional[Dict[str, Any]] = None,
+    latest_checkpoint: Optional[str] = None,
     latest_batch: int = 0,
 ) -> det.TrialController:
     if not exp_config:
@@ -323,7 +323,7 @@ RestorableMakeControllerFn = Callable[
     [
         workload.Stream,
         DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
-        DefaultNamedArg(Optional[Dict], "latest_checkpoint"),  # noqa: F821
+        DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
         DefaultNamedArg(int, "latest_batch"),  # noqa: F821
     ],
     det.TrialController,
@@ -383,7 +383,7 @@ def checkpointing_and_restoring_test(
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
     controller_A1 = make_trial_controller_fn(

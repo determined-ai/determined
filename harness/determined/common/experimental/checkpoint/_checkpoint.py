@@ -149,10 +149,7 @@ class Checkpoint(object):
                         )
                     )
 
-                metadata = storage.StorageMetadata.from_json(
-                    {"uuid": self.uuid, "resources": self.resources}
-                )
-                manager.download(metadata, str(local_ckpt_dir))
+                manager.download(self.uuid, str(local_ckpt_dir))
 
         if not local_ckpt_dir.joinpath("metadata.json").exists():
             with open(local_ckpt_dir.joinpath("metadata.json"), "w") as f:
