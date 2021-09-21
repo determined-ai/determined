@@ -10,6 +10,8 @@ import TagList from 'components/TagList';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/date';
 
+import css from './ModelVersionHeader.module.scss';
+
 interface Props {
   modelVersion: ModelVersion;
 }
@@ -32,16 +34,8 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
   }, [ modelVersion ]);
 
   return (
-    <header style={{
-      backgroundColor: 'var(--theme-colors-monochrome-17)',
-      margin: 0,
-      padding: 12,
-      width: '100%',
-    }}>
-      <div style={{
-        borderBottom: '1px solid var(--theme-colors-monochrome-12)',
-        paddingBottom: 8,
-      }}>
+    <header className={css.base}>
+      <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
           <Breadcrumb.Item href={`det/models/${modelVersion.model?.name}`}>
             <LeftOutlined style={{ marginRight: 10 }} />
@@ -59,16 +53,14 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
         marginLeft: 24,
         marginRight: 24,
       }}>
-        <div style={{
-          alignItems: 'center',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}>
-          <div>
-            <img />
-            <h1>Version {modelVersion.version}</h1>
+        <div className={css.mainRow}>
+          <div className={css.title}>
+            <div className={css.versionBox}>
+              V{modelVersion.version}
+            </div>
+            <h1 className={css.versionName}>Version {modelVersion.version}</h1>
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <div className={css.buttons}>
             <Button>Download Model</Button>
             <Button type="text"><Icon name="overflow-horizontal" size="tiny" /></Button>
           </div>
