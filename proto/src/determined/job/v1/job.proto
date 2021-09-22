@@ -63,6 +63,8 @@ message Job {
   int32 priority = 7;
   // The job weight in fairshare scheduler.
   int32 weight = 8;
+  // Entity ID.
+  string entity_id = 9;
 }
 
 // Describes a message to control jobs in a queue.

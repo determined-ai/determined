@@ -44,8 +44,19 @@ func (a *apiServer) GetJobs(
 	if err != nil {
 		return nil, err
 	}
-	for _, id := range jobs.Values() {
-		resp.Jobs = append(resp.Jobs, &jobv1.Job{Summary: &jobv1.JobSummary{JobId: fmt.Sprint(id)}})
+	for index, val := range jobs.Values() {
+		summary, ok := val.(resourcemanagers.JobSummary)
+		if !ok {
+			continue // FIXME or error?
+		}
+		resp.Jobs = append(resp.Jobs, &jobv1.Job{
+			Summary: &jobv1.JobSummary{
+				JobId:         fmt.Sprint(summary.JobID),
+				QueuePosition: int32(index),
+			},
+			EntityId: summary.EntityID,
+			// Type: "TYPE_"+summary.JobType, // TODO
+		})
 	}
 	return resp, nil
 }

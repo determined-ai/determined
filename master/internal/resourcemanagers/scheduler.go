@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
@@ -46,6 +47,23 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet 
 	}
 	return jobSet
 }
+
+func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet {
+	jobSet := orderedset.NewOrderedSet()
+	for _, req := range reqs {
+		if req.JobID == "" {
+			continue
+		}
+		jobSet.Add(JobSummary{
+			JobID:    req.JobID,
+			JobType:  model.JobTypeTensorboard, // getJobType(req.TaskActor)
+			EntityID: "TODO.ID",                // getEntityId(req.TaskActor)
+		})
+	}
+	return jobSet
+}
+
+// TODO get final entity id and type
 
 func logAllocRequests(reqs []*sproto.AllocateRequest) {
 	var str string

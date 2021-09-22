@@ -23,6 +23,6 @@ CREATE TABLE public.jobs (
 ALTER TABLE public.experiments
     ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id);
 
-ALTER TABLE public.tasks
-    -- 	RETURNING id: ERROR: insert or update on table "experiments" violates foreign key constraint "experiments_job_id_fkey" (SQLSTATE 23503)
-    ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id);
+-- TODO do we need to persist task association?
+/* ALTER TABLE public.tasks */
+/*     ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id); */

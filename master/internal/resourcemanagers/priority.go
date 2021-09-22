@@ -37,6 +37,9 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 // TODO remove me
 func (p *priorityScheduler) repr(rp *ResourcePool) {
 	log.Debugf("total tasks by time %d", rp.taskList.taskByTime.Size())
+	for handler, _ := range rp.taskList.taskByHandler {
+		log.Debug("task parent " + handler.Parent().Address().String())
+	}
 }
 
 // OrderedAllocations sorts by expected allocation order at this point excluding backfills.
