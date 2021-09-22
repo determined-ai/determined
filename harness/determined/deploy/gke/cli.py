@@ -2,7 +2,6 @@ import argparse
 import json
 import subprocess
 import sys
-from multiprocessing.sharedctypes import Value
 from pathlib import Path
 from typing import Dict, Union
 
@@ -235,6 +234,7 @@ def create_nodepools(region: str, args: argparse.Namespace) -> None:
         defaults.K8S_NVIDIA_DAEMON,
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
+
 
 def configure_helm(args: argparse.Namespace) -> None:
     helm_dir = Path(args.helm_dir)
