@@ -283,7 +283,7 @@ def describe(args: Namespace) -> None:
         v_metrics_headers = []
 
     headers = (
-        ["Trial ID", "# of Batches", "State", "Start Time", "End Time"]
+        ["Trial ID", "# of Batches", "State", "Report Time"]
         + t_metrics_headers
         + [
             "Checkpoint State",
@@ -310,21 +310,17 @@ def describe(args: Namespace) -> None:
                 checkpoint = step.get("checkpoint")
                 if checkpoint:
                     checkpoint_state = checkpoint["state"]
-                    checkpoint_start_time = checkpoint.get("start_time")
                     checkpoint_end_time = checkpoint.get("end_time")
                 else:
                     checkpoint_state = None
-                    checkpoint_start_time = None
                     checkpoint_end_time = None
 
                 validation = step.get("validation")
                 if validation:
                     validation_state = validation["state"]
-                    validation_start_time = validation.get("start_time")
                     validation_end_time = validation.get("end_time")
                 else:
                     validation_state = None
-                    validation_start_time = None
                     validation_end_time = None
 
                 if args.metrics:
@@ -340,16 +336,13 @@ def describe(args: Namespace) -> None:
                         step["trial_id"],
                         step["total_batches"],
                         step["state"],
-                        render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
                     ]
                     + t_metrics_fields
                     + [
                         checkpoint_state,
-                        render.format_time(checkpoint_start_time),
                         render.format_time(checkpoint_end_time),
                         validation_state,
-                        render.format_time(validation_start_time),
                         render.format_time(validation_end_time),
                     ]
                     + v_metrics_fields

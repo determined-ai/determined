@@ -251,7 +251,7 @@ FROM (
            e.git_committer, e.git_commit_date, e.progress,
            -- Get the trials belonging to this experiment, along with additional "num_steps",
            -- "latest_validation_metrics", and "num_completed_checkpoints" columns.
-           (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
+           (SELECT coalesce(jsonb_agg(t ORDER BY end_time ASC), '[]'::jsonb)
             FROM (
                 SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
                        t.warm_start_checkpoint_id,
@@ -379,7 +379,7 @@ FROM (
             FROM (
                 SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
                        t.warm_start_checkpoint_id,
-                (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
+                (SELECT coalesce(jsonb_agg(s ORDER BY end_time ASC), '[]'::jsonb)
                  FROM (
                      SELECT s.end_time, s.id, s.state, s.trial_id, s.total_batches,
                      -- Drop batch_metrics field from metrics column because it
@@ -596,7 +596,7 @@ FROM (
             FROM (
                 SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
                        t.warm_start_checkpoint_id,
-                (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
+                (SELECT coalesce(jsonb_agg(s ORDER BY end_time ASC), '[]'::jsonb)
                  FROM (
                      SELECT s.end_time, s.id, s.state, s.trial_id,  s.total_batches,
                      (SELECT row_to_json(c)
