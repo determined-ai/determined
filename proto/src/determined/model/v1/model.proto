@@ -13,7 +13,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 message Model {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "name", "metadata", "creation_time", "last_updated_time" ]
+      required: [ "id", "name", "metadata", "creation_time", "last_updated_time", "numVersions", "username" ]
     }
   };
   // The name of the model.
@@ -28,6 +28,18 @@ message Model {
   google.protobuf.Timestamp creation_time = 4;
   // The time the model was last updated.
   google.protobuf.Timestamp last_updated_time = 5;
+  // The id of this model.
+  int32 id = 6;
+  // The number of versions associated with this model.
+  int32 numVersions = 7;
+  // Labels associated with this model.
+  repeated string labels = 8;
+  // README for model.
+  string readme = 9;
+  // User who created this model.
+  string username = 10;
+  // Whether this model is archived or not.
+  bool archived = 11;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
