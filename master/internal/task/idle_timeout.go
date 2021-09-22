@@ -69,7 +69,8 @@ func (p *IdleTimeoutWatcher) ReceiveMsg(ctx *actor.Context) error {
 		}
 
 		if p.UseRunnerState {
-			if lastActivity == nil || p.lastExplicitActivity.After(*lastActivity) {
+			if lastActivity == nil ||
+				p.lastExplicitActivity != nil && p.lastExplicitActivity.After(*lastActivity) {
 				lastActivity = p.lastExplicitActivity
 			}
 		}
