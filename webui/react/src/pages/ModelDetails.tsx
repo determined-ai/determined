@@ -1,9 +1,10 @@
-import { Button } from 'antd';
+import { EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { Button, Card, Input } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import InfoBox from 'components/InfoBox';
+import InfoBox, { InfoRow } from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -17,7 +18,6 @@ import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 
-import CollapsableCard from './ModelDetails/CollapsableCard';
 import ModelHeader from './ModelDetails/ModelHeader';
 
 interface Params {
@@ -28,6 +28,7 @@ const ModelDetails: React.FC = () => {
   const [ model, setModel ] = useState<ModelVersions>();
   const { modelId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
+  const [ editingMetadata, setEditingMetadata ] = useState(false);
 
   const id = parseInt(modelId);
 
@@ -75,11 +76,33 @@ const ModelDetails: React.FC = () => {
     return tableColumns;
   }, []);
 
-  const metadata = useMemo(() => {
+  const metadata: InfoRow[] = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {
       return ({ content: pair[1], label: pair[0] });
     });
   }, [ model?.model.metadata ]);
+
+  const editableMetadata: InfoRow[] = useMemo(() => {
+    const md = Object.entries(model?.model.metadata || { test: 'test' }).map((pair) => {
+      return ({
+        content: <Input defaultValue={pair[1]} placeholder="Enter metadata" />,
+        label: <Input defaultValue={pair[0]} placeholder="Enter metadata label" />,
+      });
+    });
+    md.push({
+      content: <Input placeholder="Enter metadata" />,
+      label: <Input placeholder="Enter metadata label" />,
+    });
+    return md;
+  }, [ model?.model.metadata ]);
+
+  const editMetadata = useCallback(() => {
+    setEditingMetadata(true);
+  }, []);
+
+  const saveMetadata = useCallback(() => {
+    setEditingMetadata(false);
+  }, []);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
@@ -95,7 +118,7 @@ const ModelDetails: React.FC = () => {
   return (
     <Page
       docTitle="Model Details"
-      headerComponent={<ModelHeader model={model.model} />}
+      headerComponent={<ModelHeader model={model.model} onAddMetadata={editMetadata} />}
       id="modelDetails">
       <div style={{
         display: 'flex',
@@ -128,11 +151,15 @@ const ModelDetails: React.FC = () => {
               showSorterTooltip={false}
             />
         }
-        {metadata.length > 0 &&
-        <CollapsableCard title={'Metadata'}>
-          <InfoBox rows={metadata} />
-          <Button type="link">add row</Button>
-        </CollapsableCard>
+        {metadata.length > 0 || editingMetadata &&
+              <Card
+                extra={editingMetadata ?
+                  <SaveOutlined onClick={saveMetadata} /> :
+                  <EditOutlined onClick={editMetadata} />}
+                title={'Metadata'}>
+                <InfoBox rows={editingMetadata ? editableMetadata : metadata} />
+                <Button type="link">add row</Button>
+              </Card>
         }
       </div>
     </Page>

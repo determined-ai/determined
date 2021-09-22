@@ -1,4 +1,4 @@
-import { CopyOutlined, EditOutlined } from '@ant-design/icons';
+import { CopyOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -31,6 +31,7 @@ const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
+  const [ addingMetadata, setAddingMetadata ] = useState(false);
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -76,6 +77,14 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   const metadata = Object.entries({}).map((pair) => {
     return ({ content: pair[1], label: pair[0] } as InfoRow);
   });
+
+  const editMetadata = useCallback(() => {
+    setAddingMetadata(true);
+  }, []);
+
+  const saveMetadata = useCallback(() => {
+    setAddingMetadata(false);
+  }, []);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
@@ -151,15 +160,21 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     <Page
       bodyNoPadding
       docTitle="Model Version Details"
-      headerComponent={<ModelVersionHeader modelVersion={modelVersion} />}
+      headerComponent={<ModelVersionHeader
+        modelVersion={modelVersion}
+        onAddMetadata={editMetadata} />}
       id="modelDetails">
       <Tabs
         defaultActiveKey="1"
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}>
         <TabPane key="1" tab="Overview">
           <div className={css.base}>
-            {metadata.length > 0 &&
-              <Card title={'Metadata'}>
+            {metadata.length > 0 || addingMetadata &&
+              <Card
+                extra={addingMetadata ?
+                  <SaveOutlined onClick={saveMetadata} /> :
+                  <EditOutlined onClick={editMetadata} />}
+                title={'Metadata'}>
                 <InfoBox rows={metadata} />
                 <Button type="link">add row</Button>
               </Card>

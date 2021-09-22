@@ -12,9 +12,10 @@ import { formatDatetime } from 'utils/date';
 
 interface Props {
   model: ModelItem;
+  onAddMetadata: () => void;
 }
 
-const ModelHeader: React.FC<Props> = ({ model }: Props) => {
+const ModelHeader: React.FC<Props> = ({ model, onAddMetadata }: Props) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content: formatDatetime(model.creationTime, 'MMM DD, YYYY', false),
@@ -66,13 +67,16 @@ const ModelHeader: React.FC<Props> = ({ model }: Props) => {
             <h1>{model.name}</h1>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <Dropdown overlay={<Menu />}>
-              <Button>
-              Open in <DownOutlined />
+            <Dropdown overlay={(
+              <Menu>
+                <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
+                <Menu.Item danger>Deregister Version</Menu.Item>
+              </Menu>
+            )}>
+              <Button type="text">
+                <Icon name="overflow-horizontal" size="tiny" />
               </Button>
             </Dropdown>
-            <Button>Download Model</Button>
-            <Button><Icon name="overflow-horizontal" size="tiny" /></Button>
           </div>
         </div>
         <InfoBox rows={infoRows} seperator={false} />

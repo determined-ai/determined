@@ -14,9 +14,11 @@ import css from './ModelVersionHeader.module.scss';
 
 interface Props {
   modelVersion: ModelVersion;
+  onAddMetadata: () => void;
 }
 
-const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
+const ModelVersionHeader: React.FC<Props> = ({ modelVersion, onAddMetadata }: Props) => {
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content: formatDatetime(modelVersion.creationTime, 'MMM DD, YYYY', false),
@@ -61,7 +63,7 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion }: Props) => {
             <Button>Download Model</Button>
             <Dropdown overlay={(
               <Menu>
-                <Menu.Item>Add Metadata</Menu.Item>
+                <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
                 <Menu.Item danger>Deregister Version</Menu.Item>
               </Menu>
             )}>
