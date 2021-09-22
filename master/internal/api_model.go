@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,6 +39,8 @@ func (a *apiServer) GetModels(
 		return nil, err
 	}
 
+	allowedUsers := strings.Join(req.users, ",")
+
 	a.filter(&resp.Models, func(i int) bool {
 		v := resp.Models[i]
 
@@ -45,7 +48,27 @@ func (a *apiServer) GetModels(
 			return false
 		}
 
-		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
+		if !strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description)) {
+			return false
+		}
+
+		if req.Archived != nil || strconv.FormatBool(req.Archived.Value) != v.Archived {
+			return false
+		}
+
+		if !strings.Contains(allowedUsers, v.Username) {
+			return false
+		}
+		modelLabels := strings.Join(v.Labels, ";")
+		if req.Labels != nil {
+			for _, label := range req.Labels {
+				if !strings.Contains(modelLabels, label) {
+					return false
+				}
+			}
+		}
+
+		return true
 	})
 
 	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)

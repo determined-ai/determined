@@ -12,6 +12,11 @@ type Model struct {
 	Metadata        JSONObj   `db:"metadata" json:"metadata"`
 	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
 	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
+	NumVersions     int       `db:"num_versions" json:"num_versions"`
+	Labels          []string  `db:"labels" json:"labels"`
+	ReadMe          string    `db:"readme" json:"readme"`
+	Username        string    `db:"username" json:"username"`
+	Archived        bool      `db:"archived" json:"archived"`
 }
 
 // ModelVersion represents a row from the `model_versions` table.

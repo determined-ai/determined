@@ -32,6 +32,8 @@ message GetModelsRequest {
     SORT_BY_CREATION_TIME = 4;
     // Returns models sorted by last updated time.
     SORT_BY_LAST_UPDATED_TIME = 5;
+    // Returns models sorted by number of version.
+    SORT_BY_NUM_VERSIONS = 6;
   }
 
   // Sort the models by the given field.
@@ -49,10 +51,24 @@ message GetModelsRequest {
   string name = 5;
   // Limit the models to those matching the description.
   string description = 6;
+
+  // Limit the models to those with the following labels.
+  repeated string labels = 7;
+
+  // Limit to unarchived models only.
+  google.protobuf.BoolValue archived = 8;
+
+  // Limit the models to those made by the following users.
+  repeated string users = 9;
 }
 
 // Response to GetModelsRequest.
 message GetModelsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "models", "pagination" ]
+    }
+  };
   // The list of returned models.
   repeated determined.model.v1.Model models = 1;
   // Pagination information of the full dataset.
