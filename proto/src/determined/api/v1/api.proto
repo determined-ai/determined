@@ -667,7 +667,7 @@ service Determined {
   // Get a list of jobs in queue.
   rpc GetJobs(GetJobsRequest) returns (GetJobsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/resource-pools/queue"
+      get: "/api/v1/resource-pools/queues"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
