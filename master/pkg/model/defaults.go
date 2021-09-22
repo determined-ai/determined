@@ -25,8 +25,8 @@ const (
 
 // Default task environment docker image names.
 const (
-	CPUImage = "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-7a48718"
-	GPUImage = "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-7a48718"
+	CPUImage = "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0ca3d22"
+	GPUImage = "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0ca3d22"
 )
 
 // DefaultResourcesConfig returns the default resources configuration.
