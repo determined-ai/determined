@@ -52,11 +52,14 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
   }, [ metadata, extraRows ]);
 
   const onValuesChange = useCallback((_changedValues, values: Record<string, string>[]) => {
-    updateMetadata(Object.fromEntries(Object.values(values).map(pair => {
-      if (pair.label === undefined) pair.label = '';
-      if (pair.value === undefined) pair.value = '';
+    const md = (Object.fromEntries(Object.values(values).map(pair => {
+      if (pair == null) return [ '', '' ];
+      if (pair.label == null) pair.label = '';
+      if (pair.value == null) pair.value = '';
       return [ pair.label, pair.value ];
     })));
+    delete md[''];
+    updateMetadata(md);
   }, [ updateMetadata ]);
 
   return (

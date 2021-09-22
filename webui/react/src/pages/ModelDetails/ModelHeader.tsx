@@ -11,11 +11,16 @@ import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/date';
 
 interface Props {
+  archived: boolean;
   model: ModelItem;
   onAddMetadata: () => void;
+  onDelete: () => void;
+  onSwitchArchive: () => void;
 }
 
-const ModelHeader: React.FC<Props> = ({ model, onAddMetadata }: Props) => {
+const ModelHeader: React.FC<Props> = (
+  { model, archived, onAddMetadata, onDelete, onSwitchArchive }: Props,
+) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content: formatDatetime(model.creationTime, 'MMM DD, YYYY', false),
@@ -70,7 +75,10 @@ const ModelHeader: React.FC<Props> = ({ model, onAddMetadata }: Props) => {
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item danger>Deregister Version</Menu.Item>
+                <Menu.Item onClick={onSwitchArchive}>
+                  {archived ? 'Unarchive' : 'Archive'}
+                </Menu.Item>
+                <Menu.Item danger onClick={onDelete}>Delete</Menu.Item>
               </Menu>
             )}>
               <Button type="text">

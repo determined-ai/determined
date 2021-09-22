@@ -92,6 +92,14 @@ const ModelDetails: React.FC = () => {
     // patchModel with editedMetadata
   }, []);
 
+  const switchArchive = useCallback(() => {
+    //check current archive status, switch it
+  }, []);
+
+  const deleteModel = useCallback(() => {
+    //delete model, take user to model registry page
+  }, []);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
   } else if (pageError) {
@@ -106,7 +114,12 @@ const ModelDetails: React.FC = () => {
   return (
     <Page
       docTitle="Model Details"
-      headerComponent={<ModelHeader model={model.model} onAddMetadata={editMetadata} />}
+      headerComponent={<ModelHeader
+        archived={false}
+        model={model.model}
+        onAddMetadata={editMetadata}
+        onDelete={deleteModel}
+        onSwitchArchive={switchArchive} />}
       id="modelDetails">
       <div style={{
         display: 'flex',
