@@ -142,6 +142,8 @@ type Event struct {
 	Seq         int       `json:"seq"`
 	Time        time.Time `json:"time"`
 	Description string    `json:"description"`
+	IsReady     bool      `json:"is_ready"`
+	State       string    `json:"state"`
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
