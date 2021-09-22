@@ -180,12 +180,12 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			})
 			if rc := a.req.LogBasedReady; rc != nil && !a.logBasedReadinessPassed {
 				if rc.Pattern.MatchString(msg.String()) {
+					a.logBasedReadinessPassed = true
 					ctx.Tell(a.req.StreamEvents.To, sproto.Event{
 						State:             a.state.String(),
 						IsReady:           a.logBasedReadinessPassed,
 						ServiceReadyEvent: &msg,
 					})
-					a.logBasedReadinessPassed = true
 				}
 			}
 		}
