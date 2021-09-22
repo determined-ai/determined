@@ -11769,7 +11769,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @throws {RequiredError}
          */
         determinedGetJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/queue/stats`;
+            const localVarPath = `/api/v1/resource-pools/queues/stats`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11809,7 +11809,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @throws {RequiredError}
          */
         determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/queue`;
+            const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11855,12 +11855,12 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         determinedUpdateJobQueue(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/resource-pools/queue`;
+            const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11937,7 +11937,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -11988,7 +11988,7 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12035,7 +12035,7 @@ export class JobsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Control the job queue.
+     * @summary Control the job queues.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
