@@ -72,6 +72,8 @@ const SignIn: React.FC = () => {
     storeDispatch,
   ]);
 
+  useEffect(() => storeDispatch({ type: StoreAction.HideUIChrome }), [ storeDispatch ]);
+
   // Stop the polling upon a dismount of this page.
   useEffect(() => {
     return () => canceler.abort();
