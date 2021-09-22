@@ -1,6 +1,8 @@
 name: detectron2_const_e2e_tests
 environment:
-    image: "katport/detectron2:cuda-10.1"
+    image: "katport/detectron2:e2e-cuda-10.1"
+    environment_variables:
+      - DETECTRON2_DATASETS=.
 hyperparameters:
   global_batch_size: 1
   model_yaml: mask_rcnn_R_50_FPN_noaug_1x.yaml
