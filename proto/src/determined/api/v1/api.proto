@@ -678,17 +678,17 @@ service Determined {
   rpc GetJobQueueStats(GetJobQueueStatsRequest)
       returns (GetJobQueueStatsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/resource-pools/queue/stats"
+      get: "/api/v1/resource-pools/queues/stats"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
     };
   }
 
-  // Control the job queue.
+  // Control the job queues.
   rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/resource-pools/queue"
+      patch: "/api/v1/resource-pools/queues"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"
