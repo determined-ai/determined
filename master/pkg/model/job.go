@@ -1,10 +1,17 @@
 package model
 
+import "github.com/google/uuid"
+
 // JobID is the unique ID of a job among all jobs.
 type JobID string
 
 // JobType is the type of a job.
 type JobType string
+
+// NewJobID returns a random, globally unique job ID.
+func NewJobID() JobID {
+	return JobID(uuid.New().String())
+}
 
 const (
 	// JobTypeNotebook is the "NOTEBOOK" job type for the enum public.job_type in Postgres.

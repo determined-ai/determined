@@ -1,7 +1,6 @@
 package model
 
 import (
-	"crypto/rand"
 	"fmt"
 	"strconv"
 	"time"
@@ -307,7 +306,7 @@ func NewExperiment(
 	}
 	return &Experiment{
 		State:                PausedState,
-		JobID:                experimentJobId(),
+		JobID:                NewJobID(),
 		Config:               config,
 		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
@@ -319,10 +318,6 @@ func NewExperiment(
 		GitCommitter:         gitCommitter,
 		GitCommitDate:        gitCommitDate,
 	}, nil
-}
-
-func experimentJobId() JobID {
-	return JobID(NewRequestID(rand.Reader).String())
 }
 
 // Transition changes the state of the experiment to the new state. If the state was not modified
