@@ -1,0 +1,25 @@
+:orphan:
+
+**Removed Features**
+
+-  **Breaking Change** Remove ``--auto-bind-mount`` support from ``det deploy local``. The new
+   ``--auto-work-dir`` feature should be a strictly better experience. Users who depended on the
+   ``shared_fs`` directory created by ``--auto-bind-mount`` can implement the same behavior by
+   calling ``det deploy local cluster_up`` with a ``--master-config-path`` pointing to a
+   ``master.yaml`` file containing the following text:
+
+   .. code:: yaml
+
+      task_container_defaults:
+        bind_mounts:
+          container_path: ./shared_fs
+          host_path: /path/to/your/HOME/dir
+
+**New Features**
+
+-  Add a new ``--auto-work-dir`` feature to ``det deploy local``. Setting ``--auto-work-dir
+   /some/path`` will have two effects: First, ``/some/path`` will be bind-mounted into the container
+   (still as ``/some/path``). Second, interactive jobs (Notebooks, Shells, and Commands) will run in
+   the provided working directory by default. Note that by default, containers run as root, so you
+   may want to configure your user with ``det user`` such that interactive jobs run as your real
+   user.

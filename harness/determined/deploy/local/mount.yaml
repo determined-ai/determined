@@ -1,6 +1,0 @@
-version: "3.7"
-
-services:
-  determined-master:
-    volumes:
-      -  ${DET_MASTER_CONFIG:-/usr/local/determined/etc/master.yaml}:/etc/determined/master.yaml

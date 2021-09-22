@@ -2,13 +2,16 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
+import appdirs
 import docker
 
 import determined
 import determined.deploy
+from determined.common import yaml
 from determined.deploy.errors import MasterTimeoutExpired
 from determined.deploy.healthcheck import wait_for_master
 
@@ -78,7 +81,6 @@ def docker_compose(
     # Start with the user's environment to ensure that Docker and Docker Compose work correctly.
     process_env = dict(os.environ)
     if env is not None:
-        # raise ValueError(str(env))
         process_env.update(env)
     process_env["INTEGRATIONS_PROXY_ADDR"] = get_proxy_addr()
     base_command = ["docker-compose", "-f", str(path), "-p", cluster_name]
@@ -109,12 +111,10 @@ def master_up(
     db_password: str,
     delete_db: bool,
     autorestart: bool,
-    auto_bind_mount: Optional[str],
-    no_auto_bind_mount: bool,
     cluster_name: str,
+    auto_work_dir: Optional[Path],
 ) -> None:
     command = ["up", "-d"]
-    extra_files = []
     if image_repo_prefix is None:
         image_repo_prefix = "determinedai"
     if version is None:
@@ -123,40 +123,71 @@ def master_up(
         restart_policy = "unless-stopped"
     else:
         restart_policy = "no"
-    if auto_bind_mount:
-        bind_mount = auto_bind_mount
-    else:
-        bind_mount = str(Path.home())
-    if no_auto_bind_mount:
-        bind_mount = ""
 
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
-        "DET_MASTER_CONFIG": str(master_config_path),
         "DET_DB_PASSWORD": db_password,
         "IMAGE_REPO_PREFIX": image_repo_prefix,
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
-        "DET_AUTO_BIND_MOUNT": bind_mount,
     }
 
-    # When master config yaml is provided, we don't provide our own storage path
-    # as we expect the yaml to specify checkpoint_storage.
-    if master_config_path is not None:
-        master_config_path = Path(master_config_path).resolve()
-        mount_yaml = Path(__file__).parent.joinpath("mount.yaml").resolve()
-        extra_files.append(str(mount_yaml))
-    else:
-        storage_yaml = Path(__file__).parent.joinpath("storage.yaml").resolve()
-        extra_files.append(str(storage_yaml))
+    # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
+    master_conf = {}
+    make_temp_conf = False
 
+    if master_config_path is not None:
+        with master_config_path.open() as f:
+            master_conf = yaml.safe_load(f)
+    else:
+        # These defaults come from master/packaging/master.yaml (except for host_path).
+        master_conf = {
+            "db": {
+                "user": "postgres",
+                "host": "determined-db",
+                "port": 5432,
+                "name": "determined",
+            },
+            "checkpoint_storage": {
+                "type": "shared_fs",
+                "host_path": str(Path(appdirs.user_data_dir("determined"))),
+                "save_experiment_best": 0,
+                "save_trial_best": 1,
+                "save_trial_latest": 1,
+            },
+        }
+        make_temp_conf = True
+
+    if storage_host_path is not None:
         if not storage_host_path.exists():
             storage_host_path.mkdir(parents=True)
+        master_conf["checkpoint_storage"] = {
+            "type": "shared_fs",
+            "host_path": str(storage_host_path.resolve()),
+        }
+        make_temp_conf = True
 
-        env["DET_CHECKPOINT_STORAGE_HOST_PATH"] = str(storage_host_path)
+    if auto_work_dir is not None:
+        work_dir = str(auto_work_dir.resolve())
+        master_conf.setdefault("task_container_defaults", {})["work_dir"] = work_dir
+        master_conf["task_container_defaults"].setdefault("bind_mounts", []).append(
+            {"host_path": work_dir, "container_path": work_dir}
+        )
+        make_temp_conf = True
+
+    if make_temp_conf:
+        fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")
+        with open(fd, "w") as f:
+            yaml.dump(master_conf, f)
+        master_config_path = Path(temp_path)
+
+    # This is always true by now, but mypy needs help.
+    assert master_config_path is not None
+
+    env["DET_MASTER_CONFIG"] = str(master_config_path.resolve())
 
     master_down(master_name, delete_db)
-    docker_compose(command, master_name, env, extra_files=extra_files)
+    docker_compose(command, master_name, env)
     _wait_for_master("localhost", port, cluster_name)
 
 
@@ -179,8 +210,7 @@ def cluster_up(
     delete_db: bool,
     gpu: bool,
     autorestart: bool,
-    auto_bind_mount: Optional[str],
-    no_auto_bind_mount: bool,
+    auto_work_dir: Optional[Path],
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
@@ -193,9 +223,8 @@ def cluster_up(
         db_password=db_password,
         delete_db=delete_db,
         autorestart=autorestart,
-        auto_bind_mount=auto_bind_mount,
-        no_auto_bind_mount=no_auto_bind_mount,
         cluster_name=cluster_name,
+        auto_work_dir=auto_work_dir,
     )
     for agent_number in range(num_agents):
         agent_name = cluster_name + f"-agent-{agent_number}"
