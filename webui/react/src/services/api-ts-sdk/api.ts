@@ -11844,17 +11844,12 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} resourcePools Filter the results based on a set of resource pools.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools: Array<string>, options: any = {}): FetchArgs {
-            // verify required parameter 'resourcePools' is not null or undefined
-            if (resourcePools === null || resourcePools === undefined) {
-                throw new RequiredError('resourcePools','Required parameter resourcePools was null or undefined when calling determinedGetJobQueueStats.');
-            }
-            const localVarPath = `/api/v1/jobs/stats/{resourcePools}`
-                .replace(`{${"resourcePools"}}`, encodeURIComponent(String(resourcePools)));
+        determinedGetJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/resource-pools/queues/stats`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11866,6 +11861,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (resourcePools) {
+                localVarQueryParameter['resourcePools'] = resourcePools;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -11890,7 +11889,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @throws {RequiredError}
          */
         determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/jobs`;
+            const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11936,14 +11935,14 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         determinedUpdateJobQueue(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/jobs/queue-ctl`;
+            const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -11977,11 +11976,11 @@ export const JobsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} resourcePools Filter the results based on a set of resource pools.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+        determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
             const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedGetJobQueueStats(resourcePools, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -12018,7 +12017,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12046,11 +12045,11 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
         /**
          * 
          * @summary Get job queue stats for a resource pool.
-         * @param {Array<string>} resourcePools Filter the results based on a set of resource pools.
+         * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools: Array<string>, options?: any) {
+        determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any) {
             return JobsApiFp(configuration).determinedGetJobQueueStats(resourcePools, options)(fetch, basePath);
         },
         /**
@@ -12069,7 +12068,7 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
         },
         /**
          * 
-         * @summary Control the job queue.
+         * @summary Control the job queues.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12089,12 +12088,12 @@ export class JobsApi extends BaseAPI {
     /**
      * 
      * @summary Get job queue stats for a resource pool.
-     * @param {Array<string>} resourcePools Filter the results based on a set of resource pools.
+     * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public determinedGetJobQueueStats(resourcePools: Array<string>, options?: any) {
+    public determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any) {
         return JobsApiFp(this.configuration).determinedGetJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
     }
 
@@ -12116,7 +12115,7 @@ export class JobsApi extends BaseAPI {
 
     /**
      * 
-     * @summary Control the job queue.
+     * @summary Control the job queues.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
