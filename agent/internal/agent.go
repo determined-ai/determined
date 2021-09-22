@@ -16,8 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
-
 	"github.com/docker/docker/api/types/container"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -107,7 +105,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		switch msg.Child {
 		case a.socket:
-			if err := a.attemptReconnect(ctx); err == nil {
+			if a.attemptReconnect(ctx) {
 				return nil
 			}
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")
@@ -330,8 +328,7 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agent) attemptReconnect(ctx *actor.Context) error {
-	var mErr *multierror.Error
+func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 	a.reconnecting = true
 	defer func() {
 		a.reconnecting = false
@@ -339,13 +336,12 @@ func (a *agent) attemptReconnect(ctx *actor.Context) error {
 	for i := 0; i < proto.AgentReconnectAttempts; i++ {
 		if err := a.connect(ctx); err != nil {
 			ctx.Log().WithError(err).Warnf("error to reconnecting to master")
-			mErr = multierror.Append(mErr, err)
 		} else {
-			return nil
+			return true
 		}
 		time.Sleep(proto.AgentReconnectBackoff)
 	}
-	return errors.Wrapf(mErr, "failed to reconnect to master")
+	return false
 }
 
 func (a *agent) connect(ctx *actor.Context) error {

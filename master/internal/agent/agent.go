@@ -98,6 +98,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 		if a.awaitingReconnect {
 			ctx.Log().Info("agent reconnected")
+			a.awaitingReconnect = false
+
 			// Re-propagate our old state back on successful recovery.
 			if a.enabled {
 				ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
@@ -106,7 +108,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			}
 			ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
 
-			a.awaitingReconnect = false
 			for msg := range a.reconnectBacklog {
 				if err := a.receive(ctx, msg); err != nil {
 					return errors.Wrapf(err, "replaying backlog")
@@ -172,6 +173,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
+		a.enabled = true
+		a.draining = false
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
 		ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
@@ -181,6 +184,9 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
+		// Update our state.
+		a.enabled = false
+		a.draining = msg.Drain
 		// Mark current agent as disabled with RP.
 		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: msg.Drain})
 		// Update individual slot state.
