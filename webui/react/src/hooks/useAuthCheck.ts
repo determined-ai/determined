@@ -23,10 +23,10 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
   }, []);
 
   const redirectToExternalSignin = useCallback(() => {
-    const redirect = encodeURIComponent(`${location.pathname}?${location.search}`);
+    const redirect = encodeURIComponent(window.location.href);
     const authUrl = `${info.externalAuthUri}?redirect=${redirect}`;
     routeAll(authUrl);
-  }, [ info.externalAuthUri, location ]);
+  }, [ info.externalAuthUri ]);
 
   const checkAuth = useCallback(async (): Promise<void> => {
     const { jwt } = queryString.parse(location.search);
