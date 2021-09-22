@@ -1,10 +1,10 @@
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Card, Input } from 'antd';
+import { Card } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import InfoBox, { InfoRow } from 'components/InfoBox';
+import EditableMetadata from 'components/EditableMetadata';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -29,6 +29,7 @@ const ModelDetails: React.FC = () => {
   const { modelId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ editingMetadata, setEditingMetadata ] = useState(false);
+  const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
 
   const id = parseInt(modelId);
 
@@ -76,24 +77,10 @@ const ModelDetails: React.FC = () => {
     return tableColumns;
   }, []);
 
-  const metadata: InfoRow[] = useMemo(() => {
+  const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {
       return ({ content: pair[1], label: pair[0] });
     });
-  }, [ model?.model.metadata ]);
-
-  const editableMetadata: InfoRow[] = useMemo(() => {
-    const md = Object.entries(model?.model.metadata || { test: 'test' }).map((pair) => {
-      return ({
-        content: <Input defaultValue={pair[1]} placeholder="Enter metadata" />,
-        label: <Input defaultValue={pair[0]} placeholder="Enter metadata label" />,
-      });
-    });
-    md.push({
-      content: <Input placeholder="Enter metadata" />,
-      label: <Input placeholder="Enter metadata label" />,
-    });
-    return md;
   }, [ model?.model.metadata ]);
 
   const editMetadata = useCallback(() => {
@@ -102,6 +89,7 @@ const ModelDetails: React.FC = () => {
 
   const saveMetadata = useCallback(() => {
     setEditingMetadata(false);
+    // patchModel with editedMetadata
   }, []);
 
   if (isNaN(id)) {
@@ -152,14 +140,16 @@ const ModelDetails: React.FC = () => {
             />
         }
         {metadata.length > 0 || editingMetadata &&
-              <Card
-                extra={editingMetadata ?
-                  <SaveOutlined onClick={saveMetadata} /> :
-                  <EditOutlined onClick={editMetadata} />}
-                title={'Metadata'}>
-                <InfoBox rows={editingMetadata ? editableMetadata : metadata} />
-                <Button type="link">add row</Button>
-              </Card>
+          <Card
+            extra={editingMetadata ?
+              <SaveOutlined onClick={saveMetadata} /> :
+              <EditOutlined onClick={editMetadata} />}
+            title={'Metadata'}>
+            <EditableMetadata
+              editing={editingMetadata}
+              metadata={model?.model.metadata}
+              updateMetadata={setEditedMetadata} />
+          </Card>
         }
       </div>
     </Page>
