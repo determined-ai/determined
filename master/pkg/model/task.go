@@ -20,8 +20,8 @@ func NewJobID() JobID {
 type JobType string
 
 const (
-	// JobTypeTrial is the "TRIAL" job type for the enum public.job_type in Postgres.
-	JobTypeTrial = "EXPERIMENT"
+	// JobTypeExperiment is the "EXPERIMENT" job type for the enum public.job_type in Postgres.
+	JobTypeExperiment = "EXPERIMENT"
 	// JobTypeNotebook is the "NOTEBOOK" job type for the enum public.job_type in Postgres.
 	JobTypeNotebook = "NOTEBOOK"
 	// JobTypeShell is the "SHELL" job type for the enum public.job_type in Postgres.
