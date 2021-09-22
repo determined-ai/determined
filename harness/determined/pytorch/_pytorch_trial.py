@@ -355,7 +355,7 @@ class PyTorchTrialController(det.TrialController):
         for batch_idx in range(start, end):
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
-            with self.prof.record_timing("dataloader_next"):
+            with self.prof.record_timing("dataloader_next", requires_sync=False):
                 batch = next(self.training_iterator)
             batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
@@ -373,7 +373,7 @@ class PyTorchTrialController(det.TrialController):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
 
-            with self.prof.record_timing("train_batch"):
+            with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:
                     with self.context.profiler as torch_profiler:
                         tr_metrics = self.trial.train_batch(
