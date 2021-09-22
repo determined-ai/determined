@@ -1,8 +1,9 @@
 import { CopyOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Card, Tabs, Tooltip } from 'antd';
+import { Breadcrumb, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
+import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Message, { MessageType } from 'components/Message';
@@ -31,7 +32,8 @@ const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
-  const [ addingMetadata, setAddingMetadata ] = useState(false);
+  const [ editingMetadata, setEditingMetadata ] = useState(false);
+  const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -79,11 +81,11 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   });
 
   const editMetadata = useCallback(() => {
-    setAddingMetadata(true);
+    setEditingMetadata(true);
   }, []);
 
   const saveMetadata = useCallback(() => {
-    setAddingMetadata(false);
+    setEditingMetadata(false);
   }, []);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
@@ -169,14 +171,16 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}>
         <TabPane key="1" tab="Overview">
           <div className={css.base}>
-            {metadata.length > 0 || addingMetadata &&
+            {metadata.length > 0 || editingMetadata &&
               <Card
-                extra={addingMetadata ?
+                extra={editingMetadata ?
                   <SaveOutlined onClick={saveMetadata} /> :
                   <EditOutlined onClick={editMetadata} />}
                 title={'Metadata'}>
-                <InfoBox rows={metadata} />
-                <Button type="link">add row</Button>
+                <EditableMetadata
+                  editing={editingMetadata}
+                  metadata={{}}
+                  updateMetadata={setEditedMetadata} />
               </Card>
             }
             <Card
