@@ -477,14 +477,16 @@ args_description = Cmd(
                 Arg(
                     "--efs-id",
                     type=str,
-                    help="preexisting EFS that will be mounted into the task containers; "
+                    help="preexisting EFS that will be mounted into the task containers when "
+                    "using EFS deployment type; "
                     "if not provided, a new EFS instance will be created.  Note that you need"
                     "to ensure that the agents can connect to the EFS instance.",
                 ),
                 Arg(
                     "--fsx-id",
                     type=str,
-                    help="preexisting FSx that will be mounted into the task containers; "
+                    help="preexisting FSx that will be mounted into the task containers when "
+                    "using FSx deployment type; "
                     "if not provided, a new FSx instance will be created.  Note that you need"
                     "to ensure that the agents can connect to the FSx instance.",
                 ),

@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  AWS installation: change the default deployment type of ``det deploy aws`` to EFS.

@@ -9,7 +9,7 @@ class deployment_types:
 
 
 class defaults:
-    DEPLOYMENT_TYPE = deployment_types.SIMPLE
+    DEPLOYMENT_TYPE = deployment_types.EFS
     DB_PASSWORD = "postgres"
     REGION = "us-west-2"
     STACK_TAG_KEY = "managed-by"
