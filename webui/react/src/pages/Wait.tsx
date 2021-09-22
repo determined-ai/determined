@@ -57,9 +57,9 @@ const Wait: React.FC = () => {
     client.onmessage = (messageEvent) => {
       if (typeof messageEvent.data !== 'string') return;
       const msg = JSON.parse(messageEvent.data);
-      if (msg.snapshot) {
-        const state = msg.snapshot.state;
-        if (state === 'RUNNING' && msg.snapshot.is_ready) {
+      if (msg.state) {
+        const state = msg.state;
+        if (state === 'RUNNING' && msg.is_ready) {
           setWaitStatus({ isReady: true, state: CommandState.Running });
           client.close();
           window.location.assign(serverAddress(serviceAddr));
