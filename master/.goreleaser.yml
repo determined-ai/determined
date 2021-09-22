@@ -9,6 +9,8 @@ snapshot:
 
 builds:
   - main: ./cmd/determined-master
+    id: determined-ee-master
+    binary: determined-ee-master
     ldflags:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
       - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
@@ -164,7 +166,7 @@ dockers:
       - "build"
       - "static"
     ids:
-      - determined-master
+      - determined-ee-master
       - determined-gotmpl
   # arm64
   - goos: linux
