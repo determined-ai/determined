@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -51,6 +53,8 @@ type agent struct {
 
 	masterProto  string
 	masterClient *http.Client
+
+	reconnecting bool
 }
 
 func newAgent(version string, options Options) *agent {
@@ -68,8 +72,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		switch {
 		case msg.MasterSetAgentOptions != nil:
 			if a.MasterSetAgentOptions != nil {
-				return fmt.Errorf("received MasterStepAgentOptions more than once: %v",
+				ctx.Log().Debugf("received MasterStepAgentOptions more than once: %v",
 					*msg.MasterSetAgentOptions)
+				return nil
 			}
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
 			return a.setup(ctx)
@@ -102,6 +107,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		switch msg.Child {
 		case a.socket:
+			if err := a.attemptReconnect(ctx); err == nil {
+				return nil
+			}
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")
 		case a.cm:
 			ctx.Log().Warn("container manager failed, shutting down agent...")
@@ -309,8 +317,8 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool)
+	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s&reconnect=%t",
+		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool, a.reconnecting)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
 	if err != nil {
@@ -320,6 +328,24 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 	}
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 	return nil
+}
+
+func (a *agent) attemptReconnect(ctx *actor.Context) error {
+	var mErr *multierror.Error
+	a.reconnecting = true
+	defer func() {
+		a.reconnecting = false
+	}()
+	for i := 0; i < proto.AgentReconnectAttempts; i++ {
+		if err := a.connect(ctx); err != nil {
+			ctx.Log().WithError(err).Warnf("error to reconnecting to master")
+			mErr = multierror.Append(mErr, err)
+		} else {
+			return nil
+		}
+		time.Sleep(proto.AgentReconnectBackoff)
+	}
+	return errors.Wrapf(mErr, "failed to reconnect to master")
 }
 
 func (a *agent) connect(ctx *actor.Context) error {

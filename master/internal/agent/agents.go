@@ -2,6 +2,7 @@ package agent
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 
@@ -34,7 +35,35 @@ type agents struct {
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case api.WebSocketConnected:
-		id, resourcePool := msg.Ctx.QueryParam("id"), msg.Ctx.QueryParam("resource_pool")
+		id := msg.Ctx.QueryParam("id")
+		resourcePool := msg.Ctx.QueryParam("resource_pool")
+		reconnect, err := strconv.ParseBool(msg.Ctx.QueryParam("reconnect"))
+		if err != nil {
+			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
+			return nil
+		}
+
+		if reconnect {
+			if ctx.Child(id) != nil {
+				// If the agent actor is still alive on our side when an
+				// agent tries to reconnect, accept it.
+				ctx.Respond(ctx.Ask(ctx.Child(id), msg).Get())
+			} else {
+				// In the event it has closed and the agent is trying to reconnect,
+				// continue to deny it. This case is nearly impossible (master waits
+				// longer than agent tries, to avoid it).
+				ctx.Respond(errors.New("agent is past reconnect period, it must restart"))
+			}
+			return nil
+		}
+		// There is a case not explicitly handled: !reconnect && ctx.Child(id) != nil.
+		// If the agent is unable to reconnect then crashes and _is_ able to reconnect,
+		// this may fail once with "actor already connected" while we wait to decide it
+		// is dead. We could also kill it and recreate it in this case, but then we also
+		// need to make sure it is not just a new agent using the same ID by checking our
+		// state to make sure we are disconnected. But this is a lot for an edge case that
+		// is very unlikely.
+
 		if ref, err := a.createAgentActor(ctx, id, resourcePool, a.opts); err != nil {
 			ctx.Respond(err)
 		} else {
