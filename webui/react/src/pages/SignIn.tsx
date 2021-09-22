@@ -38,9 +38,10 @@ const SignIn: React.FC = () => {
    * Check every so often to see if the user is authenticated.
    * For example, the user can authenticate in a different session,info
    * and this will pick up that auth and automatically redirect them into
-   * their previous app.
+   * their previous app. We don't run immediately because the router also
+   * performs an auth check there as well upon the first page load.
    */
-  usePolling(useAuthCheck(canceler), { interval: 1000 });
+  usePolling(useAuthCheck(canceler), { interval: 1000, runImmediately: false });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
