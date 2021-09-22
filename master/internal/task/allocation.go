@@ -173,11 +173,19 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:
 		if a.req.StreamEvents != nil {
-			ctx.Tell(a.req.StreamEvents.To, sproto.Event{LogEvent: ptrs.StringPtr(msg.String())})
+			ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+				State:    a.state.String(),
+				IsReady:  a.logBasedReadinessPassed,
+				LogEvent: ptrs.StringPtr(msg.String()),
+			})
 			if rc := a.req.LogBasedReady; rc != nil && !a.logBasedReadinessPassed {
 				if rc.Pattern.MatchString(msg.String()) {
-					ctx.Tell(a.req.StreamEvents.To, sproto.Event{ServiceReadyEvent: &msg})
 					a.logBasedReadinessPassed = true
+					ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+						State:             a.state.String(),
+						IsReady:           a.logBasedReadinessPassed,
+						ServiceReadyEvent: &msg,
+					})
 				}
 			}
 		}
@@ -240,8 +248,11 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 		return errors.Wrap(err, "failed to request allocation")
 	}
 	if a.req.StreamEvents != nil {
-		event := sproto.Event{ScheduledEvent: &a.model.AllocationID}
-		ctx.Tell(a.req.StreamEvents.To, event)
+		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+			State:          a.state.String(),
+			IsReady:        a.logBasedReadinessPassed,
+			ScheduledEvent: &a.model.AllocationID,
+		})
 	}
 	return nil
 }
@@ -256,7 +267,11 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 		if a.exitReason != nil {
 			exitReason = a.exitReason.Error()
 		}
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{ExitedEvent: &exitReason})
+		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+			State:       a.state.String(),
+			IsReady:     a.logBasedReadinessPassed,
+			ExitedEvent: &exitReason,
+		})
 	}
 	// Just in-case code.
 	if !a.exited {
@@ -320,7 +335,11 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		})
 	}
 	if a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{AssignedEvent: &msg})
+		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+			State:         a.state.String(),
+			IsReady:       a.logBasedReadinessPassed,
+			AssignedEvent: &msg,
+		})
 	}
 	return nil
 }
@@ -384,7 +403,11 @@ func (a *Allocation) TaskContainerStateChanged(
 			a.registerProxies(ctx, msg)
 		}
 		if a.req.StreamEvents != nil {
-			ctx.Tell(a.req.StreamEvents.To, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
+			ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+				State:                 a.state.String(),
+				IsReady:               a.logBasedReadinessPassed,
+				ContainerStartedEvent: msg.ContainerStarted,
+			})
 		}
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
@@ -418,7 +441,11 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
 	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok && a.req.StreamEvents != nil {
-		ctx.Tell(a.req.StreamEvents.To, sproto.Event{TerminateRequestEvent: &msg})
+		ctx.Tell(a.req.StreamEvents.To, sproto.Event{
+			State:                 a.state.String(),
+			IsReady:               a.logBasedReadinessPassed,
+			TerminateRequestEvent: &msg,
+		})
 	}
 
 	if exited := a.Exit(ctx); exited {
