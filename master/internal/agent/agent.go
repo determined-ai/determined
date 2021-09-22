@@ -98,6 +98,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 		if a.awaitingReconnect {
 			ctx.Log().Info("agent reconnected")
+			// Re-propagate our old state back on successful recovery.
+			if a.enabled {
+				ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
+			} else {
+				ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: a.draining})
+			}
+			ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
+
 			a.awaitingReconnect = false
 			for msg := range a.reconnectBacklog {
 				if err := a.receive(ctx, msg); err != nil {
@@ -192,6 +200,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		a.socket = nil
 		a.awaitingReconnect = true
 		actors.NotifyAfter(ctx, aproto.AgentReconnectWait, reconnectTimeout{})
+		// Mark ourselves as draining to avoid action on ourselves while we recover. While the
+		// system is technically correct without this, it's better because we avoid any waste
+		// effort scheduling things only to have them suffer AgentErrors later.
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: true})
+		ctx.Tell(a.slots, patchSlot{Enabled: false, Drain: true})
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
