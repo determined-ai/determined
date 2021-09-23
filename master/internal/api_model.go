@@ -35,13 +35,13 @@ func contains(subset []string, set []string) bool {
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
 	m := &modelv1.Model{}
-	switch err := a.m.db.QueryProto("get_model", m, req.ModelID); err {
+	switch err := a.m.db.QueryProto("get_model", m, req.ModelId); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %d not found", req.ModelID)
+			codes.NotFound, "model %d not found", req.ModelId)
 	default:
 		return &apiv1.GetModelResponse{Model: m},
-			errors.Wrapf(err, "error fetching model %d from database", req.ModelID)
+			errors.Wrapf(err, "error fetching model %d from database", req.ModelId)
 	}
 }
 
