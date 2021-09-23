@@ -111,7 +111,7 @@ const (
 const (
 	killCooldown       = 30 * time.Second
 	okExitMessage      = "command exited successfully"
-	missingExitMessage = "command exit reason missing"
+	missingExitMessage = ""
 )
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
@@ -386,8 +386,9 @@ func (a *Allocation) TaskContainerStateChanged(
 	}
 
 	a.reservations[msg.Container.ID].container = &msg.Container
-	ctx.Log().Infof("container %s (rank %d) is %s",
-		msg.Container.ID, a.reservations[msg.Container.ID].rank, msg.Container.State)
+	ctx.Log().Debugf("container %s (rank %d) is %s",
+		msg.Container.ID, a.reservations[msg.Container.ID].rank, msg.Container.State,
+	)
 	switch msg.Container.State {
 	case cproto.Pulling:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStatePulling)
@@ -590,12 +591,13 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		ctx.Log().Info("allocation successfully killed")
 		return
 	case a.req.Preemptible && a.preemption.Acknowledged():
-		ctx.Log().Info("allocated successfully preempted")
+		ctx.Log().Info("allocation successfully stopped")
 		return
 	case len(a.reservations.exited()) > 0:
 		if a.exitReason == nil {
 			// This is true because searcher and preemption exits both ack preemption.
 			exit.UserRequestedStop = true
+			ctx.Log().Info("allocation successfully stopped early")
 			return
 		}
 
