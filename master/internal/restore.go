@@ -200,7 +200,7 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	2: shimExperimentSnapshotV2,
 }
 
-// shimExperimentSnapshot shims a trial snapshot to the version required by the master,
+// shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
 func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
