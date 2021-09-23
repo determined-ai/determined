@@ -591,13 +591,13 @@ func (a *Allocation) terminated(ctx *actor.Context) {
 		ctx.Log().Info("allocation successfully killed")
 		return
 	case a.req.Preemptible && a.preemption.Acknowledged():
-		ctx.Log().Info("allocated successfully stopped")
+		ctx.Log().Info("allocation successfully stopped")
 		return
 	case len(a.reservations.exited()) > 0:
 		if a.exitReason == nil {
 			// This is true because searcher and preemption exits both ack preemption.
 			exit.UserRequestedStop = true
-			ctx.Log().Info("allocated successfully stopped early")
+			ctx.Log().Info("allocation successfully stopped early")
 			return
 		}
 
