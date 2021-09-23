@@ -56,7 +56,7 @@ type (
 		reconnectBacklog  []interface{}
 		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
 		// pop back to our previous state.
-		preDisconnectEnabled bool
+		preDisconnectEnabled  bool
 		preDisconnectDraining bool
 
 		// uuid is an anonymous ID that is used when reporting telemetry

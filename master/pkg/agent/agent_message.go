@@ -1,9 +1,10 @@
 package agent
 
 import (
-	"github.com/pkg/errors"
 	"syscall"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -49,5 +50,5 @@ const (
 	AgentReconnectWait = AgentReconnectAttempts * AgentReconnectBackoff
 )
 
-// AgentMustReconnect is the error returned by the master when the agent must exit and reconnect.
-var AgentMustReconnect = errors.New("agent is past reconnect period, it must restart")
+// ErrAgentMustReconnect is the error returned by the master when the agent must exit and reconnect.
+var ErrAgentMustReconnect = errors.New("agent is past reconnect period, it must restart")

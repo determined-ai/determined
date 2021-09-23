@@ -325,8 +325,8 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		}
 
 		b, rErr := ioutil.ReadAll(resp.Body)
-		if rErr == nil && strings.Contains(string(b), proto.AgentMustReconnect.Error()) {
-			return proto.AgentMustReconnect
+		if rErr == nil && strings.Contains(string(b), proto.ErrAgentMustReconnect.Error()) {
+			return proto.ErrAgentMustReconnect
 		}
 
 		return errors.Wrapf(err, "error dialing master: %s", b)
@@ -348,7 +348,7 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 		switch err := a.connect(ctx); {
 		case err == nil:
 			return true
-		case errors.Is(err, proto.AgentMustReconnect):
+		case errors.Is(err, proto.ErrAgentMustReconnect):
 			return false
 		default:
 			ctx.Log().WithError(err).Error("error to reconnecting to master")
