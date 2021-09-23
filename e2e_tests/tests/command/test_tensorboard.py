@@ -80,6 +80,7 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
 
 @pytest.mark.slow  # type: ignore
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
     """
     Start a random experiment configured with the s3 backend, start a
