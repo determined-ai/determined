@@ -492,7 +492,8 @@ class ProfilerAgent:
             not self.is_enabled
             or not self.timings_is_enabled
             or not self.is_active
-            or (requires_sync != self.sync_timings)
+            # Skip recording if this metric requires a sync to be valid and sync is disabled.
+            or (not self.sync_timings and requires_sync)
         ):
             yield
             return
