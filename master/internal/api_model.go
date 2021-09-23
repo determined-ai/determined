@@ -21,10 +21,10 @@ import (
 
 func contains(subset []string, set []string) bool {
 	setMap := make(map[string]bool)
-	for _, i in range set {
+	for _, i := range set {
 		setMap[i] = true
 	}
-	for _, i in range subset {
+	for _, i := range subset {
 		if !setMap[i] {
 			return false
 		}
@@ -73,7 +73,7 @@ func (a *apiServer) GetModels(
 			return false
 		}
 
-		return req.Labels == nil || contains(req.Labels, v.Labels)	
+		return req.Labels == nil || contains(req.Labels, v.Labels)
 	})
 
 	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)
