@@ -111,7 +111,7 @@ const (
 const (
 	killCooldown       = 30 * time.Second
 	okExitMessage      = "command exited successfully"
-	missingExitMessage = "command exit reason missing"
+	missingExitMessage = ""
 )
 
 // NewAllocation returns a new allocation, which tracks allocation state in a fairly generic way.
