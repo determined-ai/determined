@@ -319,6 +319,13 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool, a.reconnecting)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
+	if resp != nil {
+		defer func() {
+			if err = resp.Body.Close(); err != nil {
+				ctx.Log().WithError(err).Error("failed to read master response on connection")
+			}
+		}()
+	}
 	if err != nil {
 		if resp == nil {
 			return errors.Wrap(err, "error dialing master")
@@ -332,9 +339,6 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		return errors.Wrapf(err, "error dialing master: %s", b)
 	}
 
-	if err = resp.Body.Close(); err != nil {
-		return errors.Wrap(err, "failed to read master response on connection")
-	}
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 	return nil
 }
