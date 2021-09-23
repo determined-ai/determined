@@ -107,20 +107,19 @@ const AppView: React.FC = () => {
 
   return (
     <div className={css.base}>
-      {isAlive ?
+      {!isAlive ? UnreachableServerMessage : (
         <Navigation>
           <main>
             <Router routes={appRoutes} />
           </main>
         </Navigation>
-        : UnreachableServerMessage }
+      )}
       {ui.omnibar.isShowing && <Omnibar />}
     </div>
   );
 };
 
 const App: React.FC = () => {
-
   return (
     <HelmetProvider>
       <StoreProvider>

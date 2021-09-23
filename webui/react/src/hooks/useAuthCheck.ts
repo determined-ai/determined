@@ -1,11 +1,11 @@
 import queryString from 'query-string';
 import { useCallback, useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router';
+import { useLocation } from 'react-router';
 
 import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { globalStorage } from 'globalStorage';
-import { paths, routeAll } from 'routes/utils';
+import { routeAll } from 'routes/utils';
 import { getCurrentUser, isAuthFailure } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { isAborted } from 'services/utils';
@@ -13,7 +13,6 @@ import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
   const { info } = useStore();
-  const history = useHistory();
   const location = useLocation();
   const storeDispatch = useStoreDispatch();
 
@@ -75,16 +74,12 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
 
           if (info.externalLoginUri) redirectToExternalSignin();
         }
-
-        // Handle JWT failures with missing `externalLoginUri`.
-        if (jwt) history.replace(paths.clusterNotAvailable());
       } finally {
         storeDispatch({ type: StoreAction.SetAuthCheck });
       }
     }
   }, [
     canceler,
-    history,
     info.externalLoginUri,
     location.search,
     redirectToExternalSignin,

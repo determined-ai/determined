@@ -96,12 +96,6 @@ const routes: RouteConfig[] = [
     path: '/reload',
     title: 'Reload',
   },
-  {
-    id: 'clusterNotAvailable',
-    needAuth: false,
-    path: '/cluster-not-available',
-    title: 'Cluster Not Available',
-  },
 ];
 
 export default routes;

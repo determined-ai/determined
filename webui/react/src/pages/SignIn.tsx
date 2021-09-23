@@ -1,12 +1,13 @@
 import { Button, notification } from 'antd';
 import queryString from 'query-string';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
+import PageMessage from 'components/PageMessage';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -33,6 +34,10 @@ const SignIn: React.FC = () => {
   const ssoQueries = handleRelayState(queries) as Record<string, boolean | string | undefined>;
   const ssoQueryString = queryString.stringify(ssoQueries);
   const samlSso = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
+
+  const externalAuthError = useMemo(() => {
+    return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
+  }, [ auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt ]);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -85,17 +90,24 @@ const SignIn: React.FC = () => {
 
   /*
    * Don't render sign in page if...
-   * 1. jwt query param detected
-   * 2. cluster has `externalLoginUri` defined
-   * 3. authentication hasn't occurred yet
+   *   1. jwt query param detected
+   *   2. cluster has `externalLoginUri` defined
+   *   3. authentication hasn't occurred yet
+   * This will prevent the form from showing for a split second when
+   * accessing a page from the browser when the user is already verified.
    */
   if (queries.jwt || info.externalLoginUri || !auth.checked) return null;
 
   /*
-   * Before showing the sign in form, make sure one auth check is done.
-   * This will prevent the form from showing for a split second when
-   * accessing a page from the browser when the user is already verified.
+   * An external auth error occurs when there are external auth urls,
+   * auth fails with a jwt.
    */
+  if (externalAuthError) return (
+    <PageMessage title="Cluster Not Available">
+      <p>Cluster is not ready. Please try again later.</p>
+    </PageMessage>
+  );
+
   return (
     <Page docTitle="Sign In">
       <div className={css.base}>

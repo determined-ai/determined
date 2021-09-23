@@ -181,9 +181,6 @@ export const paths = {
   cluster: (): string => {
     return '/cluster';
   },
-  clusterNotAvailable: (): string => {
-    return '/cluster-not-available';
-  },
   dashboard: (): string => {
     return '/dashboard';
   },
