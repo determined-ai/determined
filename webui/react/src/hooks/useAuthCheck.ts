@@ -29,48 +29,58 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
   }, [ info.externalLoginUri ]);
 
   const checkAuth = useCallback(async (): Promise<void> => {
-    const { jwt } = queryString.parse(location.search);
     /*
-     * Check for an auth token in the cookie from SSO and
-     * update the storage token and the api to use the cookie token.
-     * If auth token is not found, look for `jwt` query param instead.
+     * Check for the auth token from the following sources:
+     *   1 - query param jwt from external authentication.
+     *   2 - server cookie
+     *   3 - local storage
      */
+    const { jwt } = queryString.parse(location.search);
     const jwtToken = jwt && !Array.isArray(jwt) ? jwt : null;
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
-    updateBearerToken(authToken);
 
-    try {
-      const user = await getCurrentUser({ signal: canceler.signal });
-      storeDispatch({
-        type: StoreAction.SetAuth,
-        value: { isAuthenticated: true, token: authToken, user },
-      });
-    } catch (e) {
-      if (isAborted(e)) return;
-
-      const isAuthError = isAuthFailure(e, !!info.externalLoginUri);
-      handleError({
-        error: e,
-        isUserTriggered: false,
-        message: e.message,
-        publicMessage: 'Unable to verify current user.',
-        publicSubject: 'GET user failed',
-        silent: true,
-        type: isAuthError ? ErrorType.Auth : ErrorType.Server,
-      });
-
-      if (isAuthError) {
-        updateDetApi({ apiKey: undefined });
-        storeDispatch({ type: StoreAction.ResetAuth });
-
-        if (info.externalLoginUri) redirectToExternalSignin();
-      }
-
-      // Handle JWT failures with missing `externalLoginUri`.
-      if (jwt) history.replace(paths.clusterNotAvailable());
-    } finally {
+    /*
+     * If auth token found, update the API bearer token and validate it with the current user API,
+     * otherwise mark that we checked the auth and skip auth token validation.
+     */
+    if (!authToken) {
       storeDispatch({ type: StoreAction.SetAuthCheck });
+    } else {
+      updateBearerToken(authToken);
+
+      try {
+        const user = await getCurrentUser({ signal: canceler.signal });
+        storeDispatch({
+          type: StoreAction.SetAuth,
+          value: { isAuthenticated: true, token: authToken, user },
+        });
+      } catch (e) {
+        if (isAborted(e)) return;
+
+        const isAuthError = isAuthFailure(e, !!info.externalLoginUri);
+        handleError({
+          error: e,
+          isUserTriggered: false,
+          message: e.message,
+          publicMessage: 'Unable to verify current user.',
+          publicSubject: 'GET user failed',
+          silent: true,
+          type: isAuthError ? ErrorType.Auth : ErrorType.Server,
+        });
+
+        if (isAuthError) {
+          updateDetApi({ apiKey: undefined });
+          storeDispatch({ type: StoreAction.ResetAuth });
+
+          if (info.externalLoginUri) redirectToExternalSignin();
+        }
+
+        // Handle JWT failures with missing `externalLoginUri`.
+        if (jwt) history.replace(paths.clusterNotAvailable());
+      } finally {
+        storeDispatch({ type: StoreAction.SetAuthCheck });
+      }
     }
   }, [
     canceler,
