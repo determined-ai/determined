@@ -1,6 +1,6 @@
 import { CopyOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Breadcrumb, Card, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Breadcrumb, Card, Input, Tabs, Tooltip } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import EditableMetadata from 'components/EditableMetadata';
@@ -34,6 +34,8 @@ const ModelVersionDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ editingMetadata, setEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
+  const [ editingNotes, setEditingNotes ] = useState(false);
+  const [ editedNotes, setEditedNotes ] = useState<string>('');
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -47,6 +49,10 @@ const ModelVersionDetails: React.FC = () => {
   }, [ modelVersion, pageError ]);
 
   usePolling(fetchModelVersion);
+
+  useEffect(() => {
+    //setEditedNotes to value from db
+  }, []);
 
   const referenceText = useMemo(() => {
     return (
@@ -86,6 +92,16 @@ model.load_state_dict(ckpt['models_state_dict'][0])
 
   const saveMetadata = useCallback(() => {
     setEditingMetadata(false);
+    //save metadata to db
+  }, []);
+
+  const editNotes = useCallback(() => {
+    setEditingNotes(true);
+  }, []);
+
+  const saveNotes = useCallback(() => {
+    setEditingNotes(false);
+    //save notes to db
   }, []);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
@@ -186,13 +202,16 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             <Card
               extra={(
                 <Tooltip title="Edit">
-                  <EditOutlined onClick={() => { null ; }} />
+                  {editingNotes ?
+                    <SaveOutlined onClick={saveNotes} /> :
+                    <EditOutlined onClick={editNotes} />}
                 </Tooltip>
               )}
               title="Notes">
               {
                 null ?
-                  null :
+                  <Input.TextArea
+                    placeholder ="Add detailed description of this model..." /> :
                   <p className={css.placeholder}>Add detailed description of this model...</p>
               }
             </Card>
