@@ -19,9 +19,26 @@ CREATE TABLE public.jobs (
 );
 
 
--- TODO existing experiments? in memory we set the jobid to experiment id?
+BEGIN; -- FIXME costly? migrations cover this case.
+
+-- FIXME or we limit these to non-terminal experiments only?
+INSERT INTO jobs (
+    SELECT id as job_id, 'EXPERIMENT' as job_type FROM experiments
+);
+
+/* SET CONSTRAINTS ALL DEFERRED; */
+
 ALTER TABLE public.experiments
-    ADD COLUMN job_id text NOT NULL REFERENCES public.jobs(job_id);
+    ADD COLUMN job_id text REFERENCES public.jobs(job_id);
+
+UPDATE experiments
+SET job_id = id
+WHERE job_id IS NULL;
+
+ALTER TABLE public.experiments
+    ALTER COLUMN job_id SET NOT NULL;
+
+COMMIT;
 
 -- TODO do we need to persist task association?
 /* ALTER TABLE public.tasks */
