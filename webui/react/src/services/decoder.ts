@@ -23,7 +23,8 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
   return {
     clusterId: data.clusterId,
     clusterName: data.clusterName,
-    externalAuthUri: undefined, // TODO: set it to `data.externalAuthUri` once protobuf supports it
+    externalLoginUri: undefined, // TODO: set it to `data.externalLoginUri` once supported
+    externalLogoutUri: undefined, // TODO: set it to `data.externalLogoutUri` once supported
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     ssoProviders: data.ssoProviders,

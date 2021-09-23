@@ -24,9 +24,9 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
 
   const redirectToExternalSignin = useCallback(() => {
     const redirect = encodeURIComponent(window.location.href);
-    const authUrl = `${info.externalAuthUri}?redirect=${redirect}`;
+    const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
-  }, [ info.externalAuthUri ]);
+  }, [ info.externalLoginUri ]);
 
   const checkAuth = useCallback(async (): Promise<void> => {
     const { jwt } = queryString.parse(location.search);
@@ -49,7 +49,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     } catch (e) {
       if (isAborted(e)) return;
 
-      const isAuthError = isAuthFailure(e, !!info.externalAuthUri);
+      const isAuthError = isAuthFailure(e, !!info.externalLoginUri);
       handleError({
         error: e,
         isUserTriggered: false,
@@ -64,10 +64,10 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
         updateDetApi({ apiKey: undefined });
         storeDispatch({ type: StoreAction.ResetAuth });
 
-        if (info.externalAuthUri) redirectToExternalSignin();
+        if (info.externalLoginUri) redirectToExternalSignin();
       }
 
-      // Handle JWT failures with missing `externalAuthUri`.
+      // Handle JWT failures with missing `externalLoginUri`.
       if (jwt) history.replace(paths.clusterNotAvailable());
     } finally {
       storeDispatch({ type: StoreAction.SetAuthCheck });
@@ -75,7 +75,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
   }, [
     canceler,
     history,
-    info.externalAuthUri,
+    info.externalLoginUri,
     location.search,
     redirectToExternalSignin,
     storeDispatch,

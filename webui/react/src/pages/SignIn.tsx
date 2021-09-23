@@ -86,10 +86,10 @@ const SignIn: React.FC = () => {
   /*
    * Don't render sign in page if...
    * 1. jwt query param detected
-   * 2. cluster has `externalAuthUri` defined
+   * 2. cluster has `externalLoginUri` defined
    * 3. authentication hasn't occurred yet
    */
-  if (queries.jwt || info.externalAuthUri || !auth.checked) return null;
+  if (queries.jwt || info.externalLoginUri || !auth.checked) return null;
 
   /*
    * Before showing the sign in form, make sure one auth check is done.

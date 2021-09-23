@@ -20,10 +20,10 @@ const getResponseStatus = (e: any): number | undefined => {
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any, hasExternalAuthUri = false): boolean => {
+export const isAuthFailure = (e: any, supportExternalAuth = false): boolean => {
   const status = getResponseStatus(e) ?? 0;
   const authFailureStatuses = [ 401 ];
-  if (hasExternalAuthUri) authFailureStatuses.push(500);
+  if (supportExternalAuth) authFailureStatuses.push(500);
   return authFailureStatuses.includes(status);
 };
 
