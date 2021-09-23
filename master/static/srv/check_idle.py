@@ -3,6 +3,7 @@ import json
 import os
 from time import sleep
 from determined.common import api
+from determined.common.api import certs
 
 ACTIVE = False
 IDLE = True
@@ -32,14 +33,18 @@ def main():
         port = str(os.environ["NOTEBOOK_PORT"])
         notebook_id = str(os.environ["DET_TASK_ID"])
         notebook_server = f"http://127.0.0.1:{port}/proxy/{notebook_id}"
+        master_url = str(os.environ["DET_MASTER"])
+        cert = certs.default_load(master_url)
+
         try:
             api.put(
-                str(os.environ["DET_MASTER_HOST"]),
+                master_url,
                 f"/api/v1/notebooks/{notebook_id}/report_idle",
                 {
                     "notebook_id": notebook_id,
                     "idle": get_execution_state(notebook_server),
                 },
+                cert=cert,
             )
         except Exception as e:
             print(e)
