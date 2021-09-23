@@ -563,7 +563,7 @@ const ExperimentList: React.FC = () => {
           { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
           { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
         ]}
-        selectedRowCount={(settings.row || []).length}
+        selectedRowCount={(settings.row ?? []).length}
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
@@ -580,7 +580,7 @@ const ExperimentList: React.FC = () => {
         rowSelection={{
           onChange: handleTableRowSelect,
           preserveSelectedRowKeys: true,
-          selectedRowKeys: settings.row,
+          selectedRowKeys: settings.row ?? [],
         }}
         showSorterTooltip={false}
         size="small"

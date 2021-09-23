@@ -283,7 +283,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
             { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
             { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
-          selectedRowCount={(settings.row || []).length}
+          selectedRowCount={(settings.row ?? []).length}
           onAction={action => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
@@ -300,7 +300,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row,
+            selectedRowKeys: settings.row ?? [],
           }}
           showSorterTooltip={false}
           size="small"
