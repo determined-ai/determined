@@ -6,7 +6,10 @@ import { StoreAction, useStoreDispatch } from 'contexts/Store';
 const ClusterNotAvailable: React.FC = () => {
   const storeDispatch = useStoreDispatch();
 
-  useEffect(() => storeDispatch({ type: StoreAction.HideUIChrome }), [ storeDispatch ]);
+  useEffect(() => {
+    storeDispatch({ type: StoreAction.HideUIChrome });
+    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+  }, [ storeDispatch ]);
 
   return (
     <PageMessage title="Cluster Not Available">
