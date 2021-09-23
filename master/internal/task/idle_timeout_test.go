@@ -46,8 +46,9 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 	mActor, created := system.ActorOf(actor.Addr("MockIdleTimeoutWatchee"), &m)
 	assert.Assert(t, created)
 
+	system.Ask(mActor, actor.Ping{}).Get()
 	assert.Equal(t, actionDone, false)
-	time.Sleep(tickInterval)
+	time.Sleep(2 * tickInterval)
 	system.Ask(mActor, actor.Ping{}).Get()
 	assert.Equal(t, actionDone, true)
 }
