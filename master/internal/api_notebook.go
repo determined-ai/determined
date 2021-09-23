@@ -39,7 +39,7 @@ const (
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookDefaultPage = "/run/determined/workdir/readme.ipynb"
+	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
 var notebooksAddr = actor.Addr("notebooks")
