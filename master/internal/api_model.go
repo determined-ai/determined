@@ -19,6 +19,19 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
+func Contains([]string subset, []string set) bool {
+	setMap := make(map[string]bool)
+	for _, i in range set {
+		setMap[i] = true
+	}
+	for _, i in range subset {
+		if !setMap[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
 	m := &modelv1.Model{}
@@ -56,19 +69,11 @@ func (a *apiServer) GetModels(
 			return false
 		}
 
-		if !strings.Contains(allowedUsers, v.Username) {
+		if !Contains([]string{v.Username}, req.users) {
 			return false
 		}
-		modelLabels := strings.Join(v.Labels, ";")
-		if req.Labels != nil {
-			for _, label := range req.Labels {
-				if !strings.Contains(modelLabels, label) {
-					return false
-				}
-			}
-		}
 
-		return true
+		return req.Labels == nil || Contains(req.Labels, v.Labels)	
 	})
 
 	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)
