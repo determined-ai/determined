@@ -338,7 +338,7 @@ func (t *trial) patchState(ctx *actor.Context, state model.State) error {
 		ctx.Log().Infof("ignoring patch to less severe stopping state (%s)", state)
 		return nil
 	default:
-		ctx.Log().Infof("patching state after request (%s)", state)
+		ctx.Log().Debugf("patching state after request (%s)", state)
 		return t.transition(ctx, state)
 	}
 }
