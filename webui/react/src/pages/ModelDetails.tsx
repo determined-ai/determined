@@ -18,6 +18,7 @@ import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
 import { isEqual } from 'utils/data';
 
+import css from './ModelDetails.module.scss';
 import ModelHeader from './ModelDetails/ModelHeader';
 
 interface Params {
@@ -121,38 +122,22 @@ const ModelDetails: React.FC = () => {
         onDelete={deleteModel}
         onSwitchArchive={switchArchive} />}
       id="modelDetails">
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        marginLeft: 20,
-        marginRight: 20,
-      }}>{
-          model.modelVersions.length === 0 ?
-            <div style={{
-              alignItems: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              margin: 'var(--theme-sizes-layout-huge)',
-            }}>
-              <p>No Model Versions</p>
-              <p style={{
-                color: 'var(--theme-colors-monochrome-9)',
-                fontSize: 'var(--theme-sizes-font-medium',
-                maxWidth: '370px',
-                textAlign: 'center',
-              }}>
+      <div className={css.base}>{
+        model.modelVersions.length === 0 ?
+          <div className={css.noVersions}>
+            <p>No Model Versions</p>
+            <p className={css.subtext}>
                 Register a checkpoint from an experiment to add it to this model
-              </p>
-            </div> :
-            <ResponsiveTable
-              columns={columns}
-              dataSource={model.modelVersions}
-              pagination={{ hideOnSinglePage: true }}
-              showSorterTooltip={false}
-            />
-        }
-        {metadata.length > 0 || editingMetadata &&
+            </p>
+          </div> :
+          <ResponsiveTable
+            columns={columns}
+            dataSource={model.modelVersions}
+            pagination={{ hideOnSinglePage: true }}
+            showSorterTooltip={false}
+          />
+      }
+      {metadata.length > 0 || editingMetadata &&
           <Card
             extra={editingMetadata ?
               <SaveOutlined onClick={saveMetadata} /> :
@@ -163,7 +148,7 @@ const ModelDetails: React.FC = () => {
               metadata={model?.model.metadata}
               updateMetadata={setEditedMetadata} />
           </Card>
-        }
+      }
       </div>
     </Page>
   );
