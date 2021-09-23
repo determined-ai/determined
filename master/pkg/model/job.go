@@ -1,9 +1,17 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 // JobID is the unique ID of a job among all jobs.
 type JobID string
+
+func (id JobID) String() string {
+	return fmt.Sprint(id)
+}
 
 // JobType is the type of a job.
 type JobType string
