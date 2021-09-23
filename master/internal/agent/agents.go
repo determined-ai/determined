@@ -52,7 +52,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 				// In the event it has closed and the agent is trying to reconnect,
 				// continue to deny it. This case is nearly impossible (master waits
 				// longer than agent tries, to avoid it).
-				ctx.Respond(errors.New("agent is past reconnect period, it must restart"))
+				ctx.Respond(aproto.AgentMustReconnect)
 			}
 			return nil
 		}

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/pkg/errors"
 	"syscall"
 	"time"
 
@@ -47,3 +48,6 @@ const (
 	// attempts and AgentReconnectWait before crashing.
 	AgentReconnectWait = AgentReconnectAttempts * AgentReconnectBackoff
 )
+
+// AgentMustReconnect is the error returned by the master when the agent must exit and reconnect.
+var AgentMustReconnect = errors.New("agent is past reconnect period, it must restart")

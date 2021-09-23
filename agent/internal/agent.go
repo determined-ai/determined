@@ -320,8 +320,19 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
 	if err != nil {
-		return errors.Wrap(err, "error connecting to master")
-	} else if err = resp.Body.Close(); err != nil {
+		if resp == nil {
+			return errors.Wrap(err, "error dialing master")
+		}
+
+		b, rErr := ioutil.ReadAll(resp.Body)
+		if rErr == nil && strings.Contains(string(b), proto.AgentMustReconnect.Error()) {
+			return proto.AgentMustReconnect
+		}
+
+		return errors.Wrapf(err, "error dialing master: %s", b)
+	}
+
+	if err = resp.Body.Close(); err != nil {
 		return errors.Wrap(err, "failed to read master response on connection")
 	}
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
@@ -334,10 +345,13 @@ func (a *agent) attemptReconnect(ctx *actor.Context) bool {
 		a.reconnecting = false
 	}()
 	for i := 0; i < proto.AgentReconnectAttempts; i++ {
-		if err := a.connect(ctx); err != nil {
-			ctx.Log().WithError(err).Warnf("error to reconnecting to master")
-		} else {
+		switch err := a.connect(ctx); {
+		case err == nil:
 			return true
+		case errors.Is(err, proto.AgentMustReconnect):
+			return false
+		default:
+			ctx.Log().WithError(err).Error("error to reconnecting to master")
 		}
 		time.Sleep(proto.AgentReconnectBackoff)
 	}
