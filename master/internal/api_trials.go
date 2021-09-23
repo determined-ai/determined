@@ -305,7 +305,7 @@ func (a *apiServer) KillTrial(
 		return nil, status.Errorf(codes.NotFound, "trial %d not found", req.Id)
 	}
 
-	if err = a.ask(actor.Addr("trials", req.Id), model.StoppingCanceledState, nil); err != nil {
+	if err = a.ask(actor.Addr("trials", req.Id), model.StoppingKilledState, nil); err != nil {
 		return nil, err
 	}
 	return &apiv1.KillTrialResponse{}, nil
