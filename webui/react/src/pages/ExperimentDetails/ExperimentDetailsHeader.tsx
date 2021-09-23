@@ -219,7 +219,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 allowNewline
                 isOnDark
                 maxLength={500}
-                placeholder="experiment description"
+                placeholder="enter description"
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate} />
             </div>
