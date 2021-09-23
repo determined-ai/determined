@@ -920,7 +920,7 @@ service Determined {
   // Get the requested model.
   rpc GetModel(GetModelRequest) returns (GetModelResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}"
+      get: "/api/v1/models/{model_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
