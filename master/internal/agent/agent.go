@@ -54,6 +54,10 @@ type (
 		// get buffered while down.
 		awaitingReconnect bool
 		reconnectBacklog  []interface{}
+		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
+		// pop back to our previous state.
+		preDisconnectEnabled bool
+		preDisconnectDraining bool
 
 		// uuid is an anonymous ID that is used when reporting telemetry
 		// information to allow agent connection and disconnection events
@@ -101,6 +105,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.awaitingReconnect = false
 
 			// Re-propagate our old state back on successful recovery.
+			a.enabled = a.preDisconnectEnabled
+			a.draining = a.preDisconnectDraining
 			if a.enabled {
 				ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 			} else {
@@ -206,11 +212,15 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		a.socket = nil
 		a.awaitingReconnect = true
 		actors.NotifyAfter(ctx, aproto.AgentReconnectWait, reconnectTimeout{})
+		a.preDisconnectEnabled = a.enabled
+		a.preDisconnectDraining = a.draining
 		// Mark ourselves as draining to avoid action on ourselves while we recover. While the
 		// system is technically correct without this, it's better because we avoid any waste
 		// effort scheduling things only to have them suffer AgentErrors later.
-		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: true})
-		ctx.Tell(a.slots, patchSlot{Enabled: false, Drain: true})
+		a.enabled = false
+		a.draining = true
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: a.draining})
+		ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
