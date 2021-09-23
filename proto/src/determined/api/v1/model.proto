@@ -9,7 +9,7 @@ import "determined/model/v1/model.proto";
 // Get the requested model.
 message GetModelRequest {
   // The name of the template.
-  string model_name = 1;
+  int32 model_id = 1;
 }
 
 // Response to GetModelRequest.
