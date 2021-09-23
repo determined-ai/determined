@@ -49,3 +49,9 @@ INSERT INTO public.model_versionsv2 SELECT * FROM id_name_map;
 DROP TABLE public.models;
 
 DROP TABLE public.model_versions;
+
+ALTER TABLE public.modelsv2
+RENAME TO public.models;
+
+ALTER TABLE public.model_versionsv2
+RENAME TO public.model_versions;
