@@ -171,8 +171,7 @@ func (s *websocketActor) processWriteMessage(
 }
 
 func isClosingError(err error) bool {
-	return err == websocket.ErrCloseSent ||
-		websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
+	return err == websocket.ErrCloseSent || websocket.IsCloseError(err, websocket.CloseNormalClosure)
 }
 
 func (s *websocketActor) setupPingLoop(ctx *actor.Context) {
