@@ -4,6 +4,7 @@ import os
 from time import sleep
 from determined.common import api
 from determined.common.api import certs
+import logging
 
 ACTIVE = False
 IDLE = True
@@ -47,7 +48,7 @@ def main():
                 cert=cert,
             )
         except Exception as e:
-            print(e)
+            logging.warning("ignoring error communicating with master", exc_info=True)
 
 
 if __name__ == "__main__":
