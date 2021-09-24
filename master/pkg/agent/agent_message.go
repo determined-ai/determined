@@ -2,6 +2,9 @@ package agent
 
 import (
 	"syscall"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -35,3 +38,17 @@ type SignalContainer struct {
 	ContainerID container.ID
 	Signal      syscall.Signal
 }
+
+const (
+	// AgentReconnectAttempts is the max attempts an agent has to reconnect.
+	AgentReconnectAttempts = 5
+	// AgentReconnectBackoff is the time between attempts, with the exception of the first.
+	AgentReconnectBackoff = 5 * time.Second
+	// AgentReconnectWait is the max time the master should wait for an agent before considering
+	// it dead. The agent waits (AgentReconnectWait - AgentReconnectBackoff) before stopping
+	// attempts and AgentReconnectWait before crashing.
+	AgentReconnectWait = AgentReconnectAttempts * AgentReconnectBackoff
+)
+
+// ErrAgentMustReconnect is the error returned by the master when the agent must exit and reconnect.
+var ErrAgentMustReconnect = errors.New("agent is past reconnect period, it must restart")
