@@ -9,6 +9,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_mnist_estimator_load() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
     config = conf.set_tf1_image(config)
@@ -22,6 +23,7 @@ def test_mnist_estimator_load() -> None:
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
 def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single-multi-slot.yaml"))
@@ -36,6 +38,7 @@ def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     exp.assert_performed_initial_validation(exp_id)
 
 
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [
@@ -73,6 +76,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [
@@ -85,6 +89,7 @@ def test_mnist_estimator_data_layer_lfs(tf2: bool) -> None:
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("estimator_dataset/distributed.yaml"))
@@ -106,6 +111,7 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
 def test_mnist_estimator_data_layer_s3(
@@ -129,6 +135,7 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
@@ -146,6 +153,7 @@ def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[st
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_mnist_estimator_adaptive_with_data_layer() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/adaptive.yaml"))
     config = conf.set_tf2_image(config)
@@ -157,6 +165,7 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_on_trial_close_callback() -> None:
     config = conf.load_config(conf.fixtures_path("estimator_no_op/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
