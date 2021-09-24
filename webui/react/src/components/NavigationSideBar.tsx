@@ -184,7 +184,7 @@ const NavigationSideBar: React.FC = () => {
         <footer>
           <Dropdown
             content={<Menu>
-              <Menu.Item>
+              <Menu.Item key="sign-out">
                 <Link path={paths.logout()}>Sign Out</Link>
               </Menu.Item>
             </Menu>}
