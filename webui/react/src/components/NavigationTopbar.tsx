@@ -24,7 +24,7 @@ const NavigationTopbar: React.FC = () => {
       <div className={css.user}>
         <Dropdown
           content={<Menu>
-            <Menu.Item>
+            <Menu.Item key="sign-out">
               <Link path={paths.logout()}>Sign Out</Link>
             </Menu.Item>
           </Menu>}
