@@ -90,6 +90,9 @@ func (e ExperimentConfig) AsLegacy() LegacyConfig {
 		envvars: schemas.Copy(
 			e.Environment().EnvironmentVariables(),
 		).(EnvironmentVariablesMap),
+		podSpec: schemas.Copy(
+			e.Environment().PodSpec(),
+		).(*PodSpec),
 	}
 }
 

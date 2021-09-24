@@ -21,6 +21,7 @@ type LegacyConfig struct {
 	checkpointStorage CheckpointStorageConfig
 	bindMounts        BindMountsConfig
 	envvars           EnvironmentVariablesMap
+	podSpec           *PodSpec
 }
 
 // CheckpointStorage returns a current CheckpointStorage from a LegacyConfig.
@@ -36,6 +37,10 @@ func (h LegacyConfig) BindMounts() BindMountsConfig {
 // EnvironmentVariables returns a current EnvironmentVariables from a LegacyConfig.
 func (h LegacyConfig) EnvironmentVariables() EnvironmentVariablesMap {
 	return h.envvars
+}
+
+func (h LegacyConfig) PodSpec() *PodSpec {
+	return h.podSpec
 }
 
 func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, error) {
