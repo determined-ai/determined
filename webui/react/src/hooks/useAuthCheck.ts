@@ -40,12 +40,11 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
 
     /*
-     * If auth token found, update the API bearer token and validate it with the current user API,
-     * otherwise mark that we checked the auth and skip auth token validation.
+     * If auth token found, update the API bearer token and validate it with the current user API.
+     * If an external login URL is provided, redirect there.
+     * Otherwise mark that we checked the auth and skip auth token validation.
      */
-    if (!authToken) {
-      storeDispatch({ type: StoreAction.SetAuthCheck });
-    } else {
+    if (authToken) {
       updateBearerToken(authToken);
 
       try {
@@ -77,6 +76,10 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
       } finally {
         storeDispatch({ type: StoreAction.SetAuthCheck });
       }
+    } else if (info.externalLoginUri) {
+      redirectToExternalSignin();
+    } else {
+      storeDispatch({ type: StoreAction.SetAuthCheck });
     }
   }, [
     canceler,
