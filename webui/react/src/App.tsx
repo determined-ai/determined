@@ -7,6 +7,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import Spinner from 'components/Spinner';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { useFetchInfo } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
@@ -23,9 +24,9 @@ import { checkServerAlive, paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const [ isAlive, setIsAlive ] = useState<boolean>(true);
-  const [ canceler ] = useState(new AbortController());
   const { info, ui } = useStore();
+  const [ canceler ] = useState(new AbortController());
+  const [ isAlive, setIsAlive ] = useState<boolean>();
   const storeDispatch = useStoreDispatch();
 
   const fetchInfo = useFetchInfo(canceler);
@@ -88,34 +89,34 @@ const AppView: React.FC = () => {
     };
   }, [ ui.omnibar.isShowing, storeDispatch ]);
 
+  // Quick one time check to see if the server is reachable.
   useEffect(() => {
-    checkServerAlive().then(serverIsAlive => {
-      if (!serverIsAlive) setIsAlive(false);
-    });
+    checkServerAlive().then(alive => setIsAlive(alive));
   }, []);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
-  const UnreachableServerMessage = (
-    <PageMessage title="Server Unreachable">
-      <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
-      Please check the firewall and cluster settings.</p>
-      <Button onClick={refreshPage}>Try Again</Button>
-    </PageMessage>
-  );
-
   return (
-    <div className={css.base}>
-      {!isAlive ? UnreachableServerMessage : (
-        <Navigation>
-          <main>
-            <Router routes={appRoutes} />
-          </main>
-        </Navigation>
-      )}
-      {ui.omnibar.isShowing && <Omnibar />}
-    </div>
+    <Spinner spinning={isAlive === undefined}>
+      <div className={css.base}>
+        {isAlive === true && (
+          <Navigation>
+            <main>
+              <Router routes={appRoutes} />
+            </main>
+          </Navigation>
+        )}
+        {isAlive === false && (
+          <PageMessage title="Server is Unreachable">
+            <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
+              Please check the firewall and cluster settings.</p>
+            <Button onClick={refreshPage}>Try Again</Button>
+          </PageMessage>
+        )}
+        {ui.omnibar.isShowing && <Omnibar />}
+      </div>
+    </Spinner>
   );
 };
 
