@@ -21,6 +21,7 @@ type GCCkptSpec struct {
 	Base TaskSpec
 
 	ExperimentID       int
+	Environment        expconf.EnvironmentConfig
 	LegacyConfig       expconf.LegacyConfig
 	ToDelete           json.RawMessage
 	DeleteTensorboards bool
@@ -45,6 +46,16 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+
+	if g.Environment.RawPodSpec != nil {
+		resSpec := res.Environment.PodSpec()
+		if resSpec == nil {
+			res.Environment.RawPodSpec = g.Environment.PodSpec()
+		} else {
+			newSpec := resSpec.Merge(g.Environment.PodSpec()).(*expconf.PodSpec)
+			res.Environment.RawPodSpec = newSpec
+		}
+	}
 
 	res.WorkDir = DefaultWorkDir
 

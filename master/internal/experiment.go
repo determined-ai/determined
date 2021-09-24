@@ -288,11 +288,14 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
+		env := schemas.Copy(e.Config).(expconf.ExperimentConfig).Environment()
+
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			taskID: model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
 			GCCkptSpec: tasks.GCCkptSpec{
 				Base:         taskSpec,
 				ExperimentID: e.Experiment.ID,
+				Environment:  env,
 				LegacyConfig: e.Config.AsLegacy(),
 				ToDelete:     checkpoints,
 			},
