@@ -47,8 +47,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
 
 	resSpec := res.Environment.PodSpec()
-	newSpec := resSpec.Merge(g.LegacyConfig.PodSpec()).(*expconf.PodSpec)
-	res.Environment.RawPodSpec = newSpec
+	res.Environment.SetPodSpec(resSpec.Merge(g.LegacyConfig.PodSpec()).(*expconf.PodSpec))
 
 	res.WorkDir = DefaultWorkDir
 
