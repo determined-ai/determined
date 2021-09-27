@@ -4,13 +4,6 @@ import EditableMetadata from './EditableMetadata';
 
 export default {
   component: EditableMetadata,
-  decorators: [
-    (Story: React.FC): React.ReactNode => (
-      <div style={{ border: '1px solid black', padding: '20px' }}>
-        <Story />
-      </div>
-    ),
-  ],
   parameters: { layout: 'centered' },
   title: 'EditableMetadata',
 };

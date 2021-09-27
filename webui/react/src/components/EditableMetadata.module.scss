@@ -7,11 +7,14 @@
 
   .overflow {
     border: 1px solid var(--theme-colors-monochrome-12);
-    flex-basis: 3%;
+    padding: var(--theme-sizes-layout-small);
   }
-  & > * {
-    flex-basis: 50%;
+  & input {
+    flex-basis: 45%;
     padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
+  }
+  & input:last-of-type {
+    flex-grow: 1;
   }
 }
 .titleRow {
@@ -21,11 +24,11 @@
   & > * {
     border: 1px solid var(--theme-colors-monochrome-12);
     border-bottom: 0;
-    flex-basis: 50%;
+    flex-basis: 45%;
     padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small);
   }
   & *:last-child {
     border-left: 0;
-    flex-basis: 53%;
+    flex-grow: 1;
   }
 }
