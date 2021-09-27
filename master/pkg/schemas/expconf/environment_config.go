@@ -25,13 +25,14 @@ func (p PodSpec) Copy() interface{} {
 func (p PodSpec) Merge(other interface{}) interface{} {
 	out := k8sV1.Pod{}
 	k8sP := k8sV1.Pod(p)
-	k8sOther := k8sV1.Pod(other.(PodSpec))
+	k8sOther := k8sV1.Pod(*other.(*PodSpec))
 	// Copy the low-priority values first.
 	k8sOther.DeepCopyInto(&out)
 	// Overwrite the object with high-priority values.
 	// DeepCopyInto will only copy non-nil values, so this will effectively merge the objects.
 	k8sP.DeepCopyInto(&out)
-	return PodSpec(out)
+	output := PodSpec(out)
+	return &output
 }
 
 // WithDefaults implements the schemas.Defaultable interface.
