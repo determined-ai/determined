@@ -1,7 +1,8 @@
-import { Button, Form, Input } from 'antd';
+import { Button, Dropdown, Form, Input, Menu } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import css from './EditableMetadata.module.scss';
+import Icon from './Icon';
 import InfoBox, { InfoRow } from './InfoBox';
 
 interface Props {
@@ -21,15 +22,20 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
   const editableMetadata = useMemo(() => {
     const md = Object.entries(metadata || { }).map((pair, idx) => {
       return (
-        <EditableRow initialKey={pair[0]} initialValue={pair[1]} key={idx} name={idx} />
+        <EditableRow
+          initialKey={pair[0]}
+          initialValue={pair[1]}
+          key={idx}
+          name={idx}
+          onDelete={() => { null ; }} />
       );
     });
     for (let i = 0; i < extraRows; i++) {
-      md.push(<EditableRow key={md.length} name={md.length} />);
+      md.push(<EditableRow key={md.length} name={md.length} onDelete={() => { null ; }} />);
     }
     return (
       <>
-        <div className={css.row}><span>Key</span><span>Value</span></div>
+        <div className={css.titleRow}><span>Key</span><span>Value</span></div>
         {md}
       </>
     );
@@ -63,10 +69,11 @@ interface EditableRowProps {
   initialKey?: string;
   initialValue?: string;
   name: string | number;
+  onDelete?: () => void;
 }
 
 const EditableRow: React.FC<EditableRowProps> = (
-  { initialKey, initialValue, name }: EditableRowProps,
+  { initialKey, initialValue, name, onDelete }: EditableRowProps,
 ) => {
   return <Form.Item
     name={name}
@@ -78,7 +85,19 @@ const EditableRow: React.FC<EditableRowProps> = (
       <Form.Item initialValue={initialValue} name={[ name, 'value' ]} noStyle>
         <Input placeholder="Enter metadata" />
       </Form.Item>
+      {onDelete && <Dropdown
+        className={css.overflow}
+        overlay={(
+          <Menu>
+            <Menu.Item danger onClick={onDelete}>Delete Row</Menu.Item>
+          </Menu>
+        )}>
+        <Button type="text">
+          <Icon name="overflow-vertical" size="tiny" />
+        </Button>
+      </Dropdown>}
     </Input.Group>
+
   </Form.Item>;
 };
 
