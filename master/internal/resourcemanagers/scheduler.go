@@ -9,7 +9,22 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
+
+type SchedulingState uint8
+
+const (
+	SchedulingStateQueued              SchedulingState = 0
+	SchedulingStateScheduledBackfilled SchedulingState = 1
+	SchedulingStateScheduled           SchedulingState = 2
+)
+
+type QueueThing struct { // TODO rename me
+	AReq  *sproto.AllocateRequest
+	State SchedulingState
+}
+type SchedulerQueue = []QueueThing
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
 // to determine which pending requests can be fulfilled and which scheduled tasks
@@ -20,6 +35,7 @@ import (
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
 	OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
+	// Queue(rp *ResourcePool) SchedulerQueue
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
@@ -61,6 +77,23 @@ func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) (summaries []*sprot
 		summaries = append(summaries, job)
 	}
 	return summaries
+}
+
+// WIP
+func allocReqsToJobSummariesV2(queue SchedulerQueue) (jobs []*jobv1.Job) {
+	isAdded := make(map[model.JobID]SchedulingState)
+	for _, qt := range queue {
+		job := qt.AReq.Job
+		if job == nil {
+			continue
+		} else if _, ok := isAdded[job.JobID]; ok {
+			// TODO need to merge the scheduler states
+			continue
+		}
+		isAdded[job.JobID] = qt.State
+		// jobs = append(jobs, job)
+	}
+	return jobs
 }
 
 func logAllocRequests(reqs []*sproto.AllocateRequest) {

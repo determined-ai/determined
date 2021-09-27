@@ -23,15 +23,15 @@ func NewJobID() JobID {
 
 const (
 	// JobTypeNotebook is the "NOTEBOOK" job type for the enum public.job_type in Postgres.
-	JobTypeNotebook = "NOTEBOOK"
+	JobTypeNotebook JobType = "NOTEBOOK"
 	// JobTypeShell is the "SHELL" job type for the enum public.job_type in Postgres.
-	JobTypeShell = "SHELL"
+	JobTypeShell JobType = "SHELL"
 	// JobTypeCommand is the "COMMAND" job type for the enum public.job_type in Postgres.
-	JobTypeCommand = "COMMAND"
+	JobTypeCommand JobType = "COMMAND"
 	// JobTypeTensorboard is the "TENSORBOARD" job type for the enum.job_type in Postgres.
-	JobTypeTensorboard = "TENSORBOARD"
+	JobTypeTensorboard JobType = "TENSORBOARD"
 	// JobTypeExperiment is the "EXPERIMENT" job type for the enum.job_type in Postgres.
-	JobTypeExperiment = "EXPERIMENT"
+	JobTypeExperiment JobType = "EXPERIMENT"
 )
 
 func (jt JobType) Proto() jobv1.Type {
