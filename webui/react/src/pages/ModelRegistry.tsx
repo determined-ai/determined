@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -35,13 +35,27 @@ const ModelRegistry: React.FC = () => {
 
   usePolling(fetchModels);
 
-  const deleteModel = useCallback((version: ModelItem) => {
+  const deleteModel = useCallback((model: ModelItem) => {
     //send delete api request
   }, []);
 
-  const switchArchive = useCallback((version: ModelItem) => {
+  const switchArchived = useCallback((model: ModelItem) => {
     //check current archive status, switch it
   }, []);
+
+  const showConfirmDelete = useCallback((model: ModelItem) => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this model "${model.name}" and all 
+      of its versions from the model registry?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Model',
+      okType: 'danger',
+      onOk: () => deleteModel(model),
+      title: 'Confirm Delete',
+    });
+  }, [ deleteModel ]);
 
   const columns = useMemo(() => {
     const overflowRenderer = (_:string, record: ModelItem) => {
@@ -51,13 +65,13 @@ const ModelRegistry: React.FC = () => {
           overlay={(
             <Menu>
               <Menu.Item
-                onClick={() => switchArchive(record)}>
+                onClick={() => switchArchived(record)}>
                   Archive
               </Menu.Item>
               <Menu.Item
                 danger
                 disabled={!isDeletable}
-                onClick={() => deleteModel(record)}>
+                onClick={() => showConfirmDelete(record)}>
                   Delete Model
               </Menu.Item>
             </Menu>
@@ -100,7 +114,7 @@ const ModelRegistry: React.FC = () => {
     ];
 
     return tableColumns;
-  }, []);
+  }, [ deleteModel, switchArchived, user ]);
 
   return (
     <Page docTitle="Model Registry" id="models">

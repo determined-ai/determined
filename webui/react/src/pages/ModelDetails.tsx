@@ -1,5 +1,5 @@
 import { DownloadOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Menu } from 'antd';
+import { Button, Card, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -59,6 +59,20 @@ const ModelDetails: React.FC = () => {
     //send download api request
   }, []);
 
+  const showConfirmDelete = useCallback((version: ModelVersion) => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this version "Version ${version.version}" 
+      from this model?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: () => deleteVersion(version),
+      title: 'Confirm Delete',
+    });
+  }, [ deleteVersion ]);
+
   const columns = useMemo(() => {
     const overflowRenderer = (_:string, record: ModelVersion) => {
       const isDeletable = user?.isAdmin;
@@ -69,7 +83,7 @@ const ModelDetails: React.FC = () => {
               <Menu.Item
                 danger
                 disabled={!isDeletable}
-                onClick={() => deleteVersion(record)}>
+                onClick={() => showConfirmDelete(record)}>
                   Delete Version
               </Menu.Item>
             </Menu>
