@@ -9,16 +9,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// LocalRendezvousPort is the start of the range of ports used for rendezvous by tasks.
-const LocalRendezvousPort = 1734
-
 const (
 	hostMode container.NetworkMode = "host"
 )
-
-func rendezvousPort(offset int) int {
-	return LocalRendezvousPort + offset
-}
 
 // trialUniquePortOffset determines a deterministic, unique offset for ports that would otherwise
 // collide when using host networking.

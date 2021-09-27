@@ -51,13 +51,11 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
-"$DET_PYTHON_EXECUTABLE" -m determined.exec.fetch_context
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --trial --resources
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-# rendezvous layer: gather all addresses of all containers and store them in an
-# environment variable before invoking the launch layer.
-DET_RENDEZVOUS_INFO="$("$DET_PYTHON_EXECUTABLE" -m determined.exec.rendezvous_info)"
-export DET_RENDEZVOUS_INFO
+# Do rendezvous last, to ensure all launch layers start around the same time.
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --rendezvous
 
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.launch_autohorovod "$@"

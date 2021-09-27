@@ -1,10 +1,7 @@
 import csv
 import logging
 import subprocess
-from typing import List, NamedTuple, Optional, Tuple
-
-import determined as det
-from determined.common import check
+from typing import List, NamedTuple
 
 gpu_fields = [
     "index",
@@ -43,10 +40,11 @@ def get_gpus() -> List[GPU]:
             universal_newlines=True,
         )
     except FileNotFoundError:
+        logging.info("detected 0 gpus (nvidia-smi not found)")
         # This case is expected if NVIDIA drivers are not available.
         return []
     except Exception as e:
-        logging.warning(f"Couldn't query GPUs with `nvidia-smi`; assuming there are none: {e}")
+        logging.warning(f"detected 0 gpus (error with nvidia-smi: {e})")
         return []
 
     gpus = []
@@ -70,23 +68,10 @@ def get_gpus() -> List[GPU]:
                 logging.warning(f"Ignoring GPU with unexpected nvidia-smi output: {fields}")
     if proc.returncode:
         logging.warning(f"`nvidia-smi` exited with failure status code {proc.returncode}")
+
+    logging.info(f"detected {len(gpus)} gpus")
     return gpus
 
 
-def get_gpu_ids_and_uuids() -> Tuple[List[int], List[str]]:
-    gpus = get_gpus()
-    return [gpu.id for gpu in gpus], [gpu.uuid for gpu in gpus]
-
-
-def get_gpu_uuids_and_validate(use_gpu: bool, slot_ids: Optional[List[str]] = None) -> List[str]:
-    if use_gpu:
-        # Sanity check: if this trial is expected to run on the GPU but
-        # no GPUs are available, this indicates a misconfiguration.
-        _, gpu_uuids = get_gpu_ids_and_uuids()
-        if not gpu_uuids:
-            raise det.errors.InternalException("Failed to find GPUs for GPU-only trial")
-
-        if slot_ids is not None:
-            check.equal_lengths(slot_ids, gpu_uuids, "Mismatched slot_ids and container_gpus.")
-        return gpu_uuids
-    return []
+def get_gpu_uuids() -> List[str]:
+    return [gpu.uuid for gpu in sorted(get_gpus(), key=lambda gpu: gpu.id)]

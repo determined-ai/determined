@@ -4,12 +4,12 @@ import functools
 import getpass
 import hashlib
 import json
-import os
 import pathlib
 from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
 
 import filelock
 
+import determined as det
 from determined.common import api, constants, util
 from determined.common.api import certs
 
@@ -17,11 +17,12 @@ Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-_cur_allocation_token = os.environ.get("DET_ALLOCATION_SESSION_TOKEN", "")
-
 
 def get_allocation_token() -> str:
-    return _cur_allocation_token
+    info = det.get_cluster_info()
+    if info is None:
+        return ""
+    return info.session_token
 
 
 def salt_and_hash(password: str) -> str:

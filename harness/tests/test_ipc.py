@@ -147,14 +147,6 @@ def test_zmq_server_client() -> None:
 @pytest.mark.parametrize("force_tcp", [False, True])  # type: ignore
 def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
     size = cross_size * local_size
-    # Generate one rendezvous_info per node.
-    rendezvous_info = [
-        det.RendezvousInfo(
-            addrs=["localhost:12345"] * cross_size,
-            rank=i,
-        )
-        for i in range(cross_size)
-    ]
 
     def do_parallel(fn: Callable) -> List:
         """
@@ -199,8 +191,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
         )
         return det.DistributedContext(
             rank_info=rank_info,
-            rendezvous_info=rendezvous_info[cross_rank],
-            unique_port_offset=0,
+            chief_ip="localhost",
             force_tcp=force_tcp,
         )
 

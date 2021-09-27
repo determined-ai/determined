@@ -154,6 +154,7 @@ func (a *apiServer) LaunchNotebook(
 	spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":   strconv.Itoa(port),
 		"NOTEBOOK_CONFIG": string(configBytes),
+		"DET_TASK_TYPE":   model.TaskTypeNotebook,
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}

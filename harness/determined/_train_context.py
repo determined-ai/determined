@@ -47,7 +47,9 @@ class _TrainContext(metaclass=abc.ABCMeta):
             )
 
         self.distributed = DistributedContext(
-            rank_info, rendezvous_info, env.det_trial_unique_port_offset
+            rank_info=rank_info,
+            chief_ip=rendezvous_info.container_addrs[0],
+            port_offset=env.det_trial_unique_port_offset,
         )
         self._stop_requested = False
 
@@ -277,22 +279,30 @@ class DistributedContext:
     def __init__(
         self,
         rank_info: RankInfo,
-        rendezvous_info: det.RendezvousInfo,
-        unique_port_offset: int,
+        chief_ip: Optional[str] = None,
+        pub_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_1,
+        pull_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_2,
+        port_offset: int = 0,
         force_tcp: bool = False,
     ) -> None:
         self._info = rank_info
-        self._rendezvous_info = rendezvous_info
-        self._unique_port_offset = unique_port_offset
+        self._pub_port = pub_port + port_offset
+        self._pull_port = pull_port + port_offset
+        self._chief_ip = chief_ip
 
         self._is_chief = self._info.rank == 0
         self._is_local_chief = self._info.local_rank == 0
 
-        if len(self._rendezvous_info.get_addrs()) != self._info.cross_size:
-            raise AssertionError(
-                f"rendezvous_info has {len(self._rendezvous_info.get_addrs())} addresses but "
-                f"rank_info indicates there are {self._info.cross_size} machines"
-            )
+        if self._info.cross_size > 1:
+            if chief_ip is None:
+                raise AssertionError(
+                    f"rank_info has cross_size ({self._info.cross_size}) but chief_ip was not "
+                    "provided.  When cross_size > 1, the chief_ip parameter is required."
+                )
+            self._chief_ip = chief_ip
+        else:
+            # When cross_size == 1, always contact the chief as localhost.
+            self._cheif_ip = "127.0.0.1"
 
         self._init_ipc(force_tcp)
 
@@ -301,34 +311,25 @@ class DistributedContext:
             # No broadcasting necessary.
             return
 
-        srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._unique_port_offset
-        srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._unique_port_offset
-
         # Global broadcast server.
         if self._is_chief:
-            logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+            logging.debug(f"Chief setting up server with ports {self._pub_port}/{self._pull_port}.")
             self._chief_zmq = ipc.ZMQBroadcastServer(
                 num_connections=self._info.size - 1,
-                pub_url=f"tcp://*:{srv_pub_port}",
-                pull_url=f"tcp://*:{srv_pull_port}",
+                pub_url=f"tcp://*:{self._pub_port}",
+                pull_url=f"tcp://*:{self._pull_port}",
             )
             self._chief_zmq.safe_start(lambda: None)
 
         else:
-            if self._info.cross_rank > 0:
-                # Contact the chief via its rendezvous info.
-                chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
-            else:
-                # Contact the chief as localhost.
-                chief_ip_address = "127.0.0.1"
             logging.debug(
                 f"Non-Chief {self._info.rank} setting up comm to "
-                f"{chief_ip_address} w/ ports "
-                f"{srv_pub_port}/{srv_pull_port}."
+                f"{self._chief_ip} w/ ports "
+                f"{self._pub_port}/{self._pull_port}."
             )
             self._worker_zmq = ipc.ZMQBroadcastClient(
-                srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
-                srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
+                srv_pub_url=f"tcp://{self._chief_ip}:{self._pub_port}",
+                srv_pull_url=f"tcp://{self._chief_ip}:{self._pull_port}",
             )
             self._worker_zmq.safe_start()
 

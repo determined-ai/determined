@@ -8,9 +8,7 @@ from determined.common import check
 class EnvContext:
     def __init__(
         self,
-        master_addr: str,
-        master_port: int,
-        use_tls: bool,
+        master_url: str,
         master_cert_file: Optional[str],
         master_cert_name: Optional[str],
         container_id: str,
@@ -22,14 +20,11 @@ class EnvContext:
         container_gpus: List[str],
         slot_ids: List[int],
         debug: bool,
-        det_rendezvous_port: str,
         det_trial_unique_port_offset: int,
-        det_trial_runner_network_interface: str,
         det_trial_id: str,
         det_experiment_id: str,
         det_agent_id: str,
         det_cluster_id: str,
-        det_allocation_token: str,
         trial_seed: int,
         trial_run_id: int,
         allocation_id: str,
@@ -37,9 +32,7 @@ class EnvContext:
         test_mode: bool,
         on_cluster: bool,
     ):
-        self.master_addr = master_addr
-        self.master_port = master_port
-        self.use_tls = use_tls
+        self.master_url = master_url
         self.master_cert_file = master_cert_file
         self.master_cert_name = master_cert_name
         self.container_id = container_id
@@ -51,14 +44,11 @@ class EnvContext:
         self.container_gpus = container_gpus
         self.slot_ids = slot_ids
         self.debug = debug
-        self.det_rendezvous_port = det_rendezvous_port
         self.det_trial_unique_port_offset = det_trial_unique_port_offset
-        self.det_trial_runner_network_interface = det_trial_runner_network_interface
         self.det_trial_id = det_trial_id
         self.det_experiment_id = det_experiment_id
         self.det_agent_id = det_agent_id
         self.det_cluster_id = det_cluster_id
-        self.det_allocation_token = det_allocation_token
         self.trial_seed = trial_seed
         self.trial_run_id = trial_run_id
         self.allocation_id = allocation_id
@@ -67,9 +57,6 @@ class EnvContext:
         self.on_cluster = on_cluster
 
         self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
-
-    def rendezvous_port(self) -> int:
-        return int(self.det_rendezvous_port)
 
     def _calculate_batch_sizes(self) -> Tuple[int, int]:
         if "global_batch_size" not in self.hparams.keys():
@@ -109,14 +96,6 @@ class EnvContext:
             )
 
         return per_gpu_batch_size, effective_batch_size
-
-    @property
-    def master_url(self) -> str:
-        return "{}://{}:{}".format(
-            "https" if self.use_tls else "http",
-            self.master_addr,
-            self.master_port,
-        )
 
     @property
     def per_slot_batch_size(self) -> int:
