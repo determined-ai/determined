@@ -187,17 +187,28 @@ This plugin is also in beta and is not enabled by default. Similar to the cosche
 enabled by setting the ``defaultScheduler`` field to ``preemption``. Autoscaling is not supported
 and Determined can only automatically set labels for GPU experiments.
 
-If using a cluster with tainted nodes or labels, users must specify the tolerations or node
-selectors in the experiment config:
+Determined provides a default priority class, ``determined-medium-priority`` that has a priority of
+``50`` and is used for all tasks. If users want to set a different priority level for an experiment,
+they may either specify a priority in the ``resources`` field of the experiment config or create a
+priorityClass and specify it in the ``pod_spec`` of the config. If both are specified, the specified
+priorityClass will take precedence over the priority field.
+
+Additionally, if using a cluster with tainted nodes or labels, users must specify the tolerations or
+node selectors in the ``pod_spec``. We recommend using both tolerations and node selectors to better
+constrain where your experiments can run, especially on clusters that contain multiple GPU types.
+
+Below is an example that illustrates how to set priorities, tolerations, and node selectors.
 
 .. code:: yaml
 
+   resources:
+      priority: 42 # priorityClass, if set, takes precedence over this value
    environment:
       pod_spec:
          apiVersion: v1
          kind: Pod
          spec:
-            priorityClassName: determined-medium-priority
+            priorityClassName: determined-medium-priority # don't set if using priority value
             nodeSelector:
                key: value
             tolerations:
@@ -205,9 +216,3 @@ selectors in the experiment config:
                operator: "Equal"
                value: "value"
                effect: "NoSchedule"
-
-We recommend using both tolerations and node selectors to better constrain where your experiments
-can run, especially on clusters that contain multiple GPU types. Lastly, Determined provides low,
-medium, and high priority classes by default, named ``determined-low-priority``,
-``determined-medium-priority``, and ``determined-high-priority``. Users may make their own priority
-classes for finer grained control if they wish.

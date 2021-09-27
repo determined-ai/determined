@@ -29,7 +29,9 @@ rules:
   - apiGroups: [""]
     resources: ["nodes", "events"]
     verbs: ["list", "watch"]
-
+  - apiGroups: ["scheduling.k8s.io"]
+    resources: ["priorityclasses"]
+    verbs: ["create", "get", "list", "delete"]
 
 
 ---
