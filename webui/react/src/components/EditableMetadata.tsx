@@ -1,5 +1,6 @@
 import { Button, Dropdown, Form, Input, Menu } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import { FormListFieldData } from 'antd/lib/form/FormList';
+import React, { useCallback, useMemo } from 'react';
 
 import css from './EditableMetadata.module.scss';
 import Icon from './Icon';
@@ -12,60 +13,65 @@ interface Props {
 }
 
 const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }: Props) => {
-  const [ extraRows, setExtraRows ] = useState(1);
   const staticMetadata: InfoRow[] = useMemo(() => {
     return Object.entries(metadata || {}).map((pair) => {
       return ({ content: pair[1], label: pair[0] });
     });
   }, [ metadata ]);
 
-  const editableMetadata = useMemo(() => {
-    const md = Object.entries(metadata || { }).map((pair, idx) => {
-      return (
-        <EditableRow
-          initialKey={pair[0]}
-          initialValue={pair[1]}
-          key={idx}
-          name={idx}
-          onDelete={() => { null ; }} />
-      );
-    });
-    for (let i = 0; i < extraRows; i++) {
-      md.push(<EditableRow key={md.length} name={md.length} onDelete={() => { null ; }} />);
-    }
-    return (
-      <>
-        <div className={css.titleRow}><span>Key</span><span>Value</span></div>
-        {md}
-      </>
-    );
-  }, [ metadata, extraRows ]);
+  const metadataArray = useMemo(() => {
+    return [ ...Object.entries(metadata || { }).map(entry => {
+      return { key: entry[0], value: entry[1] };
+    }), { key: '', value: '' } ];
+  }, [ metadata ]);
 
-  const onValuesChange = useCallback((_changedValues, values: Record<string, string>[]) => {
-    const md = (Object.fromEntries(Object.values(values).map(pair => {
+  const onValuesChange = useCallback((
+    _changedValues,
+    values: {metadata: Record<string, string>[]},
+  ) => {
+    const md = (Object.fromEntries(Object.values(values.metadata).map(pair => {
       if (pair == null) return [ '', '' ];
-      if (pair.label == null) pair.label = '';
+      if (pair.key == null) pair.key = '';
       if (pair.value == null) pair.value = '';
-      return [ pair.label, pair.value ];
+      return [ pair.key, pair.value ];
     })));
     delete md[''];
+
+    //eslint-disable-next-line
+    console.log(md);
+
     updateMetadata?.(md);
   }, [ updateMetadata ]);
 
   return (
-    <Form onValuesChange={onValuesChange}>
-      {editing ? editableMetadata : <InfoBox rows={staticMetadata} />}
-      {editing ?
-        <Button
-          className={css.addRow}
-          type="link"
-          onClick={() => setExtraRows(prev => prev+1)}>+ Add Row</Button>
-        : null }
+    <Form initialValues={{ metadata: metadataArray }} onValuesChange={onValuesChange}>
+      {editing ? (
+        <>
+          <div className={css.titleRow}>
+            <span>Key</span><span>Value</span>
+          </div>
+          <Form.List name="metadata">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(field => (
+                  <EditableRow
+                    key={field.key}
+                    name={field.name}
+                    onDelete={() => remove(field.name)} />
+                ))}
+                <Button
+                  className={css.addRow}
+                  type="link"
+                  onClick={add}>+ Add Row</Button>
+              </>)}
+          </Form.List>
+        </>) : <InfoBox rows={staticMetadata} />}
     </Form>
   );
 };
 
 interface EditableRowProps {
+  field?: FormListFieldData;
   initialKey?: string;
   initialValue?: string;
   name: string | number;
@@ -73,16 +79,17 @@ interface EditableRowProps {
 }
 
 const EditableRow: React.FC<EditableRowProps> = (
-  { initialKey, initialValue, name, onDelete }: EditableRowProps,
+  { name, onDelete, field }: EditableRowProps,
 ) => {
   return <Form.Item
+    {...field}
     name={name}
     noStyle>
     <Input.Group className={css.row} compact>
-      <Form.Item initialValue={initialKey} name={[ name, 'label' ]} noStyle>
+      <Form.Item name={[ name, 'key' ]} noStyle>
         <Input placeholder="Enter metadata label" />
       </Form.Item>
-      <Form.Item initialValue={initialValue} name={[ name, 'value' ]} noStyle>
+      <Form.Item name={[ name, 'value' ]} noStyle>
         <Input placeholder="Enter metadata" />
       </Form.Item>
       {onDelete && <Dropdown

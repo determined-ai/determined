@@ -6,7 +6,8 @@
   display: flex !important;
 
   .overflow {
-    flex-basis: 0%;
+    border: 1px solid var(--theme-colors-monochrome-12);
+    flex-basis: 3%;
   }
   & > * {
     flex-basis: 50%;
@@ -16,7 +17,6 @@
 .titleRow {
   background-color: var(--theme-colors-monochrome-15);
   display: flex;
-  width: 94%;
 
   & > * {
     border: 1px solid var(--theme-colors-monochrome-12);
@@ -26,5 +26,6 @@
   }
   & *:last-child {
     border-left: 0;
+    flex-basis: 53%;
   }
 }
