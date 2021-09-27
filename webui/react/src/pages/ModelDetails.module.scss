@@ -4,6 +4,13 @@
   gap: 12px;
   margin: 0 20px;
 
+  .center {
+    display: flex;
+    justify-content: center;
+  }
+  .overflow {
+    padding: var(--theme-sizes-layout-small);
+  }
   .noVersions {
     align-items: center;
     display: flex;
