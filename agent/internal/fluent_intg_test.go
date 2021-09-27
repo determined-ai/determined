@@ -222,6 +222,7 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 		&spec.RunSpec.ContainerConfig,
 		&spec.RunSpec.HostConfig,
 		&spec.RunSpec.NetworkingConfig,
+		nil,
 		"log-test-"+uuid.New().String())
 	assert.NilError(t, err, "error creating container")
 

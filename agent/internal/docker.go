@@ -171,7 +171,13 @@ func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
 	}
 
 	response, err := d.ContainerCreate(
-		context.Background(), &msg.ContainerConfig, &msg.HostConfig, &msg.NetworkingConfig, "")
+		context.Background(),
+		&msg.ContainerConfig,
+		&msg.HostConfig,
+		&msg.NetworkingConfig,
+		nil,
+		"",
+	)
 	if err != nil {
 		sendErr(ctx, errors.Wrap(err, "error creating container"))
 		return

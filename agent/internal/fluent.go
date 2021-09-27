@@ -183,6 +183,7 @@ func startLoggingContainer(
 			},
 		},
 		nil,
+		nil,
 		opts.Fluent.ContainerName,
 	)
 	if err != nil {
