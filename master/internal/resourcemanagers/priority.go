@@ -19,6 +19,9 @@ type priorityScheduler struct {
 // AllocReqs is an alias for a list of Allocation Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
+// REMOVE can't replace groups identifier with job id since not all groups are associated with a job,
+// eg GC tasks that aren't related to a job.
+
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{

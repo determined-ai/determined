@@ -38,37 +38,38 @@ func MakeScheduler(config *SchedulerConfig) Scheduler {
 
 // allocReqsToJobOrder convertes sorted allocation requests to job order.
 func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet {
-	jobSet := orderedset.NewOrderedSet()
+	jobSet := orderedset.NewOrderedSet() // TODO stop using this (same as allocReqsToJobSummaries
 	for _, req := range reqs {
-		if req.JobID == "" {
+		if req.Job == nil {
 			continue
 		}
-		jobSet.Add(req.JobID)
+		jobSet.Add(req.Job.JobID)
 	}
 	return jobSet
 }
 
-func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet {
-	jobSet := orderedset.NewOrderedSet()
+func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) (summaries []*sproto.JobSummary) {
+	isAdded := make(map[model.JobID]bool)
 	for _, req := range reqs {
-		if req.JobID == "" {
+		job := req.Job
+		if job == nil {
+			continue
+		} else if _, ok := isAdded[job.JobID]; ok {
 			continue
 		}
-		jobSet.Add(JobSummary{
-			JobID:    req.JobID,
-			JobType:  model.JobTypeTensorboard, // getJobType(req.TaskActor)
-			EntityID: "TODO.ID",                // getEntityId(req.TaskActor)
-		})
+		isAdded[job.JobID] = true
+		summaries = append(summaries, job)
 	}
-	return jobSet
+	return summaries
 }
-
-// TODO get final entity id and type
 
 func logAllocRequests(reqs []*sproto.AllocateRequest) {
 	var str string
 	for _, req := range reqs {
-		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.JobID)
+		if req.Job == nil {
+			continue
+		}
+		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.Job.JobID)
 		// str = fmt.Sprintf("%s, AID %s, JID %s | ", str, req.AllocationID, req.JobID)
 	}
 	log.Debug("allocRequests" + str)

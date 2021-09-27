@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 )
 
@@ -10,7 +8,7 @@ import (
 type JobID string
 
 func (id JobID) String() string {
-	return fmt.Sprint(id)
+	return string(id) // FIXME does this add any value? is this a common interface in go?
 }
 
 // JobType is the type of a job.
@@ -30,6 +28,8 @@ const (
 	JobTypeCommand = "COMMAND"
 	// JobTypeTensorboard is the "TENSORBOARD" job type for the enum.job_type in Postgres.
 	JobTypeTensorboard = "TENSORBOARD"
+	// JobTypeExperiment is the "EXPERIMENT" job type for the enum.job_type in Postgres.
+	JobTypeExperiment = "EXPERIMENT"
 )
 
 // Job is the model for a job in the database.

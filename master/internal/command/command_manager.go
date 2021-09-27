@@ -1,8 +1,6 @@
 package command
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -33,8 +31,8 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, c.db, taskID, model.TaskTypeCommand, msg)
+		taskID := model.NewTaskID()
+		return createGenericCommandActor(ctx, c.db, taskID, model.TaskTypeCommand, model.JobTypeCommand, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

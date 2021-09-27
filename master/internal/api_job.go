@@ -2,12 +2,9 @@ package internal
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/goombaio/orderedset"
 
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -25,7 +22,7 @@ func (a *apiServer) GetJobs(
 	// a.sort(resp.Jobs, req.OrderBy, req.SortBy, apiv1.GetJobsRequest_SORT_BY_QUEUE_POSITION)
 	// resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
 
-	var jobs orderedset.OrderedSet
+	var jobs []*sproto.JobSummary
 	resp = &apiv1.GetJobsResponse{}
 
 	// TODO loop over all resource pools in the request
@@ -44,17 +41,17 @@ func (a *apiServer) GetJobs(
 	if err != nil {
 		return nil, err
 	}
-	for _, val := range jobs.Values() {
-		summary, ok := val.(resourcemanagers.JobSummary)
-		if !ok {
-			continue // FIXME or error?
+	for _, job := range jobs {
+		if job == nil {
+			panic("received an empty job summary") // this shouldn't happen
 		}
 		resp.Jobs = append(resp.Jobs, &jobv1.Job{
 			Summary: &jobv1.JobSummary{
-				JobId: fmt.Sprint(summary.JobID),
+				JobId: string(job.JobID),
 			},
-			EntityId: summary.EntityID,
-			// Type: "TYPE_"+summary.JobType, // TODO
+			EntityId: job.EntityID,
+			Type:     jobv1.Type_TYPE_COMMAND,
+			// Type:     "TYPE_" + string(job.JobType), // TODO
 		})
 	}
 	return resp, nil

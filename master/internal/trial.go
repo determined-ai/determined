@@ -80,7 +80,7 @@ func newTrial(
 ) *trial {
 	return &trial{
 		taskID:       taskID,
-		jobID:        jobID, // TODO restoring from an experiment w/o jobID use model.JobID(experimentID)
+		jobID:        jobID,
 		experimentID: experimentID,
 		state:        initialState,
 		searcher:     searcher,
@@ -201,11 +201,17 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
 	}
 
+	jobSummary := sproto.JobSummary{
+		JobID:    t.jobID,
+		EntityID: fmt.Sprint(t.experimentID),
+		JobType:  model.JobTypeExperiment,
+	}
+
 	ctx.Log().Info("decided to allocate trial")
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
 		AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:       t.taskID,
-		JobID:        t.jobID,
+		Job:          &jobSummary,
 		Name:         name,
 		TaskActor:    ctx.Self(),
 		Group:        ctx.Self().Parent(),

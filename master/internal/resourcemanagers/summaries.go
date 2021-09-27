@@ -11,14 +11,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
-// JobSummary contains information about a task for external display.
-type JobSummary struct {
-	// model.Job
-	JobID    model.JobID
-	JobType  model.JobType
-	EntityID string `json:"entity_id"`
-}
-
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
 	TaskID         model.TaskID              `json:"task_id"`

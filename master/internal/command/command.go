@@ -38,6 +38,7 @@ func createGenericCommandActor(
 	db *db.PgDB,
 	taskID model.TaskID,
 	taskType model.TaskType,
+	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
@@ -49,6 +50,7 @@ func createGenericCommandActor(
 
 		taskID:         taskID,
 		taskType:       taskType,
+		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 	}
 
@@ -73,6 +75,7 @@ type command struct {
 	registeredTime time.Time
 	taskID         model.TaskID
 	taskType       model.TaskType
+	jobType        model.JobType
 	allocationID   model.AllocationID
 	allocation     *actor.Ref
 	serviceAddress *string
@@ -88,10 +91,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
-			JobID:     model.JobID(c.taskID), // Building on the existing cmd single allocation assumption
 			TaskType:  c.taskType,
 			StartTime: c.registeredTime,
 		}); err != nil {
+			// TODO why do we persist the task when the underlying command isn't persisted? or is it now persisted
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 
@@ -135,9 +138,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
+		jobSummary := sproto.JobSummary{
+			JobID:    model.JobID(c.taskID),
+			JobType:  c.jobType,        // FIXME cmd job type nees to be specific to the subcmd
+			EntityID: string(c.taskID), // CHECK
+		}
+
 		allocation := task.NewAllocation(sproto.AllocateRequest{
 			AllocationID: c.allocationID,
 			TaskID:       c.taskID,
+			Job:          &jobSummary,
 			Name:         c.Config.Description,
 			TaskActor:    ctx.Self(),
 			Group:        ctx.Self(),

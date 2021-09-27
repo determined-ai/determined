@@ -16,7 +16,7 @@ type (
 		// Identifying information.
 		AllocationID model.AllocationID
 		TaskID       model.TaskID
-		JobID        model.JobID
+		Job          *JobSummary
 		Name         string
 		TaskActor    *actor.Ref
 		Group        *actor.Ref

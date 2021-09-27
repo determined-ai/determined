@@ -1,8 +1,6 @@
 package command
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,8 +32,8 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, n.db, taskID, model.TaskTypeNotebook, msg)
+		taskID := model.NewTaskID()
+		return createGenericCommandActor(ctx, n.db, taskID, model.TaskTypeNotebook, model.JobTypeNotebook, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
