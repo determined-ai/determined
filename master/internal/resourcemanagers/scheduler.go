@@ -9,22 +9,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-type SchedulingState uint8
-
-const (
-	SchedulingStateQueued              SchedulingState = 0
-	SchedulingStateScheduledBackfilled SchedulingState = 1
-	SchedulingStateScheduled           SchedulingState = 2
-)
-
-type QueueThing struct { // TODO rename me
-	AReq  *sproto.AllocateRequest
-	State SchedulingState
-}
-type SchedulerQueue = []QueueThing
+// type QueueThing struct { // TODO rename me
+// 	AReq  *sproto.AllocateRequest
+// 	State sproto.SchedulingState
+// }
+// type SchedulerQueue = []QueueThing
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
 // to determine which pending requests can be fulfilled and which scheduled tasks
@@ -64,7 +55,7 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet 
 	return jobSet
 }
 
-func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) (summaries []*sproto.JobSummary) {
+func allocReqsToJobSummaries(reqs AllocReqs) (summaries []*sproto.JobSummary) {
 	isAdded := make(map[model.JobID]bool)
 	for _, req := range reqs {
 		job := req.Job
@@ -79,24 +70,34 @@ func allocReqsToJobSummaries(reqs []*sproto.AllocateRequest) (summaries []*sprot
 	return summaries
 }
 
-// WIP
-func allocReqsToJobSummariesV2(queue SchedulerQueue) (jobs []*jobv1.Job) {
-	isAdded := make(map[model.JobID]SchedulingState)
-	for _, qt := range queue {
-		job := qt.AReq.Job
-		if job == nil {
+// WIP not needed if we assume the allocaterequest in front of the queue has the dominant (desired)
+// state for the job
+func allocReqsToJobSummariesV2(q AllocReqs) (summaries []*sproto.JobSummary) {
+	isAdded := make(map[model.JobID]*sproto.JobSummary)
+	summaries = make([]*sproto.JobSummary, 0)
+	for _, req := range q {
+		curJob := req.Job
+		if curJob == nil {
 			continue
-		} else if _, ok := isAdded[job.JobID]; ok {
-			// TODO need to merge the scheduler states
+		} else if addedJob, ok := isAdded[curJob.JobID]; ok && addedJob.State >= curJob.State {
 			continue
 		}
-		isAdded[job.JobID] = qt.State
-		// jobs = append(jobs, job)
+		isAdded[curJob.JobID] = curJob
+		summaries = append(summaries, curJob)
 	}
-	return jobs
+	return summaries
+	// jobSet := orderedset.NewOrderedSet() // TODO stop using this (same as allocReqsToJobSummaries
+	// for _, qt := range queue {
+	// 	if qt.AReq.Job == nil {
+	// 		continue
+	// 	}
+	// 	jobSet.Add(qt.AReq.Job.JobID)
+	// 	jobSet
+	// }
+	// return jobSet
 }
 
-func logAllocRequests(reqs []*sproto.AllocateRequest) {
+func logAllocRequests(reqs []*sproto.AllocateRequest, prefix string) {
 	var str string
 	for _, req := range reqs {
 		if req.Job == nil {
@@ -105,5 +106,12 @@ func logAllocRequests(reqs []*sproto.AllocateRequest) {
 		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.Job.JobID)
 		// str = fmt.Sprintf("%s, AID %s, JID %s | ", str, req.AllocationID, req.JobID)
 	}
-	log.Debug("allocRequests" + str)
+	log.Debug(prefix + ": " + str)
+}
+
+func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
+	if req.Job == nil {
+		return
+	}
+	req.Job.State = state
 }

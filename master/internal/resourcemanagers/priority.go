@@ -33,7 +33,7 @@ func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateReques
 	ar := p.OrderedAllocations(rp)
 	// TODO remove me. for testing only.
 	p.repr(rp)
-	logAllocRequests(ar)
+	logAllocRequests(ar, "ordered allocations")
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
@@ -42,6 +42,18 @@ func (p *priorityScheduler) repr(rp *ResourcePool) {
 	log.Debugf("total tasks by time %d", rp.taskList.taskByTime.Size())
 	for handler, _ := range rp.taskList.taskByHandler {
 		log.Debug("task parent " + handler.Parent().Address().String())
+	}
+}
+
+// TODO this is NOT the way.
+func syncState(req *sproto.AllocateRequest,
+	taskList *taskList,
+) {
+	assigned := taskList.GetAllocations(req.TaskActor)
+	if assigned == nil || len(assigned.Reservations) == 0 {
+		req.Job.State = sproto.SchedulingStateQueued
+	} else {
+		req.Job.State = sproto.SchedulingStateScheduled
 	}
 }
 
@@ -59,6 +71,7 @@ func (p *priorityScheduler) OrderedAllocations(
 
 		Once jobs carry a queue position attribute with them it'll be what sortTasksByPriorityAndTimestamp uses for returning tasks in order.
 	*/
+	// WARN scheduled here means that resources are allocated.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
 
@@ -159,6 +172,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
+					setJobState(allocatedTask, sproto.SchedulingStateScheduledBackfilled)
 					toAllocate = append(toAllocate, allocatedTask)
 				}
 			}
@@ -293,8 +307,10 @@ func sortTasksByPriorityAndTimestamp(
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
+			setJobState(req, sproto.SchedulingStateQueued)
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
+			setJobState(req, sproto.SchedulingStateScheduled)
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}
