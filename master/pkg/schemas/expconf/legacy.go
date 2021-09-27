@@ -157,11 +157,11 @@ func getPodSpec(raw map[string]interface{}) (*PodSpec, error) {
 
 	rawBytes, err := json.Marshal(evOnly)
 	if err != nil {
-		return ps, errors.Wrap(err, "unable to remarshal environment as json")
+		return nil, errors.Wrap(err, "unable to remarshal environment as json")
 	}
 
 	if err = json.Unmarshal(rawBytes, ps); err != nil {
-		return ps, errors.Wrap(err, "unable to unmarshal environment variables bytes")
+		return nil, errors.Wrap(err, "unable to unmarshal environment variables bytes")
 	}
 
 	return ps, nil

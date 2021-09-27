@@ -1,9 +1,10 @@
 package expconf
 
 import (
+	"testing"
+
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"gotest.tools/assert"
