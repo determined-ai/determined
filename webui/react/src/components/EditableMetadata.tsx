@@ -1,6 +1,7 @@
 import { Button, Form, Input } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import css from './EditableMetadata.module.scss';
 import InfoBox, { InfoRow } from './InfoBox';
 
 interface Props {
@@ -20,35 +21,18 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
   const editableMetadata = useMemo(() => {
     const md = Object.entries(metadata || { }).map((pair, idx) => {
       return (
-        <Form.Item
-          key={idx}
-          name={idx}>
-          <Input.Group compact>
-            <Form.Item initialValue={pair[0]} name={[ idx, 'label' ]} noStyle>
-              <Input placeholder="Enter metadata label" style={{ width: '30%' }} />
-            </Form.Item>
-            <Form.Item initialValue={pair[1]} name={[ idx, 'value' ]} noStyle>
-              <Input placeholder="Enter metadata" style={{ width: '70%' }} />
-            </Form.Item>
-          </Input.Group>
-        </Form.Item>
+        <EditableRow initialKey={pair[0]} initialValue={pair[1]} key={idx} name={idx} />
       );
     });
     for (let i = 0; i < extraRows; i++) {
-      md.push(<Form.Item
-        key={md.length}
-        name={md.length}>
-        <Input.Group>
-          <Form.Item name={[ md.length, 'label' ]} noStyle>
-            <Input placeholder="Enter metadata label" style={{ width: '30%' }} />
-          </Form.Item>
-          <Form.Item name={[ md.length, 'value' ]} noStyle>
-            <Input placeholder="Enter metadata" style={{ width: '70%' }} />
-          </Form.Item>
-        </Input.Group>
-      </Form.Item>);
+      md.push(<EditableRow key={md.length} name={md.length} />);
     }
-    return md;
+    return (
+      <>
+        <div className={css.row}><span>Key</span><span>Value</span></div>
+        {md}
+      </>
+    );
   }, [ metadata, extraRows ]);
 
   const onValuesChange = useCallback((_changedValues, values: Record<string, string>[]) => {
@@ -64,10 +48,38 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
 
   return (
     <Form onValuesChange={onValuesChange}>
-      {editing? editableMetadata : <InfoBox rows={staticMetadata} />}
-      <Button type="link" onClick={() => setExtraRows(prev => prev+1)}>+ Add Row</Button>
+      {editing ? editableMetadata : <InfoBox rows={staticMetadata} />}
+      {editing ?
+        <Button
+          className={css.addRow}
+          type="link"
+          onClick={() => setExtraRows(prev => prev+1)}>+ Add Row</Button>
+        : null }
     </Form>
   );
+};
+
+interface EditableRowProps {
+  initialKey?: string;
+  initialValue?: string;
+  name: string | number;
+}
+
+const EditableRow: React.FC<EditableRowProps> = (
+  { initialKey, initialValue, name }: EditableRowProps,
+) => {
+  return <Form.Item
+    name={name}
+    noStyle>
+    <Input.Group className={css.row} compact>
+      <Form.Item initialValue={initialKey} name={[ name, 'label' ]} noStyle>
+        <Input placeholder="Enter metadata label" />
+      </Form.Item>
+      <Form.Item initialValue={initialValue} name={[ name, 'value' ]} noStyle>
+        <Input placeholder="Enter metadata" />
+      </Form.Item>
+    </Input.Group>
+  </Form.Item>;
 };
 
 export default EditableMetadata;

@@ -12,7 +12,7 @@ export default {
     ),
   ],
   parameters: { layout: 'centered' },
-  title: 'Editable Metadata',
+  title: 'EditableMetadata',
 };
 
 const metadata = { key: 'value', lorem: 'ipsum', test: 'component' };

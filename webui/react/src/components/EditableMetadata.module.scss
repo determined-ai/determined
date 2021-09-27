@@ -1,0 +1,23 @@
+.addRow {
+  font-size: var(--theme-sizes-font-small);
+  padding: var(--theme-sizes-layout-small) 0;
+}
+.row {
+  display: flex !important;
+
+  & > * {
+    flex-basis: 50%;
+    padding: var(--theme-sizes-layout-tiny) var(--theme-sizes-layout-small)
+  }
+  &:first-child {
+    background-color: var(--theme-colors-monochrome-15);
+
+    & > * {
+      border: 1px solid var(--theme-colors-monochrome-12);
+      border-bottom: 0;
+    }
+    & *:last-child {
+      border-left: 0;
+    }
+  }
+}
