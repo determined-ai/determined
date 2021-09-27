@@ -48,9 +48,10 @@ func (a *apiServer) GetJobs(
 		resp.Jobs = append(resp.Jobs, &jobv1.Job{
 			Summary: &jobv1.JobSummary{
 				JobId: string(job.JobID),
+				// State: // look at AllocationState
 			},
 			EntityId: job.EntityID,
-			Type:     jobv1.Type_TYPE_COMMAND,
+			Type:     job.JobType.Proto(),
 			// Type:     "TYPE_" + string(job.JobType), // TODO
 		})
 	}
