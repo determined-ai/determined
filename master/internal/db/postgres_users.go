@@ -305,3 +305,23 @@ func (db *PgDB) initAuthKeys() error {
 	}
 	return nil
 }
+
+// AddAuthTokenKeypair adds the new auth token keypair.
+func (db *PgDB) AddAuthTokenKeypair(tokenKeypair *model.AuthTokenKeypair) error {
+	return db.namedExecOne(`
+INSERT INTO auth_token_keypair (public_key, private_key)
+VALUES (:public_key, :private_key)`, *tokenKeypair)
+}
+
+// AuthTokenKeypair gets the existing auth token keypair.
+func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
+	var tokenKeypair model.AuthTokenKeypair
+	switch err := db.query("SELECT * FROM auth_token_keypair", &tokenKeypair); {
+	case errors.Cause(err) == ErrNotFound:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	default:
+		return &tokenKeypair, nil
+	}
+}
