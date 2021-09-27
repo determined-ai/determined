@@ -150,18 +150,18 @@ func getPodSpec(raw map[string]interface{}) (*PodSpec, error) {
 		return nil, nil
 	}
 
-	evOnly := envOnly.(map[string]interface{})["pod_spec"]
-	if evOnly == nil {
+	psOnly := envOnly.(map[string]interface{})["pod_spec"]
+	if psOnly == nil {
 		return nil, nil
 	}
 
-	rawBytes, err := json.Marshal(evOnly)
+	rawBytes, err := json.Marshal(psOnly)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to remarshal environment as json")
+		return nil, errors.Wrap(err, "unable to remarshal pod spec as json")
 	}
 
 	if err = json.Unmarshal(rawBytes, ps); err != nil {
-		return nil, errors.Wrap(err, "unable to unmarshal environment variables bytes")
+		return nil, errors.Wrap(err, "unable to unmarshal pod spec bytes")
 	}
 
 	return ps, nil
