@@ -1,0 +1,3 @@
+tensorboard_debug_patch: v4.0
+det_version: 0.16.4
+description: refresh tensorboard files locally
