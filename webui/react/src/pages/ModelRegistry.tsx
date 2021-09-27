@@ -1,10 +1,13 @@
+import { Button, Dropdown, Menu } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import { modelNameRenderer, relativeTimeRenderer } from 'components/Table';
+import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { getModels } from 'services/api';
@@ -12,7 +15,10 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
+import css from './ModelRegistry.module.scss';
+
 const ModelRegistry: React.FC = () => {
+  const { auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
 
   const fetchModels = useCallback(async () => {
@@ -29,15 +35,49 @@ const ModelRegistry: React.FC = () => {
 
   usePolling(fetchModels);
 
+  const deleteModel = useCallback((version: ModelItem) => {
+    //send delete api request
+  }, []);
+
+  const switchArchive = useCallback((version: ModelItem) => {
+    //check current archive status, switch it
+  }, []);
+
   const columns = useMemo(() => {
+    const overflowRenderer = (_:string, record: ModelItem) => {
+      const isDeletable = user?.isAdmin;
+      return (
+        <Dropdown
+          overlay={(
+            <Menu>
+              <Menu.Item
+                onClick={() => switchArchive(record)}>
+                  Archive
+              </Menu.Item>
+              <Menu.Item
+                danger
+                disabled={!isDeletable}
+                onClick={() => deleteModel(record)}>
+                  Delete Model
+              </Menu.Item>
+            </Menu>
+          )}>
+          <Button className={css.overflow} type="text">
+            <Icon name="overflow-vertical" size="tiny" />
+          </Button>
+        </Dropdown>
+      );
+    };
+
     const tableColumns: ColumnsType<ModelItem> = [
-      { dataIndex: 'id', sorter: true, title: 'ID' },
+      { dataIndex: 'id', sorter: true, title: 'ID', width: 1 },
       {
         dataIndex: 'name',
         key: V1GetModelsRequestSortBy.NAME,
         render: modelNameRenderer,
         sorter: true,
         title: 'Model name',
+        width: 250,
       },
       {
         dataIndex: 'description',
@@ -45,15 +85,18 @@ const ModelRegistry: React.FC = () => {
         sorter: true,
         title: 'Description',
       },
-      { dataIndex: 'versions', title: 'Versions' },
+      { dataIndex: 'versions', title: 'Versions', width: 1 },
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
         render: relativeTimeRenderer,
         sorter: true,
         title: 'Last updated',
+        width: 1,
       },
-      { dataIndex: 'labels', title: 'Labels' },
+      { dataIndex: 'tags', title: 'Tags' },
+      { dataIndex: 'username', title: 'User', width: 1 },
+      { render: overflowRenderer, title: '', width: 1 },
     ];
 
     return tableColumns;
