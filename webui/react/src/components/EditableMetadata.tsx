@@ -6,7 +6,7 @@ import InfoBox, { InfoRow } from './InfoBox';
 interface Props {
   editing: boolean;
   metadata: Record<string, string>;
-  updateMetadata: (obj: Record<string, string>) => void;
+  updateMetadata?: (obj: Record<string, string>) => void;
 }
 
 const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }: Props) => {
@@ -59,13 +59,13 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
       return [ pair.label, pair.value ];
     })));
     delete md[''];
-    updateMetadata(md);
+    updateMetadata?.(md);
   }, [ updateMetadata ]);
 
   return (
     <Form onValuesChange={onValuesChange}>
       {editing? editableMetadata : <InfoBox rows={staticMetadata} />}
-      <Button type="link" onClick={() => setExtraRows(prev => prev+1)}>add row</Button>
+      <Button type="link" onClick={() => setExtraRows(prev => prev+1)}>+ Add Row</Button>
     </Form>
   );
 };
