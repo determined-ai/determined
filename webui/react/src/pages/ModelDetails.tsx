@@ -1,4 +1,4 @@
-import { DownloadOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -139,7 +139,7 @@ const ModelDetails: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ deleteVersion, downloadVersion, user ]);
+  }, [ showConfirmDelete, downloadVersion, user ]);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {

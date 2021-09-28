@@ -114,7 +114,7 @@ const ModelRegistry: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ deleteModel, switchArchived, user ]);
+  }, [ showConfirmDelete, switchArchived, user ]);
 
   return (
     <Page docTitle="Model Registry" id="models">
