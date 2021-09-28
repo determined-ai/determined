@@ -1,5 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
+ts_bindings_dest = ../webui/react/src/services/api-ts-sdk
 
 .PHONY: all
 all: get-deps
@@ -17,10 +18,23 @@ build/typescript-fetch: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/typescript-fetch
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l typescript-fetch -o build/typescript-fetch
+	rm -rf $(ts_bindings_dest)/*
+	cp -r build/typescript-fetch/* $(ts_bindings_dest)
 	touch build/typescript-fetch
 
 .PHONY: build
 build: build/typescript-fetch
+	# This target has a dependency on ../proto/ that isn't captured here for CI's sake as they'd need
+	# different dependencies in their environement.
+	# $(MAKE) -C ../proto build
+
+.PHONY: check
+check: build
+	# Checking that the committed, generated code is up-to-date by ensuring that
+	# Git reports the files as unchanged after forcibly regenerating them.
+	# The API bindings generated here depend on changes to the API and after any changes to the API
+	# you need to build the bindings and commit the newly generated code to avoid failing this check.
+	test -z "$(shell git status --porcelain $(ts_bindings_dest)/*)"
 
 .PHONY: clean-deps
 clean-deps:

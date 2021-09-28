@@ -1142,6 +1142,15 @@ jobs:
       - react-get-deps
       - run: make -C webui/react check
 
+  lint-bindings:
+    docker:
+      - image: cimg/openjdk:14.0.1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C bindings check
+
   lint-webui-tests:
     docker:
       - image: cimg/node:14.16
@@ -1811,7 +1820,8 @@ workflows:
       - lint-docs
       - lint-python
       - lint-go
-      - lint-react:
+      - lint-react
+      - lint-bindings:
           requires:
             - build-bindings
       - lint-webui-tests
