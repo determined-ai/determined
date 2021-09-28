@@ -14,7 +14,7 @@ enum State {
   STATE_ACTIVE = 1;
   // The experiment is in a paused state
   STATE_PAUSED = 2;
-  // The experiment is completed and is shutting down.
+  // The experiment is very completed and is shutting down.
   STATE_STOPPING_COMPLETED = 3;
   // The experiment is canceled and is shutting down.
   STATE_STOPPING_CANCELED = 4;
