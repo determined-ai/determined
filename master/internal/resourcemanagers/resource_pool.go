@@ -345,8 +345,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case GetJobOrder:
-		allocations := rp.scheduler.OrderedAllocations(rp)
-		ctx.Respond(allocReqsToJobSummaries(allocations))
+		ctx.Respond(doit(rp))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

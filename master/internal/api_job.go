@@ -22,7 +22,7 @@ func (a *apiServer) GetJobs(
 	// a.sort(resp.Jobs, req.OrderBy, req.SortBy, apiv1.GetJobsRequest_SORT_BY_QUEUE_POSITION)
 	// resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
 
-	var jobs []*sproto.JobSummary
+	var jobs []*jobv1.Job
 	resp = &apiv1.GetJobsResponse{}
 
 	// TODO loop over all resource pools in the request
@@ -41,19 +41,20 @@ func (a *apiServer) GetJobs(
 	if err != nil {
 		return nil, err
 	}
-	for _, job := range jobs {
-		if job == nil {
-			panic("received an empty job summary") // this shouldn't happen
-		}
-		resp.Jobs = append(resp.Jobs, &jobv1.Job{
-			Summary: &jobv1.JobSummary{
-				JobId: string(job.JobID),
-				State: job.State.Proto(), // look at AllocationState
-			},
-			EntityId: job.EntityID,
-			Type:     job.JobType.Proto(),
-		})
-	}
+	// for _, job := range jobs {
+	// 	if job == nil {
+	// 		panic("received an empty job summary") // this shouldn't happen
+	// 	}
+	// 	resp.Jobs = append(resp.Jobs, &jobv1.Job{
+	// 		Summary: &jobv1.JobSummary{
+	// 			JobId: string(job.JobID),
+	// 			State: job.State.Proto(), // look at AllocationState
+	// 		},
+	// 		EntityId: job.EntityID,
+	// 		Type:     job.JobType.Proto(),
+	// 	})
+	// }
+	resp.Jobs = jobs
 	return resp, nil
 }
 
