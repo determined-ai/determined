@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Support configuring idle timeout in the task configuration. This will only support TensorBoard
-   and Notebook.
