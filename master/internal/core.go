@@ -715,7 +715,10 @@ func (m *Master) Run(ctx context.Context) error {
 		go m.tryRestoreExperiment(sema, exp)
 	}
 	if err = m.db.FailDeletingExperiment(); err != nil {
-		return errors.Wrap(err, "couldn't force fail deleting experiments after crash")
+		return err
+	}
+	if err = m.db.CloseOpenAllocations(); err != nil {
+		return err
 	}
 
 	// Docs and WebUI.
