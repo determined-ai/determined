@@ -5,11 +5,13 @@ It launches the entrypoint script under horovodrun when slots_per_trial>1, or as
 subprocess otherwise.
 """
 
+import copy
 import logging
 import socket
 import subprocess
 import sys
 import time
+from typing import Dict
 
 import simplejson
 
@@ -19,6 +21,22 @@ from determined import horovod
 from determined.common import api, constants, storage
 from determined.common.api import certs
 from determined.constants import HOROVOD_SSH_PORT
+
+
+def mask_config_dict(d: Dict) -> Dict:
+    mask = "********"
+    new_dict = copy.deepcopy(d)
+
+    # checkpoint_storage
+    hidden_checkpoint_storage_keys = ("access_key", "secret_key")
+    try:
+        for key in new_dict["checkpoint_storage"].keys():
+            if key in hidden_checkpoint_storage_keys:
+                new_dict["checkpoint_storage"][key] = mask
+    except KeyError:
+        pass
+
+    return new_dict
 
 
 def main() -> int:
@@ -34,7 +52,7 @@ def main() -> int:
 
     logging.info(
         f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
-        + simplejson.dumps(experiment_config)
+        + simplejson.dumps(mask_config_dict(experiment_config))
     )
 
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the
