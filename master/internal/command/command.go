@@ -140,7 +140,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		jobSummary := sproto.JobSummary{
 			JobID:    model.JobID(c.taskID),
-			JobType:  c.jobType,        // FIXME cmd job type nees to be specific to the subcmd
+			JobType:  c.jobType,
 			EntityID: string(c.taskID), // CHECK
 		}
 
