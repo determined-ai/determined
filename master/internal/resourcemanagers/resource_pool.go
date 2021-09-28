@@ -345,7 +345,7 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case GetJobOrder:
-		ctx.Respond(doit(rp))
+		ctx.Respond(getV1Jobs(rp))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

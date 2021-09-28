@@ -1,7 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -449,8 +448,7 @@ func assertEqualToRelease(
 		"actual tasks and expected tasks must have the same length")
 }
 
-func TestOrderedAllocationToJobOrder(t *testing.T) {
-	// lowerPriority := 50
+func TestOrderedAllocationToJobOrder(t *testing.T) { // lowerPriority := 50
 	// higherPriority := 40
 
 	// agents := make([]*mockAgent, 0)
@@ -468,16 +466,18 @@ func TestOrderedAllocationToJobOrder(t *testing.T) {
 	// system := actor.NewSystem(t.Name())
 	// taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 	ids := [...]string{"a", "b", "c", "b", "b"}
-	expectedOrder := [...]string{"d", "b", "c"}
+	expectedOrder := [...]string{"a", "b", "c"}
 	requests := make([]*sproto.AllocateRequest, 0)
 	for _, jid := range ids {
 		requests = append(requests, &sproto.AllocateRequest{
-			JobID: model.JobID(jid),
+			Job: &sproto.JobSummary{
+				JobID: model.JobID(jid),
+			},
 		})
 	}
-	jids := make([]string, 0)
-	for _, jid := range allocReqsToJobOrder(requests).Values() {
-		jids = append(jids, fmt.Sprint(jid))
+	jids := allocReqsToJobOrder(requests)
+	assert.Equal(t, len(jids), len(expectedOrder))
+	for i := 0; i < len(jids); i++ {
+		assert.DeepEqual(t, jids[i], expectedOrder[i])
 	}
-	assert.DeepEqual(t, expectedOrder, jids)
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
-	"github.com/goombaio/orderedset"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -12,21 +11,6 @@ import (
 // we don't want a separate actor do we? could be useful for streaming job endpoints
 type GetJobOrder struct{}
 
-// allocReqsToJobOrder convertes sorted allocation requests to job order.
-func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) *orderedset.OrderedSet {
-	jobSet := orderedset.NewOrderedSet() // TODO stop using this (same as allocReqsToJobSummaries
-	for _, req := range reqs {
-		if req.Job == nil {
-			continue
-		}
-		jobSet.Add(req.Job.JobID)
-	}
-	return jobSet
-}
-
-// WARN we don't merge requests.
-// merging the states is not needed if we assume the allocaterequest in front of the queue has the dominant (desired)
-// state for the job
 func filterAllocateRequests(reqs AllocReqs) AllocReqs {
 	isAdded := make(map[model.JobID]bool)
 	rv := make(AllocReqs, 0)
@@ -50,7 +34,15 @@ func allocReqsToJobSummaries(reqs AllocReqs) (summaries []*sproto.JobSummary) {
 	return summaries
 }
 
-func fillApiJob( // TODO rename me
+// allocReqsToJobOrder convertes sorted allocation requests to job order.
+func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
+	for _, req := range filterAllocateRequests(reqs) {
+		jobIds = append(jobIds, string(req.Job.JobID))
+	}
+	return jobIds
+}
+
+func allocateReqToV1Job(
 	rp *ResourcePool,
 	req *sproto.AllocateRequest,
 ) (job *jobv1.Job) {
@@ -79,43 +71,17 @@ func fillApiJob( // TODO rename me
 	return job
 }
 
-func doit( // TODO rename
+// getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations
+func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
 	v1Jobs := make([]*jobv1.Job, 0)
 	for _, req := range filterAllocateRequests(allocateRequests) {
-		v1Jobs = append(v1Jobs, fillApiJob(rp, req))
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req))
 	}
 	return v1Jobs
 }
-
-// // WIP not needed if we assume the allocaterequest in front of the queue has the dominant (desired)
-// // state for the job
-// func allocReqsToJobSummariesV2(q AllocReqs) (summaries []*sproto.JobSummary) {
-// 	isAdded := make(map[model.JobID]*sproto.JobSummary)
-// 	summaries = make([]*sproto.JobSummary, 0)
-// 	for _, req := range q {
-// 		curJob := req.Job
-// 		if curJob == nil {
-// 			continue
-// 		} else if addedJob, ok := isAdded[curJob.JobID]; ok && addedJob.State >= curJob.State {
-// 			continue
-// 		}
-// 		isAdded[curJob.JobID] = curJob
-// 		summaries = append(summaries, curJob)
-// 	}
-// 	return summaries
-// 	// jobSet := orderedset.NewOrderedSet() // TODO stop using this (same as allocReqsToJobSummaries
-// 	// for _, qt := range queue {
-// 	// 	if qt.AReq.Job == nil {
-// 	// 		continue
-// 	// 	}
-// 	// 	jobSet.Add(qt.AReq.Job.JobID)
-// 	// 	jobSet
-// 	// }
-// 	// return jobSet
-// }
 
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 	if req.Job == nil {
