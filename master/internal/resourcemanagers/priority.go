@@ -45,31 +45,23 @@ func (p *priorityScheduler) repr(rp *ResourcePool) {
 	}
 }
 
-// TODO this is NOT the way.
-func syncState(req *sproto.AllocateRequest,
-	taskList *taskList,
-) {
-	assigned := taskList.GetAllocations(req.TaskActor)
-	if assigned == nil || len(assigned.Reservations) == 0 {
-		req.Job.State = sproto.SchedulingStateQueued
-	} else {
-		req.Job.State = sproto.SchedulingStateScheduled
-	}
-}
-
 // OrderedAllocations sorts by expected allocation order at this point excluding backfills.
 func (p *priorityScheduler) OrderedAllocations(
 	rp *ResourcePool,
 ) (reqs []*sproto.AllocateRequest) {
 	/*
 		compute a single numerical ordering for allocationreuqests that can be modified.
-		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms of priority. do we completely hide these from the user? discussed: we shouldn't show these to the user
+		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
+		of priority. do we completely hide these from the user? discussed: we shouldn't show these to
+		the user
 		. either way we
 		1. get a total ordering of allocation requests
-		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any, map allocationrequests to their jobid, per job id only keep the first occurance
+		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
+		maphallocationrequests to their jobid, per job id only keep the first occurrence
 		3. convert the resulting ordered list of jobids into a Job type for job apis
 
-		Once jobs carry a queue position attribute with them it'll be what sortTasksByPriorityAndTimestamp uses for returning tasks in order.
+		Once jobs carry a queue position attribute with them it'll be what
+		sortTasksByPriorityAndTimestamp uses for returning tasks in order.
 	*/
 	// WARN scheduled here means that resources are allocated.
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
@@ -83,9 +75,7 @@ func (p *priorityScheduler) OrderedAllocations(
 		}
 		priorities := getOrderedPriorities(aMap)
 		for _, priority := range priorities {
-			for _, req := range aMap[priority] {
-				*out = append(*out, req)
-			}
+			*out = append(*out, aMap[priority]...)
 		}
 	}
 

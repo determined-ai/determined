@@ -34,6 +34,7 @@ const (
 	JobTypeExperiment JobType = "EXPERIMENT"
 )
 
+// Proto returns the proto representation of the job type.
 func (jt JobType) Proto() jobv1.Type {
 	switch jt {
 	case JobTypeExperiment:
