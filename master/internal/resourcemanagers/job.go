@@ -1,10 +1,11 @@
 package resourcemanagers
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // FIXME haven't decided if resource manager actor should be responsible for this or not

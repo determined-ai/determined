@@ -1925,16 +1925,6 @@ export interface V1GetJobQueueStatsResponse {
 }
 
 /**
- * Sort results by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_QUEUE_POSITION: Returns checkpoints sorted by UUID.
- * @export
- * @enum {string}
- */
-export enum V1GetJobsRequestSortBy {
-    UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
-    QUEUEPOSITION = <any> 'SORT_BY_QUEUE_POSITION'
-}
-
-/**
  * Response to GetJobsRequest.
  * @export
  * @interface V1GetJobsResponse
@@ -2585,6 +2575,12 @@ export interface V1Job {
      * @memberof V1Job
      */
     weight?: number;
+    /**
+     * Entity ID.
+     * @type {string}
+     * @memberof V1Job
+     */
+    entityId?: string;
 }
 
 /**
@@ -2605,12 +2601,6 @@ export interface V1JobSummary {
      * @memberof V1JobSummary
      */
     state?: Determinedjobv1State;
-    /**
-     * The relative position of the job in its queue. Only applicable if state != STATE_QUEUED.
-     * @type {number}
-     * @memberof V1JobSummary
-     */
-    queuePosition?: number;
 }
 
 /**
@@ -11786,12 +11776,11 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION'} [sortBy] Sort results by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_QUEUE_POSITION: Returns checkpoints sorted by UUID.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
+        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11816,10 +11805,6 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
 
             if (resourcePools) {
                 localVarQueryParameter['resourcePools'] = resourcePools;
-            }
-
-            if (sortBy !== undefined) {
-                localVarQueryParameter['sortBy'] = sortBy;
             }
 
             if (orderBy !== undefined) {
@@ -11901,13 +11886,12 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION'} [sortBy] Sort results by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_QUEUE_POSITION: Returns checkpoints sorted by UUID.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, sortBy, orderBy, options);
+        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, orderBy, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11961,13 +11945,12 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {number} [paginationOffset] The number of records to skip before returning results.
          * @param {number} [paginationLimit] The amount of records limited in the results.
          * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION'} [sortBy] Sort results by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_QUEUE_POSITION: Returns checkpoints sorted by UUID.
-         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-            return JobsApiFp(configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, sortBy, orderBy, options)(fetch, basePath);
+        determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+            return JobsApiFp(configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, orderBy, options)(fetch, basePath);
         },
         /**
          * 
@@ -12006,14 +11989,13 @@ export class JobsApi extends BaseAPI {
      * @param {number} [paginationOffset] The number of records to skip before returning results.
      * @param {number} [paginationLimit] The amount of records limited in the results.
      * @param {Array<string>} [resourcePools] Filter the results based on a set of resource pools.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION'} [sortBy] Sort results by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_QUEUE_POSITION: Returns checkpoints sorted by UUID.
-     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Sort results by the given field. enum SortBy {   // Returns checkpoints in an unsorted list.   SORT_BY_UNSPECIFIED &#x3D; 0;   // Returns checkpoints sorted by UUID.   SORT_BY_QUEUE_POSITION &#x3D; 1; } Sort results by the given field. SortBy sort_by &#x3D; 3; Order results in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_QUEUE_POSITION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
-        return JobsApiFp(this.configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, sortBy, orderBy, options)(this.fetch, this.basePath);
+    public determinedGetJobs(paginationOffset?: number, paginationLimit?: number, resourcePools?: Array<string>, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', options?: any) {
+        return JobsApiFp(this.configuration).determinedGetJobs(paginationOffset, paginationLimit, resourcePools, orderBy, options)(this.fetch, this.basePath);
     }
 
     /**
