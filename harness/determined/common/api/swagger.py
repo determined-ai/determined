@@ -7,6 +7,7 @@ import argparse
 configuration = sc.Configuration()
 configuration.api_key_prefix['Authorization'] = 'Bearer'
 experiment_api = sc.ExperimentsApi(sc.ApiClient(configuration))
+job_api = sc.JobsApi(sc.ApiClient(configuration))
 
 def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     """
@@ -24,6 +25,7 @@ def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., An
         # TODO avoid global?
         # tensorboard_api = sc.TensorboardsApi(sc.ApiClient(configuration))
         experiment_api = sc.ExperimentsApi(sc.ApiClient(configuration))
+        job_api = sc.JobsApi(sc.ApiClient(configuration))
         return func(namespace)
 
     return f

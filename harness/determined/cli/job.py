@@ -3,13 +3,12 @@ from typing import Any, List
 from argparse import Namespace
 from determined.common.declarative_argparse import Arg, Cmd
 import determined.common.api.swagger as swg
-
+import yaml
 
 @swg.auth_required
-def list(args: Namespace) -> None:
-    api_response = swg.experiment_api.determined_get_experiment(1)
-    print(api_response)
-    pass
+def list(_: Namespace) -> None:
+    api_response = swg.job_api.determined_get_jobs(resource_pools=["default"]) # TODO type info for (optional) input and output
+    print(yaml.dump(api_response))
 
 args_description = [
     Cmd("j|ob", None, "manage job", [
