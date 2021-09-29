@@ -20,6 +20,14 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 		-l $* -o build/$*
 	touch build/$*
 
+.PHONY: place
+place: build
+	# process
+	sed 's/from swagger_client./from ./' -i build/python/swagger_client/__init__.py
+	sed 's/from swagger_client.models./from ./' -i build/python/swagger_client/models/__init__.py
+	rm -rf ../harness/determined/common/api/swagger_client
+	cp -r build/python/swagger_client ../harness/determined/common/api
+
 .PHONY: build
 build: build/typescript-fetch build/python
 
