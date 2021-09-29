@@ -21,6 +21,7 @@ type LegacyConfig struct {
 	checkpointStorage CheckpointStorageConfig
 	bindMounts        BindMountsConfig
 	envvars           EnvironmentVariablesMap
+	podSpec           *PodSpec
 }
 
 // CheckpointStorage returns a current CheckpointStorage from a LegacyConfig.
@@ -36,6 +37,11 @@ func (h LegacyConfig) BindMounts() BindMountsConfig {
 // EnvironmentVariables returns a current EnvironmentVariables from a LegacyConfig.
 func (h LegacyConfig) EnvironmentVariables() EnvironmentVariablesMap {
 	return h.envvars
+}
+
+// PodSpec returns a current k8s PodSpec from a LegacyConfig.
+func (h LegacyConfig) PodSpec() *PodSpec {
+	return h.podSpec
 }
 
 func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, error) {
@@ -136,6 +142,31 @@ func getEnvironmentVariables(raw map[string]interface{}) (EnvironmentVariablesMa
 	return ev, nil
 }
 
+func getPodSpec(raw map[string]interface{}) (*PodSpec, error) {
+	ps := &PodSpec{}
+
+	envOnly := raw["environment"]
+	if envOnly == nil {
+		return nil, nil
+	}
+
+	psOnly := envOnly.(map[string]interface{})["pod_spec"]
+	if psOnly == nil {
+		return nil, nil
+	}
+
+	rawBytes, err := json.Marshal(psOnly)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to remarshal pod spec as json")
+	}
+
+	if err = json.Unmarshal(rawBytes, ps); err != nil {
+		return nil, errors.Wrap(err, "unable to unmarshal pod spec bytes")
+	}
+
+	return ps, nil
+}
+
 // ParseLegacyConfigJSON parses bytes that represent an experiment config that was once valid
 // but might no longer be shimmable to the current version of ExperimentConfig.
 func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
@@ -170,6 +201,12 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 		return out, err
 	}
 	out.envvars = ev
+
+	ps, err := getPodSpec(raw)
+	if err != nil {
+		return out, err
+	}
+	out.podSpec = ps
 
 	return out, nil
 }

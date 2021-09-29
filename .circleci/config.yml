@@ -909,7 +909,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -935,7 +935,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -969,7 +969,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -995,7 +995,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1092,7 +1092,7 @@ jobs:
   test-e2e-webui:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: large
+    resource_class: medium
     steps:
       - checkout
       - attach_workspace:
@@ -1172,7 +1172,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1186,7 +1186,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1203,7 +1203,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1217,7 +1217,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:

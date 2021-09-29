@@ -87,9 +87,8 @@ func (e ExperimentConfig) AsLegacy() LegacyConfig {
 	return LegacyConfig{
 		checkpointStorage: schemas.Copy(e.CheckpointStorage()).(CheckpointStorageConfig),
 		bindMounts:        schemas.Copy(e.BindMounts()).(BindMountsConfig),
-		envvars: schemas.Copy(
-			e.Environment().EnvironmentVariables(),
-		).(EnvironmentVariablesMap),
+		envvars:           schemas.Copy(e.Environment().EnvironmentVariables()).(EnvironmentVariablesMap),
+		podSpec:           schemas.Copy(e.Environment().PodSpec()).(*PodSpec),
 	}
 }
 

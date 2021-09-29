@@ -119,3 +119,16 @@ func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
 		"DELETE FROM allocation_sessions WHERE allocation_id=$1", allocationID)
 	return err
 }
+
+// CloseOpenAllocations finds all allocations that were open when the master crashed
+// and adds an end time.
+func (db *PgDB) CloseOpenAllocations() error {
+	if _, err := db.sql.Exec(`
+UPDATE allocations
+SET end_time = current_timestamp AT TIME ZONE 'UTC'
+WHERE end_time IS NULL
+`); err != nil {
+		return errors.Wrap(err, "closing old allocations")
+	}
+	return nil
+}
