@@ -1,5 +1,6 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
-CODEGEN_BIN := swagger-codegen-cli-2.4.14.jar
+BIN_VER := 2.4.21
+CODEGEN_BIN := swagger-codegen-cli-$(BIN_VER).jar
 
 .PHONY: all
 all: get-deps
@@ -10,7 +11,7 @@ get-deps: deps/$(CODEGEN_BIN)
 
 deps/$(CODEGEN_BIN):
 	mkdir -p deps
-	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/2.4.14/$(CODEGEN_BIN) \
+	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(BIN_VER)/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
 .PHONY: build/%
@@ -23,8 +24,7 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 .PHONY: place
 place: build
 	# process
-	sed 's/from swagger_client./from ./' -i build/python/swagger_client/__init__.py
-	sed 's/from swagger_client.models./from ./' -i build/python/swagger_client/models/__init__.py
+	fd -t f .py build/python | xargs sed 's/swagger_client/determined.common.api.swagger_client/' -i
 	rm -rf ../harness/determined/common/api/swagger_client
 	cp -r build/python/swagger_client ../harness/determined/common/api
 
