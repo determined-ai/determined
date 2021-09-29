@@ -1,8 +1,6 @@
 package command
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,7 +32,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(uuid.New().String())
+		taskID := model.NewTaskID()
 		return createGenericCommandActor(
 			ctx, t.db, taskID, model.TaskTypeTensorboard, model.JobTypeTensorboard, msg,
 		)

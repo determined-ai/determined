@@ -1,8 +1,6 @@
 package command
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -34,7 +32,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		taskID := model.TaskID(uuid.New().String())
+		taskID := model.NewTaskID()
 		return createGenericCommandActor(ctx, s.db, taskID, model.TaskTypeShell, model.JobTypeShell, msg)
 
 	default:
