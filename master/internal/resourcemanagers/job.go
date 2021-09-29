@@ -12,6 +12,12 @@ import (
 // we don't want a separate actor do we? could be useful for streaming job endpoints
 type GetJobOrder struct{}
 
+/* filterAllocateRequests
+1. filters allocations that are not associated with a job
+2. merge/filter multilpe allocations representing a single job. If a job has many allocReqs this
+would only keep the one that's most representative of the final job state.
+Input: a list of allocateRequests sorted by expected order of execution from the scheduler.
+*/
 func filterAllocateRequests(reqs AllocReqs) AllocReqs {
 	isAdded := make(map[model.JobID]bool)
 	rv := make(AllocReqs, 0)
@@ -60,7 +66,7 @@ func allocateReqToV1Job(
 		Type:           req.Job.JobType.Proto(),
 		IsPreemptible:  req.Preemptible,
 		ResourcePool:   req.ResourcePool,
-		User:           "hamid", // TODO
+		User:           "demo-hamid", // TODO
 		SubmissionTime: timestamppb.New(req.TaskActor.RegisteredTime()),
 	}
 	switch schdType := rp.config.Scheduler.GetType(); schdType {
