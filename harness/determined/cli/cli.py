@@ -33,6 +33,7 @@ from determined.cli.top_arg_descriptions import deploy_cmd
 from determined.cli.trial import args_description as trial_args_description
 from determined.cli.user import args_description as user_args_description
 from determined.cli.version import args_description as version_args_description
+from determined.common.api.job import args_description as job_args_description
 from determined.cli.version import check_version
 from determined.common import api, yaml
 from determined.common.api import authentication, certs
@@ -139,6 +140,7 @@ all_args_description = (
     + trial_args_description
     + remote_args_description
     + user_args_description
+    + job_args_description
     + version_args_description
     + auth_args_description
     + oauth_args_description
