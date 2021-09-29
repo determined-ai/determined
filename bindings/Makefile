@@ -18,9 +18,13 @@ build/typescript-fetch: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/typescript-fetch
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l typescript-fetch -o build/typescript-fetch
+	touch build/typescript-fetch
+	$(MAKE) copy-bindings
+
+.PHONY: copy-bindings
+copy-bindings:
 	rm -rf $(ts_bindings_dest)/*
 	cp -r build/typescript-fetch/* $(ts_bindings_dest)
-	touch build/typescript-fetch
 
 .PHONY: build
 build: build/typescript-fetch
@@ -30,6 +34,7 @@ build: build/typescript-fetch
 
 .PHONY: check
 check: build
+	$(MAKE) copy-bindings
 	# Checking that the committed, generated code is up-to-date by ensuring that
 	# Git reports the files as unchanged after forcibly regenerating them.
 	# The API bindings generated here depend on changes to the API and after any changes to the API
