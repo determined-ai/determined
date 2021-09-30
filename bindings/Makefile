@@ -31,9 +31,9 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 .PHONY: place
 place: build
 	# process
-	fd -t f .py build/python | xargs sed 's/swagger_client/determined.common.api.swagger_client/' -i
-	rm -rf ../harness/determined/common/api/swagger_client
-	cp -r build/python/swagger_client ../harness/determined/common/api
+	# fd -t f .py build/python | xargs sed 's/swagger_client/determined.common.api.swagger_client/' -i
+	# rm -rf ../harness/determined/common/api/swagger_client
+	# cp -r build/python/swagger_client ../harness/determined/common/api
 
 	sed -i '10s/.*/        if hasattr(model_class, "update_forward_refs"):/' \
 		build/python-fastapi/fastapi_client/__init__.py
@@ -41,7 +41,7 @@ place: build
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
 
 .PHONY: build
-build: build/typescript-fetch build/python build/python-fastapi
+build: build/typescript-fetch build/python-fastapi
 
 .PHONY: clean-deps
 clean-deps:
