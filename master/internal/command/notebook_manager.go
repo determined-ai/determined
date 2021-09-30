@@ -33,7 +33,9 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
-		return createGenericCommandActor(ctx, n.db, taskID, model.TaskTypeNotebook, model.JobTypeNotebook, msg)
+		return createGenericCommandActor(
+			ctx, n.db, taskID, model.TaskTypeNotebook, model.JobTypeNotebook, msg,
+		)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

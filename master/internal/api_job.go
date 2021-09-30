@@ -32,7 +32,9 @@ func (a *apiServer) GetJobs(
 
 	switch {
 	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(sproto.AgentRMAddr.Child(req.ResourcePools[0]), resourcemanagers.GetJobOrder{}, &jobs)
+		err = a.actorRequest(
+			sproto.AgentRMAddr.Child(req.ResourcePools[0]), resourcemanagers.GetJobOrder{}, &jobs,
+		)
 	case sproto.UseK8sRM(a.m.system):
 		err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &jobs)
 	default:

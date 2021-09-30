@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
@@ -11,7 +13,7 @@ type TaskID string
 
 // NewTaskID returns a random, globally unique task ID.
 func NewTaskID() TaskID {
-	return NewTaskID()
+	return TaskID(uuid.New().String())
 }
 
 // TaskType is the type of a task.

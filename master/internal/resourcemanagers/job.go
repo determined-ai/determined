@@ -8,8 +8,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// GetJobOrder requests a list of *jobv1.Job.
 // FIXME haven't decided if resource manager actor should be responsible for this or not
-// we don't want a separate actor do we? could be useful for streaming job endpoints
+// we don't want a separate actor do we? could be useful for streaming job endpoints.
 type GetJobOrder struct{}
 
 /* filterAllocateRequests
@@ -71,7 +72,7 @@ func allocateReqToV1Job(
 	return job
 }
 
-// getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations
+// getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
 func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {

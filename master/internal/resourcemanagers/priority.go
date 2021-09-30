@@ -19,8 +19,8 @@ type priorityScheduler struct {
 // AllocReqs is an alias for a list of Allocation Requests.
 type AllocReqs = []*sproto.AllocateRequest
 
-// REMOVE can't replace groups identifier with job id since not all groups are associated with a job,
-// eg GC tasks that aren't related to a job.
+// REMOVEME can't replace groups identifier with job id since not all groups are
+// associated with a job, eg GC tasks that aren't related to a job.
 
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
@@ -31,18 +31,9 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	ar := p.OrderedAllocations(rp)
-	// TODO remove me. for testing only.
-	p.repr(rp)
+	// TODO remove me. for dev only.
 	logAllocRequests(ar, "ordered allocations")
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
-}
-
-// TODO remove me
-func (p *priorityScheduler) repr(rp *ResourcePool) {
-	log.Debugf("total tasks by time %d", rp.taskList.taskByTime.Size())
-	for handler, _ := range rp.taskList.taskByHandler {
-		log.Debug("task parent " + handler.Parent().Address().String())
-	}
 }
 
 // OrderedAllocations sorts by expected allocation order at this point excluding backfills.

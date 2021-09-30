@@ -94,7 +94,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 			TaskType:  c.taskType,
 			StartTime: c.registeredTime,
 		}); err != nil {
-			// TODO why do we persist the task when the underlying command isn't persisted? or is it now persisted
+			// TODO why do we persist the task when the underlying command isn't persisted?
+			// or is it now persisted?
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
 

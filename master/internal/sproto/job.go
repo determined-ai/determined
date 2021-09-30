@@ -19,6 +19,7 @@ const (
 	SchedulingStateScheduled SchedulingState = 2
 )
 
+// Proto returns proto representation of SchedulingState.
 func (s SchedulingState) Proto() jobv1.State {
 	switch s {
 	case SchedulingStateQueued:
