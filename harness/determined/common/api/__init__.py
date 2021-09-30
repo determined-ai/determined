@@ -35,3 +35,5 @@ from determined.common.api.profiler import (
     TrialProfilerMetricsBatch,
     get_trial_profiler_available_series,
 )
+
+# from . import fastapi_client
