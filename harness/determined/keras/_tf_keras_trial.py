@@ -17,8 +17,7 @@ from tensorflow.python.framework.ops import EagerTensor
 import determined as det
 from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
 from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 
@@ -255,7 +254,6 @@ class TFKerasTrialController(det.TrialController):
         trial_inst: det.Trial,
         context: det.TrialContext,
         env: det.EnvContext,
-        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> det.TrialController:
@@ -297,7 +295,6 @@ class TFKerasTrialController(det.TrialController):
             keras.TFKerasTrainConfig(training_data, validation_data, tf_keras_callbacks),
             context,
             env,
-            rendezvous_info,
             hvd_config,
             workloads,
         )
@@ -346,17 +343,16 @@ class TFKerasTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session,
+                self.context._generic,
                 self.env,
-                self.context.distributed,
             )
 
         # If a load path is provided, load weights and restore the data location.
         self.multiplexer_load_state = None  # type: Optional[Dict]
         if self.env.latest_checkpoint is not None:
-            with self._generic._download_initial_checkpoint(
+            logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+            with self.context._generic.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self._load(pathlib.Path(load_path))
@@ -369,6 +365,8 @@ class TFKerasTrialController(det.TrialController):
         self.train_workload_inputs = 0
         self.train_workload_len = 0
         self.test_inputs = 0
+
+        self.latest_batch = self.env.latest_batch
 
     def _check_training_data(self) -> None:
         cacheable_used = self.context.experimental.get_train_cacheable().is_decorator_used()
@@ -790,14 +788,17 @@ class TFKerasTrialController(det.TrialController):
                 elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
-                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"tensorflow-{tf.__version__}",
+                            "format": "saved_weights",
+                        }
+                        with self.context._generic.checkpointing.store_path(metadata) as (
+                            storage_id,
+                            path,
+                        ):
                             self._save_checkpoint(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"tensorflow-{tf.__version__}",
-                                "format": "saved_weights",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -859,6 +860,7 @@ class TFKerasTrialController(det.TrialController):
                 if k not in {"batch", "size"}
             }
         )
+        self.latest_batch += 1
         self.train_workload_inputs += num_inputs
         self.train_workload_batches += 1
         if self.train_workload_batches != self.train_workload_len:

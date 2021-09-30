@@ -118,14 +118,14 @@ def _load_trial_for_checkpoint_export(
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
         trial_class = load.trial_class_from_entrypoint(config["entrypoint"])
-        env, rendezvous_info, hvd_config = det._make_local_execution_env(
+        generic_context, env, hvd_config = det._make_local_execution_env(
             managed_training=managed_training,
             test_mode=False,
             config=config,
             checkpoint_dir="/tmp",
             hparams=hparams,
         )
-        trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
+        trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
     return trial_class, trial_context
 
 
@@ -138,25 +138,36 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     with tempfile.TemporaryDirectory() as checkpoint_dir:
-        env, rendezvous_info, hvd_config = det._make_local_execution_env(
+        generic_context, env, hvd_config = det._make_local_execution_env(
             managed_training=True,
             test_mode=True,
             config=config,
             checkpoint_dir=checkpoint_dir,
             limit_gpus=1,
         )
+
         workloads = _make_test_workloads(env.experiment_config)
         logging.info(f"Using hyperparameters: {env.hparams}.")
         logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
-        controller = load.load_trial(
-            trial_class=trial_class,
+        controller_class = trial_class.trial_controller_class
+        assert controller_class is not None
+        controller_class.pre_execute_hook(env, hvd_config)
+
+        trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+        logging.info(f"Creating {trial_class.__name__}.")
+        trial_inst = trial_class(trial_context)
+
+        controller = controller_class.from_trial(
+            trial_inst=trial_inst,
+            context=trial_context,
             env=env,
-            rendezvous_info=rendezvous_info,
             hvd_config=hvd_config,
             workloads=workloads,
         )
+
         controller.run()
+
         logging.info("The test experiment passed.")
         logging.info(
             "Note: to submit an experiment to the cluster, change local parameter to False"
@@ -244,7 +255,7 @@ def create(
                 config=config,
             )
 
-    elif not load.RunpyGlobals.is_initialized():
+    elif not load.in_runpy:
         # Cluster mode, but still running locally; submit the experiment.
         _submit_experiment(
             config=config,
@@ -256,7 +267,7 @@ def create(
 
     else:
         # Cluster mode, now on the cluster; actually train.
-        load.RunpyGlobals.set_runpy_trial_result(trial_def)
+        load.runpy_trial_class = trial_def
         raise det.errors.StopLoadingImplementation()
 
 
@@ -293,12 +304,12 @@ def create_trial_instance(
     determined.common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(
+    generic_context, env, hvd_config = det._make_local_execution_env(
         managed_training=False,
         test_mode=False,
         config=config,
         checkpoint_dir="/tmp",
         hparams=hparams,
     )
-    trial_context = trial_def.trial_context_class(env, hvd_config, rendezvous_info=rendezvous_info)
+    trial_context = trial_def.trial_context_class(generic_context, env, hvd_config)
     return trial_def(trial_context)

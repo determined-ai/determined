@@ -150,7 +150,7 @@ def master_up(
             },
             "checkpoint_storage": {
                 "type": "shared_fs",
-                "host_path": str(Path(appdirs.user_data_dir("determined"))),
+                "host_path": appdirs.user_data_dir("determined"),
                 "save_experiment_best": 0,
                 "save_trial_best": 1,
                 "save_trial_latest": 1,

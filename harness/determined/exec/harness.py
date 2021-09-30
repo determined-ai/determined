@@ -1,10 +1,12 @@
+import argparse
+import contextlib
 import faulthandler
 import logging
 import sys
+from typing import Iterator, Optional
 
 import determined as det
 from determined import _generic, horovod, load
-from determined.common import experimental
 from determined.common.api import certs
 
 
@@ -17,12 +19,23 @@ def config_logging(debug: bool) -> None:
     logging.debug("Starting harness.")
 
 
-def main() -> int:
+@contextlib.contextmanager
+def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
+    if debug_enabled:
+        faulthandler.dump_traceback_later(30, repeat=True)
+    try:
+        yield
+    finally:
+        if debug_enabled:
+            faulthandler.cancel_dump_traceback_later()
+
+
+def main(chief_ip: Optional[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    # TODO: refactor data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
 
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.
@@ -33,7 +46,7 @@ def main() -> int:
     # A better pattern is to pass in exactly the information that is necessary at each layer.  We
     # will use that pattern for the future high-level APIs, but it's not worth refactoring e.g. the
     # TFKerasTrialController or EstimatorTrialController to add that functionality, so for now we
-    # continue with the legay strategy.
+    # continue with the legacy strategy.
 
     env = det.EnvContext(
         master_url=info.master_url,
@@ -68,51 +81,58 @@ def main() -> int:
 
     config_logging(env.debug)
 
-    if env.experiment_config.debug_enabled():
-        faulthandler.dump_traceback_later(30, repeat=True)
+    with maybe_periodic_stacktraces(env.debug):
+        # Step 1: Load user code.
+        # We can't build a generic.Context until we have a RankInfo, and we can't build a RankInfo
+        # without horovod, and we can't load the right horovod until we know which Trial class the
+        # user implemented.
+        trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
-    with det._catch_sys_exit():
-        try:
-            # TODO: reorder object lifetimes so that the DistributedContext and the GenericContext
-            # are created here.  Nothing else in the TrialController or Trial code needs the
-            # rendezvous info.  Then we can remove the rendezvous info as an arg from the whole rest
-            # of the harness.
-            rendezvous_info = info._rendezvous_info
-            assert rendezvous_info is not None
-            controller = load.prepare_controller(
-                env,
-                rendezvous_info,
-                hvd_config,
-            )
-        except det.InvalidHP:
-            # build a Training API object just to call report_early_exit().
-            session = experimental.Session(None, None, None, certs.cli_cert)
-            training = _generic.Training(
-                session,
-                info.trial.trial_id,
-                env.trial_run_id,
-                info.trial.experiment_id,
-                None,
-                None,
-            )
-            training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
-            logging.info("InvalidHP detected during Trial init, worker is exiting")
-            return 0
+        # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
+        controller_class.pre_execute_hook(env, hvd_config)
 
-        try:
+        # Step 3: Now that horovod is initialized, we can build a RankInfo object.
+        # It is always expected that the training code can figure this out based on how the
+        # launch layer launched the code.
+        if not hvd_config.use:
+            rank_info = None
+        else:
+            rank_info = _generic.RankInfo(
+                rank=horovod.hvd.rank(),
+                size=horovod.hvd.size(),
+                local_rank=horovod.hvd.local_rank(),
+                local_size=horovod.hvd.local_size(),
+                cross_rank=horovod.hvd.cross_rank(),
+                cross_size=horovod.hvd.cross_size(),
+            )
+
+        # Step 4: Let generic.init() create the generic.Context.
+        with _generic.init(rank_info=rank_info, chief_ip=chief_ip) as generic_context:
+            trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+
+            # Step 5: Instantiate the user's Trial.
+            trial_inst = trial_class(trial_context)
+
+            # Step 6: Create a TrialController and execute training
+            logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
+            controller = controller_class.from_trial(
+                trial_inst=trial_inst,
+                context=trial_context,
+                env=env,
+                hvd_config=hvd_config,
+            )
+
             controller.run()
-        finally:
-            # TODO: Refactor load_trial so that it takes a generic context as input.
-            # That way we can just be inside a context manager and we don't have to keep track of
-            # errors so closely.
-            controller.context.distributed.close()
 
-            # Don't hang with debug=true.
-            if env.experiment_config.debug_enabled():
-                faulthandler.cancel_dump_traceback_later()
+        # XXX: callout to reviewer:
+        # no det._catch_sys_exit() anymore!  With push arch, exit() has well-defined behavior.
+        # no try/except det.InvalidHP anymore!  That's handled in generic.Context.__exit__()
 
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--chief-ip")
+    args = parser.parse_args()
+    sys.exit(main(args.chief_ip))

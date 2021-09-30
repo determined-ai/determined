@@ -19,8 +19,7 @@ from tensorflow_estimator.python.estimator.training import _NewCheckpointListene
 import determined as det
 from determined import estimator, horovod, layers, monkey_patch, tensorboard, workload
 from determined._tf_rng import get_rng_state, set_rng_state
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
 from determined.horovod import hvd
 
 VERY_LARGE_NUMBER = 9999999999999999
@@ -75,6 +74,8 @@ class DeterminedControlHook(estimator.RunHook):
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
 
         self.prof = estimator_trial_controller.prof
+
+        self.latest_batch = estimator_trial_controller.env.latest_batch
 
     def begin(self) -> None:
         # For performance reasons, we collect per batch metrics
@@ -136,6 +137,7 @@ class DeterminedControlHook(estimator.RunHook):
         )
         self._session = run_context.session
         self._current_global_step = int(run_values.results["global_step"])
+        self.latest_batch += 1
 
         self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
@@ -272,7 +274,7 @@ class DeterminedControlHook(estimator.RunHook):
         return self.estimator_trial_controller.compute_validation_metrics()
 
     def control_loop(self) -> None:
-        _generic = self.estimator_trial_controller._generic
+        _generic = self.estimator_trial_controller.context._generic
 
         assert self.estimator_trial_controller.workloads is not None
         for wkld, response_func in self.estimator_trial_controller.workloads:
@@ -300,14 +302,14 @@ class DeterminedControlHook(estimator.RunHook):
                     action = "checkpointing"
                     self._save_model()
                     if self.estimator_trial_controller.is_chief:
-                        with _generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"tensorflow-{tf.__version__}",
+                            "format": "saved_model",
+                        }
+                        with _generic.checkpointing.store_path(metadata) as (storage_id, path):
                             self._checkpoint_model(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"tensorflow-{tf.__version__}",
-                                "format": "saved_model",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -392,9 +394,8 @@ class EstimatorTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
         self._init_model()
@@ -659,11 +660,6 @@ class EstimatorTrialController(det.TrialController):
         # for the estimator itself.
         self._init_session_config(session_config, self.env, self.hvd_config)
 
-        if not self.hvd_config.use and len(self.env.container_gpus) > 1:
-            check.true(len(self.rendezvous_info.container_addrs) == 1)
-            train_distribute = tf.distribute.MirroredStrategy()
-            eval_distribute = tf.distribute.MirroredStrategy()
-
         config = config.replace(
             model_dir=str(self.estimator_dir),
             tf_random_seed=self.env.trial_seed,
@@ -715,7 +711,10 @@ class EstimatorTrialController(det.TrialController):
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
 
-        with self._generic._download_initial_checkpoint(self.env.latest_checkpoint) as load_path:
+        logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+        with self.context._generic.checkpointing.restore_path(
+            self.env.latest_checkpoint
+        ) as load_path:
             for callback in self.train_hooks:
                 if isinstance(callback, estimator.RunHook):
                     callback.on_checkpoint_load(str(load_path))

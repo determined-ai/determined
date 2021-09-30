@@ -11,7 +11,7 @@ from typing import Any, Callable, List, Optional, cast
 import pytest
 
 import determined as det
-from determined import ipc
+from determined import _generic, ipc
 
 
 class Subproc(multiprocessing.Process):
@@ -181,7 +181,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
 
     # Create all of the DistributedContexts.
     def make_distributed_context(rank: int, cross_rank: int, local_rank: int) -> Any:
-        rank_info = det.RankInfo(
+        rank_info = _generic.RankInfo(
             rank=cross_rank * local_size + local_rank,
             size=cross_size * local_size,
             local_rank=local_rank,
@@ -189,7 +189,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
             cross_rank=cross_rank,
             cross_size=cross_size,
         )
-        return det.DistributedContext(
+        return _generic.DistributedContext(
             rank_info=rank_info,
             chief_ip="localhost",
             force_tcp=force_tcp,

@@ -52,11 +52,16 @@ def main() -> int:
         # Non-distriubuted training; skip running in subprocesses to improve startup times.
         from determined.exec import harness
 
-        return harness.main()
+        return harness.main(chief_ip=None)
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
     certs.cli_cert = cert
+
+    # The launch layer should provide the chief_ip to the training code, so that the training code
+    # can function with a different launch layer in a different environment.  Inside Determined, the
+    # easiest way to get the chief_ip is with container_addrs.
+    chief_ip = info.container_addrs[0]
 
     if info.container_rank > 0:
         # Non-chief machines just run sshd.
@@ -181,6 +186,8 @@ def main() -> int:
         "python3",
         "-m",
         "determined.exec.harness",
+        "--chief-ip",
+        chief_ip,
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")
