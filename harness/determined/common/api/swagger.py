@@ -1,13 +1,15 @@
-from determined.common.api.authentication import Authentication, cli_auth
-from determined.common.api import swagger_client as sc
+import argparse
 import functools
 from typing import Any, Callable
-import argparse
+
+from determined.common.api import swagger_client as sc
+from determined.common.api.authentication import Authentication, cli_auth
 
 configuration = sc.Configuration()
-configuration.api_key_prefix['Authorization'] = 'Bearer'
+configuration.api_key_prefix["Authorization"] = "Bearer"
 experiment_api = sc.ExperimentsApi(sc.ApiClient(configuration))
 job_api = sc.JobsApi(sc.ApiClient(configuration))
+
 
 def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     """
@@ -20,7 +22,7 @@ def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., An
         configuration.host = namespace.master
         cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
         token = cli_auth.get_session_token()
-        configuration.api_key['Authorization'] = token
+        configuration.api_key["Authorization"] = token
 
         # TODO avoid global?
         # tensorboard_api = sc.TensorboardsApi(sc.ApiClient(configuration))

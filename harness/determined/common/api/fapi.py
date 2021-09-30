@@ -1,12 +1,15 @@
-from determined.common.api.authentication import Authentication, cli_auth
-import functools
-from typing import Any, Callable, Awaitable, List, Dict
 import argparse
-from determined.common.api.fastapi_client import SyncApis, ApiClient, AsyncApis
-from determined.common.api.fastapi_client.api_client import Send
-from httpx import Request, Response
-from pydantic import BaseModel # FIXME this doesn't get resolved in my IDE's language server
+import functools
 import json
+from typing import Any, Awaitable, Callable, Dict, List
+
+from httpx import Request, Response
+from pydantic import BaseModel  # FIXME this doesn't get resolved in my IDE's language server
+
+from determined.common.api.authentication import Authentication, cli_auth
+from determined.common.api.fastapi_client import ApiClient, AsyncApis, SyncApis
+from determined.common.api.fastapi_client.api_client import Send
+
 # from determined.common.api.fastapi_client.api_client import ApiClient, AsyncApis, SyncApis
 # from determined.common.api.fastapi_client.models import Pet
 
@@ -24,26 +27,30 @@ sync_apis = SyncApis(client)
 
 def add_token(token: str):
     def f(req: Request, send: Send) -> Awaitable[Response]:
-        req.headers['Authorization'] = 'Bearer ' + token
+        req.headers["Authorization"] = "Bearer " + token
         return send(req)
+
     return f
+
 
 def to_dict(o: BaseModel):
     rv = o
     if isinstance(o, List):
         return [to_dict(i) for i in o]
-    elif hasattr(o, 'dict'):
-        rv = o.dict() # type: Dict[str, Any]
+    elif hasattr(o, "dict"):
+        rv = o.dict()  # type: Dict[str, Any]
         if isinstance(o, dict):
             for k, v in o.items():
                 rv[k] = to_dict(v)
     return rv
 
+
 def to_json(o: BaseModel):
     if isinstance(o, List):
         return [to_json(i) for i in o]
-    assert hasattr(o, 'json')
+    assert hasattr(o, "json")
     return json.loads(o.json())
+
 
 def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     """
