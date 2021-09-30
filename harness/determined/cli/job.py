@@ -4,7 +4,7 @@ from typing import Any, List
 
 import yaml
 
-import determined.common.api.fapi as fapi
+from determined.common.api.fapi import sync_apis, to_json, auth_required
 from determined.common.declarative_argparse import Arg, Cmd
 
 # from determined.common.api.fastapi_client.models import V1LoginRequest
@@ -19,12 +19,12 @@ from determined.common.declarative_argparse import Arg, Cmd
 #     print(api_response.jobs)
 
 
-@fapi.auth_required
+@auth_required
 def list(args: Namespace) -> None:
-    response = fapi.sync_apis.jobs_api.determined_get_jobs(resource_pools=[args.resource_pool])
+    response = sync_apis.jobs_api.determined_get_jobs(resource_pools=[args.resource_pool])
     if response.jobs is None: # TODO remove once proto annotations are inplace.
         return
-    jobs_json = fapi.to_json(response.jobs)
+    jobs_json = to_json(response.jobs)
     if args.output == "yaml":
         print(yaml.safe_dump(jobs_json, default_flow_style=False))
     elif args.output == "json":
