@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha512"
 	"fmt"
-	"os"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,7 +29,7 @@ func replicateClientSideSaltAndHash(password string) string {
 
 func (a *apiServer) Login(
 	_ context.Context, req *apiv1.LoginRequest) (*apiv1.LoginResponse, error) {
-	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+	if a.m.config.InternalConfig.ExternalSessions.JwtKey != "" {
 		return nil, status.Error(codes.FailedPrecondition, "authentication is configured to be external")
 	}
 
@@ -71,7 +70,7 @@ func (a *apiServer) Login(
 
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest) (*apiv1.CurrentUserResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ func (a *apiServer) CurrentUser(
 
 func (a *apiServer) Logout(
 	ctx context.Context, _ *apiv1.LogoutRequest) (*apiv1.LogoutResponse, error) {
-	_, userSession, err := grpcutil.GetUser(ctx, a.m.db)
+	_, userSession, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"os"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -25,8 +24,8 @@ func (a *apiServer) GetMaster(
 		ClusterId:         a.m.ClusterID,
 		ClusterName:       a.m.config.ClusterName,
 		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
-		ExternalLoginUri:  os.Getenv("EXTERNAL_LOGIN_URI"),
-		ExternalLogoutUri: os.Getenv("EXTERNAL_LOGOUT_URI"),
+		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
+		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 	}, nil
 }
 

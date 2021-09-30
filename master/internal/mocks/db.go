@@ -2125,13 +2125,13 @@ func (_m *DB) UpsertTemplate(tpl *model.Template) error {
 	return r0
 }
 
-// UserByExternalToken provides a mock function with given fields: token
-func (_m *DB) UserByExternalToken(token string) (*model.User, *model.UserSession, error) {
-	ret := _m.Called(token)
+// UserByExternalToken provides a mock function with given fields: token, tokenKey
+func (_m *DB) UserByExternalToken(token string, tokenKey string) (*model.User, *model.UserSession, error) {
+	ret := _m.Called(token, tokenKey)
 
 	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string) *model.User); ok {
-		r0 = rf(token)
+	if rf, ok := ret.Get(0).(func(string, string) *model.User); ok {
+		r0 = rf(token, tokenKey)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
@@ -2139,8 +2139,8 @@ func (_m *DB) UserByExternalToken(token string) (*model.User, *model.UserSession
 	}
 
 	var r1 *model.UserSession
-	if rf, ok := ret.Get(1).(func(string) *model.UserSession); ok {
-		r1 = rf(token)
+	if rf, ok := ret.Get(1).(func(string, string) *model.UserSession); ok {
+		r1 = rf(token, tokenKey)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*model.UserSession)
@@ -2148,8 +2148,8 @@ func (_m *DB) UserByExternalToken(token string) (*model.User, *model.UserSession
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(token)
+	if rf, ok := ret.Get(2).(func(string, string) error); ok {
+		r2 = rf(token, tokenKey)
 	} else {
 		r2 = ret.Error(2)
 	}

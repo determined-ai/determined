@@ -424,7 +424,9 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m}, m.config.InternalConfig.PrometheusEnabled)
+		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
+			m.config.InternalConfig.PrometheusEnabled,
+			&m.config.InternalConfig.ExternalSessions)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
@@ -615,12 +617,12 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.trialLogBackend))
 
-	userService, err := user.New(m.db, m.system)
+	userService, err := user.New(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize user manager")
 	}
 	var authFuncs []echo.MiddlewareFunc
-	if len(os.Getenv("EXTERNAL_JWT_KEY")) == 0 {
+	if m.config.InternalConfig.ExternalSessions.JwtKey == "" {
 		authFuncs = []echo.MiddlewareFunc{userService.ProcessAuthentication}
 	} else {
 		authFuncs = []echo.MiddlewareFunc{userService.ProcessExternalAuthentication}

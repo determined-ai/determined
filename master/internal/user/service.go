@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -49,13 +48,14 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 
 // Service describes a user manager.
 type Service struct {
-	db     *db.PgDB
-	system *actor.System
+	db        *db.PgDB
+	system    *actor.System
+	extConfig *model.ExternalSessions
 }
 
 // New creates a new user service.
-func New(db *db.PgDB, system *actor.System) (*Service, error) {
-	return &Service{db, system}, nil
+func New(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) (*Service, error) {
+	return &Service{db, system, extConfig}, nil
 }
 
 // The middleware looks for a token in two places (in this order):
@@ -115,7 +115,7 @@ func (s *Service) ProcessExternalAuthentication(next echo.HandlerFunc) echo.Hand
 			return err
 		}
 
-		user, userSession, err := s.db.UserByExternalToken(token)
+		user, userSession, err := s.db.UserByExternalToken(token, s.extConfig.JwtKey)
 		switch err {
 		case nil:
 			if !user.Active {
@@ -153,7 +153,7 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) postLogin(c echo.Context) (interface{}, error) {
-	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
+	if s.extConfig.JwtKey != "" {
 		return nil, echo.NewHTTPError(http.StatusMisdirectedRequest,
 			"authentication is configured to be external")
 	}

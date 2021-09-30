@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -25,10 +24,6 @@ const SessionDuration = 7 * 24 * time.Hour
 
 // StartUserSession creates a row in the user_sessions table.
 func (db *PgDB) StartUserSession(user *model.User) (string, error) {
-	if len(os.Getenv("EXTERNAL_JWT_KEY")) > 0 {
-		return "", errors.New("authentication is configured to be external")
-	}
-
 	userSession := &model.UserSession{
 		UserID: user.ID,
 		Expiry: time.Now().Add(SessionDuration),
@@ -87,12 +82,12 @@ type externalToken struct {
 }
 
 // UserByExternalToken returns a user session derived from an external authentication token.
-func (db *PgDB) UserByExternalToken(tokenText string) (*model.User, *model.UserSession, error) {
+func (db *PgDB) UserByExternalToken(tokenText string, tokenKey string) (*model.User,
+	*model.UserSession, error) {
 	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
 		func(token *jwt.Token) (interface{}, error) {
-			publicKeyText := os.Getenv("EXTERNAL_JWT_KEY")
 			var publicKey rsa.PublicKey
-			err := json.Unmarshal([]byte(publicKeyText), &publicKey)
+			err := json.Unmarshal([]byte(tokenKey), &publicKey)
 			if err != nil {
 				log.Errorf("error parsing JWT key: %s", err.Error())
 				return nil, err
@@ -105,7 +100,7 @@ func (db *PgDB) UserByExternalToken(tokenText string) (*model.User, *model.UserS
 	}
 	claims := token.Claims.(*externalToken)
 
-	// TODO access control
+	// Access control logic can be applied here
 
 	tx, err := db.sql.Beginx()
 	defer func() {
