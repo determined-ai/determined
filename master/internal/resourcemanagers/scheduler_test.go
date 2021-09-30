@@ -447,3 +447,21 @@ func assertEqualToRelease(
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected tasks must have the same length")
 }
+
+func TestFilterAllocateRequests(t *testing.T) {
+	ids := [...]string{"a", "b", "c", "b", "b"}
+	expectedOrder := [...]string{"a", "b", "c"}
+	requests := make([]*sproto.AllocateRequest, 0)
+	for _, jid := range ids {
+		requests = append(requests, &sproto.AllocateRequest{
+			Job: &sproto.JobSummary{
+				JobID: model.JobID(jid),
+			},
+		})
+	}
+	jids := allocReqsToJobOrder(requests)
+	assert.Equal(t, len(jids), len(expectedOrder))
+	for i := 0; i < len(jids); i++ {
+		assert.DeepEqual(t, jids[i], expectedOrder[i])
+	}
+}

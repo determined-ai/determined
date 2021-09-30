@@ -1116,23 +1116,42 @@ FROM (
 ) descs`, skipArchived, skipInactive, username)
 }
 
+// func deferConstraints(tx *sqlx.Tx) error {
+// 	if _, err := tx.Exec(`SET CONSTRAINTS ALL DEFERRED`); err != nil {
+// 		￼return errors.Wrap(err, "deferring constraints")
+// 	￼}
+// 	￼return nil
+// }
+
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
+func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
-	err := db.namedGet(&experiment.ID, `
-INSERT INTO experiments
-(state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
-VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-		:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-		:notes)
-RETURNING id`, experiment)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
-	}
-	return nil
+	return db.withTransaction("add_experiment", func(tx *sqlx.Tx) error {
+		// if err = deferConstraints(tx); err != nil {
+		// 	return err
+		// }
+		job := model.Job{
+			JobID:   experiment.JobID,
+			JobType: "EXPERIMENT",
+		}
+		if err = addJob(tx, &job); err != nil {
+			return errors.Wrapf(err, "error inserting job %v", job)
+		}
+		err := namedGet(tx, &experiment.ID, `
+	INSERT INTO experiments
+	(state, config, model_definition, start_time, end_time, archived,
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
+	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
+					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
+					:notes, :job_id)
+	RETURNING id`, experiment)
+		if err != nil {
+			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
+		}
+		return nil
+	})
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.
@@ -1212,7 +1231,7 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
 	if err == sql.ErrNoRows {

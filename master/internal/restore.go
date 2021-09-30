@@ -145,7 +145,7 @@ func (e *experiment) restoreTrial(
 
 	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
 	t := newTrial(
-		trialTaskID(e.ID, searcher.Create.RequestID), e.ID, e.State, searcher, e.rm,
+		trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.ID, e.State, searcher, e.rm,
 		e.trialLogger, e.db, config, ckpt, e.taskSpec,
 	)
 	if trialID != nil {
@@ -170,6 +170,7 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
+		// TODO snapshot restore
 		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
 			return nil, errors.Wrap(err, "failed to shim trial snapshot")
 		}
@@ -199,7 +200,7 @@ var experimentSnapshotShims = map[int]snapshotShimFunc{
 	2: shimExperimentSnapshotV2,
 }
 
-// shimExperimentSnapshot shims a trial snapshot to the version required by the master,
+// shimExperimentSnapshot shims an experiment snapshot to the version required by the master,
 // returning an error in the event the shim fails or the snapshot version is greater
 // than the current version (which could happen in a downgrade).
 func shimExperimentSnapshot(snapshot []byte, version int) ([]byte, error) {
