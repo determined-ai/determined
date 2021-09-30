@@ -448,23 +448,7 @@ func assertEqualToRelease(
 		"actual tasks and expected tasks must have the same length")
 }
 
-func TestOrderedAllocationToJobOrder(t *testing.T) { // lowerPriority := 50
-	// higherPriority := 40
-
-	// agents := make([]*mockAgent, 0)
-	// groups := []*mockGroup{ {id: "group1", priority: &lowerPriority},
-	// 	{id: "group2", priority: &higherPriority},
-	// }
-	// tasks := []*mockTask{
-	// 	{id: "task1", slotsNeeded: 4, group: groups[0]},
-	// 	{id: "task2", slotsNeeded: 1, group: groups[0]},
-	// 	{id: "task3", slotsNeeded: 0, group: groups[1]},
-	// 	{id: "task4", slotsNeeded: 0, group: groups[1]},
-	// 	{id: "task5", slotsNeeded: 4, group: groups[1]},
-	// }
-
-	// system := actor.NewSystem(t.Name())
-	// taskList, mockGroups, _ := setupSchedulerStates(t, system, tasks, groups, agents)
+func TestFilterAllocateRequests(t *testing.T) {
 	ids := [...]string{"a", "b", "c", "b", "b"}
 	expectedOrder := [...]string{"a", "b", "c"}
 	requests := make([]*sproto.AllocateRequest, 0)

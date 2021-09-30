@@ -34,14 +34,7 @@ func filterAllocateRequests(reqs AllocReqs) AllocReqs {
 	return rv
 }
 
-func allocReqsToJobSummaries(reqs AllocReqs) (summaries []*sproto.JobSummary) {
-	for _, req := range filterAllocateRequests(reqs) {
-		summaries = append(summaries, req.Job)
-	}
-	return summaries
-}
-
-// allocReqsToJobOrder convertes sorted allocation requests to job order.
+// allocReqsToJobOrder converts sorted allocation requests to job order.
 func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
 	for _, req := range filterAllocateRequests(reqs) {
 		jobIds = append(jobIds, string(req.Job.JobID))
@@ -60,7 +53,7 @@ func allocateReqToV1Job(
 	job = &jobv1.Job{
 		Summary: &jobv1.JobSummary{
 			JobId: string(req.Job.JobID),
-			State: req.Job.State.Proto(), // look at AllocationState
+			State: req.Job.State.Proto(),
 		},
 		EntityId:       req.Job.EntityID,
 		Type:           req.Job.JobType.Proto(),
