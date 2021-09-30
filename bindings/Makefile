@@ -14,6 +14,8 @@ deps/$(CODEGEN_BIN):
 	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(BIN_VER)/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
+# ./scripts/generate.sh --import-name determined.common.api.fastapi_client --package-name fastapi_client -i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json -o /tmp/fastapi2
+
 .PHONY: build/%
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
