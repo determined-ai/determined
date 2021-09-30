@@ -259,6 +259,7 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
 	ID             int                      `db:"id"`
+	JobID          JobID                    `db:"job_id"`
 	State          State                    `db:"state"`
 	Notes          string                   `db:"notes"`
 	Config         expconf.ExperimentConfig `db:"config"`
@@ -305,6 +306,7 @@ func NewExperiment(
 	}
 	return &Experiment{
 		State:                PausedState,
+		JobID:                NewJobID(),
 		Config:               config,
 		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,

@@ -19,6 +19,12 @@ func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequ
 	return roundRobinSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 
+func (p *roundRobinScheduler) OrderedAllocations(
+	rp *ResourcePool,
+) (reqs []*sproto.AllocateRequest) {
+	return reqs
+}
+
 func roundRobinSchedule(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,

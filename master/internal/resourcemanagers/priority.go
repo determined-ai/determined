@@ -16,6 +16,12 @@ type priorityScheduler struct {
 	preemptionEnabled bool
 }
 
+// AllocReqs is an alias for a list of Allocation Requests.
+type AllocReqs = []*sproto.AllocateRequest
+
+// REMOVEME can't replace groups identifier with job id since not all groups are
+// associated with a job, eg GC tasks that aren't related to a job.
+
 // NewPriorityScheduler creates a new scheduler that schedules tasks via priority.
 func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 	return &priorityScheduler{
@@ -24,7 +30,54 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+	ar := p.OrderedAllocations(rp)
+	// TODO remove me. for dev only.
+	logAllocRequests(ar, "ordered allocations")
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+// OrderedAllocations sorts by expected allocation order at this point excluding backfills.
+func (p *priorityScheduler) OrderedAllocations(
+	rp *ResourcePool,
+) (reqs []*sproto.AllocateRequest) {
+	/*
+		compute a single numerical ordering for allocationreuqests that can be modified.
+		how do non-job tasks affect the queue and the user? how do does (eg gc) get scheduled in terms
+		of priority. do we completely hide these from the user? discussed: we shouldn't show these to
+		the user
+		. either way we
+		1. get a total ordering of allocation requests
+		2. assuming we hide non jobs form job queue: filterout non-job-related tasks if any,
+		maphallocationrequests to their jobid, per job id only keep the first occurrence
+		3. convert the resulting ordered list of jobids into a Job type for job apis
+
+		Once jobs carry a queue position attribute with them it'll be what
+		sortTasksByPriorityAndTimestamp uses for returning tasks in order.
+	*/
+	// WARN scheduled here means that resources are allocated.
+	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
+		rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
+
+	// FIXME there is gotta be a friendlier version of this.
+	// can we stick to slices together quickly in Go?
+	readFromPrioToTask := func(aMap map[int]AllocReqs, out *AllocReqs) {
+		if out == nil {
+			panic("missing output array. (nil pointer)")
+		}
+		priorities := getOrderedPriorities(aMap)
+		for _, priority := range priorities {
+			*out = append(*out, aMap[priority]...)
+		}
+	}
+
+	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
+	// TODO remove logs
+	log.Debugf("scheduled tasks %v", priorityToScheduledTaskMap)
+	log.Debugf("scheduled job order %v", allocReqsToJobOrder(reqs))
+	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
+	log.Debugf("pendings tasks %v", priorityToPendingTasksMap)
+	log.Debugf("full job order %v", allocReqsToJobOrder(reqs))
+	return reqs
 }
 
 func (p *priorityScheduler) prioritySchedule(
@@ -36,6 +89,7 @@ func (p *priorityScheduler) prioritySchedule(
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
 
+	// TODO consider agent labels
 	// Since labels are a hard scheduling constraint, process every label independently.
 	for label, agentsWithLabel := range splitAgentsByLabel(agents) {
 		// Schedule zero-slot and non-zero-slot tasks independently of each other, e.g., a lower priority
@@ -72,7 +126,6 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
 		taskList, groups, filter)
 
-	// Make a local copy of the agent state that we will modify.
 	localAgentsState := deepCopyAgents(agents)
 
 	// If there exist any tasks that cannot be scheduled, all the tasks of lower priorities
@@ -100,6 +153,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
+					setJobState(allocatedTask, sproto.SchedulingStateScheduledBackfilled)
 					toAllocate = append(toAllocate, allocatedTask)
 				}
 			}
@@ -234,8 +288,10 @@ func sortTasksByPriorityAndTimestamp(
 
 		assigned := taskList.GetAllocations(req.TaskActor)
 		if assigned == nil || len(assigned.Reservations) == 0 {
+			setJobState(req, sproto.SchedulingStateQueued)
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
+			setJobState(req, sproto.SchedulingStateScheduled)
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
 		}
 	}
