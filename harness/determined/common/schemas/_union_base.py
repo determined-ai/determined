@@ -1,9 +1,9 @@
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar, cast
+from typing import Any, Callable, Dict, Optional, Tuple, Type, TypeVar
 
 from determined.common import schemas
 
 
-class UnionBaseMeta(type):
+class UnionBaseMeta(schemas.SchemaBaseMeta):
     """
     UnionBaseMeta raises an error if you forget to set the _union_key on a UnionBase.
     """
@@ -93,7 +93,7 @@ class UnionBase(schemas.SchemaBase, metaclass=UnionBaseMeta):
 
     # _union_types maps Union[...] annotations to UnionBase classes on which to call .from_dict().
     # _union_types is used directly by _instance_from_annotation().
-    _union_types = {}  # type: Dict[frozenset, Type[UnionBase]]
+    _union_types = {}  # type: Dict[Any, Type[UnionBase]]
 
     def __init__(self) -> None:
         raise NotImplementedError(
@@ -158,27 +158,18 @@ class UnionBase(schemas.SchemaBase, metaclass=UnionBaseMeta):
 
     @classmethod
     def finalize(cls, union_type: Any) -> None:
-        # Even though Union[] types define correct equality tests, prior to python 3.7 I don't know
-        # of any programmatic way to create Unions with e.g. the None-type removed (to get the
-        # Union[] from within an Optional[Union[]]).  Since we need that exact operation in
-        # _instance_from_annotation(), we key off of a frozenset of Union.__args__.
-        args = union_type.__args__
-        args = cast(List[type], args)
-        frozen_args = frozenset(args)
+        # Disallow multiple classes from calling .finalize() with matching typing.Unions.
+        if Optional[union_type] == union_type:
+            raise TypeError(f"unable to finalize {cls.__name__} with Optional ({union_type})")
 
         # Disallow multiple classes from calling .finalize() with matching typing.Unions.
-        if frozen_args in UnionBase._union_types:
+        if union_type in UnionBase._union_types:
             raise TypeError(
-                f"unable to finalize {cls.__name__} with a union of "
-                f"[{', '.join(a.__name__ for a in args)}]"
+                f"unable to finalize {cls.__name__} with duplicate union_type {union_type}"
             )
 
-        # Ensure that the typing.Union provied matches the calls made to @members.
-        if frozen_args != frozenset(cls._members.values()):
-            raise TypeError(
-                f"Unable to finalize {cls.__name__} with a "
-                f"Union[{', '.join(a.__name__ for a in args)}], which does not match set of "
-                f"@members: [{', '.join(m.__name__ for m in cls._members.values())}]"
-            )
+        # We need to be able to be able to map union_type -> cls.
+        UnionBase._union_types[union_type] = cls
 
-        UnionBase._union_types[frozen_args] = cls
+        # Also we should be able to recognize Optional[union_type], List[union_type], etc.
+        schemas.register_known_type(union_type)
