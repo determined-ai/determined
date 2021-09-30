@@ -13,14 +13,14 @@ message GetJobsRequest {
   // Filter the results based on a set of resource pools.
   repeated string resource_pools = 2;
   // Sort results by the given field.
-  enum SortBy {
-    // Returns checkpoints in an unsorted list.
-    SORT_BY_UNSPECIFIED = 0;
-    // Returns checkpoints sorted by UUID.
-    SORT_BY_QUEUE_POSITION = 1;
-  }
+  // enum SortBy {
+  //   // Returns checkpoints in an unsorted list.
+  //   SORT_BY_UNSPECIFIED = 0;
+  //   // Returns checkpoints sorted by UUID.
+  //   SORT_BY_QUEUE_POSITION = 1;
+  // }
   // Sort results by the given field.
-  SortBy sort_by = 3;
+  // SortBy sort_by = 3;
   // Order results in either ascending or descending order.
   OrderBy order_by = 4;
 }

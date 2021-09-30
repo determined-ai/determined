@@ -8,30 +8,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
-// JobID is the unique ID of a job among all jobs.
-type JobID string
-
-// NewJobID returns a random, globally unique job ID.
-func NewJobID() JobID {
-	return JobID(uuid.New().String())
-}
-
-// JobType is the type of a job.
-type JobType string
-
-const (
-	// JobTypeExperiment is the "EXPERIMENT" job type for the enum public.job_type in Postgres.
-	JobTypeExperiment = "EXPERIMENT"
-	// JobTypeNotebook is the "NOTEBOOK" job type for the enum public.job_type in Postgres.
-	JobTypeNotebook = "NOTEBOOK"
-	// JobTypeShell is the "SHELL" job type for the enum public.job_type in Postgres.
-	JobTypeShell = "SHELL"
-	// JobTypeCommand is the "COMMAND" job type for the enum public.job_type in Postgres.
-	JobTypeCommand = "COMMAND"
-	// JobTypeTensorboard is the "TENSORBOARD" task type for the enum.task_type in Postgres.
-	JobTypeTensorboard = "TENSORBOARD"
-)
-
 // TaskID is the unique ID of a task among all tasks.
 type TaskID string
 
@@ -61,6 +37,7 @@ const (
 // Task is the model for a task in the database.
 type Task struct {
 	TaskID    TaskID     `db:"task_id"`
+	JobID     JobID      `db:"job_id"`
 	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
