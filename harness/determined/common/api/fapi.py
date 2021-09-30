@@ -1,34 +1,62 @@
 import argparse
 import functools
 import json
-from typing import Any, Awaitable, Callable, Dict, List
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar
 
-from httpx import Request, Response
-from pydantic import BaseModel  # FIXME this doesn't get resolved in my IDE's language server
+from pydantic import (  # FIXME this doesn't get resolved in my IDE's language server
+    BaseModel,
+    ValidationError,
+    parse_obj_as,
+)
 
-from determined.common.api.authentication import Authentication, cli_auth
-from determined.common.api.fastapi_client import ApiClient, AsyncApis, SyncApis
-from determined.common.api.fastapi_client.api_client import Send
-
-# from determined.common.api.fastapi_client.api_client import ApiClient, AsyncApis, SyncApis
-# from determined.common.api.fastapi_client.models import Pet
+from determined.common.api.authentication import Authentication
+from determined.common.api.fastapi_client.api.jobs_api import SyncJobsApi
+from determined.common.api.fastapi_client.exceptions import ResponseHandlingException
+from determined.common.api.request import do_request
 
 # TODO fix isinstance isn't returning true
 # if hasattr(model_class, 'update_forward_refs'):
 
+
+T = TypeVar("T")
+
+
+class ApiClient:
+    def __init__(self, host: str = "http://localhost:8080"):
+        self.host = host
+        self.auth: Optional[Authentication] = None
+
+    # @setter
+    def set_auth(self, auth: Authentication):
+        self.auth = auth
+
+    async def request(
+        self, type_: Type[T], method: str, url: str, path_params: Dict[str, Any] = None, **kwargs
+    ) -> Awaitable[T]:
+        if path_params is None:
+            path_params = {}
+        url = (self.host or "") + url.format(**path_params)
+        response = do_request(method, self.host, url, auth=self.auth, **kwargs)
+        try:
+            return parse_obj_as(type_, response.json())
+        except ValidationError as e:
+            raise ResponseHandlingException(e)
+
+
 client = ApiClient(host="http://localhost:8080")
-# client._async_client.aclose()
-sync_apis = SyncApis(client)
-# async_apis = fa.AsyncApis(client)
-
-# resp = sync_apis.authentication_api.determined_login(V1LoginRequest(username='determined', password=''))
-# print(resp)
+jobs_api = SyncJobsApi(client)  # type: ignore
 
 
-def add_token(token: str):
-    def f(req: Request, send: Send) -> Awaitable[Response]:
-        req.headers["Authorization"] = "Bearer " + token
-        return send(req)
+def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
+    """
+    A decorator for cli functions.
+    """
+
+    @functools.wraps(func)
+    def f(namespace: argparse.Namespace) -> Any:
+        global client
+        client.set_auth(Authentication(namespace.master, namespace.user, try_reauth=True))
+        return func(namespace)
 
     return f
 
@@ -50,23 +78,3 @@ def to_json(o: BaseModel):
         return [to_json(i) for i in o]
     assert hasattr(o, "json")
     return json.loads(o.json())
-
-
-def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
-    """
-    A decorator for cli functions.
-    """
-
-    @functools.wraps(func)
-    def f(namespace: argparse.Namespace) -> Any:
-        global cli_auth, sync_apis
-        client = ApiClient(host=namespace.master)
-        cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
-        token = cli_auth.get_session_token()
-        client.add_middleware(add_token(token))
-        sync_apis = SyncApis(client)
-
-        # TODO avoid global?
-        return func(namespace)
-
-    return f
