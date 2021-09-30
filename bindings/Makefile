@@ -8,15 +8,20 @@ all: get-deps
 
 .PHONY: get-deps
 get-deps: deps/$(CODEGEN_BIN)
+	rm -rf deps/fastapi_client
+	cd deps; git clone https://github.com/dmontagu/fastapi_client.git
 
 deps/$(CODEGEN_BIN):
 	mkdir -p deps
 	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(BIN_VER)/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
-# ./scripts/generate.sh --import-name determined.common.api.fastapi_client --package-name fastapi_client -i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json -o /tmp/fastapi2
+build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
+	deps/fastapi_client/scripts/generate.sh --import-name determined.common.api.fastapi_client \
+		--package-name fastapi_client \
+		-i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json \
+		-o build/python-fastapi
 
-.PHONY: build/%
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
@@ -30,8 +35,13 @@ place: build
 	rm -rf ../harness/determined/common/api/swagger_client
 	cp -r build/python/swagger_client ../harness/determined/common/api
 
+	sed -i '10s/.*/        if hasattr(model_class, "update_forward_refs"):/' \
+		build/python-fastapi/fastapi_client/__init__.py
+	rm -rf ../harness/determined/common/api/fastapi_client
+	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
+
 .PHONY: build
-build: build/typescript-fetch build/python
+build: build/typescript-fetch build/python build/python-fastapi
 
 .PHONY: clean-deps
 clean-deps:
