@@ -1,24 +1,49 @@
+import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React from 'react';
 
 import Spinner from './Spinner';
 
+const { TabPane } = Tabs;
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 interface Props {
-  editing: boolean;
+  editing?: boolean;
+  height?: string;
   markdown: string;
 }
 
-const Markdown: React.FC<Props> = ({ editing, markdown }: Props) => {
+const Markdown: React.FC<Props> = ({ editing=false, height='80vh', markdown }: Props) => {
   return (
-    <div>{editing ?
-      <React.Suspense
-        fallback={<div><Spinner tip="Loading text editor..." /></div>}>
-        <MonacoEditor />
-      </React.Suspense> :
-      <MarkdownViewer options={{ disableParsingRawHTML: true }}>{markdown}</MarkdownViewer>}
-    </div>
+    editing ?<Tabs>
+      <TabPane key="1" tab="Edit">
+        <React.Suspense
+          fallback={<div><Spinner tip="Loading text editor..." /></div>}>
+          <MonacoEditor
+            defaultValue={markdown}
+            height={height}
+            language="markdown"
+            options={{
+              wordWrap: 'on',
+              wrappingIndent: 'indent',
+            }}
+            width="100%" />
+        </React.Suspense>
+      </TabPane>
+      <TabPane key="2" tab="Preview">
+        <div style={{ height }}>
+          <MarkdownViewer options={{ disableParsingRawHTML: true }}>
+            {markdown}
+          </MarkdownViewer>
+        </div>
+      </TabPane>
+    </Tabs> :
+      <div style={{ height, overflow: 'auto' }}>
+        <MarkdownViewer options={{ disableParsingRawHTML: true }}>
+          {markdown}
+        </MarkdownViewer>
+      </div>
+
   );
 };
 
