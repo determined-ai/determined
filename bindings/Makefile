@@ -21,6 +21,7 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 		--package-name fastapi_client \
 		-i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json \
 		-o build/python-fastapi
+	touch build/python-fastapi
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
@@ -35,8 +36,10 @@ place: build
 	# rm -rf ../harness/determined/common/api/swagger_client
 	# cp -r build/python/swagger_client ../harness/determined/common/api
 
-	sed -i '10s/.*/        if hasattr(model_class, "update_forward_refs"):/' \
-		build/python-fastapi/fastapi_client/__init__.py
+	# sed -i '10s/.*/        if hasattr(model_class, "update_forward_refs"):/' \
+	# 	build/python-fastapi/fastapi_client/__init__.py
+	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
+	cp ./models.override.py build/python-fastapi/fastapi_client/models.py # TODO TEMP remove
 	rm -rf ../harness/determined/common/api/fastapi_client
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
 
