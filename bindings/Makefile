@@ -22,6 +22,9 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 		-i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json \
 		-o build/python-fastapi
 	rm -r build/python-fastapi/fastapi_client/docs/
+	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
+	rm -rf ../harness/determined/common/api/fastapi_client
+	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
 	touch build/python-fastapi
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
@@ -29,19 +32,6 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-l $* -o build/$*
 	touch build/$*
-
-.PHONY: place
-place: build
-	# process
-	# fd -t f .py build/python | xargs sed 's/swagger_client/determined.common.api.swagger_client/' -i
-	# rm -rf ../harness/determined/common/api/swagger_client
-	# cp -r build/python/swagger_client ../harness/determined/common/api
-
-	# sed -i '10s/.*/        if hasattr(model_class, "update_forward_refs"):/' \
-	# 	build/python-fastapi/fastapi_client/__init__.py
-	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
-	rm -rf ../harness/determined/common/api/fastapi_client
-	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
 
 .PHONY: build
 build: build/typescript-fetch
