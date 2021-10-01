@@ -1,7 +1,8 @@
 import faulthandler
 import logging
 import sys
-
+import os
+import torch
 import determined as det
 from determined import _generic, horovod, load
 from determined.common import experimental
@@ -18,6 +19,8 @@ def config_logging(debug: bool) -> None:
 
 
 def main() -> int:
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.distributed.init_process_group(backend="gloo|nccl")
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
