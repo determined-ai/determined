@@ -884,9 +884,9 @@ class V1Pagination(BaseModel):
     total: "Optional[int]" = Field(None, alias="total")
 
 
-# class V1PaginationRequest(BaseModel):
-#     offset: "Optional[int]" = Field(None, alias="offset")
-#     limit: "Optional[int]" = Field(None, alias="limit")
+class V1PaginationRequest(BaseModel):
+    offset: "Optional[int]" = Field(None, alias="offset")
+    limit: "Optional[int]" = Field(None, alias="limit")
 
 
 # class V1PatchExperimentResponse(BaseModel):
