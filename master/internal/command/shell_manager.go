@@ -18,7 +18,8 @@ import (
 )
 
 type shellManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -42,7 +43,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		if err := createGenericCommandActor(
-			ctx, s.db, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
+			ctx, s.db, s.logger, taskID, model.TaskTypeShell, jobID, model.JobTypeShell, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch shell")
 			ctx.Respond(err)

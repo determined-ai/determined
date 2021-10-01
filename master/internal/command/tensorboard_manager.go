@@ -17,7 +17,8 @@ import (
 )
 
 type tensorboardManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
@@ -41,7 +42,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
 		if err := createGenericCommandActor(
-			ctx, t.db, taskID, model.TaskTypeTensorboard, jobID, model.JobTypeTensorboard, msg,
+			ctx, t.db, t.logger, taskID, model.TaskTypeTensorboard, jobID, model.JobTypeTensorboard, msg,
 		); err != nil {
 			ctx.Log().WithError(err).Error("failed to launch tensorboard")
 			ctx.Respond(err)

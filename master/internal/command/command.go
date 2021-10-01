@@ -41,6 +41,7 @@ type terminateForGC struct{}
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
+	logger *actor.Ref,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobID model.JobID,
@@ -50,7 +51,8 @@ func createGenericCommandActor(
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	cmd := &command{
-		db: db,
+		db:     db,
+		logger: logger,
 
 		GenericCommandSpec: spec,
 
@@ -77,6 +79,7 @@ func createGenericCommandActor(
 type command struct {
 	db          *db.PgDB
 	eventStream *actor.Ref
+	logger      *actor.Ref
 
 	tasks.GenericCommandSpec
 
@@ -108,10 +111,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 		if err := c.db.AddTask(&model.Task{
-			TaskID:    c.taskID,
-			TaskType:  c.taskType,
-			StartTime: c.registeredTime,
-			JobID:     c.jobID,
+			TaskID:     c.taskID,
+			TaskType:   c.taskType,
+			StartTime:  c.registeredTime,
+			JobID:      c.jobID,
+			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
@@ -138,13 +142,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if c.eventStream != nil {
 			eventStreamConfig = &sproto.EventStreamConfig{
 				To: c.eventStream,
-			}
-		}
-
-		var logBasedReadinessConfig *sproto.LogBasedReadinessConfig
-		if c.LogReadinessCheck != nil {
-			logBasedReadinessConfig = &sproto.LogBasedReadinessConfig{
-				Pattern: c.LogReadinessCheck,
 			}
 		}
 
@@ -176,11 +173,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents:  eventStreamConfig,
-			ProxyPort:     portProxyConf,
-			IdleTimeout:   idleWatcherConfig,
-			LogBasedReady: logBasedReadinessConfig,
-		}, c.db, sproto.GetRM(ctx.Self().System()))
+			StreamEvents: eventStreamConfig,
+			ProxyPort:    portProxyConf,
+			IdleTimeout:  idleWatcherConfig,
+		}, c.db, sproto.GetRM(ctx.Self().System()), c.logger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.RegisterJob{
@@ -195,8 +191,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
-		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
-			ctx.Log().WithError(err).Error("marking task complete")
+		if c.exitStatus == nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
+			}
 		}
 		ctx.Self().System().TellAt(job.JobsActorAddr, job.UnregisterJob{
 			JobID: c.jobID,
@@ -208,6 +206,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			c.exitStatus = &task.AllocationExited{
 				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
 				Err:        errors.New("command allocation actor failed"),
+			}
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
 
@@ -222,6 +223,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
+		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+			ctx.Log().WithError(err).Error("marking task complete")
+		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
 	case getSummary:

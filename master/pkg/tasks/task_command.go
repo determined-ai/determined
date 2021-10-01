@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"regexp"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -27,8 +26,6 @@ type GenericCommandSpec struct {
 
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
-
-	LogReadinessCheck *regexp.Regexp
 }
 
 // ToTaskSpec generates a TaskSpec.
@@ -82,6 +79,8 @@ func (s GenericCommandSpec) ToTaskSpec(
 	if shm := s.Config.Resources.ShmSize; shm != nil {
 		res.ShmSize = int64(*shm)
 	}
+
+	res.UseFluentLogging = true
 
 	return res
 }

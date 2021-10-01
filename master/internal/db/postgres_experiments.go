@@ -996,7 +996,7 @@ FROM (
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
 			FROM (
 				SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
-					   t.warm_start_checkpoint_id,
+					   t.warm_start_checkpoint_id, t.task_id,
 				(SELECT coalesce(jsonb_agg(s ORDER BY end_time ASC), '[]'::jsonb)
 				 FROM (
 					 SELECT s.end_time, s.id, s.state, s.trial_id,  s.total_batches,
@@ -1521,6 +1521,28 @@ WHERE trials.experiment_id = $1
 		trialIDs = append(trialIDs, r.ID)
 	}
 	return trialIDs, nil
+}
+
+// ExperimentTrialAndTaskIDs returns the trial and task IDs for the experiment.
+func (db *PgDB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
+	var trialIDRows []struct {
+		ID     int          `db:"id"`
+		TaskID model.TaskID `db:"task_id"`
+	}
+	if err := db.queryRows(`
+SELECT id, task_id
+FROM trials
+WHERE trials.experiment_id = $1
+`, &trialIDRows, expID); err != nil {
+		return nil, nil, errors.Wrapf(err, "querying for trial IDs of experiment %v", expID)
+	}
+	var trialIDs []int
+	var taskIDs []model.TaskID
+	for _, r := range trialIDRows {
+		trialIDs = append(trialIDs, r.ID)
+		taskIDs = append(taskIDs, r.TaskID)
+	}
+	return trialIDs, taskIDs, nil
 }
 
 // ExperimentNumSteps returns the total number of steps for all trials of the experiment.

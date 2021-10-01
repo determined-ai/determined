@@ -438,6 +438,10 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 			Name:  "determined-container",
 			State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
 		},
+		{
+			Name:  "determined-fluent-container",
+			State: k8sV1.ContainerState{Waiting: &k8sV1.ContainerStateWaiting{}},
+		},
 	}
 	status = k8sV1.PodStatus{
 		Phase:             k8sV1.PodRunning,
@@ -452,6 +456,7 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 
 	system.Ask(ref, statusUpdate)
 	time.Sleep(time.Second)
+
 	assert.Equal(t, podMap["task"].GetLength(), 2)
 	assert.Equal(t, newPod.container.State, cproto.Starting)
 
@@ -460,8 +465,11 @@ func TestReceivePodStatusUpdateStarting(t *testing.T) {
 	system, newPod, ref, podMap, _ = createPodWithMockQueue()
 	podMap["task"].Purge()
 	status = k8sV1.PodStatus{
-		Phase:             k8sV1.PodRunning,
-		ContainerStatuses: []k8sV1.ContainerStatus{{Name: "determined-container"}},
+		Phase: k8sV1.PodRunning,
+		ContainerStatuses: []k8sV1.ContainerStatus{
+			{Name: "determined-container"},
+			{Name: "determined-fluent-container"},
+		},
 	}
 	pod = k8sV1.Pod{
 		TypeMeta:   typeMeta,
@@ -499,6 +507,10 @@ func TestMultipleContainersRunning(t *testing.T) {
 			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 		},
 		{
+			Name:  "determined-fluent-container",
+			State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
+		},
+		{
 			Name: "test-pod",
 		},
 	}
@@ -511,7 +523,11 @@ func TestMultipleContainersRunning(t *testing.T) {
 		ObjectMeta: objectMeta,
 		Status:     status,
 	}
-	newPod.containerNames = map[string]bool{"determined-container": false, "test-pod": false}
+	newPod.containerNames = map[string]bool{
+		"determined-container":        false,
+		"determined-fluent-container": false,
+		"test-pod":                    false,
+	}
 	statusUpdate := podStatusUpdate{updatedPod: &pod}
 
 	system.Ask(ref, statusUpdate)
@@ -528,7 +544,7 @@ func TestMultipleContainersRunning(t *testing.T) {
 	assert.Equal(t, podMap["task"].GetLength(), 0)
 
 	newPod.container.State = cproto.Starting
-	containerStatuses[1] = k8sV1.ContainerStatus{
+	containerStatuses[2] = k8sV1.ContainerStatus{
 		Name:  "test-pod-2",
 		State: k8sV1.ContainerState{Running: &k8sV1.ContainerStateRunning{}},
 	}

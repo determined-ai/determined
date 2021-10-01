@@ -154,7 +154,7 @@ commands:
       - install-devcluster
       - start-devcluster:
           target-stage: elastic
-          devcluster-config: elastic.devcluster.yaml
+          devcluster-config: elastic-base.devcluster.yaml
 
   go-get-deps:
     steps:
@@ -1932,6 +1932,14 @@ workflows:
           tf2: true
           mark: managed_devcluster
           managed-devcluster: true
+
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          requires:
+            - build-go
+          mark: e2e_cpu_elastic
+          devcluster-config: elastic.devcluster.yaml
+          target-stage: agent
 
       - deploy:
           enable-cors: true

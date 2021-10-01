@@ -4,3 +4,33 @@ stages:
 
   - elastic:
       name: elastic
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        logging:
+            type: elastic
+            host: localhost
+            port: 9200
+
+  - agent:
+      name: agent
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        agent_id: agent
+        container_master_host: $DOCKER_LOCALHOST

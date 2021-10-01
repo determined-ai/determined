@@ -73,7 +73,7 @@ func makeOutputConfig(
   Match *
   Host %s
   Port %d
-  URI /trial_logs
+  URI /task_logs
   Header_tag X-Fluent-Tag
   Format json
   Json_date_key timestamp
@@ -97,7 +97,7 @@ func makeOutputConfig(
   Host  %s
   Port  %d
   Logstash_Format True
-  Logstash_Prefix determined-triallogs
+  Logstash_Prefix determined-tasklogs
   Time_Key timestamp
   Time_Key_Nanos On
   storage.total_limit_size 1G
