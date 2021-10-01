@@ -265,8 +265,8 @@ approaches as well as seamless parallelization of these methods. To use Determin
 search feature, we only have to change the experiment configuration file.
 
 Let's search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The
-``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges
-to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the
+``adaptive.yaml`` file tells the :ref:`searcher algorithm <hyperparameter-tuning>` the ranges to
+explore for each hyperparameter. For our model, we will use a fixed batch size and search on the
 dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use
 ``adaptive_asha`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm
 to use and how many model configurations to explore.

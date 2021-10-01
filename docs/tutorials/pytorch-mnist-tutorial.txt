@@ -184,7 +184,7 @@ datasets, respectively. Both methods should return a :ref:`determined.pytorch.Da
            validation_data, batch_size=self.context.get_per_slot_batch_size()
        )
 
-For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
+For more information on loading data in Determined, refer to the :ref:`prepare-data` document.
 
 Defining ``train_batch``
 ========================
@@ -321,5 +321,4 @@ Once you are on the Determined landing page, you can find your experiment using 
 
 -  :ref:`model-definitions_best-practices`
 -  :ref:`experiment-configuration`
--  :ref:`benefits-of-determined`
--  :ref:`terminology-concepts`
+-  :ref:`features`
