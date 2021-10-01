@@ -76,14 +76,14 @@ WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound
 	return &user, &session, nil
 }
 
-type externalToken struct {
-	*jwt.StandardClaims
-	Email string
-}
-
 // UserByExternalToken returns a user session derived from an external authentication token.
 func (db *PgDB) UserByExternalToken(tokenText string, tokenKey string) (*model.User,
 	*model.UserSession, error) {
+	type externalToken struct {
+		*jwt.StandardClaims
+		Email string
+	}
+	
 	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
 		func(token *jwt.Token) (interface{}, error) {
 			var publicKey rsa.PublicKey

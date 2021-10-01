@@ -86,7 +86,13 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			return err
 		}
 
-		user, session, err := s.db.UserByToken(token)
+		var user *model.User
+		var session *model.UserSession
+		if s.extConfig.JwtKey == "" {
+			user, session, err = s.db.UserByToken(token)
+		} else {
+			user, session, err = s.db.UserByExternalToken(token, s.extConfig.JwtKey)
+		}
 		switch err {
 		case nil:
 			if !user.Active {
@@ -96,35 +102,6 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			// event handlers.
 			c.(*context.DetContext).SetUser(*user)
 			c.(*context.DetContext).SetUserSession(*session)
-			return next(c)
-		case db.ErrNotFound:
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		default:
-			return err
-		}
-	}
-}
-
-// ProcessExternalAuthentication is a middleware processing function that attempts
-// to authenticate incoming HTTP requests. It does not use the sessions table but relies entirely
-// on a JWT issued by an external source.
-func (s *Service) ProcessExternalAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		token, err := s.extractToken(c)
-		if err != nil {
-			return err
-		}
-
-		user, userSession, err := s.db.UserByExternalToken(token, s.extConfig.JwtKey)
-		switch err {
-		case nil:
-			if !user.Active {
-				return echo.NewHTTPError(http.StatusForbidden, "user not active")
-			}
-			// Set data on the request context that might be useful to
-			// event handlers.
-			c.(*context.DetContext).SetUser(*user)
-			c.(*context.DetContext).SetUserSession(*userSession)
 			return next(c)
 		case db.ErrNotFound:
 			return echo.NewHTTPError(http.StatusUnauthorized)
