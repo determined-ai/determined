@@ -2,43 +2,34 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/task"
-
-	"github.com/determined-ai/determined/master/internal/sproto"
-
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-
-	"github.com/determined-ai/determined/master/pkg/protoutils"
-
-	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-
 	"github.com/google/uuid"
-
 	"github.com/hashicorp/go-multierror"
-
-	"google.golang.org/protobuf/encoding/protojson"
-
-	"github.com/determined-ai/determined/proto/pkg/logv1"
-
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/pkg/errors"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -50,12 +41,6 @@ const (
 var (
 	masterLogsBatchWaitTime     = 100 * time.Millisecond
 	masterLogsBatchMissWaitTime = time.Second
-
-	trialLogsBatchWaitTime     = 100 * time.Millisecond
-	trialLogsBatchMissWaitTime = time.Second
-	trialLogsTerminationDelay  = 2 * time.Second
-
-	distinctFieldBatchWaitTime = 5 * time.Second
 
 	trialProfilerMetricsBatchWaitTime     = 100 * time.Millisecond
 	trialProfilerMetricsBatchMissWaitTime = 5 * time.Second
@@ -80,19 +65,50 @@ type TrialLogBackend interface {
 }
 
 func (a *apiServer) TrialLogs(
-	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
+	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
+) error {
+	var taskID model.TaskID
+	switch t, err := a.m.db.TrialByID(int(req.TrialId)); {
+	case errors.Is(err, sql.ErrNoRows):
+		return trialNotFound
+	case err != nil:
+		return err
+	default:
+		taskID = t.TaskID
+	}
+
+	switch t, err := a.m.db.TaskByID(taskID); {
+	case errors.Is(err, sql.ErrNoRows):
+		return a.legacyTrialLogs(req, resp)
+	case t.LogVersion == 0:
+		return a.legacyTrialLogs(req, resp)
+	default:
+		// Translate the request.
+		return a.taskLogs(&apiv1.TaskLogsRequest{
+			TaskId:          string(taskID),
+			Limit:           req.Limit,
+			Follow:          req.Follow,
+			AllocationIds:   nil,
+			ContainerIds:    req.ContainerIds,
+			RankIds:         req.RankIds,
+			Levels:          req.Levels,
+			Stdtypes:        req.Stdtypes,
+			Sources:         req.Sources,
+			TimestampBefore: req.TimestampBefore,
+			TimestampAfter:  req.TimestampAfter,
+			OrderBy:         req.OrderBy,
+		}, resp)
+	}
+}
+
+func (a *apiServer) legacyTrialLogs(
+	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
+) error {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
 		return err
-	}
-
-	switch exists, err := a.m.db.CheckTrialExists(int(req.TrialId)); {
-	case err != nil:
-		return err
-	case !exists:
-		return status.Error(codes.NotFound, "trial not found")
 	}
 
 	filters, err := constructTrialLogsFilters(req)
@@ -139,10 +155,10 @@ func (a *apiServer) TrialLogs(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
 		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
 		false,
-		trialLogsBatchWaitTime,
-		trialLogsBatchMissWaitTime,
+		taskLogsBatchWaitTime,
+		taskLogsBatchMissWaitTime,
 	).Run(resp.Context())
 }
 
@@ -229,10 +245,10 @@ func (a *apiServer) TrialLogsFields(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
 		onBatch,
-		a.isTrialTerminalFunc(int(req.TrialId), trialLogsTerminationDelay),
+		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
 		true,
-		distinctFieldBatchWaitTime,
-		distinctFieldBatchWaitTime,
+		taskLogsFieldsBatchWaitTime,
+		taskLogsFieldsBatchWaitTime,
 	).Run(resp.Context())
 }
 

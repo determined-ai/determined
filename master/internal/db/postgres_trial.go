@@ -35,9 +35,10 @@ RETURNING id`, trial); err != nil {
 		}
 
 		return addTask(tx, &model.Task{
-			TaskID:    trial.TaskID,
-			TaskType:  model.TaskTypeTrial,
-			StartTime: trial.StartTime,
+			TaskID:     trial.TaskID,
+			TaskType:   model.TaskTypeTrial,
+			StartTime:  trial.StartTime,
+			LogVersion: model.CurrentTaskLogVersion,
 		})
 	})
 }

@@ -83,5 +83,7 @@ func (s GenericCommandSpec) ToTaskSpec(
 		res.ShmSize = int64(*shm)
 	}
 
+	res.UseFluentLogging = true
+
 	return res
 }

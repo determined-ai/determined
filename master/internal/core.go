@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -70,16 +69,18 @@ type Master struct {
 	config   *Config
 	taskSpec *tasks.TaskSpec
 
-	logs            *logger.LogBuffer
-	system          *actor.System
-	echo            *echo.Echo
-	rm              *actor.Ref
-	rwCoordinator   *actor.Ref
-	db              *db.PgDB
-	proxy           *actor.Ref
-	trialLogger     *actor.Ref
+	logs          *logger.LogBuffer
+	system        *actor.System
+	echo          *echo.Echo
+	rm            *actor.Ref
+	rwCoordinator *actor.Ref
+	db            *db.PgDB
+	proxy         *actor.Ref
+	trialLogger   *actor.Ref
+	hpImportance  *actor.Ref
+
 	trialLogBackend TrialLogBackend
-	hpImportance    *actor.Ref
+	taskLogBackend  TaskLogBackend
 }
 
 // New creates an instance of the Determined master.
@@ -521,13 +522,23 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 }
 
 func (m *Master) postTrialLogs(c echo.Context) (interface{}, error) {
-	body, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
+	var logs []model.TrialLog
+	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
 		return nil, err
 	}
 
+	for _, l := range logs {
+		if l.TrialID == 0 {
+			continue
+		}
+		m.system.Tell(m.trialLogger, l)
+	}
+	return "", nil
+}
+
+func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	var logs []model.TrialLog
-	if err = json.Unmarshal(body, &logs); err != nil {
+	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
 		return nil, err
 	}
 
@@ -600,6 +611,19 @@ func (m *Master) Run(ctx context.Context) error {
 		log.WithError(sErr).Error("actor system exited")
 		cancel()
 	}()
+
+	switch {
+	case m.config.Logging.DefaultLoggingConfig != nil:
+		m.taskLogBackend = m.db
+	case m.config.Logging.ElasticLoggingConfig != nil:
+		es, eErr := elastic.Setup(*m.config.Logging.ElasticLoggingConfig)
+		if eErr != nil {
+			return eErr
+		}
+		m.taskLogBackend = es
+	default:
+		panic("unsupported logging backend")
+	}
 
 	switch {
 	case m.config.Logging.DefaultLoggingConfig != nil:

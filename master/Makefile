@@ -46,8 +46,8 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint
-	go install golang.org/x/tools/cmd/goimports
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.28.3
+	go install golang.org/x/tools/cmd/goimports@v0.1.6
 	go install github.com/goreleaser/goreleaser
 	# For hyperparameter importance computation
 	go get github.com/ryanbressler/CloudForest

@@ -62,7 +62,7 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023
-	golang.org/x/tools v0.1.0
+	golang.org/x/tools v0.1.6
 	google.golang.org/api v0.26.0
 	google.golang.org/grpc v1.37.0-dev.0.20210309003715-fce74a94bdff
 	google.golang.org/grpc/examples v0.0.0-20210525230658-4bae49e05b28 // indirect

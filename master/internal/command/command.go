@@ -87,9 +87,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 		if err := c.db.AddTask(&model.Task{
-			TaskID:    c.taskID,
-			TaskType:  c.taskType,
-			StartTime: c.registeredTime,
+			TaskID:     c.taskID,
+			TaskType:   c.taskType,
+			StartTime:  c.registeredTime,
+			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
@@ -156,15 +157,25 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 	case actor.PostStop:
-		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
-			ctx.Log().WithError(err).Error("marking task complete")
+		if c.exitStatus == nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
+			}
 		}
 	case actor.ChildStopped:
+		if c.exitStatus == nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
+			}
+		}
 	case actor.ChildFailed:
 		if msg.Child.Address().Local() == c.allocationID.String() && c.exitStatus == nil {
 			c.exitStatus = &task.AllocationExited{
 				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
 				Err:        errors.New("command allocation actor failed"),
+			}
+			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
 
@@ -179,6 +190,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
+		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+			ctx.Log().WithError(err).Error("marking task complete")
+		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
 	case getSummary:
