@@ -10,7 +10,7 @@ from pydantic import (  # FIXME this doesn't get resolved in my IDE's language s
 )
 
 from determined.common.api.authentication import Authentication
-from determined.common.api.fastapi_client.api.jobs_api import SyncJobsApi
+from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi
 from determined.common.api.fastapi_client.exceptions import ResponseHandlingException
 from determined.common.api.request import do_request
 
@@ -44,7 +44,7 @@ class ApiClient:
 
 
 client = ApiClient(host="http://localhost:8080")
-jobs_api = SyncJobsApi(client)  # type: ignore
+experiments_api = SyncExperimentsApi(client)  # type: ignore
 
 
 def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:

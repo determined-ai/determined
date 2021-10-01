@@ -4,7 +4,7 @@ from typing import Any, List
 
 import yaml
 
-from determined.common.api.fapi import auth_required, jobs_api, to_json
+from determined.common.api.fapi import auth_required, experiments_api, to_json
 from determined.common.declarative_argparse import Arg, Cmd
 
 # from determined.common.api.fastapi_client.models import V1LoginRequest
@@ -15,20 +15,18 @@ from determined.common.declarative_argparse import Arg, Cmd
 # def list(_: Namespace) -> None:
 #     # type info shows for some language servers but not all since the generated code
 #     # is using legacy docstring types
-#     api_response = swg.job_api.determined_get_jobs(resource_pools=["default"])
-#     print(api_response.jobs)
+#     api_response = swg.experiment_api.determined_get_experiments(resource_pools=["default"])
+#     print(api_response.experiments)
 
 
 @auth_required
 def list(args: Namespace) -> None:
-    response = jobs_api.determined_get_jobs(resource_pools=[args.resource_pool])
-    if response.jobs is None:  # TODO remove once proto annotations are inplace.
-        return
-    jobs_json = to_json(response.jobs)
+    response = experiments_api.determined_get_experiments(limit=5)
+    experiments_json = to_json(response.experiments)
     if args.output == "yaml":
-        print(yaml.safe_dump(jobs_json, default_flow_style=False))
+        print(yaml.safe_dump(experiments_json, default_flow_style=False))
     elif args.output == "json":
-        print(json.dumps(jobs_json, indent=4, default=str))
+        print(json.dumps(experiments_json, indent=4, default=str))
     elif ["csv", "table"].count(args.output) > 0:
         # render.tabulate_or_csv # TODO maybe add support for csv or tabular format. ref exp list
         raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
@@ -38,14 +36,14 @@ def list(args: Namespace) -> None:
 
 args_description = [
     Cmd(
-        "j|ob",
+        "x|periment",
         None,
-        "manage job",
+        "manage experiment",
         [
             Cmd(
                 "list",
                 list,
-                "list jobs",
+                "list experiments",
                 [
                     Arg(
                         "-o",
