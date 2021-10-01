@@ -2,6 +2,7 @@ import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React from 'react';
 
+import css from './Markdown.module.scss';
 import Spinner from './Spinner';
 
 const { TabPane } = Tabs;
@@ -31,14 +32,14 @@ const Markdown: React.FC<Props> = ({ editing=false, height='80vh', markdown }: P
         </React.Suspense>
       </TabPane>
       <TabPane key="2" tab="Preview">
-        <div style={{ height }}>
+        <div className={css.base} style={{ height }}>
           <MarkdownViewer options={{ disableParsingRawHTML: true }}>
             {markdown}
           </MarkdownViewer>
         </div>
       </TabPane>
     </Tabs> :
-      <div style={{ height, overflow: 'auto' }}>
+      <div className={css.base} style={{ height, overflow: 'auto' }}>
         <MarkdownViewer options={{ disableParsingRawHTML: true }}>
           {markdown}
         </MarkdownViewer>
