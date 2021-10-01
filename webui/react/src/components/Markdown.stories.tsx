@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import Markdown from './Markdown';
 
@@ -133,8 +133,10 @@ export const Default = (): React.ReactNode => (
   </div>
 );
 
-export const Editing = (): React.ReactNode => (
-  <div style={{ height: '100%', width: '600px' }}>
-    <Markdown editing={true} markdown={markdown} />
-  </div>
-);
+export const Editing = (): React.ReactNode => {
+  const [ editedMarkdown, setEditedMarkdown ] = useState(markdown);
+
+  return <div style={{ height: '100%', width: '600px' }}>
+    <Markdown editing={true} markdown={editedMarkdown} onChange={setEditedMarkdown} />
+  </div>;
+};
