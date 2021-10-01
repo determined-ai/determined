@@ -11,7 +11,8 @@ import (
 )
 
 type notebookManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -34,7 +35,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		return createGenericCommandActor(
-			ctx, n.db, taskID, model.TaskTypeNotebook, model.JobTypeNotebook, msg,
+			ctx, n.db, n.logger, taskID, model.TaskTypeNotebook, model.JobTypeNotebook, msg,
 		)
 
 	default:

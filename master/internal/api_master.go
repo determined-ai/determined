@@ -17,6 +17,11 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+var (
+	masterLogsBatchWaitTime     = 100 * time.Millisecond
+	masterLogsBatchMissWaitTime = time.Second
+)
+
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
@@ -63,20 +68,6 @@ func (a *apiServer) MasterLogs(
 		return err
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			lr := r.(*logger.Entry)
-			return resp.Send(&apiv1.MasterLogsResponse{
-				LogEntry: &logv1.LogEntry{
-					Id:        int32(lr.ID),
-					Message:   lr.Message,
-					Timestamp: timestamppb.New(lr.Time),
-					Level:     logger.LogrusLevelToProto(lr.Level),
-				},
-			})
-		})
-	}
-
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if lr.Follow {
 			lr.Limit = -1
@@ -88,15 +79,32 @@ func (a *apiServer) MasterLogs(
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 	lReq := api.BatchRequest{Offset: offset, Limit: limit, Follow: req.Follow}
 
-	return api.NewBatchStreamProcessor(
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
+
+	res := make(chan interface{}, 1)
+	go api.NewBatchStreamProcessor(
 		lReq,
 		fetch,
-		onBatch,
 		nil,
 		false,
 		masterLogsBatchWaitTime,
 		masterLogsBatchMissWaitTime,
-	).Run(resp.Context())
+	).Run(ctx, res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			lr := r.(*logger.Entry)
+			return resp.Send(&apiv1.MasterLogsResponse{
+				LogEntry: &logv1.LogEntry{
+					Id:        int32(lr.ID),
+					Message:   lr.Message,
+					Timestamp: timestamppb.New(lr.Time),
+					Level:     logger.LogrusLevelToProto(lr.Level),
+				},
+			})
+		})
+	})
 }
 
 func (a *apiServer) ResourceAllocationRaw(

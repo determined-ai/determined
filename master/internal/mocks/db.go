@@ -112,20 +112,6 @@ func (_m *DB) AddTrial(trial *model.Trial) error {
 	return r0
 }
 
-// AddTrialLogs provides a mock function with given fields: logs
-func (_m *DB) AddTrialLogs(logs []*model.TrialLog) error {
-	ret := _m.Called(logs)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func([]*model.TrialLog) error); ok {
-		r0 = rf(logs)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // AddUser provides a mock function with given fields: user, ug
 func (_m *DB) AddUser(user *model.User, ug *model.AgentUserGroup) error {
 	ret := _m.Called(user, ug)
@@ -888,6 +874,38 @@ func (_m *DB) ExperimentTotalStepTime(id int) (float64, error) {
 	}
 
 	return r0, r1
+}
+
+// ExperimentTrialAndTaskIDs provides a mock function with given fields: expID
+func (_m *DB) ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error) {
+	ret := _m.Called(expID)
+
+	var r0 []int
+	if rf, ok := ret.Get(0).(func(int) []int); ok {
+		r0 = rf(expID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]int)
+		}
+	}
+
+	var r1 []model.TaskID
+	if rf, ok := ret.Get(1).(func(int) []model.TaskID); ok {
+		r1 = rf(expID)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]model.TaskID)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(int) error); ok {
+		r2 = rf(expID)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // ExperimentTrialIDs provides a mock function with given fields: expID

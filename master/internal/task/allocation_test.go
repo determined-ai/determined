@@ -86,7 +86,7 @@ func TestAllocation(t *testing.T) {
 					Reservations: reservations,
 				},
 			}).Error())
-			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: sproto.ContainerLog{}}).Get() // sync
+			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
 			require.Nil(t, trialImpl.AssertExpectations())
 			require.True(t, db.AssertExpectations(t))
 
@@ -149,10 +149,10 @@ func TestAllocation(t *testing.T) {
 				}
 				require.NoError(t, system.Ask(self, containerStateChanged).Error())
 			}
-			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: sproto.ContainerLog{}}).Get() // sync
+			system.Ask(rm, actors.ForwardThroughMock{To: self, Msg: actor.Ping{}}).Get()
 			require.NoError(t, self.AwaitTermination())
 			require.True(t, a.exited)
-			system.Ask(trial, sproto.ContainerLog{}).Get() // sync)
+			system.Ask(trial, actor.Ping{}).Get()
 			for _, m := range trialImpl.Messages {
 				// Just clear the state since it's really hard to check (has random stuff in it).
 				if exit, ok := m.(*AllocationExited); ok {
@@ -181,6 +181,11 @@ func setup(t *testing.T) (
 	trialAddr := "trial"
 	trial := system.MustActorOf(actor.Addr(trialAddr), &trialImpl)
 
+	// mock trial
+	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	loggerAddr := "logger"
+	logger := system.MustActorOf(actor.Addr(loggerAddr), &loggerImpl)
+
 	// mock db.
 	db := &mocks.DB{}
 
@@ -198,11 +203,12 @@ func setup(t *testing.T) (
 		},
 		db,
 		rm,
+		logger,
 	)
 	self := system.MustActorOf(actor.Addr(trialAddr, "allocation"), a)
 
 	// Pre-scheduled stage.
-	system.Ask(self, sproto.ContainerLog{}).Get() // sync
+	system.Ask(self, actor.Ping{}).Get()
 	require.Contains(t, rmImpl.Messages, a.(*Allocation).req)
 
 	return system, &rmImpl, rm, &trialImpl, trial, db, a.(*Allocation), self

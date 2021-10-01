@@ -180,13 +180,17 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
 	}
 
-	trialIds, err := a.m.db.ExperimentTrialIDs(exp.ID)
+	trialIDs, taskIDs, err := a.m.db.ExperimentTrialAndTaskIDs(exp.ID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to gather trial IDs for experiment")
 	}
 
-	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIds); err != nil {
+	if err = a.m.trialLogBackend.DeleteTrialLogs(trialIDs); err != nil {
 		return errors.Wrapf(err, "failed to delete trial logs from backend")
+	}
+
+	if err = a.m.taskLogBackend.DeleteTaskLogs(taskIDs); err != nil {
+		return errors.Wrapf(err, "failed to delete trial logs from backend (task logs)")
 	}
 
 	if err = a.m.db.DeleteExperiment(exp.ID); err != nil {

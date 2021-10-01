@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -18,12 +17,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 const (
-	agentIDEnvVar     = "DET_AGENT_ID"
-	containerIDEnvVar = "DET_CONTAINER_ID"
-	trialIDEnvVar     = "DET_TRIAL_ID"
+	agentIDEnvVar      = "DET_AGENT_ID"
+	containerIDEnvVar  = "DET_CONTAINER_ID"
+	taskIDEnvVar       = "DET_TASK_ID"
+	allocationIDEnvVar = "DET_ALLOCATION_ID"
 )
 
 type containerActor struct {
@@ -33,8 +34,8 @@ type containerActor struct {
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON
 
-	baseTrialLog model.TrialLog
-	reattached   bool
+	baseTaskLog model.TaskLog
+	reattached  bool
 }
 
 type (
@@ -50,13 +51,13 @@ func reattachContainerActor(container cproto.Container, client *client.Client) a
 	return &containerActor{Container: container, client: client, reattached: true}
 }
 
-// getExtraFluentValues computes the container-specific extra fields to be injected into each Fluent
+// getBaseTaskLog computes the container-specific extra fields to be injected into each Fluent
 // log entry. We configure Docker to send these fields itself, but we need to compute and add them
 // ourselves for agent-inserted logs.
-func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
+func getBaseTaskLog(spec *cproto.Spec) model.TaskLog {
 	level := "INFO"
 	stdtype := "stdout"
-	log := model.TrialLog{
+	log := model.TaskLog{
 		Level:   &level,
 		StdType: &stdtype,
 	}
@@ -68,8 +69,10 @@ func getBaseTrialLog(spec *cproto.Spec) model.TrialLog {
 			log.AgentID = &value
 		case containerIDEnvVar:
 			log.ContainerID = &value
-		case trialIDEnvVar:
-			log.TrialID, _ = strconv.Atoi(value)
+		case taskIDEnvVar:
+			log.TaskID = value
+		case allocationIDEnvVar:
+			log.AllocationID = ptrs.StringPtr(value)
 		}
 	}
 	return log
@@ -83,7 +86,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 			c.transition(ctx, cproto.Pulling)
 			pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
 			ctx.Tell(c.docker, pull)
-			c.baseTrialLog = getBaseTrialLog(c.spec)
+			c.baseTaskLog = getBaseTaskLog(c.spec)
 		} else {
 			ctx.Tell(c.docker, reattachContainer{ID: c.Container.ID})
 		}
@@ -144,7 +147,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		msg.Container = c.Container
 		ctx.Log().Debug(msg)
 		if c.spec.RunSpec.UseFluentLogging {
-			ctx.Tell(ctx.Self().Parent(), c.makeTrialLog(msg))
+			ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
 		} else {
 			ctx.Tell(ctx.Self().Parent(), msg)
 		}
@@ -174,8 +177,8 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
-	l := c.baseTrialLog
+func (c *containerActor) makeTaskLog(log aproto.ContainerLog) model.TaskLog {
+	l := c.baseTaskLog
 	timestamp := time.Now().UTC()
 	l.Timestamp = &timestamp
 
@@ -205,7 +208,7 @@ func (c *containerActor) makeTrialLog(log aproto.ContainerLog) model.TrialLog {
 	}
 	msg += "\n"
 
-	l.Log = &msg
+	l.Log = msg
 	l.Source = &source
 
 	return l

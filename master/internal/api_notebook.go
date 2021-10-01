@@ -5,14 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -30,12 +28,13 @@ import (
 )
 
 const (
-	jupyterDir        = "/run/determined/jupyter/"
-	jupyterConfigDir  = "/run/determined/jupyter/config"
-	jupyterDataDir    = "/run/determined/jupyter/data"
-	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
-	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
-	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
+	jupyterDir         = "/run/determined/jupyter/"
+	jupyterConfigDir   = "/run/determined/jupyter/config"
+	jupyterDataDir     = "/run/determined/jupyter/data"
+	jupyterRuntimeDir  = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint  = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterIdleCheck   = "/run/determined/jupyter/check_idle.py"
+	taskReadyCheckLogs = "/run/determined/check_ready_logs.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -76,43 +75,33 @@ func (a *apiServer) SetNotebookPriority(
 }
 
 func (a *apiServer) NotebookLogs(
-	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
+	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer,
+) error {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 	); err != nil {
 		return err
 	}
 
-	cmdManagerAddr := notebooksAddr.Child(req.NotebookId)
-	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
+	ctx, cancel := context.WithCancel(resp.Context())
+	defer cancel()
 
-	logRequest := api.BatchRequest{
-		Offset: int(req.Offset),
-		Limit:  int(req.Limit),
+	res := make(chan interface{}, 1)
+	go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
+		TaskId: req.NotebookId,
+		Limit:  req.Limit,
 		Follow: req.Follow,
-	}
+	}, res)
 
-	onBatch := func(b api.Batch) error {
+	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.NotebookLogsResponse{
 				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
 			})
 		})
-	}
-
-	return a.m.system.MustActorOf(
-		cmdManagerAddr.Child("logStream-"+uuid.New().String()),
-		api.NewLogStreamProcessor(
-			resp.Context(),
-			eventManager,
-			logRequest,
-			onBatch,
-		),
-	).AwaitTermination()
+	})
 }
-
-var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
 
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
@@ -128,7 +117,6 @@ func (a *apiServer) LaunchNotebook(
 
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
-	spec.LogReadinessCheck = jupyterReadyPattern
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
@@ -178,6 +166,12 @@ func (a *apiServer) LaunchNotebook(
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterIdleCheck,
 			etc.MustStaticFile(etc.NotebookIdleCheckResource),
+			0700,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			taskReadyCheckLogs,
+			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
 			0700,
 			tar.TypeReg,
 		),

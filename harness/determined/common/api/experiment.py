@@ -1,16 +1,14 @@
-import collections
-import json
 import math
 import random
 import sys
 import time
 import uuid
-from typing import Any, Dict, List, Optional
-from urllib.parse import urlencode
+from typing import Any, Dict, Optional
 
 from termcolor import colored
 
 from determined.common import api, constants, context, yaml
+from determined.common.api import logs
 from determined.common.api import request as req
 
 
@@ -30,87 +28,6 @@ def activate_experiment(master_url: str, exp_id: int) -> None:
     patch_experiment(master_url, exp_id, {"state": "ACTIVE"})
 
 
-def trial_logs(
-    master_url: str,
-    trial_id: int,
-    head: Optional[int] = None,
-    tail: Optional[int] = None,
-    follow: bool = False,
-    agent_ids: Optional[List[str]] = None,
-    container_ids: Optional[List[str]] = None,
-    rank_ids: Optional[List[str]] = None,
-    sources: Optional[List[str]] = None,
-    stdtypes: Optional[List[str]] = None,
-    level_above: Optional[str] = None,
-    timestamp_before: Optional[str] = None,
-    timestamp_after: Optional[str] = None,
-) -> collections.abc.Iterable:
-    def to_levels_above(level: str) -> List[str]:
-        # We should just be using the generated client instead and this is why.
-        levels = [
-            "LOG_LEVEL_TRACE",
-            "LOG_LEVEL_DEBUG",
-            "LOG_LEVEL_INFO",
-            "LOG_LEVEL_WARNING",
-            "LOG_LEVEL_ERROR",
-            "LOG_LEVEL_CRITICAL",
-        ]
-        try:
-            return levels[levels.index("LOG_LEVEL_" + level) :]
-        except ValueError:
-            raise Exception("invalid log level: {}".format(level))
-
-    reverse = False
-    query = {}  # type: Dict[str, Any]
-    if head is not None:
-        query["limit"] = head
-    elif tail is not None:
-        query["limit"] = tail
-        query["order_by"] = "ORDER_BY_DESC"
-        reverse = True
-    elif follow:
-        query["follow"] = "true"
-
-    for key, val in [
-        ("agent_ids", agent_ids),
-        ("container_ids", container_ids),
-        ("rank_ids", rank_ids),
-        ("sources", sources),
-        ("stdtypes", stdtypes),
-        ("timestamp_before", timestamp_before),
-        ("timestamp_after", timestamp_after),
-    ]:
-        if val is not None:
-            query[key] = val
-
-    if level_above is not None:
-        query["levels"] = to_levels_above(level_above)
-
-    path = "/api/v1/trials/{}/logs?{}".format(trial_id, urlencode(query, doseq=True))
-    with api.get(master_url, path, stream=True) as r:
-        line_iter = r.iter_lines()
-        if reverse:
-            line_iter = reversed(list(line_iter))
-        for line in line_iter:
-            yield json.loads(line)["result"]
-
-
-def print_trial_logs(master_url: str, trial_id: int, **kwargs: Any) -> None:
-    try:
-        for log in trial_logs(master_url, trial_id, **kwargs):
-            print(log["message"], end="")
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print(
-            colored(
-                "Trial log stream ended. To reopen log stream, run: "
-                "det trial logs -f {}".format(trial_id),
-                "green",
-            )
-        )
-
-
 def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
     print("Waiting for first trial to begin...")
@@ -123,7 +40,7 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
 
     first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
     print("Following first trial with ID {}".format(first_trial_id))
-    print_trial_logs(master_url, first_trial_id, follow=True)
+    logs.pprint_trial_logs(master_url, first_trial_id, follow=True)
 
 
 def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
@@ -198,7 +115,7 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif r["state"] == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = r["trials"][0]["id"]
-            print_trial_logs(master_url, trial_id)
+            logs.pprint_trial_logs(master_url, trial_id)
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)

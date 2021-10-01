@@ -9,7 +9,7 @@ to Elasticsearch, and some tips for how to tune Elasticsearch to work best with 
 
 `Elasticsearch <https://www.elastic.co/what-is/elasticsearch>`__ is a search engine commonly used
 for storing application logs for search and analytics. Determined supports using Elasticsearch as
-the storage backend for trial logs. Configuring Determined to use Elasticsearch is simple; however,
+the storage backend for task logs. Configuring Determined to use Elasticsearch is simple; however,
 managing an Elasticsearch cluster at scale is an involved task, so this guide is recommended for
 users who have hit the limitations of the default logging backend.
 
@@ -48,9 +48,11 @@ on how the cluster will be used:
 .. code:: json
 
    {
-     "index_patterns": ["determined-triallogs-*"],
+     "index_patterns": ["determined-tasklogs-*"],
      "mappings": {
        "properties": {
+           "task_id": {"type": "keyword", "index": true},
+           "allocation_id": {"type": "keyword": "index": true},
            "agent_id": {"type": "keyword", "index": true},
            "container_id": {"type": "keyword", "index": true},
            "level": {"type": "keyword", "index": true},
@@ -62,5 +64,5 @@ on how the cluster will be used:
      }
    }
 
-The configuration settings to enable Elasticsearch as the trial log backend are described in the
+The configuration settings to enable Elasticsearch as the task log backend are described in the
 :ref:`cluster configuration <cluster-configuration>` reference.

@@ -1,5 +1,17 @@
 #!/bin/bash
 
+STDOUT_FILE=/run/determined/train/logs/stdout.log
+STDERR_FILE=/run/determined/train/logs/stderr.log
+
+mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
+
+# Explaination for this is found in ./entrypoint.sh.
+ln -sf /proc/$$/fd/1 "$STDOUT_FILE"
+ln -sf /proc/$$/fd/2 "$STDERR_FILE"
+if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
+    exec > >(multilog n2 "$STDOUT_FILE-rotate")  2> >(multilog n2 "$STDERR_FILE-rotate")
+fi
+
 set -e
 set -x
 
@@ -24,5 +36,7 @@ fi
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
+READINESS_REGEX="TensorBoard contains metrics"
 TENSORBOARD_VERSION=$(pip show tensorboard | grep Version | sed "s/[^:]*: *//")
-exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@"
+exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.tensorboard "$TENSORBOARD_VERSION" "$@" \
+    > >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX"))

@@ -66,6 +66,7 @@ type DB interface {
 	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)
+	ExperimentTrialAndTaskIDs(expID int) ([]int, []model.TaskID, error)
 	ExperimentNumSteps(id int) (int64, error)
 	ExperimentModelDefinitionRaw(id int) ([]byte, error)
 	ExperimentCheckpointsToGCRaw(
@@ -167,7 +168,6 @@ type DB interface {
 	TrialLogs(
 		trialID, limit int, fs []api.Filter, order apiv1.OrderBy, followState interface{},
 	) ([]*model.TrialLog, interface{}, error)
-	AddTrialLogs(logs []*model.TrialLog) error
 	DeleteTrialLogs(ids []int) error
 	TrialLogsCount(trialID int, fs []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)

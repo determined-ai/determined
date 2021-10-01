@@ -117,7 +117,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			ctx.Respond(responseReattachContainers{ContainersReattached: reattachedContainers})
 		}
 
-	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TrialLog:
+	case aproto.ContainerLog, aproto.ContainerStateChanged, model.TaskLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:

@@ -36,6 +36,7 @@ type terminateForGC struct{}
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
+	logger *actor.Ref,
 	taskID model.TaskID,
 	taskType model.TaskType,
 	jobType model.JobType,
@@ -44,7 +45,8 @@ func createGenericCommandActor(
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	cmd := &command{
-		db: db,
+		db:     db,
+		logger: logger,
 
 		GenericCommandSpec: spec,
 
@@ -69,6 +71,7 @@ func createGenericCommandActor(
 type command struct {
 	db          *db.PgDB
 	eventStream *actor.Ref
+	logger      *actor.Ref
 
 	tasks.GenericCommandSpec
 
@@ -97,10 +100,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 			return errors.Wrapf(err, "persisting job %v", c.taskID)
 		}
 		if err := c.db.AddTask(&model.Task{
-			TaskID:    c.taskID,
-			TaskType:  c.taskType,
-			StartTime: c.registeredTime,
-			JobID:     c.jobID(),
+			TaskID:     c.taskID,
+			TaskType:   c.taskType,
+			StartTime:  c.registeredTime,
+			JobID:      c.jobID(),
+			LogVersion: model.CurrentTaskLogVersion,
 		}); err != nil {
 			return errors.Wrapf(err, "persisting task %v", c.taskID)
 		}
@@ -128,13 +132,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		var logBasedReadinessConfig *sproto.LogBasedReadinessConfig
-		if c.LogReadinessCheck != nil {
-			logBasedReadinessConfig = &sproto.LogBasedReadinessConfig{
-				Pattern: c.LogReadinessCheck,
-			}
-		}
-
 		var idleWatcherConfig *sproto.IdleTimeoutConfig
 		if c.Config.IdleTimeout != nil && (c.WatchProxyIdleTimeout || c.WatchRunnerIdleTimeout) {
 			idleWatcherConfig = &sproto.IdleTimeoutConfig{
@@ -159,16 +156,17 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents:  eventStreamConfig,
-			ProxyPort:     portProxyConf,
-			IdleTimeout:   idleWatcherConfig,
-			LogBasedReady: logBasedReadinessConfig,
-		}, c.db, sproto.GetRM(ctx.Self().System()))
+			StreamEvents: eventStreamConfig,
+			ProxyPort:    portProxyConf,
+			IdleTimeout:  idleWatcherConfig,
+		}, c.db, sproto.GetRM(ctx.Self().System()), c.logger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
 	case actor.PostStop:
-		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
-			ctx.Log().WithError(err).Error("marking task complete")
+		if c.exitStatus == nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
+			}
 		}
 	case actor.ChildStopped:
 	case actor.ChildFailed:
@@ -176,6 +174,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			c.exitStatus = &task.AllocationExited{
 				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
 				Err:        errors.New("command allocation actor failed"),
+			}
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
 
@@ -190,6 +191,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
+		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
+			ctx.Log().WithError(err).Error("marking task complete")
+		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 
 	case getSummary:

@@ -2,19 +2,12 @@ from argparse import ONE_OR_MORE, REMAINDER, FileType, Namespace
 from pathlib import Path
 from typing import Any, List
 
-from determined.cli import command
+from determined.cli import command, task
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-from .command import (
-    CONFIG_DESC,
-    CONTEXT_DESC,
-    VOLUME_DESC,
-    launch_command,
-    parse_config,
-    render_event_stream,
-)
+from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, launch_command, parse_config
 
 
 @authentication.required
@@ -32,11 +25,7 @@ def run_command(args: Namespace) -> None:
         print(resp["id"])
         return
 
-    url = "commands/{}/events".format(resp["id"])
-
-    with api.ws(args.master, url) as ws:
-        for msg in ws:
-            render_event_stream(msg)
+    api.pprint_task_logs(args.master, resp["id"], follow=True)
 
 
 # fmt: off
@@ -71,13 +60,9 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
-        Cmd("logs", command.tail_logs, "fetch command logs", [
-            Arg("command_id", help="command ID"),
-            Arg("-f", "--follow", action="store_true",
-                help="follow the logs of a command, similar to tail -f"),
-            Arg("--tail", type=int, default=200,
-                help="number of lines to show, counting from the end "
-                     "of the log")
+        Cmd("logs", task.logs, "fetch command logs", [
+            Arg("task_id", help="command ID", metavar="command_id"),
+            *task.common_log_options,
         ]),
         Cmd("kill", command.kill, "forcibly terminate a command", [
             Arg("command_id", help="command ID", nargs=ONE_OR_MORE),

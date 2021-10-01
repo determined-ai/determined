@@ -1,11 +1,12 @@
 package sproto
 
 import (
-	"regexp"
+	"fmt"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -27,12 +28,11 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible   bool
-		DoRendezvous  bool
-		IdleTimeout   *IdleTimeoutConfig
-		ProxyPort     *PortProxyConfig
-		StreamEvents  *EventStreamConfig
-		LogBasedReady *LogBasedReadinessConfig
+		Preemptible  bool
+		DoRendezvous bool
+		IdleTimeout  *IdleTimeoutConfig
+		ProxyPort    *PortProxyConfig
+		StreamEvents *EventStreamConfig
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.
@@ -53,11 +53,6 @@ type (
 	// EventStreamConfig configures an event stream.
 	EventStreamConfig struct {
 		To *actor.Ref
-	}
-
-	// LogBasedReadinessConfig configures using logs as a ready check.
-	LogBasedReadinessConfig struct {
-		Pattern *regexp.Regexp
 	}
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
@@ -144,6 +139,7 @@ type Event struct {
 	Description string    `json:"description"`
 	IsReady     bool      `json:"is_ready"`
 	State       string    `json:"state"`
+	ContainerID string    `json:"container_id"`
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
@@ -151,8 +147,7 @@ type Event struct {
 	// ContainerStartedEvent is triggered when the container started on an agent.
 	ContainerStartedEvent *TaskContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
-	// TODO: Move to ServiceReadyEvent type to a specialized event with readiness checks.
-	ServiceReadyEvent *ContainerLog `json:"service_ready_event"`
+	ServiceReadyEvent *bool `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
 	// terminate.
 	TerminateRequestEvent *ReleaseResources `json:"terminate_request_event"`
@@ -160,4 +155,39 @@ type Event struct {
 	ExitedEvent *string `json:"exited_event"`
 	// LogEvent is triggered when a new log message is available.
 	LogEvent *string `json:"log_event"`
+}
+
+// ToTaskLog converts an event to a task log.
+func (ev *Event) ToTaskLog() model.TaskLog {
+	description := ev.Description
+	var message string
+	switch {
+	case ev.ScheduledEvent != nil:
+		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
+	case ev.ContainerStartedEvent != nil:
+		message = fmt.Sprintf("Container of %s has started", description)
+	case ev.TerminateRequestEvent != nil:
+		message = fmt.Sprintf("%s was requested to terminate", description)
+	case ev.ExitedEvent != nil:
+		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
+	case ev.LogEvent != nil:
+		message = fmt.Sprintf(*ev.LogEvent)
+	case ev.ServiceReadyEvent != nil:
+		message = fmt.Sprintf("Service of %s is available", description)
+	case ev.AssignedEvent != nil:
+		message = fmt.Sprintf("%s was assigned to an agent", description)
+	default:
+		// The client could rely on logEntry IDs and since some of these events aren't actually log
+		// events we'd need to notify of them about these non existing logs either by adding a new
+		// attribute to our response or a sentient log entry or we could keep it simple and normalize
+		// command events as log struct by setting a special message.
+		message = ""
+	}
+
+	return model.TaskLog{
+		Level:       ptrs.StringPtr(model.LogLevelInfo),
+		ContainerID: &ev.ContainerID,
+		Timestamp:   &ev.Time,
+		Log:         message,
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -62,8 +61,6 @@ func (a *apiServer) SetShellPriority(
 	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
-var shellReadinessPattern = regexp.MustCompile("Server listening on")
-
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
@@ -105,6 +102,12 @@ func (a *apiServer) LaunchShell(
 			0700,
 			tar.TypeReg,
 		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			taskReadyCheckLogs,
+			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
+			0700,
+			tar.TypeReg,
+		),
 	}
 
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeShell}
@@ -133,8 +136,6 @@ func (a *apiServer) LaunchShell(
 	spec.Keys = &keys
 
 	spec.ProxyTCP = true
-
-	spec.LogReadinessCheck = shellReadinessPattern
 
 	// Launch a Shell actor.
 	var shellID model.TaskID

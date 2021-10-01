@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -22,12 +23,18 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 	"github.com/determined-ai/determined/proto/pkg/utilv1"
+)
+
+const (
+	commandDir        = "/run/determined/"
+	commandEntrypoint = "/run/determined/command-entrypoint.sh"
 )
 
 var commandsAddr = actor.Addr("commands")
@@ -195,15 +202,18 @@ func (a *apiServer) LaunchCommand(
 			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
 		)
 	}
-	if len(spec.Config.Entrypoint) == 1 {
-		// If an entrypoint is specified as a singleton string, Determined will follow the "shell form"
-		// convention of Docker that executes the Command with "/bin/sh -c" prepended.
-		//
-		// https://docs.docker.com/engine/reference/builder/#shell-form-entrypoint-example
-		var shellFormEntrypoint = []string{"/bin/sh", "-c"}
 
-		spec.Config.Entrypoint = append(shellFormEntrypoint, spec.Config.Entrypoint...)
+	spec.Config.Entrypoint = append([]string{commandEntrypoint}, spec.Config.Entrypoint...)
+	spec.AdditionalFiles = archive.Archive{
+		spec.Base.AgentUserGroup.OwnedArchiveItem(commandDir, nil, 0700, tar.TypeDir),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			commandEntrypoint,
+			etc.MustStaticFile(etc.CommandEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
 	}
+
 	if err = check.Validate(spec.Config); err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,

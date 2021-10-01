@@ -2,15 +2,9 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // BatchRequest describes the parameters needed to target a subset of logs.
@@ -63,7 +57,6 @@ type TerminationCheckFn func() (bool, error)
 type BatchStreamProcessor struct {
 	req                    BatchRequest
 	fetcher                FetchBatchFn
-	process                OnBatchFn
 	terminateCheck         TerminationCheckFn
 	alwaysCheckTermination bool
 	batchWaitTime          time.Duration
@@ -74,7 +67,6 @@ type BatchStreamProcessor struct {
 func NewBatchStreamProcessor(
 	req BatchRequest,
 	fetcher FetchBatchFn,
-	process OnBatchFn,
 	terminateCheck TerminationCheckFn,
 	alwaysCheckTermination bool,
 	batchWaitTime time.Duration,
@@ -83,7 +75,6 @@ func NewBatchStreamProcessor(
 	return &BatchStreamProcessor{
 		req:                    req,
 		fetcher:                fetcher,
-		process:                process,
 		terminateCheck:         terminateCheck,
 		alwaysCheckTermination: alwaysCheckTermination,
 		batchWaitTime:          batchWaitTime,
@@ -91,18 +82,22 @@ func NewBatchStreamProcessor(
 	}
 }
 
-// Run runs the batch stream processor.
-func (p *BatchStreamProcessor) Run(ctx context.Context) error {
+// Run runs the batch stream processor. There is an implicit assumption upstream that errors
+// won't be sent forever, so after encountering an error in Run, we should log and continue
+// or send and return.
+func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 	t := time.NewTicker(p.batchWaitTime)
 	defer t.Stop()
+	defer close(res)
 	for {
 		var miss bool
 		switch batch, err := p.fetcher(p.req); {
 		case err != nil:
-			return errors.Wrapf(err, "failed to fetch batch")
+			res <- errors.Wrapf(err, "failed to fetch batch")
+			return
 		case batch == nil, batch.Size() == 0:
 			if !p.req.Follow {
-				return nil
+				return
 			}
 			t.Reset(p.batchMissWaitTime)
 			miss = true
@@ -110,30 +105,29 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			// Check the ctx again before we process, since fetch takes most of the time and
 			// a send on a closed ctx will print errors in the master log that can be misleading.
 			if ctx.Err() != nil {
-				return nil
+				return
 			}
 			p.req.Limit -= batch.Size()
 			p.req.Offset += batch.Size()
-			switch err := p.process(batch); {
-			case err != nil:
-				return fmt.Errorf("failed while processing batch: %w", err)
-			case !p.req.Follow && p.req.Limit <= 0:
-				return nil
+			res <- batch
+			if !p.req.Follow && p.req.Limit <= 0 {
+				return
 			}
 		}
 
 		if (miss || p.alwaysCheckTermination) && p.terminateCheck != nil {
 			switch terminate, err := p.terminateCheck(); {
 			case err != nil:
-				return errors.Wrap(err, "failed to check the termination status")
+				res <- errors.Wrap(err, "failed to check the termination status")
+				return
 			case terminate:
-				return nil
+				return
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		case <-t.C:
 			if miss {
 				miss = false
@@ -142,67 +136,4 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			continue
 		}
 	}
-}
-
-// LogStreamProcessor handles streaming log messages. Upon start, it notifies another
-// actor which handles the BatchRequest message to start streaming logs conforming to that
-// request to itself. Each time the producing actor receives a batch, it will send it to
-// the LogStreamProcessor to handle it with its OnBatchFn.
-type LogStreamProcessor struct {
-	req         BatchRequest
-	ctx         context.Context
-	send        OnBatchFn
-	logStore    *actor.Ref
-	sendCounter int
-}
-
-// CloseStream indicates that the log stream should close.
-type CloseStream struct{}
-
-// NewLogStreamProcessor creates a new logStreamActor.
-func NewLogStreamProcessor(
-	ctx context.Context,
-	eventManager *actor.Ref,
-	request BatchRequest,
-	send OnBatchFn,
-) *LogStreamProcessor {
-	return &LogStreamProcessor{req: request, ctx: ctx, send: send, logStore: eventManager}
-}
-
-// Receive implements the actor.Actor interface.
-func (l *LogStreamProcessor) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		if response := ctx.Ask(l.logStore, l.req); response.Empty() {
-			ctx.Self().Stop()
-			return status.Errorf(codes.NotFound, "logStore did not respond")
-		}
-
-	case Batch:
-		if connectionIsClosed(l.ctx) {
-			ctx.Self().Stop()
-			break
-		}
-		if err := l.send(msg); err != nil {
-			return status.Errorf(codes.Internal, "failed to send batch starting at %d", l.sendCounter)
-		}
-		l.sendCounter += msg.Size()
-		if l.req.Limit > 0 && l.sendCounter >= l.req.Limit {
-			ctx.Self().Stop()
-		}
-
-	case CloseStream:
-		ctx.Self().Stop()
-
-	case actor.PostStop:
-		ctx.Tell(l.logStore, CloseStream{})
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func connectionIsClosed(ctx context.Context) bool {
-	return ctx.Err() != nil
 }

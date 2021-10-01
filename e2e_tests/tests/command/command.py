@@ -38,7 +38,7 @@ def interactive_command(*args: str) -> Generator:
             else:
                 iterator = iter(self.process.stdout)  # type: ignore
                 line = next(iterator)
-                m = re.search(rb"Scheduling .* \(id: (.*)\)\.\.\.", line)
+                m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
                 assert m is not None
                 self.task_id = m.group(1).decode() if m else None
 

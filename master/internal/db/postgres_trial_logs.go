@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -76,45 +75,6 @@ ORDER BY timestamp %s OFFSET $2 LIMIT $3
 	}
 
 	return b, offset + len(b), nil
-}
-
-// AddTrialLogs adds a list of *model.TrialLog objects to the database with automatic IDs.
-func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
-	if len(logs) == 0 {
-		return nil
-	}
-
-	var text strings.Builder
-	text.WriteString(`
-INSERT INTO trial_logs
-  (trial_id, message, log, agent_id, container_id, rank_id, timestamp, level, stdtype, source)
- VALUES
-`)
-
-	args := make([]interface{}, 0, len(logs)*10)
-
-	for i, log := range logs {
-		if i > 0 {
-			text.WriteString(",")
-		}
-		fmt.Fprintf(&text, " ($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)",
-			i*10+1, i*10+2, i*10+3, i*10+4, i*10+5, i*10+6, i*10+7, i*10+8, i*10+9, i*10+10)
-
-		var l *model.RawString
-		if log.Log != nil {
-			r := model.RawString(*log.Log)
-			l = &r
-		}
-
-		args = append(args, log.TrialID, log.Message, l, log.AgentID, log.ContainerID, log.RankID,
-			log.Timestamp, log.Level, log.StdType, log.Source)
-	}
-
-	if _, err := db.sql.Exec(text.String(), args...); err != nil {
-		return errors.Wrapf(err, "error inserting %d trial logs", len(logs))
-	}
-
-	return nil
 }
 
 // DeleteTrialLogs deletes the logs for the given trial IDs.

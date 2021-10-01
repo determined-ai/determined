@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"runtime"
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
@@ -90,29 +89,4 @@ func compareSlices(env []string, ans []string) bool {
 		return false
 	}
 	return true
-}
-
-func defaultAgentConfig() Options {
-	// Same defaults as set by viper when binding environment variables.
-	return Options{
-		AgentID:             "test-agent",
-		MasterHost:          "localhost",
-		MasterPort:          8080,
-		ContainerMasterHost: defaultContainerMasterHost(),
-		SlotType:            "auto",
-		BindIP:              "0.0.0.0",
-		BindPort:            9090,
-		Fluent: FluentOptions{
-			Image:         "fluent/fluent-bit:1.6",
-			Port:          24224,
-			ContainerName: "determined-fluent-test",
-		},
-	}
-}
-
-func defaultContainerMasterHost() string {
-	if runtime.GOOS == "darwin" {
-		return "host.docker.internal"
-	}
-	return ""
 }

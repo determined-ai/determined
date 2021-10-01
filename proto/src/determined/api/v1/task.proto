@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/timestamp.proto";
+
+import "determined/log/v1/log.proto";
+import "determined/api/v1/pagination.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Mark the given task as ready.
+message AllocationReadyRequest {
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+// Response to IdleNotebookRequest.
+message AllocationReadyResponse {}
+
+// Stream task logs.
+message TaskLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The id of the task.
+  string task_id = 1;
+  // Limit the number of trial logs. A value of 0 denotes no limit.
+  int32 limit = 4;
+  // Continue following logs until the trial stops.
+  bool follow = 5;
+  // Limit the task logs to particular allocations.
+  repeated string allocation_ids = 6;
+  // Limit the trial logs to a subset of agents.
+  repeated string agent_ids = 7;
+  // Limit the trial logs to a subset of containers.
+  repeated string container_ids = 8;
+  // Limit the trial logs to a subset of ranks.
+  repeated int32 rank_ids = 9;
+  // Limit the trial logs to a subset of agents.
+  repeated determined.log.v1.LogLevel levels = 10;
+  // Limit the trial logs to a subset of output streams.
+  repeated string stdtypes = 11;
+  // Limit the trial logs to a subset of sources.
+  repeated string sources = 12;
+  // Limit the trial logs to ones with a timestamp before a given time.
+  google.protobuf.Timestamp timestamp_before = 13;
+  // Limit the trial logs to ones with a timestamp after a given time.
+  google.protobuf.Timestamp timestamp_after = 14;
+  // Order logs in either ascending or descending order by timestamp.
+  OrderBy order_by = 15;
+}
+
+// Response to TaskLogsRequest.
+message TaskLogsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "level", "message", "timestamp" ] }
+  };
+  // The ID of the log.
+  string id = 1;
+  // The timestamp of the log.
+  google.protobuf.Timestamp timestamp = 2;
+  // The log message.
+  string message = 3;
+  // The level of the log.
+  determined.log.v1.LogLevel level = 4;
+}
+
+// Stream distinct task log fields.
+message TaskLogsFieldsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "task_id" ] }
+  };
+  // The ID of the task.
+  string task_id = 1;
+  // Continue following fields until the task stops.
+  bool follow = 2;
+}
+
+// Response to TaskLogFieldsRequest.
+message TaskLogsFieldsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "message" ] }
+  };
+  // The distint allocation IDs present in the logs.
+  repeated string allocation_ids = 1;
+  // The distinct agent IDs present in the logs.
+  repeated string agent_ids = 2;
+  // The distinct container IDs present in the logs.
+  repeated string container_ids = 3;
+  // The distinct rank IDs present in the logs.
+  repeated int32 rank_ids = 4;
+  // The distinct stdtypes present in the logs.
+  repeated string stdtypes = 5;
+  // The distinct sources present in the logs.
+  repeated string sources = 6;
+}

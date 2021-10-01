@@ -25,23 +25,23 @@ type (
 	flushLogs struct{}
 )
 
-type trialLogger struct {
-	backend      TrialLogBackend
-	pending      []*model.TrialLog
+type taskLogger struct {
+	backend      TaskLogBackend
+	pending      []*model.TaskLog
 	lastLogFlush time.Time
 }
 
-// newTrialLogger creates an actor which can buffer up trial logs and flush them periodically.
-// There should only be one trialLogger shared across the entire system.
-func newTrialLogger(backend TrialLogBackend) actor.Actor {
-	return &trialLogger{
+// newTaskLogger creates an actor which can buffer up task logs and flush them periodically.
+// There should only be one taskLogger shared across the entire system.
+func newTaskLogger(backend TaskLogBackend) actor.Actor {
+	return &taskLogger{
 		backend:      backend,
 		lastLogFlush: time.Now(),
-		pending:      make([]*model.TrialLog, 0, logBuffer),
+		pending:      make([]*model.TaskLog, 0, logBuffer),
 	}
 }
 
-func (l *trialLogger) Receive(ctx *actor.Context) error {
+func (l *taskLogger) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, logFlushInterval, flushLogs{})
@@ -50,7 +50,7 @@ func (l *trialLogger) Receive(ctx *actor.Context) error {
 		l.tryFlushLogs(ctx, true)
 		actors.NotifyAfter(ctx, logFlushInterval, flushLogs{})
 
-	case model.TrialLog:
+	case model.TaskLog:
 		l.pending = append(l.pending, &msg)
 		l.tryFlushLogs(ctx, false)
 
@@ -64,10 +64,10 @@ func (l *trialLogger) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (l *trialLogger) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
+func (l *taskLogger) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
 	if forceFlush || len(l.pending) >= logBuffer {
-		if err := l.backend.AddTrialLogs(l.pending); err != nil {
-			ctx.Log().WithError(err).Errorf("failed to save trial logs")
+		if err := l.backend.AddTaskLogs(l.pending); err != nil {
+			ctx.Log().WithError(err).Errorf("failed to save task logs")
 		}
 		l.pending = l.pending[:0]
 	}

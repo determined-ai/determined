@@ -26,7 +26,7 @@ import (
 
 // The names of environment variables whose values should be included in log entries that Docker or
 // the agent sends to the Fluent Bit logger.
-var fluentEnvVarNames = []string{containerIDEnvVar, trialIDEnvVar}
+var fluentEnvVarNames = []string{containerIDEnvVar, allocationIDEnvVar, taskIDEnvVar}
 
 var fluentLogLineRegexp = regexp.MustCompile(`\[[^]]*\] \[ *([^]]*)\] (.*)`)
 
@@ -153,7 +153,8 @@ func startLoggingContainer(
 				{"Remove", "ai.determined.container.parent"},
 				// Rename environment variables to normal names.
 				{"Rename", containerIDEnvVar + " container_id"},
-				{"Rename", trialIDEnvVar + " trial_id"},
+				{"Rename", allocationIDEnvVar + " allocation_id"},
+				{"Rename", taskIDEnvVar + " task_id"},
 				{"Add", "agent_id " + opts.AgentID},
 				{"Rename", "source stdtype"},
 			},

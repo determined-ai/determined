@@ -1,7 +1,14 @@
 package model
 
 import (
+	"fmt"
+	"strconv"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/google/uuid"
 
@@ -34,6 +41,16 @@ const (
 	TaskTypeCheckpointGC = "CHECKPOINT_GC"
 )
 
+// TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
+// would involve either a really costly migration or versioning schemes and we pick the latter.
+type TaskLogVersion int32
+
+// CurrentTaskLogVersion describes the current scheme in which we store task
+// logs. To avoid a migration that in some cases would be extremely
+// costly, we record the log version so that we can just read old logs
+// the old way and do the new however we please.
+const CurrentTaskLogVersion TaskLogVersion = 1
+
 // Task is the model for a task in the database.
 type Task struct {
 	TaskID    TaskID     `db:"task_id"`
@@ -41,6 +58,8 @@ type Task struct {
 	TaskType  TaskType   `db:"task_type"`
 	StartTime time.Time  `db:"start_time"`
 	EndTime   *time.Time `db:"end_time"`
+	// LogVersion indicates how the logs were stored.
+	LogVersion TaskLogVersion `db:"log_version"`
 }
 
 // AllocationID is the ID of an allocation of a task. It is usually of the form
@@ -149,4 +168,147 @@ func (s AllocationState) Proto() taskv1.State {
 	default:
 		return taskv1.State_STATE_UNSPECIFIED
 	}
+}
+
+const (
+	defaultTaskLogContainer = "UNKNOWN CONTAINER"
+	defaultTaskLogTime      = "UNKNOWN TIME"
+
+	// LogLevelTrace is the trace task log level.
+	LogLevelTrace = "TRACE"
+	// LogLevelDebug is the debug task log level.
+	LogLevelDebug = "DEBUG"
+	// LogLevelInfo is the info task log level.
+	LogLevelInfo = "INFO"
+	// LogLevelWarn is the warn task log level.
+	LogLevelWarn = "WARN"
+	// LogLevelError is the error task log level.
+	LogLevelError = "ERROR"
+	// LogLevelCritical is the critical task log level.
+	LogLevelCritical = "CRITICAL"
+	// LogLevelUnspecified is the unspecified task log level.
+	LogLevelUnspecified = "UNSPECIFIED"
+)
+
+// TaskLog represents a structured log emitted by an allocation.
+type TaskLog struct {
+	// A task log should have one of these IDs after being persisted. All should be unique.
+	ID *int `db:"id" json:"id,omitempty"`
+	// The body of an Elasticsearch log response will look something like
+	// { _id: ..., _source: { ... }} where _source is the rest of this struct.
+	// StringID doesn't have serialization tags because it is not part of
+	// _source and populated from from _id.
+	StringID     *string `json:"-"`
+	TaskID       string  `db:"task_id" json:"task_id"`
+	AllocationID *string `db:"allocation_id" json:"allocation_id"`
+	AgentID      *string `db:"agent_id" json:"agent_id,omitempty"`
+	// In the case of k8s, container_id is a pod name instead.
+	ContainerID *string    `db:"container_id" json:"container_id,omitempty"`
+	RankID      *int       `db:"rank_id" json:"rank_id,omitempty"`
+	Timestamp   *time.Time `db:"timestamp" json:"timestamp"`
+	Level       *string    `db:"level" json:"level"`
+	Log         string     `db:"log" json:"log"`
+	FlatLog     string     `db:"message" json:"message,omitempty"`
+	Source      *string    `db:"source" json:"source,omitempty"`
+	StdType     *string    `db:"stdtype" json:"stdtype,omitempty"`
+}
+
+// Resolve resolves the flat version of the log that UIs have shown historically.
+// TODO(task-unif): Should we just.. stop doing this? And send the log as is and let the
+// UIs handle display (yes, IMO).
+func (t *TaskLog) Resolve() {
+	var timestamp string
+	if t.Timestamp != nil {
+		timestamp = t.Timestamp.Format(time.RFC3339Nano)
+	} else {
+		timestamp = defaultTaskLogTime
+	}
+
+	// This is just to match postgres.
+	const containerIDMaxLength = 8
+	var containerID string
+	if t.ContainerID != nil {
+		containerID = *t.ContainerID
+		if len(containerID) > containerIDMaxLength {
+			containerID = containerID[:containerIDMaxLength]
+		}
+		containerID = fmt.Sprintf("[%s] ", containerID)
+	}
+
+	var rankID string
+	if t.RankID != nil {
+		rankID = fmt.Sprintf("[rank=%d] ", *t.RankID)
+	}
+
+	var level string
+	if t.Level != nil {
+		level = fmt.Sprintf("%s: ", *t.Level)
+	}
+
+	t.FlatLog = fmt.Sprintf("[%s] %s%s|| %s %s",
+		timestamp, containerID, rankID, level, t.Log)
+}
+
+// Proto converts a task log to its protobuf representation.
+func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
+	resp := &apiv1.TaskLogsResponse{}
+
+	switch {
+	case t.ID != nil:
+		resp.Id = strconv.Itoa(*t.ID)
+	case t.StringID != nil:
+		resp.Id = *t.StringID
+	default:
+		panic("log had no valid ID")
+	}
+
+	if t.Timestamp != nil {
+		resp.Timestamp = timestamppb.New(*t.Timestamp)
+	}
+
+	if t.Level == nil {
+		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+	} else {
+		switch *t.Level {
+		case LogLevelTrace:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
+		case LogLevelDebug:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
+		case LogLevelInfo:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
+		case LogLevelWarn:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
+		case LogLevelError:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
+		case LogLevelCritical:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_CRITICAL
+		default:
+			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
+		}
+	}
+
+	if resp.Message == "" {
+		t.Resolve()
+	}
+	resp.Message = t.FlatLog
+
+	return resp, nil
+}
+
+// TaskLogBatch represents a batch of model.TaskLog.
+type TaskLogBatch []*TaskLog
+
+// Size implements logs.Batch.
+func (t TaskLogBatch) Size() int {
+	return len(t)
+}
+
+// ForEach implements logs.Batch.
+func (t TaskLogBatch) ForEach(f func(interface{}) error) error {
+	for _, tl := range t {
+		if err := f(tl); err != nil {
+			return err
+		}
+	}
+	return nil
 }

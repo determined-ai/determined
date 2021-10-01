@@ -99,8 +99,8 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
 		}
 
-	case model.TrialLog:
-		return a.postTrialLog(msg)
+	case model.TaskLog:
+		return a.postTaskLog(msg)
 
 	case actor.ChildFailed:
 		switch msg.Child {
@@ -442,22 +442,22 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	return nil
 }
 
-func (a *agent) postTrialLog(log model.TrialLog) error {
-	j, err := json.Marshal([]model.TrialLog{log})
+func (a *agent) postTaskLog(log model.TaskLog) error {
+	j, err := json.Marshal([]model.TaskLog{log})
 	if err != nil {
 		return err
 	}
 
 	resp, err := a.masterClient.Post(
-		fmt.Sprintf("%s://%s:%d/trial_logs", a.masterProto, a.MasterHost, a.MasterPort),
+		fmt.Sprintf("%s://%s:%d/task_logs", a.masterProto, a.MasterHost, a.MasterPort),
 		"application/json",
 		bytes.NewReader(j),
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to post trial log")
+		return errors.Wrap(err, "failed to post task log")
 	}
 	if err := resp.Body.Close(); err != nil {
-		return errors.Wrap(err, "failed to read master response for trial log")
+		return errors.Wrap(err, "failed to read master response for task log")
 	}
 	return nil
 }

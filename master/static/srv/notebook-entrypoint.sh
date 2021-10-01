@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 
+STDOUT_FILE=/run/determined/train/logs/stdout.log
+STDERR_FILE=/run/determined/train/logs/stderr.log
+
+mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
+
+# Explaination for this is found in ./entrypoint.sh.
+ln -sf /proc/$$/fd/1 "$STDOUT_FILE"
+ln -sf /proc/$$/fd/2 "$STDERR_FILE"
+if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
+    exec > >(multilog n2 "$STDOUT_FILE-rotate")  2> >(multilog n2 "$STDERR_FILE-rotate")
+fi
+
 set -e
 
 STARTUP_HOOK="startup-hook.sh"
@@ -34,8 +46,9 @@ export SHELL
 
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
-exec "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
+"$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
 
+READINESS_REGEX="^.*Jupyter Server .* is running.*$"
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
                  --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
@@ -43,4 +56,6 @@ exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.ip="0.0.0.0" \
                  --ServerApp.open_browser=False \
                  --ServerApp.token="" \
-                 --ServerApp.trust_xheaders=True
+                 --ServerApp.trust_xheaders=True \
+    2> >(tee -p >("$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "${READINESS_REGEX}") >&2)
+

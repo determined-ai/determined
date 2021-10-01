@@ -359,6 +359,11 @@ func (p k8sPodReservation) Start(
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
+	if spec.LoggingFields == nil {
+		spec.LoggingFields = map[string]string{}
+	}
+	spec.LoggingFields["allocation_id"] = spec.AllocationID
+	spec.LoggingFields["task_id"] = spec.TaskID
 	ctx.Tell(handler, kubernetes.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,

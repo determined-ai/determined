@@ -11,6 +11,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type (
@@ -97,4 +99,14 @@ func (c ContainerLog) String() string {
 	shortID := c.Container.ID[:8]
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
+}
+
+// ToTaskLog converts a container log to a task log.
+func (c ContainerLog) ToTaskLog() model.TaskLog {
+	return model.TaskLog{
+		ContainerID: ptrs.StringPtr(string(c.Container.ID)),
+		Log:         c.Message(),
+		Level:       c.Level,
+		Timestamp:   ptrs.TimePtr(c.Timestamp.UTC()),
+	}
 }
