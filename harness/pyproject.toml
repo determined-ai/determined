@@ -1,4 +1,4 @@
 [tool.black]
 line-length = 100
-exclude = '(_gen.py|determined/_swagger/client/*)'
+exclude = '(_gen.py|determined/common/api/fastapi_client/*)'
 

@@ -5,6 +5,7 @@ exclude =
     __pycache__,
     build,
     dist,
+    determined/common/api/fastapi_client,
     _gen.py
 
 # We ignore F401 in __init__.py because it is expected for there to be
