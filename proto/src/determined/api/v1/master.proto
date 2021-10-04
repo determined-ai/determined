@@ -42,6 +42,10 @@ message GetMasterResponse {
   bool telemetry_enabled = 5;
   // SSO providers.
   repeated SSOProvider sso_providers = 6;
+  // Redirect for starting internal sessions..
+  string external_login_uri = 7;
+  // Redirect for ending external sessions.
+  string external_logout_uri = 8;
 }
 
 // Get telemetry information.

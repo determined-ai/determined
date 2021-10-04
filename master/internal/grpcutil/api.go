@@ -20,13 +20,15 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const jsonPretty = "application/json+pretty"
 
 // NewGRPCServer creates a Determined gRPC service.
-func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus bool) *grpc.Server {
+func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus bool,
+	extConfig *model.ExternalSessions) *grpc.Server {
 	// In go-grpc, the INFO log level is used primarily for debugging
 	// purposes, so omit INFO messages from the master log.
 	logger := logrus.New()
@@ -42,7 +44,7 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		grpclogrus.StreamServerInterceptor(logEntry, opts...),
 		grpcrecovery.StreamServerInterceptor(),
-		streamAuthInterceptor(db),
+		streamAuthInterceptor(db, extConfig),
 	}
 
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
@@ -53,7 +55,7 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 				return status.Errorf(codes.Internal, "%s", p)
 			},
 		)),
-		unaryAuthInterceptor(db),
+		unaryAuthInterceptor(db, extConfig),
 	}
 
 	if enablePrometheus {

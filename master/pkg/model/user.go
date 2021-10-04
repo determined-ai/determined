@@ -115,3 +115,11 @@ func (user *User) UpdatePasswordHash(password string) error {
 	}
 	return nil
 }
+
+// ExternalSessions provides an integration point for an external service to issue JWTs to control
+// access to the cluster.
+type ExternalSessions struct {
+	LoginURI  string `json:"login_uri"`
+	LogoutURI string `json:"logout_uri"`
+	JwtKey    string `json:"jwt_key"`
+}

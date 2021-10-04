@@ -1928,6 +1928,18 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     ssoProviders?: Array<V1SSOProvider>;
+    /**
+     * Redirect for starting internal sessions..
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    externalLoginUri?: string;
+    /**
+     * Redirect for ending external sessions.
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    externalLogoutUri?: string;
 }
 
 /**

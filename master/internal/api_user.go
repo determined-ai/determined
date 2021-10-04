@@ -82,7 +82,7 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db)
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,8 @@ func (a *apiServer) PostUser(
 
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest) (*apiv1.SetUserPasswordResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx, a.m.db)
+	// TODO if ExternalSessions is there, don't even allow this
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, err
 	}
