@@ -111,7 +111,7 @@ class CertStore:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing).
         temp = pathlib.Path(str(self.path) + ".temp")
-        lock = pathlib.Path(str(self.path) + ".lock")
+        lock = str(self.path) + ".lock"
 
         with filelock.FileLock(lock):
             store = self._load_store_file()
