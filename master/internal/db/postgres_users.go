@@ -83,7 +83,7 @@ func (db *PgDB) UserByExternalToken(tokenText string, tokenKey string) (*model.U
 		*jwt.StandardClaims
 		Email string
 	}
-	
+
 	token, err := jwt.ParseWithClaims(tokenText, &externalToken{},
 		func(token *jwt.Token) (interface{}, error) {
 			var publicKey rsa.PublicKey
