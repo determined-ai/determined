@@ -42,6 +42,10 @@ _This is italic text_
 
 > This is a blockquote
 
+>> response to blockquote
+
+>>> response to the response to blockquote
+
 
 ## Lists
 
@@ -128,7 +132,7 @@ Duplicated footnote reference[^second].
 `;
 
 export const Default = (): React.ReactNode => (
-  <div style={{ height: '100%', width: '600px' }}>
+  <div style={{ height: '80vh', width: '600px' }}>
     <Markdown markdown={markdown} />
   </div>
 );
@@ -136,7 +140,7 @@ export const Default = (): React.ReactNode => (
 export const Editing = (): React.ReactNode => {
   const [ editedMarkdown, setEditedMarkdown ] = useState(markdown);
 
-  return <div style={{ height: '100%', width: '600px' }}>
+  return <div style={{ height: '80vh', width: '600px' }}>
     <Markdown editing={true} markdown={editedMarkdown} onChange={setEditedMarkdown} />
   </div>;
 };
