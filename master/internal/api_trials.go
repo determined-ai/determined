@@ -84,7 +84,7 @@ func (a *apiServer) TrialLogs(
 		return a.legacyTrialLogs(req, resp)
 	default:
 		// Translate the request.
-		return a.taskLogs(&apiv1.TaskLogsRequest{
+		return a.taskLogs(resp.Context(), &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
 			Follow:          req.Follow,
@@ -97,7 +97,18 @@ func (a *apiServer) TrialLogs(
 			TimestampBefore: req.TimestampBefore,
 			TimestampAfter:  req.TimestampAfter,
 			OrderBy:         req.OrderBy,
-		}, resp)
+		}, func(i interface{}) error {
+			l, err := i.(*model.TaskLog).Proto()
+			if err != nil {
+				return err
+			}
+			return resp.Send(&apiv1.TrialLogsResponse{
+				Id:        l.Id,
+				Timestamp: l.Timestamp,
+				Message:   l.Message,
+				Level:     l.Level,
+			})
+		})
 	}
 }
 
@@ -185,19 +196,19 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 		for _, l := range req.Levels {
 			switch l {
 			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
-				levels = append(levels, "DEBUG")
+				levels = append(levels, model.LogLevelDebug)
 			case logv1.LogLevel_LOG_LEVEL_TRACE:
-				levels = append(levels, "TRACE")
+				levels = append(levels, model.LogLevelTrace)
 			case logv1.LogLevel_LOG_LEVEL_DEBUG:
-				levels = append(levels, "DEBUG")
+				levels = append(levels, model.LogLevelDebug)
 			case logv1.LogLevel_LOG_LEVEL_INFO:
-				levels = append(levels, "INFO")
+				levels = append(levels, model.LogLevelInfo)
 			case logv1.LogLevel_LOG_LEVEL_WARNING:
-				levels = append(levels, "WARNING")
+				levels = append(levels, model.LogLevelWarn)
 			case logv1.LogLevel_LOG_LEVEL_ERROR:
-				levels = append(levels, "ERROR")
+				levels = append(levels, model.LogLevelError)
 			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
-				levels = append(levels, "CRITICAL")
+				levels = append(levels, model.LogLevelCritical)
 			}
 		}
 		return levels

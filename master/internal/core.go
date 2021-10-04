@@ -76,7 +76,7 @@ type Master struct {
 	rwCoordinator *actor.Ref
 	db            *db.PgDB
 	proxy         *actor.Ref
-	trialLogger   *actor.Ref
+	taskLogger    *actor.Ref
 	hpImportance  *actor.Ref
 
 	trialLogBackend TrialLogBackend
@@ -521,32 +521,13 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func (m *Master) postTrialLogs(c echo.Context) (interface{}, error) {
-	var logs []model.TrialLog
-	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
-		return nil, err
-	}
-
-	for _, l := range logs {
-		if l.TrialID == 0 {
-			continue
-		}
-		m.system.Tell(m.trialLogger, l)
-	}
-	return "", nil
-}
-
 func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
-	var logs []model.TrialLog
+	var logs []*model.TaskLog
 	if err := json.NewDecoder(c.Request().Body).Decode(&logs); err != nil {
-		return nil, err
+		return "", err
 	}
-
-	for _, l := range logs {
-		if l.TrialID == 0 {
-			continue
-		}
-		m.system.Tell(m.trialLogger, l)
+	if err := m.taskLogBackend.AddTaskLogs(logs); err != nil {
+		return "", errors.Wrap(err, "receiving task logs")
 	}
 	return "", nil
 }
@@ -637,7 +618,7 @@ func (m *Master) Run(ctx context.Context) error {
 	default:
 		panic("unsupported logging backend")
 	}
-	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.trialLogBackend))
+	m.taskLogger, _ = m.system.ActorOf(actor.Addr("taskLogger"), newTaskLogger(m.taskLogBackend))
 
 	userService, err := user.New(m.db, m.system)
 	if err != nil {
@@ -834,7 +815,7 @@ func (m *Master) Run(ctx context.Context) error {
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
-	m.echo.POST("/trial_logs", api.Route(m.postTrialLogs))
+	m.echo.POST("/task_logs", api.Route(m.postTaskLogs))
 
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))

@@ -65,6 +65,8 @@ const (
 	TaskTypeCheckpointGC = "CHECKPOINT_GC"
 )
 
+// TaskLogVersion is the version for our log-storing scheme. Useful because changing designs
+// would involve either a really costly migration or versioning schemes and we pick the latter.
 type TaskLogVersion int32
 
 // CurrentTaskLogVersion describes the current scheme in which we store task
@@ -191,6 +193,26 @@ func (s AllocationState) Proto() taskv1.State {
 	}
 }
 
+const (
+	defaultTaskLogContainer = "UNKNOWN CONTAINER"
+	defaultTaskLogTime      = "UNKNOWN TIME"
+
+	// LogLevelTrace is the trace task log level.
+	LogLevelTrace = "TRACE"
+	// LogLevelDebug is the debug task log level.
+	LogLevelDebug = "DEBUG"
+	// LogLevelInfo is the info task log level.
+	LogLevelInfo = "INFO"
+	// LogLevelWarn is the warn task log level.
+	LogLevelWarn = "WARN"
+	// LogLevelError is the error task log level.
+	LogLevelError = "ERROR"
+	// LogLevelCritical is the critical task log level.
+	LogLevelCritical = "CRITICAL"
+	// LogLevelUnspecified is the unspecified task log level.
+	LogLevelUnspecified = "UNSPECIFIED"
+)
+
 // TaskLog represents a structured log emitted by an allocation.
 type TaskLog struct {
 	// A task log should have one of these IDs after being persisted. All should be unique.
@@ -200,8 +222,8 @@ type TaskLog struct {
 	// StringID doesn't have serialization tags because it is not part of
 	// _source and populated from from _id.
 	StringID     *string `json:"-"`
-	TaskId       string  `db:"task_id" json:"task_id"`
-	AllocationId *string `db:"allocation_id" json:"allocation_id"`
+	TaskID       string  `db:"task_id" json:"task_id"`
+	AllocationID *string `db:"allocation_id" json:"allocation_id"`
 	AgentID      *string `db:"agent_id" json:"agent_id,omitempty"`
 	// In the case of k8s, container_id is a pod name instead.
 	ContainerID *string    `db:"container_id" json:"container_id,omitempty"`
@@ -220,7 +242,7 @@ func (t *TaskLog) Resolve() {
 	if t.Timestamp != nil {
 		timestamp = t.Timestamp.Format(time.RFC3339Nano)
 	} else {
-		timestamp = "UNKNOWN TIME"
+		timestamp = defaultTaskLogTime
 	}
 
 	// This is just to match postgres.
@@ -232,7 +254,7 @@ func (t *TaskLog) Resolve() {
 			containerID = containerID[:containerIDMaxLength]
 		}
 	} else {
-		containerID = "UNKNOWN CONTAINER"
+		containerID = defaultTaskLogContainer
 	}
 
 	var rankID string
@@ -270,17 +292,17 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 	} else {
 		switch *t.Level {
-		case "TRACE":
+		case LogLevelTrace:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_TRACE
-		case "DEBUG":
+		case LogLevelDebug:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_DEBUG
-		case "INFO":
+		case LogLevelInfo:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_INFO
-		case "WARNING":
+		case LogLevelWarn:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_WARNING
-		case "ERROR":
+		case LogLevelError:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_ERROR
-		case "CRITICAL":
+		case LogLevelCritical:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_CRITICAL
 		default:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED

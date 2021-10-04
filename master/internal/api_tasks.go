@@ -59,11 +59,17 @@ func (a *apiServer) TaskLogs(
 		return taskNotFound
 	}
 
-	return a.taskLogs(req, resp)
+	return a.taskLogs(resp.Context(), req, func(i interface{}) error {
+		pl, pErr := i.(*model.TaskLog).Proto()
+		if pErr != nil {
+			return pErr
+		}
+		return resp.Send(pl)
+	})
 }
 
 func (a *apiServer) taskLogs(
-	ctx context.Context, req *apiv1.TaskLogsRequest, handler func(*model.TaskLog),
+	ctx context.Context, req *apiv1.TaskLogsRequest, handler func(interface{}) error,
 ) error {
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
@@ -92,11 +98,7 @@ func (a *apiServer) taskLogs(
 
 	onBatch := func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
-			pl, pErr := r.(*model.TaskLog).Proto()
-			if pErr != nil {
-				return pErr
-			}
-			return resp.Send(pl)
+			return handler(r)
 		})
 	}
 
@@ -141,19 +143,19 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		for _, l := range req.Levels {
 			switch l {
 			case logv1.LogLevel_LOG_LEVEL_UNSPECIFIED:
-				levels = append(levels, "DEBUG")
+				levels = append(levels, model.LogLevelUnspecified)
 			case logv1.LogLevel_LOG_LEVEL_TRACE:
-				levels = append(levels, "TRACE")
+				levels = append(levels, model.LogLevelTrace)
 			case logv1.LogLevel_LOG_LEVEL_DEBUG:
-				levels = append(levels, "DEBUG")
+				levels = append(levels, model.LogLevelDebug)
 			case logv1.LogLevel_LOG_LEVEL_INFO:
-				levels = append(levels, "INFO")
+				levels = append(levels, model.LogLevelInfo)
 			case logv1.LogLevel_LOG_LEVEL_WARNING:
-				levels = append(levels, "WARNING")
+				levels = append(levels, model.LogLevelWarn)
 			case logv1.LogLevel_LOG_LEVEL_ERROR:
-				levels = append(levels, "ERROR")
+				levels = append(levels, model.LogLevelError)
 			case logv1.LogLevel_LOG_LEVEL_CRITICAL:
-				levels = append(levels, "CRITICAL")
+				levels = append(levels, model.LogLevelCritical)
 			}
 		}
 		return levels
@@ -212,7 +214,9 @@ func (a *apiServer) TaskLogsFields(
 // isTaskTerminalFunc returns an api.TerminationCheckFn that waits for a task to finish and
 // optionally, additionally, waits some buffer duration to give trials a bit to finish sending
 // stuff after termination.
-func (a *apiServer) isTaskTerminalFunc(taskID model.TaskID, buffer time.Duration) api.TerminationCheckFn {
+func (a *apiServer) isTaskTerminalFunc(
+	taskID model.TaskID, buffer time.Duration,
+) api.TerminationCheckFn {
 	return func() (bool, error) {
 		switch task, err := a.m.db.TaskByID(taskID); {
 		case err != nil:

@@ -88,6 +88,7 @@ func (e *Elastic) TaskLogsCount(taskID model.TaskID, fs []api.Filter) (int, erro
 // expensive for deep pagination and the scroll api specifically recommends
 // search after over itself.
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/search-request-search-after.html
+//nolint:dupl // True but duplication is a prior version that should never change.
 func (e *Elastic) TaskLogs(
 	taskID model.TaskID, limit int, fs []api.Filter, order apiv1.OrderBy,
 	searchAfter interface{},
@@ -235,6 +236,11 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 		"aggs": jsonObj{
 			// These keys are the aggregate names; they must match the aggregate names we expect to
 			// be returned, which are defined in the type of resp below.
+			"allocation_ids": jsonObj{
+				"terms": jsonObj{
+					"field": "allocation_id.keyword",
+				},
+			},
 			"agent_ids": jsonObj{
 				"terms": jsonObj{
 					"field": "agent_id.keyword",
@@ -264,11 +270,12 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 	}
 	resp := struct {
 		Aggregations struct {
-			AgentIDs     stringAggResult `json:"agent_ids"`
-			ContainerIDs stringAggResult `json:"container_ids"`
-			RankIDs      intAggResult    `json:"rank_ids"`
-			Sources      stringAggResult `json:"sources"`
-			StdTypes     stringAggResult `json:"stdtypes"`
+			AllocationIDs stringAggResult `json:"allocation_ids"`
+			AgentIDs      stringAggResult `json:"agent_ids"`
+			ContainerIDs  stringAggResult `json:"container_ids"`
+			RankIDs       intAggResult    `json:"rank_ids"`
+			Sources       stringAggResult `json:"sources"`
+			StdTypes      stringAggResult `json:"stdtypes"`
 		} `json:"aggregations"`
 	}{}
 	if err := e.search(query, &resp); err != nil {
@@ -276,11 +283,12 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 	}
 
 	return &apiv1.TaskLogsFieldsResponse{
-		AgentIds:     resp.Aggregations.AgentIDs.toKeys(),
-		ContainerIds: resp.Aggregations.ContainerIDs.toKeys(),
-		RankIds:      resp.Aggregations.RankIDs.toKeysInt32(),
-		Stdtypes:     resp.Aggregations.StdTypes.toKeys(),
-		Sources:      resp.Aggregations.Sources.toKeys(),
+		AllocationIds: resp.Aggregations.AllocationIDs.toKeys(),
+		AgentIds:      resp.Aggregations.AgentIDs.toKeys(),
+		ContainerIds:  resp.Aggregations.ContainerIDs.toKeys(),
+		RankIds:       resp.Aggregations.RankIDs.toKeysInt32(),
+		Stdtypes:      resp.Aggregations.StdTypes.toKeys(),
+		Sources:       resp.Aggregations.Sources.toKeys(),
 	}, nil
 }
 

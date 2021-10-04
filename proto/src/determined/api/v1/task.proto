@@ -78,6 +78,7 @@ message TaskLogsFieldsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id", "message" ] }
   };
+  // The distint allocation IDs present in the logs.
   repeated string allocation_ids = 1;
   // The distinct agent IDs present in the logs.
   repeated string agent_ids = 2;

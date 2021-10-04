@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/task"
@@ -147,17 +146,17 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case *task.AllocationExited:
 		return t.allocationExited(ctx, msg)
 	case sproto.ContainerLog:
-		if log, err := t.enrichTrialLog(model.TrialLog{
+		if log, err := t.enrichTaskLog(model.TaskLog{
 			ContainerID: ptrs.StringPtr(string(msg.Container.ID)),
-			Log:         ptrs.StringPtr(msg.Message()),
+			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {
 			ctx.Log().WithError(err).Warn("dropping container log")
 		} else {
 			ctx.Tell(t.logger, log)
 		}
-	case model.TrialLog:
-		if log, err := t.enrichTrialLog(msg); err != nil {
+	case model.TaskLog:
+		if log, err := t.enrichTaskLog(msg); err != nil {
 			ctx.Log().WithError(err).Warn("dropping trial log")
 		} else {
 			ctx.Tell(t.logger, log)
@@ -394,16 +393,13 @@ func (t *trial) transition(ctx *actor.Context, state model.State) error {
 	return nil
 }
 
-func (t *trial) enrichTrialLog(log model.TrialLog) (model.TrialLog, error) {
+func (t *trial) enrichTaskLog(log model.TaskLog) (model.TaskLog, error) {
 	if !t.idSet {
-		return model.TrialLog{}, fmt.Errorf(
+		return model.TaskLog{}, fmt.Errorf(
 			"cannot handle trial log before ID is set: %v", log)
 	}
-	log.TrialID = t.id
-	log.Message += "\n"
-	if log.Log != nil && !strings.HasSuffix(*log.Log, "\n") {
-		log.Log = ptrs.StringPtr(*log.Log + "\n")
-	}
+	log.TaskID = string(t.taskID)
+
 	if log.Timestamp == nil {
 		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
 	}
@@ -416,6 +412,9 @@ func (t *trial) enrichTrialLog(log model.TrialLog) (model.TrialLog, error) {
 	if log.StdType == nil {
 		log.StdType = ptrs.StringPtr("stdout")
 	}
+
+	log.Log += "\n"
+
 	return log, nil
 }
 

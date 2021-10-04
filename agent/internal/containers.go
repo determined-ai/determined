@@ -94,7 +94,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			dockerMasterLabel:        c.MasterInfo.MasterID,
 		}
 
-	case proto.ContainerLog, proto.ContainerStateChanged, model.TrialLog:
+	case proto.ContainerLog, proto.ContainerStateChanged, model.TaskLog:
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case proto.StartContainer:
