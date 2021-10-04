@@ -1,12 +1,9 @@
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, Optional, Tuple, cast
 
 
 class ExperimentConfig(dict):
     def debug_enabled(self) -> bool:
         return bool(self.get("debug", False))
-
-    def horovod_optional_args(self) -> List[str]:
-        return cast(List, self.get("data", {}).get("__det_dtrain_args", []))
 
     def scheduling_unit(self) -> int:
         return int(self.get("scheduling_unit", 100))

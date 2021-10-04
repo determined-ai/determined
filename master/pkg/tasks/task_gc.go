@@ -46,6 +46,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCheckpointGC}
 
 	res.WorkDir = DefaultWorkDir
 

@@ -88,7 +88,6 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == device.GPU)
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
