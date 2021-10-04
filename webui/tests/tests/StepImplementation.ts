@@ -415,7 +415,7 @@ export default class StepImplementation {
   @Step('Kill experiment')
   public async killExperiment() {
     await t.click(t.button('Kill'));
-    await t.click(t.button('Yes'));
+    await t.click(t.button('Kill'));
   }
 
   @Step('View experiment in TensorBoard')
