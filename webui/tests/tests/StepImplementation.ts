@@ -392,6 +392,9 @@ export default class StepImplementation {
   public async modifyExperiment(action: string, row: string) {
     await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
+    if (action === 'Kill') {
+      await t.click(t.button('Kill'));
+    }
   }
 
   @Step('Open TensorBoard from experiment row <row>')
@@ -415,7 +418,7 @@ export default class StepImplementation {
   @Step('Kill experiment')
   public async killExperiment() {
     await t.click(t.button('Kill'));
-    await t.click(t.button('Kill'));
+    await t.click(t.button('Yes'));
   }
 
   @Step('View experiment in TensorBoard')
