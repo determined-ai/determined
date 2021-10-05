@@ -5,11 +5,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 // BatchRequest describes the parameters needed to target a subset of logs.
@@ -139,67 +134,4 @@ func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 			continue
 		}
 	}
-}
-
-// LogStreamProcessor handles streaming log messages. Upon start, it notifies another
-// actor which handles the BatchRequest message to start streaming logs conforming to that
-// request to itself. Each time the producing actor receives a batch, it will send it to
-// the LogStreamProcessor to handle it with its OnBatchFn.
-type LogStreamProcessor struct {
-	req         BatchRequest
-	ctx         context.Context
-	send        OnBatchFn
-	logStore    *actor.Ref
-	sendCounter int
-}
-
-// CloseStream indicates that the log stream should close.
-type CloseStream struct{}
-
-// NewLogStreamProcessor creates a new logStreamActor.
-func NewLogStreamProcessor(
-	ctx context.Context,
-	eventManager *actor.Ref,
-	request BatchRequest,
-	send OnBatchFn,
-) *LogStreamProcessor {
-	return &LogStreamProcessor{req: request, ctx: ctx, send: send, logStore: eventManager}
-}
-
-// Receive implements the actor.Actor interface.
-func (l *LogStreamProcessor) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		if response := ctx.Ask(l.logStore, l.req); response.Empty() {
-			ctx.Self().Stop()
-			return status.Errorf(codes.NotFound, "logStore did not respond")
-		}
-
-	case Batch:
-		if connectionIsClosed(l.ctx) {
-			ctx.Self().Stop()
-			break
-		}
-		if err := l.send(msg); err != nil {
-			return status.Errorf(codes.Internal, "failed to send batch starting at %d", l.sendCounter)
-		}
-		l.sendCounter += msg.Size()
-		if l.req.Limit > 0 && l.sendCounter >= l.req.Limit {
-			ctx.Self().Stop()
-		}
-
-	case CloseStream:
-		ctx.Self().Stop()
-
-	case actor.PostStop:
-		ctx.Tell(l.logStore, CloseStream{})
-
-	default:
-		return actor.ErrUnexpectedMessage(ctx)
-	}
-	return nil
-}
-
-func connectionIsClosed(ctx context.Context) bool {
-	return ctx.Err() != nil
 }

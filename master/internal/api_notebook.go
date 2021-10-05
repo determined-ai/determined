@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -77,40 +76,30 @@ func (a *apiServer) SetNotebookPriority(
 }
 
 func (a *apiServer) NotebookLogs(
-	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
+	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer,
+) error {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 	); err != nil {
 		return err
 	}
 
-	cmdManagerAddr := notebooksAddr.Child(req.NotebookId)
-	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
-
-	logRequest := api.BatchRequest{
-		Offset: int(req.Offset),
-		Limit:  int(req.Limit),
+	res := make(chan interface{}, 1)
+	go a.taskLogs(resp.Context(), &apiv1.TaskLogsRequest{
+		TaskId: req.NotebookId,
+		Limit:  req.Limit,
+		// TODO(XXX): Offset is no longer supported.
 		Follow: req.Follow,
-	}
+	}, res)
 
-	onBatch := func(b api.Batch) error {
+	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.NotebookLogsResponse{
 				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
 			})
 		})
-	}
-
-	return a.m.system.MustActorOf(
-		cmdManagerAddr.Child("logStream-"+uuid.New().String()),
-		api.NewLogStreamProcessor(
-			resp.Context(),
-			eventManager,
-			logRequest,
-			onBatch,
-		),
-	).AwaitTermination()
+	})
 }
 
 var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")

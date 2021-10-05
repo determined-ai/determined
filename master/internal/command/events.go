@@ -32,7 +32,7 @@ func countNonNullRingValues(ring *ring.Ring) int {
 	return count
 }
 
-type logSubscribers = map[*actor.Ref]webAPI.BatchRequest
+type logSubscribers = map[chan interface{}]webAPI.BatchRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
@@ -59,28 +59,26 @@ func newEventManager(description string) *eventManager {
 	}
 }
 
-func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
-	for actor := range e.logStreams {
-		ctx.Tell(actor, webAPI.CloseStream{})
-	}
-	e.logStreams = nil
-}
-
 func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg sproto.Event) {
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
-			ctx.Tell(streamActor, logger.EntriesBatch([]*logger.Entry{msg.ToLogEntry()}))
+			select {
+			case streamActor <- logger.EntriesBatch([]*logger.Entry{msg.ToLogEntry()}):
+			default:
+				ctx.Log().Warn("dropping log in stream due to backpressure")
+			}
+
 		}
 	}
 
 	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
 		e.isTerminated = true
-		e.removeSusbscribers(ctx)
 	}
 }
 
 func (e *eventManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart, actor.PostStop:
 	case sproto.Event:
 		msg.ParentID = ctx.Self().Address().Parent().Local()
 		msg.ID = uuid.New().String()
@@ -112,41 +110,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 		e.processNewLogEvent(ctx, msg)
 
-	case webAPI.BatchRequest:
-		if ctx.Sender() == nil {
-			panic(ctxMissingSender)
-		}
-		ctx.Respond(true)
-
-		total := countNonNullRingValues(e.buffer)
-		msg.Offset = webAPI.EffectiveOffset(msg.Offset, total)
-
-		matchingEvents := e.getMatchingEvents(msg)
-		var logEntries []*logger.Entry
-		for _, ev := range matchingEvents {
-			if logEntry := ev.ToLogEntry(); logEntry != nil {
-				logEntries = append(logEntries, logEntry)
-			}
-		}
-		ctx.Tell(ctx.Sender(), logger.EntriesBatch(logEntries))
-
-		limitMet := msg.Limit > 0 && len(matchingEvents) >= msg.Limit
-
-		if msg.Follow && !e.isTerminated && !limitMet {
-			e.logStreams[ctx.Sender()] = msg
-		} else {
-			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
-		}
-
-	case webAPI.CloseStream:
-		if ctx.Sender() == nil {
-			panic(ctxMissingSender)
-		}
-		delete(e.logStreams, ctx.Sender())
-
-	case actor.PostStop:
-		e.removeSusbscribers(ctx)
-
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
 		if msg.Ctx.QueryParam("follow") == "" {
@@ -172,6 +135,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		if !ok {
 			break
 		}
+
 		events := e.buffer
 		for i := 0; i < e.buffer.Len(); i++ {
 			if events.Value != nil && i >= e.bufferSize-tail {
