@@ -435,22 +435,6 @@ export default class StepImplementation {
     await t.click(t.button('View in TensorBoard'));
   }
 
-  /* Task List Page Steps */
-
-  @Step('Filter tasks by type <table>')
-  public async filterTasksByType(table: Table) {
-    for (var row of table.getTableRows()) {
-      const ariaLabel = row.getCell('aria-label');
-      const count = row.getCell('count');
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
-      await t.click(t.text(ariaLabel, t.within(t.$('.ant-table-filter-dropdown'))));
-      await t.click(t.$('[aria-label="Apply Filter"]'));
-      await this.checkTableRowCount(count);
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
-      await t.click(t.$('[aria-label="Reset Filter"]'));
-    }
-  }
-
   /* Cluster */
 
   @Step('Should show <count> resource pool cards')
