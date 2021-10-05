@@ -17,6 +17,9 @@ interface Props extends FilterDropdownProps {
   width?: number;
 }
 
+export const ARIA_LABEL_CONTAINER = 'table-filter-dropdown-container';
+export const ARIA_LABEL_INPUT = 'table-filter-dropdown-input';
+
 const ITEM_HEIGHT = 28;
 
 const TableFilterDropdown: React.FC<Props> = ({
@@ -117,11 +120,12 @@ const TableFilterDropdown: React.FC<Props> = ({
   }, [ prevVisible, values, visible ]);
 
   return (
-    <div className={css.base} style={{ width }}>
+    <div aria-label={ARIA_LABEL_CONTAINER} className={css.base} style={{ width }}>
       {searchable && (
         <div className={css.search}>
           <Input
             allowClear
+            aria-label={ARIA_LABEL_INPUT}
             bordered={false}
             placeholder="search filters"
             prefix={<Icon name="search" size="tiny" />}
