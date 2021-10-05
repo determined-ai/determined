@@ -1,9 +1,7 @@
-import { EditOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Tabs, Tooltip } from 'antd';
+import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
-import Markdown from 'components/Markdown';
 import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
@@ -64,8 +62,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
-  const [ editingNotes, setEditingNotes ] = useState(false);
-  const [ editedNotes, setEditedNotes ] = useState('');
 
   const basePath = paths.experimentDetails(experiment.id);
 
