@@ -1,5 +1,5 @@
 import os
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
 
 import tensorflow as tf
 
@@ -8,7 +8,7 @@ from tests.experiment.utils import xor_data
 
 
 def xor_input_fn(
-    context: Union[estimator.EstimatorNativeContext, estimator.EstimatorTrialContext],
+    context: estimator.EstimatorTrialContext,
     batch_size: int,
     shuffle: bool = False,
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
@@ -31,7 +31,7 @@ def xor_input_fn(
 
 
 def xor_input_fn_data_layer(
-    context: Union[estimator.EstimatorNativeContext, estimator.EstimatorTrialContext],
+    context: estimator.EstimatorTrialContext,
     training: bool,
     batch_size: int,
     shuffle: bool = False,

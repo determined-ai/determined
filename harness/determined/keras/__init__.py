@@ -10,8 +10,6 @@ from determined.keras._data import (
 from determined.keras._enqueuer import _Enqueuer, _Sampler, _build_enqueuer
 from determined.keras._tensorboard_callback import TFKerasTensorBoard
 from determined.keras._tf_keras_context import (
-    TFKerasNativeContext,
-    TFKerasContext,
     TFKerasExperimentalContext,
     TFKerasTrainConfig,
     TFKerasTrialContext,

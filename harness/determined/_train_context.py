@@ -11,10 +11,9 @@ import determined as det
 from determined import constants, horovod, ipc
 
 
-class _TrainContext(metaclass=abc.ABCMeta):
+class TrialContext(metaclass=abc.ABCMeta):
     """
-    _TrainContext is the API to query the system about the trial as it's running.
-    These methods should be made available to both Native and Trial APIs.
+    TrialContext is the system-provided API to a Trial class.
     """
 
     def __init__(
@@ -54,7 +53,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self._stop_requested = False
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":
+    def from_config(cls, config: Dict[str, Any]) -> "TrialContext":
         """
         Create an context object suitable for debugging outside of Determined.
 
@@ -185,41 +184,6 @@ class _TrainContext(metaclass=abc.ABCMeta):
         return self.env.latest_batch
 
 
-class TrialContext(_TrainContext):
-    """
-    A base class that all TrialContexts will inherit from.
-    The context passed to the User's ``Trial.__init__()`` will inherit from this class.
-    """
-
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        super().__init__(env, hvd_config, rendezvous_info)
-
-
-class NativeContext(_TrainContext):
-    """
-    A base class that all NativeContexts will inherit when using the Native API.
-
-    The context returned by the ``init()`` function will inherit from this class.
-    """
-
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        super().__init__(env, hvd_config, rendezvous_info)
-        self._train_fn = None  # type: Optional[Callable[[], None]]
-
-    def _set_train_fn(self, train_fn: Callable[[], None]) -> None:
-        self._train_fn = train_fn
-
-
 class RankInfo:
     """
     RankInfo was worker identity information that is:
@@ -271,9 +235,7 @@ class RankInfo:
 
 class DistributedContext:
     """
-    DistributedContext extends all TrialContexts and NativeContexts under
-    the ``context.distributed`` namespace. It provides useful methods for
-    effective distributed training.
+    DistributedContext  provides useful methods for effective distributed training.
     """
 
     def __init__(

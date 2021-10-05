@@ -8,7 +8,7 @@ from determined._execution import (
     _local_execution_manager,
     InvalidHP,
 )
-from determined._train_context import NativeContext, TrialContext, DistributedContext, RankInfo
+from determined._train_context import TrialContext, DistributedContext, RankInfo
 from determined import _generic
 from determined._trial import Trial
 from determined._hparam import Categorical, Constant, Double, Integer, Log
