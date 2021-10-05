@@ -14,50 +14,48 @@ import (
 
 var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
 
-// GetJobs TODO.
+// GetJobs retrieves a list of jobs for a resource pool.
 func (a *apiServer) GetJobs(
 	_ context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	// TODO pagination and filtering
-	// a.sort(resp.Jobs, req.OrderBy, req.SortBy, apiv1.GetJobsRequest_SORT_BY_QUEUE_POSITION)
-	// resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
+	resp = &apiv1.GetJobsResponse{
+		Jobs: make([]*jobv1.Job, 0),
+	}
 
-	var jobs []*jobv1.Job
-	resp = &apiv1.GetJobsResponse{}
-
-	// TODO loop over all resource pools in the request
-	if len(req.ResourcePools) < 1 {
-		return nil, status.Error(codes.InvalidArgument, "missing resource_pools parameter") // FIXME
+	if req.ResourcePool == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing resource_pool parameter")
 	}
 
 	switch {
 	case sproto.UseAgentRM(a.m.system):
 		err = a.actorRequest(
-			sproto.AgentRMAddr.Child(req.ResourcePools[0]), resourcemanagers.GetJobOrder{}, &jobs,
+			sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.GetJobOrder{}, &resp.Jobs,
 		)
 	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &jobs)
+		err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &resp.Jobs)
 	default:
 		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 	}
 	if err != nil {
 		return nil, err
 	}
-	// for _, job := range jobs {
-	// 	if job == nil {
-	// 		panic("received an empty job summary") // this shouldn't happen
-	// 	}
-	// 	resp.Jobs = append(resp.Jobs, &jobv1.Job{
-	// 		Summary: &jobv1.JobSummary{
-	// 			JobId: string(job.JobID),
-	// 			State: job.State.Proto(), // look at AllocationState
-	// 		},
-	// 		EntityId: job.EntityID,
-	// 		Type:     job.JobType.Proto(),
-	// 	})
-	// }
-	resp.Jobs = jobs
-	return resp, nil
+
+	if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
+		// Reverese the list.
+		for i, j := 0, len(resp.Jobs)-1; i < j; i, j = i+1, j-1 {
+			resp.Jobs[i], resp.Jobs[j] = resp.Jobs[j], resp.Jobs[i]
+		}
+	}
+
+	if req.Pagination == nil {
+		req.Pagination = &apiv1.PaginationRequest{}
+	}
+	/* TODO user information
+	2. persist use with job info. not all jobs are persisted.
+	3. allocateReq.taskActor => a msg to get the task user/owner.
+	would need to bubble up incase of eg trial actor to experiment
+	*/
+	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
 }
 
 // GetJobQueueStats TODO.
