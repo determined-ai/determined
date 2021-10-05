@@ -1,11 +1,12 @@
 import { CopyOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Breadcrumb, Card, Input, Tabs, Tooltip } from 'antd';
+import { Breadcrumb, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
+import Markdown from 'components/Markdown';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -208,12 +209,11 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                 </Tooltip>
               )}
               title="Notes">
-              {
-                null ?
-                  <Input.TextArea
-                    placeholder ="Add detailed description of this model..." /> :
-                  <p className={css.placeholder}>Add detailed description of this model...</p>
-              }
+              <Markdown
+                editing={editingNotes}
+                height={200}
+                markdown={editingNotes ? editedNotes : ''}
+                onChange={setEditedNotes} />
             </Card>
             <Card
               extra={(
