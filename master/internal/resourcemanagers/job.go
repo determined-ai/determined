@@ -20,19 +20,25 @@ would only keep the one that's most representative of the final job state.
 Input: a list of allocateRequests sorted by expected order of execution from the scheduler.
 */
 func filterAllocateRequests(reqs AllocReqs) AllocReqs {
-	isAdded := make(map[model.JobID]bool)
-	rv := make(AllocReqs, 0)
+	isAdded := make(map[model.JobID]sproto.SchedulingState)
+	filteredReqs := make(AllocReqs, 0)
 	for _, req := range reqs {
 		job := req.Job
 		if job == nil {
 			continue
-		} else if _, ok := isAdded[job.JobID]; ok {
+		} else if state, ok := isAdded[job.JobID]; ok {
+			if state < job.State {
+				isAdded[job.JobID] = job.State
+			}
 			continue
 		}
-		isAdded[job.JobID] = true
-		rv = append(rv, req)
+		isAdded[job.JobID] = req.Job.State
+		filteredReqs = append(filteredReqs, req)
 	}
-	return rv
+	for _, req := range filteredReqs {
+		req.Job.State = isAdded[req.Job.JobID]
+	}
+	return filteredReqs
 }
 
 // allocReqsToJobOrder converts sorted allocation requests to job order.
