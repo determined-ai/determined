@@ -5,13 +5,11 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar
 
 from pydantic import (  # FIXME this doesn't get resolved in my IDE's language server
     BaseModel,
-    ValidationError,
     parse_obj_as,
 )
 
 from determined.common.api.authentication import Authentication
 from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi
-from determined.common.api.fastapi_client.exceptions import ResponseHandlingException
 from determined.common.api.request import do_request
 
 # TODO fix isinstance isn't returning true
@@ -37,10 +35,7 @@ class ApiClient:
             path_params = {}
         url = (self.host or "") + url.format(**path_params)
         response = do_request(method, self.host, url, auth=self.auth, **kwargs)
-        try:
-            return parse_obj_as(type_, response.json())
-        except ValidationError as e:
-            raise ResponseHandlingException(e)
+        return parse_obj_as(type_, response.json())
 
 
 client = ApiClient(host="http://localhost:8080")

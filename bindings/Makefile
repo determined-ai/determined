@@ -24,6 +24,7 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	# remove unused files
 	rm -r build/python-fastapi/fastapi_client/docs/
 	rm build/python-fastapi/fastapi_client/api_client.py
+	rm build/python-fastapi/fastapi_client/exceptions.py
 	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
 	rm -rf ../harness/determined/common/api/fastapi_client
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
