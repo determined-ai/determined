@@ -1,7 +1,10 @@
-import { Alert, Tabs } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import Markdown from 'components/Markdown';
+import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -61,6 +64,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
   const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const [ editingNotes, setEditingNotes ] = useState(false);
+  const [ editedNotes, setEditedNotes ] = useState('');
 
   const basePath = paths.experimentDetails(experiment.id);
 
@@ -155,6 +160,10 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
+  const saveNotes = useCallback((editedNotes: string) => {
+    //save to db
+  }, []);
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -185,6 +194,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
           {trialDetails
             ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
             : NoDataAlert}
+        </TabPane>
+        <TabPane key="notes" tab="Notes">
+          <NotesCard
+            notes=""
+            style={{ margin: 'var(--theme-sizes-layout-big)' }}
+            onSave={saveNotes} />
         </TabPane>
       </Tabs>
     </TrialLogPreview>
