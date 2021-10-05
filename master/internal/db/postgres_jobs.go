@@ -17,3 +17,15 @@ VALUES (:job_id, :job_type)
 	}
 	return nil
 }
+
+// updateJob propagates the new queue position to the job
+func (db *PgDB) UpdateJob(job *model.Job) error {
+	if job.JobID == "" {
+		return errors.Errorf("error modifying job with empty id")
+	}
+	query := `
+UPDATE jobs
+SET priority_value = :priority_value
+WHERE job_id = :job_id`
+	return db.namedExecOne(query, job)
+}
