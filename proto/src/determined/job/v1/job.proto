@@ -4,6 +4,7 @@ package determined.job.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/jobv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Job type.
 enum Type {
@@ -35,6 +36,9 @@ enum State {
 
 // Job summary.
 message JobSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "job_id", "state" ] }
+  };
   // Job id.
   string job_id = 1;
   // The scheduling state of the job.
@@ -47,6 +51,19 @@ message JobSummary {
 // Job represents a user submitted work that is not in a terminal
 // state.
 message Job {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "summary",
+        "type",
+        "submission_time",
+        "user",
+        "resource_pool",
+        "is_preemptible",
+        "entity_id"
+      ]
+    }
+  };
   // Job summary.
   JobSummary summary = 1;
   // Job type.
@@ -69,6 +86,9 @@ message Job {
 
 // Describes a message to control jobs in a queue.
 message QueueControl {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "job_id", "action" ] }
+  };
   // Job id.
   string job_id = 1;
   // The action to perform.

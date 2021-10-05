@@ -5,13 +5,17 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/job/v1/job.proto";
 import "determined/api/v1/pagination.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Get a list of jobs.
 message GetJobsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_pool" ] }
+  };
   // Request to paginate the resposne.
   PaginationRequest pagination = 1;
-  // Filter the results based on a set of resource pools.
-  repeated string resource_pools = 2;
+  // The target resource-pool.
+  string resource_pool = 2;
   // Sort results by the given field.
   // enum SortBy {
   //   // Returns checkpoints in an unsorted list.
@@ -24,8 +28,12 @@ message GetJobsRequest {
   // Order results in either ascending or descending order.
   OrderBy order_by = 4;
 }
+
 // Response to GetJobsRequest.
 message GetJobsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "jobs", "pagination" ] }
+  };
   // Pagination information of the full dataset.
   Pagination pagination = 1;
   // List of the request jobs.
@@ -34,6 +42,9 @@ message GetJobsResponse {
 
 // Request to update the job queue.
 message UpdateJobQueueRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "updates" ] }
+  };
   // List of job queue control requests.
   repeated determined.job.v1.QueueControl updates = 1;
 }
@@ -42,6 +53,9 @@ message UpdateJobQueueResponse {}
 
 // Job stats for a resource pool
 message RPQueueStat {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "stats", "resource_pool" ] }
+  };
   // Job queue stats.
   determined.job.v1.QueueStats stats = 1;
   // Resource pool.
@@ -54,6 +68,9 @@ message GetJobQueueStatsRequest {
 }
 // Response to GetJobQueueStatsRequest.
 message GetJobQueueStatsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
   // List of queue stats per resource pool.
   repeated RPQueueStat results = 1;
 }
