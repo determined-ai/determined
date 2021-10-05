@@ -9,7 +9,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
-import { getExpTrials, getTrialDetails } from 'services/api';
+import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -157,8 +157,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
   const saveNotes = useCallback((editedNotes: string) => {
-    //save to db
-  }, []);
+    patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+  }, [ experiment.id ]);
 
   return (
     <TrialLogPreview
@@ -193,7 +193,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
         </TabPane>
         <TabPane key="notes" tab="Notes">
           <NotesCard
-            notes=""
+            notes={experiment.notes ?? ''}
             style={{ margin: 'var(--theme-sizes-layout-big)' }}
             onSave={saveNotes} />
         </TabPane>
