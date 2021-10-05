@@ -77,14 +77,23 @@ func (a *apiServer) TrialLogs(
 		taskID = t.TaskID
 	}
 
+	res := make(chan interface{}, 1)
 	switch t, err := a.m.db.TaskByID(taskID); {
-	case errors.Is(err, sql.ErrNoRows):
-		return a.legacyTrialLogs(req, resp)
-	case t.LogVersion == 0:
-		return a.legacyTrialLogs(req, resp)
+	case errors.Is(err, sql.ErrNoRows), t.LogVersion == 0:
+		go a.legacyTrialLogs(resp.Context(), req, res)
+
+		return processBatches(res, func(b api.Batch) error {
+			return b.ForEach(func(i interface{}) error {
+				l, err := i.(*model.TrialLog).Proto()
+				if err != nil {
+					return err
+				}
+				return resp.Send(l)
+			})
+		})
 	default:
 		// Translate the request.
-		return a.taskLogs(resp.Context(), &apiv1.TaskLogsRequest{
+		go a.taskLogs(resp.Context(), &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
 			Follow:          req.Follow,
@@ -97,34 +106,40 @@ func (a *apiServer) TrialLogs(
 			TimestampBefore: req.TimestampBefore,
 			TimestampAfter:  req.TimestampAfter,
 			OrderBy:         req.OrderBy,
-		}, func(i interface{}) error {
-			l, err := i.(*model.TaskLog).Proto()
-			if err != nil {
-				return err
-			}
-			return resp.Send(&apiv1.TrialLogsResponse{
-				Id:        l.Id,
-				Timestamp: l.Timestamp,
-				Message:   l.Message,
-				Level:     l.Level,
+		}, res)
+
+		return processBatches(res, func(b api.Batch) error {
+			return b.ForEach(func(i interface{}) error {
+				l, err := i.(*model.TaskLog).Proto()
+				if err != nil {
+					return err
+				}
+				return resp.Send(&apiv1.TrialLogsResponse{
+					Id:        l.Id,
+					Timestamp: l.Timestamp,
+					Message:   l.Message,
+					Level:     l.Level,
+				})
 			})
 		})
 	}
 }
 
 func (a *apiServer) legacyTrialLogs(
-	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
-) error {
+	ctx context.Context, req *apiv1.TrialLogsRequest, res chan interface{},
+) {
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
 	); err != nil {
-		return err
+		res <- err
+		return
 	}
 
 	filters, err := constructTrialLogsFilters(req)
 	if err != nil {
-		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		res <- status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		return
 	}
 
 	var followState interface{}
@@ -146,31 +161,21 @@ func (a *apiServer) legacyTrialLogs(
 		return model.TrialLogBatch(b), nil
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			pl, pErr := r.(*model.TrialLog).Proto()
-			if pErr != nil {
-				return pErr
-			}
-			return resp.Send(pl)
-		})
-	}
-
 	total, err := a.m.trialLogBackend.TrialLogsCount(int(req.TrialId), filters)
 	if err != nil {
-		return fmt.Errorf("failed to get trial count from backend: %w", err)
+		res <- fmt.Errorf("failed to get trial count from backend: %w", err)
+		return
 	}
 	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
 
-	return api.NewBatchStreamProcessor(
+	api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
 		false,
 		taskLogsBatchWaitTime,
 		taskLogsBatchMissWaitTime,
-	).Run(resp.Context())
+	).Run(ctx, res)
 }
 
 func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error) {
@@ -245,22 +250,22 @@ func (a *apiServer) TrialLogsFields(
 		return api.ToBatchOfOne(fields), err
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(
-				r.(*apiv1.TrialLogsFieldsResponse))
-		})
-	}
-
-	return api.NewBatchStreamProcessor(
+	res := make(chan interface{})
+	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), taskLogsTerminationDelay),
 		true,
 		taskLogsFieldsBatchWaitTime,
 		taskLogsFieldsBatchWaitTime,
-	).Run(resp.Context())
+	).Run(resp.Context(), res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(
+				r.(*apiv1.TrialLogsFieldsResponse))
+		})
+	})
 }
 
 func (a *apiServer) GetTrialCheckpoints(
@@ -476,23 +481,23 @@ func (a *apiServer) GetTrialProfilerMetrics(
 		return a.m.db.GetTrialProfilerMetricsBatches(labelsJSON, lr.Offset, lr.Limit)
 	}
 
-	onBatch := func(b api.Batch) error {
+	res := make(chan interface{})
+	go api.NewBatchStreamProcessor(
+		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
+		fetch,
+		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
+		false,
+		trialProfilerMetricsBatchWaitTime,
+		trialProfilerMetricsBatchMissWaitTime,
+	).Run(resp.Context(), res)
+
+	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			return resp.Send(&apiv1.GetTrialProfilerMetricsResponse{
 				Batch: r.(*trialv1.TrialProfilerMetricsBatch),
 			})
 		})
-	}
-
-	return api.NewBatchStreamProcessor(
-		api.BatchRequest{Limit: math.MaxInt32, Follow: req.Follow},
-		fetch,
-		onBatch,
-		a.isTrialTerminalFunc(int(req.Labels.TrialId), -1),
-		false,
-		trialProfilerMetricsBatchWaitTime,
-		trialProfilerMetricsBatchMissWaitTime,
-	).Run(resp.Context())
+	})
 }
 
 func (a *apiServer) GetTrialProfilerAvailableSeries(
@@ -514,21 +519,21 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 		)
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
-		})
-	}
-
-	return api.NewBatchStreamProcessor(
+	res := make(chan interface{})
+	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTrialTerminalFunc(int(req.TrialId), -1),
 		true,
 		TrialAvailableSeriesBatchWaitTime,
 		TrialAvailableSeriesBatchWaitTime,
-	).Run(resp.Context())
+	).Run(resp.Context(), res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(r.(*apiv1.GetTrialProfilerAvailableSeriesResponse))
+		})
+	})
 }
 
 func (a *apiServer) PostTrialProfilerMetricsBatch(

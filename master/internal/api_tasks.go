@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
+	"github.com/hashicorp/go-multierror"
 )
 
 const (
@@ -59,22 +60,29 @@ func (a *apiServer) TaskLogs(
 		return taskNotFound
 	}
 
-	return a.taskLogs(resp.Context(), req, func(i interface{}) error {
-		pl, pErr := i.(*model.TaskLog).Proto()
-		if pErr != nil {
-			return pErr
-		}
-		return resp.Send(pl)
+	res := make(chan interface{})
+	go a.taskLogs(resp.Context(), req, res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(i interface{}) error {
+			pl, pErr := i.(*model.TaskLog).Proto()
+			if pErr != nil {
+				return pErr
+			}
+			return resp.Send(pl)
+		})
 	})
 }
 
 func (a *apiServer) taskLogs(
-	ctx context.Context, req *apiv1.TaskLogsRequest, handler func(interface{}) error,
-) error {
+	ctx context.Context, req *apiv1.TaskLogsRequest, res chan interface{},
+) {
+	defer close(res)
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
 	if err != nil {
-		return status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		res <- status.Error(codes.InvalidArgument, fmt.Sprintf("unsupported filter: %s", err))
+		return
 	}
 
 	var followState interface{}
@@ -96,27 +104,21 @@ func (a *apiServer) taskLogs(
 		return model.TaskLogBatch(b), nil
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return handler(r)
-		})
-	}
-
 	total, err := a.m.taskLogBackend.TaskLogsCount(taskID, filters)
 	if err != nil {
-		return fmt.Errorf("failed to get trial count from backend: %w", err)
+		res <- fmt.Errorf("getting log count from backend: %w", err)
+		return
 	}
 	effectiveLimit := api.EffectiveLimit(int(req.Limit), 0, total)
 
-	return api.NewBatchStreamProcessor(
+	api.NewBatchStreamProcessor(
 		api.BatchRequest{Limit: effectiveLimit, Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTaskTerminalFunc(taskID, taskLogsTerminationDelay),
 		false,
 		taskLogsBatchWaitTime,
 		taskLogsBatchMissWaitTime,
-	).Run(ctx)
+	).Run(ctx, res)
 }
 
 func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) {
@@ -194,21 +196,21 @@ func (a *apiServer) TaskLogsFields(
 		return api.ToBatchOfOne(fields), err
 	}
 
-	onBatch := func(b api.Batch) error {
-		return b.ForEach(func(r interface{}) error {
-			return resp.Send(r.(*apiv1.TaskLogsFieldsResponse))
-		})
-	}
-
-	return api.NewBatchStreamProcessor(
+	res := make(chan interface{})
+	go api.NewBatchStreamProcessor(
 		api.BatchRequest{Follow: req.Follow},
 		fetch,
-		onBatch,
 		a.isTaskTerminalFunc(taskID, taskLogsTerminationDelay),
 		true,
 		taskLogsFieldsBatchWaitTime,
 		taskLogsFieldsBatchWaitTime,
-	).Run(resp.Context())
+	).Run(resp.Context(), res)
+
+	return processBatches(res, func(b api.Batch) error {
+		return b.ForEach(func(r interface{}) error {
+			return resp.Send(r.(*apiv1.TaskLogsFieldsResponse))
+		})
+	})
 }
 
 // isTaskTerminalFunc returns an api.TerminationCheckFn that waits for a task to finish and
@@ -227,4 +229,26 @@ func (a *apiServer) isTaskTerminalFunc(
 			return false, nil
 		}
 	}
+}
+
+func processBatches(res chan interface{}, h func(api.Batch) error) error {
+	var err *multierror.Error
+	for r := range res {
+		switch r := r.(type) {
+		case error:
+			// Failing but not returning here will cause us to wait for the downstream
+			// processor to fail from its error or continue.
+			err = multierror.Append(err, r)
+		case api.Batch:
+			if pErr := h(r); pErr != nil {
+				err = multierror.Append(err, pErr)
+				// Since this is our failure, we fail and return. This should cause upstream
+				// processses and cause downstream senders to cancel.
+				return err.ErrorOrNil()
+			}
+		default:
+			panic(fmt.Sprintf("unexpected result %T", r))
+		}
+	}
+	return err.ErrorOrNil()
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -63,7 +62,6 @@ type TerminationCheckFn func() (bool, error)
 type BatchStreamProcessor struct {
 	req                    BatchRequest
 	fetcher                FetchBatchFn
-	process                OnBatchFn
 	terminateCheck         TerminationCheckFn
 	alwaysCheckTermination bool
 	batchWaitTime          time.Duration
@@ -74,7 +72,6 @@ type BatchStreamProcessor struct {
 func NewBatchStreamProcessor(
 	req BatchRequest,
 	fetcher FetchBatchFn,
-	process OnBatchFn,
 	terminateCheck TerminationCheckFn,
 	alwaysCheckTermination bool,
 	batchWaitTime time.Duration,
@@ -83,7 +80,6 @@ func NewBatchStreamProcessor(
 	return &BatchStreamProcessor{
 		req:                    req,
 		fetcher:                fetcher,
-		process:                process,
 		terminateCheck:         terminateCheck,
 		alwaysCheckTermination: alwaysCheckTermination,
 		batchWaitTime:          batchWaitTime,
@@ -92,17 +88,19 @@ func NewBatchStreamProcessor(
 }
 
 // Run runs the batch stream processor.
-func (p *BatchStreamProcessor) Run(ctx context.Context) error {
+func (p *BatchStreamProcessor) Run(ctx context.Context, res chan interface{}) {
 	t := time.NewTicker(p.batchWaitTime)
 	defer t.Stop()
+	defer close(res)
 	for {
 		var miss bool
 		switch batch, err := p.fetcher(p.req); {
 		case err != nil:
-			return errors.Wrapf(err, "failed to fetch batch")
+			res <- errors.Wrapf(err, "failed to fetch batch")
+			return
 		case batch == nil, batch.Size() == 0:
 			if !p.req.Follow {
-				return nil
+				return
 			}
 			t.Reset(p.batchMissWaitTime)
 			miss = true
@@ -110,30 +108,29 @@ func (p *BatchStreamProcessor) Run(ctx context.Context) error {
 			// Check the ctx again before we process, since fetch takes most of the time and
 			// a send on a closed ctx will print errors in the master log that can be misleading.
 			if ctx.Err() != nil {
-				return nil
+				return
 			}
 			p.req.Limit -= batch.Size()
 			p.req.Offset += batch.Size()
-			switch err := p.process(batch); {
-			case err != nil:
-				return fmt.Errorf("failed while processing batch: %w", err)
-			case !p.req.Follow && p.req.Limit <= 0:
-				return nil
+			res <- batch
+			if !p.req.Follow && p.req.Limit <= 0 {
+				return
 			}
 		}
 
 		if (miss || p.alwaysCheckTermination) && p.terminateCheck != nil {
 			switch terminate, err := p.terminateCheck(); {
 			case err != nil:
-				return errors.Wrap(err, "failed to check the termination status")
+				res <- errors.Wrap(err, "failed to check the termination status")
+				return
 			case terminate:
-				return nil
+				return
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		case <-t.C:
 			if miss {
 				miss = false

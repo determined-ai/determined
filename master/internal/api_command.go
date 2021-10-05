@@ -142,6 +142,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		config.WorkDir = nil
 	}
 
+	taskSpec.Entrypoint = []string{"command_entrypoint.sh"}
+
 	return &tasks.GenericCommandSpec{
 		Base:      taskSpec,
 		Config:    config,
