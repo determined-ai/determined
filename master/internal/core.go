@@ -840,6 +840,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.system,
 		m.echo,
 		m.db,
+		m.taskLogger,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)

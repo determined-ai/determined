@@ -12,7 +12,8 @@ import (
 )
 
 type commandManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -34,7 +35,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, c.db, taskID, model.TaskTypeCommand, msg)
+		return createGenericCommandActor(ctx, c.db, c.logger, taskID, model.TaskTypeCommand, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

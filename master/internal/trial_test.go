@@ -140,7 +140,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 
 	// mock allocation
 	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	taskAllocator = func(req sproto.AllocateRequest, db db.DB, rm *actor.Ref) actor.Actor {
+	taskAllocator = func(req sproto.AllocateRequest, db db.DB, rm, l *actor.Ref) actor.Actor {
 		return &allocImpl
 	}
 

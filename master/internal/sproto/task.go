@@ -1,11 +1,14 @@
 package sproto
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -160,4 +163,43 @@ type Event struct {
 	ExitedEvent *string `json:"exited_event"`
 	// LogEvent is triggered when a new log message is available.
 	LogEvent *string `json:"log_event"`
+}
+
+// ToLogEntry converts an event to a logrus entry.
+func (ev *Event) ToLogEntry() *logger.Entry {
+	description := ev.Description
+	var message string
+	switch {
+	case ev.ScheduledEvent != nil:
+		message = fmt.Sprintf("Scheduling %s (id: %s)", ev.ParentID, description)
+	case ev.ContainerStartedEvent != nil:
+		message = fmt.Sprintf("Container of %s has started", description)
+	case ev.TerminateRequestEvent != nil:
+		message = fmt.Sprintf("%s was requested to terminate", description)
+	case ev.ExitedEvent != nil:
+		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
+	case ev.LogEvent != nil:
+		message = fmt.Sprintf(*ev.LogEvent)
+	default:
+		// The client could rely on logEntry IDs and since some of these events aren't actually log
+		// events we'd need to notify of them about these non existing logs either by adding a new
+		// attribute to our response or a sentient log entry or we could keep it simple and normalize
+		// command events as log struct by setting a special message.
+		message = ""
+	}
+	return &logger.Entry{
+		ID:      ev.Seq,
+		Message: message,
+		Time:    ev.Time,
+	}
+}
+
+// ToTaskLog converts an event to a task log.
+func (ev *Event) ToTaskLog() model.TaskLog {
+	l := ev.ToLogEntry()
+	return model.TaskLog{
+		Level:     ptrs.StringPtr(l.Level.String()),
+		Timestamp: &l.Time,
+		Log:       l.Message,
+	}
 }

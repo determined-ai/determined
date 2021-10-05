@@ -13,7 +13,8 @@ import (
 )
 
 type tensorboardManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
@@ -35,7 +36,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, t.db, taskID, model.TaskTypeTensorboard, msg)
+		return createGenericCommandActor(ctx, t.db, t.logger, taskID, model.TaskTypeTensorboard, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

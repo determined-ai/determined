@@ -13,7 +13,8 @@ import (
 )
 
 type notebookManager struct {
-	db *db.PgDB
+	db     *db.PgDB
+	logger *actor.Ref
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -35,7 +36,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 
 	case tasks.GenericCommandSpec:
 		taskID := model.TaskID(uuid.New().String())
-		return createGenericCommandActor(ctx, n.db, taskID, model.TaskTypeNotebook, msg)
+		return createGenericCommandActor(ctx, n.db, n.logger, taskID, model.TaskTypeNotebook, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

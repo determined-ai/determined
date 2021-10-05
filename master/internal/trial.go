@@ -215,7 +215,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 		Preemptible:  true,
 		DoRendezvous: true,
-	}, t.db, t.rm))
+	}, t.db, t.rm, t.logger))
 	return nil
 }
 
