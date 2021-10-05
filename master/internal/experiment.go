@@ -79,6 +79,7 @@ type (
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
+		job      *model.Job
 
 		faultToleranceEnabled bool
 		restored              bool
@@ -121,6 +122,11 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		}
 	}
 
+	jobStruct := model.Job{
+		JobID:   expModel.JobID,
+		JobType: model.JobTypeExperiment,
+	}
+
 	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)
 	if err != nil {
 		return nil, err
@@ -141,6 +147,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		warmStartCheckpoint: checkpoint,
 
 		taskSpec: taskSpec,
+		job:      &jobStruct,
 
 		faultToleranceEnabled: true,
 
@@ -164,6 +171,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Tell(e.rm, sproto.SetGroupPriority{
 			Priority: e.Config.Resources().Priority(),
 			Handler:  ctx.Self(),
+		})
+
+		ctx.Tell(e.rm, sproto.SetGroupOrder{
+			QPosition: -1,
+			Handler: ctx.Self(),
 		})
 
 		if e.restored {
@@ -254,6 +266,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources.SetPriority(msg.Priority)
 		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
+		ctx.Tell(e.rm, msg)
+
+	case sproto.SetGroupOrder:
+		e.job.QPos = msg.QPosition
+		e.db.UpdateJob(e.job)
 		ctx.Tell(e.rm, msg)
 
 	// Experiment shutdown logic.
@@ -412,7 +429,7 @@ func (e *experiment) processOperations(
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
-				trialTaskID(e.ID, op.RequestID), e.JobID, e.ID, e.State, state, e.rm, e.trialLogger, e.db,
+				trialTaskID(e.ID, op.RequestID), e.JobID, e.job, e.ID, e.State, state, e.rm, e.trialLogger, e.db,
 				config, checkpoint, e.taskSpec,
 			))
 		case searcher.ValidateAfter:
@@ -507,6 +524,13 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
 	return nil
+}
+
+func (e *experiment) ChangePosition(ctx *actor.Context, position float64) error {
+	// we will use a position for each scheduler/resource pool
+	// we can translate that position to match priority or weight
+	e.job.QPos = position
+	return e.db.UpdateJob(e.job)
 }
 
 func checkpointFromTrialIDOrUUID(
