@@ -172,7 +172,7 @@ class TokenStore:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing)
         self.temp = pathlib.Path(str(self.path) + ".temp")
-        self.lock = pathlib.Path(str(self.path) + ".lock")
+        self.lock = str(self.path) + ".lock"
 
         with filelock.FileLock(self.lock):
             store = self._load_store_file()

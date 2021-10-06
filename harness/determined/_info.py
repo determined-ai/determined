@@ -1,13 +1,23 @@
 import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined import gpu
+
+DEFAULT_RENDEZVOUS_INFO_PATH = "/run/determined/info/rendezvous.json"
+DEFAULT_TRIAL_INFO_PATH = "/run/determined/info/trial.json"
+DEFAULT_RESOURCES_INFO_PATH = "/run/determined/info/resources.json"
+DEFAULT_CLUSTER_INFO_PATH = "/run/determined/info/cluster.json"
 
 
 def getenv_int(key: str) -> Optional[int]:
     val = os.environ.get(key)
     return val if val is None else int(val)
+
+
+def as_dict(obj: Any, skip: Iterable[str] = ()) -> Dict[str, Any]:
+    """Remove the leading underscore from private variables for a json representation."""
+    return {k.lstrip("_"): v for k, v in vars(obj).items() if k not in skip}
 
 
 class RendezvousInfo:
@@ -22,7 +32,7 @@ class RendezvousInfo:
         self.container_addrs = container_addrs
         self.container_rank = container_rank
 
-    def _to_file(self, path: str = "/run/determined/info/rendezvous.json") -> None:
+    def _to_file(self, path: str = DEFAULT_RENDEZVOUS_INFO_PATH) -> None:
         """
         to_file writes the RendezvousInfo to a well-known location in a Determined container.  This
         is called automatically early in the lifetime of a container, so user code can always expect
@@ -34,7 +44,7 @@ class RendezvousInfo:
     @classmethod
     def _from_file(
         cls,
-        path: str = "/run/determined/info/rendezvous.json",
+        path: str = DEFAULT_RENDEZVOUS_INFO_PATH,
     ) -> Optional["RendezvousInfo"]:
         if not os.path.exists(path):
             return None
@@ -99,12 +109,12 @@ class TrialInfo:
             inter_node_network_interface=os.environ.get("DET_INTER_NODE_NETWORK_INTERFACE"),
         )
 
-    def _to_file(self, path: str = "/run/determined/info/trial.json") -> None:
+    def _to_file(self, path: str = DEFAULT_TRIAL_INFO_PATH) -> None:
         with open(path, "w") as f:
-            json.dump({k.lstrip("_"): v for k, v in vars(self).items()}, f)
+            json.dump(as_dict(self), f)
 
     @classmethod
-    def _from_file(cls, path: str = "/run/determined/info/trial.json") -> Optional["TrialInfo"]:
+    def _from_file(cls, path: str = DEFAULT_TRIAL_INFO_PATH) -> Optional["TrialInfo"]:
         if not os.path.exists(path):
             return None
         with open(path) as f:
@@ -123,14 +133,12 @@ class ResourcesInfo:
     def _by_inspection(cls) -> "ResourcesInfo":
         return cls(gpu_uuids=gpu.get_gpu_uuids())
 
-    def _to_file(self, path: str = "/run/determined/info/resources.json") -> None:
+    def _to_file(self, path: str = DEFAULT_RESOURCES_INFO_PATH) -> None:
         with open(path, "w") as f:
-            json.dump({k.lstrip("_"): v for k, v in vars(self).items()}, f)
+            json.dump(as_dict(self), f)
 
     @classmethod
-    def _from_file(
-        cls, path: str = "/run/determined/info/resources.json"
-    ) -> Optional["ResourcesInfo"]:
+    def _from_file(cls, path: str = DEFAULT_RESOURCES_INFO_PATH) -> Optional["ResourcesInfo"]:
         if not os.path.exists(path):
             return None
         with open(path) as f:
@@ -168,7 +176,6 @@ class ClusterInfo:
     def __init__(
         self,
         master_url: str,
-        master_id: str,
         cluster_id: str,
         agent_id: str,
         container_id: str,
@@ -187,7 +194,6 @@ class ClusterInfo:
         resources_info: Optional[ResourcesInfo] = None,
     ):
         self.master_url = master_url
-        self.master_id = master_id
         self.cluster_id = cluster_id
         self.agent_id = agent_id
         self.container_id = container_id
@@ -209,7 +215,6 @@ class ClusterInfo:
     def _from_env(cls) -> "ClusterInfo":
         required = [
             "DET_MASTER",
-            "DET_MASTER_ID",
             "DET_CLUSTER_ID",
             "DET_AGENT_ID",
             "DET_CONTAINER_ID",
@@ -226,7 +231,6 @@ class ClusterInfo:
             )
         return cls(
             master_url=os.environ["DET_MASTER"],
-            master_id=os.environ["DET_MASTER_ID"],
             cluster_id=os.environ["DET_CLUSTER_ID"],
             agent_id=os.environ["DET_AGENT_ID"],
             container_id=os.environ["DET_CONTAINER_ID"],
@@ -245,13 +249,13 @@ class ClusterInfo:
             resources_info=ResourcesInfo._from_file(),
         )
 
-    def _to_file(self, path: str = "/run/determined/info/cluster.json") -> None:
+    def _to_file(self, path: str = DEFAULT_CLUSTER_INFO_PATH) -> None:
         skip = ("_trial_info", "_rendezvous_info", "_resources_info")
         with open(path, "w") as f:
-            json.dump({k.lstrip("_"): v for k, v in vars(self).items() if k not in skip}, f)
+            json.dump(as_dict(self, skip), f)
 
     @classmethod
-    def _from_file(cls, path: str = "/run/determined/info/cluster.json") -> Optional["ClusterInfo"]:
+    def _from_file(cls, path: str = DEFAULT_CLUSTER_INFO_PATH) -> Optional["ClusterInfo"]:
         if not os.path.exists(path):
             return None
         with open(path) as f:
@@ -269,8 +273,6 @@ class ClusterInfo:
                 "the .latest_checkpoint property is not yet supported when .task_type "
                 f'("{self.task_type}") != "TRIAL"'
             )
-        if self._latest_checkpoint is None:
-            return None
         return self._latest_checkpoint
 
     @property

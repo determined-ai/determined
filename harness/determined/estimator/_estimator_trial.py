@@ -358,7 +358,7 @@ class EstimatorTrialController(det.TrialController):
         user_train_spec: tf.estimator.TrainSpec,
         val_spec: tf.estimator.EvalSpec,
         serving_input_receiver_fns: Dict[str, estimator.ServingInputReceiverFn],
-        context: estimator.EstimatorContext,
+        context: estimator.EstimatorTrialContext,
         *args: Any,
         **kwargs: Any,
     ) -> None:

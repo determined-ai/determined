@@ -13,7 +13,9 @@ def trial_prep(info: det.ClusterInfo, cert: certs.Cert) -> None:
     trial_info = det.TrialInfo._from_env()
     trial_info._to_file()
 
-    resp = request.get(info.master_url, f"api/v1/experiments/{trial_info.experiment_id}/model_def")
+    resp = request.get(
+        info.master_url, path=f"api/v1/experiments/{trial_info.experiment_id}/model_def", cert=cert
+    )
     resp.raise_for_status()
 
     tgz = base64.b64decode(resp.json()["b64Tgz"])

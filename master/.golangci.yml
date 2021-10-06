@@ -44,6 +44,7 @@ linters-settings:
     packages:
       - errors
       - gopkg.in/yaml.v2
+      - github.com/dgrijalva/jwt-go
   dupl:
     threshold: 210
   goconst:

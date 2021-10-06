@@ -218,7 +218,7 @@ class TFKerasTrialController(det.TrialController):
 
     @staticmethod
     def compile_model(
-        context: keras.TFKerasContext,
+        context: keras.TFKerasTrialContext,
         compile_args: inspect.BoundArguments,
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,

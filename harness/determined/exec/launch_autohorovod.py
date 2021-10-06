@@ -37,8 +37,6 @@ def main() -> int:
         + simplejson.dumps(experiment_config)
     )
 
-    print(experiment_config)
-
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the
     # DistributedContext is not created soon enough for that to work well.
     try:
@@ -50,7 +48,7 @@ def main() -> int:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         return 1
 
-    if len(info.slot_ids) < 2:
+    if experiment_config.get("resources", {}).get("slots_per_trial", 1) < 2:
         # Non-distriubuted training; skip running in subprocesses to improve startup times.
         from determined.exec import harness
 

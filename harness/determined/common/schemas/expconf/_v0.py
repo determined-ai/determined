@@ -434,6 +434,7 @@ HyperparameterV0_Type = Union[
 HyperparameterV0.finalize(HyperparameterV0_Type)
 
 
+@schemas.register_known_type
 class AdaptiveMode(enum.Enum):
     CONSERVATIVE = "conservative"
     STANDARD = "standard"

@@ -69,7 +69,8 @@ func GetAllocationSession(ctx context.Context, d *db.PgDB) (*model.AllocationSes
 }
 
 // GetUser returns the currently logged in user.
-func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, error) {
+func GetUser(ctx context.Context, d *db.PgDB, extConfig *model.ExternalSessions) (*model.User,
+	*model.UserSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, nil, ErrTokenMissing
@@ -88,7 +89,15 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	switch user, session, err := d.UserByToken(token); err {
+	var user *model.User
+	var session *model.UserSession
+	var err error
+	if extConfig.JwtKey != "" {
+		user, session, err = d.UserByExternalToken(token, extConfig.JwtKey)
+	} else {
+		user, session, err = d.UserByToken(token)
+	}
+	switch err {
 	case nil:
 		if !user.Active {
 			return nil, nil, ErrPermissionDenied
@@ -102,7 +111,8 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 }
 
 // Return error if user cannot be authenticated or lacks authorization.
-func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
+func auth(ctx context.Context, db *db.PgDB, fullMethod string,
+	extConfig *model.ExternalSessions) error {
 	if unauthenticatedMethods[fullMethod] {
 		return nil
 	}
@@ -116,17 +126,18 @@ func auth(ctx context.Context, db *db.PgDB, fullMethod string) error {
 		return err
 	}
 
-	if _, _, err := GetUser(ctx, db); err != nil {
+	if _, _, err := GetUser(ctx, db, extConfig); err != nil {
 		return err
 	}
 	return nil
 }
 
-func streamAuthInterceptor(db *db.PgDB) grpc.StreamServerInterceptor {
+func streamAuthInterceptor(db *db.PgDB,
+	extConfig *model.ExternalSessions) grpc.StreamServerInterceptor {
 	return func(
 		srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler,
 	) error {
-		err := auth(ss.Context(), db, info.FullMethod)
+		err := auth(ss.Context(), db, info.FullMethod, extConfig)
 		if err != nil {
 			return err
 		}
@@ -135,11 +146,12 @@ func streamAuthInterceptor(db *db.PgDB) grpc.StreamServerInterceptor {
 	}
 }
 
-func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
+func unaryAuthInterceptor(db *db.PgDB,
+	extConfig *model.ExternalSessions) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		err = auth(ctx, db, info.FullMethod)
+		err = auth(ctx, db, info.FullMethod, extConfig)
 		if err != nil {
 			return nil, err
 		}

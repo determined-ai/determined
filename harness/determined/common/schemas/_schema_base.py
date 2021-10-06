@@ -1,12 +1,44 @@
 import enum
 import numbers
-import typing
-from typing import Any, List, Mapping, Optional, Sequence, Type, TypeVar, cast
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar
 
 from determined.common import schemas
 from determined.common.schemas import expconf
 
 PRIMITIVE_JSON_TYPES = (numbers.Number, str, bool, type(None))
+
+# `typing` has some awkward APIs for type inspection.  In general, the only thing we can rely on
+# across python versions is that annotations are hashable, and equality tests work.  As there is
+# only a small, fixed number of types that we actually need to know how to work with, we just build
+# some lookup tables.
+KNOWN_OPTIONAL_TYPES = {}  # type: Dict[Any, Any]
+
+KNOWN_DICT_TYPES = {}  # type: Dict[Any, Any]
+
+KNOWN_LIST_TYPES = {}  # type: Dict[Any, Any]
+
+R = TypeVar("R")
+
+
+def register_known_type(cls: R) -> R:
+    KNOWN_OPTIONAL_TYPES[Optional[cls]] = cls
+    KNOWN_OPTIONAL_TYPES[Optional[List[cls]]] = List[cls]  # type: ignore
+    KNOWN_OPTIONAL_TYPES[Optional[Dict[str, cls]]] = Dict[str, cls]  # type: ignore
+
+    KNOWN_LIST_TYPES[List[cls]] = cls  # type: ignore
+
+    # Note that schemas only support Dict[str, *], since json objects only support string keys.
+    KNOWN_DICT_TYPES[Dict[str, cls]] = cls  # type: ignore
+
+    return cls
+
+
+# Start with registering some basic types.
+register_known_type(int)
+register_known_type(float)
+register_known_type(bool)
+register_known_type(str)
+register_known_type(Any)
 
 
 def _to_dict(val: Any, explicit_nones: bool) -> Any:
@@ -81,89 +113,77 @@ def _merge(obj: Any, src: Any) -> Any:
     raise ValueError(f"invalid type in merge: {type(obj).__name__}")
 
 
-def _remove_optional(anno: Any) -> Any:
-    """Given a type annotation, which might be TYPE or Optional[TYPE], return TYPE."""
-    if type(anno) is not typing._Union:  # type: ignore
-        return anno
-    args = list(anno.__args__)
-    if type(None) in args:
-        args.remove(type(None))
-    if len(args) != 1:
-        return type(anno)(args)
-    return args[0]
-
-
-def _handle_unions(anno: type) -> type:
-    if type(anno) is not typing._Union:  # type: ignore
-        return anno
-    args = list(anno.__args__)  # type: ignore
-    args = cast(List[type], args)
-    # Strip any Nones, which indicate Optionals.
-    if type(None) in args:
-        args.remove(type(None))
-    if len(args) > 1:
-        # Named unions are instantiated using their associated UnionBase's from_dict() method.
-        named = schemas.UnionBase._union_types.get(frozenset(args))
-        if named is None:
-            raise TypeError(f"no named union for {args}")
-        return named
-    # Normal Optional[some_type] reduce to just some_type.
-    return args[0]
-
-
 def _instance_from_annotation(anno: type, value: Any, prevalidated: bool = False) -> Any:
     """
     During calls to .from_dict(), use the type annotation to create a new object from value.
     """
-
-    # All Union types reduce to some other type.  In the case of our union schemas, like
-    # hyperparameters, that other type may be partially determined by value.
-    typ = _handle_unions(anno)
-
-    if typ == typing.Any:
+    if anno == Any:
         # In the special case of typing.Any, we just return the value directly.
         return value
-    if issubclass(typ, enum.Enum):
-        return typ(value)
-    if issubclass(typ, SchemaBase):
+
+    # Handle Optionals (strip the Optional part).
+    if anno in KNOWN_OPTIONAL_TYPES:
+        anno = KNOWN_OPTIONAL_TYPES[anno]
+    elif Optional[anno] == anno:
+        raise TypeError(f"unrecognized Optional ({anno}), maybe use @schemas.register_known_type?")
+
+    # Detect List[*] types, where issubclass(x, List) is unsafe.
+    if anno in KNOWN_LIST_TYPES:
+        subanno = KNOWN_LIST_TYPES[anno]
+        if value is None:
+            return None
+        if not isinstance(value, Sequence):
+            raise TypeError(f"unable to create instance of {anno} from {value}")
+        return [_instance_from_annotation(subanno, v, prevalidated) for v in value]
+
+    # Detect Dict[*] types, where issubclass(x, Dict) is unsafe.
+    if anno in KNOWN_DICT_TYPES:
+        subanno = KNOWN_DICT_TYPES[anno]
+        if value is None:
+            return None
+        if not isinstance(value, Mapping):
+            raise TypeError(f"unable to create instance of {anno} from {value}")
+        return {k: _instance_from_annotation(subanno, v, prevalidated) for k, v in value.items()}
+
+    # Detect Union[*] types and convert them to their UnionBase class.
+    if anno in schemas.UnionBase._union_types:
+        anno = schemas.UnionBase._union_types[anno]
+
+    # Any valid annotations must be plain types by now, which will allow us to use issubclass().
+    if not isinstance(anno, type):
+        raise TypeError(
+            f"invalid compound annotation {anno}, maybe use @schemas.register_known_type?"
+        )
+
+    if issubclass(anno, enum.Enum):
+        return anno(value)
+    if issubclass(anno, SchemaBase):
         # For subclasses of SchemaBase we just call either from_dict() or from_none().
         if value is None:
-            return typ.from_none()
-        return typ.from_dict(value, prevalidated)
-    if issubclass(typ, PRIMITIVE_JSON_TYPES):
+            return anno.from_none()
+        return anno.from_dict(value, prevalidated)
+    if issubclass(anno, PRIMITIVE_JSON_TYPES):
         # For json literal types, we just include them directly.
         return value
-    if issubclass(typ, typing.List):
-        # List[thing] annotations; create a list of things.
-        args = typ.__args__  # type: ignore
-        args = cast(List[type], args)
-        if len(args) != 1:
-            raise TypeError("got typing.List[] without any element type")
-        if value is None:
-            return None
-        if not isinstance(value, typing.Sequence):
-            raise TypeError(f"unable to create instance of {typ} from {value}")
-        return [_instance_from_annotation(args[0], v, prevalidated) for v in value]
-    if issubclass(typ, typing.Dict):
-        # Dict[str, thing] annotations; create a dict of strings to things.
-        args = typ.__args__  # type: ignore
-        args = cast(List[type], args)
-        if len(args) != 2:
-            raise TypeError("got typing.Dict[] without any element type")
-        if args[0] != str:
-            raise TypeError("got typing.Dict[] without a string as the first type")
-        if value is None:
-            return None
-        if not isinstance(value, typing.Mapping):
-            raise TypeError(f"unable to create instance of {typ} from {value}")
-        return {k: _instance_from_annotation(args[1], v, prevalidated) for k, v in value.items()}
+
     raise TypeError(f"invalid type annotation on SchemaBase object: {anno}")
 
 
 T = TypeVar("T", bound="SchemaBase")
 
 
-class SchemaBase:
+class SchemaBaseMeta(type):
+    """
+    SchemaBaseMeta simply marks registers all SchemaBase objects with KNOWN_OPTIONAL_TYPES.
+    """
+
+    def __new__(cls, *arg: List[Any]) -> Any:
+        x = super().__new__(cls, *arg)
+        register_known_type(x)
+        return x
+
+
+class SchemaBase(metaclass=SchemaBaseMeta):
     _id: str
 
     def __init__(self, *args: list, **kwargs: dict) -> None:
