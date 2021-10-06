@@ -34,6 +34,8 @@ type (
 		containers       map[container.ID]*actor.Ref
 		resourcePoolName string
 		label            string
+		// started tracks if we have received the AgentStarted message.
+		started bool
 		// enabled and draining are duplicated in resourcepool agentState.
 		// TODO(ilia): refactor/dedupe it.
 		enabled  bool
@@ -208,6 +210,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
+		if !a.started {
+			// If we happen to fail before the agent has started and been registered with
+			// the resource manager, then nothing can be running on it. In this case we
+			// just fail outright and make it restart.
+			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
+			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
+		}
+
 		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
 		a.socket = nil
 		a.awaitingReconnect = true
@@ -273,6 +283,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 
 		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
+		a.started = true
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
