@@ -326,5 +326,5 @@ def send_analytics(tracking_key: str) -> None:
         analytics.track(os.environ.get("DET_CLUSTER_ID"), tracking_key)
 
 
-def on_error(error, items):
+def on_error(error: Any, items: Any) -> None:
     logging.warning(f"Analytics tracking received error: {error}")
