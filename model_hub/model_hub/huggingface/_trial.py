@@ -1,4 +1,7 @@
 import dataclasses
+import os
+import analytics
+import time
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -211,6 +214,14 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+
+        try:
+            if os.environ.get("DET_SEGMENT_ENABLED"):
+                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+                analytics.track(str(time.time()), "BaseTransformerTrial Class Created")
+        except Exception as e:
+            logging.warning(f"Analytics tracking received error: {e}")
+
         self.context = context
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.

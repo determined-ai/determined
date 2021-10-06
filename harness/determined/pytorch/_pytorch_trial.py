@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import torch
+import os
+import analytics
 
 import determined as det
 from determined import horovod, layers, pytorch, util, workload
@@ -26,6 +28,14 @@ except ImportError:
 class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+
+        try:
+            if os.environ.get("DET_SEGMENT_ENABLED"):
+                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+                analytics.track(str(time.time()), "PyTorchTrial Class Created")
+        except Exception as e:
+            logging.warning(f"Analytics tracking received error: {e}")
+
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)

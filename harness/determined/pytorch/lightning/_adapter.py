@@ -3,6 +3,10 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import pytorch_lightning as pl
+import os
+import time
+import logging
+import analytics
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
@@ -169,6 +173,13 @@ class LightningAdapter(PyTorchTrial):
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
+        try:
+            if os.environ.get("DET_SEGMENT_ENABLED"):
+                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+                analytics.track(str(time.time()), "LightningTrial Class Created")
+        except Exception as e:
+            logging.warning(f"Analytics tracking received error: {e}")
+
         check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
         check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
 

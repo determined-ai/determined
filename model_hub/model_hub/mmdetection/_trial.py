@@ -22,6 +22,8 @@ limitations under the License.
 
 import logging
 import os
+import time
+import analytics
 from typing import Any, Dict, List
 
 import attrdict
@@ -54,6 +56,13 @@ class MMDetTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        try:
+            if os.environ.get("DET_SEGMENT_ENABLED"):
+                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+                analytics.track(str(time.time()), "MMDetTrial Class Created")
+        except Exception as e:
+            logging.warning(f"Analytics tracking received error: {e}")
+
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())

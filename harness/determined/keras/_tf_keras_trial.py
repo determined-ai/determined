@@ -1,4 +1,7 @@
 import inspect
+import os
+import time
+import analytics
 import logging
 import pathlib
 import pickle
@@ -310,6 +313,13 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+
+        try:
+            if os.environ.get("DET_SEGMENT_ENABLED"):
+                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+                analytics.track(str(time.time()), "TFKerasTrial Class Created")
+        except Exception as e:
+            logging.warning(f"Analytics tracking received error: {e}")
 
         self.model = model
         self.session = session
