@@ -25,25 +25,26 @@ const Markdown: React.FC<Props> = ({ editing=false, height='100%', markdown, onC
     <div
       aria-label="markdown-editor"
       className={css.base}
-      style={{ height, overflow: 'auto' }}>
+      style={{ maxHeight: '70vh', overflow: 'auto' }}>
       {editing ? (
         <Tabs>
           <TabPane key={TabType.Edit} tab="Edit">
             <React.Suspense
               fallback={<div><Spinner tip="Loading text editor..." /></div>}>
-              <MonacoEditor
-                defaultValue={markdown}
-                height={height}
-                language="markdown"
-                options={{
-                  wordWrap: 'on',
-                  wrappingIndent: 'indent',
-                }}
-                width="100%"
-                onChange={onChange} />
+              <div style={{ height, minHeight: 200 }}>
+                <MonacoEditor
+                  defaultValue={markdown}
+                  language="markdown"
+                  options={{
+                    wordWrap: 'on',
+                    wrappingIndent: 'indent',
+                  }}
+                  width="100%"
+                  onChange={onChange} />
+              </div>
             </React.Suspense>
           </TabPane>
-          <TabPane key={TabType.Preview} tab="Preview">
+          <TabPane key={TabType.Preview} style={{ height, minHeight: 200 }} tab="Preview">
             <MarkdownViewer options={{ disableParsingRawHTML: true }}>
               {markdown}
             </MarkdownViewer>
@@ -51,7 +52,7 @@ const Markdown: React.FC<Props> = ({ editing=false, height='100%', markdown, onC
         </Tabs>
       ) : (
         <MarkdownViewer options={{ disableParsingRawHTML: true }}>
-          {markdown}
+          {markdown === '' ? '######Add detailed description of this model...' : markdown}
         </MarkdownViewer>
       )}
     </div>);
