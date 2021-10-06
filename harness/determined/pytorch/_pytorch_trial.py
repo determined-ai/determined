@@ -415,6 +415,8 @@ class PyTorchTrialController(det.TrialController):
 
             batch_dur = time.time() - batch_start_time
             samples_per_second = batch_inputs / batch_dur
+            if self.hvd_config.use:
+                samples_per_second *= hvd.size()
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 
