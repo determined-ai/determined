@@ -23,9 +23,9 @@ limitations under the License.
 import logging
 import os
 import time
-import analytics
 from typing import Any, Dict, List
 
+import analytics
 import attrdict
 import mmcv
 import mmcv.parallel

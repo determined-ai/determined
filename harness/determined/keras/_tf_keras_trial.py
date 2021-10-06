@@ -1,15 +1,15 @@
 import inspect
-import os
-import time
-import analytics
 import logging
+import os
 import pathlib
 import pickle
 import random
 import sys
+import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, cast
 
+import analytics
 import h5py
 import numpy as np
 import tensorflow as tf

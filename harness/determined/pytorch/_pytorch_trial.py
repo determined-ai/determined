@@ -1,4 +1,5 @@
 import logging
+import os
 import pathlib
 import pickle
 import random
@@ -6,10 +7,9 @@ import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import analytics
 import numpy as np
 import torch
-import os
-import analytics
 
 import determined as det
 from determined import horovod, layers, pytorch, util, workload
@@ -35,7 +35,6 @@ class PyTorchTrialController(det.TrialController):
                 analytics.track(str(time.time()), "PyTorchTrial Class Created")
         except Exception as e:
             logging.warning(f"Analytics tracking received error: {e}")
-
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)

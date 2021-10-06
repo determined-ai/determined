@@ -1,12 +1,12 @@
 import inspect
+import logging
+import os
+import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
-import pytorch_lightning as pl
-import os
-import time
-import logging
 import analytics
+import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
 from pytorch_lightning.utilities.model_helpers import is_overridden
