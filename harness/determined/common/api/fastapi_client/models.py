@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any  # noqa
 from typing import Dict, List, Optional
 
-from determined.common.api.fapi import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Determinedcheckpointv1State(str, Enum):
@@ -23,12 +23,6 @@ class Determinedcontainerv1State(str, Enum):
     TERMINATED = "STATE_TERMINATED"
 
 
-class Determineddevicev1Type(str, Enum):
-    UNSPECIFIED = "TYPE_UNSPECIFIED"
-    CPU = "TYPE_CPU"
-    GPU = "TYPE_GPU"
-
-
 class Determinedexperimentv1State(str, Enum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     ACTIVE = "STATE_ACTIVE"
@@ -44,22 +38,6 @@ class Determinedexperimentv1State(str, Enum):
     DELETE_FAILED = "STATE_DELETE_FAILED"
 
 
-class Determinedjobv1State(str, Enum):
-    UNSPECIFIED = "STATE_UNSPECIFIED"
-    QUEUED = "STATE_QUEUED"
-    SCHEDULED = "STATE_SCHEDULED"
-    SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
-
-
-class Determinedjobv1Type(str, Enum):
-    UNSPECIFIED = "TYPE_UNSPECIFIED"
-    EXPERIMENT = "TYPE_EXPERIMENT"
-    NOTEBOOK = "TYPE_NOTEBOOK"
-    TENSORBOARD = "TYPE_TENSORBOARD"
-    SHELL = "TYPE_SHELL"
-    COMMAND = "TYPE_COMMAND"
-
-
 class Determinedtaskv1State(str, Enum):
     UNSPECIFIED = "STATE_UNSPECIFIED"
     PENDING = "STATE_PENDING"
@@ -71,27 +49,33 @@ class Determinedtaskv1State(str, Enum):
     TERMINATING = "STATE_TERMINATING"
 
 
+class Devicev1Type(str, Enum):
+    UNSPECIFIED = "TYPE_UNSPECIFIED"
+    CPU = "TYPE_CPU"
+    GPU = "TYPE_GPU"
+
+
 class GetHPImportanceResponseMetricHPImportance(BaseModel):
-    hp_importance: "Optional[Dict[str, float]]"
-    experiment_progress: "Optional[float]"
-    error: "Optional[str]"
-    pending: "Optional[bool]"
-    in_progress: "Optional[bool]"
+    hp_importance: "Optional[Dict[str, float]]" = Field(None, alias="hpImportance")
+    experiment_progress: "Optional[float]" = Field(None, alias="experimentProgress")
+    error: "Optional[str]" = Field(None, alias="error")
+    pending: "Optional[bool]" = Field(None, alias="pending")
+    in_progress: "Optional[bool]" = Field(None, alias="inProgress")
 
 
 class GetTrialResponseWorkloadContainer(BaseModel):
-    training: "Optional[V1MetricsWorkload]"
-    validation: "Optional[V1MetricsWorkload]"
-    checkpoint: "Optional[V1CheckpointWorkload]"
+    training: "Optional[V1MetricsWorkload]" = Field(None, alias="training")
+    validation: "Optional[V1MetricsWorkload]" = Field(None, alias="validation")
+    checkpoint: "Optional[V1CheckpointWorkload]" = Field(None, alias="checkpoint")
 
 
 class ProtobufAny(BaseModel):
-    type_url: "Optional[str]"
-    value: "Optional[str]"
+    type_url: "Optional[str]" = Field(None, alias="typeUrl")
+    value: "Optional[str]" = Field(None, alias="value")
 
 
 class ProtobufFieldMask(BaseModel):
-    paths: "Optional[List[str]]"
+    paths: "Optional[List[str]]" = Field(None, alias="paths")
 
 
 class ProtobufNullValue(str, Enum):
@@ -99,73 +83,73 @@ class ProtobufNullValue(str, Enum):
 
 
 class RuntimeError(BaseModel):
-    error: "Optional[str]"
-    code: "Optional[int]"
-    message: "Optional[str]"
-    details: "Optional[List[ProtobufAny]]"
+    error: "Optional[str]" = Field(None, alias="error")
+    code: "Optional[int]" = Field(None, alias="code")
+    message: "Optional[str]" = Field(None, alias="message")
+    details: "Optional[List[ProtobufAny]]" = Field(None, alias="details")
 
 
 class RuntimeStreamError(BaseModel):
-    grpc_code: "Optional[int]"
-    http_code: "Optional[int]"
-    message: "Optional[str]"
-    http_status: "Optional[str]"
-    details: "Optional[List[ProtobufAny]]"
+    grpc_code: "Optional[int]" = Field(None, alias="grpcCode")
+    http_code: "Optional[int]" = Field(None, alias="httpCode")
+    message: "Optional[str]" = Field(None, alias="message")
+    http_status: "Optional[str]" = Field(None, alias="httpStatus")
+    details: "Optional[List[ProtobufAny]]" = Field(None, alias="details")
 
 
 class StreamResultOfV1GetHPImportanceResponse(BaseModel):
-    result: "Optional[V1GetHPImportanceResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1GetHPImportanceResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1GetTrialProfilerAvailableSeriesResponse(BaseModel):
-    result: "Optional[V1GetTrialProfilerAvailableSeriesResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1GetTrialProfilerAvailableSeriesResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1GetTrialProfilerMetricsResponse(BaseModel):
-    result: "Optional[V1GetTrialProfilerMetricsResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1GetTrialProfilerMetricsResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1MasterLogsResponse(BaseModel):
-    result: "Optional[V1MasterLogsResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1MasterLogsResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1MetricBatchesResponse(BaseModel):
-    result: "Optional[V1MetricBatchesResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1MetricBatchesResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1MetricNamesResponse(BaseModel):
-    result: "Optional[V1MetricNamesResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1MetricNamesResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1NotebookLogsResponse(BaseModel):
-    result: "Optional[V1NotebookLogsResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1NotebookLogsResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1TrialLogsFieldsResponse(BaseModel):
-    result: "Optional[V1TrialLogsFieldsResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1TrialLogsFieldsResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1TrialLogsResponse(BaseModel):
-    result: "Optional[V1TrialLogsResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1TrialLogsResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1TrialsSampleResponse(BaseModel):
-    result: "Optional[V1TrialsSampleResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1TrialsSampleResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class StreamResultOfV1TrialsSnapshotResponse(BaseModel):
-    result: "Optional[V1TrialsSnapshotResponse]"
-    error: "Optional[RuntimeStreamError]"
+    result: "Optional[V1TrialsSnapshotResponse]" = Field(None, alias="result")
+    error: "Optional[RuntimeStreamError]" = Field(None, alias="error")
 
 
 class TrainingLengthUnit(str, Enum):
@@ -190,195 +174,194 @@ class TrialProfilerMetricLabelsProfilerMetricType(str, Enum):
 
 
 class TrialsSampleResponseDataPoint(BaseModel):
-    batches: "int"
-    value: "float"
+    batches: "int" = Field(..., alias="batches")
+    value: "float" = Field(..., alias="value")
 
 
 class Trialv1Trial(BaseModel):
-    id: "int"
-    experiment_id: "int"
-    start_time: "datetime"
-    end_time: "Optional[datetime]"
-    state: "Determinedexperimentv1State"
-    hparams: "Any"
-    total_batches_processed: "int"
-    best_validation: "Optional[V1MetricsWorkload]"
-    latest_validation: "Optional[V1MetricsWorkload]"
-    best_checkpoint: "Optional[V1CheckpointWorkload]"
-    runner_state: "Optional[str]"
+    id: "int" = Field(..., alias="id")
+    experiment_id: "int" = Field(..., alias="experimentId")
+    start_time: "datetime" = Field(..., alias="startTime")
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    state: "Determinedexperimentv1State" = Field(..., alias="state")
+    hparams: "Any" = Field(..., alias="hparams")
+    total_batches_processed: "int" = Field(..., alias="totalBatchesProcessed")
+    best_validation: "Optional[V1MetricsWorkload]" = Field(None, alias="bestValidation")
+    latest_validation: "Optional[V1MetricsWorkload]" = Field(None, alias="latestValidation")
+    best_checkpoint: "Optional[V1CheckpointWorkload]" = Field(None, alias="bestCheckpoint")
+    runner_state: "Optional[str]" = Field(None, alias="runnerState")
 
 
 class V1AckAllocationPreemptionSignalRequest(BaseModel):
-    allocation_id: "str"
+    allocation_id: "str" = Field(..., alias="allocationId")
 
 
 class V1Agent(BaseModel):
-    id: "Optional[str]"
-    registered_time: "Optional[datetime]"
-    slots: "Optional[Dict[str, V1Slot]]"
-    containers: "Optional[Dict[str, V1Container]]"
-    label: "Optional[str]"
-    resource_pool: "Optional[str]"
-    addresses: "Optional[List[str]]"
-    enabled: "Optional[bool]"
-    draining: "Optional[bool]"
+    id: "Optional[str]" = Field(None, alias="id")
+    registered_time: "Optional[datetime]" = Field(None, alias="registeredTime")
+    slots: "Optional[Dict[str, V1Slot]]" = Field(None, alias="slots")
+    containers: "Optional[Dict[str, V1Container]]" = Field(None, alias="containers")
+    label: "Optional[str]" = Field(None, alias="label")
+    resource_pool: "Optional[str]" = Field(None, alias="resourcePool")
+    addresses: "Optional[List[str]]" = Field(None, alias="addresses")
+    enabled: "Optional[bool]" = Field(None, alias="enabled")
+    draining: "Optional[bool]" = Field(None, alias="draining")
 
 
 class V1AgentUserGroup(BaseModel):
-    agent_uid: "Optional[int]"
-    agent_gid: "Optional[int]"
+    agent_uid: "Optional[int]" = Field(None, alias="agentUid")
+    agent_gid: "Optional[int]" = Field(None, alias="agentGid")
 
 
 class V1AllocationPreemptionSignalResponse(BaseModel):
-    preempt: "Optional[bool]"
+    preempt: "Optional[bool]" = Field(None, alias="preempt")
 
 
 class V1AllocationRendezvousInfoResponse(BaseModel):
-    rendezvous_info: "V1RendezvousInfo"
+    rendezvous_info: "V1RendezvousInfo" = Field(..., alias="rendezvousInfo")
 
 
 class V1AwsCustomTag(BaseModel):
-    key: "str"
-    value: "str"
+    key: "str" = Field(..., alias="key")
+    value: "str" = Field(..., alias="value")
 
 
 class V1Checkpoint(BaseModel):
-    uuid: "Optional[str]"
-    experiment_config: "Optional[Any]"
-    experiment_id: "int"
-    trial_id: "int"
-    hparams: "Optional[Any]"
-    batch_number: "int"
-    end_time: "Optional[datetime]"
-    resources: "Optional[Dict[str, str]]"
-    metadata: "Optional[Any]"
-    framework: "Optional[str]"
-    format: "Optional[str]"
-    determined_version: "Optional[str]"
-    metrics: "Optional[V1Metrics]"
-    validation_state: "Optional[Determinedcheckpointv1State]"
-    state: "Determinedcheckpointv1State"
-    searcher_metric: "Optional[float]"
+    uuid: "Optional[str]" = Field(None, alias="uuid")
+    experiment_config: "Optional[Any]" = Field(None, alias="experimentConfig")
+    experiment_id: "int" = Field(..., alias="experimentId")
+    trial_id: "int" = Field(..., alias="trialId")
+    hparams: "Optional[Any]" = Field(None, alias="hparams")
+    batch_number: "int" = Field(..., alias="batchNumber")
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    resources: "Optional[Dict[str, str]]" = Field(None, alias="resources")
+    metadata: "Optional[Any]" = Field(None, alias="metadata")
+    framework: "Optional[str]" = Field(None, alias="framework")
+    format: "Optional[str]" = Field(None, alias="format")
+    determined_version: "Optional[str]" = Field(None, alias="determinedVersion")
+    metrics: "Optional[V1Metrics]" = Field(None, alias="metrics")
+    validation_state: "Optional[Determinedcheckpointv1State]" = Field(None, alias="validationState")
+    state: "Determinedcheckpointv1State" = Field(..., alias="state")
+    searcher_metric: "Optional[float]" = Field(None, alias="searcherMetric")
 
 
 class V1CheckpointMetadata(BaseModel):
-    trial_id: "int"
-    trial_run_id: "int"
-    uuid: "str"
-    resources: "Dict[str, str]"
-    framework: "str"
-    format: "str"
-    determined_version: "str"
-    latest_batch: "Optional[int]"
+    trial_id: "int" = Field(..., alias="trialId")
+    trial_run_id: "int" = Field(..., alias="trialRunId")
+    uuid: "str" = Field(..., alias="uuid")
+    resources: "Dict[str, str]" = Field(..., alias="resources")
+    framework: "str" = Field(..., alias="framework")
+    format: "str" = Field(..., alias="format")
+    determined_version: "str" = Field(..., alias="determinedVersion")
+    latest_batch: "Optional[int]" = Field(None, alias="latestBatch")
 
 
 class V1CheckpointWorkload(BaseModel):
-    uuid: "Optional[str]"
-    end_time: "Optional[datetime]"
-    state: "Determinedcheckpointv1State"
-    resources: "Optional[Dict[str, str]]"
-    total_batches: "int"
+    uuid: "Optional[str]" = Field(None, alias="uuid")
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    state: "Determinedcheckpointv1State" = Field(..., alias="state")
+    resources: "Optional[Dict[str, str]]" = Field(None, alias="resources")
+    total_batches: "int" = Field(..., alias="totalBatches")
 
 
 class V1Command(BaseModel):
-    id: "str"
-    description: "str"
-    state: "Determinedtaskv1State"
-    start_time: "datetime"
-    container: "Optional[V1Container]"
-    username: "str"
-    resource_pool: "str"
-    exit_status: "Optional[str]"
-    job_summary: "Optional[V1JobSummary]"
+    id: "str" = Field(..., alias="id")
+    description: "str" = Field(..., alias="description")
+    state: "Determinedtaskv1State" = Field(..., alias="state")
+    start_time: "datetime" = Field(..., alias="startTime")
+    container: "Optional[V1Container]" = Field(None, alias="container")
+    username: "str" = Field(..., alias="username")
+    resource_pool: "str" = Field(..., alias="resourcePool")
+    exit_status: "Optional[str]" = Field(None, alias="exitStatus")
 
 
 class V1CompleteValidateAfterOperation(BaseModel):
-    op: "Optional[V1ValidateAfterOperation]"
-    searcher_metric: "Optional[float]"
+    op: "Optional[V1ValidateAfterOperation]" = Field(None, alias="op")
+    searcher_metric: "Optional[float]" = Field(None, alias="searcherMetric")
 
 
 class V1Container(BaseModel):
-    parent: "Optional[str]"
-    id: "str"
-    state: "Determinedcontainerv1State"
-    devices: "Optional[List[V1Device]]"
+    parent: "Optional[str]" = Field(None, alias="parent")
+    id: "str" = Field(..., alias="id")
+    state: "Determinedcontainerv1State" = Field(..., alias="state")
+    devices: "Optional[List[V1Device]]" = Field(None, alias="devices")
 
 
 class V1CreateExperimentRequest(BaseModel):
-    model_definition: "Optional[List[V1File]]"
-    config: "Optional[str]"
-    validate_only: "Optional[bool]"
-    parent_id: "Optional[int]"
+    model_definition: "Optional[List[V1File]]" = Field(None, alias="modelDefinition")
+    config: "Optional[str]" = Field(None, alias="config")
+    validate_only: "Optional[bool]" = Field(None, alias="validateOnly")
+    parent_id: "Optional[int]" = Field(None, alias="parentId")
 
 
 class V1CreateExperimentResponse(BaseModel):
-    experiment: "V1Experiment"
-    config: "Any"
+    experiment: "V1Experiment" = Field(..., alias="experiment")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1CurrentUserResponse(BaseModel):
-    user: "V1User"
+    user: "V1User" = Field(..., alias="user")
 
 
 class V1Device(BaseModel):
-    id: "Optional[int]"
-    brand: "Optional[str]"
-    uuid: "Optional[str]"
-    type: "Optional[Determineddevicev1Type]"
+    id: "Optional[int]" = Field(None, alias="id")
+    brand: "Optional[str]" = Field(None, alias="brand")
+    uuid: "Optional[str]" = Field(None, alias="uuid")
+    type: "Optional[Devicev1Type]" = Field(None, alias="type")
 
 
 class V1DisableAgentRequest(BaseModel):
-    agent_id: "Optional[str]"
-    drain: "Optional[bool]"
+    agent_id: "Optional[str]" = Field(None, alias="agentId")
+    drain: "Optional[bool]" = Field(None, alias="drain")
 
 
 class V1DisableAgentResponse(BaseModel):
-    agent: "Optional[V1Agent]"
+    agent: "Optional[V1Agent]" = Field(None, alias="agent")
 
 
 class V1DisableSlotResponse(BaseModel):
-    slot: "Optional[V1Slot]"
+    slot: "Optional[V1Slot]" = Field(None, alias="slot")
 
 
 class V1EnableAgentResponse(BaseModel):
-    agent: "Optional[V1Agent]"
+    agent: "Optional[V1Agent]" = Field(None, alias="agent")
 
 
 class V1EnableSlotResponse(BaseModel):
-    slot: "Optional[V1Slot]"
+    slot: "Optional[V1Slot]" = Field(None, alias="slot")
 
 
 class V1Experiment(BaseModel):
-    id: "int"
-    description: "Optional[str]"
-    labels: "Optional[List[str]]"
-    start_time: "datetime"
-    end_time: "Optional[datetime]"
-    state: "Determinedexperimentv1State"
-    archived: "bool"
-    num_trials: "int"
-    progress: "Optional[float]"
-    username: "str"
-    resource_pool: "Optional[str]"
-    searcher_type: "str"
-    name: "str"
-    notes: "Optional[str]"
+    id: "int" = Field(..., alias="id")
+    description: "Optional[str]" = Field(None, alias="description")
+    labels: "Optional[List[str]]" = Field(None, alias="labels")
+    start_time: "datetime" = Field(..., alias="startTime")
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    state: "Determinedexperimentv1State" = Field(..., alias="state")
+    archived: "bool" = Field(..., alias="archived")
+    num_trials: "int" = Field(..., alias="numTrials")
+    progress: "Optional[float]" = Field(None, alias="progress")
+    username: "str" = Field(..., alias="username")
+    resource_pool: "Optional[str]" = Field(None, alias="resourcePool")
+    searcher_type: "str" = Field(..., alias="searcherType")
+    name: "str" = Field(..., alias="name")
+    notes: "Optional[str]" = Field(None, alias="notes")
 
 
 class V1ExperimentSimulation(BaseModel):
-    config: "Optional[Any]"
-    seed: "Optional[int]"
-    trials: "Optional[List[V1TrialSimulation]]"
+    config: "Optional[Any]" = Field(None, alias="config")
+    seed: "Optional[int]" = Field(None, alias="seed")
+    trials: "Optional[List[V1TrialSimulation]]" = Field(None, alias="trials")
 
 
 class V1File(BaseModel):
-    path: "str"
-    type: "int"
-    content: "str"
-    mtime: "str"
-    mode: "int"
-    uid: "int"
-    gid: "int"
+    path: "str" = Field(..., alias="path")
+    type: "int" = Field(..., alias="type")
+    content: "str" = Field(..., alias="content")
+    mtime: "str" = Field(..., alias="mtime")
+    mode: "int" = Field(..., alias="mode")
+    uid: "int" = Field(..., alias="uid")
+    gid: "int" = Field(..., alias="gid")
 
 
 class V1FittingPolicy(str, Enum):
@@ -389,7 +372,7 @@ class V1FittingPolicy(str, Enum):
 
 
 class V1GetAgentResponse(BaseModel):
-    agent: "Optional[V1Agent]"
+    agent: "Optional[V1Agent]" = Field(None, alias="agent")
 
 
 class V1GetAgentsRequestSortBy(str, Enum):
@@ -399,21 +382,21 @@ class V1GetAgentsRequestSortBy(str, Enum):
 
 
 class V1GetAgentsResponse(BaseModel):
-    agents: "Optional[List[V1Agent]]"
-    pagination: "Optional[V1Pagination]"
+    agents: "Optional[List[V1Agent]]" = Field(None, alias="agents")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetBestSearcherValidationMetricResponse(BaseModel):
-    metric: "Optional[float]"
+    metric: "Optional[float]" = Field(None, alias="metric")
 
 
 class V1GetCheckpointResponse(BaseModel):
-    checkpoint: "Optional[V1Checkpoint]"
+    checkpoint: "Optional[V1Checkpoint]" = Field(None, alias="checkpoint")
 
 
 class V1GetCommandResponse(BaseModel):
-    command: "Optional[V1Command]"
-    config: "Optional[Any]"
+    command: "Optional[V1Command]" = Field(None, alias="command")
+    config: "Optional[Any]" = Field(None, alias="config")
 
 
 class V1GetCommandsRequestSortBy(str, Enum):
@@ -424,13 +407,13 @@ class V1GetCommandsRequestSortBy(str, Enum):
 
 
 class V1GetCommandsResponse(BaseModel):
-    commands: "Optional[List[V1Command]]"
-    pagination: "Optional[V1Pagination]"
+    commands: "Optional[List[V1Command]]" = Field(None, alias="commands")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetCurrentTrialSearcherOperationResponse(BaseModel):
-    op: "Optional[V1SearcherOperation]"
-    completed: "Optional[bool]"
+    op: "Optional[V1SearcherOperation]" = Field(None, alias="op")
+    completed: "Optional[bool]" = Field(None, alias="completed")
 
 
 class V1GetExperimentCheckpointsRequestSortBy(str, Enum):
@@ -446,18 +429,17 @@ class V1GetExperimentCheckpointsRequestSortBy(str, Enum):
 
 
 class V1GetExperimentCheckpointsResponse(BaseModel):
-    checkpoints: "Optional[List[V1Checkpoint]]"
-    pagination: "Optional[V1Pagination]"
+    checkpoints: "Optional[List[V1Checkpoint]]" = Field(None, alias="checkpoints")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetExperimentLabelsResponse(BaseModel):
-    labels: "Optional[List[str]]"
+    labels: "Optional[List[str]]" = Field(None, alias="labels")
 
 
 class V1GetExperimentResponse(BaseModel):
-    experiment: "V1Experiment"
-    config: "Any"
-    job_summary: "Optional[V1JobSummary]"
+    experiment: "V1Experiment" = Field(..., alias="experiment")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1GetExperimentTrialsRequestSortBy(str, Enum):
@@ -473,12 +455,12 @@ class V1GetExperimentTrialsRequestSortBy(str, Enum):
 
 
 class V1GetExperimentTrialsResponse(BaseModel):
-    trials: "List[Trialv1Trial]"
-    pagination: "V1Pagination"
+    trials: "List[Trialv1Trial]" = Field(..., alias="trials")
+    pagination: "V1Pagination" = Field(..., alias="pagination")
 
 
 class V1GetExperimentValidationHistoryResponse(BaseModel):
-    validation_history: "Optional[List[V1ValidationHistoryEntry]]"
+    validation_history: "Optional[List[V1ValidationHistoryEntry]]" = Field(None, alias="validationHistory")
 
 
 class V1GetExperimentsRequestSortBy(str, Enum):
@@ -495,47 +477,38 @@ class V1GetExperimentsRequestSortBy(str, Enum):
 
 
 class V1GetExperimentsResponse(BaseModel):
-    experiments: "List[V1Experiment]"
-    pagination: "V1Pagination"
+    experiments: "List[V1Experiment]" = Field(..., alias="experiments")
+    pagination: "V1Pagination" = Field(..., alias="pagination")
 
 
 class V1GetHPImportanceResponse(BaseModel):
-    training_metrics: "Dict[str, GetHPImportanceResponseMetricHPImportance]"
-    validation_metrics: "Dict[str, GetHPImportanceResponseMetricHPImportance]"
-
-
-class V1GetJobQueueStatsResponse(BaseModel):
-    results: "List[V1RPQueueStat]"
-
-
-class V1GetJobsResponse(BaseModel):
-    pagination: "V1Pagination"
-    jobs: "List[V1Job]"
+    training_metrics: "Dict[str, GetHPImportanceResponseMetricHPImportance]" = Field(..., alias="trainingMetrics")
+    validation_metrics: "Dict[str, GetHPImportanceResponseMetricHPImportance]" = Field(..., alias="validationMetrics")
 
 
 class V1GetMasterConfigResponse(BaseModel):
-    config: "Any"
+    config: "Any" = Field(..., alias="config")
 
 
 class V1GetMasterResponse(BaseModel):
-    version: "str"
-    master_id: "str"
-    cluster_id: "str"
-    cluster_name: "str"
-    telemetry_enabled: "Optional[bool]"
-    sso_providers: "Optional[List[V1SSOProvider]]"
+    version: "str" = Field(..., alias="version")
+    master_id: "str" = Field(..., alias="masterId")
+    cluster_id: "str" = Field(..., alias="clusterId")
+    cluster_name: "str" = Field(..., alias="clusterName")
+    telemetry_enabled: "Optional[bool]" = Field(None, alias="telemetryEnabled")
+    sso_providers: "Optional[List[V1SSOProvider]]" = Field(None, alias="ssoProviders")
 
 
 class V1GetModelDefResponse(BaseModel):
-    b64_tgz: "str"
+    b64_tgz: "str" = Field(..., alias="b64Tgz")
 
 
 class V1GetModelResponse(BaseModel):
-    model: "Optional[V1Model]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
 
 
 class V1GetModelVersionResponse(BaseModel):
-    model_version: "Optional[V1ModelVersion]"
+    model_version: "Optional[V1ModelVersion]" = Field(None, alias="modelVersion")
 
 
 class V1GetModelVersionsRequestSortBy(str, Enum):
@@ -545,9 +518,9 @@ class V1GetModelVersionsRequestSortBy(str, Enum):
 
 
 class V1GetModelVersionsResponse(BaseModel):
-    model: "Optional[V1Model]"
-    model_versions: "Optional[List[V1ModelVersion]]"
-    pagination: "Optional[V1Pagination]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
+    model_versions: "Optional[List[V1ModelVersion]]" = Field(None, alias="modelVersions")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetModelsRequestSortBy(str, Enum):
@@ -559,13 +532,13 @@ class V1GetModelsRequestSortBy(str, Enum):
 
 
 class V1GetModelsResponse(BaseModel):
-    models: "Optional[List[V1Model]]"
-    pagination: "Optional[V1Pagination]"
+    models: "Optional[List[V1Model]]" = Field(None, alias="models")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetNotebookResponse(BaseModel):
-    notebook: "Optional[V1Notebook]"
-    config: "Optional[Any]"
+    notebook: "Optional[V1Notebook]" = Field(None, alias="notebook")
+    config: "Optional[Any]" = Field(None, alias="config")
 
 
 class V1GetNotebooksRequestSortBy(str, Enum):
@@ -576,18 +549,18 @@ class V1GetNotebooksRequestSortBy(str, Enum):
 
 
 class V1GetNotebooksResponse(BaseModel):
-    notebooks: "Optional[List[V1Notebook]]"
-    pagination: "Optional[V1Pagination]"
+    notebooks: "Optional[List[V1Notebook]]" = Field(None, alias="notebooks")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetResourcePoolsResponse(BaseModel):
-    resource_pools: "Optional[List[V1ResourcePool]]"
-    pagination: "Optional[V1Pagination]"
+    resource_pools: "Optional[List[V1ResourcePool]]" = Field(None, alias="resourcePools")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetShellResponse(BaseModel):
-    shell: "Optional[V1Shell]"
-    config: "Optional[Any]"
+    shell: "Optional[V1Shell]" = Field(None, alias="shell")
+    config: "Optional[Any]" = Field(None, alias="config")
 
 
 class V1GetShellsRequestSortBy(str, Enum):
@@ -598,25 +571,25 @@ class V1GetShellsRequestSortBy(str, Enum):
 
 
 class V1GetShellsResponse(BaseModel):
-    shells: "Optional[List[V1Shell]]"
-    pagination: "Optional[V1Pagination]"
+    shells: "Optional[List[V1Shell]]" = Field(None, alias="shells")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetSlotResponse(BaseModel):
-    slot: "Optional[V1Slot]"
+    slot: "Optional[V1Slot]" = Field(None, alias="slot")
 
 
 class V1GetSlotsResponse(BaseModel):
-    slots: "Optional[List[V1Slot]]"
+    slots: "Optional[List[V1Slot]]" = Field(None, alias="slots")
 
 
 class V1GetTelemetryResponse(BaseModel):
-    enabled: "bool"
-    segment_key: "Optional[str]"
+    enabled: "bool" = Field(..., alias="enabled")
+    segment_key: "Optional[str]" = Field(None, alias="segmentKey")
 
 
 class V1GetTemplateResponse(BaseModel):
-    template: "Optional[V1Template]"
+    template: "Optional[V1Template]" = Field(None, alias="template")
 
 
 class V1GetTemplatesRequestSortBy(str, Enum):
@@ -625,13 +598,13 @@ class V1GetTemplatesRequestSortBy(str, Enum):
 
 
 class V1GetTemplatesResponse(BaseModel):
-    templates: "Optional[List[V1Template]]"
-    pagination: "Optional[V1Pagination]"
+    templates: "Optional[List[V1Template]]" = Field(None, alias="templates")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetTensorboardResponse(BaseModel):
-    tensorboard: "Optional[V1Tensorboard]"
-    config: "Optional[Any]"
+    tensorboard: "Optional[V1Tensorboard]" = Field(None, alias="tensorboard")
+    config: "Optional[Any]" = Field(None, alias="config")
 
 
 class V1GetTensorboardsRequestSortBy(str, Enum):
@@ -642,8 +615,8 @@ class V1GetTensorboardsRequestSortBy(str, Enum):
 
 
 class V1GetTensorboardsResponse(BaseModel):
-    tensorboards: "Optional[List[V1Tensorboard]]"
-    pagination: "Optional[V1Pagination]"
+    tensorboards: "Optional[List[V1Tensorboard]]" = Field(None, alias="tensorboards")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetTrialCheckpointsRequestSortBy(str, Enum):
@@ -657,126 +630,104 @@ class V1GetTrialCheckpointsRequestSortBy(str, Enum):
 
 
 class V1GetTrialCheckpointsResponse(BaseModel):
-    checkpoints: "Optional[List[V1Checkpoint]]"
-    pagination: "Optional[V1Pagination]"
+    checkpoints: "Optional[List[V1Checkpoint]]" = Field(None, alias="checkpoints")
+    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
 
 
 class V1GetTrialProfilerAvailableSeriesResponse(BaseModel):
-    labels: "List[V1TrialProfilerMetricLabels]"
+    labels: "List[V1TrialProfilerMetricLabels]" = Field(..., alias="labels")
 
 
 class V1GetTrialProfilerMetricsResponse(BaseModel):
-    batch: "V1TrialProfilerMetricsBatch"
+    batch: "V1TrialProfilerMetricsBatch" = Field(..., alias="batch")
 
 
 class V1GetTrialResponse(BaseModel):
-    trial: "Trialv1Trial"
-    workloads: "Optional[List[GetTrialResponseWorkloadContainer]]"
+    trial: "Trialv1Trial" = Field(..., alias="trial")
+    workloads: "Optional[List[GetTrialResponseWorkloadContainer]]" = Field(None, alias="workloads")
 
 
 class V1GetUserResponse(BaseModel):
-    user: "Optional[V1User]"
+    user: "Optional[V1User]" = Field(None, alias="user")
 
 
 class V1GetUsersResponse(BaseModel):
-    users: "Optional[List[V1User]]"
+    users: "Optional[List[V1User]]" = Field(None, alias="users")
 
 
 class V1IdleNotebookRequest(BaseModel):
-    notebook_id: "Optional[str]"
-    idle: "Optional[bool]"
-
-
-class V1Job(BaseModel):
-    summary: "V1JobSummary"
-    type: "Determinedjobv1Type"
-    submission_time: "datetime"
-    user: "str"
-    resource_pool: "str"
-    is_preemptible: "bool"
-    priority: "Optional[int]"
-    weight: "Optional[float]"
-    entity_id: "str"
-
-
-class V1JobSummary(BaseModel):
-    job_id: "str"
-    state: "Determinedjobv1State"
-
-
-class V1K8PriorityClass(BaseModel):
-    priority_class: "Optional[str]"
-    priority_value: "Optional[int]"
+    notebook_id: "Optional[str]" = Field(None, alias="notebookId")
+    idle: "Optional[bool]" = Field(None, alias="idle")
 
 
 class V1KillCommandResponse(BaseModel):
-    command: "Optional[V1Command]"
+    command: "Optional[V1Command]" = Field(None, alias="command")
 
 
 class V1KillNotebookResponse(BaseModel):
-    notebook: "Optional[V1Notebook]"
+    notebook: "Optional[V1Notebook]" = Field(None, alias="notebook")
 
 
 class V1KillShellResponse(BaseModel):
-    shell: "Optional[V1Shell]"
+    shell: "Optional[V1Shell]" = Field(None, alias="shell")
 
 
 class V1KillTensorboardResponse(BaseModel):
-    tensorboard: "Optional[V1Tensorboard]"
+    tensorboard: "Optional[V1Tensorboard]" = Field(None, alias="tensorboard")
 
 
 class V1LaunchCommandRequest(BaseModel):
-    config: "Optional[Any]"
-    template_name: "Optional[str]"
-    files: "Optional[List[V1File]]"
-    data: "Optional[str]"
+    config: "Optional[Any]" = Field(None, alias="config")
+    template_name: "Optional[str]" = Field(None, alias="templateName")
+    files: "Optional[List[V1File]]" = Field(None, alias="files")
+    data: "Optional[str]" = Field(None, alias="data")
 
 
 class V1LaunchCommandResponse(BaseModel):
-    command: "Optional[V1Command]"
-    config: "Any"
+    command: "Optional[V1Command]" = Field(None, alias="command")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1LaunchNotebookRequest(BaseModel):
-    config: "Optional[Any]"
-    template_name: "Optional[str]"
-    files: "Optional[List[V1File]]"
-    preview: "Optional[bool]"
+    config: "Optional[Any]" = Field(None, alias="config")
+    template_name: "Optional[str]" = Field(None, alias="templateName")
+    files: "Optional[List[V1File]]" = Field(None, alias="files")
+    preview: "Optional[bool]" = Field(None, alias="preview")
 
 
 class V1LaunchNotebookResponse(BaseModel):
-    notebook: "V1Notebook"
-    config: "Any"
+    notebook: "V1Notebook" = Field(..., alias="notebook")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1LaunchShellRequest(BaseModel):
-    config: "Optional[Any]"
-    template_name: "Optional[str]"
-    files: "Optional[List[V1File]]"
-    data: "Optional[str]"
+    config: "Optional[Any]" = Field(None, alias="config")
+    template_name: "Optional[str]" = Field(None, alias="templateName")
+    files: "Optional[List[V1File]]" = Field(None, alias="files")
+    data: "Optional[str]" = Field(None, alias="data")
 
 
 class V1LaunchShellResponse(BaseModel):
-    shell: "Optional[V1Shell]"
-    config: "Any"
+    shell: "Optional[V1Shell]" = Field(None, alias="shell")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1LaunchTensorboardRequest(BaseModel):
-    experiment_ids: "Optional[List[int]]"
-    trial_ids: "Optional[List[int]]"
-    config: "Optional[Any]"
-    template_name: "Optional[str]"
-    files: "Optional[List[V1File]]"
+    experiment_ids: "Optional[List[int]]" = Field(None, alias="experimentIds")
+    trial_ids: "Optional[List[int]]" = Field(None, alias="trialIds")
+    config: "Optional[Any]" = Field(None, alias="config")
+    template_name: "Optional[str]" = Field(None, alias="templateName")
+    files: "Optional[List[V1File]]" = Field(None, alias="files")
 
 
 class V1LaunchTensorboardResponse(BaseModel):
-    tensorboard: "V1Tensorboard"
-    config: "Any"
+    tensorboard: "V1Tensorboard" = Field(..., alias="tensorboard")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1LogEntry(BaseModel):
-    id: "int"
-    message: "Optional[str]"
+    id: "int" = Field(..., alias="id")
+    message: "Optional[str]" = Field(None, alias="message")
 
 
 class V1LogLevel(str, Enum):
@@ -790,33 +741,33 @@ class V1LogLevel(str, Enum):
 
 
 class V1LoginRequest(BaseModel):
-    username: "str"
-    password: "str"
-    is_hashed: "Optional[bool]"
+    username: "str" = Field(..., alias="username")
+    password: "str" = Field(..., alias="password")
+    is_hashed: "Optional[bool]" = Field(None, alias="isHashed")
 
 
 class V1LoginResponse(BaseModel):
-    token: "str"
-    user: "V1User"
+    token: "str" = Field(..., alias="token")
+    user: "V1User" = Field(..., alias="user")
 
 
 class V1MarkAllocationReservationDaemonRequest(BaseModel):
-    allocation_id: "str"
-    container_id: "str"
+    allocation_id: "str" = Field(..., alias="allocationId")
+    container_id: "str" = Field(..., alias="containerId")
 
 
 class V1MasterLogsResponse(BaseModel):
-    log_entry: "Optional[V1LogEntry]"
+    log_entry: "Optional[V1LogEntry]" = Field(None, alias="logEntry")
 
 
 class V1MetricBatchesResponse(BaseModel):
-    batches: "Optional[List[int]]"
+    batches: "Optional[List[int]]" = Field(None, alias="batches")
 
 
 class V1MetricNamesResponse(BaseModel):
-    searcher_metric: "Optional[str]"
-    training_metrics: "Optional[List[str]]"
-    validation_metrics: "Optional[List[str]]"
+    searcher_metric: "Optional[str]" = Field(None, alias="searcherMetric")
+    training_metrics: "Optional[List[str]]" = Field(None, alias="trainingMetrics")
+    validation_metrics: "Optional[List[str]]" = Field(None, alias="validationMetrics")
 
 
 class V1MetricType(str, Enum):
@@ -826,48 +777,47 @@ class V1MetricType(str, Enum):
 
 
 class V1Metrics(BaseModel):
-    num_inputs: "Optional[int]"
-    validation_metrics: "Optional[Any]"
+    num_inputs: "Optional[int]" = Field(None, alias="numInputs")
+    validation_metrics: "Optional[Any]" = Field(None, alias="validationMetrics")
 
 
 class V1MetricsWorkload(BaseModel):
-    end_time: "Optional[datetime]"
-    state: "Determinedexperimentv1State"
-    metrics: "Optional[Any]"
-    num_inputs: "int"
-    total_batches: "int"
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    state: "Determinedexperimentv1State" = Field(..., alias="state")
+    metrics: "Optional[Any]" = Field(None, alias="metrics")
+    num_inputs: "int" = Field(..., alias="numInputs")
+    total_batches: "int" = Field(..., alias="totalBatches")
 
 
 class V1Model(BaseModel):
-    name: "str"
-    description: "Optional[str]"
-    metadata: "Any"
-    creation_time: "datetime"
-    last_updated_time: "datetime"
+    name: "str" = Field(..., alias="name")
+    description: "Optional[str]" = Field(None, alias="description")
+    metadata: "Any" = Field(..., alias="metadata")
+    creation_time: "datetime" = Field(..., alias="creationTime")
+    last_updated_time: "datetime" = Field(..., alias="lastUpdatedTime")
 
 
 class V1ModelVersion(BaseModel):
-    model: "Optional[V1Model]"
-    checkpoint: "Optional[V1Checkpoint]"
-    version: "Optional[int]"
-    creation_time: "Optional[datetime]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
+    checkpoint: "Optional[V1Checkpoint]" = Field(None, alias="checkpoint")
+    version: "Optional[int]" = Field(None, alias="version")
+    creation_time: "Optional[datetime]" = Field(None, alias="creationTime")
 
 
 class V1Notebook(BaseModel):
-    id: "str"
-    description: "str"
-    state: "Determinedtaskv1State"
-    start_time: "datetime"
-    container: "Optional[V1Container]"
-    username: "str"
-    service_address: "Optional[str]"
-    resource_pool: "str"
-    exit_status: "Optional[str]"
-    job_summary: "Optional[V1JobSummary]"
+    id: "str" = Field(..., alias="id")
+    description: "str" = Field(..., alias="description")
+    state: "Determinedtaskv1State" = Field(..., alias="state")
+    start_time: "datetime" = Field(..., alias="startTime")
+    container: "Optional[V1Container]" = Field(None, alias="container")
+    username: "str" = Field(..., alias="username")
+    service_address: "Optional[str]" = Field(None, alias="serviceAddress")
+    resource_pool: "str" = Field(..., alias="resourcePool")
+    exit_status: "Optional[str]" = Field(None, alias="exitStatus")
 
 
 class V1NotebookLogsResponse(BaseModel):
-    log_entry: "Optional[V1LogEntry]"
+    log_entry: "Optional[V1LogEntry]" = Field(None, alias="logEntry")
 
 
 class V1OrderBy(str, Enum):
@@ -877,108 +827,89 @@ class V1OrderBy(str, Enum):
 
 
 class V1Pagination(BaseModel):
-    offset: "Optional[int]"
-    limit: "Optional[int]"
-    start_index: "Optional[int]"
-    end_index: "Optional[int]"
-    total: "Optional[int]"
-
-
-class V1PaginationRequest(BaseModel):
-    offset: "Optional[int]"
-    limit: "Optional[int]"
+    offset: "Optional[int]" = Field(None, alias="offset")
+    limit: "Optional[int]" = Field(None, alias="limit")
+    start_index: "Optional[int]" = Field(None, alias="startIndex")
+    end_index: "Optional[int]" = Field(None, alias="endIndex")
+    total: "Optional[int]" = Field(None, alias="total")
 
 
 class V1PatchExperimentResponse(BaseModel):
-    experiment: "Optional[V1Experiment]"
+    experiment: "Optional[V1Experiment]" = Field(None, alias="experiment")
 
 
 class V1PatchModelRequest(BaseModel):
-    model: "Optional[V1Model]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
 
 
 class V1PatchModelResponse(BaseModel):
-    model: "Optional[V1Model]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
 
 
 class V1PostCheckpointMetadataRequest(BaseModel):
-    checkpoint: "Optional[V1Checkpoint]"
+    checkpoint: "Optional[V1Checkpoint]" = Field(None, alias="checkpoint")
 
 
 class V1PostCheckpointMetadataResponse(BaseModel):
-    checkpoint: "Optional[V1Checkpoint]"
+    checkpoint: "Optional[V1Checkpoint]" = Field(None, alias="checkpoint")
 
 
 class V1PostModelResponse(BaseModel):
-    model: "Optional[V1Model]"
+    model: "Optional[V1Model]" = Field(None, alias="model")
 
 
 class V1PostModelVersionRequest(BaseModel):
-    model_name: "Optional[str]"
-    checkpoint_uuid: "Optional[str]"
+    model_name: "Optional[str]" = Field(None, alias="modelName")
+    checkpoint_uuid: "Optional[str]" = Field(None, alias="checkpointUuid")
 
 
 class V1PostModelVersionResponse(BaseModel):
-    model_version: "Optional[V1ModelVersion]"
+    model_version: "Optional[V1ModelVersion]" = Field(None, alias="modelVersion")
 
 
 class V1PostTrialProfilerMetricsBatchRequest(BaseModel):
-    batches: "Optional[List[V1TrialProfilerMetricsBatch]]"
+    batches: "Optional[List[V1TrialProfilerMetricsBatch]]" = Field(None, alias="batches")
 
 
 class V1PostUserRequest(BaseModel):
-    user: "Optional[V1User]"
-    password: "Optional[str]"
+    user: "Optional[V1User]" = Field(None, alias="user")
+    password: "Optional[str]" = Field(None, alias="password")
 
 
 class V1PostUserResponse(BaseModel):
-    user: "Optional[V1User]"
+    user: "Optional[V1User]" = Field(None, alias="user")
 
 
 class V1PreviewHPSearchRequest(BaseModel):
-    config: "Optional[Any]"
-    seed: "Optional[int]"
+    config: "Optional[Any]" = Field(None, alias="config")
+    seed: "Optional[int]" = Field(None, alias="seed")
 
 
 class V1PreviewHPSearchResponse(BaseModel):
-    simulation: "Optional[V1ExperimentSimulation]"
+    simulation: "Optional[V1ExperimentSimulation]" = Field(None, alias="simulation")
 
 
 class V1PutTemplateResponse(BaseModel):
-    template: "Optional[V1Template]"
-
-
-class V1QueueControl(BaseModel):
-    job_id: "str"
-    queue_position: "Optional[int]"
-    priority: "Optional[int]"
-    weight: "Optional[int]"
-    resource_pool: "Optional[str]"
-
-
-class V1QueueStats(BaseModel):
-    queued_count: "Optional[int]"
-    scheduled_count: "Optional[int]"
-    preemptible_count: "Optional[int]"
+    template: "Optional[V1Template]" = Field(None, alias="template")
 
 
 class V1RendezvousInfo(BaseModel):
-    addresses: "List[str]"
-    rank: "int"
+    addresses: "List[str]" = Field(..., alias="addresses")
+    rank: "int" = Field(..., alias="rank")
 
 
 class V1ResourceAllocationAggregatedEntry(BaseModel):
-    period_start: "str"
-    period: "V1ResourceAllocationAggregationPeriod"
-    seconds: "float"
-    by_username: "Dict[str, float]"
-    by_experiment_label: "Dict[str, float]"
-    by_resource_pool: "Dict[str, float]"
-    by_agent_label: "Dict[str, float]"
+    period_start: "str" = Field(..., alias="periodStart")
+    period: "V1ResourceAllocationAggregationPeriod" = Field(..., alias="period")
+    seconds: "float" = Field(..., alias="seconds")
+    by_username: "Dict[str, float]" = Field(..., alias="byUsername")
+    by_experiment_label: "Dict[str, float]" = Field(..., alias="byExperimentLabel")
+    by_resource_pool: "Dict[str, float]" = Field(..., alias="byResourcePool")
+    by_agent_label: "Dict[str, float]" = Field(..., alias="byAgentLabel")
 
 
 class V1ResourceAllocationAggregatedResponse(BaseModel):
-    resource_entries: "List[V1ResourceAllocationAggregatedEntry]"
+    resource_entries: "List[V1ResourceAllocationAggregatedEntry]" = Field(..., alias="resourceEntries")
 
 
 class V1ResourceAllocationAggregationPeriod(str, Enum):
@@ -988,106 +919,105 @@ class V1ResourceAllocationAggregationPeriod(str, Enum):
 
 
 class V1ResourceAllocationRawEntry(BaseModel):
-    kind: "Optional[str]"
-    start_time: "Optional[datetime]"
-    end_time: "Optional[datetime]"
-    experiment_id: "Optional[int]"
-    username: "Optional[str]"
-    labels: "Optional[List[str]]"
-    seconds: "Optional[float]"
-    slots: "Optional[int]"
+    kind: "Optional[str]" = Field(None, alias="kind")
+    start_time: "Optional[datetime]" = Field(None, alias="startTime")
+    end_time: "Optional[datetime]" = Field(None, alias="endTime")
+    experiment_id: "Optional[int]" = Field(None, alias="experimentId")
+    username: "Optional[str]" = Field(None, alias="username")
+    labels: "Optional[List[str]]" = Field(None, alias="labels")
+    seconds: "Optional[float]" = Field(None, alias="seconds")
+    slots: "Optional[int]" = Field(None, alias="slots")
 
 
 class V1ResourceAllocationRawResponse(BaseModel):
-    resource_entries: "Optional[List[V1ResourceAllocationRawEntry]]"
+    resource_entries: "Optional[List[V1ResourceAllocationRawEntry]]" = Field(None, alias="resourceEntries")
 
 
 class V1ResourcePool(BaseModel):
-    name: "str"
-    description: "str"
-    type: "V1ResourcePoolType"
-    num_agents: "int"
-    slots_available: "int"
-    slots_used: "int"
-    slot_type: "Determineddevicev1Type"
-    aux_container_capacity: "int"
-    aux_containers_running: "int"
-    default_compute_pool: "bool"
-    default_aux_pool: "bool"
-    preemptible: "bool"
-    min_agents: "int"
-    max_agents: "int"
-    slots_per_agent: "Optional[int]"
-    aux_container_capacity_per_agent: "int"
-    scheduler_type: "V1SchedulerType"
-    scheduler_fitting_policy: "V1FittingPolicy"
-    location: "str"
-    image_id: "str"
-    instance_type: "str"
-    master_url: "str"
-    master_cert_name: "str"
-    startup_script: "str"
-    container_startup_script: "str"
-    agent_docker_network: "str"
-    agent_docker_runtime: "str"
-    agent_docker_image: "str"
-    agent_fluent_image: "str"
-    max_idle_agent_period: "float"
-    max_agent_starting_period: "float"
-    details: "V1ResourcePoolDetail"
+    name: "str" = Field(..., alias="name")
+    description: "str" = Field(..., alias="description")
+    type: "V1ResourcePoolType" = Field(..., alias="type")
+    num_agents: "int" = Field(..., alias="numAgents")
+    slots_available: "int" = Field(..., alias="slotsAvailable")
+    slots_used: "int" = Field(..., alias="slotsUsed")
+    slot_type: "Devicev1Type" = Field(..., alias="slotType")
+    aux_container_capacity: "int" = Field(..., alias="auxContainerCapacity")
+    aux_containers_running: "int" = Field(..., alias="auxContainersRunning")
+    default_compute_pool: "bool" = Field(..., alias="defaultComputePool")
+    default_aux_pool: "bool" = Field(..., alias="defaultAuxPool")
+    preemptible: "bool" = Field(..., alias="preemptible")
+    min_agents: "int" = Field(..., alias="minAgents")
+    max_agents: "int" = Field(..., alias="maxAgents")
+    slots_per_agent: "Optional[int]" = Field(None, alias="slotsPerAgent")
+    aux_container_capacity_per_agent: "int" = Field(..., alias="auxContainerCapacityPerAgent")
+    scheduler_type: "V1SchedulerType" = Field(..., alias="schedulerType")
+    scheduler_fitting_policy: "V1FittingPolicy" = Field(..., alias="schedulerFittingPolicy")
+    location: "str" = Field(..., alias="location")
+    image_id: "str" = Field(..., alias="imageId")
+    instance_type: "str" = Field(..., alias="instanceType")
+    master_url: "str" = Field(..., alias="masterUrl")
+    master_cert_name: "str" = Field(..., alias="masterCertName")
+    startup_script: "str" = Field(..., alias="startupScript")
+    container_startup_script: "str" = Field(..., alias="containerStartupScript")
+    agent_docker_network: "str" = Field(..., alias="agentDockerNetwork")
+    agent_docker_runtime: "str" = Field(..., alias="agentDockerRuntime")
+    agent_docker_image: "str" = Field(..., alias="agentDockerImage")
+    agent_fluent_image: "str" = Field(..., alias="agentFluentImage")
+    max_idle_agent_period: "float" = Field(..., alias="maxIdleAgentPeriod")
+    max_agent_starting_period: "float" = Field(..., alias="maxAgentStartingPeriod")
+    details: "V1ResourcePoolDetail" = Field(..., alias="details")
 
 
 class V1ResourcePoolAwsDetail(BaseModel):
-    region: "str"
-    root_volume_size: "int"
-    image_id: "str"
-    tag_key: "str"
-    tag_value: "str"
-    instance_name: "str"
-    ssh_key_name: "str"
-    public_ip: "bool"
-    subnet_id: "Optional[str]"
-    security_group_id: "str"
-    iam_instance_profile_arn: "str"
-    instance_type: "Optional[str]"
-    log_group: "Optional[str]"
-    log_stream: "Optional[str]"
-    spot_enabled: "bool"
-    spot_max_price: "Optional[str]"
-    custom_tags: "Optional[List[V1AwsCustomTag]]"
+    region: "str" = Field(..., alias="region")
+    root_volume_size: "int" = Field(..., alias="rootVolumeSize")
+    image_id: "str" = Field(..., alias="imageId")
+    tag_key: "str" = Field(..., alias="tagKey")
+    tag_value: "str" = Field(..., alias="tagValue")
+    instance_name: "str" = Field(..., alias="instanceName")
+    ssh_key_name: "str" = Field(..., alias="sshKeyName")
+    public_ip: "bool" = Field(..., alias="publicIp")
+    subnet_id: "Optional[str]" = Field(None, alias="subnetId")
+    security_group_id: "str" = Field(..., alias="securityGroupId")
+    iam_instance_profile_arn: "str" = Field(..., alias="iamInstanceProfileArn")
+    instance_type: "Optional[str]" = Field(None, alias="instanceType")
+    log_group: "Optional[str]" = Field(None, alias="logGroup")
+    log_stream: "Optional[str]" = Field(None, alias="logStream")
+    spot_enabled: "bool" = Field(..., alias="spotEnabled")
+    spot_max_price: "Optional[str]" = Field(None, alias="spotMaxPrice")
+    custom_tags: "Optional[List[V1AwsCustomTag]]" = Field(None, alias="customTags")
 
 
 class V1ResourcePoolDetail(BaseModel):
-    aws: "Optional[V1ResourcePoolAwsDetail]"
-    gcp: "Optional[V1ResourcePoolGcpDetail]"
-    priority_scheduler: "Optional[V1ResourcePoolPrioritySchedulerDetail]"
+    aws: "Optional[V1ResourcePoolAwsDetail]" = Field(None, alias="aws")
+    gcp: "Optional[V1ResourcePoolGcpDetail]" = Field(None, alias="gcp")
+    priority_scheduler: "Optional[V1ResourcePoolPrioritySchedulerDetail]" = Field(None, alias="priorityScheduler")
 
 
 class V1ResourcePoolGcpDetail(BaseModel):
-    project: "str"
-    zone: "str"
-    boot_disk_size: "int"
-    boot_disk_source_image: "str"
-    label_key: "str"
-    label_value: "str"
-    name_prefix: "str"
-    network: "str"
-    subnetwork: "Optional[str]"
-    external_ip: "bool"
-    network_tags: "Optional[List[str]]"
-    service_account_email: "str"
-    service_account_scopes: "List[str]"
-    machine_type: "str"
-    gpu_type: "str"
-    gpu_num: "int"
-    preemptible: "bool"
-    operation_timeout_period: "float"
+    project: "str" = Field(..., alias="project")
+    zone: "str" = Field(..., alias="zone")
+    boot_disk_size: "int" = Field(..., alias="bootDiskSize")
+    boot_disk_source_image: "str" = Field(..., alias="bootDiskSourceImage")
+    label_key: "str" = Field(..., alias="labelKey")
+    label_value: "str" = Field(..., alias="labelValue")
+    name_prefix: "str" = Field(..., alias="namePrefix")
+    network: "str" = Field(..., alias="network")
+    subnetwork: "Optional[str]" = Field(None, alias="subnetwork")
+    external_ip: "bool" = Field(..., alias="externalIp")
+    network_tags: "Optional[List[str]]" = Field(None, alias="networkTags")
+    service_account_email: "str" = Field(..., alias="serviceAccountEmail")
+    service_account_scopes: "List[str]" = Field(..., alias="serviceAccountScopes")
+    machine_type: "str" = Field(..., alias="machineType")
+    gpu_type: "str" = Field(..., alias="gpuType")
+    gpu_num: "int" = Field(..., alias="gpuNum")
+    preemptible: "bool" = Field(..., alias="preemptible")
+    operation_timeout_period: "float" = Field(..., alias="operationTimeoutPeriod")
 
 
 class V1ResourcePoolPrioritySchedulerDetail(BaseModel):
-    preemption: "bool"
-    default_priority: "int"
-    k8_priorities: "Optional[List[V1K8PriorityClass]]"
+    preemption: "bool" = Field(..., alias="preemption")
+    default_priority: "int" = Field(..., alias="defaultPriority")
 
 
 class V1ResourcePoolType(str, Enum):
@@ -1098,14 +1028,9 @@ class V1ResourcePoolType(str, Enum):
     K8S = "RESOURCE_POOL_TYPE_K8S"
 
 
-class V1RPQueueStat(BaseModel):
-    stats: "V1QueueStats"
-    resource_pool: "str"
-
-
 class V1RunnableOperation(BaseModel):
-    type: "Optional[V1RunnableType]"
-    length: "Optional[V1TrainingLength]"
+    type: "Optional[V1RunnableType]" = Field(None, alias="type")
+    length: "Optional[V1TrainingLength]" = Field(None, alias="length")
 
 
 class V1RunnableType(str, Enum):
@@ -1123,190 +1048,188 @@ class V1SchedulerType(str, Enum):
 
 
 class V1SearcherOperation(BaseModel):
-    validate_after: "Optional[V1ValidateAfterOperation]"
+    validate_after: "Optional[V1ValidateAfterOperation]" = Field(None, alias="validateAfter")
 
 
 class V1SetCommandPriorityRequest(BaseModel):
-    command_id: "Optional[str]"
-    priority: "Optional[int]"
+    command_id: "Optional[str]" = Field(None, alias="commandId")
+    priority: "Optional[int]" = Field(None, alias="priority")
 
 
 class V1SetCommandPriorityResponse(BaseModel):
-    command: "Optional[V1Command]"
+    command: "Optional[V1Command]" = Field(None, alias="command")
 
 
 class V1SetNotebookPriorityRequest(BaseModel):
-    notebook_id: "Optional[str]"
-    priority: "Optional[int]"
+    notebook_id: "Optional[str]" = Field(None, alias="notebookId")
+    priority: "Optional[int]" = Field(None, alias="priority")
 
 
 class V1SetNotebookPriorityResponse(BaseModel):
-    notebook: "Optional[V1Notebook]"
+    notebook: "Optional[V1Notebook]" = Field(None, alias="notebook")
 
 
 class V1SetShellPriorityRequest(BaseModel):
-    shell_id: "Optional[str]"
-    priority: "Optional[int]"
+    shell_id: "Optional[str]" = Field(None, alias="shellId")
+    priority: "Optional[int]" = Field(None, alias="priority")
 
 
 class V1SetShellPriorityResponse(BaseModel):
-    shell: "Optional[V1Shell]"
+    shell: "Optional[V1Shell]" = Field(None, alias="shell")
 
 
 class V1SetTensorboardPriorityRequest(BaseModel):
-    tensorboard_id: "Optional[str]"
-    priority: "Optional[int]"
+    tensorboard_id: "Optional[str]" = Field(None, alias="tensorboardId")
+    priority: "Optional[int]" = Field(None, alias="priority")
 
 
 class V1SetTensorboardPriorityResponse(BaseModel):
-    tensorboard: "Optional[V1Tensorboard]"
+    tensorboard: "Optional[V1Tensorboard]" = Field(None, alias="tensorboard")
 
 
 class V1SetUserPasswordResponse(BaseModel):
-    user: "Optional[V1User]"
+    user: "Optional[V1User]" = Field(None, alias="user")
 
 
 class V1Shell(BaseModel):
-    id: "str"
-    description: "str"
-    state: "Determinedtaskv1State"
-    start_time: "datetime"
-    container: "Optional[V1Container]"
-    private_key: "Optional[str]"
-    public_key: "Optional[str]"
-    username: "str"
-    resource_pool: "str"
-    exit_status: "Optional[str]"
-    addresses: "Optional[List[Any]]"
-    agent_user_group: "Optional[Any]"
-    job_summary: "Optional[V1JobSummary]"
+    id: "str" = Field(..., alias="id")
+    description: "str" = Field(..., alias="description")
+    state: "Determinedtaskv1State" = Field(..., alias="state")
+    start_time: "datetime" = Field(..., alias="startTime")
+    container: "Optional[V1Container]" = Field(None, alias="container")
+    private_key: "Optional[str]" = Field(None, alias="privateKey")
+    public_key: "Optional[str]" = Field(None, alias="publicKey")
+    username: "str" = Field(..., alias="username")
+    resource_pool: "str" = Field(..., alias="resourcePool")
+    exit_status: "Optional[str]" = Field(None, alias="exitStatus")
+    addresses: "Optional[List[Any]]" = Field(None, alias="addresses")
+    agent_user_group: "Optional[Any]" = Field(None, alias="agentUserGroup")
 
 
 class V1Slot(BaseModel):
-    id: "Optional[str]"
-    device: "Optional[V1Device]"
-    enabled: "Optional[bool]"
-    container: "Optional[V1Container]"
-    draining: "Optional[bool]"
+    id: "Optional[str]" = Field(None, alias="id")
+    device: "Optional[V1Device]" = Field(None, alias="device")
+    enabled: "Optional[bool]" = Field(None, alias="enabled")
+    container: "Optional[V1Container]" = Field(None, alias="container")
+    draining: "Optional[bool]" = Field(None, alias="draining")
 
 
 class V1SSOProvider(BaseModel):
-    name: "str"
-    sso_url: "str"
+    name: "str" = Field(..., alias="name")
+    sso_url: "str" = Field(..., alias="ssoUrl")
 
 
 class V1Template(BaseModel):
-    name: "str"
-    config: "Any"
+    name: "str" = Field(..., alias="name")
+    config: "Any" = Field(..., alias="config")
 
 
 class V1Tensorboard(BaseModel):
-    id: "str"
-    description: "str"
-    state: "Determinedtaskv1State"
-    start_time: "datetime"
-    container: "Optional[V1Container]"
-    experiment_ids: "Optional[List[int]]"
-    trial_ids: "Optional[List[int]]"
-    username: "str"
-    service_address: "Optional[str]"
-    resource_pool: "str"
-    exit_status: "Optional[str]"
-    job_summary: "Optional[V1JobSummary]"
+    id: "str" = Field(..., alias="id")
+    description: "str" = Field(..., alias="description")
+    state: "Determinedtaskv1State" = Field(..., alias="state")
+    start_time: "datetime" = Field(..., alias="startTime")
+    container: "Optional[V1Container]" = Field(None, alias="container")
+    experiment_ids: "Optional[List[int]]" = Field(None, alias="experimentIds")
+    trial_ids: "Optional[List[int]]" = Field(None, alias="trialIds")
+    username: "str" = Field(..., alias="username")
+    service_address: "Optional[str]" = Field(None, alias="serviceAddress")
+    resource_pool: "str" = Field(..., alias="resourcePool")
+    exit_status: "Optional[str]" = Field(None, alias="exitStatus")
 
 
 class V1TrainingLength(BaseModel):
-    unit: "TrainingLengthUnit"
-    length: "int"
+    unit: "TrainingLengthUnit" = Field(..., alias="unit")
+    length: "int" = Field(..., alias="length")
 
 
 class V1TrialEarlyExit(BaseModel):
-    reason: "TrialEarlyExitExitedReason"
+    reason: "TrialEarlyExitExitedReason" = Field(..., alias="reason")
 
 
 class V1TrialLogsFieldsResponse(BaseModel):
-    agent_ids: "Optional[List[str]]"
-    container_ids: "Optional[List[str]]"
-    rank_ids: "Optional[List[int]]"
-    stdtypes: "Optional[List[str]]"
-    sources: "Optional[List[str]]"
+    agent_ids: "Optional[List[str]]" = Field(None, alias="agentIds")
+    container_ids: "Optional[List[str]]" = Field(None, alias="containerIds")
+    rank_ids: "Optional[List[int]]" = Field(None, alias="rankIds")
+    stdtypes: "Optional[List[str]]" = Field(None, alias="stdtypes")
+    sources: "Optional[List[str]]" = Field(None, alias="sources")
 
 
 class V1TrialLogsResponse(BaseModel):
-    id: "str"
-    timestamp: "datetime"
-    message: "str"
-    level: "V1LogLevel"
+    id: "str" = Field(..., alias="id")
+    timestamp: "datetime" = Field(..., alias="timestamp")
+    message: "str" = Field(..., alias="message")
+    level: "V1LogLevel" = Field(..., alias="level")
 
 
 class V1TrialMetrics(BaseModel):
-    trial_id: "int"
-    trial_run_id: "int"
-    latest_batch: "int"
-    metrics: "Any"
-    batch_metrics: "Optional[List[Any]]"
+    trial_id: "int" = Field(..., alias="trialId")
+    trial_run_id: "int" = Field(..., alias="trialRunId")
+    latest_batch: "int" = Field(..., alias="latestBatch")
+    metrics: "Any" = Field(..., alias="metrics")
+    batch_metrics: "Optional[List[Any]]" = Field(None, alias="batchMetrics")
 
 
 class V1TrialProfilerMetricLabels(BaseModel):
-    trial_id: "int"
-    name: "str"
-    agent_id: "Optional[str]"
-    gpu_uuid: "Optional[str]"
-    metric_type: "Optional[TrialProfilerMetricLabelsProfilerMetricType]"
+    trial_id: "int" = Field(..., alias="trialId")
+    name: "str" = Field(..., alias="name")
+    agent_id: "Optional[str]" = Field(None, alias="agentId")
+    gpu_uuid: "Optional[str]" = Field(None, alias="gpuUuid")
+    metric_type: "Optional[TrialProfilerMetricLabelsProfilerMetricType]" = Field(None, alias="metricType")
 
 
 class V1TrialProfilerMetricsBatch(BaseModel):
-    values: "List[float]"
-    batches: "List[int]"
-    timestamps: "List[datetime]"
-    labels: "V1TrialProfilerMetricLabels"
+    values: "List[float]" = Field(..., alias="values")
+    batches: "List[int]" = Field(..., alias="batches")
+    timestamps: "List[datetime]" = Field(..., alias="timestamps")
+    labels: "V1TrialProfilerMetricLabels" = Field(..., alias="labels")
 
 
 class V1TrialRunnerMetadata(BaseModel):
-    state: "str"
+    state: "str" = Field(..., alias="state")
 
 
 class V1TrialSimulation(BaseModel):
-    operations: "Optional[List[V1RunnableOperation]]"
-    occurrences: "Optional[int]"
+    operations: "Optional[List[V1RunnableOperation]]" = Field(None, alias="operations")
+    occurrences: "Optional[int]" = Field(None, alias="occurrences")
 
 
 class V1TrialsSampleResponse(BaseModel):
-    trials: "List[V1TrialsSampleResponseTrial]"
-    promoted_trials: "List[int]"
-    demoted_trials: "List[int]"
+    trials: "List[V1TrialsSampleResponseTrial]" = Field(..., alias="trials")
+    promoted_trials: "List[int]" = Field(..., alias="promotedTrials")
+    demoted_trials: "List[int]" = Field(..., alias="demotedTrials")
 
 
 class V1TrialsSampleResponseTrial(BaseModel):
-    trial_id: "int"
-    hparams: "Any"
-    data: "List[TrialsSampleResponseDataPoint]"
+    trial_id: "int" = Field(..., alias="trialId")
+    hparams: "Any" = Field(..., alias="hparams")
+    data: "List[TrialsSampleResponseDataPoint]" = Field(..., alias="data")
 
 
 class V1TrialsSnapshotResponse(BaseModel):
-    trials: "List[V1TrialsSnapshotResponseTrial]"
+    trials: "List[V1TrialsSnapshotResponseTrial]" = Field(..., alias="trials")
 
 
 class V1TrialsSnapshotResponseTrial(BaseModel):
-    trial_id: "int"
-    hparams: "Any"
-    metric: "float"
-    batches_processed: "int"
+    trial_id: "int" = Field(..., alias="trialId")
+    hparams: "Any" = Field(..., alias="hparams")
+    metric: "float" = Field(..., alias="metric")
+    batches_processed: "int" = Field(..., alias="batchesProcessed")
 
 
 class V1User(BaseModel):
-    id: "int"
-    username: "str"
-    admin: "bool"
-    active: "bool"
-    agent_user_group: "Optional[V1AgentUserGroup]"
+    id: "int" = Field(..., alias="id")
+    username: "str" = Field(..., alias="username")
+    admin: "bool" = Field(..., alias="admin")
+    active: "bool" = Field(..., alias="active")
+    agent_user_group: "Optional[V1AgentUserGroup]" = Field(None, alias="agentUserGroup")
 
 
 class V1ValidateAfterOperation(BaseModel):
-    length: "Optional[V1TrainingLength]"
+    length: "Optional[V1TrainingLength]" = Field(None, alias="length")
 
 
 class V1ValidationHistoryEntry(BaseModel):
-    trial_id: "int"
-    end_time: "datetime"
-    searcher_metric: "float"
+    trial_id: "int" = Field(..., alias="trialId")
+    end_time: "datetime" = Field(..., alias="endTime")
+    searcher_metric: "float" = Field(..., alias="searcherMetric")

@@ -21,18 +21,16 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 		--package-name fastapi_client \
 		-i ~/projects/da/determined/proto/build/swagger/determined/api/v1/api.swagger.json \
 		-o build/python-fastapi
-	touch build/python-fastapi
-	$(MAKE) fapi-postprocess
-
-fapi-postprocess:
-	rm -r build/python-fastapi/fastapi_client/docs/ || exit 0
-	rm build/python-fastapi/fastapi_client/api_client.py || exit 0
-	rm build/python-fastapi/fastapi_client/exceptions.py || exit 0
-	rm -rf ../harness/determined/common/api/fastapi_client || exit 0
+	# remove unused files
+	rm -r build/python-fastapi/fastapi_client/docs/
+	rm build/python-fastapi/fastapi_client/api_client.py
+	rm build/python-fastapi/fastapi_client/exceptions.py
 	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
-	sed 's/ = Field(.*//; s/from pydantic.*/from determined.common.api.fapi import BaseModel/;' -i build/python-fastapi/fastapi_client/models.py
-	fd -t f api build/python-fastapi/fastapi_client/api | xargs sed 's/^.*fastapi.*jsonable.*/from determined.common.api.fapi import jsonable_encoder/' -i
+	# :%s/(BaseModel)/()/g
+	# :%s/ = field(.*$//g
+	rm -rf ../harness/determined/common/api/fastapi_client
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
+	touch build/python-fastapi
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*

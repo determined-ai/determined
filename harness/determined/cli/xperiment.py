@@ -4,7 +4,7 @@ from typing import Any, List
 
 import yaml
 
-from determined.common.api.fapi_client import auth_required, experiments_api
+from determined.common.api.fapi import auth_required, experiments_api, to_json
 from determined.common.declarative_argparse import Arg, Cmd
 
 # from determined.common.api.fastapi_client.models import V1LoginRequest
@@ -22,18 +22,16 @@ from determined.common.declarative_argparse import Arg, Cmd
 @auth_required
 def list(args: Namespace) -> None:
     response = experiments_api.determined_get_experiments(limit=5)
-    print(response)
-    print(response.experiments)
-    # experiments_json = to_json(response.experiments)
-    # if args.output == "yaml":
-    #     print(yaml.safe_dump(experiments_json, default_flow_style=False))
-    # elif args.output == "json":
-    #     print(json.dumps(experiments_json, indent=4, default=str))
-    # elif ["csv", "table"].count(args.output) > 0:
-    #     # render.tabulate_or_csv # TODO maybe add support for csv or tabular format. ref exp list
-    #     raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
-    # else:
-    #     raise ValueError(f"Bad output format: {args.output}")
+    experiments_json = to_json(response.experiments)
+    if args.output == "yaml":
+        print(yaml.safe_dump(experiments_json, default_flow_style=False))
+    elif args.output == "json":
+        print(json.dumps(experiments_json, indent=4, default=str))
+    elif ["csv", "table"].count(args.output) > 0:
+        # render.tabulate_or_csv # TODO maybe add support for csv or tabular format. ref exp list
+        raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
+    else:
+        raise ValueError(f"Bad output format: {args.output}")
 
 
 args_description = [
