@@ -9,8 +9,8 @@ import transformers
 import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
-from determined.common.api.request import send_analytics
 import model_hub.utils
+from determined.common.api.request import send_analytics
 from model_hub.huggingface import _config_parser as hf_parse
 
 MODEL_MODES = {
