@@ -44,7 +44,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
       <Markdown
         editing={editingNotes}
         height={200}
-        markdown={editingNotes ? editedNotes : ''}
+        markdown={editingNotes ? editedNotes : notes}
         onChange={setEditedNotes} />
     </Card>
   );

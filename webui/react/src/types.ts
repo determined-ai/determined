@@ -428,6 +428,7 @@ export interface ExperimentItem {
   id: number;
   labels: string[];
   name: string;
+  notes?: string;
   numTrials: number;
   progress?: number;
   resourcePool: string
