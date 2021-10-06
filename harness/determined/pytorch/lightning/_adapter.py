@@ -1,11 +1,7 @@
 import inspect
-import logging
-import os
-import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
-import analytics
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.optimizers import TrainerOptimizersMixin
@@ -15,6 +11,7 @@ from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
 from determined.common import check
+from determined.common.api.request import send_analytics
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
@@ -173,12 +170,8 @@ class LightningAdapter(PyTorchTrial):
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
-        try:
-            if os.environ.get("DET_SEGMENT_ENABLED"):
-                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
-                analytics.track(str(time.time()), "LightningTrial Class Created")
-        except Exception as e:
-            logging.warning(f"Analytics tracking received error: {e}")
+
+        send_analytics("LightningTrial Created")
 
         check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
         check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')

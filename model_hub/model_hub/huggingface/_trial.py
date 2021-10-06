@@ -1,10 +1,7 @@
 import dataclasses
 import logging
-import os
-import time
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
-import analytics
 import attrdict
 import datasets as hf_datasets
 import torch
@@ -12,6 +9,7 @@ import transformers
 import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
+from determined.common.api.request import send_analytics
 import model_hub.utils
 from model_hub.huggingface import _config_parser as hf_parse
 
@@ -215,13 +213,7 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
 
-        try:
-            if os.environ.get("DET_SEGMENT_ENABLED"):
-                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
-                analytics.track(str(time.time()), "BaseTransformerTrial Class Created")
-        except Exception as e:
-            logging.warning(f"Analytics tracking received error: {e}")
-
+        send_analytics("BaseTransformerTrial Created")
         self.context = context
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.

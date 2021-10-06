@@ -1,15 +1,12 @@
 import inspect
 import logging
-import os
 import pathlib
 import pickle
 import random
 import sys
-import time
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, cast
 
-import analytics
 import h5py
 import numpy as np
 import tensorflow as tf
@@ -22,6 +19,7 @@ from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check, experimental, storage
 from determined.common.api import certs
+from determined.common.api.request import send_analytics
 from determined.horovod import hvd
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
@@ -313,13 +311,7 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-
-        try:
-            if os.environ.get("DET_SEGMENT_ENABLED"):
-                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
-                analytics.track(str(time.time()), "TFKerasTrial Class Created")
-        except Exception as e:
-            logging.warning(f"Analytics tracking received error: {e}")
+        send_analytics("TFKerasTrial Created")
 
         self.model = model
         self.session = session

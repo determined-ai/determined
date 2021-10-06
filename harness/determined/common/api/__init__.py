@@ -26,6 +26,7 @@ from determined.common.api.request import (
     post,
     put,
     ws,
+    send_analytics,
 )
 from determined.common.api.profiler import (
     post_trial_profiler_metrics_batches,

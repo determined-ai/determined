@@ -1,8 +1,11 @@
+import logging
+import os
 import webbrowser
 from types import TracebackType
 from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
+import analytics
 import lomond
 import requests
 import simplejson
@@ -314,3 +317,14 @@ def ws(host: str, path: str) -> WebSocket:
     token = authentication.must_cli_auth().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
     return WebSocket(websocket)
+
+
+def send_analytics(tracking_key: str) -> None:
+    if os.environ.get("DET_SEGMENT_ENABLED"):
+        analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
+        analytics.on_error = on_error
+        analytics.track(os.environ.get("DET_CLUSTER_ID"), tracking_key)
+
+
+def on_error(error, items):
+    logging.warning(f"Analytics tracking received error: {error}")

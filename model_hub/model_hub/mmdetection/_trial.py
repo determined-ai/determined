@@ -22,10 +22,8 @@ limitations under the License.
 
 import logging
 import os
-import time
 from typing import Any, Dict, List
 
-import analytics
 import attrdict
 import mmcv
 import mmcv.parallel
@@ -38,6 +36,7 @@ import torch
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
+from determined.common.api.request import send_analytics
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
@@ -56,12 +55,7 @@ class MMDetTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
-        try:
-            if os.environ.get("DET_SEGMENT_ENABLED"):
-                analytics.write_key = os.environ.get("DET_SEGMENT_API_KEY")
-                analytics.track(str(time.time()), "MMDetTrial Class Created")
-        except Exception as e:
-            logging.warning(f"Analytics tracking received error: {e}")
+        send_analytics("MMDetTrial Created")
 
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())
