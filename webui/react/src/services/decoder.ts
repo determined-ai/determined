@@ -285,6 +285,7 @@ export const mapV1GetExperimentResponse = (
     // numTrials
     // labels
     name: exp.name,
+    notes: exp.notes,
     progress: exp.progress != null ? exp.progress : undefined,
     resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
@@ -303,6 +304,7 @@ export const mapV1Experiment = (
     id: data.id,
     labels: data.labels || [],
     name: data.name,
+    notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',

@@ -44,6 +44,7 @@ const ExperimentConfiguration = React.lazy(() => {
 
 export interface Props {
   experiment: ExperimentBase;
+  fetchExperimentDetails: () => void;
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
@@ -53,7 +54,9 @@ const NoDataAlert = (
   </div>
 );
 
-const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }: Props) => {
+const ExperimentSingleTrialTabs: React.FC<Props> = (
+  { experiment, fetchExperimentDetails, onTrialLoad }: Props,
+) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
@@ -156,9 +159,25 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
-  const saveNotes = useCallback((editedNotes: string) => {
-    patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
-  }, [ experiment.id ]);
+  const handleNotesUpdate = useCallback(async (editedNotes: string) => {
+    try {
+      await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment notes.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
+  console.log(experiment);
+  console.log(experiment.notes);
 
   return (
     <TrialLogPreview
@@ -195,7 +214,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
           <NotesCard
             notes={experiment.notes ?? ''}
             style={{ margin: 'var(--theme-sizes-layout-big)' }}
-            onSave={saveNotes} />
+            onSave={handleNotesUpdate} />
         </TabPane>
       </Tabs>
     </TrialLogPreview>
