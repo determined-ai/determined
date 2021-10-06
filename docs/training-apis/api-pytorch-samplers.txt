@@ -1,0 +1,8 @@
+########################################
+ Python API determined.pytorch.samplers
+########################################
+
+.. _pytorch-samplers:
+
+.. automodule:: determined.pytorch.samplers
+   :members:
