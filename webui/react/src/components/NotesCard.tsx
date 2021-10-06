@@ -30,6 +30,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
 
   return (
     <Card
+      bodyStyle={{ paddingTop: 'var(--theme-sizes-layout-large)' }}
       extra={(editingNotes ?
         <div style={{ display: 'flex', gap: 4 }}>
           <Button onClick={cancelEdit}>Cancel</Button>
