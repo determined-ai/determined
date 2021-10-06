@@ -14,27 +14,27 @@ import requests
 import tabulate
 from termcolor import colored
 
-import determined
+# import determined
 import determined.cli
-from determined.cli import checkpoint, experiment, render
+from determined.cli.render import yes_or_no
 from determined.cli.agent import args_description as agent_args_description
-from determined.cli.master import args_description as master_args_description
-from determined.cli.model import args_description as model_args_description
-from determined.cli.notebook import args_description as notebook_args_description
-from determined.cli.oauth import args_description as oauth_args_description
-from determined.cli.remote import args_description as remote_args_description
-from determined.cli.resources import args_description as resources_args_description
-from determined.cli.shell import args_description as shell_args_description
-from determined.cli.sso import args_description as auth_args_description
-from determined.cli.task import args_description as task_args_description
-from determined.cli.template import args_description as template_args_description
-from determined.cli.tensorboard import args_description as tensorboard_args_description
-from determined.cli.trial import args_description as trial_args_description
-from determined.cli.user import args_description as user_args_description
-from determined.cli.version import args_description as version_args_description
+# from determined.cli.master import args_description as master_args_description
+# from determined.cli.model import args_description as model_args_description
+# from determined.cli.notebook import args_description as notebook_args_description
+# from determined.cli.oauth import args_description as oauth_args_description
+# from determined.cli.remote import args_description as remote_args_description
+# from determined.cli.resources import args_description as resources_args_description
+# from determined.cli.shell import args_description as shell_args_description
+# from determined.cli.sso import args_description as auth_args_description
+# from determined.cli.task import args_description as task_args_description
+# from determined.cli.template import args_description as template_args_description
+# from determined.cli.tensorboard import args_description as tensorboard_args_description
+# from determined.cli.trial import args_description as trial_args_description
+# from determined.cli.user import args_description as user_args_description
+# from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
-from determined.common import api, yaml
-from determined.common.api import authentication, certs
+from determined.common import yaml
+from determined.common.api import authentication, certs, post, parse_master_address, errors
 from determined.common.check import check_not_none
 from determined.common.declarative_argparse import Arg, Cmd, add_args
 from determined.common.util import (
@@ -57,7 +57,7 @@ def preview_search(args: Namespace) -> None:
     if "searcher" not in experiment_config:
         print("Experiment configuration must have 'searcher' section")
         sys.exit(1)
-    r = api.post(args.master, "searcher/preview", json=experiment_config)
+    r = post(args.master, "searcher/preview", json=experiment_config)
     j = r.json()
 
     def to_full_name(kind: str) -> str:
@@ -115,14 +115,14 @@ args_description = [
         action="version", help="print CLI version and exit",
         version="%(prog)s {}".format(determined.__version__)),
 
-    experiment.args_description,
+    # experiment.args_description,
 
-    checkpoint.args_description,
+    # checkpoint.args_description,
 
-    Cmd("preview-search", preview_search, "preview search", [
-        Arg("config_file", type=FileType("r"),
-            help="experiment config file (.yaml)")
-    ]),
+    # Cmd("preview-search", preview_search, "preview search", [
+    #     Arg("config_file", type=FileType("r"),
+    #         help="experiment config file (.yaml)")
+    # ]),
 
     # deploy_args_description,
 ]  # type: List[object]
@@ -132,21 +132,21 @@ args_description = [
 
 all_args_description = (
     args_description
-    + master_args_description
-    + model_args_description
+    # + master_args_description
+    # + model_args_description
     + agent_args_description
-    + notebook_args_description
-    + resources_args_description
-    + shell_args_description
-    + task_args_description
-    + template_args_description
-    + tensorboard_args_description
-    + trial_args_description
-    + remote_args_description
-    + user_args_description
-    + version_args_description
-    + auth_args_description
-    + oauth_args_description
+    # + notebook_args_description
+    # + resources_args_description
+    # + shell_args_description
+    # + task_args_description
+    # + template_args_description
+    # + tensorboard_args_description
+    # + trial_args_description
+    # + remote_args_description
+    # + user_args_description
+    # + version_args_description
+    # + auth_args_description
+    # + oauth_args_description
 )
 
 
@@ -198,7 +198,7 @@ def main(args: List[str] = sys.argv[1:], ) -> None:
                 # cert, so allow the user to store and trust the current cert. (It could also mean
                 # that we tried to talk HTTPS on the HTTP port, but distinguishing that based on the
                 # exception is annoying, and we'll figure that out in the next step anyway.)
-                addr = api.parse_master_address(parsed_args.master)
+                addr = parse_master_address(parsed_args.master)
                 check_not_none(addr.hostname)
                 check_not_none(addr.port)
                 try:
@@ -220,7 +220,7 @@ def main(args: List[str] = sys.argv[1:], ) -> None:
                 cert_hash = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert_pem_data)).hexdigest()
                 cert_fingerprint = ":".join(chunks(cert_hash, 2))
 
-                if not render.yes_or_no(
+                if not yes_or_no(
                     "The master sent an untrusted certificate chain with this SHA256 fingerprint:\n"
                     "{}\nDo you want to trust this certificate from now on?".format(
                         cert_fingerprint
@@ -238,9 +238,9 @@ def main(args: List[str] = sys.argv[1:], ) -> None:
             parsed_args.func(parsed_args)
         except KeyboardInterrupt as e:
             raise e
-        except (api.errors.BadRequestException, api.errors.BadResponseException) as e:
+        except (errors.BadRequestException, errors.BadResponseException) as e:
             die("Failed to {}: {}".format(parsed_args.func.__name__, e))
-        except api.errors.CorruptTokenCacheException:
+        except errors.CorruptTokenCacheException:
             die(
                 "Failed to login: Attempted to read a corrupted token cache. "
                 "The store has been deleted; please try again."
