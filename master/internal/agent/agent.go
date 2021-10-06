@@ -212,7 +212,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.ChildFailed:
 		if !a.started {
 			// If we happen to fail before the agent has started and been registered with
-			// the resource manager, then nothing can be running no it. In this case we
+			// the resource manager, then nothing can be running on it. In this case we
 			// just fail outright and make it restart.
 			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
 			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
