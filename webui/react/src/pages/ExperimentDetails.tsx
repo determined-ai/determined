@@ -116,7 +116,9 @@ const ExperimentDetails: React.FC = () => {
           fetchExperimentDetails={fetchExperimentDetails}
           onTrialLoad={handleSingleTrialLoad} />
       ) : (
-        <ExperimentMultiTrialTabs experiment={experiment} />
+        <ExperimentMultiTrialTabs
+          experiment={experiment}
+          fetchExperimentDetails={fetchExperimentDetails} />
       )}
     </Page>
   );
