@@ -1567,7 +1567,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.20.10-gke.301"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1650,7 +1650,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.20.10-gke.301"
       machine-type:
         type: string
         default: "n1-standard-8"
