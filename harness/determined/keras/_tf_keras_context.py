@@ -25,21 +25,21 @@ class _ArgNotProvided:
 _arg_not_provided = _ArgNotProvided()
 
 
-class TFKerasContext:
+class TFKerasTrialContext(det.TrialContext):
     """
     Base context class that contains runtime information for any Determined
     workflow that uses the ``tf.keras`` API.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
-        self.env = env
-        self.hvd_config = hvd_config
+    def __init__(self, *arg: Any, **kwarg: Any):
+        super().__init__(*arg, **kwarg)
+
         self.dataset_initialized = False
 
-        self.experimental = TFKerasExperimentalContext(env=env, hvd_config=hvd_config)
+        self.experimental = TFKerasExperimentalContext(env=self.env, hvd_config=self.hvd_config)
 
         # The following three attributes are initialized during the lifetime of a
-        # TFKerasContext instance by the user calling compile() and
+        # TFKerasTrialContext instance by the user calling compile() and
         # fit_generator() / fit(), respectively.
         self.model = None  # type: Optional[tf.keras.Model]
         self.compile_args = None  # type: Optional[inspect.BoundArguments]
@@ -265,7 +265,7 @@ class TFKerasContext:
                 logging.info("Dataset sharding skipped.")
             return dataset
 
-        hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_dataset was called.")
+        hvd.require_horovod_type("tensorflow.keras", "TFKerasTrialContext.wrap_dataset was called.")
         dataset = dataset.shard(hvd.size(), hvd.rank())
         logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
@@ -312,7 +312,9 @@ class TFKerasContext:
             self._wrapped_optimizers.append(optimizer)
             return optimizer
 
-        hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_optimizer was called.")
+        hvd.require_horovod_type(
+            "tensorflow.keras", "TFKerasTrialContext.wrap_optimizer was called."
+        )
         if optimizer == self._compiled_optimizer:
             logging.debug(
                 "Skipping wrapping optimizer as it was already wrapped during the compile call."
@@ -378,17 +380,6 @@ class TFKerasContext:
             logging.debug(f"Using compiled optimizer: {self._compiled_optimizer}.")
             self._optimizers = [self._compiled_optimizer]
 
-
-class TFKerasTrialContext(det.TrialContext, TFKerasContext):
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        det.TrialContext.__init__(self, env, hvd_config, rendezvous_info)
-        TFKerasContext.__init__(self, env, hvd_config)
-
     def wrap_model(self, model: Any) -> Any:
         """
         This should be used to wrap ``tf.keras.Model`` objects immediately after
@@ -403,22 +394,6 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
         if not self.env.managed_training:
             return model
         return self._wrap_model_with_train_fn(model, None)
-
-
-class TFKerasNativeContext(det.NativeContext, TFKerasContext):
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        det.NativeContext.__init__(self, env, hvd_config, rendezvous_info)
-        TFKerasContext.__init__(self, env, hvd_config)
-
-    def wrap_model(self, model: Any) -> Any:
-        if not self.env.managed_training:
-            return model
-        return self._wrap_model_with_train_fn(model, self._train_fn)
 
 
 class TFKerasExperimentalContext(_data_layer.DataLayerContext):

@@ -17,16 +17,16 @@
 
 .. _estimator-context:
 
-*******************************************
- ``determined.estimator.EstimatorContext``
-*******************************************
+************************************************
+ ``determined.estimator.EstimatorTrialContext``
+************************************************
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
-using the following functions inherited from :class:`determined.estimator.EstimatorContext`. Note
-that the concrete context object where these functions will be found will be in
+using the following functions inherited from :class:`determined.estimator.EstimatorTrialContext`.
+Note that the concrete context object where these functions will be found will be in
 :class:`determined.estimator.EstimatorTrialContext`.
 
-.. autoclass:: determined.estimator.EstimatorContext
+.. autoclass:: determined.estimator.EstimatorTrialContext
    :members:
    :inherited-members:
    :member-order: bysource
@@ -50,7 +50,7 @@ Determined supports proper reduction of arbitrary validation metrics during dist
 allowing users to define custom reducers for their metrics. Custom reducers can be either a function
 or an implementation of the :class:`determined.estimator.MetricReducer` interface.
 
-See :func:`context.make_metric() <determined.estimator.EstimatorContext.make_metric>` for more
+See :func:`context.make_metric() <determined.estimator.EstimatorTrialContext.make_metric>` for more
 details.
 
 .. autoclass:: determined.estimator.MetricReducer
