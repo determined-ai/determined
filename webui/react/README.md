@@ -71,7 +71,7 @@ npm run lint:js
 npm run lint:css
 ```
 
-Our Javascript linting rules and CSS linting rules can be found in `.eslintrc.js` and `.stylelintrc.js` respectively.
+Our Javascript linting rules and CSS linting rules can be found in [.eslintrc.js](.eslistrc.js) and [.stylelintrc.js](.stylelintrc.js) respectively.
 
 ### Unit and Interaction Testing
 
@@ -91,7 +91,7 @@ npm run test -- --watchAll=false
 
 ### End-to-end Testing
 
-Refer to our [/webui/tests/README.md](https://github.com/determined-ai/determined/tree/master/webui/tests/README.md) for WebUI e2e testing details.
+Refer to our [/webui/tests/README.md](../tests/README.md) for WebUI e2e testing details.
 
 ### Visual Testing with Storybook
 
