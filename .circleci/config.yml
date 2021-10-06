@@ -1405,6 +1405,9 @@ jobs:
       target-stage:
         type: string
         default: agent1
+      proxy:
+        type: string
+        default: false
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1422,6 +1425,15 @@ jobs:
       - run:
           name: Get master dependencies
           command: make -C master get-deps
+
+      - when:
+          condition:
+            - equal: [ true, <<parameters.proxy> ]
+          steps:
+            - run: apt-get update -y
+            - run: apt-get install -yq socat
+            - run: socat TCP-LISTEN:8081,reuseaddr TCP4:localhost:8080 &
+            - run: echo $! >/tmp/socat_pid
 
       - start-devcluster:
           devcluster-config: <<parameters.devcluster-config>>
@@ -1865,6 +1877,18 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+
+      - test-e2e:
+          name: test-e2e-cpu-chaos
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: e2e_cpu_chaos
+          target-stage: agent
+          devcluster-config: chaos.devcluster.yaml
+          proxy: true
 
       - test-e2e-webui:
           requires:

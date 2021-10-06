@@ -208,7 +208,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
-		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+		ctx.Log().WithError(msg.Error).Errorf("websocket failed, awaiting reconnect: %s",
+			msg.Child.Address())
 		a.socket = nil
 		a.awaitingReconnect = true
 		actors.NotifyAfter(ctx, aproto.AgentReconnectWait, reconnectTimeout{})

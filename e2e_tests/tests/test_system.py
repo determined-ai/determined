@@ -1,12 +1,14 @@
 import contextlib
+import datetime
 import json
 import operator
 import os
+import signal
 import subprocess
 import tempfile
 import threading
 import time
-from typing import Any, Dict, Iterator, List, Optional, Set, cast
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, cast
 
 import numpy as np
 import pytest
@@ -599,6 +601,18 @@ def _fetch_slots() -> List[Dict[str, Any]]:
     return slots
 
 
+def _fetch_logs() -> List[str]:
+    command = [
+        "det",
+        "-m",
+        conf.make_master_url(),
+        "master",
+        "logs",
+    ]
+    output = subprocess.check_output(command).decode()
+    return output.splitlines()
+
+
 def _run_zero_slot_command(sleep: int = 30) -> str:
     command = [
         "det",
@@ -851,3 +865,101 @@ def test_gang_scheduling() -> None:
         t[i].start()
     for i in range(2):
         t[i].join()
+
+
+# We use a file because the first time socat is created, it is by CircleCI.
+CHAOS_SOCAT_PID_FILE = "/tmp/socat_pid"
+
+
+def _run_socat() -> Tuple[int, bool]:
+    try:
+        p = subprocess.Popen(["socat", "TCP-LISTEN:8081,reuseaddr", "TCP4:localhost:8080"])
+        with open(CHAOS_SOCAT_PID_FILE, "a") as f:
+            f.write(str(p.pid) + "\n")
+    except subprocess.CalledProcessError:
+        return -1, False
+    return p.pid, True
+
+
+def _kill_socat() -> None:
+    with open(CHAOS_SOCAT_PID_FILE, "r+") as f:
+        for line in f.readlines():
+            pid = int(line)
+            os.kill(pid, signal.SIGTERM)
+        f.seek(0)
+        f.truncate()
+
+
+@pytest.mark.e2e_cpu_chaos  # type: ignore
+def test_master_agent_network_failures_happy() -> None:
+    """
+    Check we have a connected agent, kill a socat proxy connecting the master and
+    agent and ensure after aproto.AgentReconnectWait + some change we still have
+    an agent.
+    """
+
+    slots = _fetch_slots()
+    assert len(slots) == 1
+
+    try:
+        _kill_socat()
+
+        deadline = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        while 1:
+            if any("websocket failed, awaiting reconnect" in line for line in _fetch_logs()):
+                break
+            assert datetime.datetime.now() < deadline, "agent did not disconnect by deadline"
+            time.sleep(1)
+
+        pid, success = _run_socat()
+        assert success, "could not restart socat"
+
+        deadline = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        while 1:
+            if any("agent reconnected" in line for line in _fetch_logs()):
+                break
+            assert datetime.datetime.now() < deadline, "agent did not reconnect by deadline"
+            time.sleep(1)
+
+        slots = _fetch_slots()
+        assert len(slots) == 1
+
+    finally:
+        # It's ok if this fails, it may already be running.
+        _run_socat()
+
+
+@pytest.mark.e2e_cpu_chaos  # type: ignore
+def test_master_agent_network_failures_sad() -> None:
+    """
+    Check we have a connected agent, kill a socat proxy connecting the master and
+    agent and ensure after aproto.AgentReconnectWait without the proxy recovering
+    the agent dies.
+    """
+
+    slots = _fetch_slots()
+    assert len(slots) == 1
+
+    try:
+        _kill_socat()
+
+        deadline = datetime.datetime.now() + datetime.timedelta(seconds=5)
+        while 1:
+            if any("websocket failed, awaiting reconnect" in line for line in _fetch_logs()):
+                break
+            assert datetime.datetime.now() < deadline, "agent did not disconnect by deadline"
+            time.sleep(1)
+
+        # Master takes a bit to really consider an agent failed.
+        time.sleep(30)
+
+        devcluster_up = True
+        try:
+            _fetch_slots()
+        except subprocess.CalledProcessError:
+            devcluster_up = False
+
+        assert not devcluster_up, "devcluster should've crashed when its agent died"
+
+    finally:
+        _run_socat()
