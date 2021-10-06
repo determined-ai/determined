@@ -1,10 +1,10 @@
-import json
 from argparse import Namespace
 from typing import Any, List
 
 import yaml
 
-from determined.common.api.fapi import auth_required, experiments_api, to_json
+from determined.common.api.fapi import auth_required, experiments_api
+from determined.common.api.fapi_helper import to_json
 from determined.common.declarative_argparse import Arg, Cmd
 
 # from determined.common.api.fastapi_client.models import V1LoginRequest

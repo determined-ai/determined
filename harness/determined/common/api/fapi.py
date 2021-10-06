@@ -54,22 +54,3 @@ def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., An
         return func(namespace)
 
     return f
-
-
-def to_dict(o: BaseModel):
-    rv = o
-    if isinstance(o, List):
-        return [to_dict(i) for i in o]
-    elif hasattr(o, "dict"):
-        rv = o.dict()  # type: Dict[str, Any]
-        if isinstance(o, dict):
-            for k, v in o.items():
-                rv[k] = to_dict(v)
-    return rv
-
-
-def to_json(o: BaseModel):
-    if isinstance(o, List):
-        return [to_json(i) for i in o]
-    assert hasattr(o, "json")
-    return json.loads(o.json())
