@@ -29,6 +29,7 @@ enum TabType {
   Overview = 'overview',
   Profiler = 'profiler',
   Workloads = 'workloads',
+  Notes = 'notes'
 }
 
 interface Params {
@@ -175,9 +176,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
       });
     }
   }, [ experiment.id, fetchExperimentDetails ]);
-
-  console.log(experiment);
-  console.log(experiment.notes);
 
   return (
     <TrialLogPreview
