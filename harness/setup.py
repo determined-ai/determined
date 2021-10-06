@@ -55,7 +55,7 @@ setup(
         # so we expose that requirement here.
         "websocket-client<1",
         # Telemetry
-        "analytics-python"
+        "analytics-python",
     ],
     zip_safe=False,
     entry_points={
