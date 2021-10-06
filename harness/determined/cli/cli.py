@@ -158,7 +158,12 @@ def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
     return parser
 
 
-def main(parser: ArgumentParser, args: List[str] = sys.argv[1:], ) -> None:
+def main(args: List[str] = sys.argv[1:], ) -> None:
+    if len(args) > 0 and args[0] == 'deploy':
+        from determined.deploy.cli import args_description as deploy_args_description
+        all_args_description.append(deploy_args_description)
+    parser = make_parser(all_args_description)
+
     try:
         argcomplete.autocomplete(parser)
 
