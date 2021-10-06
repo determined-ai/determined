@@ -26,6 +26,8 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	rm build/python-fastapi/fastapi_client/api_client.py
 	rm build/python-fastapi/fastapi_client/exceptions.py
 	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
+	# :%s/(BaseModel)/()/g
+	# :%s/ = field(.*$//g
 	rm -rf ../harness/determined/common/api/fastapi_client
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
 	touch build/python-fastapi
