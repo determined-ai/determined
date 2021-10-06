@@ -54,6 +54,8 @@ setup(
         # docker-compose has a requirement not properly propagated with semi-old pip installations;
         # so we expose that requirement here.
         "websocket-client<1",
+        # Telemetry
+        "analytics-python"
     ],
     zip_safe=False,
     entry_points={

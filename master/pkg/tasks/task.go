@@ -50,6 +50,9 @@ type TaskSpec struct {
 	HarnessPath string
 	MasterCert  *tls.Certificate
 
+	SegmentEnabled bool
+	SegmentAPIKey  string
+
 	// Fields that are set on the per-request basis.
 	// TaskContainerDefaults should be removed from TaskSpec once we move to using the same
 	// schema for the cluster-level defaults and the request-level configuration.
@@ -131,6 +134,11 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {
 		e["DET_USE_TLS"] = "false"
+	}
+
+	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+	if t.SegmentEnabled {
+		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
 	}
 
 	for k, v := range t.ExtraEnvVars {
