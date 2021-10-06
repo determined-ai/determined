@@ -1,4 +1,6 @@
 import hashlib
+# erom determined.deploy.cli import DEPLOY_CMD_NAME
+# from determined.deploy.cli import args_description as deploy_args_description
 import socket
 import ssl
 import sys
@@ -41,8 +43,8 @@ from determined.common.util import (
     get_default_master_address,
     safe_load_yaml_with_exceptions,
 )
-from determined.deploy.cli import DEPLOY_CMD_NAME
-from determined.deploy.cli import args_description as deploy_args_description
+# from determined.deploy.cli import DEPLOY_CMD_NAME
+# from determined.deploy.cli import args_description as deploy_args_description
 
 from .errors import EnterpriseOnlyError
 
@@ -122,7 +124,7 @@ args_description = [
             help="experiment config file (.yaml)")
     ]),
 
-    deploy_args_description,
+    # deploy_args_description,
 ]  # type: List[object]
 
 # fmt: on
@@ -148,17 +150,16 @@ all_args_description = (
 )
 
 
-def make_parser() -> ArgumentParser:
+def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
     parser = ArgumentParser(
         description="Determined command-line client", formatter_class=ArgumentDefaultsHelpFormatter
     )
-    add_args(parser, all_args_description)
+    add_args(parser, arg_descriptions)
     return parser
 
 
-def main(args: List[str] = sys.argv[1:]) -> None:
+def main(parser: ArgumentParser, args: List[str] = sys.argv[1:], ) -> None:
     try:
-        parser = make_parser()
         argcomplete.autocomplete(parser)
 
         parsed_args = parser.parse_args(args)
@@ -181,9 +182,9 @@ def main(args: List[str] = sys.argv[1:]) -> None:
 
         try:
             # For `det deploy`, skip interaction with master.
-            if v.get("_command") == DEPLOY_CMD_NAME:
-                parsed_args.func(parsed_args)
-                return
+            # if v.get("_command") == DEPLOY_CMD_NAME:
+            #     parsed_args.func(parsed_args)
+            #     return
 
             try:
                 check_version(parsed_args)
