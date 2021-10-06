@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Awaitable, List
 
 from determined.common.api.fastapi_client import models as m
-from fastapi.encoders import jsonable_encoder
+from determined.common.api.fapi import jsonable_encoder
 
 if TYPE_CHECKING:
     from determined.common.api.fastapi_client.api_client import ApiClient
