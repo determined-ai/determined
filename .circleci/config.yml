@@ -2039,12 +2039,12 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              compute-agent-instance-type: ["p2.8xlarge"]
+              compute-agent-instance-type: ["p3.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
-              max-dynamic-agents: [2]
+              max-dynamic-agents: [4]
 
       - test-e2e-gke:
           name: test-e2e-gke-single-gpu
