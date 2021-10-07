@@ -24,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
+	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -59,6 +61,7 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 		return nil, errors.Wrapf(err,
 			"error fetching experiment from database: %d", experimentID)
 	}
+
 	return exp, nil
 }
 
@@ -81,7 +84,37 @@ func (a *apiServer) GetExperiment(
 		return nil, errors.Wrapf(err,
 			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
-	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
+
+	resp := apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}
+
+	// if model.TerminalStates[exp.State] {
+	// if false { // if not in any active resourcepool eg terminal state return
+	// 	// would this be faster than asking the resourcemanagers?
+	// 	return &resp, nil
+	// }
+
+	jobId := model.NewJobID() // TODO get from db
+	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: jobId}
+
+	switch {
+	case sproto.UseAgentRM(a.m.system):
+		err = a.actorRequest(
+			sproto.AgentRMAddr.Child(exp.ResourcePool), jobSummaryMsg, &resp.JobSummary,
+		)
+		// TODO err status skip the expected error.
+		if err != nil {
+			err = nil
+		}
+	case sproto.UseK8sRM(a.m.system):
+		err = a.actorRequest(sproto.K8sRMAddr, jobSummaryMsg, &resp.JobSummary)
+	default:
+		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }
 
 func (a *apiServer) DeleteExperiment(

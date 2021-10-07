@@ -43,9 +43,8 @@ message JobSummary {
   string job_id = 1;
   // The scheduling state of the job.
   State state = 2;
-  // The relative position of the job in its queue.
-  // Only applicable if state != STATE_QUEUED.
-  // int32 queue_position = 3;
+  // The number of jobs ahead of this one in the queue.
+  int32 jobs_ahead = 3;
 }
 
 // Job represents a user submitted work that is not in a terminal

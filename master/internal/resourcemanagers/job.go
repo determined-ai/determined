@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -11,7 +13,11 @@ import (
 // GetJobOrder requests a list of *jobv1.Job.
 // FIXME haven't decided if resource manager actor should be responsible for this or not
 // we don't want a separate actor do we? could be useful for streaming job endpoints.
-type GetJobOrder struct{}
+// CHECK do we define these in sproto package?
+type GetJobOrder struct{} // response: []*jobv1.Job
+type GetJobSummary struct {
+	JobID model.JobID
+} // response: *jobv1.JobSummary // QUESTION should we use proto defined messages more often internally or keep them at api level
 
 /* filterAllocateRequests
 1. filters allocations that are not associated with a job
@@ -52,6 +58,7 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
 func allocateReqToV1Job(
 	rp *ResourcePool,
 	req *sproto.AllocateRequest,
+	jobsAhead int,
 ) (job *jobv1.Job) {
 	if req.Job == nil {
 		return job
@@ -59,8 +66,9 @@ func allocateReqToV1Job(
 	group := rp.groups[req.Group]
 	job = &jobv1.Job{
 		Summary: &jobv1.JobSummary{
-			JobId: string(req.Job.JobID),
-			State: req.Job.State.Proto(),
+			JobId:     string(req.Job.JobID),
+			State:     req.Job.State.Proto(),
+			JobsAhead: int32(jobsAhead),
 		},
 		EntityId:       req.Job.EntityID,
 		Type:           req.Job.JobType.Proto(),
@@ -78,14 +86,27 @@ func allocateReqToV1Job(
 	return job
 }
 
+// getJobSummary given an ordered list of allocateRequests returns the
+// requested job summary.
+func getV1JobSummary(rp *ResourcePool, jobId model.JobID, requests AllocReqs) (*jobv1.JobSummary, error) {
+	requests = filterAllocateRequests(requests)
+	for idx, req := range requests {
+		if req.Job.JobID == jobId {
+			return allocateReqToV1Job(rp, req, idx).Summary, nil
+		}
+	}
+	return nil, status.Error(codes.NotFound, "job not found")
+}
+
 // getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
+// CHECK should this be on the resourcepool struct?
 func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
 	v1Jobs := make([]*jobv1.Job, 0)
-	for _, req := range filterAllocateRequests(allocateRequests) {
-		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req))
+	for idx, req := range filterAllocateRequests(allocateRequests) {
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req, idx))
 	}
 	return v1Jobs
 }
