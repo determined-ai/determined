@@ -87,11 +87,9 @@ func (a *apiServer) GetExperiment(
 
 	resp := apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}
 
-	// if model.TerminalStates[exp.State] {
-	// if false { // if not in any active resourcepool eg terminal state return
-	// 	// would this be faster than asking the resourcemanagers?
-	// 	return &resp, nil
-	// }
+	if model.TerminalStates[model.StateFromProto(exp.State)] {
+		return &resp, nil
+	}
 
 	jobId := model.NewJobID() // TODO get from db
 	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: jobId}
