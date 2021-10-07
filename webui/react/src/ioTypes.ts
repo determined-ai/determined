@@ -88,7 +88,7 @@ const runStatesIoType = io.keyof(runStates);
 
 /* Trials */
 
-const ioMetricValue = io.any;
+const ioMetricValue = io.unknown;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
