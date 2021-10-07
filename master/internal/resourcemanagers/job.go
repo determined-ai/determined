@@ -1,8 +1,6 @@
 package resourcemanagers
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -88,14 +86,14 @@ func allocateReqToV1Job(
 
 // getJobSummary given an ordered list of allocateRequests returns the
 // requested job summary.
-func getV1JobSummary(rp *ResourcePool, jobId model.JobID, requests AllocReqs) (*jobv1.JobSummary, error) {
+func getV1JobSummary(rp *ResourcePool, jobId model.JobID, requests AllocReqs) *jobv1.JobSummary {
 	requests = filterAllocateRequests(requests)
 	for idx, req := range requests {
 		if req.Job.JobID == jobId {
-			return allocateReqToV1Job(rp, req, idx).Summary, nil
+			return allocateReqToV1Job(rp, req, idx).Summary
 		}
 	}
-	return nil, status.Error(codes.NotFound, "job not found")
+	return nil
 }
 
 // getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations.

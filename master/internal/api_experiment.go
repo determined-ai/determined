@@ -101,10 +101,6 @@ func (a *apiServer) GetExperiment(
 		err = a.actorRequest(
 			sproto.AgentRMAddr.Child(exp.ResourcePool), jobSummaryMsg, &resp.JobSummary,
 		)
-		// TODO err status skip the expected error.
-		if err != nil {
-			err = nil
-		}
 	case sproto.UseK8sRM(a.m.system):
 		err = a.actorRequest(sproto.K8sRMAddr, jobSummaryMsg, &resp.JobSummary)
 	default:
