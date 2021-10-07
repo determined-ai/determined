@@ -36,7 +36,7 @@ import torch
 
 import determined.pytorch as det_torch
 from determined.common import set_logger
-from determined.common.api.request import send_analytics
+from determined.common.api.analytics import send_analytics
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends

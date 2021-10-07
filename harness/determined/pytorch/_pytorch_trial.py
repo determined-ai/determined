@@ -13,7 +13,7 @@ import determined as det
 from determined import horovod, layers, pytorch, util, workload
 from determined.common import check, experimental, storage
 from determined.common.api import certs
-from determined.common.api.request import send_analytics
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 from determined.util import has_param
 

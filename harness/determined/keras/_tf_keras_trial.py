@@ -19,7 +19,7 @@ from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check, experimental, storage
 from determined.common.api import certs
-from determined.common.api.request import send_analytics
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.

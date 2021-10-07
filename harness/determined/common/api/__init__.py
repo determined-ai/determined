@@ -26,6 +26,8 @@ from determined.common.api.request import (
     post,
     put,
     ws,
+)
+from determined.common.api.analytics import (
     send_analytics,
 )
 from determined.common.api.profiler import (

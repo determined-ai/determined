@@ -11,7 +11,7 @@ from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
 from determined.common import check
-from determined.common.api.request import send_analytics
+from determined.common.api.analytics import send_analytics
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
