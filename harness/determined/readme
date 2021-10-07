@@ -1,0 +1,3 @@
+1030 => 670
+1. vim $(which det) => python cli/__main__.py
+2. sep deploy  => 100ms (do the rest?)
