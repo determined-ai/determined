@@ -1,4 +1,3 @@
-import logging
 import os
 from typing import Any
 
@@ -13,4 +12,4 @@ def send_analytics(tracking_key: str) -> None:
 
 
 def on_error(error: Any, items: Any) -> None:
-    logging.warning(f"Analytics tracking received error: {error}")
+    pass
