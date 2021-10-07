@@ -405,8 +405,6 @@ export default class StepImplementation {
     await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
     if (action === 'Kill') {
-      // Wait for the modal to animate in
-      await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
       await t.click(t.button('Kill'));
     }
   }
