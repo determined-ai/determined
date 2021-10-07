@@ -1,14 +1,13 @@
 package db
 
 import (
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"regexp"
 	"strconv"
 
 	"github.com/go-pg/migrations/v8"
 	"github.com/go-pg/pg/v10"
+	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,23 +24,11 @@ func makeGoPgOpts(dbURL string) (*pg.Options, error) {
 	}
 
 	if opts.TLSConfig != nil {
-		match := re.FindStringSubmatch(dbURL)
-		if len(match) > 0 {
-			caCertPool := x509.NewCertPool()
-			caPath := match[1]
-
-			caCert, err := ioutil.ReadFile(caPath) //nolint: gosec
-			if err != nil {
-				return nil, errors.Wrapf(err, "unable to read CA file %q", caPath)
-			}
-
-			if !caCertPool.AppendCertsFromPEM(caCert) {
-				return nil, errors.Wrap(err, "unable to add CA to cert pool")
-			}
-
-			opts.TLSConfig.RootCAs = caCertPool
-			opts.TLSConfig.ClientCAs = caCertPool
+		pgxConfig, err := pgconn.ParseConfig(dbURL)
+		if err != nil {
+			return nil, err
 		}
+		opts.TLSConfig = pgxConfig.TLSConfig
 	}
 
 	return opts, nil
