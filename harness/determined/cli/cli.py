@@ -1,6 +1,4 @@
 import hashlib
-# erom determined.deploy.cli import DEPLOY_CMD_NAME
-# from determined.deploy.cli import args_description as deploy_args_description
 import socket
 import ssl
 import sys
@@ -44,7 +42,6 @@ from determined.common.util import (
     safe_load_yaml_with_exceptions,
 )
 # from determined.deploy.cli import DEPLOY_CMD_NAME
-# from determined.deploy.cli import args_description as deploy_args_description
 
 from .errors import EnterpriseOnlyError
 
@@ -123,6 +120,7 @@ args_description = [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
     ]),
+    Cmd("d|eploy", None, "manage deployments", []),
 
     # deploy_args_description,
 ]  # type: List[object]
@@ -159,10 +157,11 @@ def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
 
 
 def main(args: List[str] = sys.argv[1:], ) -> None:
-    if len(args) > 0 and args[0] == 'deploy':
-        from determined.deploy.cli import args_description as deploy_args_description
-        all_args_description.append(deploy_args_description)
     parser = make_parser(all_args_description)
+
+    if len(args) > 0 and (args[0] == 'deploy' or args[0] == 'd') : # TODO use generate_aliases
+        from determined.deploy.cli import args_description as deploy_args_description
+        parser = make_parser([deploy_args_description])
 
     try:
         argcomplete.autocomplete(parser)
