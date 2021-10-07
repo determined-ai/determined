@@ -15,7 +15,9 @@ Specification to stop the running experiments to setup a controlled environment.
 
 * Sort table by column "ID"
 * "Kill" experiment row "1"
+* Confirm or cancel modal with button "Kill"
 * "Kill" experiment row "2"
+* Confirm or cancel modal with button "Kill"
 * "Archive" experiment row "2"
 
 ## Create tensorboards

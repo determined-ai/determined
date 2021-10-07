@@ -258,7 +258,19 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/logs`);
   }
 
-  /* Experiment Actions */
+  /* Modal Steps */
+
+  @Step('Confirm or cancel modal with button <label>')
+  public async confirmModal(label: string) {
+    // Wait for the modal to animate in.
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await t.click(t.button(label, t.within(t.$('.ant-modal-body'))));
+    // Wait for the modal to animate away
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
+  }
+
+  /* Experiment Steps */
+
   @Step('Activate experiment <id>')
   public async activateExperiment(id: string) {
     await this.navigateToExperimentDetail(id);
