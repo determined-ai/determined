@@ -36,8 +36,9 @@ const Markdown: React.FC<Props> = ({ editing=false, height='100%', markdown, onC
                   defaultValue={markdown}
                   language="markdown"
                   options={{
+                    quickSuggestions: false,
+                    renderLineHighlight: 'none',
                     wordWrap: 'on',
-                    wrappingIndent: 'indent',
                   }}
                   width="100%"
                   onChange={onChange} />
