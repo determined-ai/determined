@@ -15,7 +15,7 @@ import (
 
 func makeGoPgOpts(dbURL string) (*pg.Options, error) {
 	// go-pg ParseURL doesn't support sslrootcert, so strip it and do manually.
-	// TODO(ilia): make an upstream PR for this.
+	// TODO(DET-6084): make an upstream PR for this.
 	re := regexp.MustCompile(`&sslrootcert=([^&]*)`)
 	url := re.ReplaceAllString(dbURL, "")
 	opts, err := pg.ParseURL(url)
