@@ -20,9 +20,9 @@ require (
 	github.com/elastic/go-elasticsearch/v7 v7.9.0
 	github.com/emirpasic/gods v1.12.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
-	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/go-pg/migrations/v8 v8.1.0
 	github.com/go-pg/pg/v10 v10.4.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/protobuf v1.5.0
 	github.com/golangci/golangci-lint v1.28.3
 	github.com/google/go-cmp v0.5.5
