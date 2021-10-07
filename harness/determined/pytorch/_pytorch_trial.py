@@ -13,6 +13,7 @@ import determined as det
 from determined import horovod, layers, pytorch, util, workload
 from determined.common import check, experimental, storage
 from determined.common.api import certs
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 from determined.util import has_param
 
@@ -26,6 +27,7 @@ except ImportError:
 class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        send_analytics("PyTorchTrial Created")
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
