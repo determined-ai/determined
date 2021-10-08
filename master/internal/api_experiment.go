@@ -94,16 +94,16 @@ func (a *apiServer) GetExperiment(
 	// 	// would this be faster than asking the resourcemanagers?
 	// 	return &resp, nil
 	// }
-	jobId, err := a.m.db.ExperimentJobID(int(exp.Id))
-	switch err {
-	case db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
-	case nil:
-		return nil, errors.Wrapf(err,
-			"error fetching job_id from database: %d", req.ExperimentId)
-	}
+	// jobId, err := a.m.db.ExperimentJobID(int(exp.Id))
+	// switch err {
+	// case db.ErrNotFound:
+	// 	return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+	// case nil:
+	// 	return nil, errors.Wrapf(err,
+	// 		"error fetching job_id from database: %d", req.ExperimentId)
+	// }
 
-	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: jobId}
+	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: model.JobID(exp.JobId)}
 
 	switch {
 	case sproto.UseAgentRM(a.m.system):

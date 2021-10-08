@@ -1650,14 +1650,3 @@ FROM (
 
 	return db.rawQuery(ctes+query, id, experimentBest, trialBest, trialLatest)
 }
-
-// ExperimentJobID fetches the job id of experiment.
-func (db *PgDB) ExperimentJobID(id int) (jobId model.JobID, err error) {
-	row := db.sql.QueryRow(`
-SELECT job_id
-FROM experiments
-WHERE id=$1
-	`, id)
-	err = row.Scan(&jobId)
-	return jobId, err
-}
