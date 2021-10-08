@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -29,12 +28,13 @@ import (
 )
 
 const (
-	jupyterDir        = "/run/determined/jupyter/"
-	jupyterConfigDir  = "/run/determined/jupyter/config"
-	jupyterDataDir    = "/run/determined/jupyter/data"
-	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
-	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
-	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
+	jupyterDir         = "/run/determined/jupyter/"
+	jupyterConfigDir   = "/run/determined/jupyter/config"
+	jupyterDataDir     = "/run/determined/jupyter/data"
+	jupyterRuntimeDir  = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint  = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterIdleCheck   = "/run/determined/jupyter/check_idle.py"
+	taskReadyCheckLogs = "/run/determined/check_ready_logs.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
@@ -102,8 +102,6 @@ func (a *apiServer) NotebookLogs(
 	})
 }
 
-var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
-
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
@@ -118,7 +116,6 @@ func (a *apiServer) LaunchNotebook(
 
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
-	spec.LogReadinessCheck = jupyterReadyPattern
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
@@ -167,6 +164,12 @@ func (a *apiServer) LaunchNotebook(
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			jupyterIdleCheck,
 			etc.MustStaticFile(etc.NotebookIdleCheckResource),
+			0700,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			taskReadyCheckLogs,
+			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
 			0700,
 			tar.TypeReg,
 		),

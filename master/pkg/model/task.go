@@ -253,8 +253,7 @@ func (t *TaskLog) Resolve() {
 		if len(containerID) > containerIDMaxLength {
 			containerID = containerID[:containerIDMaxLength]
 		}
-	} else {
-		containerID = defaultTaskLogContainer
+		containerID = fmt.Sprintf("[%s] ", containerID)
 	}
 
 	var rankID string
@@ -267,7 +266,7 @@ func (t *TaskLog) Resolve() {
 		level = fmt.Sprintf("%s: ", *t.Level)
 	}
 
-	t.FlatLog = fmt.Sprintf("[%s] [%s] %s|| %s %s",
+	t.FlatLog = fmt.Sprintf("[%s] %s%s|| %s %s",
 		timestamp, containerID, rankID, level, t.Log)
 }
 

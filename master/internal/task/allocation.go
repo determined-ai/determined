@@ -68,8 +68,8 @@ type (
 		idleTimeoutWatcher *IdleTimeoutWatcher
 		// proxy state
 		proxies []string
-		// log-based readiness state
-		logBasedReadinessPassed bool
+		// Tracks if the allocation has reported itself as ready.
+		serviceReady bool
 	}
 
 	// MarkReservationDaemon marks the given reservation as a daemon. In the event of a normal exit,
@@ -99,6 +99,10 @@ type (
 		Containers map[cproto.ID]cproto.Container
 		Addresses  map[cproto.ID][]cproto.Address
 		Ready      bool
+	}
+	// AllocationReady marks an allocation as ready.
+	AllocationReady struct {
+		Message string
 	}
 )
 
@@ -174,24 +178,13 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:
-		a.sendEvent(ctx, sproto.Event{
-			State:    a.state.String(),
-			IsReady:  a.logBasedReadinessPassed,
-			LogEvent: ptrs.StringPtr(msg.String()),
-		})
-		if rc := a.req.LogBasedReady; rc != nil && !a.logBasedReadinessPassed {
-			if rc.Pattern.MatchString(msg.String()) {
-				a.logBasedReadinessPassed = true
-				a.sendEvent(ctx, sproto.Event{
-					State:             a.state.String(),
-					IsReady:           a.logBasedReadinessPassed,
-					ServiceReadyEvent: &msg,
-				})
-			}
-		}
+		a.sendEvent(ctx, sproto.Event{LogEvent: ptrs.StringPtr(msg.String())})
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)
 	// to interact with the allocation. The usually trace back to API calls.
+	case AllocationReady:
+		a.serviceReady = true
+		a.sendEvent(ctx, sproto.Event{ServiceReadyEvent: ptrs.BoolPtr(true)})
 	case MarkReservationDaemon:
 		a.SetReservationAsDaemon(ctx, msg.AllocationID, msg.ContainerID)
 	case AllocationSignal:
@@ -246,11 +239,7 @@ func (a *Allocation) RequestResources(ctx *actor.Context) error {
 	if err := ctx.Ask(a.rm, a.req).Error(); err != nil {
 		return errors.Wrap(err, "failed to request allocation")
 	}
-	a.sendEvent(ctx, sproto.Event{
-		State:          a.state.String(),
-		IsReady:        a.logBasedReadinessPassed,
-		ScheduledEvent: &a.model.AllocationID,
-	})
+	a.sendEvent(ctx, sproto.Event{ScheduledEvent: &a.model.AllocationID})
 	return nil
 }
 
@@ -263,11 +252,7 @@ func (a *Allocation) Cleanup(ctx *actor.Context) {
 	if a.exitReason != nil {
 		exitReason = a.exitReason.Error()
 	}
-	a.sendEvent(ctx, sproto.Event{
-		State:       a.state.String(),
-		IsReady:     a.logBasedReadinessPassed,
-		ExitedEvent: &exitReason,
-	})
+	a.sendEvent(ctx, sproto.Event{ExitedEvent: &exitReason})
 	// Just in-case code.
 	if !a.exited {
 		ctx.Log().Info("exit did not run properly")
@@ -329,11 +314,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 			IsMultiAgent: len(a.reservations) > 1,
 		})
 	}
-	a.sendEvent(ctx, sproto.Event{
-		State:         a.state.String(),
-		IsReady:       a.logBasedReadinessPassed,
-		AssignedEvent: &msg,
-	})
+	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
 }
 
@@ -397,11 +378,7 @@ func (a *Allocation) TaskContainerStateChanged(
 			a.registerProxies(ctx, msg)
 		}
 		if a.req.StreamEvents != nil {
-			ctx.Tell(a.req.StreamEvents.To, sproto.Event{
-				State:                 a.state.String(),
-				IsReady:               a.logBasedReadinessPassed,
-				ContainerStartedEvent: msg.ContainerStarted,
-			})
+			a.sendEvent(ctx, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
 		}
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
@@ -435,11 +412,7 @@ func (a *Allocation) Exit(ctx *actor.Context) (exited bool) {
 // Terminate attempts to close an allocation by gracefully stopping it (though a kill are possible).
 func (a *Allocation) Terminate(ctx *actor.Context) {
 	if msg, ok := ctx.Message().(sproto.ReleaseResources); ok {
-		a.sendEvent(ctx, sproto.Event{
-			State:                 a.state.String(),
-			IsReady:               a.logBasedReadinessPassed,
-			TerminateRequestEvent: &msg,
-		})
+		a.sendEvent(ctx, sproto.Event{TerminateRequestEvent: &msg})
 	}
 
 	if exited := a.Exit(ctx); exited {
@@ -640,7 +613,10 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
 	if log.Timestamp == nil {
+		fmt.Printf("we set the timestamp %s\n", log.Timestamp)
 		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
+	} else {
+		fmt.Printf("we did not set the timestamp %s\n", log.Timestamp)
 	}
 
 	if a.killedDaemons && strings.Contains(log.Log, killedLogSubstr) {
@@ -662,6 +638,11 @@ func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 }
 
 func (a *Allocation) sendEvent(ctx *actor.Context, ev sproto.Event) {
+	ev.Description = a.req.Name
+	ev.ParentID = ctx.Self().Address().Local()
+	ev.State = a.state.String()
+	ev.IsReady = a.serviceReady
+	ev.Time = time.Now().UTC()
 	ctx.Tell(a.logger, a.enrichLog(ev.ToTaskLog()))
 	if a.req.StreamEvents != nil {
 		ctx.Tell(a.req.StreamEvents.To, ev)
@@ -703,7 +684,7 @@ func (a *Allocation) State() AllocationState {
 		State:      a.state,
 		Containers: containers,
 		Addresses:  addresses,
-		Ready:      a.req.DoRendezvous && a.rendezvous.ready() || a.logBasedReadinessPassed,
+		Ready:      a.req.DoRendezvous && a.rendezvous.ready() || a.serviceReady,
 	}
 }
 

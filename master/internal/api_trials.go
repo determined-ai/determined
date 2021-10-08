@@ -81,7 +81,6 @@ func (a *apiServer) TrialLogs(
 	switch t, err := a.m.db.TaskByID(taskID); {
 	case errors.Is(err, sql.ErrNoRows), t.LogVersion == 0:
 		go a.legacyTrialLogs(resp.Context(), req, res)
-
 		return processBatches(res, func(b api.Batch) error {
 			return b.ForEach(func(i interface{}) error {
 				l, err := i.(*model.TrialLog).Proto()
@@ -107,7 +106,6 @@ func (a *apiServer) TrialLogs(
 			TimestampAfter:  req.TimestampAfter,
 			OrderBy:         req.OrderBy,
 		}, res)
-
 		return processBatches(res, func(b api.Batch) error {
 			return b.ForEach(func(i interface{}) error {
 				l, err := i.(*model.TaskLog).Proto()

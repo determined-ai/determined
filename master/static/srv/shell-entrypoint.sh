@@ -83,4 +83,7 @@ unmodified="/run/determined/ssh/authorized_keys_unmodified"
 modified="/run/determined/ssh/authorized_keys"
 sed -e "s/^/$options /" "$unmodified" > "$modified"
 
-exec /usr/sbin/sshd "$@"
+READINESS_REGEX="Server listening on"
+exec /usr/sbin/sshd "$@" \
+    > >(tee -p >(exec "$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX")) \
+    2> >(tee -p >(exec "$DET_PYTHON_EXECUTABLE" /run/determined/check_ready_logs.py --ready-regex "$READINESS_REGEX") >&2)

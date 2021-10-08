@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -30,6 +31,20 @@ var (
 	// Common errors
 	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
+
+func (a *apiServer) AllocationReady(
+	ctx context.Context, req *apiv1.AllocationReadyRequest,
+) (*apiv1.AllocationReadyResponse, error) {
+	handler, err := a.allocationHandlerByID(model.AllocationID(req.AllocationId))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(handler.Address(), task.AllocationReady{}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.AllocationReadyResponse{}, nil
+}
 
 // TaskLogBackend is an interface trial log backends, such as elastic or postgres,
 // must support to provide the features surfaced in API.
@@ -78,7 +93,6 @@ func (a *apiServer) TaskLogs(
 func (a *apiServer) taskLogs(
 	ctx context.Context, req *apiv1.TaskLogsRequest, res chan interface{},
 ) {
-	defer close(res)
 	taskID := model.TaskID(req.TaskId)
 	filters, err := constructTaskLogsFilters(req)
 	if err != nil {

@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"archive/tar"
-	"regexp"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
@@ -27,8 +26,6 @@ type GenericCommandSpec struct {
 
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
-
-	LogReadinessCheck *regexp.Regexp
 }
 
 // ToTaskSpec generates a TaskSpec.

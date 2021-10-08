@@ -2,7 +2,6 @@ package sproto
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -30,12 +29,11 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible   bool
-		DoRendezvous  bool
-		IdleTimeout   *IdleTimeoutConfig
-		ProxyPort     *PortProxyConfig
-		StreamEvents  *EventStreamConfig
-		LogBasedReady *LogBasedReadinessConfig
+		Preemptible  bool
+		DoRendezvous bool
+		IdleTimeout  *IdleTimeoutConfig
+		ProxyPort    *PortProxyConfig
+		StreamEvents *EventStreamConfig
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.
@@ -56,11 +54,6 @@ type (
 	// EventStreamConfig configures an event stream.
 	EventStreamConfig struct {
 		To *actor.Ref
-	}
-
-	// LogBasedReadinessConfig configures using logs as a ready check.
-	LogBasedReadinessConfig struct {
-		Pattern *regexp.Regexp
 	}
 
 	// ResourcesReleased notifies resource providers to return resources from a task.
@@ -154,8 +147,7 @@ type Event struct {
 	// ContainerStartedEvent is triggered when the container started on an agent.
 	ContainerStartedEvent *TaskContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
-	// TODO: Move to ServiceReadyEvent type to a specialized event with readiness checks.
-	ServiceReadyEvent *ContainerLog `json:"service_ready_event"`
+	ServiceReadyEvent *bool `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
 	// terminate.
 	TerminateRequestEvent *ReleaseResources `json:"terminate_request_event"`
@@ -180,6 +172,8 @@ func (ev *Event) ToLogEntry() *logger.Entry {
 		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
+	case ev.ServiceReadyEvent != nil:
+		message = fmt.Sprintf("Service (%s) is available", description)
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
 		// events we'd need to notify of them about these non existing logs either by adding a new
@@ -198,7 +192,7 @@ func (ev *Event) ToLogEntry() *logger.Entry {
 func (ev *Event) ToTaskLog() model.TaskLog {
 	l := ev.ToLogEntry()
 	return model.TaskLog{
-		Level:     ptrs.StringPtr(l.Level.String()),
+		Level:     ptrs.StringPtr(model.LogLevelInfo),
 		Timestamp: &l.Time,
 		Log:       l.Message,
 	}

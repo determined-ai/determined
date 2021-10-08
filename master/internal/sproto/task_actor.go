@@ -102,5 +102,6 @@ func (l ContainerLog) ToTaskLog() model.TaskLog {
 		ContainerID: ptrs.StringPtr(string(l.Container.ID)),
 		Log:         l.Message(),
 		Level:       l.Level,
+		Timestamp:   ptrs.TimePtr(l.Timestamp.UTC()),
 	}
 }

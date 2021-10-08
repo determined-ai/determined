@@ -121,13 +121,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		var logBasedReadinessConfig *sproto.LogBasedReadinessConfig
-		if c.LogReadinessCheck != nil {
-			logBasedReadinessConfig = &sproto.LogBasedReadinessConfig{
-				Pattern: c.LogReadinessCheck,
-			}
-		}
-
 		var idleWatcherConfig *sproto.IdleTimeoutConfig
 		if c.Config.IdleTimeout != nil && (c.WatchProxyIdleTimeout || c.WatchRunnerIdleTimeout) {
 			idleWatcherConfig = &sproto.IdleTimeoutConfig{
@@ -152,10 +145,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 				SingleAgent: true,
 			},
 
-			StreamEvents:  eventStreamConfig,
-			ProxyPort:     portProxyConf,
-			IdleTimeout:   idleWatcherConfig,
-			LogBasedReady: logBasedReadinessConfig,
+			StreamEvents: eventStreamConfig,
+			ProxyPort:    portProxyConf,
+			IdleTimeout:  idleWatcherConfig,
 		}, c.db, sproto.GetRM(ctx.Self().System()), c.logger)
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
