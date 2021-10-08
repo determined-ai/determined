@@ -1,6 +1,6 @@
 import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Layout, Space, Tooltip } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Button, Card, Space, Tooltip } from 'antd';
+import React, { useCallback, useState } from 'react';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
@@ -38,7 +38,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         padding: 0,
       }}
       className={css.base}
-      extra={(editingNotes ? (
+      extra={editingNotes ? (
         <Space size="small">
           <Button size="small" onClick={cancelEdit}>Cancel</Button>
           <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
@@ -47,8 +47,6 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         <Tooltip title="Edit">
           <EditOutlined onClick={editNotes} />
         </Tooltip>
-
-      )
       )}
       headStyle={{
         flexGrow: 0,
@@ -61,7 +59,9 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
       <Markdown
         editing={editingNotes}
         markdown={editingNotes ? editedNotes : notes}
-        onChange={setEditedNotes} />
+        onChange={setEditedNotes}
+        onClick={editNotes}
+      />
     </Card>
   );
 };
