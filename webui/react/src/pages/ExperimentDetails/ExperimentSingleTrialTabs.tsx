@@ -210,12 +210,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             : NoDataAlert}
         </TabPane>
         <TabPane key="notes" tab="Notes">
-          <Section>
-            <NotesCard
-              notes={experiment.notes ?? ''}
-              style={{ margin: 'var(--theme-sizes-layout-big)' }}
-              onSave={handleNotesUpdate} />
-          </Section>
+          <NotesCard
+            notes={experiment.notes ?? ''}
+            style={{ border: 0 }}
+            onSave={handleNotesUpdate}
+          />
         </TabPane>
       </Tabs>
     </TrialLogPreview>
