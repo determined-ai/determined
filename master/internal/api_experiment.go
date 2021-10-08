@@ -52,8 +52,13 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
+type ejob struct {
+	experimentv1.Experiment
+	jobId model.JobID `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"job_id"`
+}
+
 func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
-	exp := &experimentv1.Experiment{}
+	exp := &ejob{}
 	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
@@ -62,7 +67,7 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 			"error fetching experiment from database: %d", experimentID)
 	}
 
-	return exp, nil
+	return &exp.Experiment, nil
 }
 
 func (a *apiServer) GetExperiment(
