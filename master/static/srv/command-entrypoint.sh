@@ -25,4 +25,9 @@ fi
 
 set -e
 
-exec $@
+if [ "$#" -eq 1 ];
+then
+    exec /bin/sh -c $@
+else
+    exec $@
+fi

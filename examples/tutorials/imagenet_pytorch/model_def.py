@@ -137,7 +137,7 @@ class ImagenetTrial(PyTorchTrial):
         # measure accuracy and record loss
         acc1, acc5 = self.accuracy(output, target, topk=(1, 5))
 
-        return {"val_loss": loss.itgiem(), "top1": acc1[0], "top5":acc5[0]}
+        return {"val_loss": loss.item(), "top1": acc1[0], "top5":acc5[0]}
 
     def accuracy(self, output, target, topk=(1,)):
         """Computes the accuracy over the k top predictions for the specified values of k"""

@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 const defaultEventBufferSize = 200
@@ -32,8 +31,6 @@ func countNonNullRingValues(ring *ring.Ring) int {
 	return count
 }
 
-type logSubscribers = map[chan interface{}]webAPI.BatchRequest
-
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
 
@@ -43,7 +40,6 @@ type eventManager struct {
 	closed       bool
 	seq          int
 	isTerminated bool
-	logStreams   logSubscribers
 
 	description string
 }
@@ -52,27 +48,9 @@ func newEventManager(description string) *eventManager {
 	return &eventManager{
 		bufferSize:   defaultEventBufferSize,
 		buffer:       ring.New(defaultEventBufferSize),
-		logStreams:   make(logSubscribers),
 		isTerminated: false,
 
 		description: description,
-	}
-}
-
-func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg sproto.Event) {
-	for streamActor, logRequest := range e.logStreams {
-		if eventSatisfiesLogRequest(logRequest, &msg) {
-			select {
-			case streamActor <- logger.EntriesBatch([]*logger.Entry{msg.ToLogEntry()}):
-			default:
-				ctx.Log().Warn("dropping log in stream due to backpressure")
-			}
-
-		}
-	}
-
-	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
-		e.isTerminated = true
 	}
 }
 
@@ -108,7 +86,10 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
-		e.processNewLogEvent(ctx, msg)
+
+		if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
+			e.isTerminated = true
+		}
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))

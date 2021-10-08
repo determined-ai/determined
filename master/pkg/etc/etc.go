@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	// CommandEntrypointResource is the pre-flight script for commands.
+	CommandEntrypointResource = "command-entrypoint.sh"
 	// SSHConfigResource is the template SSH config file.
 	SSHConfigResource = "ssh_config"
 	// SSHDConfigResource is the template SSHD config file.

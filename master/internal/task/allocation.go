@@ -377,9 +377,7 @@ func (a *Allocation) TaskContainerStateChanged(
 		if a.req.ProxyPort != nil {
 			a.registerProxies(ctx, msg)
 		}
-		if a.req.StreamEvents != nil {
-			a.sendEvent(ctx, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
-		}
+		a.sendEvent(ctx, sproto.Event{ContainerStartedEvent: msg.ContainerStarted})
 	case cproto.Terminated:
 		a.state = model.MostProgressedAllocationState(a.state, model.AllocationStateTerminating)
 		a.reservations[msg.Container.ID].exit = msg.ContainerStopped
