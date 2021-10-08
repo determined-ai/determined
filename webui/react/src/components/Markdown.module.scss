@@ -759,4 +759,9 @@
 }
 .render {
   padding: var(--theme-sizes-layout-big);
+
+  .placeholder {
+    color: var(--theme-colors-monochrome-9);
+    font-style: italic;
+  }
 }

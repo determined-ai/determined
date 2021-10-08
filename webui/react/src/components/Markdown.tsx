@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import css from './Markdown.module.scss';
 import Spinner from './Spinner';
@@ -12,10 +12,12 @@ interface Props {
   editing?: boolean;
   markdown: string;
   onChange?: (editedMarkdown: string) => void;
+  onClick?: () => void;
 }
 
 interface RenderProps {
   markdown: string;
+  placeholder?: string;
 }
 
 enum TabType {
@@ -23,17 +25,29 @@ enum TabType {
   Preview = 'preview'
 }
 
-const MarkdownRender: React.FC<RenderProps> = ({ markdown }) => {
+const MarkdownRender: React.FC<RenderProps> = ({ markdown, placeholder }) => {
+  const showPlaceholdere = !markdown && placeholder;
   return (
     <div className={css.render}>
-      <MarkdownViewer options={{ disableParsingRawHTML: true }}>
-        {markdown}
-      </MarkdownViewer>
+      {showPlaceholdere ? (
+        <div className={css.placeholder}>{placeholder}</div>
+      ) : (
+        <MarkdownViewer options={{ disableParsingRawHTML: true }}>
+          {markdown}
+        </MarkdownViewer>
+      )}
     </div>
   );
 };
 
-const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange }: Props) => {
+const Markdown: React.FC<Props> = ({
+  editing = false,
+  markdown,
+  onChange,
+  onClick,
+}: Props) => {
+  const handleRenderClick = useCallback(() => onClick?.(), [ onClick ]);
+
   return (
     <div aria-label="markdown-editor" className={css.base}>
       {editing ? (
@@ -64,9 +78,12 @@ const Markdown: React.FC<Props> = ({ editing = false, markdown, onChange }: Prop
           </TabPane>
         </Tabs>
       ) : (
-        <MarkdownRender
-          markdown={markdown || '######Add detailed description of this model...'}
-        />
+        <div onClick={handleRenderClick}>
+          <MarkdownRender
+            markdown={markdown}
+            placeholder="Add detailed description of this model..."
+          />
+        </div>
       )}
     </div>);
 };
