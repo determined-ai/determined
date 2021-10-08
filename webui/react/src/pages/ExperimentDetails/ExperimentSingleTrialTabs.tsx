@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
+import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
@@ -209,10 +210,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             : NoDataAlert}
         </TabPane>
         <TabPane key="notes" tab="Notes">
-          <NotesCard
-            notes={experiment.notes ?? ''}
-            style={{ margin: 'var(--theme-sizes-layout-big)' }}
-            onSave={handleNotesUpdate} />
+          <Section>
+            <NotesCard
+              notes={experiment.notes ?? ''}
+              style={{ margin: 'var(--theme-sizes-layout-big)' }}
+              onSave={handleNotesUpdate} />
+          </Section>
         </TabPane>
       </Tabs>
     </TrialLogPreview>

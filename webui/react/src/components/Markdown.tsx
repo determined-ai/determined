@@ -25,7 +25,7 @@ const Markdown: React.FC<Props> = ({ editing=false, height='100%', markdown, onC
     <div
       aria-label="markdown-editor"
       className={css.base}
-      style={{ maxHeight: '70vh', overflow: 'auto' }}>
+      style={{ overflow: 'auto' }}>
       {editing ? (
         <Tabs>
           <TabPane key={TabType.Edit} tab="Edit">
@@ -36,6 +36,11 @@ const Markdown: React.FC<Props> = ({ editing=false, height='100%', markdown, onC
                   defaultValue={markdown}
                   language="markdown"
                   options={{
+                    folding: false,
+                    hideCursorInOverviewRuler: true,
+                    lineDecorationsWidth: 8,
+                    lineNumbersMinChars: 4,
+                    occurrencesHighlight: false,
                     quickSuggestions: false,
                     renderLineHighlight: 'none',
                     wordWrap: 'on',
