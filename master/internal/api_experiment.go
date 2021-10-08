@@ -52,13 +52,8 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	}
 }
 
-type ejob struct {
-	experimentv1.Experiment
-	jobId model.JobID `protobuf:"bytes,2,opt,name=start_time,json=startTime,proto3" json:"job_id"`
-}
-
 func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, error) {
-	exp := &ejob{}
+	exp := &experimentv1.Experiment{}
 	switch err := a.m.db.QueryProto("get_experiment", exp, experimentID); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
@@ -67,7 +62,7 @@ func (a *apiServer) getExperiment(experimentID int) (*experimentv1.Experiment, e
 			"error fetching experiment from database: %d", experimentID)
 	}
 
-	return &exp.Experiment, nil
+	return exp, nil
 }
 
 func (a *apiServer) GetExperiment(
@@ -92,13 +87,22 @@ func (a *apiServer) GetExperiment(
 
 	resp := apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}
 
+	// FIXME I have work on another machine that's not pushed and doesn't boot up
+
 	// if model.TerminalStates[exp.State] {
 	// if false { // if not in any active resourcepool eg terminal state return
 	// 	// would this be faster than asking the resourcemanagers?
 	// 	return &resp, nil
 	// }
+	jobId, err := a.m.db.ExperimentJobID(int(exp.Id))
+	switch err {
+	case db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+	case nil:
+		return nil, errors.Wrapf(err,
+			"error fetching job_id from database: %d", req.ExperimentId)
+	}
 
-	jobId := model.NewJobID() // TODO get from db
 	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: jobId}
 
 	switch {
