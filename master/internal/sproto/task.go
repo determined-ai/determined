@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -140,6 +139,7 @@ type Event struct {
 	Description string    `json:"description"`
 	IsReady     bool      `json:"is_ready"`
 	State       string    `json:"state"`
+	ContainerID string    `json:"container_id"`
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
@@ -157,8 +157,8 @@ type Event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-// ToLogEntry converts an event to a logrus entry.
-func (ev *Event) ToLogEntry() *logger.Entry {
+// ToTaskLog converts an event to a task log.
+func (ev *Event) ToTaskLog() model.TaskLog {
 	description := ev.Description
 	var message string
 	switch {
@@ -173,7 +173,9 @@ func (ev *Event) ToLogEntry() *logger.Entry {
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
 	case ev.ServiceReadyEvent != nil:
-		message = fmt.Sprintf("Service (%s) is available", description)
+		message = fmt.Sprintf("Service of %s is available", description)
+	case ev.AssignedEvent != nil:
+		message = fmt.Sprintf("%s was assigned to an agent", description)
 	default:
 		// The client could rely on logEntry IDs and since some of these events aren't actually log
 		// events we'd need to notify of them about these non existing logs either by adding a new
@@ -181,19 +183,10 @@ func (ev *Event) ToLogEntry() *logger.Entry {
 		// command events as log struct by setting a special message.
 		message = ""
 	}
-	return &logger.Entry{
-		ID:      ev.Seq,
-		Message: message,
-		Time:    ev.Time,
-	}
-}
 
-// ToTaskLog converts an event to a task log.
-func (ev *Event) ToTaskLog() model.TaskLog {
-	l := ev.ToLogEntry()
 	return model.TaskLog{
 		Level:     ptrs.StringPtr(model.LogLevelInfo),
-		Timestamp: &l.Time,
-		Log:       l.Message,
+		Timestamp: &ev.Time,
+		Log:       message,
 	}
 }

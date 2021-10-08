@@ -4,7 +4,7 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined.cli import command, render
+from determined.cli import command, render, task
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.check import check_eq
@@ -91,13 +91,9 @@ args_description = [
         Cmd("open", open_notebook, "open an existing notebook", [
             Arg("notebook_id", help="notebook ID")
         ]),
-        Cmd("logs", command.tail_logs, "fetch notebook logs", [
-            Arg("notebook_id", help="notebook ID"),
-            Arg("-f", "--follow", action="store_true",
-                help="follow the logs of a notebook, similar to tail -f"),
-            Arg("--tail", type=int, default=200,
-                help="number of lines to show, counting from the end "
-                     "of the log")
+        Cmd("logs", task.logs, "fetch notebook logs", [
+            Arg("task_id", help="notebook ID", metavar="notebook_id"),
+            *task.common_log_options
         ]),
         Cmd("kill", command.kill, "kill a notebook", [
             Arg("notebook_id", help="notebook ID", nargs=ONE_OR_MORE),

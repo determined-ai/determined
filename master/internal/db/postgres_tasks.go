@@ -35,10 +35,10 @@ type queryHandler interface {
 func (db *PgDB) TaskByID(taskID model.TaskID) (model.Task, error) {
 	status := model.Task{}
 	if err := db.sql.QueryRowx(`
-SELECT task_id, task_type, start_time, end_time
+SELECT task_id, task_type, start_time, end_time, log_version
 FROM tasks
 WHERE task_id = $1
-`, taskID).Scan(&status); err != nil {
+`, taskID).StructScan(&status); err != nil {
 		return model.Task{}, errors.Wrap(err, "querying task")
 	}
 	return status, nil

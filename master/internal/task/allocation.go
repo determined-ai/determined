@@ -178,6 +178,7 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		a.Cleanup(ctx)
 	case sproto.ContainerLog:
+		ctx.Tell(a.logger, a.enrichLog(msg.ToTaskLog()))
 		a.sendEvent(ctx, sproto.Event{LogEvent: ptrs.StringPtr(msg.String())})
 
 	// These messages allow users (and sometimes an orchestrator, such as HP search)

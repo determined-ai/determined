@@ -5,7 +5,7 @@ from typing import Any, List
 
 from termcolor import colored
 
-from determined.cli import command
+from determined.cli import command, task
 from determined.common import api, constants, context
 from determined.common.api import authentication
 from determined.common.check import check_eq
@@ -101,14 +101,9 @@ args_description = [
             "open existing TensorBoard instance", [
                 Arg("tensorboard_id", help="TensorBoard ID")
             ]),
-        Cmd("logs", command.tail_logs, "fetch TensorBoard instance logs", [
-            Arg("tensorboard_id", help="TensorBoard ID"),
-            Arg("-f", "--follow", action="store_true",
-                help="follow the logs of a TensorBoard instance, "
-                     "similar to tail -f"),
-            Arg("--tail", type=int, default=200,
-                help="number of lines to show, counting from the end "
-                     "of the log")
+        Cmd("logs", task.logs, "fetch TensorBoard instance logs", [
+            Arg("task_id", help="TensorBoard ID", metavar="tensorboard_id"),
+            *task.common_log_options,
         ]),
         Cmd("kill", command.kill, "kill TensorBoard instance", [
             Arg("tensorboard_id", help="TensorBoard ID", nargs=ONE_OR_MORE),

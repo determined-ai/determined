@@ -191,19 +191,6 @@ def config(args: Namespace) -> None:
     print(render.format_object_as_yaml(res_json["config"]))
 
 
-@authentication.required
-def tail_logs(args: Namespace) -> None:
-    api_full_path = "{}/{}/events?follow={}&tail={}".format(
-        RemoteTaskOldAPIs[args._command],
-        RemoteTaskGetIDsFunc[args._command](args),  # type: ignore
-        args.follow,
-        args.tail,
-    )
-    with api.ws(args.master, api_full_path) as ws:
-        for msg in ws:
-            render_event_stream(msg)
-
-
 def _set_nested_config(config: Dict[str, Any], key_path: List[str], value: Any) -> Dict[str, Any]:
     current = config
     for key in key_path[:-1]:

@@ -10,7 +10,7 @@ from typing import IO, Any, Dict, List, Union
 import appdirs
 from termcolor import colored
 
-from determined.cli import command
+from determined.cli import command, task
 from determined.common import api
 from determined.common.api import authentication, certs
 from determined.common.check import check_eq, check_len
@@ -211,13 +211,9 @@ args_description = [
             Arg("shell_id", help="shell ID"),
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
-        Cmd("logs", command.tail_logs, "fetch shell logs", [
-            Arg("shell_id", help="shell ID"),
-            Arg("-f", "--follow", action="store_true",
-                help="follow the logs of a shell, similar to tail -f"),
-            Arg("--tail", type=int, default=200,
-                help="number of lines to show, counting from the end "
-                     "of the log")
+        Cmd("logs", task.logs, "fetch shell logs", [
+            Arg("task_id", help="shell ID", metavar="shell_id"),
+            *task.common_log_options
         ]),
         Cmd("kill", command.kill, "kill a shell", [
             Arg("shell_id", help="shell ID", nargs=ONE_OR_MORE),

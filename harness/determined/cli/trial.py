@@ -104,7 +104,7 @@ def kill_trial(args: Namespace) -> None:
 
 @authentication.required
 def trial_logs(args: Namespace) -> None:
-    api.experiment.print_trial_logs(
+    api.pprint_trial_logs(
         args.master,
         args.trial_id,
         head=args.head,

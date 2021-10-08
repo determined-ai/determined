@@ -466,7 +466,7 @@ service Determined {
     };
     option deprecated = true;
   }
-  // Set task to ready state.
+  // Set allocation to ready state.
   rpc AllocationReady(AllocationReadyRequest) returns (AllocationReadyResponse) {
     option (google.api.http) = {
       post: "/api/v1/allocations/{allocation_id}/ready"

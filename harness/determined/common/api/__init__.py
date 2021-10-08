@@ -11,7 +11,12 @@ from determined.common.api.experiment import (
     patch_experiment_v1,
     follow_experiment_logs,
     follow_test_experiment_logs,
+)
+from determined.common.api.logs import (
+    pprint_trial_logs,
+    pprint_task_logs,
     trial_logs,
+    task_logs,
 )
 from determined.common.api.request import (
     WebSocket,

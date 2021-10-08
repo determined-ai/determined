@@ -2,7 +2,7 @@ from argparse import ONE_OR_MORE, REMAINDER, FileType, Namespace
 from pathlib import Path
 from typing import Any, List
 
-from determined.cli import command
+from determined.cli import command, task
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
@@ -71,16 +71,12 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
-        Cmd("logs", command.tail_logs, "fetch command logs", [
-            Arg("command_id", help="command ID"),
-            Arg("-f", "--follow", action="store_true",
-                help="follow the logs of a command, similar to tail -f"),
-            Arg("--tail", type=int, default=200,
-                help="number of lines to show, counting from the end "
-                     "of the log")
+        Cmd("logs", task.logs, "fetch command logs", [
+            Arg("task_id", help="X command ID", metavar="command_id"),
+            *task.common_log_options,
         ]),
         Cmd("kill", command.kill, "forcibly terminate a command", [
-            Arg("command_id", help="command ID", nargs=ONE_OR_MORE),
+            Arg("command_id", help="XX command ID", nargs=ONE_OR_MORE),
             Arg("-f", "--force", action="store_true", help="ignore errors"),
         ]),
         Cmd("set", None, "set command attributes", [
