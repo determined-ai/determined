@@ -33,3 +33,7 @@ def test_trial_logs() -> None:
     subprocess.check_call(
         ["det", "-m", conf.make_master_url(), "trial", "logs", "--tail", "10", str(trial_id)],
     )
+
+@pytest.mark.e2e_cpu # type: ignore
+def test_task_logs() -> None:
+    

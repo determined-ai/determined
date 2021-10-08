@@ -611,11 +611,8 @@ const killedLogSubstr = "exit code 137"
 func (a *Allocation) enrichLog(log model.TaskLog) model.TaskLog {
 	log.TaskID = string(a.req.TaskID)
 
-	if log.Timestamp == nil {
-		fmt.Printf("we set the timestamp %s\n", log.Timestamp)
+	if log.Timestamp == nil || *log.Timestamp == (time.Time{}) {
 		log.Timestamp = ptrs.TimePtr(time.Now().UTC())
-	} else {
-		fmt.Printf("we did not set the timestamp %s\n", log.Timestamp)
 	}
 
 	if a.killedDaemons && strings.Contains(log.Log, killedLogSubstr) {

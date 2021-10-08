@@ -185,6 +185,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
+		ctx.Log().Info("should be marking task complete")
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
 		}

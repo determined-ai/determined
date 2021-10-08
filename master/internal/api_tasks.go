@@ -238,7 +238,7 @@ func (a *apiServer) isTaskTerminalFunc(
 		switch task, err := a.m.db.TaskByID(taskID); {
 		case err != nil:
 			return true, err
-		case task.EndTime != nil && task.EndTime.Add(buffer).After(time.Now().UTC()):
+		case task.EndTime != nil && task.EndTime.UTC().Add(buffer).Before(time.Now().UTC()):
 			return true, nil
 		default:
 			return false, nil
