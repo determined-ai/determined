@@ -1257,13 +1257,13 @@ func (_m *DB) MetricNames(experimentID int, sStartTime time.Time, vStartTime tim
 	return r0, r1, r2, r3, r4
 }
 
-// Migrate provides a mock function with given fields: migrationURL
-func (_m *DB) Migrate(migrationURL string) error {
-	ret := _m.Called(migrationURL)
+// Migrate provides a mock function with given fields: migrationURL, actions
+func (_m *DB) Migrate(migrationURL string, actions []string) error {
+	ret := _m.Called(migrationURL, actions)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(migrationURL)
+	if rf, ok := ret.Get(0).(func(string, []string) error); ok {
+		r0 = rf(migrationURL, actions)
 	} else {
 		r0 = ret.Error(0)
 	}
