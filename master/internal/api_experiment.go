@@ -90,9 +90,17 @@ func (a *apiServer) GetExperiment(
 	if model.TerminalStates[model.StateFromProto(exp.State)] {
 		return &resp, nil
 	}
+	// jobId, err := a.m.db.ExperimentJobID(int(exp.Id))
+	// switch err {
+	// case db.ErrNotFound:
+	// 	return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+	// case nil:
+	// 	return nil, errors.Wrapf(err,
+	// 		"error fetching job_id from database: %d", req.ExperimentId)
+	// }
+	// >>>>>>> d61327139250e94b17a25a5b100964b0d8c2f8c8
 
-	jobId := model.NewJobID() // TODO get from db
-	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: jobId}
+	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: model.JobID(exp.JobId)}
 
 	switch {
 	case sproto.UseAgentRM(a.m.system):

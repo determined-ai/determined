@@ -35,9 +35,9 @@ enum State {
 }
 
 // Job summary.
-message JobSummary {
+message JobSummary {  // TODO move job_id out
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "job_id", "state" ] }
+    json_schema: { required: [ "job_id", "state", "jobs_ahead" ] }
   };
   // Job id.
   string job_id = 1;
