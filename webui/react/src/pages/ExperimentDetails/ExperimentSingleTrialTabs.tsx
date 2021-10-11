@@ -188,6 +188,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
             ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
             : NoDataAlert}
         </TabPane>
+        <TabPane key="notes" tab="Notes">
+          <NotesCard
+            notes={experiment.notes ?? ''}
+            style={{ border: 0 }}
+            onSave={handleNotesUpdate}
+          />
+        </TabPane>
         <TabPane key="hyperparameters" tab="Hyperparameters">
           {trialDetails
             ? <TrialDetailsHyperparameters experiment={experiment} trial={trialDetails} />
@@ -207,13 +214,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = (
           {trialDetails
             ? <TrialDetailsLogs experiment={experiment} trial={trialDetails} />
             : NoDataAlert}
-        </TabPane>
-        <TabPane key="notes" tab="Notes">
-          <NotesCard
-            notes={experiment.notes ?? ''}
-            style={{ border: 0 }}
-            onSave={handleNotesUpdate}
-          />
         </TabPane>
       </Tabs>
     </TrialLogPreview>
