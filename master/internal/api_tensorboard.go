@@ -277,6 +277,12 @@ func (a *apiServer) LaunchTensorboard(
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
 		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			taskReadyCheckLogs,
+			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
+			0700,
+			tar.TypeReg,
+		),
 	}
 
 	if err = check.Validate(req.Config); err != nil {

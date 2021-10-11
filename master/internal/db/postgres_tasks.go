@@ -64,8 +64,8 @@ func (db *PgDB) AddTask(t *model.Task) error {
 
 func addTask(q queryHandler, t *model.Task) error {
 	if _, err := q.NamedExec(`
-INSERT INTO tasks (task_id, task_type, start_time)
-VALUES (:task_id, :task_type, :start_time)
+INSERT INTO tasks (task_id, task_type, start_time, log_version)
+VALUES (:task_id, :task_type, :start_time, :log_version)
 `, t); err != nil {
 		return errors.Wrap(err, "adding task")
 	}
@@ -274,6 +274,6 @@ WHERE task_id = $1
 // TaskLogsFields returns the unique fields that can be filtered on for the given task.
 func (db *PgDB) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResponse, error) {
 	var fields apiv1.TaskLogsFieldsResponse
-	err := db.QueryProto("get_task_log_fields", &fields, taskID)
+	err := db.QueryProto("get_task_logs_fields", &fields, taskID)
 	return &fields, err
 }

@@ -7,7 +7,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )
@@ -20,7 +20,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )
@@ -33,7 +33,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )
@@ -46,7 +46,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )
@@ -59,7 +59,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )
@@ -72,7 +72,7 @@ SELECT
                 FROM
                     task_logs
                 WHERE
-                    trial_id = $1
+                    task_id = $1
             ),
             NULL
         )

@@ -61,6 +61,11 @@ TensorboardTableHeader = OrderedDict(
     ]
 )
 
+TaskTypeNotebook = "notebook"
+TaskTypeCommand = "command cmd"
+TaskTypeShell = "shell"
+TaskTypeTensorboard = "tensorboard"
+
 RemoteTaskName = {
     "notebook": "notebook",
     "command cmd": "command",
@@ -158,8 +163,7 @@ def kill(args: Namespace) -> None:
 
     for i, task_id in enumerate(task_ids):
         try:
-            api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[args._command], task_id)
-            api.post(args.master, api_full_path)
+            _kill(args.master, args._command, task_id)
             print(colored("Killed {} {}".format(name, task_id), "green"))
         except api.errors.APIException as e:
             if not args.force:
@@ -167,6 +171,11 @@ def kill(args: Namespace) -> None:
                     print("Cowardly not killing {}".format(ignored))
                 raise e
             print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
+
+
+def _kill(master_url: str, taskType: str, taskID: str) -> None:
+    api_full_path = "api/v1/{}/{}/kill".format(RemoteTaskNewAPIs[taskType], taskID)
+    api.post(master_url, api_full_path)
 
 
 @authentication.required
@@ -265,13 +274,18 @@ def launch_command(
     template: str,
     context_path: Optional[Path] = None,
     data: Optional[Dict[str, Any]] = None,
-    preview: Optional[bool] = False,
+    preview: Optional[bool]  = False,
+    extras: Optional[Dict[str, Any]] = None,
 ) -> Any:
     user_files = []  # type: List[Dict[str, Any]]
     if context_path:
         user_files, _ = context.read_context(context_path)
 
-    body = {"config": config}  # type: Dict[str, Any]
+    body = {}  # type: Dict[str, Any]
+    if extras:
+        body.update(extras)
+
+    body["config"] = config
 
     if template:
         body["template_name"] = template

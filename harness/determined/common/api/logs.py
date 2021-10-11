@@ -81,9 +81,27 @@ def trial_logs(
             yield simplejson.loads(line)["result"]
 
 
+def trial_log_fields(
+    master_url: str,
+    trial_id: int,
+    follow: bool = False,
+) -> collections.abc.Iterable:
+    path = "/api/v1/trials/{}/logs/fields?{}".format(
+        trial_id,
+        to_log_query_string(
+            None,
+            None,
+            follow=follow,
+        ),
+    )
+    with api.get(master_url, path, stream=True) as r:
+        for line in r.iter_lines():
+            yield simplejson.loads(line)["result"]
+
+
 def task_logs(
     master_url: str,
-    task_id: int,
+    task_id: str,
     head: Optional[int] = None,
     tail: Optional[int] = None,
     follow: bool = False,
@@ -121,6 +139,24 @@ def task_logs(
         if tail is not None:
             line_iter = reversed(list(line_iter))
         for line in line_iter:
+            yield simplejson.loads(line)["result"]
+
+
+def task_log_fields(
+    master_url: str,
+    task_id: str,
+    follow: bool = False,
+) -> collections.abc.Iterable:
+    path = "/api/v1/tasks/{}/logs/fields?{}".format(
+        task_id,
+        to_log_query_string(
+            None,
+            None,
+            follow=follow,
+        ),
+    )
+    with api.get(master_url, path, stream=True) as r:
+        for line in r.iter_lines():
             yield simplejson.loads(line)["result"]
 
 

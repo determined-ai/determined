@@ -69,7 +69,7 @@ func (a *apiServer) TrialLogs(
 ) error {
 	var taskID model.TaskID
 	switch t, err := a.m.db.TrialByID(int(req.TrialId)); {
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, sql.ErrNoRows), errors.Is(err, db.ErrNotFound):
 		return trialNotFound
 	case err != nil:
 		return err

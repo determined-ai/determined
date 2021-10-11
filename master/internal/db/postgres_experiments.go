@@ -1003,7 +1003,7 @@ FROM (
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
 			FROM (
 				SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
-					   t.warm_start_checkpoint_id,
+					   t.warm_start_checkpoint_id, t.task_id,
 				(SELECT coalesce(jsonb_agg(s ORDER BY end_time ASC), '[]'::jsonb)
 				 FROM (
 					 SELECT s.end_time, s.id, s.state, s.trial_id,  s.total_batches,
