@@ -19,7 +19,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
-func contains(subset []string, set []string) bool {
+func isSubset(subset []string, set []string) bool {
 	setMap := make(map[string]bool)
 	for _, i := range set {
 		setMap[i] = true
@@ -52,8 +52,6 @@ func (a *apiServer) GetModels(
 		return nil, err
 	}
 
-	allowedUsers := strings.Join(req.users, ",")
-
 	a.filter(&resp.Models, func(i int) bool {
 		v := resp.Models[i]
 
@@ -69,11 +67,11 @@ func (a *apiServer) GetModels(
 			return false
 		}
 
-		if !contains([]string{v.Username}, req.users) {
+		if !isSubset([]string{v.Username}, req.Users) {
 			return false
 		}
 
-		return req.Labels == nil || contains(req.Labels, v.Labels)
+		return req.Labels == nil || isSubset(req.Labels, v.Labels)
 	})
 
 	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)
