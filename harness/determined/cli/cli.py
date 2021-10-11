@@ -16,6 +16,7 @@ import determined
 import determined.cli
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
+from determined.cli.constants import DEPLOY_CMD_NAME
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -43,8 +44,6 @@ from determined.common.util import (
 )
 
 from .errors import EnterpriseOnlyError
-
-DEPLOY_CMD_NAME = "d|eploy"  # TODO import
 
 
 @authentication.required
