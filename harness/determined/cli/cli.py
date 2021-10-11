@@ -34,7 +34,7 @@ from determined.cli.version import check_version
 from determined.common import api, yaml
 from determined.common.api import authentication, certs
 from determined.common.check import check_not_none
-from determined.common.declarative_argparse import Arg, Cmd, add_args
+from determined.common.declarative_argparse import Arg, Cmd, add_args, generate_aliases
 from determined.common.util import (
     chunks,
     debug_mode,
@@ -43,6 +43,8 @@ from determined.common.util import (
 )
 
 from .errors import EnterpriseOnlyError
+
+DEPLOY_CMD_NAME = "d|eploy" # TODO import
 
 
 @authentication.required
@@ -119,7 +121,7 @@ args_description = [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
     ]),
-    Cmd("d|eploy", None, "manage deployments", []),
+    Cmd(DEPLOY_CMD_NAME, None, "manage deployments", []),
 ]  # type: List[object]
 
 # fmt: on
@@ -155,8 +157,8 @@ def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
 
 def main(args: List[str] = sys.argv[1:], ) -> None:
     parser = make_parser(all_args_description)
-    # TODO use generate_aliases
-    is_deploy_cmd = len(args) > 0 and (args[0] == 'deploy' or args[0] == 'd')
+    full_cmd, aliases = generate_aliases(DEPLOY_CMD_NAME)
+    is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, *full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
         parser = make_parser([deploy_args_description])
