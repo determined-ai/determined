@@ -158,6 +158,8 @@ def main(
     args: List[str] = sys.argv[1:],
 ) -> None:
     parser = make_parser(all_args_description)
+
+    # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
     full_cmd, aliases = generate_aliases(DEPLOY_CMD_NAME)
     is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
