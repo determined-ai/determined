@@ -155,8 +155,9 @@ def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
 
 def main(args: List[str] = sys.argv[1:], ) -> None:
     parser = make_parser(all_args_description)
-
-    if len(args) > 0 and (args[0] == 'deploy' or args[0] == 'd') : # TODO use generate_aliases
+    # TODO use generate_aliases
+    is_deploy_cmd = len(args) > 0 and (args[0] == 'deploy' or args[0] == 'd')
+    if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
         parser = make_parser([deploy_args_description])
 
@@ -178,11 +179,14 @@ def main(args: List[str] = sys.argv[1:], ) -> None:
             parser.print_usage()
             parser.exit(2, "{}: no subcommand specified\n".format(parser.prog))
 
-        # Configure the CLI's Cert singleton.
-        certs.cli_cert = certs.default_load(parsed_args.master)
-
         try:
             # For `det deploy`, skip interaction with master.
+            if is_deploy_cmd:
+                parsed_args.func(parsed_args)
+                return
+
+            # Configure the CLI's Cert singleton.
+            certs.cli_cert = certs.default_load(parsed_args.master)
 
             try:
                 check_version(parsed_args)
