@@ -10,26 +10,18 @@ from determined.common.storage import StorageManager
 def test_unknown_type() -> None:
     config = {"type": "unknown"}
     with pytest.raises(TypeError, match="Unknown storage type: unknown"):
-        storage.build(config, container_path=None)
+        storage.build(config)
 
 
 def test_missing_type() -> None:
     with pytest.raises(CheckFailedError, match="Missing 'type' parameter"):
-        storage.build({}, container_path=None)
+        storage.build({})
 
 
 def test_illegal_type() -> None:
     config = {"type": 4}
     with pytest.raises(CheckFailedError, match="must be a string"):
-        storage.build(config, container_path=None)
-
-
-def test_build_with_container_path() -> None:
-    config = {"type": "shared_fs", "host_path": "/host_path", "storage_path": "storage_path"}
-    manager = storage.build(config, container_path=None)
-    assert manager._base_path == "/host_path/storage_path"
-    manager = storage.build(config, container_path="/container_path")
-    assert manager._base_path == "/container_path/storage_path"
+        storage.build(config)
 
 
 def test_list_directory() -> None:

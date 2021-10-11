@@ -16,7 +16,7 @@ import simplejson
 import determined as det
 import determined.common
 from determined import horovod
-from determined.common import api, constants, storage
+from determined.common import api, storage
 from determined.common.api import certs
 from determined.constants import HOROVOD_SSH_PORT
 
@@ -40,10 +40,7 @@ def main() -> int:
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the
     # DistributedContext is not created soon enough for that to work well.
     try:
-        storage.validate_config(
-            experiment_config["checkpoint_storage"],
-            container_path=constants.SHARED_FS_CONTAINER_PATH,
-        )
+        storage.validate_config(experiment_config["checkpoint_storage"])
     except Exception as e:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         return 1

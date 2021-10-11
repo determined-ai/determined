@@ -1,68 +1,63 @@
-import contextlib
 import os
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Optional
 
-from determined import errors
-from determined.common import check
+import determined as det
+from determined.common import constants
 from determined.common.storage.base import StorageManager
+from determined.common.storage.file import FileStorageManager
 
 
 def _full_storage_path(
+    on_cluster: bool,
     host_path: str,
     storage_path: Optional[str] = None,
-    container_path: Optional[str] = None,
 ) -> str:
     """
     Return the full path to the storage_path, either as a subdirectory of the host_path in the
-    host environment, where container_path must be None, or as a subdirectory of the container_path
-    when in the container enviornment, where container_path must not be None.
+    host environment if on_cluster is True, or as a subdirectory of the container_path otherwise.
     """
-    check.true(os.path.isabs(host_path), "`host_path` must be an absolute path.")
+    if not os.path.isabs(host_path):
+        raise ValueError("`host_path` must be an absolute path.")
+
+    container_path = constants.SHARED_FS_CONTAINER_PATH
 
     if storage_path is None:
-        return host_path if container_path is None else container_path
+        return container_path if on_cluster else host_path
 
     # Note that os.path.join() will just return storage_path when it is absolute.
     abs_path = os.path.normpath(os.path.join(host_path, storage_path))
-    check.true(abs_path.startswith(host_path), "storage path must be a subdirectory of host path.")
+    if not abs_path.startswith(host_path):
+        raise ValueError(
+            f"storage path ({storage_path}) must be a subdirectory of host path ({host_path})."
+        )
     storage_path = os.path.relpath(abs_path, host_path)
 
-    return os.path.join(host_path if container_path is None else container_path, storage_path)
+    return os.path.join(container_path if on_cluster else host_path, storage_path)
 
 
 class SharedFSStorageManager(StorageManager):
     """
-    Store and load storages from a shared file system. Each agent should
-    have this shared file system mounted in the same location defined by the
-    `host_path`.
+    Store and load checkpoints from a shared file system. Each agent should have this shared file
+    system mounted in the same location defined by the `host_path`.
+
+    SharedFSStorageManager is not actually an implementation of a StorageManager; it only implements
+    .from_config() and can choose one of two possible base_path values for a FileStorageManager.
     """
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+    def from_config(cls, config: Dict[str, Any]) -> "StorageManager":
+        """
+        SharedFSStorageManager.from_config() actually just decides if we are inside the container or
+        not, and builds a base StorageManager accordingly.
+        """
         allowed_keys = {"host_path", "storage_path", "container_path", "propagation"}
-        for key in config.keys():
-            check.is_in(key, allowed_keys, "extra key in shared_fs config")
-        check.is_in("host_path", config, "shared_fs config is missing host_path")
+        extra_keys = allowed_keys.difference(set(config.keys()))
+        if extra_keys:
+            raise ValueError(f"extra key(s) in shared_fs config: {sorted(extra_keys)}")
+        if "host_path" not in config:
+            raise ValueError(f"shared_fs config is missing host_path: {config}")
         # Ignore legacy configuration values propagation and container_path.
-        base_path = _full_storage_path(
-            config["host_path"], config.get("storage_path"), container_path
-        )
-        return cls(base_path)
+        on_cluster = det.get_cluster_info() is not None
+        base_path = _full_storage_path(on_cluster, config["host_path"], config.get("storage_path"))
 
-    @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[str]:
-        """
-        Prepare a local directory exposing the checkpoint. Do some simple checks to make sure the
-        configuration seems reasonable.
-        """
-        check.true(
-            os.path.exists(self._base_path),
-            f"Storage directory does not exist: {self._base_path}. Please verify that you are "
-            "using the correct configuration value for checkpoint_storage.host_path",
-        )
-        storage_dir = os.path.join(self._base_path, storage_id)
-        if not os.path.exists(storage_dir):
-            raise errors.CheckpointNotFound(
-                f"Did not find checkpoint {storage_id} in shared_fs storage"
-            )
-        yield storage_dir
+        return FileStorageManager(base_path)

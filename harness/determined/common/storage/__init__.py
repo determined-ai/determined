@@ -10,6 +10,7 @@ from .azure import AzureStorageManager
 from .gcs import GCSStorageManager
 from .hdfs import HDFSStorageManager
 from .s3 import S3StorageManager
+from .file import FileStorageManager
 from .shared import SharedFSStorageManager
 
 __all__ = [
@@ -30,7 +31,7 @@ _STORAGE_MANAGERS = {
 }  # type: Dict[str, Type[StorageManager]]
 
 
-def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManager:
+def build(config: Dict[str, Any]) -> StorageManager:
     """
     Return a checkpoint manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no storage manager
@@ -76,7 +77,7 @@ def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManag
     config.pop("checkpoint_path", None)
 
     try:
-        return subclass.from_config(config, container_path)
+        return subclass.from_config(config)
     except TypeError as e:
         raise TypeError(
             "Failed to instantiate {} checkpoint storage: {}".format(identifier, str(e))
@@ -115,5 +116,5 @@ def validate_manager(manager: StorageManager) -> None:
     manager.delete(storage_id)
 
 
-def validate_config(config: Dict[str, Any], container_path: Optional[str]) -> None:
-    validate_manager(build(config, container_path))
+def validate_config(config: Dict[str, Any]) -> None:
+    validate_manager(build(config))

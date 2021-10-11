@@ -33,24 +33,6 @@ def test_setting_optional_variable(tmp_path: pathlib.Path) -> None:
     assert manager.base_path == pathlib.Path("test_value/tensorboard")
 
 
-def test_build_with_container_path(tmp_path: pathlib.Path) -> None:
-    checkpoint_config = {
-        "type": "shared_fs",
-        "host_path": str(HOST_PATH),
-        "storage_path": str(STORAGE_PATH),
-    }
-    env = test_util.get_dummy_env()
-    manager = tensorboard.build(
-        env.det_cluster_id,
-        env.det_experiment_id,
-        env.det_trial_id,
-        checkpoint_config,
-        container_path=str(tmp_path),
-    )
-    assert isinstance(manager, tensorboard.SharedFSTensorboardManager)
-    assert manager.storage_path == tmp_path.joinpath("test_storage_path")
-
-
 def test_setting_storage_path(tmp_path: pathlib.Path) -> None:
     checkpoint_config = {
         "type": "shared_fs",

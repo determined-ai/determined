@@ -3,12 +3,12 @@ import contextlib
 import os
 import shutil
 import uuid
-from typing import Any, Dict, Iterator, Optional, Tuple
+from typing import Any, Dict, Iterator, Tuple
 
-from determined.common.check import check_gt, check_true, check_type
+from determined.common import check
 
 
-class StorageManager:
+class StorageManager(metaclass=abc.ABCMeta):
     """
     Abstract base class for storage managers. Storage managers need to
     support three operations: creating, loading, and deleting storages.
@@ -20,15 +20,16 @@ class StorageManager:
     """
 
     def __init__(self, base_path: str) -> None:
-        check_type(base_path, str)
-        check_gt(len(base_path), 0)
+        check.is_instance(base_path, str)
+        check.gt(len(base_path), 0)
         self._base_path = base_path
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+    def from_config(cls, config: Dict[str, Any]) -> "StorageManager":
         """from_config() just calls __init__() unless it is overridden in a subclass."""
         return cls(**config)
 
+    @abc.abstractmethod
     def post_store_path(self, storage_id: str, storage_dir: str) -> None:
         """
         post_store_path is a hook that will be called after store_path(). Subclasess of
@@ -62,7 +63,7 @@ class StorageManager:
         storage_dir = os.path.join(self._base_path, storage_id)
 
         yield (storage_id, storage_dir)
-        check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
+        check.true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
 
         self.post_store_path(storage_id, storage_dir)
 
@@ -71,24 +72,16 @@ class StorageManager:
     def restore_path(self, storage_id: str) -> Iterator[str]:
         """
         restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
-        necessary cleanup afterwards. Subclasess of StorageManager must implement this.
+        necessary cleanup afterwards.  Subclasses of StorageManager must implement this.
         """
         pass
 
+    @abc.abstractmethod
     def delete(self, storage_id: str) -> None:
         """
         Delete the stored data from persistent storage.
         """
-        storage_dir = os.path.join(self._base_path, storage_id)
-
-        check_true(
-            os.path.exists(storage_dir), "Storage directory does not exist: {}".format(storage_dir)
-        )
-        check_true(
-            os.path.isdir(storage_dir), "Storage path is not a directory: {}".format(storage_dir)
-        )
-
-        self._remove_checkpoint_directory(storage_id, ignore_errors=False)
+        pass
 
     def _remove_checkpoint_directory(self, storage_id: str, ignore_errors: bool = True) -> None:
         """
@@ -109,7 +102,7 @@ class StorageManager:
         signified by a trailing "/". Returned path names are relative to
         `root`; directories are included but have a file size of 0.
         """
-        check_true(os.path.isdir(root), "{} must be an extant directory".format(root))
+        check.true(os.path.isdir(root), "{} must be an extant directory".format(root))
         result = {}
         for cur_path, sub_dirs, files in os.walk(root):
             for d in sub_dirs:

@@ -5,7 +5,7 @@ from typing import Any, Generator, Optional, Tuple
 
 import determined as det
 from determined import _generic, tensorboard, workload
-from determined.common import check, constants
+from determined.common import check
 from determined.experimental import client
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
@@ -105,7 +105,6 @@ class WorkloadSequencer(workload.Source):
             env.det_experiment_id,
             env.det_trial_id,
             env.experiment_config["checkpoint_storage"],
-            container_path=None if not env.on_cluster else constants.SHARED_FS_CONTAINER_PATH,
         )
         tbd_writer = tensorboard.get_metric_writer()
         self.training = _generic.Training(

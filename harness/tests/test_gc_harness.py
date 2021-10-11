@@ -11,7 +11,7 @@ from tests.storage import util as storage_util
 
 @pytest.fixture()
 def manager(tmp_path: Path) -> storage.StorageManager:
-    return storage.SharedFSStorageManager(str(tmp_path))
+    return storage.FileStorageManager(str(tmp_path))
 
 
 @pytest.fixture(params=[0, 1, 5])

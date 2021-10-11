@@ -2,6 +2,7 @@ import os
 import pathlib
 from typing import Any, Dict, Optional
 
+import determined as det
 from determined.common.storage.shared import _full_storage_path
 from determined.tensorboard import azure, base, gcs, hdfs, s3, shared
 
@@ -46,15 +47,11 @@ def build(
     experiment_id: str,
     trial_id: Optional[str],
     checkpoint_config: Dict[str, Any],
-    container_path: Optional[str] = None,
 ) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no tensorboard manager
     with `type` is defined.
-
-    container_path, if set, will replace the host_path when determining the storage_path for the
-    SharedFSTensorboardManager.
     """
     type_name = checkpoint_config.get("type")
 
@@ -72,10 +69,11 @@ def build(
         sync_path = get_experiment_sync_path(cluster_id, experiment_id)
 
     if type_name == "shared_fs":
+        on_cluster = det.get_cluster_info() is not None
         host_path = checkpoint_config["host_path"]
         storage_path = checkpoint_config.get("storage_path")
         return shared.SharedFSTensorboardManager(
-            _full_storage_path(host_path, storage_path, container_path),
+            _full_storage_path(on_cluster, host_path, storage_path),
             base_path,
             sync_path,
         )

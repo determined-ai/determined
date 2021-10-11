@@ -4,7 +4,7 @@ import pathlib
 import shutil
 from typing import Any, Dict, List, Optional, cast
 
-from determined.common import constants, storage
+from determined.common import storage
 from determined.common.experimental import session
 from determined.common.storage import shared
 
@@ -81,13 +81,8 @@ class Checkpoint(object):
         host_path = self.experiment_config["checkpoint_storage"]["host_path"]
         storage_path = self.experiment_config["checkpoint_storage"].get("storage_path")
         potential_paths = [
-            pathlib.Path(shared._full_storage_path(host_path, storage_path), self.uuid),
-            pathlib.Path(
-                shared._full_storage_path(
-                    host_path, storage_path, constants.SHARED_FS_CONTAINER_PATH
-                ),
-                self.uuid,
-            ),
+            pathlib.Path(shared._full_storage_path(True, host_path, storage_path), self.uuid),
+            pathlib.Path(shared._full_storage_path(False, host_path, storage_path), self.uuid),
         ]
 
         for path in potential_paths:
@@ -130,10 +125,7 @@ class Checkpoint(object):
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-                manager = storage.build(
-                    self.experiment_config["checkpoint_storage"],
-                    container_path=None,
-                )
+                manager = storage.build(self.experiment_config["checkpoint_storage"])
                 if not isinstance(
                     manager,
                     (

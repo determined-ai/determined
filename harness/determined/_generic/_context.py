@@ -4,7 +4,7 @@ import pathlib
 from typing import Iterator
 
 import determined as det
-from determined.common import constants, storage
+from determined.common import storage
 
 
 class Context:
@@ -20,10 +20,7 @@ class Context:
         self._env = env
         self._dist = dist
 
-        self._storage_mgr = storage.build(
-            env.experiment_config["checkpoint_storage"],
-            container_path=None if not env.on_cluster else constants.SHARED_FS_CONTAINER_PATH,
-        )
+        self._storage_mgr = storage.build(env.experiment_config["checkpoint_storage"])
 
     @contextlib.contextmanager
     def _download_initial_checkpoint(self, storage_id: str) -> Iterator[pathlib.Path]:

@@ -10,7 +10,7 @@ from typing import Any, List
 
 import determined as det
 from determined import tensorboard
-from determined.common import constants, storage
+from determined.common import storage
 
 
 def delete_checkpoints(
@@ -97,7 +97,7 @@ def main(argv: List[str]) -> None:
     storage_config = args.storage_config
     logging.info("Using checkpoint storage: {}".format(storage_config))
 
-    manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
+    manager = storage.build(storage_config)
 
     storage_ids = [c["uuid"] for c in args.delete["checkpoints"]]
 
@@ -109,7 +109,6 @@ def main(argv: List[str]) -> None:
             args.experiment_id,
             None,
             storage_config,
-            container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
         delete_tensorboards(tb_manager, dry_run=args.dry_run)
 

@@ -12,13 +12,13 @@ from tests.storage import util
 def live_manager(tmp_path: Path, require_secrets: bool) -> storage.S3StorageManager:
     """
     Return a working S3StorageManager connected to a real bucket when we detect that we have access
-    to s3.  S3 access may come from the user's normal filesystem authentication of from the
+    to s3.  S3 access may come from the user's normal filesystem authentication or from the
     AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.
 
     Note that we pass these variables as part of circleci's "storage-unit-tests" context.
 
     The circleci credentials belong to the "storage-unit-tests" user.  The contest of the key are at
-    github.com/determined-ai/secrets/aws/access-keys/storage-unit-tests.csv.
+    github.com/determined-ai/secrets/tree/master/aws/access-keys/storage-unit-tests.csv.
 
     The user only has premissions to read/write the "storage-unit-tests" bucket.
     """

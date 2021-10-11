@@ -17,7 +17,8 @@ def prep_gcs_test_creds(tmp_path: Path) -> Iterator[None]:
 
     Note that the gcs credentials in the "storage-unit-tests" context are the keyid=c07eed131 key
     to the storage-unit-tests@determined-ai.iam.gserviceaccount.com service account.  The contents
-    of the key are at github.com/determined-ai/secrets/gcp/service-accounts/storage-unit-tests.json.
+    of the key are at
+    github.com/determined-ai/secrets/tree/master/gcp/service-accounts/storage-unit-tests.json.
 
     The service account should only have permission to view the "storage-unit-tests" bucket.
     """
