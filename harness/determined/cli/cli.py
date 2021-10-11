@@ -160,7 +160,7 @@ def main(
 ) -> None:
     parser = make_parser(all_args_description)
     full_cmd, aliases = generate_aliases(DEPLOY_CMD_NAME)
-    is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, *full_cmd])
+    is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
 
