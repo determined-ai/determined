@@ -8,14 +8,20 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// GetJobOrder requests a list of *jobv1.Job.
 // FIXME haven't decided if resource manager actor should be responsible for this or not
 // we don't want a separate actor do we? could be useful for streaming job endpoints.
-// CHECK do we define these in sproto package?
-type GetJobOrder struct{} // response: []*jobv1.Job
+// CHECK do we define the following messages in sproto package?
+// QUESTION should we use proto defined messages more often internally or keep them at api level
+
+// GetJobOrder requests a list of *jobv1.Job.
+// Expected response: []*jobv1.Job.
+type GetJobOrder struct{}
+
+// GetJobSummary requests a JobSummary.
+// Expected response: jobv1.JobSummary.
 type GetJobSummary struct {
 	JobID model.JobID
-} // response: *jobv1.JobSummary // QUESTION should we use proto defined messages more often internally or keep them at api level
+}
 
 /* filterAllocateRequests
 1. filters allocations that are not associated with a job
@@ -86,10 +92,10 @@ func allocateReqToV1Job(
 
 // getJobSummary given an ordered list of allocateRequests returns the
 // requested job summary.
-func getV1JobSummary(rp *ResourcePool, jobId model.JobID, requests AllocReqs) *jobv1.JobSummary {
+func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *jobv1.JobSummary {
 	requests = filterAllocateRequests(requests)
 	for idx, req := range requests {
-		if req.Job.JobID == jobId {
+		if req.Job.JobID == jobID {
 			return allocateReqToV1Job(rp, req, idx).Summary
 		}
 	}

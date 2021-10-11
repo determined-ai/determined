@@ -63,6 +63,7 @@ const (
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
 )
 
+// StateFromProto maps experimentv1.State to State.
 func StateFromProto(state experimentv1.State) State {
 	str := state.String()
 	return State(strings.TrimPrefix(str, "STATE_"))
