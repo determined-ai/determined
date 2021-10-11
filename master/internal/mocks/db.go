@@ -1257,13 +1257,13 @@ func (_m *DB) MetricNames(experimentID int, sStartTime time.Time, vStartTime tim
 	return r0, r1, r2, r3, r4
 }
 
-// Migrate provides a mock function with given fields: migrationURL
-func (_m *DB) Migrate(migrationURL string) error {
-	ret := _m.Called(migrationURL)
+// Migrate provides a mock function with given fields: migrationURL, actions
+func (_m *DB) Migrate(migrationURL string, actions []string) error {
+	ret := _m.Called(migrationURL, actions)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(migrationURL)
+	if rf, ok := ret.Get(0).(func(string, []string) error); ok {
+		r0 = rf(migrationURL, actions)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2123,6 +2123,38 @@ func (_m *DB) UpsertTemplate(tpl *model.Template) error {
 	}
 
 	return r0
+}
+
+// UserByExternalToken provides a mock function with given fields: token, tokenKey
+func (_m *DB) UserByExternalToken(token string, tokenKey string) (*model.User, *model.UserSession, error) {
+	ret := _m.Called(token, tokenKey)
+
+	var r0 *model.User
+	if rf, ok := ret.Get(0).(func(string, string) *model.User); ok {
+		r0 = rf(token, tokenKey)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.User)
+		}
+	}
+
+	var r1 *model.UserSession
+	if rf, ok := ret.Get(1).(func(string, string) *model.UserSession); ok {
+		r1 = rf(token, tokenKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*model.UserSession)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(string, string) error); ok {
+		r2 = rf(token, tokenKey)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserByID provides a mock function with given fields: userID

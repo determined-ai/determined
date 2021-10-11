@@ -3,7 +3,6 @@ import pathlib
 import numpy as np
 
 import determined as det
-from determined import constants
 from determined.tensorboard import SharedFSTensorboardManager, get_base_path, get_sync_path
 from determined.tensorboard.metric_writers import util as metric_writers_util
 
@@ -12,9 +11,7 @@ BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
 def get_dummy_env() -> det.EnvContext:
     return det.EnvContext(
-        master_addr="",
-        master_port=0,
-        use_tls=False,
+        master_url="",
         master_cert_file=None,
         master_cert_name=None,
         container_id="",
@@ -26,13 +23,10 @@ def get_dummy_env() -> det.EnvContext:
         slot_ids=[],
         debug=False,
         hparams={"global_batch_size": 1},
-        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
-        det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_agent_id="1",
         det_experiment_id="1",
-        det_allocation_token="",
         det_cluster_id="uuid-123",
         trial_seed=0,
         trial_run_id=1,

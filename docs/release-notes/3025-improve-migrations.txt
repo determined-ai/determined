@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Database migrations: improve stability on upgrades.

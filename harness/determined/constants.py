@@ -1,19 +1,8 @@
-from pathlib import Path
-
-# The port to use (from the container's point of view; it will be mapped to
-# some arbitrary port on the host) for communication across containers. Must
-# match LocalRendezvousPort in master/internal/trial.go.
-LOCAL_RENDEZVOUS_PORT = 1734
-
 # The maximum number of slots we expect any agent to have. Since we offset some ports
 # by the min(device_id) belonging to the trial, if we have two ports offset in this way,
 # we separate them by the max(min(device_id)) to avoid collisions. The two rendezvous ports
 # are examples of this.
 MAX_SLOTS_PER_AGENT = 16
-
-# The path used to serialize the training process environment variables
-# inside the trial container.
-TRAIN_PROCESS_ENVIRONMENT_VARIABLE_PATH = Path("/tmp/det_train_process_env.json")
 
 # The default configs to use in the Determined Native API.
 #
@@ -46,10 +35,6 @@ HOROVOD_GLOO_RENDEZVOUS_PORT = 12355
 # validation metrics.
 INTER_TRAIN_PROCESS_COMM_PORT_1 = 12360
 INTER_TRAIN_PROCESS_COMM_PORT_2 = INTER_TRAIN_PROCESS_COMM_PORT_1 + MAX_SLOTS_PER_AGENT
-
-# Default trial runner interface. For distributed training this
-# specifies that the network interface must be auto-detected.
-AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE = "DET_AUTO_DETECT_NETWORK_INTERFACE"
 
 # How many seconds horovod waits for startup to complete before failing.
 HOROVOD_STARTUP_TIMEOUT_SECONDS = 1200

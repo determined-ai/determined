@@ -4,7 +4,9 @@
  Model Hub
 ###########
 
-.. rubric:: **Overview**
+**********
+ Overview
+**********
 
 Determined's **model-hub** library makes it easy to train models from popular third-party libraries
 with a Determined cluster. With **model-hub**, use trusted implementations of model architectures
@@ -19,7 +21,9 @@ Each supported third-party library in **model-hub** is accompanied by:
 -  A suite of helper functions (if applicable) to allow users to easily write their own Trial
    classes for use with the third-party library.
 
-.. rubric:: **Getting Started**
+*****************
+ Getting Started
+*****************
 
 For a given task, deep learning practitioners often adapt existing model implementations from a
 trusted third-party library, such as HuggingFace Transformers. When beginning your deep learning
@@ -33,7 +37,9 @@ project in this way, we suggest using **model-hub** with the following steps:
 
 For detailed instructions, check out the documentation for your Model Hub library of choice.
 
-.. rubric:: **Available Libraries**
+*********************
+ Available Libraries
+*********************
 
 Released libraries
 

@@ -37,6 +37,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 	envVars := g.LegacyConfig.EnvironmentVariables()
 	env := expconf.EnvironmentConfig{
 		RawEnvironmentVariables: &envVars,
+		RawPodSpec:              g.LegacyConfig.PodSpec(),
 	}
 	// Fill the rest of the environment with default values.
 	defaultConfig := expconf.ExperimentConfig{}
@@ -45,6 +46,7 @@ func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
 	}
 	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCheckpointGC}
 
 	res.WorkDir = DefaultWorkDir
 

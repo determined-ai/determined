@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import tensorflow as tf
 
@@ -28,31 +28,25 @@ ServingInputReceiverFn = Callable[
 ]
 
 
-class EstimatorContext(estimator._EstimatorReducerContext):
+class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext):
     """
     Base context class that contains runtime information for any Determined
     workflow that uses the ``tf.estimator`` API.
     """
 
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        allgather_fn: Callable[[Any], List[Any]],
-    ) -> None:
-        super().__init__(allgather_fn)
-        self.env = env
-        self.hvd_config = hvd_config
+    def __init__(self, *arg: Any, **kwarg: Any) -> None:
+        det.TrialContext.__init__(self, *arg, **kwarg)
+        estimator._EstimatorReducerContext.__init__(self, self.distributed._zmq_allgather)
 
         self.experimental = EstimatorExperimentalContext(
-            env=env,
-            hvd_config=hvd_config,
+            env=self.env,
+            hvd_config=self.hvd_config,
             parent=self,
         )
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
-        logging.debug(f"Initialized EstimatorContext with config: {self.hvd_config}.")
+        logging.debug(f"Initialized EstimatorTrialContext with config: {self.hvd_config}.")
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -74,7 +68,7 @@ class EstimatorContext(estimator._EstimatorReducerContext):
             "Please specify an optimizer object instead of using a string name.",
         )
 
-        hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_optimizer was called.")
+        hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_optimizer was called.")
         use_compression = self.hvd_config.fp16_compression
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
@@ -116,7 +110,7 @@ class EstimatorContext(estimator._EstimatorReducerContext):
         if not self.env.managed_training:
             return dataset
 
-        hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
+        hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
         if not self.hvd_config.use or not shard_dataset:
@@ -129,44 +123,6 @@ class EstimatorContext(estimator._EstimatorReducerContext):
         return dataset
 
 
-class EstimatorTrialContext(det.TrialContext, EstimatorContext):
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        det.TrialContext.__init__(self, env, hvd_config, rendezvous_info)
-        EstimatorContext.__init__(self, env, hvd_config, self.distributed._zmq_allgather)
-
-
-class EstimatorNativeContext(det.NativeContext, EstimatorContext):
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        det.NativeContext.__init__(self, env, hvd_config, rendezvous_info)
-        EstimatorContext.__init__(self, env, hvd_config, self.distributed._zmq_allgather)
-
-        # TODO(DET-1931): Figure out the right interface to set it.
-        self.serving_input_receiver_fns = {}  # type: Dict[str, ServingInputReceiverFn]
-
-    def train_and_evaluate(
-        self,
-        estimator: tf.estimator.Estimator,
-        train_spec: tf.estimator.TrainSpec,
-        eval_spec: tf.estimator.EvalSpec,
-    ) -> Any:
-        self.estimator = estimator
-        self.train_spec = train_spec
-        self.eval_spec = eval_spec
-
-        if self._train_fn:
-            self._train_fn()
-
-
 class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
     Context class that contains experimental runtime information and features
@@ -177,7 +133,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
 
     def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext, parent: EstimatorContext
+        self, env: det.EnvContext, hvd_config: horovod.HorovodContext, parent: EstimatorTrialContext
     ) -> None:
         super().__init__(env=env, hvd_config=hvd_config)
         self._parent = parent

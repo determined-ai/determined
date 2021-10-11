@@ -25,7 +25,7 @@ def format_validation(validation: Dict[str, Any]) -> List[Any]:
 # TODO(neilc): Report more info about checkpoints and validations.
 def format_checkpoint(checkpoint: Dict[str, Any]) -> List[Any]:
     if not checkpoint:
-        return [None, None]
+        return [None, None, None]
 
     if checkpoint["state"] in (constants.COMPLETED, constants.DELETED):
         return [

@@ -23,15 +23,21 @@ const defaultConfigPath = "/etc/determined/master.yaml"
 // logStoreSize is how many log events to keep in memory.
 const logStoreSize = 25000
 
-var rootCmd = &cobra.Command{
-	Use: "determined-master",
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := runRoot(); err != nil {
-			log.Error(fmt.Sprintf("%+v", err))
-			os.Exit(1)
-		}
-	},
+func newRootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "determined-master",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := runRoot(); err != nil {
+				log.Error(fmt.Sprintf("%+v", err))
+				os.Exit(1)
+			}
+		},
+	}
+	cmd.AddCommand(newMigrateCmd())
+	return cmd
 }
+
+var rootCmd = newRootCmd()
 
 func runRoot() error {
 	logStore := logger.NewLogBuffer(logStoreSize)

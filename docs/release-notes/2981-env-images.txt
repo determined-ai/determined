@@ -1,0 +1,9 @@
+:orphan:
+
+**Improvements**
+
+-  Images: Added CPU-only images for TF version 2.5 and 2.6.
+-  Images: TF 2.5 and 2.6 images will no longer include PyTorch builds. For PyTorch 1.9, please use
+   the combined TF 2.4 & PyTorch 1.9 image.
+-  Images: TF 2.4, 2.5, 2.6, and PyTorch 1.9 images will now use Python 3.8. Legacy TF 1.15 &
+   PyTorch 1.7 image will continue to use Python 3.7.

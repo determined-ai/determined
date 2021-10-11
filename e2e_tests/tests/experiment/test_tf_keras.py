@@ -6,6 +6,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [
@@ -51,6 +52,7 @@ def test_tf_keras_const_warm_start(
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
 def test_tf_keras_parallel(
@@ -75,6 +77,7 @@ def test_tf_keras_parallel(
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
@@ -95,6 +98,7 @@ def test_tf_keras_single_gpu(tf2: bool, collect_trial_profiles: Callable[[int], 
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
@@ -110,6 +114,7 @@ def test_tf_keras_mnist_parallel(collect_trial_profiles: Callable[[int], None]) 
 
 
 @pytest.mark.tensorflow2_cpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) -> None:
     """Keras on tf2 with tf2 and eager execution disabled."""
     config = conf.load_config(conf.fixtures_path("keras_tf2_disabled_no_op/const.yaml"))
@@ -126,6 +131,7 @@ def test_tf_keras_tf2_disabled(collect_trial_profiles: Callable[[int], None]) ->
     collect_trial_profiles(trials[0]["id"])
 
 
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize(  # type: ignore
     "tf2",
     [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
@@ -139,6 +145,7 @@ def test_tf_keras_mnist_data_layer_lfs(
 
 
 @pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_s3(
@@ -170,6 +177,7 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> int:
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_tf_keras_mnist_data_layer_parallel(
@@ -198,6 +206,7 @@ def test_tf_keras_mnist_data_layer_parallel(
 
 
 @pytest.mark.parallel  # type: ignore
+@pytest.mark.tensorflow2  # type: ignore
 def run_tf_keras_dcgan_example(collect_trial_profiles: Callable[[int], None]) -> None:
     config = conf.load_config(conf.gan_examples_path("dcgan_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})

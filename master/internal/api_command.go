@@ -49,7 +49,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var err error
 
 	// Validate the user and get the agent user group.
-	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
@@ -211,6 +211,7 @@ func (a *apiServer) LaunchCommand(
 			err.Error(),
 		)
 	}
+	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCommand}
 
 	// Launch a command actor.
 	commandIDFut := a.m.system.AskAt(commandsAddr, *spec)

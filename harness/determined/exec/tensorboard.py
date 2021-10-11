@@ -111,7 +111,7 @@ def get_tensorboard_args(args: List[str]) -> List[str]:
 
     if major == "2":
         tensorboard_args.append("--bind_all")
-        if minor == "5":
+        if minor >= "5":
             tensorboard_args.append("--load_fast=false")
         if len(logdir.split(",")) > 1:
             tensorboard_args.append(f"--logdir_spec={logdir}")

@@ -37,7 +37,6 @@ export const checkServerAlive = async (address?: string): Promise<boolean> => {
   } catch (_) {
     return false;
   }
-
 };
 
 // Returns the address to the server hosting react assets

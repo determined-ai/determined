@@ -1,12 +1,13 @@
 import { Button, notification } from 'antd';
 import queryString from 'query-string';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Page from 'components/Page';
+import PageMessage from 'components/PageMessage';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -19,6 +20,7 @@ import css from './SignIn.module.scss';
 
 interface Queries {
   cli?: boolean;
+  jwt?: string;
   redirect?: string;
 }
 
@@ -33,13 +35,18 @@ const SignIn: React.FC = () => {
   const ssoQueryString = queryString.stringify(ssoQueries);
   const samlSso = info.ssoProviders?.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
 
+  const externalAuthError = useMemo(() => {
+    return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
+  }, [ auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt ]);
+
   /*
    * Check every so often to see if the user is authenticated.
    * For example, the user can authenticate in a different session,info
    * and this will pick up that auth and automatically redirect them into
-   * their previous app.
+   * their previous app. We don't run immediately because the router also
+   * performs an auth check there as well upon the first page load.
    */
-  usePolling(useAuthCheck(canceler), { interval: 1000 });
+  usePolling(useAuthCheck(canceler), { interval: 1000, runImmediately: false });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
@@ -71,17 +78,37 @@ const SignIn: React.FC = () => {
     storeDispatch,
   ]);
 
+  useEffect(() => {
+    storeDispatch({ type: StoreAction.HideUIChrome });
+    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
+  }, [ storeDispatch ]);
+
   // Stop the polling upon a dismount of this page.
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
 
   /*
-   * Before showing the sign in form, make sure one auth check is done.
+   * Don't render sign in page if...
+   *   1. jwt query param detected
+   *   2. cluster has `externalLoginUri` defined
+   *   3. authentication hasn't occurred yet
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  return auth.checked ? (
+  if (queries.jwt || info.externalLoginUri || !auth.checked) return null;
+
+  /*
+   * An external auth error occurs when there are external auth urls,
+   * auth fails with a jwt.
+   */
+  if (externalAuthError) return (
+    <PageMessage title="Cluster Not Available">
+      <p>Cluster is not ready. Please try again later.</p>
+    </PageMessage>
+  );
+
+  return (
     <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
@@ -98,7 +125,7 @@ const SignIn: React.FC = () => {
         </div>
       </div>
     </Page>
-  ) : null;
+  );
 };
 
 export default SignIn;

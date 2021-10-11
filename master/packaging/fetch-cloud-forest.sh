@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-# Install native version to ensure it's on PATH
+# Ensure growforest is present.
 go install github.com/ryanbressler/CloudForest/growforest
 
-# Ensure the Linux binary is installed regardless of OS
-GOOS=linux go install github.com/ryanbressler/CloudForest/growforest
+# Load the whole go env.
+source <(go env)
 
-# Find the Linux binary for packaging and output the path
-if [ "$(go env GOOS)" == "linux" ]; then
-  echo $(which growforest)
+# Find the appropriate binary for packaging and output the path.
+if [ "$GOOS" == "$GOHOSTOS" ] && [ "$GOARCH" == "$GOHOSTARCH" ]; then
+    # Package is installed for local use.
+    echo "$GOPATH/bin/growforest"
 else
-  echo $(dirname $(which growforest))/linux_amd64/growforest
+    echo "$GOPATH/bin/${GOOS}_${GOARCH}/growforest"
 fi

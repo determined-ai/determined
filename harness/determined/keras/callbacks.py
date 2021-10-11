@@ -656,7 +656,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
 class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
     """
     This is a thin wrapper over the TensorBoard callback that ships with ``tf.keras``.  For more
-    information, see the :ref:`TensorBoard Guide <how-to-tensorboard>` or the upstream docs for
+    information, see the :ref:`TensorBoard Guide <tensorboards>` or the upstream docs for
     `tf.keras.callbacks.TensorBoard
     <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`__.
 

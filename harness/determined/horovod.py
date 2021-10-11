@@ -5,8 +5,6 @@ from typing import Any, Dict, List, Optional, cast
 
 import determined as det
 from determined import constants
-from determined._experiment_config import ExperimentConfig
-from determined._rendezvous_info import RendezvousInfo
 from determined.common import check
 
 
@@ -96,20 +94,7 @@ def create_hostlist_arg(num_proc_per_machine: int, ip_addresses: List[str]) -> s
     return ",".join([f"{host}:{num_proc_per_machine}" for host in trial_runner_hosts])
 
 
-def create_network_interface_arg_if_specified(env: det.EnvContext, num_machines: int) -> List[str]:
-    if (
-        env.det_trial_runner_network_interface
-        != constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE
-    ) and num_machines > 1:
-        return [
-            "--network-interface",
-            str(env.det_trial_runner_network_interface),
-        ]
-    return []
-
-
-def create_performance_args(env: det.EnvContext) -> List[str]:
-    optimizations = env.experiment_config.get("optimizations", {})
+def create_performance_args(optimizations: Dict[str, Any]) -> List[str]:
     check.check_in("auto_tune_tensor_fusion", optimizations)
     check.check_in("tensor_fusion_threshold", optimizations)
     check.check_in("tensor_fusion_cycle_time", optimizations)
@@ -143,7 +128,8 @@ def create_performance_args(env: det.EnvContext) -> List[str]:
 def create_run_command(
     num_proc_per_machine: int,
     ip_addresses: List[str],
-    env: det.EnvContext,
+    inter_node_network_interface: Optional[str],
+    optimizations: Dict[str, Any],
     debug: bool,
     optional_args: List[str],
 ) -> List[str]:
@@ -164,8 +150,9 @@ def create_run_command(
         "--gloo-timeout-seconds",
         str(constants.HOROVOD_GLOO_TIMEOUT_SECONDS),
     ]
-    horovod_process_cmd.extend(create_network_interface_arg_if_specified(env, num_machines))
-    horovod_process_cmd.extend(create_performance_args(env))
+    if inter_node_network_interface is not None and num_machines > 1:
+        horovod_process_cmd.extend(["--network-interface", inter_node_network_interface])
+    horovod_process_cmd.extend(create_performance_args(optimizations))
     if debug:
         horovod_process_cmd.append("--verbose")
     horovod_process_cmd.extend(optional_args)
@@ -192,9 +179,9 @@ class HorovodContext:
 
     @staticmethod
     def from_configs(
-        experiment_config: ExperimentConfig,
-        rendezvous_info: RendezvousInfo,
+        experiment_config: det.ExperimentConfig,
         hparams: Dict[str, Any],
+        multi_machine_trial: bool = False,
     ) -> "HorovodContext":
         """
         Create the HorovodContext according to experiment config and rendezvous info for this trial.
@@ -203,7 +190,6 @@ class HorovodContext:
         # Horovod is always used for multi-machine distributed training. For
         # single-machine multi-GPU training, Horovod is used when native_parallel is
         # disabled.
-        multi_machine_trial = rendezvous_info.get_size() > 1
         multi_slot_trial = experiment_config["resources"]["slots_per_trial"] > 1
         use_horovod = multi_machine_trial or (
             multi_slot_trial and not experiment_config.native_parallel_enabled()

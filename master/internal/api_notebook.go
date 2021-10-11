@@ -39,7 +39,7 @@ const (
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookDefaultPage = "/run/determined/workdir/readme.ipynb"
+	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
 var notebooksAddr = actor.Addr("notebooks")
@@ -154,6 +154,7 @@ func (a *apiServer) LaunchNotebook(
 	spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":   strconv.Itoa(port),
 		"NOTEBOOK_CONFIG": string(configBytes),
+		"DET_TASK_TYPE":   model.TaskTypeNotebook,
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}

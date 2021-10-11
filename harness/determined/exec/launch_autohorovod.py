@@ -5,11 +5,7 @@ It launches the entrypoint script under horovodrun when slots_per_trial>1, or as
 subprocess otherwise.
 """
 
-import distutils.util
-import json
 import logging
-import os
-import pathlib
 import socket
 import subprocess
 import sys
@@ -19,155 +15,57 @@ import simplejson
 
 import determined as det
 import determined.common
-from determined import gpu, horovod, layers
+from determined import horovod
 from determined.common import api, constants, storage
 from determined.common.api import certs
 from determined.constants import HOROVOD_SSH_PORT
 
-ENVIRONMENT_VARIABLE_KEYS = {
-    "DET_MASTER_ADDR",
-    "DET_MASTER_PORT",
-    "DET_USE_TLS",
-    "DET_AGENT_ID",
-    "DET_SLOT_IDS",
-    "DET_CONTAINER_ID",
-    "DET_USE_GPU",
-    "DET_EXPERIMENT_ID",
-    "DET_TRIAL_ID",
-    "DET_TRIAL_SEED",
-    "DET_EXPERIMENT_CONFIG",
-    "DET_HPARAMS",
-    "DET_LATEST_BATCH",
-    "DET_RENDEZVOUS_PORT",
-    "DET_TRIAL_RUNNER_NETWORK_INTERFACE",
-    "DET_ALLOCATION_SESSION_TOKEN",
-    "DET_TRIAL_RUN_ID",
-    "DET_ALLOCATION_ID",
-    "DET_RENDEZVOUS_INFO",
-}
-
 
 def main() -> int:
-    missing_vars = ENVIRONMENT_VARIABLE_KEYS.difference(set(os.environ))
-    if missing_vars:
-        for var in missing_vars:
-            print(f"missing environment variable: {var}", file=sys.stderr)
-        return 1
+    info = det.get_cluster_info()
+    assert info is not None, "must be run on-cluster"
+    assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    experiment_config = simplejson.loads(os.environ["DET_EXPERIMENT_CONFIG"])
+    # Hack: read the full config.  The experiment config is not a stable API!
+    experiment_config = info.trial._config
+
     debug = experiment_config.get("debug", False)
     determined.common.set_logger(debug)
 
-    master_addr = os.environ["DET_MASTER_ADDR"]
-    master_port = int(os.environ["DET_MASTER_PORT"])
-    use_tls = distutils.util.strtobool(os.environ.get("DET_USE_TLS", "false"))
-    master_cert_file = os.environ.get("DET_MASTER_CERT_FILE")
-    master_cert_name = os.environ.get("DET_MASTER_CERT_NAME")
-    agent_id = os.environ["DET_AGENT_ID"]
-    container_id = os.environ["DET_CONTAINER_ID"]
-    hparams = simplejson.loads(os.environ["DET_HPARAMS"])
-
-    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
-    master_url = f"http{'s' if use_tls else ''}://{master_addr}:{master_port}"
-    cert = certs.default_load(master_url)
-    certs.cli_cert = cert
-
-    latest_checkpoint = os.environ.get("DET_LATEST_CHECKPOINT")
-
-    latest_batch = int(os.environ["DET_LATEST_BATCH"])
-
-    use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
-    slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
-    det_rendezvous_port = os.environ["DET_RENDEZVOUS_PORT"]
-    det_trial_unique_port_offset = int(os.environ["DET_TRIAL_UNIQUE_PORT_OFFSET"])
-    det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]
-    det_trial_id = os.environ["DET_TRIAL_ID"]
-    det_experiment_id = os.environ["DET_EXPERIMENT_ID"]
-    det_agent_id = os.environ["DET_AGENT_ID"]
-    det_cluster_id = os.environ["DET_CLUSTER_ID"]
-    det_allocation_token = os.environ["DET_ALLOCATION_SESSION_TOKEN"]
-    trial_seed = int(os.environ["DET_TRIAL_SEED"])
-    trial_run_id = int(os.environ["DET_TRIAL_RUN_ID"])
-    allocation_id = os.environ["DET_ALLOCATION_ID"]
-
-    container_gpus = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
-
-    env = det.EnvContext(
-        master_addr=master_addr,
-        master_port=master_port,
-        use_tls=use_tls,
-        master_cert_file=master_cert_file,
-        master_cert_name=master_cert_name,
-        container_id=container_id,
-        experiment_config=experiment_config,
-        hparams=hparams,
-        latest_checkpoint=latest_checkpoint,
-        latest_batch=latest_batch,
-        use_gpu=use_gpu,
-        container_gpus=container_gpus,
-        slot_ids=slot_ids,
-        debug=debug,
-        det_rendezvous_port=det_rendezvous_port,
-        det_trial_unique_port_offset=det_trial_unique_port_offset,
-        det_trial_runner_network_interface=det_trial_runner_network_interface,
-        det_trial_id=det_trial_id,
-        det_experiment_id=det_experiment_id,
-        det_agent_id=det_agent_id,
-        det_cluster_id=det_cluster_id,
-        det_allocation_token=det_allocation_token,
-        trial_seed=trial_seed,
-        trial_run_id=trial_run_id,
-        allocation_id=allocation_id,
-        managed_training=True,
-        test_mode=False,
-        on_cluster=True,
-    )
-
     logging.info(
-        f"New trial runner in (container {container_id}) on agent {agent_id}: {env.__dict__}."
+        f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
+        + simplejson.dumps(experiment_config)
     )
 
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the
     # DistributedContext is not created soon enough for that to work well.
     try:
         storage.validate_config(
-            env.experiment_config["checkpoint_storage"],
+            experiment_config["checkpoint_storage"],
             container_path=constants.SHARED_FS_CONTAINER_PATH,
         )
     except Exception as e:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         return 1
 
-    jri = json.loads(os.environ["DET_RENDEZVOUS_INFO"])
-    rendezvous_info = det.RendezvousInfo(addrs=jri["addresses"], rank=jri["rank"])
-
-    hvd_config = horovod.HorovodContext.from_configs(
-        env.experiment_config, rendezvous_info, env.hparams
-    )
-
-    if not hvd_config.use:
-        # Skip running in subprocesses to improve startup times.
+    if experiment_config.get("resources", {}).get("slots_per_trial", 1) < 2:
+        # Non-distriubuted training; skip running in subprocesses to improve startup times.
         from determined.exec import harness
 
-        return harness.main(env, rendezvous_info, hvd_config)
+        return harness.main()
 
-    # Horovod-based training will require us to pass the environment config through the filesystem.
-    # This is so that machine-specific variables, like DET_CONTAINER_ID, are correct on every
-    # worker, even when the worker is on a different machine than where horovodrun was called.
-    # Otherwise the horovodrun machine will blindly duplicate its own variables everywhere.
-    # TODO: It would be better to do this master-side.
-    wpc = layers.WorkerProcessContext(hvd_config, rendezvous_info, env)
-    wpc_path = f"/tmp/worker_process_context{env.allocation_id}"
-    wpc.to_file(pathlib.Path(wpc_path))
+    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    cert = certs.default_load(info.master_url)
+    certs.cli_cert = cert
 
-    if rendezvous_info.rank > 0:
+    if info.container_rank > 0:
         # Non-chief machines just run sshd.
 
         # Mark sshd containers as daemon containers that the master should kill when all non-daemon
         # contiainers (horovodrun, in this case) have exited.
         api.post(
-            master_url,
-            path=f"/api/v1/allocations/{env.allocation_id}/containers/{env.container_id}/daemon",
+            info.master_url,
+            path=f"/api/v1/allocations/{info.allocation_id}/containers/{info.container_id}/daemon",
             cert=cert,
         )
 
@@ -183,8 +81,8 @@ def main() -> int:
             "SIGTERM",
             "--on-exit",
             "WAIT",
-            f"/tmp/pid_server-{env.allocation_id}",
-            str(len(env.slot_ids)),
+            f"/tmp/pid_server-{info.allocation_id}",
+            str(len(info.slot_ids)),
             "--",
         ]
 
@@ -198,7 +96,7 @@ def main() -> int:
         ]
 
         logging.debug(
-            f"Non-chief [{rendezvous_info.get_rank()}] training process launch "
+            f"Non-chief [{info.container_rank}] training process launch "
             f"command: {run_sshd_command}."
         )
         return subprocess.Popen(pid_server_cmd + run_sshd_command).wait()
@@ -206,7 +104,7 @@ def main() -> int:
     # Chief machine waits for every worker's sshd to be available.  All machines should be pretty
     # close to in-step by now because all machines just finished synchronizing rendezvous info.
     deadline = time.time() + 20
-    for peer in rendezvous_info.get_ip_addresses()[1:]:
+    for peer in info.container_addrs[1:]:
         while True:
             with socket.socket() as sock:
                 sock.settimeout(1)
@@ -248,24 +146,28 @@ def main() -> int:
         "SIGINT",
         "--on-exit",
         "WAIT",
-        f"/tmp/pid_server-{env.allocation_id}",
-        str(len(env.slot_ids)),
+        f"/tmp/pid_server-{info.allocation_id}",
+        str(len(info.slot_ids)),
         "--",
     ]
 
+    # TODO: remove this (very old) hack when we have a configurable launch layer.
+    hvd_optional_args = experiment_config.get("data", {}).get("__det_dtrain_args", [])
+
     hvd_cmd = horovod.create_run_command(
-        num_proc_per_machine=len(env.slot_ids),
-        ip_addresses=rendezvous_info.get_ip_addresses(),
-        env=env,
-        debug=env.experiment_config.debug_enabled(),
-        optional_args=env.experiment_config.horovod_optional_args() + sys.argv[1:],
+        num_proc_per_machine=len(info.slot_ids),
+        ip_addresses=info.container_addrs,
+        inter_node_network_interface=info.trial._inter_node_network_interface,
+        optimizations=experiment_config["optimizations"],
+        debug=debug,
+        optional_args=hvd_optional_args + sys.argv[1:],
     )
 
     pid_client_cmd = [
         "python3",
         "-m",
         "determined.exec.pid_client",
-        f"/tmp/pid_server-{env.allocation_id}",
+        f"/tmp/pid_server-{info.allocation_id}",
         "--",
     ]
 
@@ -279,7 +181,6 @@ def main() -> int:
         "python3",
         "-m",
         "determined.exec.harness",
-        wpc_path,
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")

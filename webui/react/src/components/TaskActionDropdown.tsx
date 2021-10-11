@@ -75,10 +75,33 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
         }
         case Action.Kill:
           if (isExperiment) {
-            await killExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            Modal.confirm({
+              content: `
+              Are you sure you want to kill
+              experiment ${id}?
+            `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killExperiment({ experimentId: id });
+                onComplete?.(action);
+              },
+              title: 'Confirm Experiment Kill',
+            });
           } else {
-            await killTask(task as CommandTask);
+            Modal.confirm({
+              content: `
+              Are you sure you want to kill
+              this task?
+            `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killTask(task as CommandTask);
+                onComplete?.(action);
+              },
+              title: 'Confirm Task Kill',
+            });
           }
           break;
         case Action.Pause:

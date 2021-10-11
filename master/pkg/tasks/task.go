@@ -21,6 +21,7 @@ const (
 	DefaultWorkDir    = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
+	infoDir           = "/run/determined/info"
 	trainDir          = "/run/determined/train"
 	modelCopy         = "/run/determined/train/model"
 	rootDir           = "/"
@@ -48,6 +49,9 @@ type TaskSpec struct {
 	ClusterID   string
 	HarnessPath string
 	MasterCert  *tls.Certificate
+
+	SegmentEnabled bool
+	SegmentAPIKey  string
 
 	// Fields that are set on the per-request basis.
 	// TaskContainerDefaults should be removed from TaskSpec once we move to using the same
@@ -108,10 +112,10 @@ func (t TaskSpec) EnvVars() map[string]string {
 	e := map[string]string{
 		// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 		// the user inside the container.
-		"PYTHONUSERBASE":               userPythonBaseDir,
-		"DET_TASK_ID":                  t.TaskID,
-		"DET_ALLOCATION_ID":            t.AllocationID,
-		"DET_ALLOCATION_SESSION_TOKEN": t.AllocationSessionToken,
+		"PYTHONUSERBASE":    userPythonBaseDir,
+		"DET_TASK_ID":       t.TaskID,
+		"DET_ALLOCATION_ID": t.AllocationID,
+		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 	}
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
@@ -121,16 +125,20 @@ func (t TaskSpec) EnvVars() map[string]string {
 	}
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
-	if networkInterface == "" {
-		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
+	if networkInterface != "" {
+		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
-	e["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
 
 	if t.MasterCert != nil {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {
 		e["DET_USE_TLS"] = "false"
+	}
+
+	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+	if t.SegmentEnabled {
+		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
 	}
 
 	for k, v := range t.ExtraEnvVars {
@@ -219,6 +227,7 @@ func workDirArchive(
 ) container.RunArchive {
 	a := archive.Archive{
 		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(infoDir, nil, 0755, tar.TypeDir),
 		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
 	}
 	if createWorkDir {

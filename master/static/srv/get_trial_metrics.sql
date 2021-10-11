@@ -3,6 +3,7 @@ FROM
   (SELECT t.id,
           t.experiment_id,
           t.state,
+          t.start_time,
           t.end_time,
           t.hparams,
           t.seed,
