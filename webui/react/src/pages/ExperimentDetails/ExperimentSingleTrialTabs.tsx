@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
 import NotesCard from 'components/NotesCard';
-import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
