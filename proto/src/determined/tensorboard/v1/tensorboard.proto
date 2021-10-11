@@ -20,6 +20,7 @@ message Tensorboard {
         "start_time",
         "state",
         "username",
+        "job_id",
         "resource_pool"
       ]
     }

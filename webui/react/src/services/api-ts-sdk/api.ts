@@ -1138,7 +1138,7 @@ export interface V1Command {
      * @type {string}
      * @memberof V1Command
      */
-    jobId?: string;
+    jobId: string;
 }
 
 /**
@@ -4711,7 +4711,7 @@ export interface V1Shell {
      * @type {string}
      * @memberof V1Shell
      */
-    jobId?: string;
+    jobId: string;
 }
 
 /**
@@ -4849,7 +4849,7 @@ export interface V1Tensorboard {
      * @type {string}
      * @memberof V1Tensorboard
      */
-    jobId?: string;
+    jobId: string;
 }
 
 /**
