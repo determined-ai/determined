@@ -23,6 +23,10 @@ type GetJobSummary struct {
 	JobID model.JobID
 }
 
+// GetJobQStats requests stats for a queue.
+// Expected response: jobv1.QueueStats.
+type GetJobQStats struct{}
+
 /* filterAllocateRequests
 1. filters allocations that are not associated with a job
 2. merge/filter multilpe allocations representing a single job. If a job has many allocReqs this
@@ -120,4 +124,21 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 		return
 	}
 	req.Job.State = state
+}
+
+func jobStats(rp *ResourcePool) *jobv1.QueueStats {
+	stats := jobv1.QueueStats{}
+	reqs := rp.scheduler.OrderedAllocations(rp)
+	reqs = filterAllocateRequests(reqs)
+	for _, req := range reqs {
+		if req.Preemptible {
+			stats.PreemptibleCount++
+		}
+		if req.Job.State == sproto.SchedulingStateQueued {
+			stats.QueuedCount++
+		} else {
+			stats.ScheduledCount++
+		}
+	}
+	return &stats
 }
