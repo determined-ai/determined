@@ -23,6 +23,8 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu_elastic # type: ignore
+@pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.timeout(300)
 def test_trial_logs() -> None:
     # TODO: refactor tests to not use cli singleton auth.
@@ -44,6 +46,8 @@ def test_trial_logs() -> None:
 
 
 @pytest.mark.e2e_cpu # type: ignore
+@pytest.mark.e2e_cpu_elastic # type: ignore
+@pytest.mark.e2e_gpu # type: ignore
 @pytest.mark.timeout(300)
 @pytest.mark.parametrize(  # type: ignore
     "task_type,task_config,task_extras,log_regex",

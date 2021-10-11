@@ -153,13 +153,13 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case actor.PostStop:
 		if c.exitStatus == nil {
-			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
 	case actor.ChildStopped:
 		if c.exitStatus == nil {
-			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
@@ -169,7 +169,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				FinalState: task.AllocationState{State: model.AllocationStateTerminated},
 				Err:        errors.New("command allocation actor failed"),
 			}
-			if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+			if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 				ctx.Log().WithError(err).Error("marking task complete")
 			}
 		}
@@ -185,7 +185,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 	case *task.AllocationExited:
 		c.exitStatus = msg
-		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
+		if err := c.db.CompleteTask(c.taskID, time.Now().UTC()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")
 		}
 		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})

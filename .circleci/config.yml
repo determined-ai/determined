@@ -1866,6 +1866,16 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
 
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: e2e_cpu_elastic
+          target-stage: agent
+
       - test-e2e-webui:
           requires:
             - build-react

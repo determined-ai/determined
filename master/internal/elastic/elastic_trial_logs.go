@@ -98,7 +98,7 @@ func (e *Elastic) TrialLogs(
 					jsonObj{
 						"range": jsonObj{
 							"timestamp": jsonObj{
-								"lte": time.Now().UTC().Add(elasticTimeWindowDelay),
+								"lte": time.Now().UTC().Add(-ElasticTimeWindowDelay),
 							},
 						},
 					}),

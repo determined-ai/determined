@@ -24,7 +24,7 @@ const (
 	elasticMaxQuerySize = 10000
 	// A time buffer to allow logs to come in before we try to serve them up. We do this to
 	// not miss later logs when using search_after.
-	elasticTimeWindowDelay = -10 * time.Second
+	ElasticTimeWindowDelay = 10 * time.Second
 )
 
 type jsonObj = map[string]interface{}
@@ -71,7 +71,7 @@ func (e *Elastic) TaskLogsCount(taskID model.TaskID, fs []api.Filter) (int, erro
 				"filter": append(filtersToElastic(fs),
 					jsonObj{
 						"term": jsonObj{
-							"task_id": taskID,
+							"task_id.keyword": taskID,
 						},
 					}),
 			},
@@ -104,17 +104,18 @@ func (e *Elastic) TaskLogs(
 				"filter": append(filtersToElastic(fs),
 					jsonObj{
 						"term": jsonObj{
-							"task_id": taskID,
+							"task_id.keyword": taskID,
 						},
 					},
 					// Only look at logs posted more than 10 seconds ago. In the event
 					// a fluentbit shipper is backed up, it may post logs with a timestamp
 					// that falls before the current time. If we do a search_after based on
 					// the latest logs, we may miss these backed up unless we do this.
+					// This probably should be using PIT instead.
 					jsonObj{
 						"range": jsonObj{
 							"timestamp": jsonObj{
-								"lte": time.Now().UTC().Add(elasticTimeWindowDelay),
+								"lte": time.Now().UTC().Add(-ElasticTimeWindowDelay),
 							},
 						},
 					}),
@@ -180,7 +181,7 @@ func (e *Elastic) DeleteTaskLogs(ids []model.TaskID) error {
 	for i, id := range ids {
 		taskIDterms[i] = jsonObj{
 			"term": jsonObj{
-				"task_id": id,
+				"task_id.keyword": id,
 			},
 		}
 	}
@@ -227,7 +228,7 @@ func (e *Elastic) TaskLogsFields(taskID model.TaskID) (*apiv1.TaskLogsFieldsResp
 				"filter": []jsonObj{
 					{
 						"term": jsonObj{
-							"task_id": taskID,
+							"task_id.keyword": taskID,
 						},
 					},
 				},

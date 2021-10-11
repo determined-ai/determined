@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -23,9 +24,11 @@ const (
 )
 
 var (
-	taskLogsBatchWaitTime       = 100 * time.Millisecond
-	taskLogsBatchMissWaitTime   = time.Second
-	taskLogsTerminationDelay    = 2 * time.Second
+	taskLogsBatchWaitTime     = 100 * time.Millisecond
+	taskLogsBatchMissWaitTime = time.Second
+	// For Elasticsearch, this _must_ be greater than internal/elastic.elasticTimeWindowDelay
+	// or else following terminates before all logs are delivered.
+	taskLogsTerminationDelay    = elastic.ElasticTimeWindowDelay + time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
 
 	// Common errors
