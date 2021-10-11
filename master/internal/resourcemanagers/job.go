@@ -63,8 +63,8 @@ func allocateReqToV1Job(
 	}
 	group := rp.groups[req.Group]
 	job = &jobv1.Job{
+		JobId: string(req.Job.JobID),
 		Summary: &jobv1.JobSummary{
-			JobId:     string(req.Job.JobID),
 			State:     req.Job.State.Proto(),
 			JobsAhead: int32(jobsAhead),
 		},

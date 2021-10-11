@@ -37,14 +37,12 @@ enum State {
 // Job summary.
 message JobSummary {  // TODO move job_id out
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "job_id", "state", "jobs_ahead" ] }
+    json_schema: { required: [ "state", "jobs_ahead" ] }
   };
-  // Job id.
-  string job_id = 1;
   // The scheduling state of the job.
-  State state = 2;
+  State state = 1;
   // The number of jobs ahead of this one in the queue.
-  int32 jobs_ahead = 3;
+  int32 jobs_ahead = 2;
 }
 
 // Job represents a user submitted work that is not in a terminal
@@ -59,7 +57,8 @@ message Job {
         "user",
         "resource_pool",
         "is_preemptible",
-        "entity_id"
+        "entity_id",
+        "job_id"
       ]
     }
   };
@@ -81,6 +80,8 @@ message Job {
   double weight = 8;
   // Entity ID.
   string entity_id = 9;
+  // Job type.
+  string job_id = 10;
 }
 
 // Describes a message to control jobs in a queue.
