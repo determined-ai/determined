@@ -41,7 +41,6 @@ from determined.common.util import (
     get_default_master_address,
     safe_load_yaml_with_exceptions,
 )
-# from determined.deploy.cli import DEPLOY_CMD_NAME
 
 from .errors import EnterpriseOnlyError
 
@@ -121,8 +120,6 @@ args_description = [
             help="experiment config file (.yaml)")
     ]),
     Cmd("d|eploy", None, "manage deployments", []),
-
-    # deploy_args_description,
 ]  # type: List[object]
 
 # fmt: on
@@ -186,9 +183,6 @@ def main(args: List[str] = sys.argv[1:], ) -> None:
 
         try:
             # For `det deploy`, skip interaction with master.
-            # if v.get("_command") == DEPLOY_CMD_NAME:
-            #     parsed_args.func(parsed_args)
-            #     return
 
             try:
                 check_version(parsed_args)
