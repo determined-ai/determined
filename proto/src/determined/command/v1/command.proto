@@ -40,6 +40,6 @@ message Command {
   string resource_pool = 11;
   // The exit status;
   string exit_status = 12;
-  // The associated job summary.
-  determined.job.v1.JobSummary job_summary = 13;
+  // The associated job id.
+  string job_id = 13;
 }

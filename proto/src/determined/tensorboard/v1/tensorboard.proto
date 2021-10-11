@@ -46,6 +46,6 @@ message Tensorboard {
   string resource_pool = 12;
   // The exit status;
   string exit_status = 13;
-  // The associated job summary.
-  determined.job.v1.JobSummary job_summary = 14;
+  // The associated job id.
+  string job_id = 14;
 }

@@ -80,7 +80,7 @@ message Experiment {
   // The experiment notes.
   string notes = 14;
   // Associated job's id.
-  string job_id = 15; // #TODO apply to NTbCS
+  string job_id = 15;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an
