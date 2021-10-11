@@ -1,2 +1,8 @@
-DEPLOY_CMD_NAME = "d|eploy"
-DEPLOY_CMD_DESCRIPTION = "manage deployments"
+from determined.common.declarative_argparse import Cmd
+
+deploy_cmd = Cmd(
+    "d|eploy",
+    None,
+    "manage deployments",
+    [],
+)

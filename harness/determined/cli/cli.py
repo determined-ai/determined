@@ -16,7 +16,7 @@ import determined
 import determined.cli
 from determined.cli import checkpoint, experiment, render
 from determined.cli.agent import args_description as agent_args_description
-from determined.cli.constants import DEPLOY_CMD_DESCRIPTION, DEPLOY_CMD_NAME
+from determined.cli.constants import deploy_cmd
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -120,7 +120,7 @@ args_description = [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
     ]),
-    Cmd(DEPLOY_CMD_NAME, None, DEPLOY_CMD_DESCRIPTION, []),
+    deploy_cmd,
 ]  # type: List[object]
 
 # fmt: on
@@ -159,7 +159,7 @@ def main(
     parser = make_parser(all_args_description)
 
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
-    full_cmd, aliases = generate_aliases(DEPLOY_CMD_NAME)
+    full_cmd, aliases = generate_aliases(deploy_cmd.name)
     is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description

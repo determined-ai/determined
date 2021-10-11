@@ -3,7 +3,7 @@ import warnings
 from typing import List, Union
 
 from determined import __version__
-from determined.cli.constants import DEPLOY_CMD_DESCRIPTION, DEPLOY_CMD_NAME
+from determined.cli.constants import deploy_cmd
 from determined.common.declarative_argparse import Arg, Cmd, add_args
 
 from .aws.cli import args_description as aws_args_description
@@ -30,13 +30,8 @@ args_subs: List[Union[Arg, Cmd]] = [
     gcp_args_description,
 ]
 
-args_description = Cmd(
-    DEPLOY_CMD_NAME,
-    None,
-    DEPLOY_CMD_DESCRIPTION,
-    args_subs,
-)
-
+deploy_cmd.subs = args_subs
+args_description = deploy_cmd
 
 def main() -> None:
     """Deprecated entry point for standalone `det-deploy`."""
