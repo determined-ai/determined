@@ -12,20 +12,20 @@ interface Props {
 }
 
 const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
-  const [ editingNotes, setEditingNotes ] = useState(false);
+  const [ isEditing, setIsEditing ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
 
   const editNotes = useCallback(() => {
-    setEditingNotes(true);
+    setIsEditing(true);
   }, []);
 
   const cancelEdit = useCallback(() => {
-    setEditingNotes(false);
+    setIsEditing(false);
     setEditedNotes(notes);
   }, [ notes ]);
 
   const saveNotes = useCallback(() => {
-    setEditingNotes(false);
+    setIsEditing(false);
     onSave(editedNotes);
   }, [ editedNotes, onSave ]);
 
@@ -38,7 +38,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         padding: 0,
       }}
       className={css.base}
-      extra={editingNotes ? (
+      extra={isEditing ? (
         <Space size="small">
           <Button size="small" onClick={cancelEdit}>Cancel</Button>
           <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
@@ -57,8 +57,8 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
       style={style}
       title="Notes">
       <Markdown
-        editing={editingNotes}
-        markdown={editingNotes ? editedNotes : notes}
+        editing={isEditing}
+        markdown={isEditing ? editedNotes : notes}
         onChange={setEditedNotes}
         onClick={editNotes}
       />
