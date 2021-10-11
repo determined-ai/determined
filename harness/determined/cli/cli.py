@@ -44,7 +44,7 @@ from determined.common.util import (
 
 from .errors import EnterpriseOnlyError
 
-DEPLOY_CMD_NAME = "d|eploy" # TODO import
+DEPLOY_CMD_NAME = "d|eploy"  # TODO import
 
 
 @authentication.required
@@ -155,12 +155,15 @@ def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
     return parser
 
 
-def main(args: List[str] = sys.argv[1:], ) -> None:
+def main(
+    args: List[str] = sys.argv[1:],
+) -> None:
     parser = make_parser(all_args_description)
     full_cmd, aliases = generate_aliases(DEPLOY_CMD_NAME)
     is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, *full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
+
         parser = make_parser([deploy_args_description])
 
     try:
