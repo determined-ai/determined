@@ -16,8 +16,8 @@ import requests
 from determined import experimental
 from determined.common import api, yaml
 from determined.common.api import authentication, certs
-from tests import cluster
 from tests import config as conf
+from tests.cluster import utils as cluster_utils
 
 
 def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:
@@ -537,7 +537,7 @@ def verify_completed_experiment_metadata(
     # take some time.
     max_secs_to_free_slots = 30
     for _ in range(max_secs_to_free_slots):
-        if cluster.num_free_slots() == cluster.num_slots():
+        if cluster_utils.num_free_slots() == cluster_utils.num_slots():
             break
         time.sleep(1)
     else:
