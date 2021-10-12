@@ -3685,7 +3685,7 @@ export interface V1QueueStats {
 }
 
 /**
- * 
+ * Job stats for a resource pool.
  * @export
  * @interface V1RPQueueStat
  */
