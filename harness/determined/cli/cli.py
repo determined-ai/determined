@@ -145,7 +145,7 @@ all_args_description = (
 )
 
 
-def make_parser(arg_descriptions: List[object]) -> ArgumentParser:
+def make_parser(arg_descriptions: List[object] = all_args_description) -> ArgumentParser:
     parser = ArgumentParser(
         description="Determined command-line client", formatter_class=ArgumentDefaultsHelpFormatter
     )
