@@ -116,6 +116,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
     description: string,
     labels: string[],
     name: string,
+    notes: string;
   }>
 }
 

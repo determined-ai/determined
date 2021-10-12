@@ -428,6 +428,7 @@ export interface ExperimentItem {
   id: number;
   labels: string[];
   name: string;
+  notes?: string;
   numTrials: number;
   progress?: number;
   resourcePool: string
@@ -445,6 +446,7 @@ export interface ExperimentBase {
   hyperparameters: HyperparametersFlattened;    // nested hp keys are flattened, eg) foo.bar
   id: number;
   name: string;
+  notes?: string;
   progress?: number;
   resourcePool: string;
   startTime: string;
