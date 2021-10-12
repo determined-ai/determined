@@ -33,6 +33,7 @@ args_subs: List[Union[Arg, Cmd]] = [
 deploy_cmd.subs = args_subs
 args_description = deploy_cmd
 
+
 def main() -> None:
     """Deprecated entry point for standalone `det-deploy`."""
     parser = argparse.ArgumentParser(
