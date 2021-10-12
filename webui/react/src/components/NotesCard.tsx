@@ -60,7 +60,7 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         editing={isEditing}
         markdown={isEditing ? editedNotes : notes}
         onChange={setEditedNotes}
-        onClick={editNotes}
+        onClick={() => { if (notes === '') editNotes(); }}
       />
     </Card>
   );
