@@ -21,7 +21,9 @@ export const useFetchInfo = (canceler: AbortController): () => Promise<void> => 
     try {
       const response = await getInfo({ signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetInfo, value: response });
-    } catch (e) {}
+    } catch (e) {
+      storeDispatch({ type: StoreAction.SetInfoCheck });
+    }
   }, [ canceler, storeDispatch ]);
 };
 

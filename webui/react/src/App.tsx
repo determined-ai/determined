@@ -1,5 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
 import { setupAnalytics } from 'Analytics';
@@ -20,14 +20,15 @@ import appRoutes from 'routes';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-import { checkServerAlive, paths, serverAddress } from './routes/utils';
+import { paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
   const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
-  const [ isAlive, setIsAlive ] = useState<boolean>();
   const storeDispatch = useStoreDispatch();
+
+  const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
   const fetchInfo = useFetchInfo(canceler);
 
@@ -89,25 +90,19 @@ const AppView: React.FC = () => {
     };
   }, [ ui.omnibar.isShowing, storeDispatch ]);
 
-  // Quick one time check to see if the server is reachable.
-  useEffect(() => {
-    checkServerAlive().then(alive => setIsAlive(alive));
-  }, []);
-
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
   return (
-    <Spinner spinning={isAlive === undefined}>
+    <Spinner spinning={!info.checked}>
       <div className={css.base}>
-        {isAlive === true && (
+        {isServerReachable ? (
           <Navigation>
             <main>
               <Router routes={appRoutes} />
             </main>
           </Navigation>
-        )}
-        {isAlive === false && (
+        ) : (
           <PageMessage title="Server is Unreachable">
             <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
               Please check the firewall and cluster settings.</p>

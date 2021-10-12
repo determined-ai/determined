@@ -38,8 +38,14 @@ export interface SsoProvider {
   ssoUrl: string;
 }
 
+export enum BrandingType {
+  Determined = 'determined',
+  HPE = 'hpe',
+}
+
 export interface DeterminedInfo {
   branding?: string;
+  checked: boolean,
   clusterId: string;
   clusterName: string;
   externalLoginUri?: string;
