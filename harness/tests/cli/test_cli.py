@@ -1,7 +1,6 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import cast
 
 import pytest
 import requests
@@ -239,5 +238,4 @@ def test_cli_args_exist() -> None:
 
     with pytest.raises(SystemExit) as e:
         cli.main(["preview-search", "-h"])
-    e = cast(SystemExit, e.value)
-    assert e.code == 0
+    assert e.value.code == 0
