@@ -1,6 +1,7 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
+import { Prompt, useLocation } from 'react-router-dom';
 
 import Markdown from './Markdown';
 import css from './NotesCard.module.scss';
@@ -14,6 +15,7 @@ interface Props {
 const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
   const [ isEditing, setIsEditing ] = useState(false);
   const [ editedNotes, setEditedNotes ] = useState(notes);
+  const location = useLocation();
 
   const editNotes = useCallback(() => {
     setIsEditing(true);
@@ -62,6 +64,15 @@ const NotesCard: React.FC<Props> = ({ notes, onSave, style }: Props) => {
         onChange={setEditedNotes}
         onClick={() => { if (notes === '') editNotes(); }}
       />
+      <Prompt
+        message={(newLocation) => {
+          return (
+            newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/')) ?
+              true :
+              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
+          );
+        }}
+        when={editedNotes !== notes} />
     </Card>
   );
 };
