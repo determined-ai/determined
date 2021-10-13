@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import pytest
 import requests
@@ -198,15 +199,45 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
 
 def test_cli_args_exist() -> None:
     valid_cmds = [
-        "d",
-        "deploy",
+        "auth",
+        "agent",
+        "a",
+        "command",
+        "cmd",
         "checkpoint",
         "c",
+        "deploy",
+        "d",
         "experiment",
         "e",
+        "master",
+        "m",
+        "model",
+        "m",
+        "notebook",
+        "oauth",
+        "resources",
+        "res",
+        "shell",
+        "slot",
+        "s",
+        "task",
+        "template",
+        "tpl",
+        "tensorboard",
         "trial",
         "t",
+        "user",
+        "u",
     ]
-    cli.main([])
     for cmd in valid_cmds:
         cli.main([cmd, "help"])
+
+    cli.main([])
+    for cmd in ["version", "help"]:
+        cli.main([cmd])
+
+    with pytest.raises(SystemExit) as e:
+        cli.main(["preview-search", "-h"])
+    e = cast(SystemExit, e.value)
+    assert e.code == 0

@@ -156,6 +156,7 @@ def make_parser(arg_descriptions: List[object] = all_args_description) -> Argume
 def main(
     args: List[str] = sys.argv[1:],
 ) -> None:
+    print(args)
     parser = make_parser(all_args_description)
 
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
