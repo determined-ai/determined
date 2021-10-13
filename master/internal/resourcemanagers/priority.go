@@ -324,7 +324,7 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 // 1 if a is in front of b
 // 0 if a is equal to b in position
 // -1 if a is behind b
-func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group,) int {
+func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group) int {
 	aPosition := groups[a.Group].qPosition
 	bPosition := groups[b.Group].qPosition
 	if aPosition == bPosition {

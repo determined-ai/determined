@@ -54,7 +54,7 @@ func (jt JobType) Proto() jobv1.Type {
 
 // Job is the model for a job in the database.
 type Job struct {
-	JobID         JobID   `db:"job_id"`
-	JobType       JobType `db:"job_type"`
-	QPos          float64 `db:"q_position""`
+	JobID   JobID   `db:"job_id"`
+	JobType JobType `db:"job_type"`
+	QPos    float64 `db:"q_position""`
 }
