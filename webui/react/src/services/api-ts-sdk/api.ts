@@ -1940,6 +1940,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     externalLogoutUri?: string;
+    /**
+     * Branding style to use on front-end.
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    branding?: string;
 }
 
 /**

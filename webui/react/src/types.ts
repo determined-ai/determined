@@ -39,6 +39,7 @@ export interface SsoProvider {
 }
 
 export interface DeterminedInfo {
+  branding?: string;
   clusterId: string;
   clusterName: string;
   externalLoginUri?: string;
