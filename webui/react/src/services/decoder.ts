@@ -21,6 +21,7 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
 
 export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   return {
+    branding: data.branding,
     clusterId: data.clusterId,
     clusterName: data.clusterName,
     externalLoginUri: data.externalLoginUri,
