@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any  # noqa
 from typing import Dict, List, Optional
 
-from determined.common.api.tmp_hdantic import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 class Determinedcheckpointv1State(str, Enum):
