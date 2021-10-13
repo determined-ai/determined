@@ -160,7 +160,7 @@ def main(
 
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
     full_cmd, aliases = generate_aliases(deploy_cmd.name)
-    is_deploy_cmd = len(args) > 0 and any(args[0] in alias for alias in [*aliases, full_cmd])
+    is_deploy_cmd = len(args) > 0 and any(args[0] == alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
 
