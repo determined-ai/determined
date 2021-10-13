@@ -17,7 +17,6 @@
    sysadmin-basics/index
    sysadmin-deploy-on-aws/index
    sysadmin-deploy-on-gcp/index
-   sysadmin-deploy-on-azure/index
    sysadmin-deploy-on-prem/index
    sysadmin-deploy-on-k8s/index
    ecosystem-integration
