@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -10,6 +11,7 @@ import (
 	"github.com/jackc/pgtype"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 
 	"github.com/pkg/errors"
@@ -60,6 +62,12 @@ const (
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
 )
+
+// StateFromProto maps experimentv1.State to State.
+func StateFromProto(state experimentv1.State) State {
+	str := state.String()
+	return State(strings.TrimPrefix(str, "STATE_"))
+}
 
 // States and transitions
 

@@ -140,7 +140,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 		jobSummary := sproto.JobSummary{
-			JobID:    model.JobID(c.taskID),
+			JobID:    c.jobID(),
 			JobType:  c.jobType,
 			EntityID: string(c.taskID), // CHECK
 		}
@@ -296,6 +296,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -310,6 +311,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Username:     c.Base.Owner.Username,
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
+		JobId:        c.jobID().String(),
 	}
 }
 
@@ -328,6 +330,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		ExitStatus:     c.exitStatus.String(),
 		Addresses:      toProto(state.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -345,6 +348,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -366,6 +370,10 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 	}
 
 	return c.lastState
+}
+
+func (c *command) jobID() model.JobID {
+	return model.JobID(c.taskID)
 }
 
 func toProto(as []cproto.Address) []*structpb.Struct {

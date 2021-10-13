@@ -1143,11 +1143,11 @@ export interface V1Command {
      */
     exitStatus?: string;
     /**
-     * The associated job summary.
-     * @type {V1JobSummary}
+     * The associated job id.
+     * @type {string}
      * @memberof V1Command
      */
-    jobSummary?: V1JobSummary;
+    jobId: string;
 }
 
 /**
@@ -1498,6 +1498,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     notes?: string;
+    /**
+     * Associated job's id.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    jobId?: string;
 }
 
 /**
@@ -2609,6 +2615,12 @@ export interface V1Job {
      * @memberof V1Job
      */
     entityId: string;
+    /**
+     * Job type.
+     * @type {string}
+     * @memberof V1Job
+     */
+    jobId: string;
 }
 
 /**
@@ -2618,17 +2630,17 @@ export interface V1Job {
  */
 export interface V1JobSummary {
     /**
-     * Job id.
-     * @type {string}
-     * @memberof V1JobSummary
-     */
-    jobId: string;
-    /**
      * The scheduling state of the job.
      * @type {Determinedjobv1State}
      * @memberof V1JobSummary
      */
     state: Determinedjobv1State;
+    /**
+     * The number of jobs ahead of this one in the queue.
+     * @type {number}
+     * @memberof V1JobSummary
+     */
+    jobsAhead: number;
 }
 
 /**
@@ -3404,11 +3416,11 @@ export interface V1Notebook {
      */
     exitStatus?: string;
     /**
-     * The associated job summary.
-     * @type {V1JobSummary}
+     * The associated job id.
+     * @type {string}
      * @memberof V1Notebook
      */
-    jobSummary?: V1JobSummary;
+    jobId: string;
 }
 
 /**
@@ -3981,7 +3993,7 @@ export interface V1QueueStats {
 }
 
 /**
- * 
+ * Job stats for a resource pool.
  * @export
  * @interface V1RPQueueStat
  */
@@ -5003,11 +5015,11 @@ export interface V1Shell {
      */
     agentUserGroup?: any;
     /**
-     * The associated job summary.
-     * @type {V1JobSummary}
+     * The associated job id.
+     * @type {string}
      * @memberof V1Shell
      */
-    jobSummary?: V1JobSummary;
+    jobId: string;
 }
 
 /**
@@ -5141,11 +5153,11 @@ export interface V1Tensorboard {
      */
     exitStatus?: string;
     /**
-     * The associated job summary.
-     * @type {V1JobSummary}
+     * The associated job id.
+     * @type {string}
      * @memberof V1Tensorboard
      */
-    jobSummary?: V1JobSummary;
+    jobId: string;
 }
 
 /**
