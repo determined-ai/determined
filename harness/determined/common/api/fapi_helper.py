@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from determined.common.api.tmp_hdantic import BaseModel
 import json
 from typing import Any, Dict, List, Union
 

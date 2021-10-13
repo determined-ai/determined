@@ -3,8 +3,7 @@ import functools
 import json
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar
 
-from pydantic import (  # FIXME this doesn't get resolved in my IDE's language server
-    BaseModel,
+from determined.common.api.tmp_hdantic import (  # FIXME this doesn't get resolved in my IDE's language server
     parse_obj_as,
 )
 
