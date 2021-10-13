@@ -6,34 +6,31 @@ import Icon, { IconSize } from 'components/Icon';
 
 import css from './Spinner.module.scss';
 
-interface Props extends SpinProps, SpinState {}
-
-interface IndicatorUnpositionedProps {
+interface Props extends Omit<SpinProps, 'size'>, SpinState {
+  center?: boolean;
+  inline?: boolean;
   size?: IconSize;
 }
 
-export const IndicatorUnpositioned: React.FC<IndicatorUnpositionedProps> =(
-  { size = 'large' }: IndicatorUnpositionedProps,
-) => {
-  const classes = [ css.spin ];
-  return <div className={classes.join(' ')}>
-    <Icon name="spinner" size={size} />
-  </div>;
-};
+const Spinner: React.FC<Props> = ({ center, size, tip, ...props }: PropsWithChildren<Props>) => {
+  const classes = [ css.base ];
 
-export const Indicator: React.FC = () => {
-  const classes = [ css.spin, css.center ];
-  return <div className={classes.join(' ')}>
-    <Icon name="spinner" size="large" />
-  </div>;
-};
+  if (center || tip) classes.push(css.center);
 
-const Spinner: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  return <div className={css.centerContainer}>
-    <Spin
-      indicator={props.tip ? <IndicatorUnpositioned /> : <Indicator />}
-      {...props}>{props.children}</Spin>
-  </div>;
+  return (
+    <div className={classes.join(' ')}>
+      <Spin
+        indicator={(
+          <div className={css.spin}>
+            <Icon name="spinner" size={size} />
+          </div>
+        )}
+        tip={tip}
+        {...props}>
+        {props.children}
+      </Spin>
+    </div>
+  );
 };
 
 export default Spinner;
