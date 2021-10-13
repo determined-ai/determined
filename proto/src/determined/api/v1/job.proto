@@ -51,7 +51,7 @@ message UpdateJobQueueRequest {
 // Response to UpdateJobQueueRequest.
 message UpdateJobQueueResponse {}
 
-// Job stats for a resource pool
+// Job stats for a resource pool.
 message RPQueueStat {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "stats", "resource_pool" ] }

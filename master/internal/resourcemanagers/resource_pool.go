@@ -244,7 +244,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveRequestMsg(ctx)
 
 	case
-		GetJobOrder:
+		GetJobOrder,
+		GetJobQStats,
+		GetJobSummary:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -343,9 +345,14 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
 	case GetJobOrder:
 		ctx.Respond(getV1Jobs(rp))
+	case GetJobSummary:
+		resp := getV1JobSummary(rp, msg.JobID, rp.scheduler.OrderedAllocations(rp))
+		ctx.Respond(resp)
+	case GetJobQStats:
+		ctx.Respond(*jobStats(rp))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
