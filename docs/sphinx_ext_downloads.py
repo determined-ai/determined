@@ -49,12 +49,13 @@ def setup(app: application.Sphinx) -> Dict[str, Any]:
     app.add_config_value("dai_downloads_root", None, "html")
 
     # Disable the old instance of DownloadFileCollector and replace it with ours.
-    for event in app.events.listeners.values():
-        for listener_id, callback in list(event.items()):
-            if isinstance(callback, types.MethodType) and isinstance(
-                callback.__self__, asset.DownloadFileCollector
-            ):
-                del event[listener_id]
+    for key in app.events.listeners:
+        event = app.events.listeners[key]
+        app.events.listeners[key] = [listener for listener in event if not (
+                isinstance(listener.handler, types.MethodType) and
+                isinstance(listener.handler.__self__, asset.DownloadFileCollector)
+        )]
+
     app.add_env_collector(DownloadExternalFileCollector)
 
     return {
