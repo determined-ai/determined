@@ -194,3 +194,48 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
     ) as tree:
         model_def, _ = context.read_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "subdir", "subdir/A.py"}
+
+
+def test_cli_args_exist() -> None:
+    valid_cmds = [
+        "auth",
+        "agent",
+        "a",
+        "command",
+        "cmd",
+        "checkpoint",
+        "c",
+        "deploy",
+        "d",
+        "experiment",
+        "e",
+        "master",
+        "m",
+        "model",
+        "m",
+        "notebook",
+        "oauth",
+        "resources",
+        "res",
+        "shell",
+        "slot",
+        "s",
+        "task",
+        "template",
+        "tpl",
+        "tensorboard",
+        "trial",
+        "t",
+        "user",
+        "u",
+    ]
+    for cmd in valid_cmds:
+        cli.main([cmd, "help"])
+
+    cli.main([])
+    for cmd in ["version", "help"]:
+        cli.main([cmd])
+
+    with pytest.raises(SystemExit) as e:
+        cli.main(["preview-search", "-h"])
+    assert e.value.code == 0
