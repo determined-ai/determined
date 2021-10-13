@@ -93,25 +93,27 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
+  if (!info.checked) {
+    return <Spinner center />;
+  }
+
   return (
-    <Spinner spinning={!info.checked}>
-      <div className={css.base}>
-        {isServerReachable ? (
-          <Navigation>
-            <main>
-              <Router routes={appRoutes} />
-            </main>
-          </Navigation>
-        ) : (
-          <PageMessage title="Server is Unreachable">
-            <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
+    <div className={css.base}>
+      {isServerReachable ? (
+        <Navigation>
+          <main>
+            <Router routes={appRoutes} />
+          </main>
+        </Navigation>
+      ) : (
+        <PageMessage title="Server is Unreachable">
+          <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
               Please check the firewall and cluster settings.</p>
-            <Button onClick={refreshPage}>Try Again</Button>
-          </PageMessage>
-        )}
-        {ui.omnibar.isShowing && <Omnibar />}
-      </div>
-    </Spinner>
+          <Button onClick={refreshPage}>Try Again</Button>
+        </PageMessage>
+      )}
+      {ui.omnibar.isShowing && <Omnibar />}
+    </div>
   );
 };
 
