@@ -56,6 +56,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 
 	e := &model.Experiment{
 		State:                model.ActiveState,
+		JobID:                model.NewJobID(),
 		Config:               config,
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
