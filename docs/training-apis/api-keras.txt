@@ -85,8 +85,6 @@ To execute arbitrary Python code during the lifecycle of a ``TFKerasTrial``, imp
 ``tf.keras.callbacks.Callbacks`` interface) and supply them to the ``TFKerasTrial`` by implementing
 :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
-.. autofunction:: determined.keras.TFKerasTrial.keras_callbacks
-
 ********************************
  ``determined.keras.callbacks``
 ********************************
