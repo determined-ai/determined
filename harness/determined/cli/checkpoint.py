@@ -114,7 +114,7 @@ def describe(args: Namespace) -> None:
     render_checkpoint(checkpoint)
 
 
-args_description = Cmd(
+main_cmd = Cmd(
     "c|heckpoint",
     None,
     "manage checkpoints",
@@ -147,3 +147,4 @@ args_description = Cmd(
         ),
     ],
 )
+args_description = [main_cmd]  # type: List[Any]

@@ -14,8 +14,10 @@ from termcolor import colored
 
 import determined
 import determined.cli
-from determined.cli import checkpoint, experiment, render
+from determined.cli import render
 from determined.cli.agent import args_description as agent_args_description
+from determined.cli.checkpoint import args_description as checkpoint_args_description
+from determined.cli.experiment import args_description as experiment_args_description
 from determined.cli.master import args_description as master_args_description
 from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
@@ -112,10 +114,6 @@ args_description = [
         action="version", help="print CLI version and exit",
         version="%(prog)s {}".format(determined.__version__)),
 
-    experiment.args_description,
-
-    checkpoint.args_description,
-
     Cmd("preview-search", preview_search, "preview search", [
         Arg("config_file", type=FileType("r"),
             help="experiment config file (.yaml)")
@@ -127,6 +125,8 @@ args_description = [
 
 all_args_description = (
     args_description
+    + experiment_args_description
+    + checkpoint_args_description
     + master_args_description
     + model_args_description
     + agent_args_description
@@ -145,26 +145,26 @@ all_args_description = (
 )
 
 
-def make_parser(arg_descriptions: List[object] = all_args_description) -> ArgumentParser:
-    parser = ArgumentParser(
+def make_parser() -> ArgumentParser:
+    return ArgumentParser(
         description="Determined command-line client", formatter_class=ArgumentDefaultsHelpFormatter
     )
-    add_args(parser, arg_descriptions)
-    return parser
 
 
 def main(
     args: List[str] = sys.argv[1:],
 ) -> None:
-    parser = make_parser(all_args_description)
-
     # TODO: we lazily import "det deploy" but in the future we'd want to lazily import everything.
+    parser = make_parser()
+
     full_cmd, aliases = generate_aliases(deploy_cmd.name)
     is_deploy_cmd = len(args) > 0 and any(args[0] == alias for alias in [*aliases, full_cmd])
     if is_deploy_cmd:
         from determined.deploy.cli import args_description as deploy_args_description
 
-        parser = make_parser([deploy_args_description])
+        add_args(parser, [deploy_args_description])
+    else:
+        add_args(parser, all_args_description)
 
     try:
         argcomplete.autocomplete(parser)
