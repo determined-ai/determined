@@ -10,8 +10,8 @@ import (
 // addJob persists the existence of a task from a tx.
 func addJob(tx *sqlx.Tx, t *model.Job) error {
 	if _, err := tx.NamedExec(`
-INSERT INTO jobs (job_id, job_type)
-VALUES (:job_id, :job_type)
+INSERT INTO jobs (job_id, job_type, q_position)
+VALUES (:job_id, :job_type, :q_position)
 `, t); err != nil {
 		return errors.Wrap(err, "adding job")
 	}
@@ -25,7 +25,7 @@ func (db *PgDB) UpdateJob(job *model.Job) error {
 	}
 	query := `
 UPDATE jobs
-SET priority_value = :priority_value
+SET q_position = :q_position
 WHERE job_id = :job_id`
 	return db.namedExecOne(query, job)
 }

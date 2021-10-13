@@ -56,6 +56,5 @@ func (jt JobType) Proto() jobv1.Type {
 type Job struct {
 	JobID         JobID   `db:"job_id"`
 	JobType       JobType `db:"job_type"`
-	PriorityValue int     `db:"priority_value"`
 	QPos          float64 `db:"q_position""`
 }
