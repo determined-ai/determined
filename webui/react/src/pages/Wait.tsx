@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-import Logo, { LogoTypes } from 'components/Logo';
+import Logo, { LogoType } from 'components/Logo';
 import Page from 'components/Page';
 import { IndicatorUnpositioned } from 'components/Spinner';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import { CommandState } from 'types';
@@ -28,6 +28,7 @@ interface Queries {
 
 const Wait: React.FC = () => {
   const { taskType } = useParams<Params>();
+  const { info } = useStore();
   const storeDispatch = useStoreDispatch();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
@@ -88,7 +89,7 @@ const Wait: React.FC = () => {
     <Page id="wait">
       <div className={css.base}>
         <div className={css.content}>
-          <Logo type={LogoTypes.OnLightVertical} />
+          <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <p>Service State: {waitStatus?.state}</p>
           <p>{message}</p>
           <br />

@@ -123,10 +123,10 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         <header>
-          <div className={css.logo}>
+          {/* <div className={css.logo}>
             <div className={css.logoIcon} />
             <div className={css.logoLabel} />
-          </div>
+          </div> */}
           <div className={css.version}>
             {isVersionLong ? (
               <Tooltip placement="right" title={`Version ${version}`}>
