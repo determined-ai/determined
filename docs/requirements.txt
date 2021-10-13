@@ -2,10 +2,10 @@
 docutils==0.15.2
 
 pillow
-rstfmt==0.0.9
+rstfmt==0.0.10
 sphinx-argparse>=0.2.5
 sphinx-copybutton
 sphinx-sitemap>=2.2.0
-sphinx==2.4.4
+sphinx==4.2.0
 
 git+https://github.com/determined-ai/determined_sphinx_theme.git@9edfa7c6ce6926def9fc69b8ddd7666f3419a907
