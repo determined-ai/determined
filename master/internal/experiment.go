@@ -173,11 +173,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			Handler:  ctx.Self(),
 		})
 
-		ctx.Tell(e.rm, sproto.SetGroupOrder{
-			QPosition: -1,
-			Handler:   ctx.Self(),
-		})
-
 		if e.restored {
 			e.restoreTrials(ctx)
 			return nil
@@ -259,19 +254,25 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		resources := e.Config.Resources()
 		resources.SetWeight(msg.Weight)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
 	case sproto.SetGroupPriority:
 		resources := e.Config.Resources()
 		resources.SetPriority(msg.Priority)
 		e.Config.SetResources(resources)
-		msg.Handler = ctx.Self()
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			msg.Handler = ctx.Self()
+			ctx.Tell(e.rm, msg)
+		}
 
 	case sproto.SetGroupOrder:
 		e.job.QPos = msg.QPosition
 		e.db.UpdateJob(e.job)
-		ctx.Tell(e.rm, msg)
+		if !e.isRP(msg.Handler) {
+			ctx.Tell(e.rm, msg)
+		}
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -531,6 +532,20 @@ func (e *experiment) ChangePosition(ctx *actor.Context, position float64) error 
 	// we can translate that position to match priority or weight
 	e.job.QPos = position
 	return e.db.UpdateJob(e.job)
+}
+
+// isRP determines whether or not the message originated from an RP, in which case we will NOT forward the
+// message to a resource manager
+func (e *experiment) isRP(handler *actor.Ref) bool {
+	if handler == nil {
+		return false
+	}
+	for _, child := range e.rm.Children() {
+		if child.Address() == handler.Address() {
+			return true
+		}
+	}
+	return false
 }
 
 func checkpointFromTrialIDOrUUID(

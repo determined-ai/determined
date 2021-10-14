@@ -352,23 +352,26 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		for it := rp.taskList.iterator(); it.next(); {
 			req := it.value()
 			if req.Job.JobID == msg.JobID {
-				//group := rp.getOrCreateGroup(ctx, req.Group)
+				group := rp.getOrCreateGroup(ctx, req.Group)
 				if msg.QPosition != 0 {
-					//group.qPosition = msg.QPosition
+					group.qPosition = msg.QPosition
 					ctx.Tell(req.Group, sproto.SetGroupOrder{
 						QPosition: msg.QPosition,
+						Handler:   ctx.Self(),
 					})
 				}
 				if *msg.Priority != 0 {
-					//group.priority = msg.Priority
+					group.priority = msg.Priority
 					ctx.Tell(req.Group, sproto.SetGroupPriority{
 						Priority: msg.Priority,
+						Handler:  ctx.Self(),
 					})
 				}
 				if msg.Weight != 0 {
-					//group.weight = msg.Weight
+					group.weight = msg.Weight
 					ctx.Tell(req.Group, sproto.SetGroupWeight{
-						Weight: msg.Weight,
+						Weight:  msg.Weight,
+						Handler: ctx.Self(),
 					})
 				}
 			}
