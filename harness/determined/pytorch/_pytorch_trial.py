@@ -31,6 +31,7 @@ class PyTorchTrialController(det.TrialController):
         self.trial = cast(PyTorchTrial, trial_inst)
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
         self.context._set_determined_profiler(self.prof)
+        self.distributed_training = self.context.distributed.get_size() > 1
         if torch.cuda.is_available():
             self.prof._set_sync_device(self._sync_device)
         self.callbacks = self.trial.build_callbacks()
@@ -119,8 +120,8 @@ class PyTorchTrialController(det.TrialController):
     def _set_data_loaders(self) -> None:
         skip_batches = self.env.latest_batch
 
-        nreplicas = hvd.size() if self.hvd_config.use else 1
-        rank = hvd.rank() if self.hvd_config.use else 0
+        nreplicas = self.context.distributed.get_size()
+        rank = self.context.distributed.get_rank()
 
         def _dataset_repro_warning(fn: str, data_obj: Any) -> str:
             return (
@@ -189,7 +190,7 @@ class PyTorchTrialController(det.TrialController):
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
 
-            if self.hvd_config.use:
+            if self.hvd_config.use and self.distributed_training:
                 hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
                 for optimizer in self.context.optimizers:
                     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
@@ -258,7 +259,7 @@ class PyTorchTrialController(det.TrialController):
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Average training metrics across GPUs"""
-        check.true(self.hvd_config.use, "Can only average training metrics in multi-GPU training.")
+        check.true(self.distributed_training, "Can only average training metrics in multi-GPU training.")
         metrics_timeseries = util._list_to_dict(per_batch_metrics)
 
         # combined_timeseries is: dict[metric_name] -> 2d-array.
@@ -280,7 +281,7 @@ class PyTorchTrialController(det.TrialController):
             combined_timeseries_type = Dict[str, List[List[Any]]]
             combined_timeseries = cast(combined_timeseries_type, combined_timeseries)
             num_batches = len(per_batch_metrics)
-            num_processes = hvd.size()
+            num_processes = self.context.distributed.get_size()
             averaged_metrics_timeseries = {}  # type: Dict[str, List]
 
             for metric_name in combined_timeseries.keys():
@@ -330,7 +331,7 @@ class PyTorchTrialController(det.TrialController):
     def _should_update_scaler(self) -> bool:
         if not self.context._scaler or not self.context.experimental._auto_amp:
             return False
-        if self.hvd_config.use:
+        if self.distributed_training:
             return self.context._should_communicate_and_update()  # type: ignore
         return True
 
@@ -422,8 +423,8 @@ class PyTorchTrialController(det.TrialController):
         if self.hvd_config.use and self.hvd_config.average_training_metrics:
             with self.prof.record_timing("average_training_metrics"):
                 per_batch_metrics = self._average_training_metrics(per_batch_metrics)
-        if self.hvd_config.use:
-            num_inputs *= hvd.size()
+        if self.distributed_training:
+            num_inputs *= self.context.distributed.get_size()
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
         # Ignore batch_metrics entirely for custom reducers; there's no guarantee that per-batch
@@ -518,8 +519,8 @@ class PyTorchTrialController(det.TrialController):
                 metrics_reducers=self._prepare_metrics_reducers(keys=keys),
             )
 
-            if self.hvd_config.use:
-                num_inputs *= hvd.size()
+            if self.distributed_training:
+                num_inputs *= self.context.distributed.get_size()
 
         else:
             check.true(self._evaluate_full_dataset_defined())
@@ -602,7 +603,7 @@ class PyTorchTrialController(det.TrialController):
             for name in keys or []
         }
 
-        if self.hvd_config.use:
+        if self.context.hvd_config.use:
             # If using horovod combine metrics across all processes.
             # Only the chief process will receive all the metrics.
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
@@ -632,7 +633,7 @@ class PyTorchTrialController(det.TrialController):
         self, metrics: Dict[str, Any], num_batches: int
     ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
         # The chief receives the metric from every other training process.
-        check.true(self.hvd_config.use)
+        check.true(self.distributed_training)
 
         # all_args is a list of [(metrics, num_batches), ...] for each worker.
         all_args = self.context.distributed._zmq_gather((metrics, num_batches))

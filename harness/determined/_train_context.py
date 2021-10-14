@@ -2,6 +2,7 @@ import abc
 import contextlib
 import functools
 import logging
+import os
 import shutil
 import socket
 import tempfile
@@ -21,12 +22,13 @@ class TrialContext(metaclass=abc.ABCMeta):
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
         rendezvous_info: det.RendezvousInfo,
+        backend: str,
     ) -> None:
         self.env = env
         self.hvd_config = hvd_config
         self.rendezvous_info = rendezvous_info
 
-        if hvd_config.use:
+        if backend == "horovod":
             rank_info = RankInfo(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),
@@ -34,6 +36,15 @@ class TrialContext(metaclass=abc.ABCMeta):
                 local_size=horovod.hvd.local_size(),
                 cross_rank=horovod.hvd.cross_rank(),
                 cross_size=horovod.hvd.cross_size(),
+            )
+        elif backend == "torch":
+            rank_info = RankInfo(
+                rank=int(os.environ["RANK"]),
+                size=int(os.environ["WORLD_SIZE"]),
+                local_rank=int(os.environ["LOCAL_RANK"]),
+                local_size=int(os.environ["LOCAL_WORLD_SIZE"]),
+                cross_rank=int(os.environ["GROUP_RANK"]),
+                cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
             )
         else:
             rank_info = RankInfo(
@@ -266,6 +277,7 @@ class DistributedContext:
             # When cross_size == 1, always contact the chief as localhost.
             self._chief_ip = "127.0.0.1"
 
+        self._chief_ip = "127.0.0.1"
         self._init_ipc(force_tcp)
 
     def _init_ipc(self, force_tcp: bool) -> None:

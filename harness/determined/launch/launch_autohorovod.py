@@ -181,6 +181,8 @@ def main() -> int:
         "python3",
         "-m",
         "determined.exec.harness",
+        "--distributed",
+        "horovod"
     ]
 
     logging.debug(f"chief worker calling horovodrun with args: {hvd_cmd[1:]} ...")

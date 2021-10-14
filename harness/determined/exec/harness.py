@@ -6,6 +6,7 @@ import determined as det
 from determined import _generic, horovod, load
 from determined.common import experimental
 from determined.common.api import certs
+import argparse
 
 
 def config_logging(debug: bool) -> None:
@@ -21,6 +22,12 @@ def main() -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--distributed")
+    args = parser.parse_args()
+    distributed = args.distributed
+
 
     # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
@@ -83,6 +90,7 @@ def main() -> int:
                 env,
                 rendezvous_info,
                 hvd_config,
+                distributed
             )
         except det.InvalidHP:
             # build a Training API object just to call report_early_exit().

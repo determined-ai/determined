@@ -64,11 +64,12 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
 
 
 def load_trial(
-    trial_class: Type[det.Trial],
-    env: det.EnvContext,
-    rendezvous_info: det.RendezvousInfo,
-    hvd_config: horovod.HorovodContext,
-    workloads: Optional[workload.Stream] = None,
+        trial_class: Type[det.Trial],
+        env: det.EnvContext,
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+        backend: str,
+        workloads: Optional[workload.Stream] = None,
 ) -> det.TrialController:
     # Step 1: Validate model definition.
     controller_class = trial_class.trial_controller_class
@@ -83,11 +84,11 @@ def load_trial(
         f"The class attribute `trial_controller_class` of {trial_class.__name__} is "
         "not a valid subclass of `det.TrialController`",
     )
-    controller_class = cast(Type[det.TrialController], controller_class)
 
+    controller_class = cast(Type[det.TrialController], controller_class)
     # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
     controller_class.pre_execute_hook(env, hvd_config)
-    trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
+    trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info, backend)
 
     try:
         # Step 3: Instantiate the user's Trial.
@@ -110,9 +111,10 @@ def load_trial(
 
 
 def prepare_controller(
-    env: det.EnvContext,
-    rendezvous_info: det.RendezvousInfo,
-    hvd_config: horovod.HorovodContext,
+        env: det.EnvContext,
+        rendezvous_info: det.RendezvousInfo,
+        hvd_config: horovod.HorovodContext,
+        backend: str,
 ) -> det.TrialController:
     """
     Load a user's python code, locate the Trial and Trial Controller, then instantiate one.
@@ -122,6 +124,6 @@ def prepare_controller(
         controller = load.load_native(env, rendezvous_info, hvd_config)
     else:
         trial_class = trial_class_from_entrypoint(env.experiment_config["entrypoint"])
-        controller = load_trial(trial_class, env, rendezvous_info, hvd_config)
+        controller = load_trial(trial_class, env, rendezvous_info, hvd_config, backend)
 
     return controller
