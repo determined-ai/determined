@@ -10,7 +10,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_disable_and_enable_slots() -> None:
     command = [
         "det",
@@ -108,7 +108,7 @@ def _wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> Non
     pytest.fail(f"Command did't reach {state} state after {ticks} secs")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_disable_agent_zero_slots() -> None:
     """
     Start a command, disable the agent it's running on. The command should
@@ -131,7 +131,7 @@ def test_disable_agent_zero_slots() -> None:
         subprocess.check_call(command)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_drain_agent() -> None:
     """
     Start an experiment, `disable --drain` the agent once the trial is running,
@@ -195,7 +195,7 @@ def test_drain_agent() -> None:
         exp.cancel_single(experiment_id_no_start)
 
 
-@pytest.mark.e2e_cpu_2a  # type: ignore
+@pytest.mark.e2e_cpu_2a
 def test_drain_agent_sched() -> None:
     """
     Start an experiment, drain it. Start a second one and make sure it schedules
@@ -261,7 +261,7 @@ def _task_agents(task_id: str) -> List[str]:
     return [c["agent"] for c in task_data.get("containers", [])]
 
 
-@pytest.mark.e2e_cpu_2a  # type: ignore
+@pytest.mark.e2e_cpu_2a
 def test_drain_agent_sched_zeroslot() -> None:
     """
     Start a command, drain it, start another one on the second node, drain it

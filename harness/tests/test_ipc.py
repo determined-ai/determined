@@ -142,9 +142,9 @@ def test_zmq_server_client() -> None:
     assert server_object == client_object
 
 
-@pytest.mark.parametrize("cross_size", [1, 4])  # type: ignore
-@pytest.mark.parametrize("local_size", [1, 4])  # type: ignore
-@pytest.mark.parametrize("force_tcp", [False, True])  # type: ignore
+@pytest.mark.parametrize("cross_size", [1, 4])
+@pytest.mark.parametrize("local_size", [1, 4])
+@pytest.mark.parametrize("force_tcp", [False, True])
 def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
     size = cross_size * local_size
 

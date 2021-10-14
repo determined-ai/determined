@@ -12,13 +12,13 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
 def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:
     config = exp.s3_checkpoint_config(secrets)
     run_gc_checkpoints_test(config)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_gc_checkpoints_lfs() -> None:
     run_gc_checkpoints_test(exp.shared_fs_checkpoint_config())
 
@@ -101,7 +101,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             break
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
 def test_s3_no_creds(secrets: Dict[str, str]) -> None:
     pytest.skip("Temporarily skipping this until we find a more secure way of testing this.")
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
@@ -115,7 +115,7 @@ def test_s3_no_creds(secrets: Dict[str, str]) -> None:
     exp.run_basic_test_with_temp_config(config, conf.tutorials_path("mnist_pytorch"), 1)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_fail_on_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
@@ -127,7 +127,7 @@ def test_fail_on_chechpoint_save() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_fail_on_preclose_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
