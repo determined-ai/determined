@@ -17,6 +17,8 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
+import { ThemeId } from 'themes';
+import { BrandingType } from 'types';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -24,9 +26,10 @@ import { paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
+  const storeDispatch = useStoreDispatch();
   const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
-  const storeDispatch = useStoreDispatch();
+  const { setThemeId } = useTheme();
 
   const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
@@ -34,7 +37,6 @@ const AppView: React.FC = () => {
 
   useKeyTracker();
   useRouteTracker();
-  useTheme();
 
   // Poll every 10 minutes
   usePolling(fetchInfo, { interval: 600000 });
@@ -65,6 +67,12 @@ const AppView: React.FC = () => {
       });
     }
   }, [ info ]);
+
+  // Detect branding changes and update theme accordingly.
+  useEffect(() => {
+    const themeId = info.branding === BrandingType.HPE ? ThemeId.LightHPE : ThemeId.LightDetermined;
+    setThemeId(themeId);
+  }, [ info.branding, setThemeId ]);
 
   useEffect(() => {
     return () => canceler.abort();
