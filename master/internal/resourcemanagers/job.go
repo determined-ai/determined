@@ -13,6 +13,13 @@ import (
 // we don't want a separate actor do we? could be useful for streaming job endpoints.
 type GetJobOrder struct{}
 
+type SetJobOrder struct {
+	QPosition float64
+	Weight    float64
+	Priority  *int
+	JobID     model.JobID
+}
+
 /* filterAllocateRequests
 1. filters allocations that are not associated with a job
 2. merge/filter multilpe allocations representing a single job. If a job has many allocReqs this

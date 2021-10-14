@@ -245,7 +245,8 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveRequestMsg(ctx)
 
 	case
-		GetJobOrder:
+		GetJobOrder,
+		SetJobOrder:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -344,9 +345,34 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 }
 
 func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
-	switch ctx.Message().(type) {
+	switch msg := ctx.Message().(type) {
 	case GetJobOrder:
 		ctx.Respond(getV1Jobs(rp))
+	case SetJobOrder:
+		for it := rp.taskList.iterator(); it.next(); {
+			req := it.value()
+			if req.Job.JobID == msg.JobID {
+				//group := rp.getOrCreateGroup(ctx, req.Group)
+				if msg.QPosition != 0 {
+					//group.qPosition = msg.QPosition
+					ctx.Tell(req.Group, sproto.SetGroupOrder{
+						QPosition: msg.QPosition,
+					})
+				}
+				if *msg.Priority != 0 {
+					//group.priority = msg.Priority
+					ctx.Tell(req.Group, sproto.SetGroupPriority{
+						Priority: msg.Priority,
+					})
+				}
+				if msg.Weight != 0 {
+					//group.weight = msg.Weight
+					ctx.Tell(req.Group, sproto.SetGroupWeight{
+						Weight: msg.Weight,
+					})
+				}
+			}
+		}
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -377,7 +403,7 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 
 	case sproto.SetGroupOrder:
 		group := rp.getOrCreateGroup(ctx, msg.Handler)
-		if msg.QPosition != -1 {
+		if msg.QPosition != 0 {
 			group.qPosition = msg.QPosition
 		}
 

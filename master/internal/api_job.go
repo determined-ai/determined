@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -69,5 +71,41 @@ func (a *apiServer) GetJobQueueStats(
 func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {
-	return nil, notImplementedError
+	resp = &apiv1.UpdateJobQueueResponse{}
+
+	switch {
+	case sproto.UseAgentRM(a.m.system):
+		for _, update := range req.Updates {
+			qPosition := float64(update.GetQueuePosition())
+			priority := int(update.GetPriority())
+			weight := float64(update.GetWeight())
+			err = a.actorRequest(sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.SetJobOrder{
+				QPosition: qPosition,
+				Priority:  &priority,
+				Weight:    weight,
+				JobID:     model.JobID(update.GetJobId()),
+			}, resp)
+			if err != nil {
+				return nil, err
+			}
+		}
+	case sproto.UseK8sRM(a.m.system):
+		for _, update := range req.Updates {
+			qPosition := float64(update.GetQueuePosition())
+			priority := int(update.GetPriority())
+			weight := float64(update.GetWeight())
+			err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.SetJobOrder{
+				QPosition: qPosition,
+				Weight:    weight,
+				Priority:  &priority,
+				JobID:     model.JobID(update.GetJobId()),
+			}, resp)
+			if err != nil {
+				return nil, err
+			}
+		}
+	default:
+		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+	}
+	return resp, nil
 }

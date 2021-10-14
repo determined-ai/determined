@@ -105,6 +105,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
 
+	case
+		GetJobOrder,
+		SetJobOrder:
+		return k.receiveJobQueueMsg(ctx)
+
 	case sproto.GetTaskSummary:
 		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, kubernetesScheduler); resp != nil {
 			ctx.Respond(*resp)
@@ -229,6 +234,41 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	k.reqList.AddTask(&msg)
+}
+
+func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case GetJobOrder:
+		//ctx.Respond(getV1Jobs(rp))
+	case SetJobOrder:
+		for it := k.reqList.iterator(); it.next(); {
+			req := it.value()
+			if req.Job.JobID == msg.JobID {
+				//group := k.getOrCreateGroup(ctx, req.Group)
+				if msg.QPosition != 0 {
+					//group.qPosition = msg.QPosition
+					ctx.Tell(req.Group, sproto.SetGroupOrder{
+						QPosition: msg.QPosition,
+					})
+				}
+				if *msg.Priority != 0 {
+					//group.priority = msg.Priority
+					ctx.Tell(req.Group, sproto.SetGroupPriority{
+						Priority: msg.Priority,
+					})
+				}
+				if msg.Weight != 0 {
+					//group.weight = msg.Weight
+					ctx.Tell(req.Group, sproto.SetGroupWeight{
+						Weight: msg.Weight,
+					})
+				}
+			}
+		}
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
