@@ -5,7 +5,6 @@ import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
   DetailedUser, DeterminedInfo, ResourceType,
 } from 'types';
-import { updateFaviconType } from 'utils/browser';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
 
@@ -157,7 +156,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetAgents: {
       if (isEqual(state.agents, action.value)) return state;
       const cluster = agentsToOverview(action.value);
-      updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
       return { ...state, agents: action.value, cluster };
     }
     case StoreAction.ResetAuth:
