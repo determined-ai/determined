@@ -143,7 +143,12 @@ export const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {
-  history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+  history.push(stripUrl(path), { loginRedirect: filterOutLoginLocation(window.location) });
+};
+export const filterOutLoginLocation = (
+  location: { pathname: string },
+): { pathname: string } | undefined => {
+  return location.pathname.includes('login') ? undefined : clone(location);
 };
 
 /*
