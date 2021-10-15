@@ -214,5 +214,5 @@ func (a *apiServer) PostModelVersion(
 	respModelVersion.ModelVersion.Model = getResp.Model
 	respModelVersion.ModelVersion.Checkpoint = c
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelId)
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
 }
