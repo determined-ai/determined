@@ -18,14 +18,18 @@ from .cluster_log_manager import ClusterLogManager
 _INTEG_MARKERS = {
     "tensorflow1_cpu",
     "tensorflow2_cpu",
+    "tensorflow2",
     "e2e_cpu",
+    "e2e_cpu_2a",
     "e2e_gpu",
     "det_deploy_local",
     "distributed",
     "cloud",
     "parallel",
     "nightly",
-    "model_hub",
+    "model_hub_transformers",
+    "model_hub_transformers_amp",
+    "model_hub_mmdetection",
 }
 
 
@@ -139,6 +143,8 @@ def using_k8s(request: SubRequest) -> bool:
         config.make_master_url(),
         "master",
         "config",
+        "-o",
+        "json",
     ]
 
     output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)

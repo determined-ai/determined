@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package api
@@ -5,6 +6,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -14,6 +16,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	structpb "github.com/golang/protobuf/ptypes/struct"
 
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -133,17 +137,20 @@ func trialDetailAPITests(
 			err = db.AddTrial(trial)
 			assert.NilError(t, err, "failed to insert trial")
 
-			step := testutils.StepModel(trial.ID)
-			step.ID = id
-			step.TotalBatches = id * experiment.Config.SchedulingUnit()
-			err = db.AddStep(step)
-			assert.NilError(t, err, "failed to insert step")
-
-			metrics := map[string]interface{}{
-				"avg_metrics": tc.metrics,
+			metrics := trialv1.TrialMetrics{
+				TrialId:     int32(trial.ID),
+				LatestBatch: int32(id * experiment.Config.SchedulingUnit()),
 			}
-			err = db.UpdateStep(trial.ID, step.TotalBatches, model.CompletedState, metrics)
-			assert.NilError(t, err, "failed to update step")
+
+			m := structpb.Struct{}
+			b, err := json.Marshal(map[string]interface{}{"metrics": tc.metrics})
+			assert.NilError(t, err, "failed to marshal metrics")
+			err = protojson.Unmarshal(b, &m)
+			assert.NilError(t, err, "failed to unmarshal metrics")
+			metrics.Metrics = &m
+
+			err = db.AddTrainingMetrics(context.Background(), &metrics)
+			assert.NilError(t, err, "failed to insert step")
 
 			ctx, _ := context.WithTimeout(creds, 10*time.Second)
 			req := apiv1.GetTrialRequest{TrialId: int32(trial.ID)}
@@ -226,6 +233,8 @@ func trialProfilerMetricsTests(
 		assert.Assert(t, origEqRecv, "received:\nt\t%s\noriginal:\n\t%s", bRecv, bOrig)
 	}
 
+	err = pgDB.UpdateTrial(trial.ID, model.StoppingCompletedState)
+	assert.NilError(t, err, "failed to update trial state")
 	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
 	assert.NilError(t, err, "failed to update trial state")
 
@@ -579,6 +588,8 @@ func trialLogFollowingTests(
 		assertStringContains(t, resp.Message, message)
 	}
 
+	err = pgDB.UpdateTrial(trial.ID, model.StoppingCompletedState)
+	assert.NilError(t, err, "failed to update trial state")
 	err = pgDB.UpdateTrial(trial.ID, model.CompletedState)
 	assert.NilError(t, err, "failed to update trial state")
 

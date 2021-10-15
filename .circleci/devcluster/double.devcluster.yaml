@@ -1,0 +1,40 @@
+stages:
+  - db:
+      name: db
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+
+  - agent:
+      name: agent2
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        agent_id: agent2
+        container_master_host: $DOCKER_LOCALHOST
+        fluent:
+          port: 24225  # default value is 24224
+          container_name: determined-fluent-2

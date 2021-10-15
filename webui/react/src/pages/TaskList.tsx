@@ -452,7 +452,7 @@ const TaskList: React.FC = () => {
       <div className={css.base}>
         <TableBatch
           actions={[ { disabled: !hasKillable, label: Action.Kill, value: Action.Kill } ]}
-          selectedRowCount={(settings.row || []).length}
+          selectedRowCount={(settings.row ?? []).length}
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
@@ -469,7 +469,7 @@ const TaskList: React.FC = () => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row,
+            selectedRowKeys: settings.row ?? [],
           }}
           showSorterTooltip={false}
           size="small"

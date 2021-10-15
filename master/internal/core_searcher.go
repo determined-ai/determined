@@ -13,32 +13,43 @@ import (
 )
 
 func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
-	body, err := ioutil.ReadAll(c.Request().Body)
+	bytes, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
 		return nil, err
 	}
 
 	// Parse the provided experiment config.
-	config, err := expconf.ParseAnyExperimentConfigYAML(body)
+	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, errors.Wrapf(err, "invalid experiment configuration")
 	}
 
-	// Apply any json-schema-defined defaults.
-	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
+	// Get the useful subconfigs for preview search.
+	if config.RawSearcher == nil {
+		return nil, errors.New("invalid experiment configuration; missing searcher")
+	}
+	sc := *config.RawSearcher
+	hc := config.RawHyperparameters
 
-	// Make sure the experiment config has all eventuallyRequired fields.
-	if err = schemas.IsComplete(config); err != nil {
-		return nil, errors.Wrap(err, "invalid experiment configuration")
+	// Apply any json-schema-defined defaults.
+	sc = schemas.WithDefaults(sc).(expconf.SearcherConfig)
+	hc = schemas.WithDefaults(hc).(expconf.Hyperparameters)
+
+	// Make sure the searcher config has all eventuallyRequired fields.
+	if err = schemas.IsComplete(sc); err != nil {
+		return nil, errors.Wrapf(err, "invalid searcher configuration")
+	}
+	if err = schemas.IsComplete(hc); err != nil {
+		return nil, errors.Wrapf(err, "invalid hyperparameters configuration")
 	}
 
 	// Disallow EOL searchers.
-	if err = config.Searcher().AssertCurrent(); err != nil {
+	if err = sc.AssertCurrent(); err != nil {
 		return nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
-	sm := searcher.NewSearchMethod(config.Searcher())
-	s := searcher.NewSearcher(0, sm, config.Hyperparameters())
+	sm := searcher.NewSearchMethod(sc)
+	s := searcher.NewSearcher(0, sm, hc)
 	return searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher().Metric())
 }
 

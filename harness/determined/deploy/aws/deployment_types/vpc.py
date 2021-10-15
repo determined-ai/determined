@@ -27,6 +27,9 @@ class VPC(base.DeterminedDeployment):
         constants.cloudformation.GPU_ENV_IMAGE,
         constants.cloudformation.LOG_GROUP_PREFIX,
         constants.cloudformation.IMAGE_REPO_PREFIX,
+        constants.cloudformation.MASTER_CONFIG_TEMPLATE,
+        constants.cloudformation.MOUNT_EFS_ID,
+        constants.cloudformation.MOUNT_FSX_ID,
     ]
 
     def deploy(self) -> None:

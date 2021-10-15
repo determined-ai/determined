@@ -5,6 +5,7 @@ exclude =
     __pycache__,
     build,
     dist
+    tests/fixtures/merge_config.py
 
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is
@@ -14,6 +15,7 @@ exclude =
 per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
 
 # Explanations for ignored error codes:
+# - A003 (class attribute shadowing python builtin): model_hub/mmdetection/_callbacks.py will fail but we need it to match the signature for a mmdetection class.
 # - D1* (no missing docstrings): too much effort to start enforcing
 # - D200 (short docstring must fit in one line with quotes): stylistic choice
 # - D202 (no blank lines after function docstrings): stylistic choice
@@ -24,7 +26,7 @@ per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
 # - E203 (no space before colon): not PEP8-compliant; triggered by Black-formatted code
 # - W503 (no line breaks before binary operator): not PEP8-compliant; triggered by Black-formatted code
 # - C812-C816 (missing trailing comma): stylistic choice
-ignore = D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816
+ignore = A003,D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816
 
 show_source = true
 

@@ -23,8 +23,8 @@ class InvalidDataTypeException(InvalidExperimentException):
     InvalidDataType is used if the data type of an experiment is invalid.
     """
 
-    def __init__(self, type: Type, message: str) -> None:
-        super().__init__(f"Invalid data type ({type.__name__}): {message}.")
+    def __init__(self, typ: Type, message: str) -> None:
+        super().__init__(f"Invalid data type ({typ.__name__}): {message}.")
 
 
 class InvalidConfigurationException(InvalidExperimentException):
@@ -78,4 +78,10 @@ class InvalidModelException(InvalidExperimentException):
     """
     InvalidModelException indicates that the model is inavlid or is (partially)
     unsupported
+    """
+
+
+class CheckpointNotFound(Exception):
+    """
+    CheckpointNotFoundException indicates a checkpoint could not be found in checkpoint storage.
     """

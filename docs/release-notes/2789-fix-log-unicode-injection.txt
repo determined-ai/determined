@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Fix issue of logs potentially introducing harmful HTML/JS injections via unicode.

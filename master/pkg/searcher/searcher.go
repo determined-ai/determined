@@ -7,8 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 
-	"github.com/determined-ai/determined/master/pkg/workload"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -19,11 +17,9 @@ import (
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialOperations     OperationList                          `json:"trial_operations"`
 		TrialsRequested     int                                    `json:"trials_requested"`
+		TrialsCreated       map[model.RequestID]bool               `json:"trials_created"`
 		TrialsClosed        map[model.RequestID]bool               `json:"trials_closed"`
-		TrialIDs            map[model.RequestID]int                `json:"trial_ids"`
-		RequestIDs          map[int]model.RequestID                `json:"request_ids"`
 		Exits               map[model.RequestID]bool               `json:"exits"`
 		Failures            map[model.RequestID]bool               `json:"failures"`
 		TrialProgress       map[model.RequestID]model.PartialUnits `json:"trial_progress"`
@@ -50,9 +46,8 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 		method:  method,
 		SearcherState: SearcherState{
 			Rand:                nprand.New(seed),
+			TrialsCreated:       map[model.RequestID]bool{},
 			TrialsClosed:        map[model.RequestID]bool{},
-			TrialIDs:            map[model.RequestID]int{},
-			RequestIDs:          map[int]model.RequestID{},
 			Exits:               map[model.RequestID]bool{},
 			Failures:            map[model.RequestID]bool{},
 			TrialProgress:       map[model.RequestID]model.PartialUnits{},
@@ -78,14 +73,13 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 
 // TrialCreated informs the searcher that a trial has been created as a result of a Create
 // operation.
-func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error) {
-	s.TrialIDs[create.RequestID] = trialID
-	s.RequestIDs[trialID] = create.RequestID
-	s.TrialProgress[create.RequestID] = 0
-	operations, err := s.method.trialCreated(s.context(), create.RequestID)
+func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) {
+	s.TrialsCreated[requestID] = true
+	s.TrialProgress[requestID] = 0
+	operations, err := s.method.trialCreated(s.context(), requestID)
 	if err != nil {
 		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %s", create.RequestID)
+			"error while handling a trial created event: %s", requestID)
 	}
 	s.Record(operations)
 	return operations, nil
@@ -93,28 +87,23 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 
 // TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
 func (s *Searcher) TrialExitedEarly(
-	trialID int, exitedReason workload.ExitedReason,
+	requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
-	requestID, ok := s.RequestIDs[trialID]
-	if !ok {
-		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
-	}
-
 	if s.Exits[requestID] {
-		return nil, api.AsErrBadRequest("trial %d reported an exit twice", trialID)
+		return nil, api.AsValidationError("trial %d reported an exit twice", requestID)
 	}
 
 	switch exitedReason {
-	case workload.InvalidHP, workload.InitInvalidHP:
+	case model.InvalidHP, model.InitInvalidHP:
 		delete(s.TrialProgress, requestID)
-	case workload.Errored:
+	case model.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).
 		s.Failures[requestID] = true
 	}
 	operations, err := s.method.trialExitedEarly(s.context(), requestID, exitedReason)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", trialID)
+		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", requestID)
 	}
 	s.Exits[requestID] = true
 	s.Record(operations)
@@ -128,13 +117,8 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress model.Pa
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	trialID int, metric float64, op ValidateAfter,
+	requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
-	requestID, ok := s.RequestID(trialID)
-	if !ok {
-		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
-	}
-
 	if _, ok := s.CompletedOperations[op.String()]; ok {
 		return nil, fmt.Errorf("operation %v was already completed", op)
 	}
@@ -172,25 +156,8 @@ func (s *Searcher) Progress() float64 {
 	return progress
 }
 
-// TrialID finds the trial ID for the provided request ID. The first return value is the trial ID
-// if the trial has been created; otherwise, it is 0. The second is whether or not the trial has
-// been created.
-func (s *Searcher) TrialID(id model.RequestID) (int, bool) {
-	trialID, ok := s.TrialIDs[id]
-	return trialID, ok
-}
-
-// RequestID finds the request ID for the provided trial ID. The first return value is the request
-// ID if the trial has been created; otherwise, it is undefined. The second is whether or not the
-// trial has been created.
-func (s *Searcher) RequestID(id int) (model.RequestID, bool) {
-	requestID, ok := s.RequestIDs[id]
-	return requestID, ok
-}
-
 // Record records operations that were requested by the searcher for a specific trial.
 func (s *Searcher) Record(ops []Operation) {
-	s.TrialOperations = append(s.TrialOperations, ops...)
 	for _, op := range ops {
 		switch op.(type) {
 		case Create:

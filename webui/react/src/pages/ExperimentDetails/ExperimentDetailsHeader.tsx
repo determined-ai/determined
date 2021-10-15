@@ -19,7 +19,7 @@ import {
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { terminalRunStates } from 'utils/types';
+import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -139,7 +139,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       downloadModel: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
-        label: 'Download Model',
+        label: 'Download Experiment Code',
         onClick: (e) => {
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
@@ -189,15 +189,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       terminalRunStates.has(experiment.state) && (
         experiment.archived ? options.archive : options.unarchive
       ),
-      curUser?.isAdmin && terminalRunStates.has(experiment.state) && options.delete,
+      deletableRunStates.has(experiment.state) &&
+        curUser && (curUser.isAdmin || curUser.username === experiment.username) && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
+    curUser,
     deleteExperimentHandler,
     isRunningDelete,
-    curUser?.isAdmin,
     experiment.archived,
     experiment.id,
     experiment.state,
+    experiment.username,
     fetchExperimentDetails,
     isRunningArchive,
     isRunningTensorboard,
@@ -217,7 +219,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 allowNewline
                 isOnDark
                 maxLength={500}
-                placeholder="experiment description"
+                placeholder="Add description"
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate} />
             </div>
@@ -241,45 +243,26 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           </div>
         }
         leftContent={
-          trial ? (
-            <div className={css.base}>
-              <div className={css.experimentInfo}>
-                <div className={css.experimentId}>Experiment {experiment.id}</div>
-              </div>
-              <div className={css.experimentName}>
-                <InlineEditor
-                  isOnDark
-                  maxLength={128}
-                  placeholder="experiment name"
-                  value={experiment.name}
-                  onSave={handleNameUpdate} />
-              </div>
-              <Icon name="arrow-right" size="tiny" />
-              <div className={css.trial}>
-                <div
-                  className={css.state}
-                  style={{ backgroundColor: getStateColorCssVar(trial.state) }}>
-                  {trial.state}
-                </div>
-              Trial {trial.id}
-              </div>
+          <div className={css.base}>
+            <div className={css.experimentInfo}>
+              <ExperimentState experiment={experiment} />
+              <div className={css.experimentId}>Experiment {experiment.id}</div>
             </div>
-          ) : (
-            <div className={css.base}>
-              <div className={css.experimentInfo}>
-                <ExperimentState experiment={experiment} />
-                <div className={css.experimentId}>Experiment {experiment.id}</div>
-              </div>
-              <div className={css.experimentName}>
-                <InlineEditor
-                  isOnDark
-                  maxLength={128}
-                  placeholder="experiment name"
-                  value={experiment.name}
-                  onSave={handleNameUpdate} />
-              </div>
+            <div className={css.experimentName}>
+              <InlineEditor
+                isOnDark
+                maxLength={128}
+                placeholder="experiment name"
+                value={experiment.name}
+                onSave={handleNameUpdate} />
             </div>
-          )
+            {trial ? (
+              <>
+                <Icon name="arrow-right" size="tiny" />
+                <div className={css.trial}>Trial {trial.id}</div>
+              </>
+            ) : null}
+          </div>
         }
         options={headerOptions}
         style={{ backgroundColor: getStateColorCssVar(experiment.state) }}

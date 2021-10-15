@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -15,78 +17,60 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // Experiment-specific actor messages.
 type (
+	// Searcher-related messages.
 	trialCreated struct {
-		create searcher.Create
-		trialSnapshot
+		requestID model.RequestID
 	}
 	trialCompleteOperation struct {
-		op     searcher.ValidateAfter
-		metric float64
-		trialSnapshot
+		requestID model.RequestID
+		op        searcher.ValidateAfter
+		metric    float64
 	}
 	trialReportEarlyExit struct {
-		reason workload.ExitedReason
-		trialSnapshot
+		requestID model.RequestID
+		reason    model.ExitedReason
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
 		progress  model.PartialUnits
 	}
-	trialQueryIsBestValidation struct {
-		validationMetrics workload.ValidationMetrics
+	trialGetSearcherState struct {
+		requestID model.RequestID
 	}
-
-	// Searcher-related messages.
-	trialGetCurrentOperation struct {
-		trialID int
-	}
-
 	// trialClosed is used to replay closes missed when the master dies between when a trial closing in
 	// its actor.PostStop and when the experiment snapshots the trial closed.
 	trialClosed struct {
 		requestID model.RequestID
 	}
-	getTrial       struct{ trialID int }
-	killExperiment struct{}
 )
 
-type trialSnapshot struct {
-	requestID model.RequestID
-	trialID   int
-	snapshot  []byte
-}
-
-type trialSnapshotCarrier interface {
-	getSnapshot() trialSnapshot
-}
-
-func (t trialSnapshot) getSnapshot() trialSnapshot {
-	return t
-}
-
 type (
+	trialSearcherState struct {
+		Create   searcher.Create
+		Op       searcher.ValidateAfter
+		Complete bool
+		Closed   bool
+	}
+
 	experimentState struct {
-		SearcherState  json.RawMessage `json:"searcher_state"`
-		BestValidation *float64        `json:"best_validation"`
+		SearcherState      json.RawMessage                        `json:"searcher_state"`
+		TrialSearcherState map[model.RequestID]trialSearcherState `json:"trial_searcher_state"`
 	}
 
 	experiment struct {
 		experimentState
 
 		*model.Experiment
-		modelDefinition     archive.Archive
 		rm                  *actor.Ref
 		trialLogger         *actor.Ref
 		hpImportance        *actor.Ref
@@ -95,8 +79,6 @@ type (
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
-
-		TrialCurrentOperation map[model.RequestID]searcher.ValidateAfter
 
 		faultToleranceEnabled bool
 		restored              bool
@@ -126,23 +108,9 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
 	)
 
-	// Call InitialOperations which adds operations to the record in the Searcher. These
-	// will be sent back to their respective trials in experiment prestart. This allows them to
-	// be discarded if we Restore from a snapshot (since they will already exist in the snapshot
-	// and have been accounted for).
-	if _, err = search.InitialOperations(); err != nil {
-		return nil, errors.Wrap(err, "failed to generate initial operations")
-	}
-
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
 		master.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
-	if err != nil {
-		return nil, err
-	}
-
-	// Decompress the model definition from .tar.gz into an Archive.
-	modelDefinition, err := archive.FromTarGz(expModel.ModelDefinitionBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +133,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 
 	return &experiment{
 		Experiment:          expModel,
-		modelDefinition:     modelDefinition,
 		rm:                  master.rm,
 		trialLogger:         master.trialLogger,
 		hpImportance:        master.hpImportance,
@@ -175,16 +142,15 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 
 		taskSpec: taskSpec,
 
-		TrialCurrentOperation: map[model.RequestID]searcher.ValidateAfter{},
-
 		faultToleranceEnabled: true,
+
+		experimentState: experimentState{
+			TrialSearcherState: map[model.RequestID]trialSearcherState{},
+		},
 	}, nil
 }
 
 func (e *experiment) Receive(ctx *actor.Context) error {
-	if msg, ok := ctx.Message().(trialSnapshotCarrier); ok && e.faultToleranceEnabled {
-		defer e.snapshotAndSave(ctx, msg.getSnapshot())
-	}
 	switch msg := ctx.Message().(type) {
 	// Searcher-related messages.
 	case actor.PreStart:
@@ -201,38 +167,51 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		})
 
 		if e.restored {
-			e.restoreTrialsFromPriorOperations(ctx, e.searcher.TrialOperations)
-		} else {
-			e.processOperations(ctx, e.searcher.TrialOperations, nil)
-			ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
-		}
-		// Since e.searcher.TrialOperations should have all trials that were previously
-		// allocated, we can stop trying to restore new trials after processing these.
-		e.restored = false
-	case trialCreated:
-		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
-		e.processOperations(ctx, ops, err)
-	case trialCompleteOperation:
-		if msg.op != e.TrialCurrentOperation[msg.op.RequestID] &&
-			ctx.ExpectingResponse() {
-			ctx.Respond(api.AsErrBadRequest(
-				"expected op %v but received op %v",
-				e.TrialCurrentOperation[msg.requestID], msg.op,
-			))
+			e.restoreTrials(ctx)
 			return nil
 		}
-		ops, err := e.searcher.ValidationCompleted(msg.trialID, msg.metric, msg.op)
-		e.processOperations(ctx, ops, err)
-	case trialSnapshot:
-		// Handled by the defered call at the top.
-	case trialReportEarlyExit:
-		ops, err := e.searcher.TrialExitedEarly(msg.trialID, msg.reason)
-		if err != nil && ctx.ExpectingResponse() {
-			ctx.Respond(err)
+
+		ops, err := e.searcher.InitialOperations()
+		if err != nil {
+			return errors.Wrap(err, "failed to generate initial operations")
 		}
+		e.processOperations(ctx, ops, nil)
+		ctx.Tell(e.hpImportance, hpimportance.ExperimentCreated{ID: e.ID})
+	case trialCreated:
+		ops, err := e.searcher.TrialCreated(msg.requestID)
 		e.processOperations(ctx, ops, err)
-	case trialQueryIsBestValidation:
-		ctx.Respond(e.isBestValidation(msg.validationMetrics))
+	case trialCompleteOperation:
+		state, ok := e.TrialSearcherState[msg.op.RequestID]
+		switch {
+		case !ok:
+			ctx.Respond(api.AsValidationError("no such trial"))
+			return nil
+		case msg.op != state.Op:
+			ctx.Respond(api.AsValidationError("expected op %v but received op %v", state.Op, msg.op))
+			return nil
+		case state.Complete:
+			ctx.Respond(api.AsValidationError("received op %v which was previously completed", msg.op))
+			return nil
+		}
+
+		state.Complete = true
+		e.TrialSearcherState[msg.op.RequestID] = state
+		ctx.Tell(ctx.Child(msg.op.RequestID), state)
+		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
+		e.processOperations(ctx, ops, err)
+	case trialReportEarlyExit:
+		state, ok := e.TrialSearcherState[msg.requestID]
+		if !ok {
+			ctx.Respond(api.AsValidationError("trial has no state"))
+			return nil
+		}
+
+		state.Complete = true
+		state.Closed = true
+		e.TrialSearcherState[msg.requestID] = state
+		ctx.Tell(ctx.Child(msg.requestID), state)
+		ops, err := e.searcher.TrialExitedEarly(msg.requestID, msg.reason)
+		e.processOperations(ctx, ops, err)
 	case trialReportProgress:
 		e.searcher.SetTrialProgress(msg.requestID, msg.progress)
 		progress := e.searcher.Progress()
@@ -240,22 +219,13 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
 		ctx.Tell(e.hpImportance, hpimportance.ExperimentProgress{ID: e.ID, Progress: progress})
-	case trialGetCurrentOperation:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
+	case trialGetSearcherState:
+		state, ok := e.TrialSearcherState[msg.requestID]
 		if !ok {
-			ctx.Respond(api.AsErrNotFound("trial %d not found", msg.trialID))
+			ctx.Respond(api.AsErrNotFound("trial has no state"))
 			return nil
 		}
-		if op, ok := e.TrialCurrentOperation[requestID]; ok {
-			ctx.Respond(op)
-			return nil
-		}
-		ctx.Respond(api.AsErrNotFound("trial %d has no operations", msg.trialID))
-		return nil
-	case sendNextWorkload:
-		// Pass this back to the trial; this message is just used to allow the trial to synchronize
-		// with the searcher.
-		ctx.Tell(ctx.Sender(), msg)
+		ctx.Respond(state)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
 		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
@@ -263,13 +233,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.trialClosed(ctx, model.MustParseRequestID(msg.Child.Address().Local()))
 	case trialClosed:
 		e.trialClosed(ctx, msg.requestID)
-
-	case getTrial:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
-		ref := ctx.Child(requestID)
-		if ok && ref != nil {
-			ctx.Respond(ref)
-		}
 
 	// Patch experiment messages.
 	case model.State:
@@ -325,8 +288,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		taskSpec := *e.taskSpec
-
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
+			taskID: model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New())),
 			GCCkptSpec: tasks.GCCkptSpec{
 				Base:         taskSpec,
 				ExperimentID: e.Experiment.ID,
@@ -372,37 +335,26 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.CancelExperimentResponse{})
 		default:
-			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
-			case true:
-				// Do nothing more, propagating the state change will cause the
-				// trial to release its resources and gracefully exit.
-				ctx.Respond(&apiv1.CancelExperimentResponse{})
-			default:
+			if ok := e.updateState(ctx, model.StoppingCanceledState); !ok {
 				ctx.Respond(status.Errorf(codes.FailedPrecondition,
-					"experiment in incompatible state %s", e.State))
+					"experiment in incompatible state %s", e.State,
+				))
+			} else {
+				ctx.Respond(&apiv1.CancelExperimentResponse{})
 			}
 		}
 
-	case killExperiment, *apiv1.KillExperimentRequest:
+	case *apiv1.KillExperimentRequest:
 		switch {
 		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
-			if ctx.ExpectingResponse() {
-				ctx.Respond(&apiv1.KillExperimentResponse{})
-			}
+			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
-			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
-			case true:
-				if ctx.ExpectingResponse() {
-					ctx.Respond(&apiv1.KillExperimentResponse{})
-				}
-				for _, child := range ctx.Children() {
-					ctx.Tell(child, killTrial{})
-				}
-			default:
-				if ctx.ExpectingResponse() {
-					ctx.Respond(status.Errorf(codes.FailedPrecondition,
-						"experiment in incompatible state %s", e.State))
-				}
+			if ok := e.updateState(ctx, model.StoppingKilledState); !ok {
+				ctx.Respond(status.Errorf(codes.FailedPrecondition,
+					"experiment in incompatible state %s", e.State,
+				))
+			} else {
+				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
 	}
@@ -418,47 +370,17 @@ func (e *experiment) trialClosed(ctx *actor.Context, requestID model.RequestID) 
 	}
 }
 
-// restoreTrialsFromPriorOperations from the operations that were snapshotted with the
+// restoreTrialsFromStates from the operations that were snapshotted with the
 // last experiment checkpoint.
-func (e *experiment) restoreTrialsFromPriorOperations(
-	ctx *actor.Context, ops []searcher.Operation,
-) {
-	// Previous implementations had a nice property that: since trials were restored in the order
-	// they were requested, the trial running on failure was the first restarted. Using this ordered
-	// list keeps that property.
-	var requestIDs []model.RequestID
-	trialOpsByRequestID := make(map[model.RequestID][]searcher.Operation)
-	for _, op := range ops {
-		ctx.Log().Debugf("restoring searcher op: %v", op)
-		switch op := op.(type) {
-		case searcher.Create:
-			requestIDs = append(requestIDs, op.RequestID)
-			trialOpsByRequestID[op.RequestID] = append(trialOpsByRequestID[op.RequestID], op)
-		case searcher.ValidateAfter:
-			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
-			e.TrialCurrentOperation[op.GetRequestID()] = op
-		case searcher.Close:
-			trialOpsByRequestID[op.GetRequestID()] = append(trialOpsByRequestID[op.GetRequestID()], op)
-		}
-	}
-
-	for _, requestID := range requestIDs {
-		ops := trialOpsByRequestID[requestID]
-		op, ok := ops[0].(searcher.Create)
-		if !ok {
-			panic(fmt.Sprintf("encountered trial without a create: %s", requestID))
-		}
-		checkpoint, err := e.checkpointForCreate(op)
+func (e *experiment) restoreTrials(ctx *actor.Context) {
+	for _, state := range e.TrialSearcherState {
+		checkpoint, err := e.checkpointForCreate(state.Create)
 		if err != nil {
 			e.updateState(ctx, model.StoppingErrorState)
 			ctx.Log().Error(err)
 			return
 		}
-		terminal := e.restoreTrial(ctx, op, checkpoint, ops[1:])
-		// In the event a trial is terminal and is not recorded in the searcher, replay the close.
-		if terminal && !e.searcher.TrialsClosed[op.RequestID] {
-			ctx.Tell(ctx.Self(), trialClosed{requestID: op.RequestID})
-		}
+		e.restoreTrial(ctx, checkpoint, state)
 	}
 }
 
@@ -473,7 +395,9 @@ func (e *experiment) processOperations(
 		return
 	}
 
-	trialOperations := make(map[model.RequestID][]searcher.Operation)
+	defer e.snapshotAndSave(ctx)
+
+	updatedTrials := make(map[model.RequestID]bool)
 	for _, operation := range ops {
 		ctx.Log().Debugf("handling searcher op: %v", operation)
 		switch op := operation.(type) {
@@ -485,12 +409,23 @@ func (e *experiment) processOperations(
 				return
 			}
 			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
-			ctx.ActorOf(op.RequestID, newTrial(e, config, op, checkpoint))
+			state := trialSearcherState{Create: op, Complete: true}
+			e.TrialSearcherState[op.RequestID] = state
+			ctx.ActorOf(op.RequestID, newTrial(
+				trialTaskID(e.ID, op.RequestID), e.ID, e.State, state, e.rm, e.trialLogger, e.db,
+				config, checkpoint, e.taskSpec,
+			))
 		case searcher.ValidateAfter:
-			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
-			e.TrialCurrentOperation[op.GetRequestID()] = op
+			state := e.TrialSearcherState[op.RequestID]
+			state.Op = op
+			state.Complete = false
+			e.TrialSearcherState[op.RequestID] = state
+			updatedTrials[op.RequestID] = true
 		case searcher.Close:
-			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
+			state := e.TrialSearcherState[op.RequestID]
+			state.Closed = true
+			e.TrialSearcherState[op.RequestID] = state
+			updatedTrials[op.RequestID] = true
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)
@@ -501,44 +436,32 @@ func (e *experiment) processOperations(
 			panic(fmt.Sprintf("unexpected operation: %v", op))
 		}
 	}
-	for requestID, ops := range trialOperations {
-		ctx.Tell(ctx.Child(requestID), ops)
+
+	for requestID := range updatedTrials {
+		ctx.Tell(ctx.Child(requestID), e.TrialSearcherState[requestID])
 	}
+}
+
+func trialTaskID(eID int, rID model.RequestID) model.TaskID {
+	return model.TaskID(fmt.Sprintf("%d.%s", eID, rID))
 }
 
 func (e *experiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
 	checkpoint := e.warmStartCheckpoint
 	// If the Create specifies a checkpoint, ignore the experiment-wide one.
 	if op.Checkpoint != nil {
-		trialID, ok := e.searcher.TrialID(op.Checkpoint.RequestID)
-		if !ok {
-			return nil, errors.Errorf(
+		trial, err := e.db.TrialByExperimentAndRequestID(e.ID, op.Checkpoint.RequestID)
+		if err != nil {
+			return nil, errors.Wrapf(err,
 				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
 		}
-		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trialID, nil)
+		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trial.ID, nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpoint not found")
 		}
 		checkpoint = checkpointModel
 	}
 	return checkpoint, nil
-}
-
-func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
-	metricName := e.Config.Searcher().Metric()
-	validation, err := metrics.Metric(metricName)
-	if err != nil {
-		// TODO: Better error handling here.
-		return false
-	}
-	smallerIsBetter := e.Config.Searcher().SmallerIsBetter()
-	isBest := (e.BestValidation == nil) ||
-		(smallerIsBetter && validation <= *e.BestValidation) ||
-		(!smallerIsBetter && validation >= *e.BestValidation)
-	if isBest {
-		e.BestValidation = &validation
-	}
-	return isBest
 }
 
 func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
@@ -551,9 +474,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
 	ctx.Log().Infof("experiment state changed to %s", state)
-	for _, child := range ctx.Children() {
-		ctx.Tell(child, state)
-	}
+	ctx.TellAll(state, ctx.Children()...)
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}
@@ -586,4 +507,35 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
 	return nil
+}
+
+func checkpointFromTrialIDOrUUID(
+	db *db.PgDB, trialID *int, checkpointUUIDStr *string,
+) (*model.Checkpoint, error) {
+	var checkpoint *model.Checkpoint
+	var err error
+
+	// Attempt to find a Checkpoint object from the given IDs.
+	if trialID != nil {
+		checkpoint, err = db.LatestCheckpointForTrial(*trialID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get checkpoint for source trial %d", *trialID)
+		}
+		if checkpoint == nil {
+			return nil, errors.Errorf("no checkpoint found for source trial %d", *trialID)
+		}
+	} else if checkpointUUIDStr != nil {
+		checkpointUUID, err := uuid.Parse(*checkpointUUIDStr)
+		if err != nil {
+			return nil, errors.Wrap(err, "invalid source checkpoint UUID")
+		}
+		checkpoint, err = db.CheckpointByUUID(checkpointUUID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get source checkpoint %v", checkpointUUID)
+		}
+		if checkpoint == nil {
+			return nil, errors.Errorf("no checkpoint found with UUID %v", checkpointUUID)
+		}
+	}
+	return checkpoint, nil
 }

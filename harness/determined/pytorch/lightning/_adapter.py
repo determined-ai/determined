@@ -11,6 +11,7 @@ from torch.optim.optimizer import Optimizer
 from typing_extensions import Literal
 
 from determined.common import check
+from determined.common.api.analytics import send_analytics
 from determined.errors import InvalidModelException
 from determined.monkey_patch import monkey_patch
 from determined.pytorch import (
@@ -169,6 +170,9 @@ class LightningAdapter(PyTorchTrial):
                 https://nvidia.github.io/apex/amp.html#opt-levels-and-properties
 
         """
+
+        send_analytics("LightningTrial Created")
+
         check.check_in(precision, {16, 32}, "only precisions 16 & 32 are supported.")
         check.check_in(amp_backend, {"native", "apex"}, 'only "native", and "apex" are supported')
 

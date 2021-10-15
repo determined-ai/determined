@@ -1,0 +1,13 @@
+/*
+ * disabledLegend is used to disable any user interactions
+ * on the uPlot chart for the series. We want to keep the series in the
+ * legends even though we are not rendering the charts because
+ * the legend shows the series data value when hovering the chart.
+ */
+
+.disabledLegend {
+  pointer-events: none;
+  user-select: none;
+}
+.disabledLegend:global(.u-off) > * { opacity: 1; }
+.hiddenLegend { display: none; }

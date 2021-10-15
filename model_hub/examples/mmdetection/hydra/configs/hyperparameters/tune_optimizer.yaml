@@ -1,0 +1,6 @@
+override_mmdet_config:
+  optimizer.lr:
+    type: log
+    base: 10
+    minval: -3
+    maxval: -1

@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Cluster: Fix a breakage in trial fault tolerance caused by not sending enough state snapshots.

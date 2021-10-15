@@ -1,7 +1,13 @@
 package kubernetes
 
 import (
-	"github.com/pkg/errors"
+	"time"
+
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
+	watchtools "k8s.io/client-go/tools/watch"
+
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,6 +15,8 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
+
+const defaultInformerBackoff = 5 * time.Second
 
 // messages that are sent to the informer.
 type (
@@ -47,9 +55,7 @@ func (i *informer) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self(), startInformer{})
 
 	case startInformer:
-		if err := i.startInformer(ctx); err != nil {
-			return err
-		}
+		i.startInformer(ctx)
 
 	case actor.PostStop:
 
@@ -61,17 +67,35 @@ func (i *informer) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (i *informer) startInformer(ctx *actor.Context) error {
-	watch, err := i.podInterface.Watch(metaV1.ListOptions{LabelSelector: determinedLabel})
+func (i *informer) startInformer(ctx *actor.Context) {
+	pods, err := i.podInterface.List(metaV1.ListOptions{LabelSelector: determinedLabel})
 	if err != nil {
-		return errors.Wrap(err, "error initializing pod watch")
+		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
+		actors.NotifyAfter(ctx, defaultInformerBackoff, startInformer{})
+		return
+	}
+
+	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
+		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
+			return i.podInterface.Watch(metaV1.ListOptions{LabelSelector: determinedLabel})
+		},
+	})
+	if err != nil {
+		ctx.Log().WithError(err).Warnf("error initializing pod retry watcher")
+		actors.NotifyAfter(ctx, defaultInformerBackoff, startInformer{})
+		return
 	}
 
 	ctx.Log().Info("pod informer is starting")
-	for event := range watch.ResultChan() {
+	for event := range rw.ResultChan() {
+		if event.Type == watch.Error {
+			ctx.Log().Warnf("pod informer emitted error %+v", event)
+			continue
+		}
+
 		pod, ok := event.Object.(*k8sV1.Pod)
 		if !ok {
-			ctx.Log().Errorf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
+			ctx.Log().Warnf("error converting event of type %T to *k8sV1.Pod: %+v", event, event)
 			continue
 		}
 
@@ -85,6 +109,4 @@ func (i *informer) startInformer(ctx *actor.Context) error {
 
 	ctx.Log().Warn("pod informer stopped unexpectedly")
 	ctx.Tell(ctx.Self(), startInformer{})
-
-	return nil
 }

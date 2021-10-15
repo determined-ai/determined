@@ -70,6 +70,8 @@ class SumDictReducer(estimator.MetricReducer):
 
 
 class LinearEstimator(estimator.EstimatorTrial):
+    _searcher_metric = "loss"
+
     def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
         self.hparams = context.get_hparams()

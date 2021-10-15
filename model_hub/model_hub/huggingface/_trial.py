@@ -1,6 +1,6 @@
 import dataclasses
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import attrdict
 import datasets as hf_datasets
@@ -9,8 +9,9 @@ import transformers
 import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
+import model_hub.utils
+from determined.common.api.analytics import send_analytics
 from model_hub.huggingface import _config_parser as hf_parse
-from model_hub.huggingface import _utils as utils
 
 MODEL_MODES = {
     "base": transformers.AutoModel,
@@ -24,8 +25,6 @@ MODEL_MODES = {
     "token-classification": transformers.AutoModelForTokenClassification,
     "question-answering": transformers.AutoModelForQuestionAnswering,
 }
-
-logger = logging.getLogger(__name__)
 
 
 def build_using_auto(
@@ -149,7 +148,12 @@ def build_default_lr_scheduler(
 
 def default_load_dataset(
     data_config: Union[Dict, attrdict.AttrDict]
-) -> Union[hf_datasets.DatasetDict, hf_datasets.Dataset]:
+) -> Union[
+    hf_datasets.Dataset,
+    hf_datasets.IterableDataset,
+    hf_datasets.DatasetDict,
+    hf_datasets.IterableDatasetDict,
+]:
     """
     Creates the dataset using HuggingFace datasets' load_dataset method.
     If a dataset_name is provided, we will use that long with the dataset_config_name.
@@ -167,6 +171,9 @@ def default_load_dataset(
         datasets = hf_datasets.load_dataset(
             data_config.dataset_name, data_config.dataset_config_name
         )
+        assert hasattr(datasets, "keys"), "Expected a dictionary of datasets."
+        datasets = cast(Union[hf_datasets.DatasetDict, hf_datasets.IterableDatasetDict], datasets)
+
         if "validation" not in datasets.keys():
             assert (
                 "validation_split_percentage" in data_config
@@ -205,6 +212,8 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+
+        send_analytics("BaseTransformerTrial Created")
         self.context = context
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
@@ -250,11 +259,13 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
             build_default_lr_scheduler(self.optimizer, scheduler_kwargs),
             det_torch.LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
-        self.grad_clip_fn = (
-            lambda x: torch.nn.utils.clip_grad_norm_(x, optimizer_kwargs.max_grad_norm)
-            if optimizer_kwargs.max_grad_norm > 0  # type: ignore
-            else None
-        )
+
+        self.grad_clip_fn = None
+
+        if optimizer_kwargs.max_grad_norm > 0:  # type: ignore
+            self.grad_clip_fn = lambda x: torch.nn.utils.clip_grad_norm_(
+                x, optimizer_kwargs.max_grad_norm
+            )
 
     def check_hparams(self) -> None:
         # We require hparams to be an AttrDict.
@@ -264,11 +275,11 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
         if "num_training_steps" not in self.hparams:
             # Compute the total number of training iterations used to configure the
             # learning rate scheduler.
-            self.hparams.num_training_steps = utils.compute_num_training_steps(
+            self.hparams.num_training_steps = model_hub.utils.compute_num_training_steps(
                 self.context.get_experiment_config(), self.context.get_global_batch_size()
             )
         if "use_pretrained_weights" not in self.hparams:
-            logger.warning(
+            logging.warning(
                 "We will be using pretrained weights for the model by default."
                 "If you want to train the model from scratch, you can set a hyperparameter "
                 "named use_pretrained_weights to false in the experiment config."

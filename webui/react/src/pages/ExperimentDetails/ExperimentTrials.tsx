@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
-import HumanReadableFloat from 'components/HumanReadableFloat';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import ResponsiveTable from 'components/ResponsiveTable';
@@ -32,6 +32,7 @@ import {
 import { getMetricValue, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
+import css from './ExperimentTrials.module.scss';
 import settingsConfig, { Settings } from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
@@ -87,7 +88,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       return function renderer (_: string, record: TrialItem): React.ReactNode {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         const value = getMetricValue((record as any)[key], metric);
-        return value && <HumanReadableFloat num={value} />;
+        return <HumanReadableNumber num={value} />;
       };
     };
 
@@ -275,14 +276,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
   }, [ settings.row, updateSettings ]);
 
   return (
-    <>
+    <div className={css.base}>
       <Section>
         <TableBatch
           actions={[
             { label: Action.OpenTensorBoard, value: Action.OpenTensorBoard },
             { label: Action.CompareTrials, value: Action.CompareTrials },
           ]}
-          selectedRowCount={(settings.row || []).length}
+          selectedRowCount={(settings.row ?? []).length}
           onAction={action => submitBatchAction(action as Action)}
           onClear={clearSelected}
         />
@@ -299,7 +300,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
           rowSelection={{
             onChange: handleTableRowSelect,
             preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row,
+            selectedRowKeys: settings.row ?? [],
           }}
           showSorterTooltip={false}
           size="small"
@@ -314,11 +315,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
       {settings.compare &&
       <TrialsComparisonModal
         experiment={experiment}
-        trials={settings.row || []}
+        trials={settings.row ?? []}
         visible={settings.compare}
         onCancel={handleTrialCompareCancel}
         onUnselect={handleTrialUnselect} />}
-    </>
+    </div>
   );
 };
 

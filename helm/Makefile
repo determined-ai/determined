@@ -2,6 +2,7 @@
 build: clean
 	mkdir -p build/
 	helm package --destination build charts/determined
+	cd build/ && ln -s determined-*.tgz determined-latest.tgz && cd ..
 
 fmt:
 	helm lint charts/determined/
@@ -16,4 +17,4 @@ release: export NGC_API_USERNAME ?=
 release: export NGC_API_KEY ?=
 release:
 	helm repo add determined $$NGC_REPO --username $$NGC_API_USERNAME --password $$NGC_API_KEY
-	helm push -f build/determined-0.16.1.tgz determined
+	helm cm-push -f build/determined-latest.tgz determined

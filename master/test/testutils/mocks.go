@@ -1,9 +1,12 @@
+//go:build integration
 // +build integration
 
 package testutils
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -89,27 +92,10 @@ func WithTrialState(state model.State) TrialModelOption {
 // TrialModel returns a new trial with the specified options.
 func TrialModel(eID int, opts ...TrialModelOption) *model.Trial {
 	t := &model.Trial{
+		TaskID:       model.TaskID(uuid.New().String()),
 		ExperimentID: eID,
 		State:        model.ActiveState,
 		StartTime:    time.Now(),
-	}
-	for _, o := range opts {
-		o.apply(t)
-	}
-	return t
-}
-
-// StepModelOption is an option that can be applied to a step.
-type StepModelOption interface {
-	apply(*model.Step)
-}
-
-// StepModel returns a new step with the specified options.
-func StepModel(tID int, opts ...StepModelOption) *model.Step {
-	t := &model.Step{
-		TrialID:   tID,
-		State:     model.ActiveState,
-		StartTime: time.Now(),
 	}
 	for _, o := range opts {
 		o.apply(t)

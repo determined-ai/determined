@@ -1,8 +1,10 @@
 import argparse
 import os
 import sys
+from pathlib import Path
 from typing import Callable
 
+import pkg_resources
 from termcolor import colored
 
 import determined
@@ -75,6 +77,14 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
     if args.no_filestore:
         args.filestore_address = ""
 
+    if args.master_config_template_path:
+        if not args.master_config_template_path.exists():
+            raise ValueError(
+                f"Input master config template doesn't exist: {args.master_config_template_path}"
+            )
+        with args.master_config_template_path.open("r") as fin:
+            det_configs["master_config_template"] = fin.read()
+
     # Not all args will be passed to Terraform, list the ones that won't be
     # TODO(ilia): Switch to filtering variables_to_include instead, i.e.
     #             only pass the ones recognized by terraform.
@@ -89,6 +99,7 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
         "no_wait_for_master",
         "no_prompt",
         "no_filestore",
+        "master_config_template_path",
         "func",
         "_command",
         "_subcommand",
@@ -114,7 +125,11 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
                     "red",
                 )
             )
-            print("For details, SSH to master instance and check /var/log/cloud-init-output.log.")
+            print(
+                "For details, SSH to master instance and run "
+                "`sudo journalctl -u google-startup-scripts.service`"
+                " or check /var/log/cloud-init-output.log."
+            )
             sys.exit(1)
 
     print("Determined Deployment Successful")
@@ -129,6 +144,12 @@ def handle_down(args: argparse.Namespace) -> None:
 
 def handle_up(args: argparse.Namespace) -> None:
     return deploy_gcp("up", args)
+
+
+def handle_dump_master_config_template(args: argparse.Namespace) -> None:
+    fn = pkg_resources.resource_filename("determined.deploy.gcp", "terraform/master.yaml.tmpl")
+    with open(fn, "r") as fin:
+        print(fin.read())
 
 
 args_description = Cmd(
@@ -213,13 +234,13 @@ args_description = Cmd(
                             type=str,
                             default="",
                             help="the address of an existing Filestore in the format of "
-                            "'ip-address:/file-share'; if not provided, a new Filestore "
-                            "instance will be created",
+                            "'ip-address:/file-share'; if not provided and the no-filestore "
+                            "flag is not set, a new Filestore instance will be created",
                         ),
                         Arg(
                             "--no-filestore",
-                            help="whether to create a new Filestore if no filestore "
-                            "address is provided",
+                            help="whether to create a new Filestore if filestore-address "
+                            "parameter is not set",
                             action="store_true",
                         ),
                         Arg(
@@ -386,9 +407,21 @@ args_description = Cmd(
                             default="",
                             help="Docker image for GPU tasks",
                         ),
+                        Arg(
+                            "--master-config-template-path",
+                            type=Path,
+                            default=None,
+                            help="path to master yaml template",
+                        ),
                     ],
                 ),
             ],
+        ),
+        Cmd(
+            "dump-master-config-template",
+            handle_dump_master_config_template,
+            "dump default master config template",
+            [],
         ),
     ],
 )

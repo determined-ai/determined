@@ -3,6 +3,7 @@ import functools
 import logging
 import pathlib
 from typing import Any, Callable, Optional, cast
+from urllib import parse
 
 import tensorflow as tf
 import yogadl
@@ -59,7 +60,7 @@ class _CacheableDecorator:
             return
 
         batch_size = self._per_slot_batch_size
-        self._offset = self._env.initial_workload.total_batches_processed * batch_size
+        self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
         if not self._hvd_config.use:
@@ -77,10 +78,9 @@ class _CacheableDecorator:
             session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.visible_device_list = str(hvd.local_rank())
 
-        scheme = "wss" if self._env.use_tls else "ws"
-        rw_coordinator_url = (
-            f"{scheme}://{self._env.master_addr}:{self._env.master_port}/ws/data-layer/"
-        )
+        parsed = parse.urlparse(self._env.master_url)
+        scheme = "wss" if parsed.scheme == "https" else "ws"
+        rw_coordinator_url = f"{scheme}://{parsed.netloc}/ws/data-layer/"
         data_layer_type = self._env.experiment_config.get_data_layer_type()
 
         if data_layer_type == StorageTypes.SHARED_FS.value:

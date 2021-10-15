@@ -40,6 +40,7 @@ import torch
 import yaml
 
 from determined import experimental, pytorch
+from determined.pytorch import samplers
 
 
 class OnesDataset(torch.utils.data.Dataset):
@@ -90,6 +91,8 @@ def triangle_label_sum(updates: List) -> Any:
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
+    _searcher_metric = "val_loss"
+
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
@@ -109,6 +112,10 @@ class OneVarTrial(pytorch.PyTorchTrial):
 
         self.cls_reducer = context.wrap_reducer(TriangleLabelSum(), name="cls_reducer")
         self.fn_reducer = context.wrap_reducer(triangle_label_sum, name="fn_reducer")
+
+        self.hparams = self.context.get_hparams()
+        if self.hparams.get("disable_dataset_reproducibility_checks"):
+            self.context.experimental.disable_dataset_reproducibility_checks()
 
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
@@ -167,11 +174,50 @@ class OneVarTrial(pytorch.PyTorchTrial):
         loss = self.loss_fn(self.model(data), label)
         return {"val_loss": loss}
 
-    def build_training_data_loader(self) -> pytorch.DataLoader:
-        return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+    def build_training_data_loader(self) -> torch.utils.data.DataLoader:
+        if self.hparams["dataloader_type"] == "determined":
+            return pytorch.DataLoader(
+                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
+            )
+        elif self.hparams["dataloader_type"] == "torch":
+            dataset = OnesDataset()
 
-    def build_validation_data_loader(self) -> pytorch.DataLoader:
-        return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+            seed = self.context.get_trial_seed()
+            num_workers = self.context.distributed.get_size()
+            rank = self.context.distributed.get_rank()
+            batch_size = self.context.get_per_slot_batch_size()
+            skip_batches = self.context.get_initial_batch()
+
+            sampler = torch.utils.data.SequentialSampler(dataset)
+            sampler = samplers.ReproducibleShuffleSampler(sampler, seed)
+            sampler = samplers.RepeatSampler(sampler)
+            sampler = samplers.DistributedSampler(sampler, num_workers=num_workers, rank=rank)
+            batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
+            batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip_batches)
+
+            return torch.utils.data.DataLoader(dataset, batch_sampler=batch_sampler)
+        else:
+            raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
+
+    def build_validation_data_loader(self) -> torch.utils.data.DataLoader:
+        if self.hparams["dataloader_type"] == "determined":
+            return pytorch.DataLoader(
+                OnesDataset(), batch_size=self.context.get_per_slot_batch_size()
+            )
+        elif self.hparams["dataloader_type"] == "torch":
+            dataset = OnesDataset()
+
+            num_workers = self.context.distributed.get_size()
+            rank = self.context.distributed.get_rank()
+            batch_size = self.context.get_per_slot_batch_size()
+
+            sampler = torch.utils.data.SequentialSampler(dataset)
+            sampler = samplers.DistributedSampler(sampler, num_workers=num_workers, rank=rank)
+            batch_sampler = torch.utils.data.BatchSampler(sampler, batch_size, drop_last=False)
+
+            return torch.utils.data.DataLoader(dataset, batch_sampler=batch_sampler)
+        else:
+            raise ValueError(f"unknown dataloader_type: {self.hparams['dataloader_type']}")
 
 
 if __name__ == "__main__":
@@ -180,6 +226,7 @@ if __name__ == "__main__":
     description: test-native-api-local-test-mode
     hyperparameters:
       global_batch_size: 32
+      dataloader_type: determined
     scheduling_unit: 1
     searcher:
       name: single

@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type (
@@ -18,7 +17,7 @@ type (
 	// in a shim if needed.
 	gridSearchState struct {
 		PendingTrials    int              `json:"pending_trials"`
-		RemainingTrials  []hparamSample   `json:"remaining_trials"`
+		RemainingTrials  []HParamSample   `json:"remaining_trials"`
 		SearchMethodType SearchMethodType `json:"search_method_type"`
 	}
 	// gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
@@ -36,7 +35,7 @@ func newGridSearch(config expconf.GridConfig) SearchMethod {
 		GridConfig: config,
 		gridSearchState: gridSearchState{
 			SearchMethodType: GridSearch,
-			RemainingTrials:  make([]hparamSample, 0),
+			RemainingTrials:  make([]HParamSample, 0),
 		},
 	}
 }
@@ -74,7 +73,7 @@ func (s *gridSearch) progress(trialProgress map[model.RequestID]model.PartialUni
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
 func (s *gridSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
 	var ops []Operation
@@ -105,93 +104,72 @@ func (s *gridSearch) trialClosed(ctx context, _ model.RequestID) ([]Operation, e
 	return ops, nil
 }
 
-func newHyperparameterGrid(params expconf.Hyperparameters) []hparamSample {
-	hpToInd, valueSets := getHPsValueSets(params)
-	values := cartesianProduct(valueSets)
-	var samples []hparamSample
-	for _, val := range values {
-		samples = append(samples, createHparamSample(params, hpToInd, val))
+func newHyperparameterGrid(params expconf.Hyperparameters) []HParamSample {
+	var axes []gridAxis
+	// Use params.Each for consistent ordering.
+	params.Each(func(name string, param expconf.HyperparameterV0) {
+		route := []string{name}
+		axes = append(axes, getGridAxes(route, param)...)
+	})
+	points := cartesianProduct(axes)
+	var samples []HParamSample
+	for _, axisValues := range points {
+		sample := HParamSample{}
+		for _, av := range axisValues {
+			applyToSample(av.Route, av.Value, sample)
+		}
+		samples = append(samples, sample)
 	}
 	return samples
 }
 
-// Returns gridded values for a single hyperparameter.
-func getHPValueSet(h expconf.Hyperparameter) [][]interface{} {
-	var valueSets [][]interface{}
-	if h.RawNestedHyperparameter != nil {
-		for _, nestedHP := range *h.RawNestedHyperparameter {
-			valueSets = append(valueSets, getHPValueSet(nestedHP)...)
-		}
-	} else {
-		valueSets = append(valueSets, append(grid(h), h))
-	}
-	return valueSets
+// axisValue is a single value a parameter can take, plus the route to set it if it is nested.
+type axisValue struct {
+	Route []string
+	Value interface{}
 }
 
-// Returns the gridded values for all hyperparameters in valueSets.
-// hpToInd maps each Hyperparameter to the corresponding index in valueSets
-// so we will know how to parse those values into hparamSample later.
-func getHPsValueSets(params expconf.Hyperparameters) (
-	map[expconf.Hyperparameter]int, [][]interface{}) {
-	var results [][]interface{}
-	params.Each(func(name string, param expconf.Hyperparameter) {
-		results = append(results, getHPValueSet(param)...)
-	})
-	var valueSets [][]interface{}
-	hpToInd := make(map[expconf.Hyperparameter]int)
-	for i, val := range results {
-		valueSets = append(valueSets, val[0:len(val)-1])
-		hpPtr := val[len(val)-1].(expconf.Hyperparameter)
-		hpToInd[hpPtr] = i
-	}
-	return hpToInd, valueSets
-}
+// gridAxis is a set of possible axisValues for a single hyperparameter.
+type gridAxis = []axisValue
 
-func hpToVal(
-	param expconf.Hyperparameter,
-	hpToInd map[expconf.Hyperparameter]int,
-	values []interface{}) interface{} {
-	if param.RawNestedHyperparameter != nil {
-		nestedSamples := make(map[string]interface{})
-		for nestedName, nestedHP := range *param.RawNestedHyperparameter {
-			nestedSamples[nestedName] = values[hpToInd[nestedHP]]
-		}
-		return nestedSamples
+func applyToSample(route []string, val interface{}, sample HParamSample) HParamSample {
+	key := route[0]
+	if len(route) == 1 {
+		// end of the route
+		sample[key] = val
+		return sample
 	}
-	ind := hpToInd[param]
-	return values[ind]
-}
-
-// Create a hparamSample for a given generated set of values in the
-// gridded space.
-func createHparamSample(
-	hparams expconf.Hyperparameters,
-	hpToInd map[expconf.Hyperparameter]int,
-	values []interface{}) hparamSample {
-	sample := make(hparamSample)
-	hparams.Each(func(name string, param expconf.Hyperparameter) {
-		sample[name] = hpToVal(param, hpToInd, values)
-	})
+	// make sure subsample is present
+	if _, ok := sample[key]; !ok {
+		sample[key] = HParamSample{}
+	}
+	// descend one layer and recurse
+	subsample := sample[key].(HParamSample)
+	subsample = applyToSample(route[1:], val, subsample)
+	sample[key] = subsample
 	return sample
 }
 
-func cartesianProduct(valueSets [][]interface{}) [][]interface{} {
+// Turns lists of all-values-per-axis into all combinations of one-value-per-axis.
+// Technically, both input and output are [][]axisValue, but semantically they are different.
+func cartesianProduct(axes []gridAxis) [][]axisValue {
 	switch {
-	case len(valueSets) == 0:
+	case len(axes) == 0:
 		return nil
-	case len(valueSets) == 1:
-		cross := make([][]interface{}, 0, len(valueSets[0]))
-		for _, value := range valueSets[0] {
-			cross = append(cross, []interface{}{value})
+	case len(axes) == 1:
+		axis := axes[0]
+		cross := make([][]axisValue, 0, len(axis))
+		for _, value := range axis {
+			cross = append(cross, []axisValue{value})
 		}
 		return cross
 	default:
-		right := cartesianProduct(valueSets[1:])
-		left := valueSets[0]
-		cross := make([][]interface{}, 0, len(left)*len(right))
+		right := cartesianProduct(axes[1:])
+		left := axes[0]
+		cross := make([][]axisValue, 0, len(left)*len(right))
 		for _, lValue := range left {
 			for _, rValue := range right {
-				var duplicate []interface{}
+				var duplicate []axisValue
 				duplicate = append(duplicate, lValue)
 				duplicate = append(duplicate, rValue...)
 				cross = append(cross, duplicate)
@@ -201,11 +179,15 @@ func cartesianProduct(valueSets [][]interface{}) [][]interface{} {
 	}
 }
 
-func grid(h expconf.Hyperparameter) []interface{} {
+// Return a list of all axes represented by a hyperparameter.  Non-nested hyperparameters will
+// return a single axis, which is simply all values that parameter can take in the search.  Nested
+// hyperparameters will return one axis for every subordinate parameter.
+func getGridAxes(route []string, h expconf.Hyperparameter) []gridAxis {
 	switch {
 	case h.RawConstHyperparameter != nil:
 		p := *h.RawConstHyperparameter
-		return []interface{}{p.Val()}
+		axis := []axisValue{{route, p.Val()}}
+		return []gridAxis{axis}
 	case h.RawIntHyperparameter != nil:
 		p := *h.RawIntHyperparameter
 		// Dereferencing is okay because initialization of GridSearch has checked p.Count is non-nil.
@@ -214,53 +196,72 @@ func grid(h expconf.Hyperparameter) []interface{} {
 		// Clamp to the maximum number of integers in the range.
 		count = min(count, p.Maxval()-p.Minval()+1)
 
-		vals := make([]interface{}, count)
+		axis := make([]axisValue, count)
 		// Includes temporary validation, for invalid count
 		if count == 1 {
-			vals[0] = int(math.Round(float64(p.Minval()+p.Maxval()) / 2.0))
+			axis[0] = axisValue{route, int(math.Round(float64(p.Minval()+p.Maxval()) / 2.0))}
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = int(
+				axis[i] = axisValue{route, int(
 					math.Round(
 						float64(p.Minval()) + float64(i*(p.Maxval()-p.Minval()))/float64(count-1),
 					),
-				)
+				)}
 			}
 		}
-		return vals
+		return []gridAxis{axis}
 	case h.RawDoubleHyperparameter != nil:
 		p := *h.RawDoubleHyperparameter
 		// Dereferencing is okay because initialization of GridSearch has checked p.Count is non-nil.
 		count := *p.Count()
-		vals := make([]interface{}, count)
+		axis := make([]axisValue, count)
 
 		if count == 1 {
-			vals[0] = (p.Minval() + p.Maxval()) / 2.0
+			axis[0] = axisValue{route, (p.Minval() + p.Maxval()) / 2.0}
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = p.Minval() + float64(i)*(p.Maxval()-p.Minval())/float64(count-1)
+				axis[i] = axisValue{
+					route, p.Minval() + float64(i)*(p.Maxval()-p.Minval())/float64(count-1),
+				}
 			}
 		}
-		return vals
+		return []gridAxis{axis}
 	case h.RawLogHyperparameter != nil:
 		p := *h.RawLogHyperparameter
 		count := *p.Count()
-		vals := make([]interface{}, count)
+		axis := make([]axisValue, count)
 
 		// Includes temporary validation, for invalid count.
 		if count == 1 {
-			vals[0] = math.Pow(p.Base(), (p.Minval()+p.Maxval())/2.0)
+			axis[0] = axisValue{route, math.Pow(p.Base(), (p.Minval()+p.Maxval())/2.0)}
 		} else {
 			for i := 0; i < count; i++ {
-				vals[i] = math.Pow(
+				axis[i] = axisValue{route, math.Pow(
 					p.Base(), p.Minval()+float64(i)*(p.Maxval()-p.Minval())/float64(count-1),
-				)
+				)}
 			}
 		}
-		return vals
+		return []gridAxis{axis}
 	case h.RawCategoricalHyperparameter != nil:
 		p := *h.RawCategoricalHyperparameter
-		return p.Vals()
+		axis := make([]axisValue, len(p.Vals()))
+		for i, val := range p.Vals() {
+			axis[i] = axisValue{route, val}
+		}
+		return []gridAxis{axis}
+	case h.RawNestedHyperparameter != nil:
+		axes := []gridAxis{}
+		// Use h.Each for deterministic ordering.
+		nested := expconf.Hyperparameters(*h.RawNestedHyperparameter)
+		nested.Each(func(name string, subparam expconf.HyperparameterV0) {
+			// make a completely clean copy of route
+			var subroute []string
+			subroute = append(subroute, route...)
+			// extend subroute with this key
+			subroute = append(subroute, name)
+			axes = append(axes, getGridAxes(subroute, subparam)...)
+		})
+		return axes
 	default:
 		panic(fmt.Sprintf("unexpected hyperparameter type %+v", h))
 	}

@@ -1,0 +1,4 @@
+global_batch_size: 16
+config_file: ???
+merge_config: null
+use_pretrained: false

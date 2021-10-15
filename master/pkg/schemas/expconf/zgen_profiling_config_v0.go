@@ -38,6 +38,17 @@ func (p *ProfilingConfigV0) SetEndAfterBatch(val *int) {
 	p.RawEndAfterBatch = val
 }
 
+func (p ProfilingConfigV0) SyncTimings() bool {
+	if p.RawSyncTimings == nil {
+		panic("You must call WithDefaults on ProfilingConfigV0 before .SyncTimings")
+	}
+	return *p.RawSyncTimings
+}
+
+func (p *ProfilingConfigV0) SetSyncTimings(val bool) {
+	p.RawSyncTimings = &val
+}
+
 func (p ProfilingConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedProfilingConfigV0()
 }

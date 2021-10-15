@@ -27,11 +27,17 @@ const optional = (x: io.Mixed) => io.union([ x, io.null, io.undefined ]);
 
 /* Info */
 
+const ioSsoProvider = io.type({
+  name: io.string,
+  sso_url: io.string,
+});
+
 export const ioDeterminedInfo = io.type({
   cluster_id: io.string,
   cluster_name: io.string,
   isTelemetryEnabled: io.boolean,
   master_id: io.string,
+  sso_providers: optional(io.array(ioSsoProvider)),
   version: io.string,
 });
 
@@ -82,28 +88,9 @@ const runStatesIoType = io.keyof(runStates);
 
 /* Trials */
 
-const ioMetricValue = io.any;
+const ioMetricValue = io.unknown;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
-
-export const ioValidationMetrics = io.type({
-  num_inputs: io.number,
-  validation_metrics: ioMetric,
-});
-export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
-
-const startEndTimeDef = {
-  end_time: optional(io.string),
-  start_time: io.string,
-};
-
-export const ioValidation = io.type({
-  ...startEndTimeDef,
-  id: io.number,
-  metrics: optional(ioValidationMetrics),
-  state: runStatesIoType,
-});
-export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
 
 /* Experiments */
 
@@ -212,6 +199,7 @@ export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 const ioTaskLog = io.type({
   assigned_event: io.unknown,
   container_started_event: io.unknown,
+  description: io.string,
   exited_event: optional(io.string),
   id: io.string,
   log_event: optional(io.string),
@@ -219,7 +207,6 @@ const ioTaskLog = io.type({
   scheduled_event: optional(io.string),
   seq: io.number,
   service_ready_event: optional(io.type({})),
-  snapshot: io.type({ config: io.type({ description: io.string }) }),
   terminate_request_event: optional(io.string),
   time: io.string,
 });

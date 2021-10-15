@@ -6,7 +6,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, List
 
 import determined as det
 from determined import tensorboard
@@ -14,22 +14,19 @@ from determined.common import constants, storage
 
 
 def delete_checkpoints(
-    manager: storage.StorageManager, to_delete: List[Dict[str, Any]], dry_run: bool
+    manager: storage.StorageManager, to_delete: List[str], dry_run: bool
 ) -> None:
     """
-    Delete some of the checkpoints associated with a single
-    experiment. `to_delete` is a list of two-element dicts,
-    {"uuid": str, "resources": List[str]}.
+    Delete some of the checkpoints associated with a single experiment.
     """
     logging.info("Deleting {} checkpoints".format(len(to_delete)))
 
-    for record in to_delete:
-        metadata = storage.StorageMetadata.from_json(record)
+    for storage_id in to_delete:
         if not dry_run:
-            logging.info("Deleting checkpoint {}".format(metadata))
-            manager.delete(metadata)
+            logging.info(f"Deleting checkpoint {storage_id}")
+            manager.delete(storage_id)
         else:
-            logging.info("Dry run: deleting checkpoint {}".format(metadata.storage_id))
+            logging.info(f"Dry run: deleting checkpoint {storage_id}")
 
 
 def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool = False) -> None:
@@ -37,11 +34,11 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
     Delete all Tensorboards associated with a single experiment.
     """
     if dry_run:
-        logging.info("Dry run: deleting Tensorboards for {}".format(manager.sync_path))
+        logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
 
     manager.delete()
-    logging.info("Finished deleting Tensorboards for {}".format(manager.sync_path))
+    logging.info(f"Finished deleting Tensorboards for {manager.sync_path}")
 
 
 def json_file_arg(val: str) -> Any:
@@ -102,7 +99,9 @@ def main(argv: List[str]) -> None:
 
     manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
 
-    delete_checkpoints(manager, args.delete["checkpoints"], dry_run=args.dry_run)
+    storage_ids = [c["uuid"] for c in args.delete["checkpoints"]]
+
+    delete_checkpoints(manager, storage_ids, dry_run=args.dry_run)
 
     if args.delete_tensorboards:
         tb_manager = tensorboard.build(

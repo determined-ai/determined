@@ -6,6 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -103,7 +105,7 @@ func setupKubernetesResourceManager(
 	loggingConfig model.LoggingConfig,
 ) *actor.Ref {
 	ref, _ := system.ActorOf(
-		actor.Addr("kubernetesRM"),
+		sproto.K8sRMAddr,
 		newKubernetesResourceManager(config, echo, masterTLSConfig, loggingConfig),
 	)
 	system.Ask(ref, actor.Ping{}).Get()

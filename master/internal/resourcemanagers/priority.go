@@ -96,7 +96,7 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 				}
 			} else if p.preemptionEnabled {
 				for _, allocatedTask := range successfulAllocations {
-					if allocatedTask.NonPreemptible {
+					if !allocatedTask.Preemptible {
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
@@ -163,7 +163,7 @@ func trySchedulingTaskViaPreemption(
 
 	for priority := model.MaxUserSchedulingPriority; priority > allocationPriority; priority-- {
 		for _, preemptionCandidate := range priorityToScheduledTaskMap[priority] {
-			if preemptionCandidate.NonPreemptible || !filter(preemptionCandidate) {
+			if !preemptionCandidate.Preemptible || !filter(preemptionCandidate) {
 				continue
 			}
 
@@ -233,7 +233,7 @@ func sortTasksByPriorityAndTimestamp(
 		}
 
 		assigned := taskList.GetAllocations(req.TaskActor)
-		if assigned == nil || len(assigned.Allocations) == 0 {
+		if assigned == nil || len(assigned.Reservations) == 0 {
 			priorityToPendingTasksMap[*priority] = append(priorityToPendingTasksMap[*priority], req)
 		} else {
 			priorityToScheduledTaskMap[*priority] = append(priorityToScheduledTaskMap[*priority], req)
@@ -273,8 +273,8 @@ func removeTaskFromAgents(
 	agents map[*actor.Ref]*agentState,
 	resourcesAllocated *sproto.ResourcesAllocated,
 ) {
-	for _, allocation := range resourcesAllocated.Allocations {
-		allocation := allocation.(*containerAllocation)
+	for _, allocation := range resourcesAllocated.Reservations {
+		allocation := allocation.(*containerReservation)
 		if len(allocation.devices) == 0 {
 			// Handle zero-slot containers.
 			delete(agents[allocation.agent.handler].zeroSlotContainers, allocation.container.id)

@@ -52,7 +52,7 @@ class Checkpoint(object):
         metadata: Dict[str, Any],
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
-        format: Optional[str] = None,
+        format: Optional[str] = None,  # noqa: A002
         model_version: Optional[int] = None,
         model_name: Optional[str] = None,
     ):
@@ -149,10 +149,7 @@ class Checkpoint(object):
                         )
                     )
 
-                metadata = storage.StorageMetadata.from_json(
-                    {"uuid": self.uuid, "resources": self.resources}
-                )
-                manager.download(metadata, str(local_ckpt_dir))
+                manager.download(self.uuid, str(local_ckpt_dir))
 
         if not local_ckpt_dir.joinpath("metadata.json").exists():
             with open(local_ckpt_dir.joinpath("metadata.json"), "w") as f:
@@ -210,7 +207,7 @@ class Checkpoint(object):
 
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            body={"checkpoint": {"metadata": self.metadata}},
+            json={"checkpoint": {"metadata": self.metadata}},
         )
 
     def remove_metadata(self, keys: List[str]) -> None:
@@ -228,7 +225,7 @@ class Checkpoint(object):
 
         self._session.post(
             "/api/v1/checkpoints/{}/metadata".format(self.uuid),
-            body={"checkpoint": {"metadata": self.metadata}},
+            json={"checkpoint": {"metadata": self.metadata}},
         )
 
     @staticmethod

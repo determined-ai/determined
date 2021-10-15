@@ -72,7 +72,8 @@ const MasterLogs: React.FC = () => {
       noWrap
       pageProps={{ title: 'Master Logs' }}
       ref={logsRef}
-      onScrollToTop={handleScrollToTop} />
+      onScrollToTop={handleScrollToTop}
+    />
   );
 };
 

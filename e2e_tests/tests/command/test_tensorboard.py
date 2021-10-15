@@ -53,8 +53,8 @@ entrypoint: model_def:NoOpTrial
 """
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
     """
     Start a random experiment configured with the shared_fs backend, start a
@@ -78,8 +78,9 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_gpu
+@pytest.mark.tensorflow2
 def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
     """
     Start a random experiment configured with the s3 backend, start a
@@ -101,8 +102,8 @@ def test_start_tensorboard_for_s3_experiment(tmp_path: Path, secrets: Dict[str, 
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[str, str]) -> None:
     """
     Start 3 random experiments configured with the s3 and shared_fs backends,

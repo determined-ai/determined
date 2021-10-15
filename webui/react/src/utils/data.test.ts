@@ -17,6 +17,7 @@ import {
   isSet,
   isSyncFunction,
   setPathList,
+  unflattenObject,
 } from './data';
 
 enum Type {
@@ -63,7 +64,8 @@ const asyncFn = async (): Promise<boolean> => {
 const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
 
 describe('data utility', () => {
-  describe('flattenObject', () => {
+  describe('flattenObject and unflattenObject', () => {
+    const continueFn = (value: unknown) => !(value as { type: string }).type;
     const tests = [
       {
         input: {
@@ -81,10 +83,53 @@ describe('data utility', () => {
           'b': [ 0, 1, 2 ],
         },
       },
+      {
+        input: {
+          a: {
+            x: true,
+            y: -5.280,
+            z: { hello: 'world' },
+          },
+          b: [ 0, 1, 2 ],
+        },
+        options: { delimiter: '->]X[<-' },
+        output: {
+          'a->]X[<-x': true,
+          'a->]X[<-y': -5.280,
+          'a->]X[<-z->]X[<-hello': 'world',
+          'b': [ 0, 1, 2 ],
+        },
+      },
+      {
+        input: {
+          arch: {
+            n_filters1: { maxval: 64, minval: 8, type: 'int' },
+            n_filters2: { maxval: 72, minval: 8, type: 'int' },
+          },
+          dropout1: { maxval: 0.8, minval: 0.2, type: 'double' },
+          dropout2: { maxval: 0.8, minval: 0.2, type: 'double' },
+          global_batch_size: { type: 'const', val: 64 },
+          learning_rate: { maxval: 1, minval: 0.0001, type: 'double' },
+        },
+        options: { continueFn },
+        output: {
+          'arch.n_filters1': { maxval: 64, minval: 8, type: 'int' },
+          'arch.n_filters2': { maxval: 72, minval: 8, type: 'int' },
+          'dropout1': { maxval: 0.8, minval: 0.2, type: 'double' },
+          'dropout2': { maxval: 0.8, minval: 0.2, type: 'double' },
+          'global_batch_size': { type: 'const', val: 64 },
+          'learning_rate': { maxval: 1, minval: 0.0001, type: 'double' },
+        },
+      },
     ];
     it('should flatten object', () => {
       tests.forEach(test => {
-        expect(flattenObject(test.input)).toStrictEqual(test.output);
+        expect(flattenObject(test.input, test.options)).toStrictEqual(test.output);
+      });
+    });
+    it('should unflatten object', () => {
+      tests.forEach(test => {
+        expect(unflattenObject(test.output, test.options?.delimiter)).toStrictEqual(test.input);
       });
     });
   });

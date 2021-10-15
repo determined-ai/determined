@@ -1,12 +1,9 @@
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, Optional, Tuple, cast
 
 
 class ExperimentConfig(dict):
     def debug_enabled(self) -> bool:
         return bool(self.get("debug", False))
-
-    def horovod_optional_args(self) -> List[str]:
-        return cast(List, self.get("data", {}).get("__det_dtrain_args", []))
 
     def scheduling_unit(self) -> int:
         return int(self.get("scheduling_unit", 100))
@@ -35,6 +32,9 @@ class ExperimentConfig(dict):
 
         return self["profiling"]["begin_on_batch"], self["profiling"].get("end_after_batch", None)
 
+    def profiling_sync_timings(self) -> bool:
+        return bool(self.get("profiling", {}).get("sync_timings", True))
+
     def get_data_layer_type(self) -> str:
         return cast(str, self["data_layer"]["type"])
 
@@ -46,3 +46,16 @@ class ExperimentConfig(dict):
         min_validation_period = self.get("min_validation_period", {})
         assert isinstance(min_validation_period, dict)
         return min_validation_period
+
+    def get_searcher_metric(self) -> str:
+        searcher_metric = self.get("searcher", {}).get("metric")
+        assert isinstance(
+            searcher_metric, str
+        ), f"searcher metric ({searcher_metric}) is not a string"
+
+        return searcher_metric
+
+    def get_min_checkpoint_period(self) -> Dict:
+        min_checkpoint_period = self.get("min_checkpoint_period", {})
+        assert isinstance(min_checkpoint_period, dict)
+        return min_checkpoint_period

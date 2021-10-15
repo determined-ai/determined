@@ -22,9 +22,9 @@ We welcome outside contributions. If you'd like to make a contribution, please:
 
 1. Apply the linter with `make fmt` and test locally with `make test` before
    submitting your code. Make sure that your code doesn't accidentally include
-   cloud credentials. We recommend [using git-secrets to automatically prevent 
+   cloud credentials. We recommend [using git-secrets to automatically prevent
    this](#secrets).
-   
+
 1. The first time you submit code, you'll need to
    [sign a CLA](https://determined.ai/cla/).
 
@@ -50,7 +50,7 @@ git clone git@github.com:determined-ai/determined.git
 
 #### Prerequisites
 
-- Go (>= 1.16)
+- Go (>= 1.17)
 - Python (>= 3.6, < 3.8)
 - Node (>= 12)
 - NPM (>= 6.12)
@@ -80,18 +80,9 @@ A minimal Determined cluster consists of three services: a
 [PostgreSQL](https://www.postgresql.org/) database, a Determined master,
 and a Determined agent.
 
-To start the master and agent, along with a transient database, do:
-
-```sh
-make -C tools run
-```
-
-The database will be destroyed when the cluster is shutdown. To start a
-long-running database (running in the background), do:
-
-```sh
-make -C tools start-db
-```
+For running these services in development, please use [devcluster](https://github.com/determined-ai/devcluster).
+It offers an intuitive UI as well as easy rebuild, restart, and configuration
+of master and one or more local agents.
 
 ### Accessing Determined
 
@@ -184,11 +175,11 @@ running experiments.
 
 ### Secrets
 
-To prevent cloud credentials from accidentally being exposed on GitHub, install 
-and configure the [git-secrets](https://github.com/awslabs/git-secrets) tool. 
+To prevent cloud credentials from accidentally being exposed on GitHub, install
+and configure the [git-secrets](https://github.com/awslabs/git-secrets) tool.
 This sets up git hooks to prevent pushing code that contain secrets (based on regex).
 
-For Mac, the tool can be installed via `brew install git-secrets`. For other 
+For Mac, the tool can be installed via `brew install git-secrets`. For other
 OSes see installation instructions [here](https://github.com/awslabs/git-secrets#installing-git-secrets).
 
 Then navigate to the repo, set up the git hooks, and define the regexes:

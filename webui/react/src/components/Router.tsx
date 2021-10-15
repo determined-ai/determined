@@ -4,8 +4,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes/types';
-import { paths } from 'routes/utils';
-import { clone } from 'utils/data';
+import { filterOutLoginLocation, paths } from 'routes/utils';
 
 interface Props {
   routes: RouteConfig[];
@@ -44,7 +43,7 @@ const Router: React.FC<Props> = (props: Props) => {
             {...route}
             render={({ location }): ReactNode => <Redirect to={{
               pathname: paths.login(),
-              state: { loginRedirect: clone(location) },
+              state: { loginRedirect: filterOutLoginLocation(location) },
             }} />}
           />;
         } else if (route.redirect) {

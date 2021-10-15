@@ -1,4 +1,6 @@
 import abc
+import contextlib
+import functools
 import logging
 import shutil
 import socket
@@ -9,10 +11,9 @@ import determined as det
 from determined import constants, horovod, ipc
 
 
-class _TrainContext(metaclass=abc.ABCMeta):
+class TrialContext(metaclass=abc.ABCMeta):
     """
-    _TrainContext is the API to query the system about the trial as it's running.
-    These methods should be made available to both Native and Trial APIs.
+    TrialContext is the system-provided API to a Trial class.
     """
 
     def __init__(
@@ -45,12 +46,14 @@ class _TrainContext(metaclass=abc.ABCMeta):
             )
 
         self.distributed = DistributedContext(
-            rank_info, rendezvous_info, env.det_trial_unique_port_offset
+            rank_info=rank_info,
+            chief_ip=rendezvous_info.container_addrs[0],
+            port_offset=env.det_trial_unique_port_offset,
         )
         self._stop_requested = False
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any]) -> "_TrainContext":
+    def from_config(cls, config: Dict[str, Any]) -> "TrialContext":
         """
         Create an context object suitable for debugging outside of Determined.
 
@@ -87,6 +90,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
             managed_training=False,
             test_mode=False,
             config=config,
+            checkpoint_dir="/tmp",
             limit_gpus=1,
         )
         return cls(env_context, hvd_config, rendezvous_info)
@@ -176,40 +180,8 @@ class _TrainContext(metaclass=abc.ABCMeta):
         )
         self._stop_requested = stop_requested
 
-
-class TrialContext(_TrainContext):
-    """
-    A base class that all TrialContexts will inherit from.
-    The context passed to the User's ``Trial.__init__()`` will inherit from this class.
-    """
-
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        super().__init__(env, hvd_config, rendezvous_info)
-
-
-class NativeContext(_TrainContext):
-    """
-    A base class that all NativeContexts will inherit when using the Native API.
-
-    The context returned by the ``init()`` function will inherit from this class.
-    """
-
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        rendezvous_info: det.RendezvousInfo,
-    ) -> None:
-        super().__init__(env, hvd_config, rendezvous_info)
-        self._train_fn = None  # type: Optional[Callable[[], None]]
-
-    def _set_train_fn(self, train_fn: Callable[[], None]) -> None:
-        self._train_fn = train_fn
+    def get_initial_batch(self) -> int:
+        return self.env.latest_batch
 
 
 class RankInfo:
@@ -263,30 +235,36 @@ class RankInfo:
 
 class DistributedContext:
     """
-    DistributedContext extends all TrialContexts and NativeContexts under
-    the ``context.distributed`` namespace. It provides useful methods for
-    effective distributed training.
+    DistributedContext  provides useful methods for effective distributed training.
     """
 
     def __init__(
         self,
         rank_info: RankInfo,
-        rendezvous_info: det.RendezvousInfo,
-        unique_port_offset: int,
+        chief_ip: Optional[str] = None,
+        pub_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_1,
+        pull_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_2,
+        port_offset: int = 0,
         force_tcp: bool = False,
     ) -> None:
         self._info = rank_info
-        self._rendezvous_info = rendezvous_info
-        self._unique_port_offset = unique_port_offset
+        self._pub_port = pub_port + port_offset
+        self._pull_port = pull_port + port_offset
+        self._chief_ip = chief_ip
 
         self._is_chief = self._info.rank == 0
         self._is_local_chief = self._info.local_rank == 0
 
-        if len(self._rendezvous_info.get_addrs()) != self._info.cross_size:
-            raise AssertionError(
-                f"rendezvous_info has {len(self._rendezvous_info.get_addrs())} addresses but "
-                f"rank_info indicates there are {self._info.cross_size} machines"
-            )
+        if self._info.cross_size > 1:
+            if chief_ip is None:
+                raise AssertionError(
+                    f"rank_info has cross_size ({self._info.cross_size}) but chief_ip was not "
+                    "provided.  When cross_size > 1, the chief_ip parameter is required."
+                )
+            self._chief_ip = chief_ip
+        else:
+            # When cross_size == 1, always contact the chief as localhost.
+            self._chief_ip = "127.0.0.1"
 
         self._init_ipc(force_tcp)
 
@@ -295,29 +273,25 @@ class DistributedContext:
             # No broadcasting necessary.
             return
 
-        srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self._unique_port_offset
-        srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self._unique_port_offset
-
         # Global broadcast server.
         if self._is_chief:
-            logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+            logging.debug(f"Chief setting up server with ports {self._pub_port}/{self._pull_port}.")
             self._chief_zmq = ipc.ZMQBroadcastServer(
                 num_connections=self._info.size - 1,
-                pub_url=f"tcp://*:{srv_pub_port}",
-                pull_url=f"tcp://*:{srv_pull_port}",
+                pub_url=f"tcp://*:{self._pub_port}",
+                pull_url=f"tcp://*:{self._pull_port}",
             )
             self._chief_zmq.safe_start(lambda: None)
 
         else:
-            chief_ip_address = self._rendezvous_info.get_ip_addresses()[0]
             logging.debug(
                 f"Non-Chief {self._info.rank} setting up comm to "
-                f"{chief_ip_address} w/ ports "
-                f"{srv_pub_port}/{srv_pull_port}."
+                f"{self._chief_ip} w/ ports "
+                f"{self._pub_port}/{self._pull_port}."
             )
             self._worker_zmq = ipc.ZMQBroadcastClient(
-                srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
-                srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
+                srv_pub_url=f"tcp://{self._chief_ip}:{self._pub_port}",
+                srv_pull_url=f"tcp://{self._chief_ip}:{self._pull_port}",
             )
             self._worker_zmq.safe_start()
 
@@ -514,7 +488,7 @@ class DistributedContext:
 
     def _zmq_broadcast_local(self, stuff: Any = None) -> Any:
         """
-        Every local worker gets the value sent by the local chief.
+        Every worker gets the value sent by the local chief.
         """
         if self._info.local_size < 2:
             return stuff
@@ -523,3 +497,37 @@ class DistributedContext:
         else:
             stuff = self._local_worker_zmq.recv()
         return stuff
+
+    def _local_chief_contextmanager(self, fn: Callable) -> Callable:
+        """
+        Wrap a contextmanager such that the real context manager only runs on the chief, but the
+        results are distributed to all the local workers.
+        """
+        if self._is_local_chief:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*args: Any, **kwargs: Any) -> Any:
+                with fn(*args, **kwargs) as out:
+                    # broadcast to local workers
+                    _ = self._zmq_broadcast_local(out)
+                    try:
+                        yield out
+                    finally:
+                        # wait for local workers
+                        _ = self._zmq_gather_local(None)
+
+        else:
+
+            @functools.wraps(fn)
+            @contextlib.contextmanager
+            def _fn(*__: Any, **___: Any) -> Any:
+                # wait for local chief
+                out = self._zmq_broadcast_local(None)
+                try:
+                    yield out
+                finally:
+                    # wait for local workers
+                    _ = self._zmq_gather_local(None)
+
+        return _fn

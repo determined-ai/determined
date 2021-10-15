@@ -8,7 +8,8 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
+@pytest.mark.tensorflow2
 def test_mnist_estimator_load() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
     config = conf.set_tf1_image(config)
@@ -21,8 +22,9 @@ def test_mnist_estimator_load() -> None:
     assert isinstance(model, AutoTrackable)
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("tf2", [False, True])  # type: ignore
+@pytest.mark.parallel
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize("tf2", [False, True])
 def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single-multi-slot.yaml"))
     config = conf.set_slots_per_trial(config, 8)
@@ -31,12 +33,13 @@ def test_mnist_estimator_const_parallel(tf2: bool) -> None:
     config = conf.set_perform_initial_validation(config, True)
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.cv_examples_path("mnist_estimator"), 1, has_zeroth_step=True
+        config, conf.cv_examples_path("mnist_estimator"), 1
     )
     exp.assert_performed_initial_validation(exp_id)
 
 
-@pytest.mark.parametrize(  # type: ignore
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize(
     "tf2",
     [
         pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
@@ -73,7 +76,8 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
-@pytest.mark.parametrize(  # type: ignore
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize(
     "tf2",
     [
         pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
@@ -84,8 +88,9 @@ def test_mnist_estimator_data_layer_lfs(tf2: bool) -> None:
     run_mnist_estimator_data_layer_test(tf2, "lfs")
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
+@pytest.mark.parallel
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize("tf2", [True, False])
 def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("estimator_dataset/distributed.yaml"))
     # Run with multiple steps to verify we are resetting reducers right.
@@ -105,9 +110,10 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     assert metrics["label_sum_cls"] == label_sum
 
 
-@pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-@pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
+@pytest.mark.e2e_gpu
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize("tf2", [True, False])
+@pytest.mark.parametrize("storage_type", ["s3"])
 def test_mnist_estimator_data_layer_s3(
     tf2: bool, storage_type: str, secrets: Dict[str, str]
 ) -> None:
@@ -128,8 +134,9 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
     )
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
+@pytest.mark.parallel
+@pytest.mark.tensorflow2
+@pytest.mark.parametrize("storage_type", ["lfs", "s3"])
 def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -145,7 +152,8 @@ def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[st
     )
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
+@pytest.mark.tensorflow2
 def test_mnist_estimator_adaptive_with_data_layer() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/adaptive.yaml"))
     config = conf.set_tf2_image(config)
@@ -156,15 +164,14 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
     )
 
 
-@pytest.mark.parallel  # type: ignore
+@pytest.mark.parallel
+@pytest.mark.tensorflow2
 def test_on_trial_close_callback() -> None:
     config = conf.load_config(conf.fixtures_path("estimator_no_op/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_max_length(config, {"batches": 3})
 
-    exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("estimator_no_op"), 1, has_zeroth_step=False
-    )
+    exp_id = exp.run_basic_test_with_temp_config(config, conf.fixtures_path("estimator_no_op"), 1)
 
     assert exp.check_if_string_present_in_trial_logs(
         exp.experiment_trials(exp_id)[0]["id"], "rank 0 has completed on_trial_close"

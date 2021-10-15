@@ -4,12 +4,12 @@ import functools
 import getpass
 import hashlib
 import json
-import os
 import pathlib
 from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
 
 import filelock
 
+import determined as det
 from determined.common import api, constants, util
 from determined.common.api import certs
 
@@ -17,11 +17,12 @@ Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-_cur_task_token = os.environ.get("DET_TASK_TOKEN", "")
 
-
-def get_task_token() -> str:
-    return _cur_task_token
+def get_allocation_token() -> str:
+    info = det.get_cluster_info()
+    if info is None:
+        return ""
+    return info.session_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -75,7 +76,8 @@ class Authentication:
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
 
-        if password is None and session_user == constants.DEFAULT_DETERMINED_USER:
+        fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
+        if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD
         elif session_user is None:
             session_user = input("Username: ")
@@ -86,7 +88,13 @@ class Authentication:
         if password:
             password = api.salt_and_hash(password)
 
-        token = do_login(self.master_address, session_user, password, cert)
+        try:
+            token = do_login(self.master_address, session_user, password, cert)
+        except api.errors.ForbiddenException:
+            if fallback_to_default:
+                raise api.errors.UnauthenticatedException(username=session_user)
+            raise
+
         self.token_store.set_token(session_user, token)
 
         return Session(session_user, token)
@@ -124,7 +132,7 @@ def do_login(
     r = api.post(
         master_address,
         "login",
-        body={"username": username, "password": password},
+        json={"username": username, "password": password},
         authenticated=False,
         cert=cert,
     )
@@ -164,7 +172,7 @@ class TokenStore:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing)
         self.temp = pathlib.Path(str(self.path) + ".temp")
-        self.lock = pathlib.Path(str(self.path) + ".lock")
+        self.lock = str(self.path) + ".lock"
 
         with filelock.FileLock(self.lock):
             store = self._load_store_file()
@@ -375,8 +383,7 @@ def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
-        v = vars(namespace)
-        cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=True)
+        cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
         return func(namespace)
 
     return f
@@ -390,10 +397,9 @@ def optional(func: Callable[[argparse.Namespace], Any]) -> Callable[[argparse.Na
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
-        v = vars(namespace)
         try:
-            cli_auth = Authentication(namespace.master, v.get("user"), try_reauth=False)
-        except api.errors.UnauthenticatedException:
+            cli_auth = Authentication(namespace.master, namespace.user, try_reauth=False)
+        except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
             pass
 
         return func(namespace)

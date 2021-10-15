@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	initContainerTarSrcPath = "/run/determined/temp/tar/src"
-	initContainerTarDstPath = "/run/determined/temp/tar/dst"
-	initContainerWorkDir    = "/run/determined/temp/"
-	determinedLabel         = "determined"
-	determinedSystemLabel   = "determined-system"
+	initContainerTarSrcPath   = "/run/determined/temp/tar/src"
+	initContainerTarDstPath   = "/run/determined/temp/tar/dst"
+	initContainerWorkDir      = "/run/determined/temp/"
+	determinedLabel           = "determined"
+	determinedPreemptionLabel = "determined-preemption"
+	determinedSystemLabel     = "determined-system"
 )
 
 // pod manages the lifecycle of a Kubernetes pod that executes a

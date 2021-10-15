@@ -1,10 +1,10 @@
 .PHONY: fmt check
 
 fmt:
-	isort
+	isort .
 	black .
 
 check:
-	isort --check-only
+	isort . --check-only
 	black . --check
 	flake8

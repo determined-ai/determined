@@ -3,7 +3,6 @@
 .base {
   display: flex;
   flex-direction: column;
-  max-height: 100%;
 
   &:not(:last-child) {
     padding-bottom: var(--theme-sizes-layout-big);

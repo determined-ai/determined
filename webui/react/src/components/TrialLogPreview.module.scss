@@ -1,0 +1,40 @@
+$preview-height: 33px;
+$preview-transition-in: height 0.2s ease-in-out;
+$preview-transition-out: height 0s;
+
+.base {
+  height: calc(100% - #{$preview-height});
+  transition: $preview-transition-in;
+
+  .preview {
+    background-color: var(--theme-colors-monochrome-17);
+    border-top: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-11);
+    cursor: pointer;
+    height: $preview-height;
+    overflow: hidden;
+    position: sticky;
+    top: 100%;
+    transition: $preview-transition-in;
+    width: 100%;
+  }
+  .preview:hover {
+    background-color: var(--theme-colors-monochrome-15);
+  }
+  .container {
+    flex-grow: 1;
+    font-family: 'Source Code Pro', monospace;
+    font-size: var(--theme-sizes-font-small);
+    padding: 6px 8px;
+    position: relative;
+  }
+}
+.base.hidePreview {
+  height: 100%;
+  transition: $preview-transition-out;
+
+  .preview {
+    border-width: 0;
+    height: 0;
+    transition: $preview-transition-out;
+  }
+}

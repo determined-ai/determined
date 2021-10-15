@@ -1,0 +1,52 @@
+$no-wrap-height: 20px;
+
+.base {
+  display: flex;
+  // padding: 0 var(--theme-sizes-layout-medium);
+  position: absolute;
+  width: 100%;
+
+  * { white-space: nowrap; }
+  .number {
+    color: var(--theme-colors-monochrome-10);
+    flex-shrink: 0;
+    text-align: right;
+    user-select: none;
+  }
+  .number::after { content: attr(data-label) '\00a0'; }
+  .level {
+    color: var(--theme-colors-monochrome-10);
+    flex-shrink: 0;
+    padding: 2px;
+  }
+  .level > .levelLabel { font-size: 0; }
+  .critical { color: var(--theme-colors-states-failed); }
+  .debug { color: var(--theme-colors-states-active); }
+  .error { color: var(--theme-colors-states-failed); }
+  .trace { color: var(--theme-colors-states-active); }
+  .warning { color: var(--theme-colors-states-suspended); }
+  .time {
+    color: var(--theme-colors-base-0);
+    flex-shrink: 0;
+  }
+  .time::after { content: '\00a0'; }
+  .message {
+    flex-grow: 1;
+    line-break: anywhere;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+}
+.base.noWrap {
+  height: $no-wrap-height;
+  
+  & > * { height: $no-wrap-height; }
+  .time { line-height: $no-wrap-height; }
+  .message {
+    line-break: normal;
+    line-height: $no-wrap-height;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

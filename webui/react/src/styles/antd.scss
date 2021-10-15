@@ -176,13 +176,8 @@ html {
   .ant-table-thead > tr > th:only-child {
     border-width: var(--theme-sizes-border-width);
   }
-  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
+  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger {
     background-color: var(--theme-colors-monochrome-13);
-  }
-  .ant-table-thead > tr > th > .ant-table-filter-column > .ant-table-filter-trigger-container > .ant-table-filter-trigger {
-    align-items: center;
-    display: flex;
-    justify-content: center;
   }
   .ant-table-tbody > tr [class*=tagPlus] {
     opacity: 0;
@@ -258,13 +253,17 @@ html {
   .ant-tabs > .ant-tabs-content-holder > .ant-tabs-content {
     height: 100%;
     overflow: auto;
-    padding: var(--theme-sizes-layout-big) 0;
   }
   .ant-tabs-top > .ant-tabs-nav::before,
   .ant-tabs-bottom > .ant-tabs-nav::before,
   .ant-tabs-top > div > .ant-tabs-nav::before,
   .ant-tabs-bottom > div > .ant-tabs-nav::before {
     border-color: var(--theme-colors-monochrome-12);
+  }
+  .ant-tabs.no-padding {
+    & > .ant-tabs-nav {
+      padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big) 0 var(--theme-sizes-layout-big);
+    }
   }
 
   /* Tabs Cards Style */

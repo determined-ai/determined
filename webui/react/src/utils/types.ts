@@ -2,15 +2,14 @@ import { paths } from 'routes/utils';
 import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentItem, Hyperparameters, HyperparameterType, MetricsWorkload,
-  RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RecordKey, ResourceState, RunState,
-  SlotState, Workload,
+  CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask, RecentExperimentTask,
+  RecentTask, RecordKey, ResourceState, RunState, SlotState, Workload,
 } from 'types';
 
 import { LaunchTensorboardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
-import { isMetricsWorkload } from './step';
+import { isMetricsWorkload } from './workload';
 
 /* Conversions to Tasks */
 
@@ -81,6 +80,13 @@ export const terminalRunStates: Set<RunState> = new Set([
   RunState.Completed,
   RunState.Errored,
   RunState.Deleted,
+]);
+
+export const deletableRunStates: Set<RunState> = new Set([
+  RunState.Canceled,
+  RunState.Completed,
+  RunState.Errored,
+  RunState.DeleteFailed,
 ]);
 
 export const runStateToLabel: {[key in RunState]: string} = {
@@ -200,18 +206,6 @@ export const checkpointSize = (checkpoint: Checkpoint | CheckpointWorkload): num
 };
 
 /* Experiment Config */
-export const trialHParamsToExperimentHParams = (
-  hParams: Record<string, unknown>,
-): Hyperparameters => {
-  const experimentHParams: Hyperparameters = {};
-  Object.entries(hParams).forEach(([ param, value ]) => {
-    experimentHParams[param] = {
-      type: HyperparameterType.Constant,
-      val: value as number,
-    };
-  });
-  return experimentHParams;
-};
 
 export const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
   const DEFAULT_BATCHES_PER_STEP = 100;

@@ -4,7 +4,7 @@ This files mimics keras.dataset download's function.
 For parallel and distributed training, we need to account
 for multiple processes (one per GPU) per agent.
 
-For more information on data in Determined, read our data-access tutorial.
+For more information on data in Determined, read the document for preparing data.
 """
 
 import gzip

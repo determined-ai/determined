@@ -48,9 +48,9 @@ def terraform_read_variables(vars_file_path: str) -> Dict:
         sys.exit(1)
 
     with open(vars_file_path, "r") as f:
-        vars = json.load(f)
-        assert isinstance(vars, dict), "expected a dict of variables"
-        return vars
+        variables = json.load(f)
+        assert isinstance(variables, dict), "expected a dict of variables"
+        return variables
 
 
 def terraform_write_variables(configs: Dict, variables_to_exclude: List) -> str:
@@ -175,11 +175,11 @@ def wait_for_operations(compute: Any, tf_vars: Dict, operations: List) -> bool:
     return False
 
 
-def list_instances(compute: Any, tf_vars: Dict, filter: str) -> Any:
+def list_instances(compute: Any, tf_vars: Dict, filter_expr: str) -> Any:
     """Get list of instances for this deployment matching the given filter."""
     result = (
         compute.instances()
-        .list(project=tf_vars.get("project_id"), zone=tf_vars.get("zone"), filter=filter)
+        .list(project=tf_vars.get("project_id"), zone=tf_vars.get("zone"), filter=filter_expr)
         .execute()
     )
     return result["items"] if "items" in result else []
@@ -230,8 +230,8 @@ def master_name(tf_vars: Dict) -> str:
 
 def stop_master(compute: Any, tf_vars: Dict) -> None:
     """Stop the master, waiting for operation to complete."""
-    filter = f'name="{master_name(tf_vars)}"'
-    instances = list_instances(compute, tf_vars, filter)
+    filter_expr = f'name="{master_name(tf_vars)}"'
+    instances = list_instances(compute, tf_vars, filter_expr)
 
     if len(instances) == 0:
         print(f"WARNING: Unable to locate master: {master_name(tf_vars)}")
@@ -251,8 +251,8 @@ def stop_master(compute: Any, tf_vars: Dict) -> None:
 
 def terminate_running_agents(compute: Any, tf_vars: Dict) -> None:
     """Terminate all dynamic agents, waiting for operation to complete."""
-    filter = f'labels.managed-by="{master_name(tf_vars)}"'
-    agent_instances = list_instances(compute, tf_vars, filter)
+    filter_expr = f'labels.managed-by="{master_name(tf_vars)}"'
+    agent_instances = list_instances(compute, tf_vars, filter_expr)
     delete_instances(compute, tf_vars, agent_instances)
 
 

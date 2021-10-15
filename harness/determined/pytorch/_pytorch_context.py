@@ -61,7 +61,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
-        self.profiler = None
+        self.profiler = None  # type: Any
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
 
@@ -107,7 +107,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         warned_types = set()
 
         # Second, eliminate any need for the loss functions to be in that context:
-        def end_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:
+        def end_fp16(module: torch.nn.Module, input: Any, output: Any) -> Any:  # noqa: A002
 
             if isinstance(output, torch.Tensor):
                 return output.float() if output.dtype == torch.float16 else output
@@ -264,7 +264,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         when training.
         """
         self.profiler = torch.profiler.profile(
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(get_base_path({})),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(str(get_base_path({}))),
             *args,
             **kwargs,
         )

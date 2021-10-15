@@ -3,7 +3,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generator,
     Iterator,
     List,
     Optional,
@@ -17,12 +16,7 @@ from typing import (
 
 import numpy as np
 import torch
-
-# from torch.utils.data.dataloader import _InfiniteConstantSampler
-from determined.common.check import check_gt, check_lt
-
-# TODO(DET-1524): Uncomment inports.
-from torch.utils.data import (  # _DatasetKind,; IterableDataset,
+from torch.utils.data import (
     BatchSampler,
     Dataset,
     RandomSampler,
@@ -31,6 +25,7 @@ from torch.utils.data import (  # _DatasetKind,; IterableDataset,
     _utils,
 )
 
+from determined.pytorch import samplers
 
 _Array = Union[np.ndarray, torch.Tensor]
 _Data = Union[Dict[str, _Array], Sequence[_Array], _Array]
@@ -101,6 +96,26 @@ class DataLoader:
         timeout: float = 0,
         worker_init_fn: _worker_init_fn_t = None,
     ):
+        # Don't allow IterableDatasets in our DataLoader.
+        if isinstance(dataset, torch.utils.data.IterableDataset):
+            raise ValueError(
+                "IterableDatasets are not supported through det.pytorch.DataLoader().  Read about "
+                "the difference between IterableDatasets and MapDatasets at: "
+                "pytorch.org/docs/stable/data. "
+                "You can use an IterableDataset in Determined, but you will be responsible for "
+                "shuffling, sharding, repeating, and skipping to ensure reproducibility and "
+                "correctness of training.  See the in-depth guide at: "
+                "docs.determined.ai/latest/reference/api/pytorch-samplers.html"
+            )
+
+        # Don't allow this rare combination of inputs that we would puke on later.
+        if batch_sampler is None and batch_size is None:
+            raise ValueError(
+                "The case of batch_sampler=None and batch_size=None is not supported through "
+                "det.pytorch.DataLoader(). For customizing your data loader beyond what is "
+                "supported by det.pytorch.DataLoader, see the in-depth guide at: "
+                "docs.determined.ai/latest/reference/api/pytorch-samplers.html"
+            )
 
         # BEGIN VENDORED CODE FROM PYTORCH
         # https://github.com/pytorch/pytorch/blob/v1.3.1/torch/utils/data/dataloader.py#L120
@@ -118,12 +133,6 @@ class DataLoader:
         self.pin_memory = pin_memory
         self.timeout = timeout
         self.worker_init_fn = worker_init_fn
-
-        # TODO(DET-1524): uncomment this as we do not currently support IterableDataset
-        # if isinstance(dataset, IterableDataset):
-        #     raise AssertionError("`IterableDataset`s are not currently supported.")
-        # else:
-        #     self._dataset_kind = _DatasetKind.Map
 
         if sampler is not None and shuffle:
             raise ValueError("sampler option is mutually exclusive with " "shuffle")
@@ -148,15 +157,6 @@ class DataLoader:
                 )
 
         if sampler is None:  # give default samplers
-            # TODO(DET-1524): uncomment this logic and delete the one after it.
-            # if self._dataset_kind == _DatasetKind.Iterable:
-            #    # See NOTE [ Custom Samplers and IterableDataset ]
-            #    sampler = _InfiniteConstantSampler()
-            # else:  # map-style
-            #    if shuffle:
-            #        sampler = RandomSampler(dataset)
-            #    else:
-            #        sampler = SequentialSampler(dataset)
             if shuffle:
                 sampler = RandomSampler(dataset)  # type: ignore
             else:
@@ -202,7 +202,7 @@ class DataLoader:
             collate_fn=self.collate_fn,
             pin_memory=self.pin_memory,
             timeout=self.timeout,
-            worker_init_fn=self.worker_init_fn,  # type: ignore
+            worker_init_fn=self.worker_init_fn,
         )
 
     def __iter__(self) -> Iterator:
@@ -211,9 +211,6 @@ class DataLoader:
 
     def __len__(self) -> int:
         """Compatibiliy with the real DataLoader when using a PyTorchTrial outside of Determined."""
-        # TODO(DET-1524): uncomment this as we do not currently support IterableDataset
-        # if isinstance(dataset, IterableDataset):
-        #     return len(self.dataset)
         batch_sampler = cast(BatchSampler, self.batch_sampler)
         return len(batch_sampler)
 
@@ -231,116 +228,19 @@ def adapt_batch_sampler(
     sharding for distributed training.
     """
     if repeat:
-        batch_sampler = RepeatBatchSampler(batch_sampler)
+        batch_sampler = samplers.RepeatBatchSampler(batch_sampler)
 
     if num_replicas > 1:
-        batch_sampler = DistributedBatchSampler(batch_sampler, num_replicas, rank)
+        batch_sampler = samplers.DistributedBatchSampler(batch_sampler, num_replicas, rank)
 
     # SkipBatchSampler is used when we are continuing training. SkipBatchSampler must be applied
     # after DistributedBatchSampler, since the number of batches to skip is based on how many
     # global batches should be skipped, which corresponds with how many batches are emitted by the
     # DistributedBatchSampler, not the initial BatchSampler.
     if skip > 0:
-        batch_sampler = SkipBatchSampler(batch_sampler, skip, same_length=repeat)
+        batch_sampler = samplers.SkipBatchSampler(batch_sampler, skip)
 
     return batch_sampler
-
-
-class RepeatBatchSampler(torch.utils.data.BatchSampler):
-    """
-    RepeatBatchSampler yields infinite batches indices by repeatedly iterating
-    through the batches of another BatchSampler. __len__ is just the length of
-    the underlying BatchSampler.
-    """
-
-    def __init__(self, batch_sampler: torch.utils.data.BatchSampler) -> None:
-        self.batch_sampler = batch_sampler
-
-    def __len__(self) -> int:
-        return len(self.batch_sampler)
-
-    def __iter__(self) -> Generator:
-        while True:
-            yield from self.batch_sampler
-
-
-class DistributedBatchSampler(torch.utils.data.BatchSampler):
-    """
-    DistributedBatchSampler is meant to wrap any BatchSampler to pass every nth
-    batch to a worker, using the worker's rank as the initial offset.
-
-    DistributedBatchSampler is different than the PyTorch built-in
-    torch.utils.data.distributed.DistributedSampler, because that
-    DistributedSampler expects to bbe called before the BatchSampler, and
-    additionally the DistributedSampler is meant to be a stand-alone sampler.
-
-    DistributedBatchSampler has the potential gotcha that when wrapping a
-    non-repeating BatchSampler, if the length of the BatchSampler is not
-    divisible by the number of replicas the length of the resulting
-    DistributedBatchSampler will differ based on the rank. In that case, the
-    divergent paths of multiple workers could cause problems during training.
-    PyTorchTrial always uses RepeatBatchSampler during training, PyTorchTrial
-    does not require that the workers stay in-step during validation, so this
-    potential gotcha is not a problem in Determined.
-    """
-
-    def __init__(
-        self, batch_sampler: torch.utils.data.BatchSampler, num_replicas: int, rank: int
-    ) -> None:
-        check_gt(rank, -1, "rank must be non-negative")
-        check_gt(num_replicas, 0, "num_replicas must be positive")
-        check_lt(rank, num_replicas, "rank must be less than num_replicas")
-
-        self.batch_sampler = batch_sampler
-        self.num_replicas = num_replicas
-        self.rank = rank
-
-    def __len__(self) -> int:
-        full_global_batches = len(self.batch_sampler) // self.num_replicas
-        worker_gets_partial_batch = int(len(self.batch_sampler) % self.num_replicas > self.rank)
-        return full_global_batches + worker_gets_partial_batch
-
-    def __iter__(self) -> Generator:
-        if self.num_replicas == 1:
-            yield from self.batch_sampler
-        else:
-            for i, batch in enumerate(self.batch_sampler):
-                if i % self.num_replicas == self.rank:
-                    yield batch
-
-
-class SkipBatchSampler(torch.utils.data.BatchSampler):
-    """
-    SkipBatchSampler skips some batches from an underlying BatchSampler, and
-    yield the rest. By default, the length of the new BatchSampler is reported
-    to be the length of the base BatchSampler minus the amount skipped.
-
-    In some cases, such as if the base BatchSampler is known to contain a
-    RepeatBatchSampler, it makes more sense to report the full length of the
-    base BatchSampler. This behavior is controlled using the same_length
-    parameter.
-    """
-
-    def __init__(
-        self, batch_sampler: torch.utils.data.BatchSampler, skip: int, same_length: bool = False
-    ) -> None:
-        self.batch_sampler = batch_sampler
-        self.skip = skip
-        self.length = len(batch_sampler)
-        if not same_length:
-            self.length -= self.skip
-
-    def __len__(self) -> int:
-        return self.length
-
-    def __iter__(self) -> Generator:
-        iterator = iter(self.batch_sampler)
-        for _ in range(self.skip):
-            try:
-                next(iterator)
-            except StopIteration:
-                return
-        yield from iterator
 
 
 def data_length(data: _Data) -> int:

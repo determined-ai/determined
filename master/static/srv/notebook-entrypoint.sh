@@ -2,7 +2,6 @@
 
 set -e
 
-WORKING_DIR="/run/determined/workdir"
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
 if [ -z "$DET_PYTHON_EXECUTABLE" ] ; then
@@ -21,7 +20,7 @@ fi
 # training, so we try to query the user system for a valid HOME, or default to
 # the working directory otherwise.
 if [ "$HOME" = "/" ] ; then
-    HOME="$(set -o pipefail; getent passwd "$(whoami)" | cut -d: -f6)" || HOME="$WORKING_DIR"
+    HOME="$(set -o pipefail; getent passwd "$(whoami)" | cut -d: -f6)" || HOME="$PWD"
     export HOME
 fi
 
@@ -31,7 +30,10 @@ export SHELL
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
-pushd ${WORKING_DIR} && test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}" && popd
+test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
+
+exec "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &
+
 exec jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
                  --ServerApp.allow_origin="*" \
                  --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \

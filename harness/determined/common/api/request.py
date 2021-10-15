@@ -1,6 +1,6 @@
 import webbrowser
 from types import TracebackType
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
 import lomond
@@ -52,9 +52,9 @@ def add_token_to_headers(
     if user_token:
         return {**headers, "Authorization": "Bearer {}".format(user_token)}
 
-    task_token = authentication.get_task_token()
-    if task_token:
-        return {**headers, "Grpc-Metadata-x-task-token": "Bearer {}".format(task_token)}
+    allocation_token = authentication.get_allocation_token()
+    if allocation_token:
+        return {**headers, "Grpc-Metadata-x-allocation-token": "Bearer {}".format(allocation_token)}
 
     return headers
 
@@ -64,12 +64,14 @@ def do_request(
     host: str,
     path: str,
     params: Optional[Dict[str, Any]] = None,
-    body: Optional[Dict[str, Any]] = None,
+    json: Any = None,
+    data: Optional[str] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
     stream: bool = False,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     # If no explicit Authentication object was provided, use the cli's singleton Authentication.
     if auth is None:
@@ -88,15 +90,21 @@ def do_request(
     if authenticated:
         h = add_token_to_headers(h, auth)
 
+    # Allow the json json to come pre-encoded, if we need custom encoding.
+    if json is not None and data is not None:
+        raise ValueError("json and data must not be provided together")
+
     try:
         r = determined.common.requests.request(
             method,
             make_url(host, path),
             params=params,
-            json=body,
+            json=json,
+            data=data,
             headers=h,
             verify=cert.bundle if cert else None,
             stream=stream,
+            timeout=timeout,
             server_hostname=cert.name if cert else None,
         )
     except requests.exceptions.SSLError:
@@ -106,11 +114,17 @@ def do_request(
     except requests.exceptions.RequestException as e:
         raise errors.BadRequestException(str(e))
 
+    def _get_message(r: requests.models.Response) -> str:
+        try:
+            return str(simplejson.loads(r.text).get("message"))
+        except Exception:
+            return ""
+
     if r.status_code == 403:
         username = ""
         if auth is not None:
             username = auth.get_session_user()
-        raise errors.UnauthenticatedException(username=username)
+        raise errors.ForbiddenException(username=username, message=_get_message(r))
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
     elif r.status_code >= 300:
@@ -128,6 +142,7 @@ def get(
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
     stream: bool = False,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a GET request to the remote API.
@@ -153,6 +168,7 @@ def delete(
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a DELETE request to the remote API.
@@ -166,17 +182,19 @@ def delete(
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
 def post(
     host: str,
     path: str,
-    body: Optional[Dict[str, Any]] = None,
+    json: Any = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a POST request to the remote API.
@@ -185,22 +203,24 @@ def post(
         "POST",
         host,
         path,
-        body=body,
+        json=json,
         headers=headers,
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
 def patch(
     host: str,
     path: str,
-    body: Dict[str, Any],
+    json: Dict[str, Any],
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a PATCH request to the remote API.
@@ -209,22 +229,24 @@ def patch(
         "PATCH",
         host,
         path,
-        body=body,
+        json=json,
         headers=headers,
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
 def put(
     host: str,
     path: str,
-    body: Optional[Dict[str, Any]] = None,
+    json: Optional[Dict[str, Any]] = None,
     headers: Optional[Dict[str, str]] = None,
     authenticated: bool = True,
     auth: Optional[authentication.Authentication] = None,
     cert: Optional[certs.Cert] = None,
+    timeout: Optional[Union[Tuple, float]] = None,
 ) -> requests.Response:
     """
     Send a PUT request to the remote API.
@@ -233,15 +255,16 @@ def put(
         "PUT",
         host,
         path,
-        body=body,
+        json=json,
         headers=headers,
         authenticated=authenticated,
         auth=auth,
         cert=cert,
+        timeout=timeout,
     )
 
 
-def open(host: str, path: str) -> str:
+def browser_open(host: str, path: str) -> str:
     url = make_url(host, path)
     webbrowser.open(url)
     return url

@@ -1,0 +1,15 @@
+#####################
+ Prepare Environment
+#####################
+
+Determined launches workloads using Docker containers. By default, workloads execute inside a
+Determined-provided container that includes common deep learning libraries and frameworks. So you do
+not need to do anything if you do not need to use custom environments.
+
+See the full list of documents.
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   *

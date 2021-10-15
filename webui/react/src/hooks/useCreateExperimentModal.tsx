@@ -9,7 +9,8 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
-import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
+import { trialHParamsToExperimentHParams } from 'utils/experiment';
+import { upgradeConfig } from 'utils/types';
 
 import css from './useCreateExperimentModal.module.scss';
 import usePrevious from './usePrevious';
@@ -72,7 +73,7 @@ const trialContinueConfig = (
   };
 };
 
-const MonacoEditor = React.lazy(() => import('react-monaco-editor'));
+const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const useCreateExperimentModal = (): ModalHooks => {
   const modalRef = useRef<ReturnType<ModalFunc>>();
@@ -246,13 +247,6 @@ const useCreateExperimentModal = (): ModalHooks => {
             fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
             <MonacoEditor
               height="40vh"
-              language="yaml"
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                selectOnLineNumbers: true,
-              }}
-              theme="vs-light"
               value={configString}
               onChange={handleEditorChange}
             />

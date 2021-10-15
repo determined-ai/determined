@@ -1,242 +1,179 @@
 package internal
 
 import (
-	"sort"
-	"strconv"
+	"crypto/rand"
+	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
-	"gotest.tools/assert"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/db"
+
+	"github.com/determined-ai/determined/master/internal/task"
+
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
-	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-type mockActor struct {
-	Messages []interface{}
-}
+func TestTrial(t *testing.T) {
+	system, db, rID, tr, self := setup(t)
 
-func (a *mockActor) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case api.WriteMessage:
-		a.Messages = append(a.Messages, msg.Message)
-		ctx.Respond(api.WriteResponse{})
-	default:
-	}
-	return nil
-}
-
-type mockAllocation struct {
-}
-
-func (mockAllocation) Summary() sproto.ContainerSummary {
-	return sproto.ContainerSummary{}
-}
-func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {}
-func (mockAllocation) Kill(ctx *actor.Context)                                 {}
-
-func TestRendezvousInfo(t *testing.T) {
-	addresses := [][]cproto.Address{
-		{
-			{
-				ContainerPort: 1,
-			},
-			{
-				ContainerPort: 10,
-			},
-			{
-				ContainerPort: MinLocalRendezvousPort,
-			},
-			{
-				ContainerPort: 100,
-			},
+	// Pre-scheduled stage.
+	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self, trialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    expconf.NewLengthInBatches(10),
 		},
-		{
-			{
-				ContainerPort: 200,
-			},
-			{
-				ContainerPort: 20,
-			},
-			{
-				ContainerPort: MinLocalRendezvousPort + 1,
-			},
-			{
-				ContainerPort: 2,
-			},
+		Complete: false,
+		Closed:   true,
+	}).Error())
+	require.NotNil(t, tr.allocation)
+
+	// Pre-allocated stage.
+	db.On("AddTrial", mock.Anything).Return(nil)
+	db.On("UpdateTrialRunID", 0, 1).Return(nil)
+	db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
+	require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
+		To:  self,
+		Msg: task.BuildTaskSpec{},
+	}).Error())
+	require.True(t, db.AssertExpectations(t))
+
+	// Running stage.
+	db.On("UpdateTrial", 0, model.StoppingCompletedState).Return(nil)
+	require.NoError(t, system.Ask(self, trialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    expconf.NewLengthInBatches(10),
 		},
-	}
+		Complete: true,
+		Closed:   true,
+	}).Error())
+	require.True(t, db.AssertExpectations(t))
 
-	system := actor.NewSystem("")
-
-	rp, created := system.ActorOf(
-		actor.Addr("resourceManagers"),
-		resourcemanagers.NewResourcePool(
-			&resourcemanagers.ResourcePoolConfig{PoolName: "default"},
-			nil,
-			resourcemanagers.NewFairShareScheduler(),
-			resourcemanagers.WorstFit,
-		))
-	if !created {
-		t.Fatal("unable to create cluster")
-	}
-
-	defaultTaskSpec := &tasks.TaskSpec{
-		HarnessPath:           "/opt/determined",
-		TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
-	}
-
-	// This is the minimal trial to receive scheduler.ContainerStarted messages.
-	trial := &trial{
-		rm:                   rp,
-		experiment:           &model.Experiment{},
-		task:                 &sproto.AllocateRequest{},
-		allocations:          []sproto.Allocation{mockAllocation{}, mockAllocation{}},
-		experimentState:      model.ActiveState,
-		startedContainers:    make(map[cproto.ID]bool),
-		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
-		containers:           make(map[cproto.ID]cproto.Container),
-		containerRanks:       make(map[cproto.ID]int),
-		containerAddresses:   make(map[cproto.ID][]cproto.Address),
-		containerSockets:     make(map[cproto.ID]*actor.Ref),
-		taskSpec:             defaultTaskSpec,
-	}
-	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
-	if !created {
-		t.Fatal("unable to create trial")
-	}
-
-	// Simulate a stray websocket connecting to the trial.
-	strayID := cproto.ID("stray-container-id")
-	system.Ask(trialRef, containerConnected{ContainerID: strayID})
-	t.Run("Stray sockets are not accepted", func(t *testing.T) {
-		_, strayRemains := trial.containerSockets[strayID]
-		assert.Assert(t, !strayRemains)
+	// Terminating stage.
+	db.On("UpdateTrial", 0, model.CompletedState).Return(nil)
+	system.Tell(tr.allocation, actors.ForwardThroughMock{
+		To:  self,
+		Msg: &task.AllocationExited{},
 	})
-
-	containers := make([]*cproto.Container, 0)
-	mockActors := make(map[*cproto.Container]*mockActor)
-	for idx, caddrs := range addresses {
-		c := &cproto.Container{
-			ID:    cproto.ID(strconv.Itoa(idx)),
-			State: cproto.Running,
-		}
-		mockActors[c] = &mockActor{}
-		ref, created := system.ActorOf(actor.Addr(uuid.New().String()), mockActors[c])
-		if !created {
-			t.Fatal("cannot make socket")
-		}
-
-		// Simulate trial containers connecting to the trial actor.
-		trial.containerSockets[c.ID] = ref
-
-		// Simulate the scheduling of a container.
-		system.Ask(trialRef, sproto.TaskContainerStateChanged{
-			Container: *c,
-			ContainerStarted: &sproto.TaskContainerStarted{
-				Addresses: caddrs,
-			},
-		}).Get()
-
-		containers = append(containers, c)
-	}
-
-	var rmsgs []*rendezvousInfoMessage
-	for _, c := range containers {
-		for _, msg := range mockActors[c].Messages {
-			tmsg, ok := msg.(*trialMessage)
-			if !ok {
-				continue
-			} else if tmsg.RendezvousInfo == nil {
-				continue
-			}
-			rmsgs = append(rmsgs, tmsg.RendezvousInfo)
-		}
-	}
-
-	if e, f := len(addresses), len(rmsgs); e != f {
-		t.Fatalf("expected %d messages but found %d instead", e, f)
-	}
-
-	rep := rmsgs[0]
-
-	t.Run("Rendezvous addrs are sorted", func(t *testing.T) {
-		var addrs []int
-		for _, addr := range rep.Addrs {
-			i, _ := strconv.Atoi(addr)
-			addrs = append(addrs, i)
-		}
-		assert.Assert(t, sort.IntsAreSorted(addrs), addrs)
-	})
-
-	t.Run("Rendezvous information is the same for all containers", func(t *testing.T) {
-		for idx, n := 1, len(rmsgs); idx < n; idx++ {
-			// Ignore the rank in comparisons.
-			rmsgs[idx].Rank = 0
-			assert.DeepEqual(t, rep, rmsgs[idx])
-		}
-	})
+	require.NoError(t, tr.allocation.StopAndAwaitTermination())
+	require.NoError(t, self.AwaitTermination())
+	require.True(t, model.TerminalStates[tr.state])
+	require.True(t, db.AssertExpectations(t))
 }
 
-func TestPreemption(t *testing.T) {
-	// Initialize a nil preemption.
-	var p *preemption
+func TestTrialRestarts(t *testing.T) {
+	system, db, rID, tr, self := setup(t)
 
-	// Watch nil should not panic and return an error.
-	id := uuid.New()
-	_, err := p.watch(watchPreemption{id: id})
-	assert.Error(t, err, "no preemption status available nil preemption")
+	// Pre-scheduled stage.
+	require.NoError(t, system.Ask(self, model.ActiveState).Error())
+	require.NoError(t, system.Ask(self, trialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    expconf.NewLengthInBatches(10),
+		},
+		Complete: false,
+		Closed:   true,
+	}).Error())
 
-	// All method on nil should not panic.
-	p.unwatch(unwatchPreemption{id: id})
-	p.preempt()
-	p.close()
+	for i := 0; i <= tr.config.MaxRestarts(); i++ {
+		require.NotNil(t, tr.allocation)
+		require.Equal(t, i, tr.restarts)
 
-	// "task" is allocated.
-	p = newPreemption()
+		// Pre-allocated stage.
+		if i == 0 {
+			db.On("AddTrial", mock.Anything).Return(nil)
+		}
+		db.On("UpdateTrialRunID", 0, i+1).Return(nil)
+		db.On("LatestCheckpointForTrial", 0).Return(&model.Checkpoint{}, nil)
+		require.NoError(t, system.Ask(tr.allocation, actors.ForwardThroughMock{
+			To:  self,
+			Msg: task.BuildTaskSpec{},
+		}).Error())
+		require.True(t, db.AssertExpectations(t))
 
-	// real watcher connects
-	id = uuid.New()
-	w, err := p.watch(watchPreemption{id: id})
-	assert.NilError(t, err)
+		db.On("UpdateTrialRestarts", 0, i+1).Return(nil)
+		if i == tr.config.MaxRestarts() {
+			db.On("UpdateTrial", 0, model.ErrorState).Return(nil)
+		}
 
-	// should immediately receive initial status.
-	select {
-	case <-w.C:
-		t.Fatal("received preemption but should not have")
-	default:
+		system.Tell(tr.allocation, actors.ForwardThroughMock{
+			To:  self,
+			Msg: &task.AllocationExited{Err: errors.New("bad stuff went down")},
+		})
+		require.NoError(t, tr.allocation.StopAndAwaitTermination())
+		system.Ask(self, model.TrialLog{}).Get() // sync
+
+		if i == tr.config.MaxRestarts() {
+			require.True(t, db.AssertExpectations(t))
+		}
+	}
+	require.NoError(t, self.AwaitTermination())
+	require.True(t, model.TerminalStates[tr.state])
+}
+
+func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *actor.Ref) {
+	require.NoError(t, etc.SetRootPath("../static/srv"))
+	system := actor.NewSystem("system")
+
+	// mock resource manager.
+	rmImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	rm := system.MustActorOf(actor.Addr("rm"), &rmImpl)
+
+	// mock allocation
+	allocImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	taskAllocator = func(req sproto.AllocateRequest, db db.DB, rm *actor.Ref) actor.Actor {
+		return &allocImpl
 	}
 
-	// on preemption, it should also receive status.
-	p.preempt()
+	// mock logger.
+	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
+	logger := system.MustActorOf(actor.Addr("logger"), &loggerImpl)
 
-	// should receive updated preemption status.
-	select {
-	case <-w.C:
-	default:
-		t.Fatal("did not receive preemption")
-	}
+	// mock db.
+	db := &mocks.DB{}
 
-	// preempted preemption unwatching should work.
-	p.unwatch(unwatchPreemption{id})
-
-	// new post-preemption watch connects
-	id = uuid.New()
-	w, err = p.watch(watchPreemption{id: id})
-	assert.NilError(t, err)
-
-	// should immediately receive initial status and initial status should be preemption.
-	select {
-	case <-w.C:
-	default:
-		t.Fatal("preemptionWatcher.C was empty channel (should come with initial status when preempted)")
-	}
-
-	// preempted preemption unwatching should work.
-	p.unwatch(unwatchPreemption{id})
+	// instantiate the trial
+	rID := model.NewRequestID(rand.Reader)
+	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
+	tr := newTrial(
+		taskID,
+		1,
+		model.PausedState,
+		trialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
+		rm, logger,
+		db,
+		schemas.WithDefaults(expconf.ExperimentConfig{
+			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
+				RawSharedFSConfig: &expconf.SharedFSConfig{
+					RawHostPath:      ptrs.StringPtr("/tmp"),
+					RawContainerPath: ptrs.StringPtr("determined-sharedfs"),
+				},
+			},
+		}).(expconf.ExperimentConfig),
+		&model.Checkpoint{},
+		&tasks.TaskSpec{
+			AgentUserGroup: &model.AgentUserGroup{},
+		},
+	)
+	self := system.MustActorOf(actor.Addr("trial"), tr)
+	return system, db, rID, tr, self
 }

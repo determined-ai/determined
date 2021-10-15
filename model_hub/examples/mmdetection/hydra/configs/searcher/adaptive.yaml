@@ -1,0 +1,8 @@
+name: adaptive_asha
+metric: bbox_mAP
+max_length:
+  batches: 87850
+max_trials: 100
+mode: aggressive
+max_rungs: 4
+smaller_is_better: false

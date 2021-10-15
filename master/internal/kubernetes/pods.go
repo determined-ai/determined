@@ -139,6 +139,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startEventListener(ctx)
 		p.startPreemptionListener(ctx)
 
+	case actor.PostStop:
+
 	case sproto.StartTaskPod:
 		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
@@ -396,6 +398,15 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	podInfo, ok := p.podHandlerToMetadata[podHandler]
 	if !ok {
 		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())
+	}
+
+	name := fmt.Sprintf("%s-priorityclass", podInfo.containerID)
+	_, exists := p.clientSet.SchedulingV1().PriorityClasses().Get(name, metaV1.GetOptions{})
+	if exists == nil {
+		err := p.clientSet.SchedulingV1().PriorityClasses().Delete(name, &metaV1.DeleteOptions{})
+		if err != nil {
+			ctx.Log().Warnf("Deletion of PriorityClass %s failed.", name)
+		}
 	}
 
 	ctx.Log().WithField("pod", podInfo.podName).WithField(

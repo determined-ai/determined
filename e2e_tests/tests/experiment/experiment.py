@@ -16,8 +16,8 @@ import requests
 from determined import experimental
 from determined.common import api, yaml
 from determined.common.api import authentication, certs
-from tests import cluster
 from tests import config as conf
+from tests.cluster import utils as cluster_utils
 
 
 def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:
@@ -98,7 +98,7 @@ def change_experiment_state(experiment_id: int, new_state: str) -> None:
         conf.make_master_url(),
         "experiments/{}".format(experiment_id),
         headers={"Content-Type": "application/merge-patch+json"},
-        body={"state": new_state},
+        json={"state": new_state},
     )
     assert r.status_code == requests.codes.no_content, r.text
 
@@ -179,6 +179,36 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
             return True
 
     return False
+
+
+def wait_for_experiment_active_workload(
+    experiment_id: int, max_ticks: int = conf.MAX_TASK_SCHEDULED_SECS
+) -> None:
+    for _ in range(conf.MAX_TASK_SCHEDULED_SECS):
+        if experiment_has_active_workload(experiment_id):
+            return
+
+        time.sleep(1)
+
+    pytest.fail(
+        f"The only trial cannot be scheduled within {max_ticks} seconds.",
+    )
+
+
+def wait_for_experiment_workload_progress(
+    experiment_id: int, max_ticks: int = conf.MAX_TRIAL_BUILD_SECS
+) -> None:
+    for _ in range(conf.MAX_TRIAL_BUILD_SECS):
+        trials = experiment_trials(experiment_id)
+        if len(trials) > 0:
+            only_trial = trials[0]
+            if len(only_trial["steps"]) > 1:
+                return
+        time.sleep(1)
+
+    pytest.fail(
+        f"Trial cannot finish first workload within {max_ticks} seconds.",
+    )
 
 
 def experiment_has_completed_workload(experiment_id: int) -> bool:
@@ -321,8 +351,8 @@ def assert_performed_initial_validation(exp_id: int) -> None:
     assert len(steps) > 0
     zeroth_step = steps[0]
 
-    assert zeroth_step["id"] == 0
     assert zeroth_step["validation"] is not None
+    assert zeroth_step["validation"]["total_batches"] == 0
     assert zeroth_step["validation"]["state"] == "COMPLETED"
 
 
@@ -451,20 +481,19 @@ def run_basic_test(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
-    has_zeroth_step: bool = False,
 ) -> int:
     assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
     assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials, has_zeroth_step)
+    verify_completed_experiment_metadata(experiment_id, expected_trials)
 
     return experiment_id
 
 
 def verify_completed_experiment_metadata(
-    experiment_id: int, num_expected_trials: Optional[int], has_zeroth_step: bool = False
+    experiment_id: int, num_expected_trials: Optional[int]
 ) -> None:
     # If `expected_trials` is None, the expected number of trials is
     # non-deterministic.
@@ -483,14 +512,9 @@ def verify_completed_experiment_metadata(
 
         assert len(trial["steps"]) > 0
 
-        # Check that steps appear in increasing order of step ID.
-        # Step IDs should start at 0 or 1 and have no gaps.
-        step_ids = [s["id"] for s in trial["steps"]]
-        assert step_ids == sorted(step_ids)
-        if has_zeroth_step:
-            assert step_ids == list(range(0, len(step_ids)))
-        else:
-            assert step_ids == list(range(1, len(step_ids) + 1))
+        # Check that batches appear in increasing order.
+        batch_ids = [s["total_batches"] for s in trial["steps"]]
+        assert all(x <= y for x, y in zip(batch_ids, batch_ids[1:]))
 
         for step in trial["steps"]:
             assert step["state"] == "COMPLETED"
@@ -513,7 +537,7 @@ def verify_completed_experiment_metadata(
     # take some time.
     max_secs_to_free_slots = 30
     for _ in range(max_secs_to_free_slots):
-        if cluster.num_free_slots() == cluster.num_slots():
+        if cluster_utils.num_free_slots() == cluster_utils.num_slots():
             break
         time.sleep(1)
     else:
@@ -620,7 +644,6 @@ def run_basic_test_with_temp_config(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
-    has_zeroth_step: bool = False,
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
@@ -631,7 +654,6 @@ def run_basic_test_with_temp_config(
             expected_trials,
             create_args,
             max_wait_secs=max_wait_secs,
-            has_zeroth_step=has_zeroth_step,
         )
     return experiment_id
 

@@ -116,6 +116,7 @@ class ProfilingConfigV0(schemas.SchemaBase):
     enabled: Optional[bool] = None
     begin_on_batch: Optional[int] = None
     end_after_batch: Optional[int] = None
+    sync_timings: Optional[bool] = None
 
     @schemas.auto_init
     def __init__(
@@ -123,6 +124,7 @@ class ProfilingConfigV0(schemas.SchemaBase):
         enabled: Optional[bool] = None,
         begin_on_batch: Optional[int] = None,
         end_after_batch: Optional[int] = None,
+        sync_timings: Optional[bool] = None,
     ) -> None:
         pass
 
@@ -242,11 +244,11 @@ class EnvironmentImageV0(schemas.SchemaBase):
     def runtime_defaults(self) -> None:
         if self.cpu is None:
             self.cpu = (
-                "determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd"
+                "determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-f286b87"
             )
         if self.gpu is None:
             self.gpu = (
-                "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd"
+                "determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-f286b87"
             )
 
 
@@ -432,6 +434,7 @@ HyperparameterV0_Type = Union[
 HyperparameterV0.finalize(HyperparameterV0_Type)
 
 
+@schemas.register_known_type
 class AdaptiveMode(enum.Enum):
     CONSERVATIVE = "conservative"
     STANDARD = "standard"

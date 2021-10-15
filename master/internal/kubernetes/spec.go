@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
+	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -87,7 +88,6 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.slotType == device.GPU)
 	if p.masterTLSConfig.CertificateName != "" {
 		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
 	}
@@ -127,7 +127,7 @@ func (p *pod) configureConfigMapSpec(
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      p.configMapName,
 			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
+			Labels:    map[string]string{determinedLabel: p.taskSpec.AllocationID},
 		},
 		BinaryData: configMapData,
 	}, nil
@@ -201,11 +201,33 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		return
 	}
 
-	if scheduler == coscheduler || scheduler == preemptionScheduler {
+	if p.taskSpec.Description == gcTask {
+		if newPod.Spec.PriorityClassName != "" {
+			log.Warnf(
+				"GC Priority is currently using priority class: %s. "+
+					"It will be reset to determined-system-priority",
+				newPod.Spec.PriorityClassName,
+			)
+		}
+		newPod.Spec.PriorityClassName = "determined-system-priority"
+	} else if scheduler == coscheduler || scheduler == preemptionScheduler {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
 		p.configureCoscheduler(newPod, scheduler)
+	}
+
+	if newPod.Spec.PriorityClassName == "" && p.taskSpec.ResourcesConfig.Priority() != nil {
+		priority := int32(*p.taskSpec.ResourcesConfig.Priority())
+		name := fmt.Sprintf("%s-priorityclass", p.taskSpec.ContainerID)
+
+		err := p.createPriorityClass(name, priority)
+
+		if err == nil {
+			newPod.Spec.PriorityClassName = name
+		}
+	} else if newPod.Spec.PriorityClassName == "" {
+		newPod.Spec.PriorityClassName = "determined-medium-priority"
 	}
 }
 
@@ -217,26 +239,12 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	resources := p.taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.taskSpec.Description == gcTask {
-		if newPod.Spec.PriorityClassName != "" {
-			log.Warnf(
-				"GC Priority is currently using priority class: %s. "+
-					"It will be reset to determined-system-priority",
-				newPod.Spec.PriorityClassName,
-			)
-		}
-		newPod.Spec.PriorityClassName = "determined-system-priority"
-	}
-
 	if p.slotType != device.GPU {
 		minAvailable = 0
 	} else {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
 	}
 
-	if newPod.Spec.PriorityClassName == "" {
-		newPod.Spec.PriorityClassName = "determined-medium-priority"
-	}
 	if newPod.APIVersion == "" {
 		newPod.APIVersion = "v1"
 	}
@@ -253,6 +261,24 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
 			minAvailable)
 	}
+}
+
+func (p *pod) createPriorityClass(name string, priority int32) error {
+	preemptionPolicy := k8sV1.PreemptNever
+
+	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(&schedulingV1.PriorityClass{
+		TypeMeta: metaV1.TypeMeta{},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      name,
+			Namespace: "",
+		},
+		Value:            priority,
+		GlobalDefault:    false,
+		Description:      "temporary priorityClass for determined",
+		PreemptionPolicy: &preemptionPolicy,
+	})
+
+	return err
 }
 
 func (p *pod) configurePodSpec(
@@ -275,7 +301,7 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.AllocationID
 
 	p.modifyPodSpec(podSpec, scheduler)
 
@@ -418,7 +444,6 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 			Command:         fluentArgs,
 			Image:           "fluent/fluent-bit:1.6",
 			ImagePullPolicy: configureImagePullPolicy(spec.Environment),
-			SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 			VolumeMounts:    loggingMounts,
 			WorkingDir:      fluentBaseDir,
 		})
@@ -433,7 +458,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 		SecurityContext: configureSecurityContext(spec.AgentUserGroup),
 		Resources:       p.configureResourcesRequirements(),
 		VolumeMounts:    volumeMounts,
-		WorkingDir:      tasks.ContainerWorkDir,
+		WorkingDir:      spec.WorkDir,
 	}
 
 	p.pod = p.configurePodSpec(
@@ -448,7 +473,7 @@ func (p *pod) createPodSpec(ctx *actor.Context, scheduler string) error {
 
 func configureUniqueName(t tasks.TaskSpec, rank int) string {
 	return fmt.Sprintf("%s-%d-%s-%s",
-		t.Description, rank, t.TaskID, petName.Generate(2, "-"))
+		t.Description, rank, t.AllocationID, petName.Generate(2, "-"))
 }
 
 func trialNameFromPod(podName string) string {

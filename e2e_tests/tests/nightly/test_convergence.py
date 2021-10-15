@@ -4,7 +4,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_mnist_pytorch_accuracy() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -29,7 +29,7 @@ def test_mnist_pytorch_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_fashion_mnist_tf_keras() -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
@@ -55,7 +55,7 @@ def test_fashion_mnist_tf_keras() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_imagenet_pytorch() -> None:
     config = conf.load_config(conf.tutorials_path("imagenet_pytorch/const_cifar.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -71,7 +71,7 @@ def test_imagenet_pytorch() -> None:
         if step.get("validation")
     ]
 
-    target_loss = 1.40
+    target_loss = 1.55
     assert max(validation_loss) < target_loss, (
         "imagenet_pytorch did not reach minimum target loss {} in {} steps."
         " full validation accuracy history: {}".format(
@@ -80,7 +80,7 @@ def test_imagenet_pytorch() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_cifar10_pytorch_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -105,7 +105,7 @@ def test_cifar10_pytorch_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_fasterrcnn_coco_pytorch_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("fasterrcnn_coco_pytorch/const.yaml"))
     config = conf.set_random_seed(config, 1590497309)
@@ -131,7 +131,7 @@ def test_fasterrcnn_coco_pytorch_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_mnist_estimator_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -156,7 +156,7 @@ def test_mnist_estimator_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_mnist_tf_layers_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("mnist_tf_layers/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -181,7 +181,7 @@ def test_mnist_tf_layers_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_cifar10_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("cifar10_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591110586)
@@ -206,7 +206,7 @@ def test_cifar10_tf_keras_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_iris_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591280374)
@@ -232,7 +232,7 @@ def test_iris_tf_keras_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_unets_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.cv_examples_path("unets_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591280374)
@@ -258,7 +258,7 @@ def test_unets_tf_keras_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_gbt_titanic_estimator_accuracy() -> None:
     config = conf.load_config(conf.decision_trees_examples_path("gbt_titanic_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -283,7 +283,7 @@ def test_gbt_titanic_estimator_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_data_layer_mnist_estimator_accuracy() -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
@@ -308,7 +308,7 @@ def test_data_layer_mnist_estimator_accuracy() -> None:
     )
 
 
-@pytest.mark.nightly  # type: ignore
+@pytest.mark.nightly
 def test_data_layer_mnist_tf_keras_accuracy() -> None:
     config = conf.load_config(conf.features_examples_path("data_layer_mnist_tf_keras/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(

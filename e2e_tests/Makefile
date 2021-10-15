@@ -1,7 +1,7 @@
 .PHONY: fmt check test
 
 fmt:
-	isort \
+	isort . \
 		-s ./tests/fixtures/pytorch_amp/model_def.py \
 		-s ./tests/fixtures/pytorch_amp/layers.py \
 		-s ./tests/fixtures/pytorch_amp/data.py \
@@ -12,7 +12,7 @@ fmt:
 	black .
 
 check:
-	isort --check-only  \
+	isort . --check-only  \
 		-s ./tests/fixtures/pytorch_amp/model_def.py \
 		-s ./tests/fixtures/pytorch_amp/layers.py \
 		-s ./tests/fixtures/pytorch_amp/data.py \

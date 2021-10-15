@@ -13,30 +13,39 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/ssh"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // TrialSpec is a description of a task for running a trial container.
 type TrialSpec struct {
 	Base TaskSpec
 
-	ExperimentConfig    expconf.ExperimentConfig
-	ModelDefinition     archive.Archive
-	HParams             map[string]interface{}
-	TrialSeed           uint32
-	LatestCheckpoint    *model.Checkpoint
-	InitialWorkload     workload.Workload
-	WorkloadManagerType model.WorkloadManagerType
-
-	// This is used to hint the resource manager to override defaults and start
-	// the container in host mode iff it has been scheduled across multiple agents.
-	IsMultiAgent bool
+	ExperimentID     int
+	TrialID          int
+	TrialRunID       int
+	ExperimentConfig expconf.ExperimentConfig
+	HParams          map[string]interface{}
+	TrialSeed        uint32
+	LatestCheckpoint *model.Checkpoint
+	LatestBatch      int
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
-	res.TaskToken = taskToken
+
+	env := s.ExperimentConfig.Environment()
+	ports := env.Ports()
+	if ports == nil {
+		ports = make(map[string]int)
+	}
+	// TODO: remove this, but without breaking rendezvous api.
+	ports["trial"] = 1734
+	env.SetPorts(ports)
+	res.Environment = env
+
+	res.ResourcesConfig = s.ExperimentConfig.Resources()
+
+	res.WorkDir = DefaultWorkDir
 
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(
@@ -81,67 +90,44 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) 
 			rootDir,
 		),
 		wrapArchive(additionalFiles, rootDir),
-		wrapArchive(
-			archive.Archive{
-				s.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint.json",
-					[]byte(jsonify(s.LatestCheckpoint)),
-					0600,
-					tar.TypeReg,
-				),
-			},
-			trainDir,
-		),
 	}
 
 	res.Description = fmt.Sprintf(
 		"exp-%d-trial-%d",
-		s.InitialWorkload.ExperimentID,
-		s.InitialWorkload.TrialID,
+		s.ExperimentID,
+		s.TrialID,
 	)
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
 
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
-	env.SetPorts(ports)
-	res.Environment = env
-
-	portOffset := trialUniquePortOffset(s.Base.Devices)
-	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
-		"DET_EXPERIMENT_ID":            fmt.Sprintf("%d", s.InitialWorkload.ExperimentID),
-		"DET_TRIAL_ID":                 fmt.Sprintf("%d", s.InitialWorkload.TrialID),
-		"DET_TRIAL_SEED":               fmt.Sprintf("%d", s.TrialSeed),
-		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
-		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_INITIAL_WORKLOAD":         jsonify(s.InitialWorkload),
-		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
-		"DET_WORKLOAD_MANAGER_TYPE":    string(s.WorkloadManagerType),
-		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
-		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
+		"DET_EXPERIMENT_ID":      strconv.Itoa(s.ExperimentID),
+		"DET_TRIAL_ID":           strconv.Itoa(s.TrialID),
+		"DET_TRIAL_RUN_ID":       strconv.Itoa(s.TrialRunID),
+		"DET_TRIAL_SEED":         strconv.FormatUint(uint64(s.TrialSeed), 10),
+		"DET_EXPERIMENT_CONFIG":  jsonify(s.ExperimentConfig),
+		"DET_HPARAMS":            jsonify(s.HParams),
+		"DET_LATEST_BATCH":       strconv.Itoa(s.LatestBatch),
+		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
+		"DET_TASK_TYPE":          model.TaskTypeTrial,
 	}
+	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
+		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID
+	}
+
 	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{
-		"trial_id": strconv.Itoa(s.InitialWorkload.TrialID),
+		"trial_id": strconv.Itoa(s.TrialID),
 	}
 
 	res.UseFluentLogging = true
-
-	res.UseHostMode = s.IsMultiAgent
 
 	if shm := s.ExperimentConfig.Resources().ShmSize(); shm != nil {
 		res.ShmSize = int64(*shm)
 	}
 
-	res.ResourcesConfig = s.ExperimentConfig.Resources()
-
-	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts())
+	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts(), res.WorkDir)
 	addMount := func(source, target string, bindOpts *mount.BindOptions) {
 		mounts = append(mounts, mount.Mount{
 			Type: mount.TypeBind, Source: source, Target: target, BindOptions: bindOpts,

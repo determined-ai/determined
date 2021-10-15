@@ -1,9 +1,11 @@
 package searcher
 
 import (
+	"encoding/json"
 	"strconv"
 	"testing"
 
+	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -44,17 +46,34 @@ func TestGridFunctionality(t *testing.T) {
 
 func TestHyperparameterGridMethod(t *testing.T) {
 	dParam := expconf.DoubleHyperparameter{RawMaxval: 2.0, RawCount: ptrs.IntPtr(5)}
-	assert.Equal(t, len(grid(expconf.Hyperparameter{RawDoubleHyperparameter: &dParam})), 5)
+	assert.Equal(t,
+		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawDoubleHyperparameter: &dParam})[0]),
+		5,
+	)
 	iParam := expconf.IntHyperparameter{RawMaxval: 20, RawCount: ptrs.IntPtr(7)}
-	assert.Equal(t, len(grid(expconf.Hyperparameter{RawIntHyperparameter: &iParam})), 7)
+	assert.Equal(t,
+		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawIntHyperparameter: &iParam})[0]),
+		7,
+	)
 	lParam := expconf.LogHyperparameter{
 		RawMinval: -3.0, RawMaxval: -2.0, RawBase: 10, RawCount: ptrs.IntPtr(2),
 	}
-	assert.Equal(t, len(grid(expconf.Hyperparameter{RawLogHyperparameter: &lParam})), 2)
+	assert.Equal(t,
+		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawLogHyperparameter: &lParam})[0]),
+		2,
+	)
 	catParam := expconf.CategoricalHyperparameter{RawVals: []interface{}{1, 2, 3}}
-	assert.Equal(t, len(grid(expconf.Hyperparameter{RawCategoricalHyperparameter: &catParam})), 3)
+	assert.Equal(t,
+		len(getGridAxes(
+			[]string{"x"}, expconf.Hyperparameter{RawCategoricalHyperparameter: &catParam})[0],
+		),
+		3,
+	)
 	constParam := expconf.ConstHyperparameter{RawVal: 3}
-	assert.Equal(t, len(grid(expconf.Hyperparameter{RawConstHyperparameter: &constParam})), 1)
+	assert.Equal(t,
+		len(getGridAxes([]string{"x"}, expconf.Hyperparameter{RawConstHyperparameter: &constParam})[0]),
+		1,
+	)
 }
 
 func TestGrid(t *testing.T) {
@@ -65,7 +84,7 @@ func TestGrid(t *testing.T) {
 		"2": expconf.Hyperparameter{RawIntHyperparameter: iParam2},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": 0, "2": 0},
 		{"1": 0, "2": 5},
 		{"1": 0, "2": 10},
@@ -91,18 +110,100 @@ func TestNestedGrid(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
-		{"1": 0, "2": map[string]interface{}{"3": 0}},
-		{"1": 0, "2": map[string]interface{}{"3": 5}},
-		{"1": 0, "2": map[string]interface{}{"3": 10}},
-		{"1": 10, "2": map[string]interface{}{"3": 0}},
-		{"1": 10, "2": map[string]interface{}{"3": 5}},
-		{"1": 10, "2": map[string]interface{}{"3": 10}},
-		{"1": 20, "2": map[string]interface{}{"3": 0}},
-		{"1": 20, "2": map[string]interface{}{"3": 5}},
-		{"1": 20, "2": map[string]interface{}{"3": 10}},
+	expected := []HParamSample{
+		{"1": 0, "2": HParamSample{"3": 0}},
+		{"1": 0, "2": HParamSample{"3": 5}},
+		{"1": 0, "2": HParamSample{"3": 10}},
+		{"1": 10, "2": HParamSample{"3": 0}},
+		{"1": 10, "2": HParamSample{"3": 5}},
+		{"1": 10, "2": HParamSample{"3": 10}},
+		{"1": 20, "2": HParamSample{"3": 0}},
+		{"1": 20, "2": HParamSample{"3": 5}},
+		{"1": 20, "2": HParamSample{"3": 10}},
 	}
 	assert.DeepEqual(t, actual, expected)
+}
+
+func TestNestedGridFurther(t *testing.T) {
+	hps := map[string]expconf.Hyperparameter{
+		"constant": {
+			RawConstHyperparameter: &expconf.ConstHyperparameter{RawVal: 2},
+		},
+		"a": {
+			RawNestedHyperparameter: &map[string]expconf.Hyperparameter{
+				"b": {
+					RawNestedHyperparameter: &map[string]expconf.Hyperparameter{
+						"c1": {
+							RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
+								RawVals: []interface{}{3, 5},
+							},
+						},
+						"c2": {
+							RawIntHyperparameter: &expconf.IntHyperparameter{
+								RawMinval: 7,
+								RawMaxval: 11,
+								RawCount:  ptrs.IntPtr(2),
+							},
+						},
+					},
+				},
+			},
+		},
+		"f": {
+			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
+				RawMinval: 13.0,
+				RawMaxval: 17.0,
+				RawCount:  ptrs.IntPtr(2),
+			},
+		},
+		"l": {
+			RawLogHyperparameter: &expconf.LogHyperparameter{
+				RawMinval: 1,
+				RawMaxval: 2,
+				RawBase:   10,
+				RawCount:  ptrs.IntPtr(2),
+			},
+		},
+	}
+
+	expect := map[string]bool{
+		`{"a":{"b":{"c1":3,"c2":7}},"constant":2,"f":13,"l":10}`:   true,
+		`{"a":{"b":{"c1":3,"c2":11}},"constant":2,"f":13,"l":10}`:  true,
+		`{"a":{"b":{"c1":5,"c2":7}},"constant":2,"f":13,"l":10}`:   true,
+		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":13,"l":10}`:  true,
+		`{"a":{"b":{"c1":3,"c2":7}},"constant":2,"f":17,"l":10}`:   true,
+		`{"a":{"b":{"c1":3,"c2":11}},"constant":2,"f":17,"l":10}`:  true,
+		`{"a":{"b":{"c1":5,"c2":7}},"constant":2,"f":17,"l":10}`:   true,
+		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":17,"l":10}`:  true,
+		`{"a":{"b":{"c1":3,"c2":7}},"constant":2,"f":13,"l":100}`:  true,
+		`{"a":{"b":{"c1":3,"c2":11}},"constant":2,"f":13,"l":100}`: true,
+		`{"a":{"b":{"c1":5,"c2":7}},"constant":2,"f":13,"l":100}`:  true,
+		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":13,"l":100}`: true,
+		`{"a":{"b":{"c1":3,"c2":7}},"constant":2,"f":17,"l":100}`:  true,
+		`{"a":{"b":{"c1":3,"c2":11}},"constant":2,"f":17,"l":100}`: true,
+		`{"a":{"b":{"c1":5,"c2":7}},"constant":2,"f":17,"l":100}`:  true,
+		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":17,"l":100}`: true,
+	}
+
+	for _, sample := range newHyperparameterGrid(hps) {
+		byts, err := json.Marshal(sample)
+		assert.NilError(t, err)
+		result := string(byts)
+		val, ok := expect[result]
+		if !ok {
+			assert.NilError(t, errors.Errorf("got unexpected value: %v", result))
+		}
+		if !val {
+			assert.NilError(t, errors.Errorf("got value twice: %v", result))
+		}
+		expect[result] = false
+	}
+
+	for exp, val := range expect {
+		if val {
+			assert.NilError(t, errors.Errorf("did not see %v", exp))
+		}
+	}
 }
 
 func TestGridIntCount(t *testing.T) {
@@ -114,7 +215,7 @@ func TestGridIntCount(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": 0},
 		{"1": 1},
 		{"1": 2},
@@ -133,7 +234,7 @@ func TestGridIntCountNegative(t *testing.T) {
 		},
 	}
 	actual := newHyperparameterGrid(hparams)
-	expected := []hparamSample{
+	expected := []HParamSample{
 		{"1": -4},
 		{"1": -3},
 		{"1": -2},

@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding: var(--theme-sizes-layout-big);
 
   .radioGroup {
     background-color: var(--theme-colors-monochrome-13);
@@ -12,4 +13,7 @@
     margin-bottom: var(--theme-sizes-layout-big);
     padding: var(--theme-sizes-layout-medium);
   }
+}
+.alert {
+  padding: var(--theme-sizes-layout-big);
 }

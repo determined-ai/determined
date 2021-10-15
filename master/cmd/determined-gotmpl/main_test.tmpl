@@ -1,0 +1,21 @@
+resource_manager:
+  type: agent
+  default_aux_resource_pool: aux-pool
+  default_compute_resource_pool: compute-pool
+  scheduler:
+    type: {{ .resource_manager.scheduler.type }}
+    {{- if eq .resource_manager.scheduler.type "priority" }}
+    preemption: {{ .resource_manager.scheduler.preemption_enabled }}
+    {{- end }}
+
+resource_pools:
+  - pool_name: compute-pool-solo
+    max_aux_containers_per_agent: 0
+    provider:
+      instance_type:
+        machine_type: {{ .resource_pools.pools.compute_pool.instance_type.machine_type }}
+        gpu_type: {{ .resource_pools.pools.compute_pool.instance_type.gpu_type }}
+        gpu_num: 1
+        preemptible: {{ .resource_pools.pools.compute_pool.instance_type.preemptible }}
+      cpu_slots_allowed: true
+      {{- toYaml .resource_pools.gcp | nindent 6}}

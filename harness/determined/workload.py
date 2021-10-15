@@ -1,9 +1,8 @@
 import abc
 from enum import Enum, unique
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple, Union, cast
 
 from determined.common import check
-from determined.common.types import ExperimentID, StepID, TrialID
 
 
 class Workload:
@@ -12,14 +11,13 @@ class Workload:
         RUN_STEP = 1
         COMPUTE_VALIDATION_METRICS = 2
         CHECKPOINT_MODEL = 3
-        TERMINATE = 4
 
     def __init__(
         self,
         kind: Kind,
-        e_id: ExperimentID,
-        t_id: TrialID,
-        s_id: StepID,
+        e_id: int,
+        t_id: int,
+        s_id: int,
         num_batches: int,
         total_batches_processed: int,
     ) -> None:
@@ -47,15 +45,15 @@ class Workload:
         return self.__dict__
 
     @staticmethod
-    def from_json(dict: Dict[str, Any]) -> "Workload":
-        check.check_in(dict["kind"], Workload.Kind.__members__)
+    def from_json(data: Dict[str, Any]) -> "Workload":
+        check.check_in(data["kind"], Workload.Kind.__members__)
         return Workload(
-            Workload.Kind[dict["kind"]],
-            dict["experiment_id"],
-            dict["trial_id"],
-            dict["step_id"],
-            dict["num_batches"],
-            dict["total_batches_processed"],
+            Workload.Kind[data["kind"]],
+            data["experiment_id"],
+            data["trial_id"],
+            data["step_id"],
+            data["num_batches"],
+            data["total_batches_processed"],
         )
 
 
@@ -63,14 +61,14 @@ class Workload:
 Metrics = Dict[str, Any]
 
 
-class Skipped:
-    """Skipped is used in place of Metrics when a workload is ignored by a lower layer."""
+class InvalidHP:
+    """Workload canceled because an InvalidHP was raised."""
 
     pass
 
 
-"""Every Workload needs a Response, which is either a Metrics object or a SkippedWorkload."""
-Response = Union[Metrics, Skipped]
+"""Every Workload needs a Response, which is either a Metrics object or an InvalidHP."""
+Response = Union[Metrics, InvalidHP]
 
 
 """
@@ -81,19 +79,12 @@ ResponseFunc = Callable[[Response], None]
 
 
 """
-Args is auxiliary information relevant to a workload which does not come from the master, such as
-the path to a checkpoint directory for a trial to save to.
-"""
-Args = List[Any]
-
-
-"""
 Stream describes the main message passing interface between layers of the harness.  Higher layers
 will yield workloads to lower layers, with closures to be called for the response.  Yielding a
 response closure alongside the workload only works because the messaging paradigm in the harness is
 synchronous.
 """
-Stream = Iterator[Tuple[Workload, Args, ResponseFunc]]
+Stream = Iterator[Tuple[Workload, ResponseFunc]]
 
 
 class Source(metaclass=abc.ABCMeta):
@@ -110,8 +101,7 @@ class Source(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __iter__(self) -> Stream:
         """
-        Generate tuples of (workload, workload args, response closure) to pass to the next layer
-        down.
+        Generate tuples of (workload, response closure) to pass to the next layer down.
         """
         pass
 
@@ -131,15 +121,12 @@ class WorkloadResponseInterceptor:
             interceptor = WorkloadResponseInterceptor()
 
             # Yield some workload message to the TrialController.
-            yield from interceptor.send(my_workload, my_workload_args)
+            yield from interceptor.send(my_workload)
 
             # Check that the result is appropriate.
             check.is_reasonable(interceptor.result())
 
             ...
-
-            # Close the TrialController.
-            yield from interceptor.send(terminate_workload, [])
 
         # Create a Trial to read this stream of workloads.
         controller = MyTrialController(..., make_workloads())
@@ -156,10 +143,10 @@ class WorkloadResponseInterceptor:
         check.is_none(self._response, "_respond() was called twice by the TrialController")
         self._response = resp
 
-    def send(self, workload: Workload, workload_args: Args) -> Stream:
+    def send(self, workload: Workload) -> Stream:
         """Yield a workload with our _respond() function so we can intercept the response."""
         self._response = None
-        yield workload, workload_args, self._respond
+        yield workload, self._respond
 
     def result(self) -> Response:
         """Read the WorkloadResponse from the TrialController (only call once per send)."""
@@ -169,9 +156,9 @@ class WorkloadResponseInterceptor:
         return cast(Response, out)
 
     def metrics_result(self) -> Metrics:
-        """Identical to result but disallow workload.Skipped responses."""
+        """Identical to result but disallow workload.InvalidHP responses."""
         check.is_not_none(self._response, "_respond() was not called by the TrialController.")
-        check.is_instance(self._response, dict, "unexpected SkippedWorkload response.")
+        check.is_instance(self._response, dict, "unexpected InvalidHP response.")
         return cast(Metrics, self._response)
 
 
@@ -188,9 +175,9 @@ def train_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.RUN_STEP,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         num_batches,
         total_batches_processed,
     )
@@ -204,9 +191,9 @@ def validation_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.COMPUTE_VALIDATION_METRICS,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         0,
         total_batches_processed,
     )
@@ -217,20 +204,9 @@ def checkpoint_workload(
 ) -> Workload:
     return Workload(
         Workload.Kind.CHECKPOINT_MODEL,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
+        exp_id,
+        trial_id,
+        step_id,
         0,
         total_batches_processed,
-    )
-
-
-def terminate_workload(step_id: int = 1, exp_id: int = 1, trial_id: int = 1) -> Workload:
-    return Workload(
-        Workload.Kind.TERMINATE,
-        ExperimentID(exp_id),
-        TrialID(trial_id),
-        StepID(step_id),
-        0,
-        0,
     )

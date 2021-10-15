@@ -48,6 +48,7 @@ class Secure(base.DeterminedDeployment):
         constants.cloudformation.GPU_ENV_IMAGE,
         constants.cloudformation.LOG_GROUP_PREFIX,
         constants.cloudformation.IMAGE_REPO_PREFIX,
+        constants.cloudformation.MASTER_CONFIG_TEMPLATE,
     ]
 
     def deploy(self) -> None:

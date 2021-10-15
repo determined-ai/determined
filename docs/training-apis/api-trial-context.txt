@@ -1,0 +1,36 @@
+.. _trial-context:
+
+####################################
+ Python API determined.TrialContext
+####################################
+
+The ``TrialContext`` provides useful methods for writing ``Trial`` subclasses. All ``Trial``
+subclasses receive a ``TrialContext`` object as an argument to their ``__init__()`` method:
+
+-  :class:`~determined.pytorch.PyTorchTrial` subclasses receive a plain
+   :class:`~determined.PyTorchTrialContext`.
+-  :class:`~determined.keras.TFKerasTrial` subclasses receive a
+   :class:`~determined.keras.TFKerasTrialContext`.
+-  :class:`~determined.estimator.EstimatorTrial` subclasses receive an
+   :class:`~determined.estimator.EstimatorTrialContext`.
+
+*****************************
+ ``determined.TrialContext``
+*****************************
+
+.. autoclass:: determined.TrialContext
+   :members:
+   :inherited-members:
+   :member-order: bysource
+
+   TrialContext always has an instance of :class:`~determined._train_context.DistributedContext`
+   accessible as the ``distributed`` attribute for information related to distributed training.
+
+*****************************************
+ ``determined.TrialContext.distributed``
+*****************************************
+
+.. autoclass:: determined._train_context.DistributedContext
+   :members:
+   :inherited-members:
+   :member-order: bysource

@@ -18,12 +18,12 @@ class _CreateExperimentResponse:
             raise ValueError(f'CreateExperimentResponse["experiment"] must be a dict; got {exp}')
         if "id" not in exp:
             raise ValueError(f'CreateExperimentResponse["experiment"] must have an id; got {exp}')
-        id = exp["id"]
-        if not isinstance(id, int):
+        exp_id = exp["id"]
+        if not isinstance(exp_id, int):
             raise ValueError(
-                f'CreateExperimentResponse["experiment"]["id"] must be a int; got {id}'
+                f'CreateExperimentResponse["experiment"]["id"] must be a int; got {exp_id}'
             )
-        self.id = id
+        self.id = exp_id
 
 
 class Determined:
@@ -96,7 +96,7 @@ class Determined:
 
         resp = self._session.post(
             "/api/v1/experiments",
-            body={
+            json={
                 "config": yaml.safe_dump(experiment_config),
                 "model_definition": model_context,
             },
@@ -146,7 +146,7 @@ class Determined:
         """
         r = self._session.post(
             "/api/v1/models/{}".format(name),
-            body={"description": description, "metadata": metadata},
+            json={"description": description, "metadata": metadata},
         )
 
         return model.Model.from_json(r.json().get("model"), self._session)

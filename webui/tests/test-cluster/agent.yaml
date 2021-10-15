@@ -1,3 +1,0 @@
-master_host: localhost
-master_port: 8081
-slot_type: cpu

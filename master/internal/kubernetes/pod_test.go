@@ -134,7 +134,7 @@ func createPodWithMockQueue() (
 ) {
 	commandSpec := tasks.GenericCommandSpec{
 		Base: tasks.TaskSpec{
-			TaskID:         "task",
+			AllocationID:   "task",
 			ContainerID:    "container",
 			ClusterID:      "cluster",
 			AgentUserGroup: createAgentUserGroup(),
@@ -148,7 +148,7 @@ func createPodWithMockQueue() (
 		actorMap["task"],
 		actorMap["cluster"],
 		actorMap["resource"],
-		commandSpec.ToTaskSpec(nil, ""),
+		commandSpec.ToTaskSpec(nil),
 	)
 	ref, _ := system.ActorOf(
 		actor.Addr("pod-actor-test"),

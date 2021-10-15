@@ -14,7 +14,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 import numpy as np
 import simplejson
 
-import determined as det
 from determined import constants
 from determined.common import check, util
 
@@ -129,27 +128,6 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     return metrics
 
 
-def wrap_metrics(
-    metrics: det.workload.Response,
-    stop_requested: bool,
-    invalid_hp: bool,
-    init_invalid_hp: bool,
-) -> det.workload.Response:
-    """
-    Make workload response with metrics, stop_requested, invalid_hp, and init_invalid_hp flags.
-    Skipped if not chief.
-    """
-    if isinstance(metrics, det.workload.Skipped):
-        return metrics
-    else:
-        return {
-            "metrics": metrics,
-            "stop_requested": stop_requested,
-            "invalid_hp": invalid_hp,
-            "init_invalid_hp": init_invalid_hp,
-        }
-
-
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
     def json_serializer(obj: Any) -> Any:
         if isinstance(obj, datetime.datetime):
@@ -159,6 +137,8 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
         if isinstance(obj, np.float64):
             return float(obj)
         if isinstance(obj, np.float32):
+            return float(obj)
+        if isinstance(obj, np.float16):
             return float(obj)
         if isinstance(obj, np.int64):
             return int(obj)

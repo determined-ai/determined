@@ -85,8 +85,13 @@ func (a *apiServer) GetExperiment(
 }
 
 func (a *apiServer) DeleteExperiment(
-	_ context.Context, req *apiv1.DeleteExperimentRequest,
+	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
+	if err != nil {
+		return nil, err
+	}
+
 	// Avoid loading the experiment config for what may be a very old experiment.
 	e, err := a.m.db.ExperimentWithoutConfigByID(int(req.ExperimentId))
 	switch {
@@ -94,6 +99,12 @@ func (a *apiServer) DeleteExperiment(
 		return nil, status.Errorf(codes.NotFound, "experiment not found")
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment")
+	}
+
+	// AuthZ the request.
+	curUserIsOwner := e.OwnerID == nil || *e.OwnerID == curUser.ID
+	if !curUser.Admin && !curUserIsOwner {
+		return nil, grpcutil.ErrPermissionDenied
 	}
 
 	switch exists, eErr := a.m.db.ExperimentHasCheckpointsInRegistry(int(req.ExperimentId)); {
@@ -155,6 +166,7 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment) error {
 
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	if gcErr := a.m.system.MustActorOf(addr, &checkpointGCTask{
+		taskID: model.TaskID(uuid.New().String()),
 		GCCkptSpec: tasks.GCCkptSpec{
 			Base:               taskSpec,
 			ExperimentID:       exp.ID,
@@ -343,7 +355,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_RECORDS,
+						Unit:   experimentv1.TrainingLength_UNIT_RECORDS,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -356,7 +368,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_BATCHES,
+						Unit:   experimentv1.TrainingLength_UNIT_BATCHES,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -369,7 +381,7 @@ func (a *apiServer) PreviewHPSearch(
 				{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
 					Length: &experimentv1.TrainingLength{
-						Units:  experimentv1.TrainingLength_UNITS_EPOCHS,
+						Unit:   experimentv1.TrainingLength_UNIT_EPOCHS,
 						Length: int32(op.Length.Units),
 					},
 				},
@@ -682,7 +694,7 @@ func (a *apiServer) CreateExperiment(
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 
-	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
@@ -1247,7 +1259,10 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	}
 
 	metric, err := a.m.db.ExperimentBestSearcherValidation(int(req.ExperimentId))
-	if err != nil {
+	switch {
+	case errors.Cause(err) == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "no validations for experiment")
+	case err != nil:
 		return nil, err
 	}
 

@@ -5,48 +5,7 @@ import shutil
 import uuid
 from typing import Any, Dict, Iterator, Optional, Tuple
 
-from determined.common.check import check_gt, check_not_none, check_true, check_type
-
-
-class StorageMetadata:
-    def __init__(
-        self,
-        storage_id: str,
-        resources: Dict[str, int],
-        framework: Optional[str] = None,
-        format: Optional[str] = None,
-    ) -> None:
-        check_gt(len(storage_id), 0, "Invalid storage ID")
-        self.storage_id = storage_id
-        self.resources = resources
-        self.framework = framework
-        self.format = format
-
-    def __json__(self) -> Dict[str, Any]:
-        return {
-            "uuid": self.storage_id,
-            "resources": self.resources,
-            "framework": self.framework,
-            "format": self.format,
-        }
-
-    def __str__(self) -> str:
-        return "<storage {}, framework {}, format {}>".format(
-            self.storage_id, self.framework, self.format
-        )
-
-    def __repr__(self) -> str:
-        return "<storage {}, framework {}, format {}, resources {}>".format(
-            self.storage_id, self.framework, self.format, self.resources
-        )
-
-    @staticmethod
-    def from_json(record: Dict[str, Any]) -> "StorageMetadata":
-        check_not_none(record["uuid"], "Storage ID is undefined")
-        check_not_none(record["resources"], "Resources are undefined")
-        return StorageMetadata(
-            record["uuid"], record["resources"], record.get("framework"), record.get("format")
-        )
+from determined.common.check import check_gt, check_true, check_type
 
 
 class StorageManager:
@@ -70,7 +29,7 @@ class StorageManager:
         """from_config() just calls __init__() unless it is overridden in a subclass."""
         return cls(**config)
 
-    def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
+    def post_store_path(self, storage_id: str, storage_dir: str) -> None:
         """
         post_store_path is a hook that will be called after store_path(). Subclasess of
         StorageManager should override this in order to customize the behavior of store_path().
@@ -105,23 +64,22 @@ class StorageManager:
         yield (storage_id, storage_dir)
         check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
 
-        metadata = StorageMetadata(storage_id, StorageManager._list_directory(storage_dir))
-        self.post_store_path(storage_id, storage_dir, metadata)
+        self.post_store_path(storage_id, storage_dir)
 
     @abc.abstractmethod
     @contextlib.contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
+    def restore_path(self, storage_id: str) -> Iterator[str]:
         """
         restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
         necessary cleanup afterwards. Subclasess of StorageManager must implement this.
         """
         pass
 
-    def delete(self, metadata: StorageMetadata) -> None:
+    def delete(self, storage_id: str) -> None:
         """
         Delete the stored data from persistent storage.
         """
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
+        storage_dir = os.path.join(self._base_path, storage_id)
 
         check_true(
             os.path.exists(storage_dir), "Storage directory does not exist: {}".format(storage_dir)
@@ -130,7 +88,7 @@ class StorageManager:
             os.path.isdir(storage_dir), "Storage path is not a directory: {}".format(storage_dir)
         )
 
-        self._remove_checkpoint_directory(metadata.storage_id, ignore_errors=False)
+        self._remove_checkpoint_directory(storage_id, ignore_errors=False)
 
     def _remove_checkpoint_directory(self, storage_id: str, ignore_errors: bool = True) -> None:
         """

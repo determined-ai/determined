@@ -15,8 +15,8 @@ const (
 	sslModeDisable = "disable"
 )
 
-// Setup connects to the database and run any necessary migrations.
-func Setup(opts *Config) (*PgDB, error) {
+// Connect connects to the database, but doesn't run migrations & inits.
+func Connect(opts *Config) (*PgDB, error) {
 	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
 	dbURL += fmt.Sprintf(sslTpl, opts.SSLMode, opts.SSLRootCert)
 	log.Infof("connecting to database %s:%s", opts.Host, opts.Port)
@@ -27,13 +27,23 @@ func Setup(opts *Config) (*PgDB, error) {
 
 	db.sql.SetMaxOpenConns(maxOpenConns)
 
-	if err = db.Migrate(opts.Migrations); err != nil {
+	return db, nil
+}
+
+// Setup connects to the database and run any necessary migrations.
+func Setup(opts *Config) (*PgDB, error) {
+	db, err := Connect(opts)
+	if err != nil {
+		return db, err
+	}
+
+	if err = db.Migrate(opts.Migrations, []string{"up"}); err != nil {
 		return nil, errors.Wrap(err, "running migrations")
 	}
 	if err = db.initAuthKeys(); err != nil {
 		return nil, err
 	}
-	if err = db.initTaskSessions(); err != nil {
+	if err = db.initAllocationSessions(); err != nil {
 		return nil, err
 	}
 	return db, nil

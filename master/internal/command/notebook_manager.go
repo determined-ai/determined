@@ -1,17 +1,16 @@
 package command
 
 import (
-	"regexp"
+	"github.com/google/uuid"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
-
-var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
 
 type notebookManager struct {
 	db *db.PgDB
@@ -35,11 +34,8 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case tasks.GenericCommandSpec:
-		return createGenericCommandActor(ctx, n.db, msg, map[string]readinessCheck{
-			"notebook": func(log sproto.ContainerLog) bool {
-				return jupyterReadyPattern.MatchString(log.String())
-			},
-		})
+		taskID := model.TaskID(uuid.New().String())
+		return createGenericCommandActor(ctx, n.db, taskID, model.TaskTypeNotebook, msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

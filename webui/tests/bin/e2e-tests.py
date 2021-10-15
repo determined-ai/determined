@@ -22,8 +22,7 @@ reports_dir = tests_dir.joinpath("reports")
 logs_dir = reports_dir.joinpath("logs")
 videos_dir = reports_dir.joinpath("videos")
 test_cluster_dir = tests_dir.joinpath("test-cluster")
-
-CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
+devcluster_config_path = test_cluster_dir / 'devcluster.yaml'
 
 CLEAR = "\033[39m"
 BLUE = "\033[94m"
@@ -37,7 +36,7 @@ def run(cmd: List[str], config) -> None:
 
 def run_forget(cmd: List[str], logfile, config) -> subprocess.Popen:
     out_target = logfile if logfile is not None else sys.stdout
-    return subprocess.Popen(cmd, stdout=out_target)
+    return subprocess.Popen(cmd, env=config["env"], stdout=out_target)
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -73,21 +72,17 @@ def wait_until(condition, timeout=1, *args):
 
 def setup_cluster(config, logfile=None):
     logger.info("setting up the cluster..")
-    run(CLUSTER_CMD_PREFIX + ["start-db"], config)
-    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
-    if not wait_until(is_cluster_up, 10, config):
+    cluster_process = run_forget(
+        ["devcluster", "-1", "-c", devcluster_config_path], logfile, config)
+    if not wait_until(is_cluster_up, 60, config):
         raise Exception(f"cluster {config['DET_MASTER']} is unreachable")
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
 
 
-def teardown_cluster(config):
+def teardown_cluster(config, pid):
     logger.info("tearing down the cluster..")
-    # FIXME
-    run_ignore_failure(["pkill", "determined"], config)
-    run_ignore_failure(["pkill", "run-server"], config)
-
-    run(CLUSTER_CMD_PREFIX + ["stop-db"], config)
+    run_ignore_failure(["kill", str(pid)], config)
 
 
 @contextmanager
@@ -95,10 +90,10 @@ def det_cluster(config):
     try:
         log_path = str(test_cluster_dir.joinpath("cluster.stdout.log"))
         with open(log_path, "w") as f:
-            yield setup_cluster(config, f)
-
+            cluster_process = setup_cluster(config, f)
+            yield
     finally:
-        teardown_cluster(config)
+        teardown_cluster(config, cluster_process.pid)
 
 
 def pre_e2e_tests(config):
@@ -158,12 +153,9 @@ def get_config(args):
     config["CLUSTER_NAME"] = f"det_test_{args.det_port}"
     config["DET_MASTER"] = f"{args.det_host}:{args.det_port}"
 
-    env = {}
-    for var in ["DISPLAY", "PATH", "XAUTHORITY", "TERM"]:
-        value = os.environ.get(var)
-        if value is not None:
-            env[var] = value
+    env = os.environ.copy()
     env["DET_MASTER"] = config["DET_MASTER"]
+    env["DET_PROJ"] = str(root_path)
     logging.basicConfig(
         level=(args.log_level or "INFO"),
         format=(args.log_format or f"{LOG_COLOR}%(message)s{CLEAR}"),

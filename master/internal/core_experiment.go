@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -357,6 +359,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
+				taskID: model.TaskID(uuid.New().String()),
 				GCCkptSpec: tasks.GCCkptSpec{
 					Base:               taskSpec,
 					ExperimentID:       dbExp.ID,
@@ -511,7 +514,8 @@ func (m *Master) postExperimentKill(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	resp := m.system.AskAt(actor.Addr("experiments", args.ExperimentID), killExperiment{})
+	exp := actor.Addr("experiments", args.ExperimentID)
+	resp := m.system.AskAt(exp, &apiv1.KillExperimentRequest{})
 	if resp.Source() == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound,
 			fmt.Sprintf("active experiment not found: %d", args.ExperimentID))

@@ -3,7 +3,9 @@ package internal
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -15,7 +17,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -34,10 +35,11 @@ const (
 	jupyterDataDir    = "/run/determined/jupyter/data"
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterIdleCheck  = "/run/determined/jupyter/check_idle.py"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookDefaultPage = "/run/determined/workdir/test.ipynb"
+	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
 var notebooksAddr = actor.Addr("notebooks")
@@ -55,6 +57,11 @@ func (a *apiServer) GetNotebooks(
 
 func (a *apiServer) GetNotebook(
 	_ context.Context, req *apiv1.GetNotebookRequest) (resp *apiv1.GetNotebookResponse, err error) {
+	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
+}
+
+func (a *apiServer) IdleNotebook(
+	_ context.Context, req *apiv1.IdleNotebookRequest) (resp *apiv1.IdleNotebookResponse, err error) {
 	return resp, a.actorRequest(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
@@ -106,6 +113,8 @@ func (a *apiServer) NotebookLogs(
 	).AwaitTermination()
 }
 
+var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
@@ -117,6 +126,10 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErr2GRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
+
+	spec.WatchProxyIdleTimeout = true
+	spec.WatchRunnerIdleTimeout = true
+	spec.LogReadinessCheck = jupyterReadyPattern
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
@@ -134,8 +147,14 @@ func (a *apiServer) LaunchNotebook(
 	// Selecting a random port mitigates the risk of multiple processes binding
 	// the same port on an agent in host mode.
 	port := getRandomPort(minNotebookPort, maxNotebookPort)
+	configBytes, err := json.Marshal(spec.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot marshal notebook config: %s", err.Error())
+	}
 	spec.Base.ExtraEnvVars = map[string]string{
-		"NOTEBOOK_PORT": strconv.Itoa(port),
+		"NOTEBOOK_PORT":   strconv.Itoa(port),
+		"NOTEBOOK_CONFIG": string(configBytes),
+		"DET_TASK_TYPE":   model.TaskTypeNotebook,
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}
@@ -158,6 +177,12 @@ func (a *apiServer) LaunchNotebook(
 			tar.TypeReg,
 		),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
+			jupyterIdleCheck,
+			etc.MustStaticFile(etc.NotebookIdleCheckResource),
+			0700,
+			tar.TypeReg,
+		),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			notebookDefaultPage,
 			etc.MustStaticFile(etc.NotebookTemplateResource),
 			0644,
@@ -171,7 +196,7 @@ func (a *apiServer) LaunchNotebook(
 		return nil, err
 	}
 
-	notebookID := notebookIDFut.Get().(sproto.TaskID)
+	notebookID := notebookIDFut.Get().(model.TaskID)
 	notebook := a.m.system.AskAt(notebooksAddr.Child(notebookID), &notebookv1.Notebook{})
 	if err = api.ProcessActorResponseError(&notebook); err != nil {
 		return nil, err

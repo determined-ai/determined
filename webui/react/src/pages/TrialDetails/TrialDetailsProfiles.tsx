@@ -5,6 +5,8 @@ import ProfilesFiltersProvider from 'pages/TrialDetails/Profiles/ProfilesFilters
 import ProfilesNotEnabled from 'pages/TrialDetails/Profiles/ProfilesNotEnabled';
 import { ExperimentBase, TrialDetails } from 'types';
 
+import css from './TrialDetailsProfiles.module.scss';
+
 export interface Props {
   experiment: ExperimentBase;
   trial: TrialDetails;
@@ -12,7 +14,7 @@ export interface Props {
 
 export const CHART_HEIGHT = 400;
 
-const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => {
+const Profiler: React.FC<Props> = ({ experiment, trial }: Props) => {
   if (!experiment.config.profiling?.enabled) {
     return (
       <ProfilesNotEnabled />
@@ -20,10 +22,18 @@ const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => 
   } else {
     return (
       <ProfilesFiltersProvider trial={trial}>
-        <ProfilesEnabled trial={trial} />
+        <ProfilesEnabled />
       </ProfilesFiltersProvider>
     );
   }
+};
+
+const TrialDetailsProfiles: React.FC<Props> = (props: Props) => {
+  return (
+    <div className={css.base}>
+      <Profiler {...props} />
+    </div>
+  );
 };
 
 export default TrialDetailsProfiles;

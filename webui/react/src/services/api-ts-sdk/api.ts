@@ -126,7 +126,7 @@ export enum Determinedexperimentv1State {
 }
 
 /**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PENDING: The task is pending assignment.  - STATE_ASSIGNED: The task has been assigned to an agent but has not started yet.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.
  * @export
  * @enum {string}
  */
@@ -137,7 +137,8 @@ export enum Determinedtaskv1State {
     PULLING = <any> 'STATE_PULLING',
     STARTING = <any> 'STATE_STARTING',
     RUNNING = <any> 'STATE_RUNNING',
-    TERMINATED = <any> 'STATE_TERMINATED'
+    TERMINATED = <any> 'STATE_TERMINATED',
+    TERMINATING = <any> 'STATE_TERMINATING'
 }
 
 /**
@@ -549,15 +550,15 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
- * The units for the training length.   - UNITS_UNSPECIFIED: Zero-value (not allowed).  - UNITS_RECORDS: Indicates a training length is specified in records, samples or another synonymous unit.  - UNITS_BATCHES: Indicates a training length is specified in batches.  - UNITS_EPOCHS: Indicates a training length is specified in epochs.
+ * The units for the training length.   - UNIT_UNSPECIFIED: Zero-value (not allowed).  - UNIT_RECORDS: Indicates a training length is specified in records, samples or another synonymous unit.  - UNIT_BATCHES: Indicates a training length is specified in batches.  - UNIT_EPOCHS: Indicates a training length is specified in epochs.
  * @export
  * @enum {string}
  */
-export enum TrainingLengthUnits {
-    UNSPECIFIED = <any> 'UNITS_UNSPECIFIED',
-    RECORDS = <any> 'UNITS_RECORDS',
-    BATCHES = <any> 'UNITS_BATCHES',
-    EPOCHS = <any> 'UNITS_EPOCHS'
+export enum TrainingLengthUnit {
+    UNSPECIFIED = <any> 'UNIT_UNSPECIFIED',
+    RECORDS = <any> 'UNIT_RECORDS',
+    BATCHES = <any> 'UNIT_BATCHES',
+    EPOCHS = <any> 'UNIT_EPOCHS'
 }
 
 /**
@@ -670,6 +671,34 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     bestCheckpoint?: V1CheckpointWorkload;
+    /**
+     * The last reported state of the trial runner (harness code).
+     * @type {string}
+     * @memberof Trialv1Trial
+     */
+    runnerState?: string;
+}
+
+/**
+ * Acknowledge the receipt of some stop signal.
+ * @export
+ * @interface V1AckAllocationPreemptionSignalRequest
+ */
+export interface V1AckAllocationPreemptionSignalRequest {
+    /**
+     * The allocation that is acknowledging the request.
+     * @type {string}
+     * @memberof V1AckAllocationPreemptionSignalRequest
+     */
+    allocationId: string;
+}
+
+/**
+ * Response to AckAllocationPreemptionSignalRequest.
+ * @export
+ * @interface V1AckAllocationPreemptionSignalResponse
+ */
+export interface V1AckAllocationPreemptionSignalResponse {
 }
 
 /**
@@ -728,6 +757,18 @@ export interface V1Agent {
      * @memberof V1Agent
      */
     addresses?: Array<string>;
+    /**
+     * Flag notifying if containers can be scheduled on this agent.
+     * @type {boolean}
+     * @memberof V1Agent
+     */
+    enabled?: boolean;
+    /**
+     * Flag notifying if this agent is in the draining mode: current containers will be allowed to finish but no new ones will be scheduled.
+     * @type {boolean}
+     * @memberof V1Agent
+     */
+    draining?: boolean;
 }
 
 /**
@@ -748,6 +789,34 @@ export interface V1AgentUserGroup {
      * @memberof V1AgentUserGroup
      */
     agentGid?: number;
+}
+
+/**
+ * Response to AllocationPreemptionSignalRequest.
+ * @export
+ * @interface V1AllocationPreemptionSignalResponse
+ */
+export interface V1AllocationPreemptionSignalResponse {
+    /**
+     * True if signaling preempt, otherwise just a synchronization marker.
+     * @type {boolean}
+     * @memberof V1AllocationPreemptionSignalResponse
+     */
+    preempt?: boolean;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1AllocationRendezvousInfoResponse
+ */
+export interface V1AllocationRendezvousInfoResponse {
+    /**
+     * The rendezvous information.
+     * @type {V1RendezvousInfo}
+     * @memberof V1AllocationRendezvousInfoResponse
+     */
+    rendezvousInfo: V1RendezvousInfo;
 }
 
 /**
@@ -829,13 +898,7 @@ export interface V1Checkpoint {
      */
     batchNumber: number;
     /**
-     * Timestamp when the checkpoint began being saved to persistent storage.
-     * @type {Date}
-     * @memberof V1Checkpoint
-     */
-    startTime: Date;
-    /**
-     * Timestamp when the checkpoint completed being saved to persistent storage.
+     * Timestamp when the checkpoint was reported as being saved to persistent storage.
      * @type {Date}
      * @memberof V1Checkpoint
      */
@@ -909,7 +972,7 @@ export interface V1CheckpointMetadata {
      */
     trialId: number;
     /**
-     * The run of the trial assocaited with the checkpoint.
+     * The run of the trial associated with the checkpoint.
      * @type {number}
      * @memberof V1CheckpointMetadata
      */
@@ -925,7 +988,7 @@ export interface V1CheckpointMetadata {
      * @type {{ [key: string]: string; }}
      * @memberof V1CheckpointMetadata
      */
-    resources?: { [key: string]: string; };
+    resources: { [key: string]: string; };
     /**
      * The framework associated with the checkpoint.
      * @type {string}
@@ -949,19 +1012,7 @@ export interface V1CheckpointMetadata {
      * @type {number}
      * @memberof V1CheckpointMetadata
      */
-    totalBatches?: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1CheckpointMetadata
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1CheckpointMetadata
-     */
-    totalEpochs?: number;
+    latestBatch?: number;
 }
 
 /**
@@ -976,12 +1027,6 @@ export interface V1CheckpointWorkload {
      * @memberof V1CheckpointWorkload
      */
     uuid?: string;
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1CheckpointWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}
@@ -1244,6 +1289,26 @@ export interface V1Device {
      * @memberof V1Device
      */
     type?: Devicev1Type;
+}
+
+/**
+ * Disable the agent.
+ * @export
+ * @interface V1DisableAgentRequest
+ */
+export interface V1DisableAgentRequest {
+    /**
+     * The id of the agent.
+     * @type {string}
+     * @memberof V1DisableAgentRequest
+     */
+    agentId?: string;
+    /**
+     * If true, wait for running tasks to finish.
+     * @type {boolean}
+     * @memberof V1DisableAgentRequest
+     */
+    drain?: boolean;
 }
 
 /**
@@ -1619,6 +1684,12 @@ export interface V1GetCurrentTrialSearcherOperationResponse {
      * @memberof V1GetCurrentTrialSearcherOperationResponse
      */
     op?: V1SearcherOperation;
+    /**
+     * The status of the searcher operation.
+     * @type {boolean}
+     * @memberof V1GetCurrentTrialSearcherOperationResponse
+     */
+    completed?: boolean;
 }
 
 /**
@@ -1851,6 +1922,30 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     telemetryEnabled?: boolean;
+    /**
+     * SSO providers.
+     * @type {Array<V1SSOProvider>}
+     * @memberof V1GetMasterResponse
+     */
+    ssoProviders?: Array<V1SSOProvider>;
+    /**
+     * Redirect for starting internal sessions..
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    externalLoginUri?: string;
+    /**
+     * Redirect for ending external sessions.
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    externalLogoutUri?: string;
+    /**
+     * Branding style to use on front-end.
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    branding?: string;
 }
 
 /**
@@ -2297,20 +2392,6 @@ export interface V1GetTrialProfilerMetricsResponse {
 }
 
 /**
- * 
- * @export
- * @interface V1GetTrialRendezvousInfoResponse
- */
-export interface V1GetTrialRendezvousInfoResponse {
-    /**
-     * The rendezvous information.
-     * @type {V1RendezvousInfo}
-     * @memberof V1GetTrialRendezvousInfoResponse
-     */
-    rendezvousInfo: V1RendezvousInfo;
-}
-
-/**
  * Response to GetTrialRequest.
  * @export
  * @interface V1GetTrialResponse
@@ -2356,6 +2437,34 @@ export interface V1GetUsersResponse {
      * @memberof V1GetUsersResponse
      */
     users?: Array<V1User>;
+}
+
+/**
+ * Kill the requested notebook if idle.
+ * @export
+ * @interface V1IdleNotebookRequest
+ */
+export interface V1IdleNotebookRequest {
+    /**
+     * The id of the notebook.
+     * @type {string}
+     * @memberof V1IdleNotebookRequest
+     */
+    notebookId?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1IdleNotebookRequest
+     */
+    idle?: boolean;
+}
+
+/**
+ * Response to IdleNotebookRequest.
+ * @export
+ * @interface V1IdleNotebookResponse
+ */
+export interface V1IdleNotebookResponse {
 }
 
 /**
@@ -2734,6 +2843,34 @@ export interface V1LogoutResponse {
 }
 
 /**
+ * Mark some reservation as a daemon.
+ * @export
+ * @interface V1MarkAllocationReservationDaemonRequest
+ */
+export interface V1MarkAllocationReservationDaemonRequest {
+    /**
+     * The allocation ID for the reservation.
+     * @type {string}
+     * @memberof V1MarkAllocationReservationDaemonRequest
+     */
+    allocationId: string;
+    /**
+     * The container ID for the reservation.
+     * @type {string}
+     * @memberof V1MarkAllocationReservationDaemonRequest
+     */
+    containerId: string;
+}
+
+/**
+ * Response to MarkAllocationReservationDaemonRequest.
+ * @export
+ * @interface V1MarkAllocationReservationDaemonResponse
+ */
+export interface V1MarkAllocationReservationDaemonResponse {
+}
+
+/**
  * Response to MasterLogsRequest.
  * @export
  * @interface V1MasterLogsResponse
@@ -2824,12 +2961,6 @@ export interface V1Metrics {
  * @interface V1MetricsWorkload
  */
 export interface V1MetricsWorkload {
-    /**
-     * The time the workload was started.
-     * @type {Date}
-     * @memberof V1MetricsWorkload
-     */
-    startTime: Date;
     /**
      * The time the workload finished or was stopped.
      * @type {Date}
@@ -3203,6 +3334,14 @@ export interface V1PostTrialProfilerMetricsBatchRequest {
  * @interface V1PostTrialProfilerMetricsBatchResponse
  */
 export interface V1PostTrialProfilerMetricsBatchResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PostTrialRunnerMetadataResponse
+ */
+export interface V1PostTrialRunnerMetadataResponse {
 }
 
 /**
@@ -4009,6 +4148,26 @@ export enum V1RunnableType {
 }
 
 /**
+ * Describe one SSO provider.
+ * @export
+ * @interface V1SSOProvider
+ */
+export interface V1SSOProvider {
+    /**
+     * A descriptive name for this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    name: string;
+    /**
+     * The URL to use for SSO with this provider.
+     * @type {string}
+     * @memberof V1SSOProvider
+     */
+    ssoUrl: string;
+}
+
+/**
  * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.
  * @export
  * @enum {string}
@@ -4295,6 +4454,12 @@ export interface V1Slot {
      * @memberof V1Slot
      */
     container?: V1Container;
+    /**
+     * Flag notifying if this slot is in the draining mode: current containers will be allowed to finish but no new ones will be scheduled.
+     * @type {boolean}
+     * @memberof V1Slot
+     */
+    draining?: boolean;
 }
 
 /**
@@ -4399,66 +4564,16 @@ export interface V1Tensorboard {
 export interface V1TrainingLength {
     /**
      * The units the training length is in terms of.
-     * @type {TrainingLengthUnits}
+     * @type {TrainingLengthUnit}
      * @memberof V1TrainingLength
      */
-    units: TrainingLengthUnits;
+    unit: TrainingLengthUnit;
     /**
      * The value for the training length.
      * @type {number}
      * @memberof V1TrainingLength
      */
     length: number;
-}
-
-/**
- * The training metrics for some duration of training.
- * @export
- * @interface V1TrainingMetrics
- */
-export interface V1TrainingMetrics {
-    /**
-     * The trial associated with these metrics.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    trialId: number;
-    /**
-     * The trial run associated with these metrics.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    trialRunId: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalBatches: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1TrainingMetrics
-     */
-    totalEpochs?: number;
-    /**
-     * The metrics for this bit of training (reduced over the reporting period).
-     * @type {any}
-     * @memberof V1TrainingMetrics
-     */
-    metrics: any;
-    /**
-     * The batch metrics for this bit of training.
-     * @type {Array<any>}
-     * @memberof V1TrainingMetrics
-     */
-    batchMetrics?: Array<any>;
 }
 
 /**
@@ -4546,17 +4661,41 @@ export interface V1TrialLogsResponse {
 }
 
 /**
- * Response to TrialPreemptionSignalRequest.
+ * Metrics from the trial some duration of training.
  * @export
- * @interface V1TrialPreemptionSignalResponse
+ * @interface V1TrialMetrics
  */
-export interface V1TrialPreemptionSignalResponse {
+export interface V1TrialMetrics {
     /**
-     * True if signaling preempt, otherwise just a synchronization marker.
-     * @type {boolean}
-     * @memberof V1TrialPreemptionSignalResponse
+     * The trial associated with these metrics.
+     * @type {number}
+     * @memberof V1TrialMetrics
      */
-    preempt?: boolean;
+    trialId: number;
+    /**
+     * The trial run associated with these metrics.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    trialRunId: number;
+    /**
+     * The number of batches trained on when these metrics were reported.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    latestBatch: number;
+    /**
+     * The metrics for this bit of training (reduced over the reporting period).
+     * @type {any}
+     * @memberof V1TrialMetrics
+     */
+    metrics: any;
+    /**
+     * The batch metrics for this bit of training.
+     * @type {Array<any>}
+     * @memberof V1TrialMetrics
+     */
+    batchMetrics?: Array<any>;
 }
 
 /**
@@ -4627,6 +4766,20 @@ export interface V1TrialProfilerMetricsBatch {
      * @memberof V1TrialProfilerMetricsBatch
      */
     labels: V1TrialProfilerMetricLabels;
+}
+
+/**
+ * The metadata pertaining to the current running task for a trial.
+ * @export
+ * @interface V1TrialRunnerMetadata
+ */
+export interface V1TrialRunnerMetadata {
+    /**
+     * The state of the trial runner.
+     * @type {string}
+     * @memberof V1TrialRunnerMetadata
+     */
+    state: string;
 }
 
 /**
@@ -4831,50 +4984,6 @@ export interface V1ValidationHistoryEntry {
      * @memberof V1ValidationHistoryEntry
      */
     searcherMetric: number;
-}
-
-/**
- * The validation metrics at some point of training.
- * @export
- * @interface V1ValidationMetrics
- */
-export interface V1ValidationMetrics {
-    /**
-     * The trial associated with these metrics.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    trialId: number;
-    /**
-     * The trial run associated with these metrics.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    trialRunId: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalBatches: number;
-    /**
-     * The number of batches trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalRecords?: number;
-    /**
-     * The number of epochs trained on when these metrics were reported.
-     * @type {number}
-     * @memberof V1ValidationMetrics
-     */
-    totalEpochs?: number;
-    /**
-     * The metrics.
-     * @type {any}
-     * @memberof V1ValidationMetrics
-     */
-    metrics: any;
 }
 
 
@@ -5339,13 +5448,18 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options: any = {}): FetchArgs {
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedDisableAgent.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedDisableAgent.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -5362,10 +5476,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1DisableAgentRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -5975,11 +6093,12 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableAgent(agentId, options);
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableAgent(agentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -6282,11 +6401,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
+         * @param {V1DisableAgentRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedDisableAgent(agentId, options)(fetch, basePath);
+        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+            return ClusterApiFp(configuration).determinedDisableAgent(agentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -6455,12 +6575,13 @@ export class ClusterApi extends BaseAPI {
      * 
      * @summary Disable the agent.
      * @param {string} agentId The id of the agent.
+     * @param {V1DisableAgentRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedDisableAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedDisableAgent(agentId, options)(this.fetch, this.basePath);
+    public determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+        return ClusterApiFp(this.configuration).determinedDisableAgent(agentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9109,6 +9230,137 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
     return {
         /**
          * 
+         * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
+         * @param {string} allocationId The allocation that is acknowledging the request.
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAckAllocationPreemptionSignal.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAckAllocationPreemptionSignal.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/signals/ack_preemption`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1AckAllocationPreemptionSignalRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
+         * @param {string} allocationId The id of the allocation.
+         * @param {number} [timeoutSeconds] The timeout in seconds.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationPreemptionSignal.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/signals/preemption`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (timeoutSeconds !== undefined) {
+                localVarQueryParameter['timeoutSeconds'] = timeoutSeconds;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationRendezvousInfo(allocationId: string, containerId: string, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationRendezvousInfo.');
+            }
+            // verify required parameter 'containerId' is not null or undefined
+            if (containerId === null || containerId === undefined) {
+                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling determinedAllocationRendezvousInfo.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/rendezvous_info/{containerId}`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
+                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -9412,26 +9664,25 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
-         * @param {number} trialId The id of the trial.
-         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrialRendezvousInfo.');
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'notebookId' is not null or undefined
+            if (notebookId === null || notebookId === undefined) {
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedIdleNotebook.');
             }
-            // verify required parameter 'containerId' is not null or undefined
-            if (containerId === null || containerId === undefined) {
-                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling determinedGetTrialRendezvousInfo.');
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedIdleNotebook.');
             }
-            const localVarPath = `/api/v1/trials/{trialId}/rendezvous_info/{containerId}`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)))
-                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+            const localVarPath = `/api/v1/notebooks/{notebookId}/report_idle`
+                .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'PUT' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -9443,10 +9694,66 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1IdleNotebookRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            // verify required parameter 'containerId' is not null or undefined
+            if (containerId === null || containerId === undefined) {
+                throw new RequiredError('containerId','Required parameter containerId was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedMarkAllocationReservationDaemon.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/containers/{containerId}/daemon`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
+                .replace(`{${"containerId"}}`, encodeURIComponent(String(containerId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1MarkAllocationReservationDaemonRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -9597,6 +9904,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary For bookkeeping, update trial runner metadata (currently just state).
+         * @param {number} trialId The id of the trial.
+         * @param {V1TrialRunnerMetadata} body The state for the trial runner.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedPostTrialRunnerMetadata.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostTrialRunnerMetadata.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/runner/metadata`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1TrialRunnerMetadata" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Record a checkpoint.
          * @param {number} checkpointMetadataTrialId The ID of the trial associated with the checkpoint.
          * @param {V1CheckpointMetadata} body The training metrics to persist.
@@ -9737,11 +10090,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options: any = {}): FetchArgs {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'trainingMetricsTrialId' is not null or undefined
             if (trainingMetricsTrialId === null || trainingMetricsTrialId === undefined) {
                 throw new RequiredError('trainingMetricsTrialId','Required parameter trainingMetricsTrialId was null or undefined when calling determinedReportTrialTrainingMetrics.');
@@ -9771,7 +10124,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1TrainingMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1TrialMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -9783,11 +10136,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options: any = {}): FetchArgs {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'validationMetricsTrialId' is not null or undefined
             if (validationMetricsTrialId === null || validationMetricsTrialId === undefined) {
                 throw new RequiredError('validationMetricsTrialId','Required parameter validationMetricsTrialId was null or undefined when calling determinedReportTrialValidationMetrics.');
@@ -9817,45 +10170,8 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1ValidationMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1TrialMetrics" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
-         * @param {number} trialId The requested trial&#39;s id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        determinedTrialPreemptionSignal(trialId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedTrialPreemptionSignal.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/signals/preemption`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
 
             return {
                 url: url.format(localVarUrlObj),
@@ -10027,6 +10343,66 @@ export const InternalApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
+         * @param {string} allocationId The allocation that is acknowledging the request.
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
+         * @param {string} allocationId The id of the allocation.
+         * @param {number} [timeoutSeconds] The timeout in seconds.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationRendezvousInfo(allocationId: string, containerId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationRendezvousInfo(allocationId, containerId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -10181,14 +10557,35 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
-         * @param {number} trialId The id of the trial.
-         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialRendezvousInfoResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options);
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedIdleNotebook(notebookId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationReservationDaemonResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10250,6 +10647,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
          */
         determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedPostTrialProfilerMetricsBatch(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary For bookkeeping, update trial runner metadata (currently just state).
+         * @param {number} trialId The id of the trial.
+         * @param {V1TrialRunnerMetadata} body The state for the trial runner.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedPostTrialRunnerMetadata(trialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10324,11 +10741,11 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -10344,31 +10761,12 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
-         * @param {number} trialId The requested trial&#39;s id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        determinedTrialPreemptionSignal(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TrialPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedTrialPreemptionSignal(trialId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10438,6 +10836,39 @@ export const InternalApiFp = function(configuration?: Configuration) {
  */
 export const InternalApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
+        /**
+         * 
+         * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
+         * @param {string} allocationId The allocation that is acknowledging the request.
+         * @param {V1AckAllocationPreemptionSignalRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
+            return InternalApiFp(configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
+         * @param {string} allocationId The id of the allocation.
+         * @param {number} [timeoutSeconds] The timeout in seconds.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+         * @param {string} allocationId The id of the allocation.
+         * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedAllocationRendezvousInfo(allocationId: string, containerId: string, options?: any) {
+            return InternalApiFp(configuration).determinedAllocationRendezvousInfo(allocationId, containerId, options)(fetch, basePath);
+        },
         /**
          * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
@@ -10522,14 +10953,26 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
-         * @param {number} trialId The id of the trial.
-         * @param {string} containerId The id of the container. Used to verify all containers are connected.
+         * @summary Send notebook idle data to master
+         * @param {string} notebookId The id of the notebook.
+         * @param {V1IdleNotebookRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any) {
-            return InternalApiFp(configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options)(fetch, basePath);
+        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+            return InternalApiFp(configuration).determinedIdleNotebook(notebookId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+         * @param {string} allocationId The allocation ID for the reservation.
+         * @param {string} containerId The container ID for the reservation.
+         * @param {V1MarkAllocationReservationDaemonRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
+            return InternalApiFp(configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -10564,6 +11007,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
             return InternalApiFp(configuration).determinedPostTrialProfilerMetricsBatch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary For bookkeeping, update trial runner metadata (currently just state).
+         * @param {number} trialId The id of the trial.
+         * @param {V1TrialRunnerMetadata} body The state for the trial runner.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
+            return InternalApiFp(configuration).determinedPostTrialRunnerMetadata(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -10602,33 +11056,23 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Record training metrics for specified training.
          * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-         * @param {V1TrainingMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any) {
+        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Record validation metrics.
          * @param {number} validationMetricsTrialId The trial associated with these metrics.
-         * @param {V1ValidationMetrics} body The training metrics to persist.
+         * @param {V1TrialMetrics} body The training metrics to persist.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any) {
+        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
-         * @param {number} trialId The requested trial&#39;s id.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        determinedTrialPreemptionSignal(trialId: number, options?: any) {
-            return InternalApiFp(configuration).determinedTrialPreemptionSignal(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -10672,6 +11116,45 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
  * @extends {BaseAPI}
  */
 export class InternalApi extends BaseAPI {
+    /**
+     * 
+     * @summary Acknowledge the receipt of a signal to stop the given allocation early. This is used indicate and exit 0 isn't final; specifically, it is used for HP search directed early stops and preemption signals (not necessarily just scheduler preemption).
+     * @param {string} allocationId The allocation that is acknowledging the request.
+     * @param {V1AckAllocationPreemptionSignalRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
+        return InternalApiFp(this.configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Long poll preemption signals for the given allocation. If the allocation has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the allocation is preempted.
+     * @param {string} allocationId The id of the allocation.
+     * @param {number} [timeoutSeconds] The timeout in seconds.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Gather an allocation's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
+     * @param {string} allocationId The id of the allocation.
+     * @param {string} containerId The id of the allocation. Used to verify all allocations are connected.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedAllocationRendezvousInfo(allocationId: string, containerId: string, options?: any) {
+        return InternalApiFp(this.configuration).determinedAllocationRendezvousInfo(allocationId, containerId, options)(this.fetch, this.basePath);
+    }
+
     /**
      * 
      * @summary Reports to the searcher that the trial has completed the given searcher operation.
@@ -10772,15 +11255,29 @@ export class InternalApi extends BaseAPI {
 
     /**
      * 
-     * @summary Gather a trial's rendezvous info. Blocks until all trial containers connect to gather their rendezvous information and responds to them all at once.
-     * @param {number} trialId The id of the trial.
-     * @param {string} containerId The id of the container. Used to verify all containers are connected.
+     * @summary Send notebook idle data to master
+     * @param {string} notebookId The id of the notebook.
+     * @param {V1IdleNotebookRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetTrialRendezvousInfo(trialId: number, containerId: string, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetTrialRendezvousInfo(trialId, containerId, options)(this.fetch, this.basePath);
+    public determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+        return InternalApiFp(this.configuration).determinedIdleNotebook(notebookId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Mark the given reservation (container, pod, etc) within an allocation as a daemon reservation. In the exit of a successful exit, Determined will wait for all reservations to exit - unless they are marked as daemon reservations, in which case Determined will clean them up regardless of exit status after all non-daemon reservations have exited.
+     * @param {string} allocationId The allocation ID for the reservation.
+     * @param {string} containerId The container ID for the reservation.
+     * @param {V1MarkAllocationReservationDaemonRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedMarkAllocationReservationDaemon(allocationId: string, containerId: string, body: V1MarkAllocationReservationDaemonRequest, options?: any) {
+        return InternalApiFp(this.configuration).determinedMarkAllocationReservationDaemon(allocationId, containerId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10821,6 +11318,19 @@ export class InternalApi extends BaseAPI {
      */
     public determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
         return InternalApiFp(this.configuration).determinedPostTrialProfilerMetricsBatch(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary For bookkeeping, update trial runner metadata (currently just state).
+     * @param {number} trialId The id of the trial.
+     * @param {V1TrialRunnerMetadata} body The state for the trial runner.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
+        return InternalApiFp(this.configuration).determinedPostTrialRunnerMetadata(trialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10866,12 +11376,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Record training metrics for specified training.
      * @param {number} trainingMetricsTrialId The trial associated with these metrics.
-     * @param {V1TrainingMetrics} body The training metrics to persist.
+     * @param {V1TrialMetrics} body The training metrics to persist.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrainingMetrics, options?: any) {
+    public determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(this.fetch, this.basePath);
     }
 
@@ -10879,25 +11389,13 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Record validation metrics.
      * @param {number} validationMetricsTrialId The trial associated with these metrics.
-     * @param {V1ValidationMetrics} body The training metrics to persist.
+     * @param {V1TrialMetrics} body The training metrics to persist.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1ValidationMetrics, options?: any) {
+    public determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Long poll preemption signals for the given trial. If the trial's current task has been preempted when called, it will return so immediately. Otherwise, the connection will be kept open until the timeout is reached or the task is preempted.
-     * @param {number} trialId The requested trial&#39;s id.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public determinedTrialPreemptionSignal(trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedTrialPreemptionSignal(trialId, options)(this.fetch, this.basePath);
     }
 
     /**

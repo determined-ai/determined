@@ -1,0 +1,34 @@
+.. _model-definitions:
+
+###################################
+ Training: Implement Training APIs
+###################################
+
+The training APIs is the interface between Determined and the user's application framework (e.g.,
+Keras, TensorFlow), in terms of loading training data, describing a model architecture, and
+specifying the underlying iterative optimization training algorithms.
+
+The interface is called the Trial API. With the :ref:`Trial API <model-definitions_trial-api>`,
+developers expose the components of their model and training to Determined's training loop
+implementation.
+
+To read more about the Trial API, see:
+
+-  :ref:`model-definitions_trial-api`
+      -  :ref:`pytorch-trial`
+      -  :ref:`tf-keras-trial`
+      -  :ref:`estimator-trial`
+
+-  :ref:`examples`
+
+************
+ Learn More
+************
+
+See the full list of documents.
+
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   *

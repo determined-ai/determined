@@ -1,0 +1,67 @@
+# This startup input will cause the harness to rebuild on startup.
+startup_input: "p"
+
+commands:
+  p: make -C harness build  # rebuild Python
+  w: make -C webui build    # rebuild Webui
+  c: make -C docs build     # rebuild doCs
+
+# Three stages: db, master, and agent.
+stages:
+  - db:
+      port: 5432
+      db_name: determined
+      password: postgres
+      container_name: determined_db
+      image_name: "postgres:10.14"
+
+      # data_dir is where the persistent files will be saved to.  If this key
+      # is not present, the database will not persist at all.
+      data_dir: ~/.postgres
+
+  - master:
+      pre:
+        - sh: make -C proto build
+        - sh: make -C master build
+        - sh: make -C tools prep-root
+        - sh: mkdir -p /tmp/determined-cp
+      post:
+        - logcheck:
+            regex: accepting incoming connections on port
+      cmdline:
+        - master/build/determined-master
+        - --config-file
+        - :config
+
+      # config_file is just a master.yaml
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp/determined-cp
+        log:
+          level: debug
+
+        # This is important: we have to use the symbolic links in the
+        # tools/build directory to run properly.
+        root: tools/build
+
+  - agent:
+      pre:
+        - sh: make -C agent build
+      cmdline:
+        - agent/build/determined-agent
+        - run
+        - --config-file
+        - :config
+
+      # config_file is just an agent.yaml
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        container_master_host: $DOCKER_LOCALHOST

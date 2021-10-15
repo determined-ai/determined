@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.16.4.dev0
+    default: 0.17.1.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a173dcd
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-f286b87
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-f286b87
 
   login-docker:
     parameters:
@@ -140,7 +140,9 @@ commands:
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
-      - run: make -C tools start-db
+      - start-devcluster:
+          target-stage: elastic
+          devcluster-config: elastic.devcluster.yaml
 
   go-get-deps:
     steps:
@@ -212,12 +214,13 @@ commands:
             sudo apt-get install -y python3-venv
             /usr/bin/python3 -m venv /tmp/venv
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
-            /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
+            /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
       - run:
           name: Write cache key
           command: |
             echo <<parameters.executor>> > /tmp/cachefile
+            pip freeze --all >> /tmp/cachefile
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
             fi
@@ -231,7 +234,7 @@ commands:
 
       - restore_cache:
           keys:
-            - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+            - det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined>>
           steps:
@@ -241,6 +244,9 @@ commands:
       - when:
           condition: <<parameters.model-hub>>
           steps:
+            - run:
+                name: Install mmdetection dependencies
+                command: sudo apt-get install -y ffmpeg libsm6 libxext6
             - install-wheel:
                 package-name: model-hub
                 package-location: ~/project/model_hub
@@ -257,12 +263,12 @@ commands:
               pip install -r <<parameters.extra-requirements-file>>
             fi
       - save_cache:
-          key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
+          key: det-python-deps-v1dev3-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
       - run: python --version
       - run: pip --version
-      - run: pip freeze
+      - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
 
@@ -330,8 +336,6 @@ commands:
       - upload-test-job:
           only_on_branch: master
           test_results_path: <<parameters.junit-path>>
-
-
 
   run-det-deploy-tests:
     parameters:
@@ -434,7 +438,7 @@ commands:
           when: always
           command: |
             det deploy aws down \
-              --cluster-id <<parameters.cluster-id>>
+              --cluster-id <<parameters.cluster-id>> --no-prompt
 
   setup-aws-cluster:
     parameters:
@@ -628,7 +632,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
         type: string
     steps:
       - set-cluster-id:
@@ -681,13 +685,6 @@ commands:
           make -C webui/tests get-deps
       - run: docker pull determinedai/gauge-taiko-ts
 
-  setup-local-cluster:
-    parameters:
-      det-version:
-        type: string
-    steps:
-      - run: det deploy local cluster-up --no-gpu --delete-db --det-version <<parameters.det-version>>
-
   dump-local-cluster-logs:
     steps:
       - run:
@@ -703,9 +700,9 @@ commands:
           mkdir -p webui/tests/reports/videos
           docker run \
             --name e2e_gauge \
-            --network=determined_default \
             --mount type=bind,source=$(pwd)/webui,target=/webui \
             -w /webui/tests \
+            --add-host=determined-master:host-gateway \
             --env DET_MASTER=determined-master:8080 \
             determinedai/gauge-taiko-ts
           rm -f webui/tests/reports/videos/*.jpeg
@@ -839,6 +836,19 @@ commands:
       - run: make -C master check
       - run: make -C agent check
 
+  start-devcluster:
+    parameters:
+      devcluster-config:
+        type: string
+        default: double.devcluster.yaml
+      target-stage:
+        type: string
+        default: agent1
+    steps:
+      - run: pip install git+https://github.com/determined-ai/devcluster.git@1b9749e26271bbfae8a672f1ffe4ba82884bb9f7#egg=devcluster
+      - run:
+          command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
+          background: true
 
 jobs:
   build-helm:
@@ -865,7 +875,7 @@ jobs:
       - helm/install-helm-client
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.8.1"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -899,7 +909,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -925,7 +935,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -959,7 +969,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -985,7 +995,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1069,7 +1079,10 @@ jobs:
       - run: sudo apt-get install -y $(pwd)/agent/dist/determined-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
-      - run: make -C tools start-db
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
+      - start-devcluster:
+          target-stage: db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
@@ -1079,21 +1092,22 @@ jobs:
   test-e2e-webui:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: large
+    resource_class: medium
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
 
       - install-webui-test-deps
       - setup-python-venv:
           determined: true
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
+
+      - run: make -C master get-deps
+      - start-devcluster
+      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
+
       - run-e2e-webui-tests
       - dump-local-cluster-logs
       - store_test_results:
@@ -1116,20 +1130,6 @@ jobs:
       - checkout
       - run: make -C webui/tests get-deps
       - run: make -C webui/tests check
-
-  build-react-preview:
-    docker:
-      - image: cimg/node:12.16
-    environment:
-      PUBLIC_URL: /0
-      SERVER_ADDRESS: https://detai.ml/fixed
-    steps:
-      - checkout
-      - react-get-deps
-      - run: make -C webui/react build
-      - store_artifacts:
-          path: webui/react/build
-          destination: /
 
   build-react:
     parameters:
@@ -1172,7 +1172,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1186,7 +1186,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1203,7 +1203,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1217,7 +1217,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1236,6 +1236,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
       - setup-go-intg-deps
       - run: make -C master test-intg
 
@@ -1248,6 +1250,8 @@ jobs:
       - attach_workspace:
           at: .
       - reinstall-go
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
       - setup-go-intg-deps
       - run: make -C agent test-intg
 
@@ -1280,7 +1284,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.8.1"
+          extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1301,7 +1305,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
@@ -1313,10 +1317,22 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1"
+          extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
+
+  test-unit-storage:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: true
+          extras-requires: "tensorflow==2.4.3"
+          extra-requirements-file: "harness/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
 
   test-unit-model-hub:
     docker:
@@ -1326,7 +1342,7 @@ jobs:
       - setup-python-venv:
           determined: true
           model-hub: true
-          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
+          extras-requires: "torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "model_hub/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C model_hub test
@@ -1360,14 +1376,14 @@ jobs:
       # LMDB also has special requirements that only apply to windows (patch-ng).
       - run: sh -c "if which conda ; then conda install cryptography patch-ng --yes ; fi"
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
-      - run: pip freeze
+      - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.
       - run: sh -c "pip check || true"
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install setuptools_scm
       - run: pip install -r harness/tests/requirements.txt
-      - run: pip freeze
+      - run: pip freeze --all
       - run: sh -c "pip check || true"
       - run: pytest harness/tests/cli
 
@@ -1383,6 +1399,12 @@ jobs:
         type: string
       parallelism:
         type: integer
+      devcluster-config:
+        type: string
+        default: double.devcluster.yaml
+      target-stage:
+        type: string
+        default: agent1
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1393,20 +1415,17 @@ jobs:
           at: .
 
       - setup-python-venv:
-          determined: true
+          determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-2004:202101-01
 
       - run:
           name: Get master dependencies
           command: make -C master get-deps
-      - run:
-          name: Start database
-          command: make -C tools start-db
-      - run:
-          name: Start cluster
-          command: make -C tools run
-          background: true
+
+      - start-devcluster:
+          devcluster-config: <<parameters.devcluster-config>>
+          target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
           tf1: <<parameters.tf1>>
@@ -1416,6 +1435,8 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
 
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy:
     parameters:
@@ -1546,7 +1567,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.501"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1629,7 +1650,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.501"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1655,7 +1676,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -1766,17 +1787,14 @@ workflows:
   test-unit:
     jobs:
       - test-unit-go
-      - build-proto
-      - build-bindings:
-          requires:
-            - build-proto
-      - test-unit-react:
-          requires:
-            - build-bindings
+      - test-unit-react
       - test-unit-harness
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-examples
+      - test-unit-storage:
+          context: storage-unit-tests
+          filters: *upstream-feature-branch
 
   test-intg:
     jobs:
@@ -1787,19 +1805,9 @@ workflows:
     jobs:
       - build-proto
       - build-helm
-      - build-bindings:
-          requires:
-            - build-proto
-      - build-react-preview:
-          requires:
-            - build-bindings
       - build-react:
           dev-mode: true
-          requires:
-            - build-bindings
-      - build-storybook:
-          requires:
-            - build-bindings
+      - build-storybook
       - build-docs:
           requires:
             - build-helm
@@ -1827,36 +1835,41 @@ workflows:
           name: test-e2e-tf2
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [1]
-              tf2: [true]
-              mark: ["tensorflow2_cpu"]
+          parallelism: 1
+          tf2: true
+          mark: "tensorflow2_cpu"
 
       - test-e2e:
           name: test-e2e-tf1
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [1]
-              tf1: [true]
-              mark: ["tensorflow1_cpu"]
+          parallelism: 1
+          tf1: true
+          mark: "tensorflow1_cpu"
 
       - test-e2e:
           name: test-e2e-cpu
           requires:
             - build-go
-          matrix:
-            parameters:
-              parallelism: [4]
-              tf1: [true]
-              mark: ["e2e_cpu"]
+          parallelism: 4
+          tf1: true
+          tf2: true
+          mark: e2e_cpu
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: e2e_cpu_2a
+          target-stage: agent2
 
       - test-e2e-webui:
           requires:
-            - build-bindings
-            - package-and-push-system-local
+            - build-react
+            - build-go
 
       - deploy:
           enable-cors: true
@@ -1977,23 +1990,59 @@ workflows:
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
 
-      - request-model-hub-tests:
+      - request-transformers-tests:
           type: approval
           filters: *upstream-feature-branch
 
       - test-e2e-aws:
-          name: test-e2e-model-hub
+          name: test-e2e-transformers
           context: aws
           filters: *upstream-feature-branch
           requires:
-            - request-model-hub-tests
+            - request-transformers-tests
             - package-and-push-system-dev
           matrix:
             parameters:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
-              cluster-id-prefix: ["model-hub"]
-              mark: ["model_hub"]
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      - test-e2e-aws:
+          name: test-e2e-transformers-amp
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-transformers-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              max-dynamic-agents: [2]
+
+      - request-mmdetection-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-aws:
+          name: test-e2e-mmdetection
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-mmdetection-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
@@ -2127,8 +2176,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2147,8 +2195,44 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-single-gpu-tfonly
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cuda-11
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.1
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-parallel-tfonly
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cuda-11
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.1
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2247,12 +2331,36 @@ workflows:
               slack-mentions: ["channel"]
               slack-channel: ["ml-ag"]
       - test-e2e-aws:
-          name: test-e2e-gpu-model-hub
+          name: test-e2e-gpu-transformers
           context: aws
           matrix:
             parameters:
-              cluster-id-prefix: ["model-hub"]
-              mark: ["model_hub"]
+              cluster-id-prefix: ["transformers"]
+              mark: ["model_hub_transformers"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-transformers-amp
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["transformers-amp"]
+              mark: ["model_hub_transformers_amp"]
+              compute-agent-instance-type: ["p2.8xlarge"]
+              aux-agent-instance-type: ["m5.large"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-mmdetection
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["mmdetection"]
+              mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
@@ -2291,8 +2399,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2307,8 +2414,36 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.1
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-single-gpu-tfonly
+          context: gcp
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.1
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-parallel-tfonly
+          context: gcp
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.1
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.1
 
   release:
     jobs:
@@ -2316,13 +2451,7 @@ workflows:
           filters: *release-and-rc-filters
       - build-proto:
           filters: *release-and-rc-filters
-      - build-bindings:
-          requires:
-            - build-proto
-          filters: *release-and-rc-filters
       - build-react:
-          requires:
-            - build-bindings
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:

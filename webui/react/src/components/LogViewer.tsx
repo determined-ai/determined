@@ -126,6 +126,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
+  const containerClasses = [ css.container, css.master ];
   const scrollToTopClasses = [ css.scrollToTop ];
   const enableTailingClasses = [ css.enableTailing ];
 
@@ -492,8 +493,8 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   return (
     <Page {...props.pageProps} loading={!!props.isLoading} options={logOptions}>
-      <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={container}>
+      <div className={classes.join(' ')} ref={baseRef}>
+        <div className={containerClasses.join(' ')} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
             {visibleLogs.map(log => (
               <div

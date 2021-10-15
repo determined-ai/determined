@@ -1,0 +1,25 @@
+name: detectron2_const
+environment:
+    image: "katport/detectron2:cuda-10.1"
+    environment_variables:
+      - DETECTRON2_DATASETS=/mnt/dtrain-fsx/detectron2
+hyperparameters:
+  global_batch_size: 16 # Detectron defaults to 16 regardless of N GPUs
+  model_yaml: mask_rcnn_R_50_FPN_noaug_1x.yaml
+  output_dir: None
+  fake_data: False
+searcher:
+  name: single
+  metric: bboxAP
+  max_length: 
+    batches: 90000
+  smaller_is_better: false
+resources:
+    slots_per_trial: 1
+entrypoint: model_def:DetectronTrial
+bind_mounts:
+  - host_path: /path/to/data
+    container_path: /mnt/dtrain-fsx/detectron2
+    read_only: true
+min_validation_period:
+  batches: 5000

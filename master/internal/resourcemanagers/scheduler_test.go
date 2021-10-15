@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"testing"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/google/uuid"
 
 	"github.com/pkg/errors"
@@ -48,7 +50,7 @@ var errMock = errors.New("mock error")
 type mockTask struct {
 	rmRef *actor.Ref
 
-	id               sproto.TaskID
+	id               model.AllocationID
 	group            *mockGroup
 	slotsNeeded      int
 	nonPreemptible   bool
@@ -64,13 +66,13 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 	case SendRequestResourcesToResourceManager:
 		task := sproto.AllocateRequest{
-			ID:             t.id,
-			Name:           string(t.id),
-			SlotsNeeded:    t.slotsNeeded,
-			NonPreemptible: t.nonPreemptible,
-			Label:          t.label,
-			ResourcePool:   t.resourcePool,
-			TaskActor:      ctx.Self(),
+			AllocationID: t.id,
+			Name:         string(t.id),
+			SlotsNeeded:  t.slotsNeeded,
+			Preemptible:  !t.nonPreemptible,
+			Label:        t.label,
+			ResourcePool: t.resourcePool,
+			TaskActor:    ctx.Self(),
 		}
 		if t.group == nil {
 			task.Group = ctx.Self()
@@ -95,8 +97,12 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		panic(errMock)
 
 	case sproto.ResourcesAllocated:
-		for rank, allocation := range msg.Allocations {
-			allocation.Start(ctx, tasks.TaskSpec{}, rank)
+		for rank, allocation := range msg.Reservations {
+			allocation.Start(ctx, tasks.TaskSpec{}, sproto.ReservationRuntimeInfo{
+				Token:        "",
+				AgentRank:    rank,
+				IsMultiAgent: len(msg.Reservations) > 1,
+			})
 		}
 	case sproto.ReleaseResources:
 		ctx.Tell(t.rmRef, sproto.ResourcesReleased{TaskActor: ctx.Self()})
@@ -231,8 +237,8 @@ func newFakeAgentState(
 
 	if slotsUsed > 0 {
 		req := &sproto.AllocateRequest{
-			SlotsNeeded:    slotsUsed,
-			NonPreemptible: false,
+			SlotsNeeded: slotsUsed,
+			Preemptible: true,
 		}
 		container := newContainer(req, state, req.SlotsNeeded)
 		state.allocateFreeDevices(req.SlotsNeeded, container.id)
@@ -254,15 +260,15 @@ func forceAddTask(
 	numAllocated int,
 	slotsNeeded int,
 ) {
-	task := &mockTask{id: sproto.TaskID(taskID), slotsNeeded: slotsNeeded}
+	task := &mockTask{id: model.AllocationID(taskID), slotsNeeded: slotsNeeded}
 	ref, created := system.ActorOf(actor.Addr(taskID), task)
 	assert.Assert(t, created)
 
 	req := &sproto.AllocateRequest{
-		ID:          sproto.TaskID(taskID),
-		TaskActor:   ref,
-		Group:       ref,
-		SlotsNeeded: slotsNeeded,
+		AllocationID: model.AllocationID(taskID),
+		TaskActor:    ref,
+		Group:        ref,
+		SlotsNeeded:  slotsNeeded,
 	}
 	taskList.AddTask(req)
 	forceSetTaskAllocations(t, taskList, taskID, numAllocated)
@@ -274,15 +280,15 @@ func forceSetTaskAllocations(
 	taskID string,
 	numAllocated int,
 ) {
-	req, ok := taskList.GetTaskByID(sproto.TaskID(taskID))
+	req, ok := taskList.GetTaskByID(model.AllocationID(taskID))
 	assert.Check(t, ok)
 	if numAllocated > 0 {
 		allocated := &sproto.ResourcesAllocated{
-			ID:          sproto.TaskID(taskID),
-			Allocations: []sproto.Allocation{},
+			ID:           model.AllocationID(taskID),
+			Reservations: []sproto.Reservation{},
 		}
 		for i := 0; i < numAllocated; i++ {
-			allocated.Allocations = append(allocated.Allocations, containerAllocation{})
+			allocated.Reservations = append(allocated.Reservations, containerReservation{})
 		}
 		taskList.SetAllocations(req.TaskActor, allocated)
 	} else {
@@ -312,6 +318,7 @@ func setupSchedulerStates(
 			devices:               make(map[device.Device]*cproto.ID),
 			zeroSlotContainers:    make(map[cproto.ID]bool),
 			maxZeroSlotContainers: mockAgent.maxZeroSlotContainers,
+			enabled:               true,
 		}
 		for i := 0; i < mockAgent.slots; i++ {
 			agent.devices[device.Device{ID: i}] = nil
@@ -343,11 +350,11 @@ func setupSchedulerStates(
 		groups[ref] = &group{handler: ref}
 
 		req := &sproto.AllocateRequest{
-			ID:             mockTask.id,
-			SlotsNeeded:    mockTask.slotsNeeded,
-			Label:          mockTask.label,
-			TaskActor:      ref,
-			NonPreemptible: mockTask.nonPreemptible,
+			AllocationID: mockTask.id,
+			SlotsNeeded:  mockTask.slotsNeeded,
+			Label:        mockTask.label,
+			TaskActor:    ref,
+			Preemptible:  !mockTask.nonPreemptible,
 		}
 		if mockTask.group == nil {
 			req.Group = ref
@@ -384,9 +391,9 @@ func setupSchedulerStates(
 			}
 
 			allocated := &sproto.ResourcesAllocated{
-				ID: req.ID,
-				Allocations: []sproto.Allocation{
-					&containerAllocation{
+				ID: req.AllocationID,
+				Reservations: []sproto.Reservation{
+					&containerReservation{
 						req:       req,
 						agent:     agentState,
 						container: container,
@@ -406,12 +413,12 @@ func assertEqualToAllocate(
 	actual []*sproto.AllocateRequest,
 	expected []*mockTask,
 ) {
-	expectedMap := map[sproto.TaskID]bool{}
+	expectedMap := map[model.AllocationID]bool{}
 	for _, task := range expected {
 		expectedMap[task.id] = true
 	}
 	for _, task := range actual {
-		_, ok := expectedMap[task.ID]
+		_, ok := expectedMap[task.AllocationID]
 		assert.Assert(t, ok)
 	}
 	assert.Equal(t, len(actual), len(expected),
@@ -424,7 +431,7 @@ func assertEqualToRelease(
 	actual []*actor.Ref,
 	expected []*mockTask,
 ) {
-	expectedMap := map[sproto.TaskID]bool{}
+	expectedMap := map[model.AllocationID]bool{}
 	for _, task := range expected {
 		expectedMap[task.id] = true
 	}
@@ -433,7 +440,7 @@ func assertEqualToRelease(
 		assert.Assert(t, task != nil)
 
 		if task != nil {
-			_, ok := expectedMap[task.ID]
+			_, ok := expectedMap[task.AllocationID]
 			assert.Assert(t, ok)
 		}
 	}

@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -16,6 +18,7 @@ type checkpointGCTask struct {
 	rm *actor.Ref
 	db *db.PgDB
 
+	taskID model.TaskID
 	tasks.GCCkptSpec
 
 	task *sproto.AllocateRequest
@@ -27,27 +30,33 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		t.task = &sproto.AllocateRequest{
-			ID:   sproto.NewTaskID(),
-			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
+			TaskID:       t.taskID,
+			AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, 1)),
+			Name:         fmt.Sprintf("Checkpoint GC (Experiment %d)", t.ExperimentID),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskActor:      ctx.Self(),
-			NonPreemptible: true,
+			TaskActor: ctx.Self(),
 		}
 		ctx.Tell(t.rm, *t.task)
 
 	case sproto.ResourcesAllocated:
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		taskToken, err := t.db.StartTaskSession(string(msg.ID))
+		allocationToken, err := t.db.StartAllocationSession(msg.ID)
 		if err != nil {
 			return errors.Wrap(err, "cannot start a new task session for a GC task")
 		}
 
-		for rank, a := range msg.Allocations {
-			a.Start(ctx, t.ToTaskSpec(taskToken), rank)
+		if len(msg.Reservations) != 1 {
+			return errors.New("multi-reservation checkpoint gc is wrong")
 		}
+
+		msg.Reservations[0].Start(ctx, t.ToTaskSpec(allocationToken), sproto.ReservationRuntimeInfo{
+			Token:        allocationToken,
+			AgentRank:    0,
+			IsMultiAgent: false,
+		})
 	case sproto.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.
 
@@ -72,7 +81,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 	case actor.PostStop:
 		if t.task != nil {
-			if err := t.db.DeleteTaskSessionByTaskID(string(t.task.ID)); err != nil {
+			if err := t.db.DeleteAllocationSession(t.task.AllocationID); err != nil {
 				ctx.Log().WithError(err).Error("cannot delete task session for a GC task")
 			}
 		}

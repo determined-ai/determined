@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := build
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
+MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go
 
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
@@ -14,9 +15,10 @@ clean: ungen
 ungen:
 	rm -f $(GENERATED)
 	rm -f `find ./pkg/schemas/ -name 'zgen_*.go'` build/schema_gen.stamp
+	rm -f `find ./internal/mocks -name '*.go'` build/mock_gen.stamp
 
 .PHONY: gen
-gen: $(GENERATED) build/schema_gen.stamp
+gen: $(GENERATED) build/schema_gen.stamp build/mock_gen.stamp
 
 .PHONY: force-gen
 force-gen:
@@ -27,11 +29,20 @@ build/schema_gen.stamp: $(GENERATION_INPUTS)
 	mkdir -p build
 	touch $@
 
+build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
+	mockery --name=DB --dir=internal/db --output internal/mocks --filename db.go
+	mockery --name=Reservation --dir=internal/sproto --output internal/mocks --filename reservation.go
+	# fmt once since the mocks are not generated formatted.
+	$(MAKE) fmt
+	mkdir -p build
+	touch $@
+
 .PHONY: check-gen
 check-gen: force-gen gen
 	# Checking that committed, generated code is up-to-date by ensuring that
 	# git reports the files as unchanged after forcibly regenerating the files:
 	test -z "$(shell git status --porcelain '**/zgen*')"
+	test -z "$(shell git status --porcelain './internal/mocks/*')"
 
 .PHONY: get-deps
 get-deps:
@@ -41,6 +52,7 @@ get-deps:
 	# For hyperparameter importance computation
 	go get github.com/ryanbressler/CloudForest
 	go install github.com/ryanbressler/CloudForest/growforest
+	go get github.com/vektra/mockery/v2/.../@v2.9.2
 
 .PHONY: build
 build: gen

@@ -31,8 +31,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd
-        gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-a173dcd
+        cpu: determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-f286b87
+        gpu: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-f286b87
       pod_spec: null
       ports:
         qwer: 1234
@@ -93,6 +93,7 @@
       enabled: true
       begin_on_batch: 0
       end_after_batch: 1
+      sync_timings: false
     records_per_epoch: 0
     reproducibility:
       experiment_seed: 1606239866
@@ -193,6 +194,7 @@
       enabled: false
       begin_on_batch: 0
       end_after_batch: null
+      sync_timings: true
     records_per_epoch: 0
     reproducibility:
       experiment_seed: "*"

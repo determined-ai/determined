@@ -1,0 +1,32 @@
+ARG BASE_IMAGE
+# This will be an image from determinedai/environments
+FROM ${BASE_IMAGE}
+
+ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
+
+RUN apt-get update && apt-get install -y git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx unzip\
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install MMCV
+ARG MMCV_VERSION
+ARG MMCV_CUDA_VERSION
+ARG TORCH_VERSION
+RUN pip install mmcv-full==${MMCV_VERSION} -f https://download.openmmlab.com/mmcv/dist/${MMCV_CUDA_VERSION}/torch${TORCH_VERSION}/index.html
+
+# Install MMDetection
+RUN conda clean --all
+RUN git clone https://github.com/open-mmlab/mmdetection.git /mmdetection
+WORKDIR /mmdetection
+ARG MMDETECTION_VERSION
+RUN git checkout tags/v${MMDETECTION_VERSION}
+ENV FORCE_CUDA="1"
+RUN pip install -r requirements/build.txt
+RUN pip install --no-cache-dir -e .
+ENV MMDETECTION_CONFIG_DIR=/mmdetection/configs
+
+# Wheel must be built before building the docker image
+RUN mkdir -p /tmp/model-hub-wheel
+ADD dist /tmp/model-hub-wheel
+ARG MODEL_HUB_VERSION
+RUN python -m pip install --find-links=/tmp/model-hub-wheel model-hub==${MODEL_HUB_VERSION}

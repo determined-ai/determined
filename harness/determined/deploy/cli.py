@@ -3,6 +3,7 @@ import warnings
 from typing import List, Union
 
 from determined import __version__
+from determined.cli.top_arg_descriptions import deploy_cmd
 from determined.common.declarative_argparse import Arg, Cmd, add_args
 
 from .aws.cli import args_description as aws_args_description
@@ -31,13 +32,8 @@ args_subs: List[Union[Arg, Cmd]] = [
     gke_args_description,
 ]
 
-DEPLOY_CMD_NAME = "d|eploy"
-args_description = Cmd(
-    DEPLOY_CMD_NAME,
-    None,
-    "manage deployments",
-    args_subs,
-)
+deploy_cmd.subs = args_subs
+args_description = deploy_cmd
 
 
 def main() -> None:

@@ -30,6 +30,7 @@ type slotEnabled struct {
 	deviceAdded  bool
 	agentEnabled bool
 	userEnabled  bool
+	draining     bool
 }
 
 func (s slotEnabled) Enabled() bool {
@@ -38,6 +39,7 @@ func (s slotEnabled) Enabled() bool {
 
 type patchSlot struct {
 	Enabled bool `json:"enabled"`
+	Drain   bool `json:"drain"`
 }
 
 func (s *slot) Receive(ctx *actor.Context) error {
@@ -48,6 +50,7 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		ctx.Respond(s.summarize(ctx))
 	case patchSlot:
 		s.enabled.userEnabled = msg.Enabled
+		s.enabled.draining = msg.Drain
 		s.patch(ctx)
 	case aproto.StartContainer:
 		check.Panic(check.True(s.enabled.Enabled(), "container allocated but slot is not enabled"))
@@ -73,6 +76,8 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		s.handleAPIRequest(ctx, msg)
 	case actor.PostStop:
 		s.enabled.agentEnabled = false
+		// Disable the draining, to make sure any running containers are killed in `patch`.
+		s.enabled.draining = false
 		s.patch(ctx)
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -106,12 +111,19 @@ func (s *slot) patch(ctx *actor.Context) {
 			add.ContainerID = &s.container.ID
 		}
 		ctx.Tell(s.resourcePool, add)
-	} else if !s.enabled.Enabled() && s.enabled.deviceAdded {
-		s.enabled.deviceAdded = false
-		remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
-		ctx.Tell(s.resourcePool, remove)
-		if s.container != nil {
-			ctx.Tell(remove.Agent, sproto.KillTaskContainer{ContainerID: s.container.ID})
+	} else if !s.enabled.Enabled() {
+		agentRef := ctx.Self().Parent().Parent()
+
+		if !s.enabled.draining && s.enabled.deviceAdded {
+			s.enabled.deviceAdded = false
+			remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
+			ctx.Tell(s.resourcePool, remove)
+		}
+
+		// On `PostStop`, draining will be already set to false, and we'll kill the container
+		// whether we have the device or not.
+		if !s.enabled.draining && s.container != nil {
+			ctx.Tell(agentRef, sproto.KillTaskContainer{ContainerID: s.container.ID})
 		}
 	}
 }
@@ -126,5 +138,6 @@ func (s *slot) summarize(ctx *actor.Context) model.SlotSummary {
 		Device:    s.device,
 		Enabled:   s.enabled.Enabled(),
 		Container: s.container,
+		Draining:  s.enabled.draining,
 	}
 }

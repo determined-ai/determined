@@ -1,52 +1,28 @@
 # Database Migrations
 
-## Install migrate CLI
+We use `go-pg/migrations`: https://github.com/go-pg/migrations
 
-https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
+## Running migrations manually
 
-## Example Commands
+```bash
+determined-master [MASTER_ARGS] migrate [MIGRATION_ARGS]
+```
+
+where `MASTER_ARGS` are the normal determined-master command flags,
+and `MIGRATION_ARGS` are `go-pg/migrations` args.
+
+For example, to migrate down to a specific version, run
+
+```bash
+determined-master --config-file /path/to/master.yaml migrate down 20210917133742
+```
+
+## Creating new migrations
+
+We use timestamps instead of sequential numbers, standard for `go-pg/migrations`.
+When creating a new migration, either write it manually, or use this script:
 
 ```bash
 
-export MIGRATION_TITLE='my-migration-title'
-export DET_DB_PASSWORD=postgres
-export CONNECTION_STRING=postgres://postgres:${DET_DB_PASSWORD}@localhost:5432/determined'?'sslmode=disable
-
-# Create template migration files.
-migrate \
-  -database ${CONNECTION_STRING} \
-  -verbose \
-  create -ext sql -dir $(pwd) ${MIGRATION_TITLE}
-
-# Edit template sql files.
-
-# Run master.
-```
-
-## If things go wrong
-
-```
-# To manually migrate...
-migrate \
-  -database ${CONNECTION_STRING} \
-  -path . \
-  -verbose \
-  up
-
-# To fix broken migrations
-migrate \
-  -database ${CONNECTION_STRING} \
-  -path . \
-  -verbose \
-  version
-migrate
-  -database ${CONNECTION_STRING} \
-  -path . \
-  -verbose \
-  force version-number
-migrate
-  -database ${CONNECTION_STRING} \
-  -path . \
-  -verbose \
-  down 1
+touch $(date +%Y%m%d%H%M%S)_migration_name.{up,down}.sql
 ```

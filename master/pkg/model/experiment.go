@@ -16,7 +16,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
@@ -43,6 +42,8 @@ const (
 	ErrorState State = "ERROR"
 	// PausedState constant.
 	PausedState State = "PAUSED"
+	// StoppingKilledState constant.
+	StoppingKilledState State = "STOPPING_KILLED"
 	// StoppingCanceledState constant.
 	StoppingCanceledState State = "STOPPING_CANCELED"
 	// StoppingCompletedState constant.
@@ -58,9 +59,6 @@ const (
 
 	// TrialWorkloadSequencerType constant.
 	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
-
-	// TrialWorkloadManagerType handles model training loads.
-	TrialWorkloadManagerType WorkloadManagerType = "TRIAL_WORKLOAD_MANAGER"
 )
 
 // States and transitions
@@ -89,6 +87,7 @@ var RunningStates = map[State]bool{
 // StoppingStates are the valid stopping states.
 var StoppingStates = map[State]bool{
 	StoppingCanceledState:  true,
+	StoppingKilledState:    true,
 	StoppingCompletedState: true,
 	StoppingErrorState:     true,
 }
@@ -105,10 +104,12 @@ var ManualStates = map[State]bool{
 	ActiveState:           true,
 	PausedState:           true,
 	StoppingCanceledState: true,
+	StoppingKilledState:   true,
 }
 
 // StoppingToTerminalStates maps from stopping states to the corresponding terminal states.
 var StoppingToTerminalStates = map[State]State{
+	StoppingKilledState:    CanceledState,
 	StoppingCanceledState:  CanceledState,
 	StoppingCompletedState: CompletedState,
 	StoppingErrorState:     ErrorState,
@@ -118,17 +119,24 @@ var StoppingToTerminalStates = map[State]State{
 var ExperimentTransitions = map[State]map[State]bool{
 	ActiveState: {
 		PausedState:            true,
+		StoppingKilledState:    true,
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
 	},
 	PausedState: {
 		ActiveState:            true,
+		StoppingKilledState:    true,
 		StoppingCanceledState:  true,
 		StoppingCompletedState: true,
 		StoppingErrorState:     true,
 	},
 	StoppingCanceledState: {
+		CanceledState:       true,
+		StoppingKilledState: true,
+		StoppingErrorState:  true,
+	},
+	StoppingKilledState: {
 		CanceledState:      true,
 		StoppingErrorState: true,
 	},
@@ -163,15 +171,55 @@ var ExperimentTransitions = map[State]map[State]bool{
 var ExperimentReverseTransitions = reverseTransitions(ExperimentTransitions)
 
 // TrialTransitions maps trial states to their possible transitions.
+// Trials are mostly the same as experiments, but when immediate exits through
+// ErrorState allowed since can die immediately and let the RM clean us up.
 var TrialTransitions = map[State]map[State]bool{
 	ActiveState: {
-		CanceledState:  true,
+		PausedState:            true,
+		StoppingKilledState:    true,
+		StoppingCanceledState:  true,
+		StoppingCompletedState: true,
+		StoppingErrorState:     true,
+		ErrorState:             true,
+		// User-canceled trials go directly from ACTIVE to COMPLETED with no in between.
 		CompletedState: true,
-		ErrorState:     true,
 	},
 	CanceledState:  {},
 	CompletedState: {},
 	ErrorState:     {},
+	PausedState: {
+		ActiveState:            true,
+		StoppingKilledState:    true,
+		StoppingCanceledState:  true,
+		StoppingCompletedState: true,
+		StoppingErrorState:     true,
+		ErrorState:             true,
+	},
+	// The pattern of the transitory states here is that they
+	// can always degrade into a more severe state, but never
+	// the other way.
+	StoppingCompletedState: {
+		StoppingCanceledState: true,
+		StoppingKilledState:   true,
+		StoppingErrorState:    true,
+		CompletedState:        true,
+		ErrorState:            true,
+	},
+	StoppingCanceledState: {
+		StoppingKilledState: true,
+		StoppingErrorState:  true,
+		CanceledState:       true,
+		ErrorState:          true,
+	},
+	StoppingKilledState: {
+		StoppingErrorState: true,
+		CanceledState:      true,
+		ErrorState:         true,
+	},
+	StoppingErrorState: {
+		ActiveState: true,
+		ErrorState:  true,
+	},
 }
 
 // TrialReverseTransitions list possible ancestor states.
@@ -290,7 +338,11 @@ func (e *Experiment) Transition(state State) (bool, error) {
 
 // Trial represents a row from the `trials` table.
 type Trial struct {
-	ID                    int        `db:"id"`
+	ID int `db:"id"`
+	// Uniquely identifies the trial task among all tasks. Likely,
+	// to be replaced in the near future by some smarter combination
+	// of ID, RequestID and TaskID.. we don't need them all.
+	TaskID                TaskID     `db:"task_id"`
 	RequestID             *RequestID `db:"request_id"`
 	ExperimentID          int        `db:"experiment_id"`
 	State                 State      `db:"state"`
@@ -304,12 +356,19 @@ type Trial struct {
 // NewTrial creates a new trial in the active state.  Note that the trial ID
 // will not be set.
 func NewTrial(
+	taskID TaskID,
 	requestID RequestID,
 	experimentID int,
 	hparams JSONObj,
-	warmStartCheckpointID *int,
-	trialSeed int64) *Trial {
+	warmStartCheckpoint *Checkpoint,
+	trialSeed int64,
+) *Trial {
+	var warmStartCheckpointID *int
+	if warmStartCheckpoint != nil {
+		warmStartCheckpointID = &warmStartCheckpoint.ID
+	}
 	return &Trial{
+		TaskID:                taskID,
 		RequestID:             &requestID,
 		ExperimentID:          experimentID,
 		State:                 ActiveState,
@@ -320,75 +379,15 @@ func NewTrial(
 	}
 }
 
-// Step represents a row from the `steps` table.
-type Step struct {
-	TrialID      int        `db:"trial_id"`
-	TrialRunID   int        `db:"trial_run_id"`
-	ID           int        `db:"id"`
-	TotalBatches int        `db:"total_batches"`
-	TotalRecords int        `db:"total_records"`
-	TotalEpochs  float32    `db:"total_epochs" json:"-"`
-	State        State      `db:"state"`
-	StartTime    time.Time  `db:"start_time"`
-	EndTime      *time.Time `db:"end_time"`
-	Metrics      JSONObj    `db:"metrics"`
-}
-
-// NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, totalBatches int) *Step {
-	return &Step{
-		TrialID:      trialID,
-		ID:           stepID,
-		TotalBatches: totalBatches,
-		State:        ActiveState,
-		StartTime:    time.Now().UTC(),
-	}
-}
-
-// NewNoOpStep creates a new step in the completed state.
-func NewNoOpStep(trialID, stepID int) *Step {
-	now := time.Now().UTC()
-	return &Step{
-		TrialID:   trialID,
-		ID:        stepID,
-		State:     CompletedState,
-		StartTime: now,
-		EndTime:   &now,
-	}
-}
-
-// IsNew checks whether this step describes a new, in-progress step.
-func (s *Step) IsNew() bool {
-	return s.State == ActiveState && s.EndTime == nil && len(s.Metrics) == 0
-}
-
-// Validation represents a row from the `validations` table.
-type Validation struct {
+// TrialMetrics represents a row from the `steps` or `validations` table.
+type TrialMetrics struct {
 	ID           int        `db:"id" json:"id"`
 	TrialID      int        `db:"trial_id" json:"trial_id"`
 	TrialRunID   int        `db:"trial_run_id" json:"-"`
-	TotalBatches int        `db:"total_batches" json:"-"`
-	TotalRecords int        `db:"total_records" json:"-"`
-	TotalEpochs  float32    `db:"total_epochs" json:"-"`
+	TotalBatches int        `db:"total_batches" json:"total_batches"`
 	State        State      `db:"state" json:"state"`
-	StartTime    time.Time  `db:"start_time" json:"start_time"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
-}
-
-// NewValidation creates a new validation in the active state.
-func NewValidation(trialID, totalBatches int) *Validation {
-	return &Validation{
-		TrialID:      trialID,
-		TotalBatches: totalBatches,
-		State:        ActiveState,
-		StartTime:    time.Now().UTC(),
-	}
-}
-
-// IsNew checks whether this validation describes a new, in-progress validation operation.
-func (v *Validation) IsNew() bool {
-	return v.State == ActiveState && v.ID == 0 && v.EndTime == nil && len(v.Metrics) == 0
 }
 
 // Checkpoint represents a row from the `checkpoints` table.
@@ -397,10 +396,7 @@ type Checkpoint struct {
 	TrialID           int        `db:"trial_id" json:"trial_id"`
 	TrialRunID        int        `db:"trial_run_id" json:"-"`
 	TotalBatches      int        `db:"total_batches" json:"total_batches"`
-	TotalRecords      int        `db:"total_records" json:"-"`
-	TotalEpochs       float32    `db:"total_epochs" json:"-"`
 	State             State      `db:"state" json:"state"`
-	StartTime         time.Time  `db:"start_time" json:"start_time"`
 	EndTime           *time.Time `db:"end_time" json:"end_time"`
 	UUID              *string    `db:"uuid" json:"uuid"`
 	Resources         JSONObj    `db:"resources" json:"resources"`
@@ -408,24 +404,6 @@ type Checkpoint struct {
 	Framework         string     `db:"framework" json:"framework"`
 	Format            string     `db:"format" json:"format"`
 	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
-}
-
-// NewCheckpoint creates a new checkpoint in the active state.
-func NewCheckpoint(trialID, totalBatches int) *Checkpoint {
-	return &Checkpoint{
-		TrialID:           trialID,
-		TotalBatches:      totalBatches,
-		State:             ActiveState,
-		StartTime:         time.Now().UTC(),
-		Metadata:          JSONObj{},
-		DeterminedVersion: version.Version,
-	}
-}
-
-// IsNew checks whether this checkpoint describes a new, in-progress checkpoint operation.
-func (c *Checkpoint) IsNew() bool {
-	return c.State == ActiveState && c.ID == 0 && c.EndTime == nil &&
-		c.UUID == nil && len(c.Resources) == 0 && len(c.Metadata) == 0
 }
 
 // TrialLog represents a row from the `trial_logs` table.
@@ -670,5 +648,36 @@ func (hpi *ExperimentHPImportance) GetMetricHPImportance(metricName string, metr
 		return MetricHPImportance{}
 	default:
 		panic("Invalid metric type!")
+	}
+}
+
+// ExitedReason defines why a workload exited early.
+type ExitedReason string
+
+const (
+	// Errored signals the searcher that the workload errored out.
+	Errored ExitedReason = "ERRORED"
+	// UserCanceled signals the searcher that the user requested a cancelation.
+	UserCanceled ExitedReason = "USER_CANCELED"
+	// InvalidHP signals the searcher that the user raised an InvalidHP exception.
+	InvalidHP ExitedReason = "INVALID_HP"
+	// InitInvalidHP signals the searcher that the user raised an InvalidHP exception
+	// in the trial init.
+	InitInvalidHP ExitedReason = "INIT_INVALID_HP"
+)
+
+// ExitedReasonFromProto returns an ExitedReason from its protobuf representation.
+func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
+	switch r {
+	case trialv1.TrialEarlyExit_EXITED_REASON_UNSPECIFIED:
+		return Errored
+	case trialv1.TrialEarlyExit_EXITED_REASON_INVALID_HP:
+		return InvalidHP
+	case trialv1.TrialEarlyExit_EXITED_REASON_USER_REQUESTED_STOP:
+		return UserCanceled
+	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
+		return InitInvalidHP
+	default:
+		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}
 }

@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -50,7 +49,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var err error
 
 	// Validate the user and get the agent user group.
-	user, _, err := grpcutil.GetUser(ctx, a.m.db)
+	user, _, err := grpcutil.GetUser(ctx, a.m.db, &a.m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
@@ -95,7 +94,8 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	taskSpec.Owner = user
 
 	// Get the full configuration.
-	config := command.DefaultConfig(&taskSpec.TaskContainerDefaults)
+	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
+	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
@@ -132,6 +132,14 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	var userFiles archive.Archive
 	if len(req.Files) > 0 {
 		userFiles = filesToArchive(req.Files)
+
+		workdirSetInReq := config.WorkDir != nil &&
+			(workDirInDefaults == nil || *workDirInDefaults != *config.WorkDir)
+		if workdirSetInReq {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"cannot set work_dir and context directory at the same time")
+		}
+		config.WorkDir = nil
 	}
 
 	return &tasks.GenericCommandSpec{
@@ -203,13 +211,14 @@ func (a *apiServer) LaunchCommand(
 			err.Error(),
 		)
 	}
+	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCommand}
 
 	// Launch a command actor.
 	commandIDFut := a.m.system.AskAt(commandsAddr, *spec)
 	if err = api.ProcessActorResponseError(&commandIDFut); err != nil {
 		return nil, err
 	}
-	cmdID := commandIDFut.Get().(sproto.TaskID)
+	cmdID := commandIDFut.Get().(model.TaskID)
 	cmd := a.m.system.AskAt(commandsAddr.Child(cmdID), &commandv1.Command{})
 	if err = api.ProcessActorResponseError(&cmd); err != nil {
 		return nil, err

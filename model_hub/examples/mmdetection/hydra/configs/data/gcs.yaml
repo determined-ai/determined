@@ -1,0 +1,3 @@
+file_client_args:
+  backend: gcs
+  bucket_name: ???

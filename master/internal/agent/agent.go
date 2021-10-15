@@ -6,6 +6,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -23,26 +25,62 @@ import (
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-type agent struct {
-	address          string
-	resourcePool     *actor.Ref
-	socket           *actor.Ref
-	slots            *actor.Ref
-	containers       map[container.ID]*actor.Ref
-	resourcePoolName string
-	label            string
+type (
+	agent struct {
+		address          string
+		resourcePool     *actor.Ref
+		socket           *actor.Ref
+		slots            *actor.Ref
+		containers       map[container.ID]*actor.Ref
+		resourcePoolName string
+		label            string
+		// started tracks if we have received the AgentStarted message.
+		started bool
+		// enabled and draining are duplicated in resourcepool agentState.
+		// TODO(ilia): refactor/dedupe it.
+		enabled  bool
+		draining bool
 
-	// uuid is an anonymous ID that is used when reporting telemetry
-	// information to allow agent connection and disconnection events
-	// to be correlated.
-	uuid uuid.UUID
+		// awaitingReconnect et al contain reconnect related state. The pattern for
+		// reconnecting agents is
+		//  * They have a small window to reconnect.
+		//  * In the meantime, we store up the messages it still can receive. We buffer and replay
+		//    such that things go out in the order they always would have. This is critical since
+		//    Start/Kill messages don't commute.
+		//  * We deny state changes while in recovery for simplicity. Within a bounded time, it will
+		//    recover or die.
+		//  * If the agent reconnects within the deadline, great. We replay the messages and move on.
+		//  * If it doesn't we stop with an error. If it comes back to reconnect later (only by some
+		//    monumental clock skew), the agent manager shoos it away, telling it to restart.
+		// Because of all this, for future developers: messages must be replay-able and writes must
+		// get buffered while down.
+		awaitingReconnect bool
+		reconnectBacklog  []interface{}
+		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
+		// pop back to our previous state.
+		preDisconnectEnabled  bool
+		preDisconnectDraining bool
 
-	// opts are additional agent options the master sends to the agent.
-	opts *aproto.MasterSetAgentOptions
-}
+		// uuid is an anonymous ID that is used when reporting telemetry
+		// information to allow agent connection and disconnection events
+		// to be correlated.
+		uuid uuid.UUID
+
+		// opts are additional agent options the master sends to the agent.
+		opts *aproto.MasterSetAgentOptions
+	}
+
+	reconnectTimeout struct{}
+)
+
+var errRecovering = errors.New("agent disconnected, wait for recovery")
 
 func (a *agent) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
+	return a.receive(ctx, ctx.Message())
+}
+
+func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
+	switch msg := msg.(type) {
 	case actor.PreStart:
 		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{resourcePool: a.resourcePool})
@@ -64,7 +102,33 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			ctx.Log().WithError(err).Error("failed to write master set agent options")
 		}
+		if a.awaitingReconnect {
+			ctx.Log().Info("agent reconnected")
+			a.awaitingReconnect = false
+
+			// Re-propagate our old state back on successful recovery.
+			a.enabled = a.preDisconnectEnabled
+			a.draining = a.preDisconnectDraining
+			if a.enabled {
+				ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
+			} else {
+				ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: a.draining})
+			}
+			ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
+
+			for msg := range a.reconnectBacklog {
+				if err := a.receive(ctx, msg); err != nil {
+					return errors.Wrapf(err, "replaying backlog")
+				}
+			}
+			a.reconnectBacklog = nil
+		}
 	case sproto.KillTaskContainer:
+		if a.awaitingReconnect {
+			a.bufferForRecovery(ctx, msg)
+			return nil
+		}
+
 		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
@@ -74,11 +138,21 @@ func (a *agent) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("failed to write kill task message")
 		}
 	case aproto.SignalContainer:
+		if a.awaitingReconnect {
+			a.bufferForRecovery(ctx, msg)
+			return nil
+		}
+
 		wsm := ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}}
 		if err := ctx.Ask(a.socket, wsm).Error(); err != nil {
 			ctx.Log().WithError(err).Error("failed to write signal container message")
 		}
 	case sproto.StartTaskContainer:
+		if a.awaitingReconnect {
+			a.bufferForRecovery(ctx, msg)
+			return nil
+		}
+
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
 			msg.TaskActor.Address())
@@ -102,16 +176,67 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
+		if a.awaitingReconnect {
+			ctx.Respond(errRecovering)
+			return nil
+		}
+
+		a.enabled = true
+		a.draining = false
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
+		ctx.Tell(a.resourcePool, sproto.EnableAgent{Agent: ctx.Self()})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case *proto.DisableAgentRequest:
-		ctx.Tell(a.slots, patchSlot{Enabled: false})
+		if a.awaitingReconnect {
+			ctx.Respond(errRecovering)
+			return nil
+		}
+
+		// Update our state.
+		a.enabled = false
+		a.draining = msg.Drain
+		// Mark current agent as disabled with RP.
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: msg.Drain})
+		// Update individual slot state.
+		ctx.Tell(a.slots, patchSlot{Enabled: false, Drain: msg.Drain})
+		// Kill both slotted and zero-slot tasks, unless draining.
+		if !msg.Drain {
+			for cid := range a.containers {
+				// TODO(DET-5916): This kill should not count towards max_restarts.
+				ctx.Tell(ctx.Self(), sproto.KillTaskContainer{ContainerID: cid})
+			}
+		}
 		ctx.Respond(&proto.DisableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
-		telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
-		return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
+		if !a.started {
+			// If we happen to fail before the agent has started and been registered with
+			// the resource manager, then nothing can be running on it. In this case we
+			// just fail outright and make it restart.
+			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
+			return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
+		}
+
+		ctx.Log().WithError(msg.Error).Errorf("child failed, awaiting reconnect: %s", msg.Child.Address())
+		a.socket = nil
+		a.awaitingReconnect = true
+		actors.NotifyAfter(ctx, aproto.AgentReconnectWait, reconnectTimeout{})
+		a.preDisconnectEnabled = a.enabled
+		a.preDisconnectDraining = a.draining
+		// Mark ourselves as draining to avoid action on ourselves while we recover. While the
+		// system is technically correct without this, it's better because we avoid any waste
+		// effort scheduling things only to have them suffer AgentErrors later.
+		a.enabled = false
+		a.draining = true
+		ctx.Tell(a.resourcePool, sproto.DisableAgent{Agent: ctx.Self(), Drain: a.draining})
+		ctx.Tell(a.slots, patchSlot{Enabled: a.enabled, Drain: a.draining})
+	case reconnectTimeout:
+		// Re-enter from actor.ChildFailed.
+		if a.awaitingReconnect {
+			telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
+			return errors.New("agent failed to reconnect by deadline")
+		}
 	case actor.ChildStopped:
 		telemetry.ReportAgentDisconnected(ctx.Self().System(), a.uuid)
 		ctx.Self().Stop()
@@ -119,7 +244,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("agent disconnected")
 		for cid := range a.containers {
 			stopped := aproto.ContainerError(
-				aproto.AgentFailed, errors.New("agent failed while container was running"))
+				aproto.AgentFailed, errors.New("agent closed with allocated containers"))
 			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
 				Container: container.Container{
 					ID:    cid,
@@ -133,6 +258,11 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agent) bufferForRecovery(ctx *actor.Context, msg interface{}) {
+	ctx.Log().WithField("msg", msg).Debugf("buffering message until agent reconnects")
+	a.reconnectBacklog = append(a.reconnectBacklog, msg)
 }
 
 func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
@@ -153,6 +283,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 
 		ctx.Tell(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
+		a.started = true
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
@@ -186,7 +317,9 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 			Addresses: sc.ContainerStarted.Addresses(),
 		}
 	case container.Terminated:
-		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
+		ctx.Log().
+			WithError(sc.ContainerStopped.Failure).
+			Infof("container %s terminated", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
 		rsc.ContainerStopped = &sproto.TaskContainerStopped{
 			ContainerStopped: *sc.ContainerStopped,
@@ -206,5 +339,7 @@ func (a *agent) summarize(ctx *actor.Context) model.AgentSummary {
 		ResourcePool:   a.resourcePoolName,
 		Label:          a.label,
 		Addresses:      []string{a.address},
+		Enabled:        a.enabled,
+		Draining:       a.draining,
 	}
 }

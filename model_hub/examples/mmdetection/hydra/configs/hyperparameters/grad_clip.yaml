@@ -1,0 +1,4 @@
+override_mmdet_config:
+  optimizer_config._delete_: true
+  optimizer_config.grad_clip.max_norm: ???
+  optimizer_config.grad_clip.norm_type: ???

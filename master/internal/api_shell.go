@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -14,7 +15,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -63,6 +63,8 @@ func (a *apiServer) SetShellPriority(
 	return resp, a.actorRequest(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
+var shellReadinessPattern = regexp.MustCompile("Server listening on")
+
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
@@ -106,6 +108,8 @@ func (a *apiServer) LaunchShell(
 		),
 	}
 
+	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeShell}
+
 	var keys ssh.PrivateAndPublicKeys
 	if len(req.Data) > 0 {
 		var data map[string]interface{}
@@ -131,13 +135,15 @@ func (a *apiServer) LaunchShell(
 
 	spec.ProxyTCP = true
 
+	spec.LogReadinessCheck = shellReadinessPattern
+
 	// Launch a Shell actor.
 	shellIDFut := a.m.system.AskAt(shellsAddr, *spec)
 	if err = api.ProcessActorResponseError(&shellIDFut); err != nil {
 		return nil, err
 	}
 
-	shellID := shellIDFut.Get().(sproto.TaskID)
+	shellID := shellIDFut.Get().(model.TaskID)
 	shell := a.m.system.AskAt(shellsAddr.Child(shellID), &shellv1.Shell{})
 	if err = api.ProcessActorResponseError(&shell); err != nil {
 		return nil, err

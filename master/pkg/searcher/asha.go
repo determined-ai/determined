@@ -7,7 +7,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // AsyncHalvingSearch implements a search using the asynchronous successive halving algorithm
@@ -282,10 +281,10 @@ func (s *asyncHalvingSearch) progress(map[model.RequestID]model.PartialUnits) fl
 }
 
 func (s *asyncHalvingSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason workload.ExitedReason,
+	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	if exitedReason == workload.InvalidHP || exitedReason == workload.InitInvalidHP {
+	if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
 		var ops []Operation
 		s.EarlyExitTrials[requestID] = true
 		ops = append(ops, NewClose(requestID))

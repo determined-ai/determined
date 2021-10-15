@@ -17,7 +17,7 @@ interface Props extends Omit<ModalFuncProps, 'type'> {
 }
 
 const StopExperimentModal: React.FC<Props> = ({ experiment, onClose }: Props) => {
-  const [ type, setType ] = useState<ActionType>(ActionType.Kill);
+  const [ type, setType ] = useState<ActionType>(ActionType.Cancel);
 
   const onOk = useCallback(async () => {
     if (type === ActionType.Cancel) {
@@ -32,16 +32,19 @@ const StopExperimentModal: React.FC<Props> = ({ experiment, onClose }: Props) =>
   return (
     <Modal
       okText="Stop Experiment"
-      title={`Stop Experiment ${experiment.id}`}
+      title="Confirm Stop"
       visible={true}
       onCancel={() => onClose(ActionType.None)}
       onOk={onOk}
     >
-      <p>Confirm stopping experiment {experiment.id}.</p>
+      <p>Are you sure you want to stop experiment {experiment.id}?</p>
       <Checkbox
         checked={type === ActionType.Cancel}
         onChange={(e) => setType(e.target.checked ? ActionType.Cancel : ActionType.Kill)}
-      >Save checkpoint before stopping experiment</Checkbox>
+      >Save checkpoint before stopping</Checkbox>
+      {type === ActionType.Kill && <p style={{ color: 'var(--theme-colors-danger-normal)' }}>
+        Note: Any progress/data on incomplete workflows will be lost.
+      </p>}
     </Modal>
   );
 };

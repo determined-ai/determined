@@ -3,6 +3,7 @@ export VERSION := $(shell cat ../VERSION)
 
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build
+SPHINXWRAPPER = ./sphinx-wrapper.py
 
 .PHONY: build-examples
 build-examples:
@@ -13,11 +14,11 @@ build-examples:
 build-helm:
 	$(MAKE) -C ../helm build
 
-reference/attributions.txt: $(shell find ../tools/scripts/licenses -type f)
+attributions.txt: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py sphinx $@
 
 .PHONY: build
-build: build-examples build-helm reference/attributions.txt
+build: build-examples build-helm attributions.txt
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	cp ../model_hub/build-examples/* site/downloads/examples
@@ -57,4 +58,4 @@ check:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 .PHONY: ALWAYS
 sp-%: ALWAYS
-	@$(SPHINXBUILD) -M $* . site $(SPHINXOPTS) $(O)
+	@$(SPHINXWRAPPER) $(SPHINXBUILD) -M $* . site $(SPHINXOPTS) $(O)

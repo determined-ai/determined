@@ -20,12 +20,15 @@ from determined.common.api.request import (
     do_request,
     get,
     make_url,
-    open,
+    browser_open,
     parse_master_address,
     patch,
     post,
     put,
     ws,
+)
+from determined.common.api.analytics import (
+    send_analytics,
 )
 from determined.common.api.profiler import (
     post_trial_profiler_metrics_batches,

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.16.4.dev0",
+    version="0.17.1.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -54,6 +54,8 @@ setup(
         # docker-compose has a requirement not properly propagated with semi-old pip installations;
         # so we expose that requirement here.
         "websocket-client<1",
+        # Telemetry
+        "analytics-python",
     ],
     zip_safe=False,
     entry_points={

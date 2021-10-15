@@ -1,3 +1,5 @@
+> **NOTE**: This example is deprecated in favor of our [`model-hub` support for mmdetection](../../../model_hub/examples/mmdetection).
+
 # MMDetection in Determined
 This example allows you to use the powerful object detection library [MMDetection](https://github.com/open-mmlab/mmdetection) while benefiting from all the features available on Determined's integrated deep learning platform.  In particular, get access to automated resource provisioning and experiment tracking with Determined along with state-of-the-art support for distributed training and hyperparameter tuning with little to no code modification.  
 

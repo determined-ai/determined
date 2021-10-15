@@ -12,7 +12,7 @@ class ClusterLogManager:
         self.setup_logs()
         return self
 
-    def __exit__(self, type: type, value: Exception, traceback: TracebackType) -> None:
+    def __exit__(self, exc_type: type, exc_value: Exception, traceback: TracebackType) -> None:
         self.stop_logs()
 
     def setup_logs(self) -> None:

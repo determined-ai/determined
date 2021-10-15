@@ -27,67 +27,72 @@ type GCCkptSpec struct {
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (g GCCkptSpec) ToTaskSpec(taskToken string) TaskSpec {
+func (g GCCkptSpec) ToTaskSpec(allocationToken string) TaskSpec {
 	res := g.Base
 
-	res.TaskToken = taskToken
+	res.AllocationSessionToken = allocationToken
+
+	// Set Environment.
+	// Keep only the EnvironmentVariables provided by the experiment's config.
+	envVars := g.LegacyConfig.EnvironmentVariables()
+	env := expconf.EnvironmentConfig{
+		RawEnvironmentVariables: &envVars,
+		RawPodSpec:              g.LegacyConfig.PodSpec(),
+	}
+	// Fill the rest of the environment with default values.
+	defaultConfig := expconf.ExperimentConfig{}
+	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
+	if defaultConfig.RawEnvironment != nil {
+		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
+	}
+	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": model.TaskTypeCheckpointGC}
+
+	res.WorkDir = DefaultWorkDir
 
 	res.ExtraArchives = []container.RunArchive{
 		wrapArchive(
 			archive.Archive{
+				g.Base.AgentUserGroup.OwnedArchiveItem("checkpoint_gc", nil, 0700, tar.TypeDir),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"storage_config.json",
+					"checkpoint_gc/storage_config.json",
 					[]byte(jsonify(g.LegacyConfig.CheckpointStorage())),
 					0600,
 					tar.TypeReg,
 				),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoints_to_delete.json",
+					"checkpoint_gc/checkpoints_to_delete.json",
 					[]byte(jsonify(g.ToDelete)),
 					0600,
 					tar.TypeReg,
 				),
 				g.Base.AgentUserGroup.OwnedArchiveItem(
-					etc.GCCheckpointsEntrypointResource,
+					filepath.Join("checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 					0700,
 					tar.TypeReg,
 				),
 			},
-			ContainerWorkDir,
+			runDir,
 		),
 	}
 
 	res.Description = "gc"
 
 	res.Entrypoint = []string{
-		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
+		filepath.Join("/run/determined/checkpoint_gc", etc.GCCheckpointsEntrypointResource),
 		"--experiment-id",
 		strconv.Itoa(g.ExperimentID),
 		"--storage-config",
-		"storage_config.json",
+		"/run/determined/checkpoint_gc/storage_config.json",
 		"--delete",
-		"checkpoints_to_delete.json",
+		"/run/determined/checkpoint_gc/checkpoints_to_delete.json",
 	}
 	if g.DeleteTensorboards {
 		res.Entrypoint = append(res.Entrypoint, "--delete-tensorboards")
 	}
 
-	// Keep only the EnvironmentVariables provided by the experiment's config.
-	envVars := g.LegacyConfig.EnvironmentVariables()
-	env := expconf.EnvironmentConfig{
-		RawEnvironmentVariables: &envVars,
-	}
-	// Fill the rest of the environment with default values.
-	defaultConfig := expconf.ExperimentConfig{}
-	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
-
-	if defaultConfig.RawEnvironment != nil {
-		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
-	}
-	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
-
-	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts())
+	res.Mounts = ToDockerMounts(g.LegacyConfig.BindMounts(), res.WorkDir)
 	if fs := g.LegacyConfig.CheckpointStorage().RawSharedFSConfig; fs != nil {
 		res.Mounts = append(res.Mounts, mount.Mount{
 			Type:   mount.TypeBind,

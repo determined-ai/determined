@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"crypto/tls"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -85,8 +87,8 @@ func (rp *ResourcePool) setupProvisioner(ctx *actor.Context) error {
 func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
 	rp.notifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
-	if len(msg.ID) == 0 {
-		msg.ID = sproto.TaskID(uuid.New().String())
+	if len(msg.AllocationID) == 0 {
+		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
 	if msg.Group == nil {
 		msg.Group = msg.TaskActor
@@ -97,8 +99,8 @@ func (rp *ResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) 
 	}
 
 	ctx.Log().Infof(
-		"resources are requested by %s (Task ID: %s)",
-		msg.TaskActor.Address(), msg.ID,
+		"resources are requested by %s (Allocation ID: %s)",
+		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	rp.taskList.AddTask(&msg)
 }
@@ -118,10 +120,10 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 		return false
 	}
 
-	allocations := make([]sproto.Allocation, 0, len(fits))
+	allocations := make([]sproto.Reservation, 0, len(fits))
 	for _, fit := range fits {
 		container := newContainer(req, fit.Agent, fit.Slots)
-		allocations = append(allocations, &containerAllocation{
+		allocations = append(allocations, &containerReservation{
 			req:       req,
 			agent:     fit.Agent,
 			container: container,
@@ -130,7 +132,7 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	}
 
 	allocated := sproto.ResourcesAllocated{
-		ID: req.ID, ResourcePool: rp.config.PoolName, Allocations: allocations,
+		ID: req.AllocationID, ResourcePool: rp.config.PoolName, Reservations: allocations,
 	}
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
@@ -145,10 +147,10 @@ func (rp *ResourcePool) releaseResource(ctx *actor.Context, handler *actor.Ref) 
 }
 
 func (rp *ResourcePool) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
-	ctx.Log().Infof("resources are released for %s", handler.Address())
 	if allocated := rp.taskList.GetAllocations(handler); allocated != nil {
-		for _, allocation := range allocated.Allocations {
-			typed := allocation.(*containerAllocation)
+		ctx.Log().Infof("resources are released for %s", handler.Address())
+		for _, allocation := range allocated.Reservations {
+			typed := allocation.(*containerReservation)
 			typed.agent.deallocateContainer(typed.container.id)
 		}
 	}
@@ -226,7 +228,9 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.AddAgent,
 		sproto.AddDevice,
 		sproto.RemoveDevice,
-		sproto.RemoveAgent:
+		sproto.RemoveAgent,
+		sproto.EnableAgent,
+		sproto.DisableAgent:
 		return rp.receiveAgentMsg(ctx)
 
 	case
@@ -238,6 +242,10 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return rp.receiveRequestMsg(ctx)
+
+	case sproto.GetTaskHandler:
+		reschedule = false
+		ctx.Respond(getTaskHandler(rp.taskList, msg.ID))
 
 	case sproto.GetTaskSummary:
 		reschedule = false
@@ -305,6 +313,25 @@ func (rp *ResourcePool) receiveAgentMsg(ctx *actor.Context) error {
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(rp.agents, msg.Agent)
 
+	case sproto.EnableAgent:
+		ctx.Log().Infof("enabling agent: %s", msg.Agent.Address().Local())
+		state, ok := rp.agents[msg.Agent]
+		check.Panic(check.True(ok, "error enabling agent, agent not found: %s", msg.Agent.Address()))
+		state.enabled = true
+		state.draining = false
+
+	case sproto.DisableAgent:
+		drain := msg.Drain
+		drainStr := "disabling"
+		if drain {
+			drainStr = "draining"
+		}
+		ctx.Log().Infof("%s agent: %s", drainStr, msg.Agent.Address().Local())
+		state, ok := rp.agents[msg.Agent]
+		check.Panic(check.True(ok, "error %s agent, agent not found: %s", drainStr, msg.Agent.Address()))
+		state.draining = drain
+		state.enabled = false
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -348,8 +375,8 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	return nil
 }
 
-// containerAllocation contains information for tasks have been allocated but not yet started.
-type containerAllocation struct {
+// containerReservation contains information for tasks have been allocated but not yet started.
+type containerReservation struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
@@ -357,19 +384,24 @@ type containerAllocation struct {
 }
 
 // Summary summarizes a container allocation.
-func (c containerAllocation) Summary() sproto.ContainerSummary {
+func (c containerReservation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{
-		TaskID: c.req.ID,
-		ID:     c.container.id,
-		Agent:  c.agent.handler.Address().Local(),
+		AllocationID: c.req.AllocationID,
+		ID:           c.container.id,
+		Agent:        c.agent.handler.Address().Local(),
 	}
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
+func (c containerReservation) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
-	spec.TaskID = string(c.req.ID)
+	spec.AllocationID = string(c.req.AllocationID)
+	spec.AllocationSessionToken = rri.Token
+	spec.TaskID = string(c.req.TaskID)
+	spec.UseHostMode = rri.IsMultiAgent
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskContainer{
 		TaskActor: c.req.TaskActor,
@@ -386,7 +418,7 @@ func (c containerAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank
 }
 
 // KillContainer notifies the agent to kill the container.
-func (c containerAllocation) Kill(ctx *actor.Context) {
+func (c containerReservation) Kill(ctx *actor.Context) {
 	ctx.Tell(c.agent.handler, sproto.KillTaskContainer{
 		ContainerID: c.container.id,
 	})

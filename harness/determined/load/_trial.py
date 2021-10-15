@@ -1,11 +1,10 @@
 import importlib
 import logging
-import pathlib
 import sys
-from typing import Optional, Tuple, Type, cast
+from typing import Optional, Type, cast
 
 import determined as det
-from determined import horovod, load, tensorboard, workload
+from determined import horovod, load, workload
 from determined.common import check
 
 
@@ -67,10 +66,9 @@ def trial_class_from_entrypoint(entrypoint_spec: str) -> Type[det.Trial]:
 def load_trial(
     trial_class: Type[det.Trial],
     env: det.EnvContext,
-    workloads: workload.Stream,
-    load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
+    workloads: Optional[workload.Stream] = None,
 ) -> det.TrialController:
     # Step 1: Validate model definition.
     controller_class = trial_class.trial_controller_class
@@ -91,26 +89,28 @@ def load_trial(
     controller_class.pre_execute_hook(env, hvd_config)
     trial_context = trial_class.trial_context_class(env, hvd_config, rendezvous_info)
 
-    # Step 3: Instantiate the user's Trial.
-    trial_inst = trial_class(trial_context)
+    try:
+        # Step 3: Instantiate the user's Trial.
+        trial_inst = trial_class(trial_context)
 
-    # Step 4: Return the TrialController.
-    logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
-    return controller_class.from_trial(
-        trial_inst=trial_inst,
-        context=trial_context,
-        env=env,
-        workloads=workloads,
-        load_path=load_path,
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-    )
+        # Step 4: Return the TrialController.
+        logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
+        return controller_class.from_trial(
+            trial_inst=trial_inst,
+            context=trial_context,
+            env=env,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+            workloads=workloads,
+        )
+    except Exception:
+        # TODO: Refactor load_trial so that it takes a generic context as input.
+        trial_context.distributed.close()
+        raise
 
 
 def prepare_controller(
     env: det.EnvContext,
-    workloads: workload.Stream,
-    load_path: Optional[pathlib.Path],
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
@@ -119,37 +119,9 @@ def prepare_controller(
     """
 
     if env.experiment_config.native_enabled():
-        controller = load.load_native(env, workloads, load_path, rendezvous_info, hvd_config)
+        controller = load.load_native(env, rendezvous_info, hvd_config)
     else:
         trial_class = trial_class_from_entrypoint(env.experiment_config["entrypoint"])
-        controller = load_trial(trial_class, env, workloads, load_path, rendezvous_info, hvd_config)
+        controller = load_trial(trial_class, env, rendezvous_info, hvd_config)
 
     return controller
-
-
-def prepare_tensorboard(
-    env: det.EnvContext,
-    container_path: Optional[str] = None,
-) -> Tuple[tensorboard.TensorboardManager, tensorboard.BatchMetricWriter]:
-    tensorboard_mgr = tensorboard.build(
-        env.det_cluster_id,
-        env.det_experiment_id,
-        env.det_trial_id,
-        env.experiment_config["checkpoint_storage"],
-        container_path,
-    )
-    try:
-        from determined.tensorboard.metric_writers import tensorflow
-
-        writer: tensorboard.MetricWriter = tensorflow.TFWriter()
-
-    except ModuleNotFoundError:
-        logging.warning("Tensorflow writer not found")
-        from determined.tensorboard.metric_writers import pytorch
-
-        writer = pytorch.TorchWriter()
-
-    return (
-        tensorboard_mgr,
-        tensorboard.BatchMetricWriter(writer),
-    )

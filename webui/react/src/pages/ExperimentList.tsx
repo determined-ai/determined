@@ -26,8 +26,8 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import {
-  activateExperiment, archiveExperiment, cancelExperiment, getExperimentLabels, getExperiments,
-  killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
+  getExperiments, killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -39,7 +39,7 @@ import { isBoolean, isEqual } from 'utils/data';
 import { alphanumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 import {
-  cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
+  cancellableRunStates, deletableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -75,6 +75,7 @@ const ExperimentList: React.FC = () => {
     hasActivatable,
     hasArchivable,
     hasCancelable,
+    hasDeletable,
     hasKillable,
     hasPausable,
     hasUnarchivable,
@@ -83,6 +84,7 @@ const ExperimentList: React.FC = () => {
       hasActivatable: false,
       hasArchivable: false,
       hasCancelable: false,
+      hasDeletable: false,
       hasKillable: false,
       hasPausable: false,
       hasUnarchivable: false,
@@ -92,18 +94,21 @@ const ExperimentList: React.FC = () => {
       if (!experiment) continue;
       const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isDeletable = deletableRunStates.has(experiment.state) &&
+        user && (user.isAdmin || user.username === experiment.username);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
       const isPausable = experiment.state === RunState.Active;
       if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
       if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
       if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
+      if (!tracker.hasDeletable && isDeletable) tracker.hasDeletable = true;
       if (!tracker.hasKillable && isKillable) tracker.hasKillable = true;
       if (!tracker.hasActivatable && isActivatable) tracker.hasActivatable = true;
       if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
     }
     return tracker;
-  }, [ experimentMap, settings.row ]);
+  }, [ experimentMap, settings.row, user ]);
 
   const fetchUsers = useFetchUsers(canceler);
 
@@ -134,7 +139,16 @@ const ExperimentList: React.FC = () => {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
       setIsLoading(false);
     }
-  }, [ canceler, settings ]);
+  }, [ canceler,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.state,
+    settings.tableLimit,
+    settings.tableOffset,
+    settings.user ]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -414,6 +428,8 @@ const ExperimentList: React.FC = () => {
           return archiveExperiment({ experimentId });
         case Action.Cancel:
           return cancelExperiment({ experimentId });
+        case Action.Delete:
+          return deleteExperiment({ experimentId });
         case Action.Kill:
           return killExperiment({ experimentId });
         case Action.Pause:
@@ -545,8 +561,9 @@ const ExperimentList: React.FC = () => {
           { disabled: !hasUnarchivable, label: Action.Unarchive, value: Action.Unarchive },
           { disabled: !hasCancelable, label: Action.Cancel, value: Action.Cancel },
           { disabled: !hasKillable, label: Action.Kill, value: Action.Kill },
+          { disabled: !hasDeletable, label: Action.Delete, value: Action.Delete },
         ]}
-        selectedRowCount={(settings.row || []).length}
+        selectedRowCount={(settings.row ?? []).length}
         onAction={handleBatchAction}
         onClear={clearSelected}
       />
@@ -563,7 +580,7 @@ const ExperimentList: React.FC = () => {
         rowSelection={{
           onChange: handleTableRowSelect,
           preserveSelectedRowKeys: true,
-          selectedRowKeys: settings.row,
+          selectedRowKeys: settings.row ?? [],
         }}
         showSorterTooltip={false}
         size="small"

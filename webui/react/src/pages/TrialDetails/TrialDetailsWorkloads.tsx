@@ -4,7 +4,7 @@ import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import CheckpointModal from 'components/CheckpointModal';
-import HumanReadableFloat from 'components/HumanReadableFloat';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Icon from 'components/Icon';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
@@ -18,8 +18,8 @@ import {
 } from 'types';
 import { isEqual } from 'utils/data';
 import { numericSorter } from 'utils/sort';
-import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/step';
 import { extractMetricValue } from 'utils/trial';
+import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings, TrialWorkloadFilter } from './TrialDetailsOverview.settings';
 import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
@@ -77,7 +77,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     const metricRenderer = (metricName: MetricName) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
-        return value != null ? <HumanReadableFloat num={value} /> : undefined;
+        return <HumanReadableNumber num={value} />;
       };
       return metricCol;
     };

@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // MaxNamePrefixLen is the max length of the instance name prefix. The full name of an instance
@@ -42,8 +43,8 @@ type GCPClusterConfig struct {
 
 	InstanceType gceInstanceType `json:"instance_type"`
 
-	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
-	CPUSlotsAllowed        bool     `json:"cpu_slots_allowed"`
+	OperationTimeoutPeriod model.Duration `json:"operation_timeout_period"`
+	CPUSlotsAllowed        bool           `json:"cpu_slots_allowed"`
 
 	UseCloudLogging bool `json:"use_cloud_logging"`
 }
@@ -52,14 +53,14 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize:        200,
-		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-a173dcd",
+		BootDiskSourceImage: "projects/determined-ai/global/images/det-environments-f286b87",
 		LabelKey:            "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
 			GPUType:     "nvidia-tesla-v100",
 			GPUNum:      4,
 		},
-		OperationTimeoutPeriod: Duration(5 * time.Minute),
+		OperationTimeoutPeriod: model.Duration(5 * time.Minute),
 		CPUSlotsAllowed:        false,
 	}
 }

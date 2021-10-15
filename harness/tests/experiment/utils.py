@@ -1,8 +1,6 @@
-import distutils.util
 import os
 import pathlib
 import tempfile
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -11,9 +9,8 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import constants, experimental, gpu, horovod, keras, load, workload
+from determined import experimental, gpu, horovod, keras, load, workload
 from determined.common import check
-from determined.common.types import ExperimentID, StepID, TrialID
 
 
 class TrainAndValidate:
@@ -28,6 +25,7 @@ class TrainAndValidate:
         self._avg_training_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self._validation_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self.request_stop_step_id = request_stop_step_id
+        self._latest_batch = 0
 
     def send(
         self, steps: int, validation_freq: int, initial_step_id: int = 1, scheduling_unit: int = 1
@@ -35,7 +33,7 @@ class TrainAndValidate:
         self._training_metrics = []
         self._avg_training_metrics = []
         self._validation_metrics = []
-        total_batches_processed = 0
+        self._latest_batch = 0
         interceptor = workload.WorkloadResponseInterceptor()
 
         for step_id in range(initial_step_id, initial_step_id + steps):
@@ -44,31 +42,29 @@ class TrainAndValidate:
                 workload.train_workload(
                     step_id,
                     num_batches=scheduling_unit,
-                    total_batches_processed=total_batches_processed,
+                    total_batches_processed=self._latest_batch,
                 ),
-                [],
             )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
             assert len(batch_metrics) == scheduling_unit
             self._training_metrics.extend(batch_metrics)
             self._avg_training_metrics.append(metrics["metrics"]["avg_metrics"])
-            total_batches_processed += scheduling_unit
-            if metrics["stop_requested"]:
+            self._latest_batch += scheduling_unit
+            if metrics.get("stop_requested"):
                 assert step_id == self.request_stop_step_id
                 stop_requested = True
 
             if step_id % validation_freq == 0:
                 yield from interceptor.send(
                     workload.validation_workload(
-                        step_id, total_batches_processed=total_batches_processed
+                        step_id, total_batches_processed=self._latest_batch
                     ),
-                    [],
                 )
                 validation = interceptor.metrics_result()
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
-                if validation["stop_requested"]:
+                if validation.get("stop_requested"):
                     assert step_id == self.request_stop_step_id
                     stop_requested = True
 
@@ -82,12 +78,20 @@ class TrainAndValidate:
         assert self._validation_metrics is not None
         return self._training_metrics, self._validation_metrics
 
+    def get_latest_batch(self) -> int:
+        return self._latest_batch
+
     def get_avg_training_metrics(self) -> List[Dict[str, Any]]:
         assert self._avg_training_metrics is not None
         return self._avg_training_metrics
 
 
-def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Dict:
+def make_default_exp_config(
+    hparams: Dict[str, Any],
+    scheduling_unit: int,
+    searcher_metric: str,
+    checkpoint_dir: Optional[str] = None,
+) -> Dict:
     return {
         "scheduling_unit": scheduling_unit,
         "resources": {"native_parallel": False, "slots_per_trial": 1},
@@ -99,52 +103,54 @@ def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Di
             "average_training_metrics": False,
         },
         "data_layer": {"type": "shared_fs"},
+        "checkpoint_storage": {
+            "type": "shared_fs",
+            "host_path": checkpoint_dir or "/tmp",
+        },
+        "searcher": {
+            "metric": searcher_metric,
+        },
     }
 
 
 def make_default_env_context(
-    hparams: Dict[str, Any], experiment_config: Optional[Dict] = None, trial_seed: int = 0
+    hparams: Dict[str, Any],
+    experiment_config: Dict,
+    trial_seed: int = 0,
+    latest_checkpoint: Optional[str] = None,
+    latest_batch: int = 0,
+    expose_gpus: bool = False,
 ) -> det.EnvContext:
-    if experiment_config is None:
-        experiment_config = make_default_exp_config(hparams, 1)
+    assert (latest_checkpoint is None) == (latest_batch == 0)
 
-    # TODO(ryan): Fix the parameter passing so that this doesn't read from environment variables,
-    # and we can get rid of the @expose_gpus fixture.
-    use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
-    gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu)
+    if expose_gpus:
+        gpu_uuids = gpu.get_gpu_uuids()
+        use_gpu = bool(gpu_uuids)
+    else:
+        gpu_uuids = []
+        use_gpu = False
 
     return det.EnvContext(
         experiment_config=experiment_config,
-        initial_workload=workload.Workload(
-            workload.Workload.Kind.RUN_STEP,
-            ExperimentID(1),
-            TrialID(1),
-            StepID(1),
-            det.ExperimentConfig(experiment_config).scheduling_unit(),
-            0,
-        ),
-        master_addr="",
-        master_port=0,
-        use_tls=False,
+        master_url="",
         master_cert_file=None,
         master_cert_name=None,
         container_id="",
         hparams=hparams,
-        latest_checkpoint=None,
+        latest_checkpoint=latest_checkpoint,
+        latest_batch=latest_batch,
         use_gpu=use_gpu,
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        workload_manager_type="TRIAL_WORKLOAD_MANAGER",
-        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
-        det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_experiment_id="1",
         det_agent_id="1",
         det_cluster_id="uuid-123",
-        det_task_token="",
         trial_seed=trial_seed,
+        trial_run_id=1,
+        allocation_id="",
         managed_training=True,
         test_mode=False,
         on_cluster=False,
@@ -152,7 +158,7 @@ def make_default_env_context(
 
 
 def make_default_rendezvous_info() -> det.RendezvousInfo:
-    return det.RendezvousInfo(addrs=[f"127.0.0.1:{constants.LOCAL_RENDEZVOUS_PORT}"], rank=0)
+    return det.RendezvousInfo(container_addrs=["127.0.0.1"], container_rank=0)
 
 
 def make_default_hvd_config() -> horovod.HorovodContext:
@@ -222,43 +228,33 @@ def make_xor_data_sequences(
     )
 
 
-def make_trial_controller(
-    trial_class: Type[det.Trial],
-    hparams: Dict[str, Any],
-    workloads: workload.Stream,
-    env: Optional[det.EnvContext] = None,
-    load_path: Optional[pathlib.Path] = None,
-) -> det.TrialController:
-    """
-    Create a TrialController for a given Trial class, using the Trial.get_trial_controller_class()
-    static method, as the harness code would.
-    """
-    if env is None:
-        env = make_default_env_context(hparams=hparams)
-
-    return load.load_trial(
-        trial_class,
-        env=env,
-        workloads=workloads,
-        load_path=load_path,
-        rendezvous_info=make_default_rendezvous_info(),
-        hvd_config=make_default_hvd_config(),
-    )
-
-
 def make_trial_controller_from_trial_implementation(
     trial_class: Type[det.Trial],
     hparams: Dict,
     workloads: workload.Stream,
     scheduling_unit: int = 1,
-    load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
+    checkpoint_dir: Optional[str] = None,
+    latest_checkpoint: Optional[str] = None,
+    latest_batch: int = 0,
+    expose_gpus: bool = False,
 ) -> det.TrialController:
     if not exp_config:
-        exp_config = make_default_exp_config(hparams, scheduling_unit)
+        assert hasattr(
+            trial_class, "_searcher_metric"
+        ), "Trial classes for unit tests should be annotated with a _searcher_metric attribute"
+        searcher_metric = trial_class._searcher_metric  # type: ignore
+        exp_config = make_default_exp_config(
+            hparams, scheduling_unit, searcher_metric, checkpoint_dir=checkpoint_dir
+        )
     env = make_default_env_context(
-        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
+        hparams=hparams,
+        experiment_config=exp_config,
+        trial_seed=trial_seed,
+        latest_checkpoint=latest_checkpoint,
+        latest_batch=latest_batch,
+        expose_gpus=expose_gpus,
     )
 
     rendezvous_info = make_default_rendezvous_info()
@@ -267,10 +263,9 @@ def make_trial_controller_from_trial_implementation(
     return load.load_trial(
         trial_class=trial_class,
         env=env,
-        workloads=workloads,
-        load_path=load_path,
         rendezvous_info=rendezvous_info,
         hvd_config=hvd_config,
+        workloads=workloads,
     )
 
 
@@ -299,8 +294,6 @@ def reproducibility_test(
         training_metrics[tag] = tm
         validation_metrics[tag] = vm
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
-
     # Trial A
     os.environ["DET_TRIAL_SEED"] = str(seed)
     controller_A = controller_fn(make_workloads("A"))
@@ -326,7 +319,12 @@ def reproducibility_test(
 
 
 RestorableMakeControllerFn = Callable[
-    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")],  # noqa: F821
+    [
+        workload.Stream,
+        DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
+        DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
+        DefaultNamedArg(int, "latest_batch"),  # noqa: F821
+    ],
     det.TrialController,
 ]
 
@@ -345,8 +343,6 @@ def train_and_validate(
         metrics["training"] += tm
         metrics["validation"] += vm
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
-
     controller = make_trial_controller_fn(make_workloads(steps))
     controller.run()
 
@@ -354,7 +350,7 @@ def train_and_validate(
 
 
 def checkpointing_and_restoring_test(
-    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: Path
+    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: pathlib.Path
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
     """
     Tests if a trial controller of any framework can checkpoint and restore from that checkpoint
@@ -370,11 +366,11 @@ def checkpointing_and_restoring_test(
 
     training_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
     validation_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
-    checkpoint_dir = tmp_path.joinpath("checkpoint")
+    checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
+    latest_checkpoint = None
+    latest_batch = 0
 
-    def make_workloads(
-        steps: int, tag: str, checkpoint_dir: Optional[pathlib.Path] = None
-    ) -> workload.Stream:
+    def make_workloads(steps: int, tag: str, checkpoint: bool) -> workload.Stream:
         trainer = TrainAndValidate()
 
         yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
@@ -382,20 +378,29 @@ def checkpointing_and_restoring_test(
         training_metrics[tag] += tm
         validation_metrics[tag] += vm
 
-        if checkpoint_dir is not None:
-            yield workload.checkpoint_workload(), [
-                checkpoint_dir
-            ], workload.ignore_workload_response
+        if checkpoint is not None:
+            interceptor = workload.WorkloadResponseInterceptor()
+            yield from interceptor.send(workload.checkpoint_workload())
+            nonlocal latest_checkpoint, latest_batch
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
+            latest_batch = trainer.get_latest_batch()
 
-        yield workload.terminate_workload(), [], workload.ignore_workload_response
-
-    controller_A1 = make_trial_controller_fn(make_workloads(1, "A", checkpoint_dir))
+    controller_A1 = make_trial_controller_fn(
+        make_workloads(1, "A", True),
+        checkpoint_dir=checkpoint_dir,
+    )
     controller_A1.run()
+    assert latest_checkpoint is not None, "make_workloads did not set the latest_checkpoint"
 
-    controller_A2 = make_trial_controller_fn(make_workloads(1, "A"), load_path=checkpoint_dir)
+    controller_A2 = make_trial_controller_fn(
+        make_workloads(1, "A", False),
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        latest_batch=latest_batch,
+    )
     controller_A2.run()
 
-    controller_B = make_trial_controller_fn(make_workloads(2, "B"))
+    controller_B = make_trial_controller_fn(make_workloads(2, "B", False))
     controller_B.run()
 
     for A, B in zip(training_metrics["A"], training_metrics["B"]):

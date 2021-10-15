@@ -12,12 +12,10 @@ import "protoc-gen-swagger/options/annotations.proto";
 // CheckpointWorkload is an artifact created by a trial during training.
 message CheckpointWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "start_time", "state", "total_batches" ] }
+    json_schema: { required: [ "state", "total_batches" ] }
   };
   // UUID of the checkpoint.
   string uuid = 1;
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 2;
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 3;
   // The state of the checkpoint.
@@ -32,12 +30,8 @@ message CheckpointWorkload {
 // MetricsWorkload is a workload generating metrics.
 message MetricsWorkload {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "start_time", "state", "num_inputs", "total_batches" ]
-    }
+    json_schema: { required: [ "state", "num_inputs", "total_batches" ] }
   };
-  // The time the workload was started.
-  google.protobuf.Timestamp start_time = 1;
   // The time the workload finished or was stopped.
   google.protobuf.Timestamp end_time = 2;
   // The current validation state.
@@ -85,6 +79,8 @@ message Trial {
   MetricsWorkload latest_validation = 9;
   // Best checkpoint.
   CheckpointWorkload best_checkpoint = 10;
+  // The last reported state of the trial runner (harness code).
+  string runner_state = 11;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series
@@ -157,11 +153,11 @@ message TrialEarlyExit {
   ExitedReason reason = 1;
 }
 
-// The training metrics for some duration of training.
-message TrainingMetrics {
+// Metrics from the trial some duration of training.
+message TrialMetrics {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
+      required: [ "trial_id", "trial_run_id", "latest_batch", "metrics" ]
     }
   };
   // The trial associated with these metrics.
@@ -169,36 +165,11 @@ message TrainingMetrics {
   // The trial run associated with these metrics.
   int32 trial_run_id = 2;
   // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 3;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 4;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 5;
+  int32 latest_batch = 3;
   // The metrics for this bit of training (reduced over the reporting period).
-  google.protobuf.Struct metrics = 6;
+  google.protobuf.Struct metrics = 7;
   // The batch metrics for this bit of training.
-  repeated google.protobuf.Struct batch_metrics = 7;
-}
-
-// The validation metrics at some point of training.
-message ValidationMetrics {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "trial_id", "trial_run_id", "total_batches", "metrics" ]
-    }
-  };
-  // The trial associated with these metrics.
-  int32 trial_id = 1;
-  // The trial run associated with these metrics.
-  int32 trial_run_id = 2;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 3;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 4;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 5;
-  // The metrics.
-  google.protobuf.Struct metrics = 6;
+  repeated google.protobuf.Struct batch_metrics = 8;
 }
 
 // The checkpoint metadata for some trial checkpoint.
@@ -209,6 +180,7 @@ message CheckpointMetadata {
         "trial_id",
         "trial_run_id",
         "uuid",
+        "resources",
         "framework",
         "format",
         "determined_version"
@@ -217,7 +189,7 @@ message CheckpointMetadata {
   };
   // The ID of the trial associated with the checkpoint.
   int32 trial_id = 1;
-  // The run of the trial assocaited with the checkpoint.
+  // The run of the trial associated with the checkpoint.
   int32 trial_run_id = 2;
   // UUID of the checkpoint.
   string uuid = 3;
@@ -230,11 +202,7 @@ message CheckpointMetadata {
   // The Determined version associated with the checkpoint.
   string determined_version = 7;
   // The number of batches trained on when these metrics were reported.
-  int32 total_batches = 8;
-  // The number of batches trained on when these metrics were reported.
-  int32 total_records = 9;
-  // The number of epochs trained on when these metrics were reported.
-  float total_epochs = 10;
+  int32 latest_batch = 8;
 }
 
 // The rendezvous info for the trial to rendezvous with sibling containers.
@@ -246,4 +214,13 @@ message RendezvousInfo {
   repeated string addresses = 1;
   // The container rank.
   int32 rank = 2;
+}
+
+// The metadata pertaining to the current running task for a trial.
+message TrialRunnerMetadata {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "state" ] }
+  };
+  // The state of the trial runner.
+  string state = 1;
 }

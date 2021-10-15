@@ -9,7 +9,7 @@ import UPlotChart, { Options } from 'components/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlotChart/trackAxis';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
-import { MetricName, MetricType, RunState, WorkloadWrapper } from 'types';
+import { MetricName, MetricType, WorkloadWrapper } from 'types';
 import { glasbeyColor } from 'utils/color';
 
 interface Props {
@@ -45,7 +45,7 @@ const TrialChart: React.FC<Props> = ({
       metrics.forEach((metric, index) => {
         const metricsWl = metric.type === MetricType.Training ?
           wlWrapper.training : wlWrapper.validation;
-        if (!metricsWl || !metricsWl.metrics || metricsWl.state !== RunState.Completed) return;
+        if (!metricsWl || !metricsWl.metrics) return;
 
         const x = metricsWl.totalBatches;
         if (!xValues.includes(x)) xValues.push(x);

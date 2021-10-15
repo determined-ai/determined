@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -32,31 +33,6 @@ func countNonNullRingValues(ring *ring.Ring) int {
 	return count
 }
 
-// event is the union of all event types during the parent lifecycle.
-type event struct {
-	Snapshot summary   `json:"snapshot"`
-	ParentID string    `json:"parent_id"`
-	ID       string    `json:"id"`
-	Seq      int       `json:"seq"`
-	Time     time.Time `json:"time"`
-
-	ScheduledEvent *sproto.TaskID `json:"scheduled_event"`
-	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *sproto.ResourcesAllocated `json:"assigned_event"`
-	// ContainerStartedEvent is triggered when the container started on an agent.
-	ContainerStartedEvent *sproto.TaskContainerStarted `json:"container_started_event"`
-	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
-	// TODO: Move to ServiceReadyEvent type to a specialized event with readiness checks.
-	ServiceReadyEvent *sproto.ContainerLog `json:"service_ready_event"`
-	// TerminateRequestEvent is triggered when the scheduler has requested the container to
-	// terminate.
-	TerminateRequestEvent *sproto.ReleaseResources `json:"terminate_request_event"`
-	// ExitedEvent is triggered when the command has terminated.
-	ExitedEvent *string `json:"exited_event"`
-	// LogEvent is triggered when a new log message is available.
-	LogEvent *string `json:"log_event"`
-}
-
 type logSubscribers = map[*actor.Ref]webAPI.BatchRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
@@ -69,14 +45,18 @@ type eventManager struct {
 	seq          int
 	isTerminated bool
 	logStreams   logSubscribers
+
+	description string
 }
 
-func newEventManager() *eventManager {
+func newEventManager(description string) *eventManager {
 	return &eventManager{
 		bufferSize:   defaultEventBufferSize,
 		buffer:       ring.New(defaultEventBufferSize),
 		logStreams:   make(logSubscribers),
 		isTerminated: false,
+
+		description: description,
 	}
 }
 
@@ -87,7 +67,7 @@ func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
 	e.logStreams = nil
 }
 
-func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
+func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg sproto.Event) {
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
@@ -103,11 +83,12 @@ func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
 
 func (e *eventManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case event:
+	case sproto.Event:
 		msg.ParentID = ctx.Self().Address().Parent().Local()
 		msg.ID = uuid.New().String()
 		msg.Seq = e.seq
 		msg.Time = time.Now().UTC()
+		msg.Description = e.description
 		e.seq++
 
 		// Add the event to the event buffer.
@@ -219,7 +200,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 // validEvent returns true if the given event's Seq value is within the bounds specified
 // by greaterThanSeq and lessThanSeq. Note that these values can be nil, in which case the
 // particular bound is not regarded.
-func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
+func validEvent(e sproto.Event, greaterThanSeq, lessThanSeq *int) bool {
 	if greaterThanSeq != nil && e.Seq <= *greaterThanSeq {
 		return false
 	}
@@ -230,8 +211,8 @@ func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
 	return true
 }
 
-func eventToLogEntry(ev *event) *logger.Entry {
-	description := ev.Snapshot.Config.Description
+func eventToLogEntry(ev *sproto.Event) *logger.Entry {
+	description := ev.Description
 	var message string
 	switch {
 	case ev.ScheduledEvent != nil:
@@ -258,17 +239,17 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	}
 }
 
-func eventSatisfiesLogRequest(req webAPI.BatchRequest, event *event) bool {
+func eventSatisfiesLogRequest(req webAPI.BatchRequest, event *sproto.Event) bool {
 	return event.Seq >= req.Offset
 }
 
-func (e *eventManager) getMatchingEvents(req webAPI.BatchRequest) []*event {
+func (e *eventManager) getMatchingEvents(req webAPI.BatchRequest) []*sproto.Event {
 	events := e.buffer
-	var logs []*event
+	var logs []*sproto.Event
 
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
-			event := events.Value.(event)
+			event := events.Value.(sproto.Event)
 			if eventSatisfiesLogRequest(req, &event) && (req.Limit < 1 || len(logs) < req.Limit) {
 				logs = append(logs, &event)
 			}
@@ -292,7 +273,7 @@ func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			return
 		}
 		events := e.buffer
-		clientEvents := make([]event, 0)
+		clientEvents := make([]sproto.Event, 0)
 
 		var limit int
 		if args.Limit != nil {
@@ -303,7 +284,7 @@ func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 
 		for i := 0; i < e.bufferSize; i++ {
 			if events.Value != nil {
-				event := events.Value.(event)
+				event := events.Value.(sproto.Event)
 				if validEvent(event, args.GreaterThanID, args.LessThanID) && len(clientEvents) < limit {
 					clientEvents = append(clientEvents, event)
 				}

@@ -20,5 +20,4 @@ from model_hub.huggingface._trial import (
 
 from model_hub.huggingface._utils import (
     remove_unused_columns,
-    compute_num_training_steps,
 )

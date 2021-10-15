@@ -283,15 +283,13 @@ def describe(args: Namespace) -> None:
         v_metrics_headers = []
 
     headers = (
-        ["Trial ID", "# of Batches", "State", "Start Time", "End Time"]
+        ["Trial ID", "# of Batches", "State", "Report Time"]
         + t_metrics_headers
         + [
             "Checkpoint State",
-            "Checkpoint Start Time",
-            "Checkpoint End Time",
+            "Checkpoint Report Time",
             "Validation State",
-            "Validation Start Time",
-            "Validation End Time",
+            "Validation Report Time",
         ]
         + v_metrics_headers
     )
@@ -312,21 +310,17 @@ def describe(args: Namespace) -> None:
                 checkpoint = step.get("checkpoint")
                 if checkpoint:
                     checkpoint_state = checkpoint["state"]
-                    checkpoint_start_time = checkpoint.get("start_time")
                     checkpoint_end_time = checkpoint.get("end_time")
                 else:
                     checkpoint_state = None
-                    checkpoint_start_time = None
                     checkpoint_end_time = None
 
                 validation = step.get("validation")
                 if validation:
                     validation_state = validation["state"]
-                    validation_start_time = validation.get("start_time")
                     validation_end_time = validation.get("end_time")
                 else:
                     validation_state = None
-                    validation_start_time = None
                     validation_end_time = None
 
                 if args.metrics:
@@ -342,16 +336,13 @@ def describe(args: Namespace) -> None:
                         step["trial_id"],
                         step["total_batches"],
                         step["state"],
-                        render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
                     ]
                     + t_metrics_fields
                     + [
                         checkpoint_state,
-                        render.format_time(checkpoint_start_time),
                         render.format_time(checkpoint_end_time),
                         validation_state,
-                        render.format_time(validation_start_time),
                         render.format_time(validation_end_time),
                     ]
                     + v_metrics_fields
@@ -649,11 +640,11 @@ def experiment_id_completer(prefix: str, parsed_args: Namespace, **kwargs: Any) 
     return [str(e["id"]) for e in r.json()]
 
 
-def experiment_id_arg(help: str) -> Arg:
+def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help, completer=experiment_id_completer)
 
 
-args_description = Cmd(
+main_cmd = Cmd(
     "e|xperiment",
     None,
     "manage experiments",
@@ -709,7 +700,7 @@ args_description = Cmd(
         ),
         Cmd(
             "list-checkpoints lc",
-            checkpoint.list,
+            checkpoint.list_checkpoints,
             "list checkpoints of experiment",
             [
                 experiment_id_arg("experiment ID"),
@@ -981,3 +972,5 @@ args_description = Cmd(
         ),
     ],
 )
+
+args_description = [main_cmd]  # type: List[Any]

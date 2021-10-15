@@ -2,12 +2,14 @@ import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
+import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
-import { getExpTrials, getTrialDetails } from 'services/api';
+import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -15,6 +17,8 @@ import TrialDetailsHyperparameters from '../TrialDetails/TrialDetailsHyperparame
 import TrialDetailsLogs from '../TrialDetails/TrialDetailsLogs';
 import TrialDetailsOverview from '../TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
+
+import css from './ExperimentSingleTrialTabs.module.scss';
 
 const { TabPane } = Tabs;
 
@@ -25,6 +29,7 @@ enum TabType {
   Overview = 'overview',
   Profiler = 'profiler',
   Workloads = 'workloads',
+  Notes = 'notes'
 }
 
 interface Params {
@@ -40,12 +45,19 @@ const ExperimentConfiguration = React.lazy(() => {
 
 export interface Props {
   experiment: ExperimentBase;
+  fetchExperimentDetails: () => void;
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
-const NoDataAlert = <Alert message="No data available." type="warning" />;
+const NoDataAlert = (
+  <div className={css.base}>
+    <Alert message="No data available." type="warning" />
+  </div>
+);
 
-const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }: Props) => {
+const ExperimentSingleTrialTabs: React.FC<Props> = (
+  { experiment, fetchExperimentDetails, onTrialLoad }: Props,
+) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
@@ -53,23 +65,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const { tab } = useParams<Params>();
   const [ canceler ] = useState(new AbortController());
   const [ trialDetails, setTrialDetails ] = useState<TrialDetails>();
+  const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const basePath = paths.experimentDetails(experiment.id);
-  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-
-  const [ tabKey, setTabKey ] = useState(defaultTabKey);
-
-  const handleTabChange = useCallback(key => {
-    setTabKey(key);
-    history.replace(`${basePath}/${key}`);
-  }, [ basePath, history ]);
-
-  // Sets the default sub route.
-  useEffect(() => {
-    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
-      history.replace(`${basePath}/${tabKey}`);
-    }
-  }, [ basePath, history, tab, tabKey ]);
 
   const fetchFirstTrialId = useCallback(async () => {
     try {
@@ -119,6 +117,23 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
   const { stopPolling } = usePolling(fetchTrialDetails);
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId);
 
+  const handleTabChange = useCallback(key => {
+    setTabKey(key);
+    history.replace(`${basePath}/${key}`);
+  }, [ basePath, history ]);
+
+  const handleViewLogs = useCallback(() => {
+    setTabKey(TabType.Logs);
+    history.replace(`${basePath}/${TabType.Logs}?tail`);
+  }, [ basePath, history ]);
+
+  // Sets the default sub route.
+  useEffect(() => {
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      history.replace(`${basePath}/${tabKey}`);
+    }
+  }, [ basePath, history, tab, tabKey ]);
+
   useEffect(() => {
     if (trialDetails && terminalRunStates.has(trialDetails.state)) {
       stopPolling();
@@ -145,9 +160,29 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
+  const handleNotesUpdate = useCallback(async (editedNotes: string) => {
+    try {
+      await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment notes.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
   return (
-    <>
-      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
+    <TrialLogPreview
+      hidePreview={tabKey === TabType.Logs}
+      trial={trialDetails}
+      onViewLogs={handleViewLogs}>
+      <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
         <TabPane key="overview" tab="Overview">
           {trialDetails
             ? <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
@@ -163,6 +198,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
             <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
         </TabPane>
+        <TabPane key="notes" tab="Notes">
+          <NotesCard
+            notes={experiment.notes ?? ''}
+            style={{ border: 0 }}
+            onSave={handleNotesUpdate}
+          />
+        </TabPane>
         <TabPane key="profiler" tab="Profiler">
           {trialDetails
             ? <TrialDetailsProfiles experiment={experiment} trial={trialDetails} />
@@ -174,7 +216,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
             : NoDataAlert}
         </TabPane>
       </Tabs>
-    </>
+    </TrialLogPreview>
   );
 };
 

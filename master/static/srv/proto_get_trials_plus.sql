@@ -21,7 +21,6 @@ WITH searcher_info AS (
 trial_validations AS (
   SELECT v.trial_id,
     v.total_batches,
-    v.start_time,
     v.end_time,
     v.state,
     v.metrics,
@@ -40,7 +39,6 @@ trial_validations AS (
 best_validation AS (
   SELECT v.trial_id,
     v.total_batches,
-    v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
     v.metrics->'validation_metrics' as metrics,
@@ -61,7 +59,6 @@ best_validation AS (
 latest_validation AS (
   SELECT v.trial_id,
     v.total_batches,
-    v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
     v.metrics->'validation_metrics' as metrics,
@@ -83,7 +80,6 @@ best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
     c.total_batches,
     c.trial_id,
-    c.start_time AS start_time,
     c.end_time AS end_time,
     c.resources AS resources,
     'STATE_' || c.state AS state
@@ -120,7 +116,8 @@ SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
       AND s.state = 'COMPLETED'
     ORDER BY s.total_batches DESC
     LIMIT 1
-  ) AS total_batches_processed
+  ) AS total_batches_processed,
+   t.runner_state
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id

@@ -3,8 +3,6 @@ import pathlib
 import numpy as np
 
 import determined as det
-import determined.common.types
-from determined import constants, workload
 from determined.tensorboard import SharedFSTensorboardManager, get_base_path, get_sync_path
 from determined.tensorboard.metric_writers import util as metric_writers_util
 
@@ -13,37 +11,26 @@ BASE_PATH = pathlib.Path(__file__).resolve().parent.joinpath("fixtures")
 
 def get_dummy_env() -> det.EnvContext:
     return det.EnvContext(
-        master_addr="",
-        master_port=0,
-        use_tls=False,
+        master_url="",
         master_cert_file=None,
         master_cert_name=None,
         container_id="",
         experiment_config={"resources": {"slots_per_trial": 1, "native_parallel": False}},
-        initial_workload=workload.Workload(
-            workload.Workload.Kind.RUN_STEP,
-            determined.common.types.ExperimentID(1),
-            determined.common.types.TrialID(1),
-            determined.common.types.StepID(1),
-            constants.DEFAULT_SCHEDULING_UNIT,
-            0,
-        ),
         latest_checkpoint=None,
+        latest_batch=0,
         use_gpu=False,
         container_gpus=[],
         slot_ids=[],
         debug=False,
-        workload_manager_type="",
         hparams={"global_batch_size": 1},
-        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
-        det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_agent_id="1",
         det_experiment_id="1",
-        det_task_token="",
         det_cluster_id="uuid-123",
         trial_seed=0,
+        trial_run_id=1,
+        allocation_id="",
         managed_training=True,
         test_mode=False,
         on_cluster=False,

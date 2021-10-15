@@ -4,15 +4,14 @@ import multiprocessing
 import sys
 import textwrap
 import threading
+import time
 import traceback
 from typing import Any, Callable, List, Optional, cast
 
 import pytest
 
 import determined as det
-from determined import ipc, layers, workload
-from tests.experiment import utils
-from tests.fixtures import fake_subprocess_receiver
+from determined import ipc
 
 
 class Subproc(multiprocessing.Process):
@@ -124,28 +123,6 @@ def test_broadcast_server_client() -> None:
                 assert all(g == 2 * msg for g in gathered)
 
 
-def test_subprocess_launcher_receiver() -> None:
-    env = utils.make_default_env_context(hparams={"global_batch_size": 1})
-    rendezvous_info = utils.make_default_rendezvous_info()
-    hvd_config = utils.make_default_hvd_config()
-
-    def make_workloads() -> workload.Stream:
-        interceptor = workload.WorkloadResponseInterceptor()
-        for i, wkld in enumerate(fake_subprocess_receiver.fake_workload_gen()):
-            yield from interceptor.send(wkld, [])
-            assert interceptor.metrics_result() == {"count": i}
-
-    subproc = layers.SubprocessLauncher(
-        env=env,
-        workloads=make_workloads(),
-        load_path=None,
-        rendezvous_info=rendezvous_info,
-        hvd_config=hvd_config,
-        python_subprocess_entrypoint="tests.fixtures.fake_subprocess_receiver",
-    )
-    subproc.run()
-
-
 def test_zmq_server_client() -> None:
     server = ipc.ZMQServer(num_connections=1, ports=None, port_range=(1000, 65535))
     assert len(server.get_ports()) == 1
@@ -165,19 +142,11 @@ def test_zmq_server_client() -> None:
     assert server_object == client_object
 
 
-@pytest.mark.parametrize("cross_size", [1, 4])  # type: ignore
-@pytest.mark.parametrize("local_size", [1, 4])  # type: ignore
-@pytest.mark.parametrize("force_tcp", [False, True])  # type: ignore
+@pytest.mark.parametrize("cross_size", [1, 4])
+@pytest.mark.parametrize("local_size", [1, 4])
+@pytest.mark.parametrize("force_tcp", [False, True])
 def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) -> None:
     size = cross_size * local_size
-    # Generate one rendezvous_info per node.
-    rendezvous_info = [
-        det.RendezvousInfo(
-            addrs=["localhost:12345"] * cross_size,
-            rank=i,
-        )
-        for i in range(cross_size)
-    ]
 
     def do_parallel(fn: Callable) -> List:
         """
@@ -222,8 +191,7 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
         )
         return det.DistributedContext(
             rank_info=rank_info,
-            rendezvous_info=rendezvous_info[cross_rank],
-            unique_port_offset=0,
+            chief_ip="localhost",
             force_tcp=force_tcp,
         )
 
@@ -269,3 +237,128 @@ def test_distributed_context(cross_size: int, local_size: int, force_tcp: bool) 
     # Close all contexts.
     for context in contexts:
         context.close()
+
+
+class TestPIDServer:
+    def test_normal_execution(self) -> None:
+        with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            def worker_proc() -> None:
+                with ipc.PIDClient(port) as pid_client:
+                    for _ in range(5):
+                        pid_client.keep_alive()
+                        time.sleep(0.1)
+
+            procs = [
+                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(target=worker_proc),
+            ]
+
+            for p in procs:
+                p.start()
+
+            pid_server.run()
+
+            for p in procs:
+                p.join()
+
+            assert len(pid_server.graceful_shutdowns) == 2
+
+    def test_worker_crashes(self) -> None:
+        with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            # Enforce that the crashed worker causes the exit before the other worker exits.
+            deadline = time.time() + 20
+
+            def worker_proc() -> None:
+                with ipc.PIDClient(port):
+                    # Wait for the crashing process to cause us to die.
+                    time.sleep(30)
+
+            def crashing_worker_proc() -> None:
+                with ipc.PIDClient(port):
+                    time.sleep(0.5)
+                    raise ValueError("Crashing...")
+
+            procs = [
+                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(target=crashing_worker_proc),
+            ]
+
+            for p in procs:
+                p.start()
+
+            with pytest.raises(det.errors.WorkerError):
+                pid_server.run()
+
+            assert time.time() < deadline, "crashing worker did not trigger exit"
+
+            for p in procs:
+                p.terminate()
+                p.join()
+
+            assert len(pid_server.graceful_shutdowns) == 0
+
+    def test_health_check_pre_connect(self) -> None:
+        with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            fail_time = time.time() + 0.2
+
+            def worker_proc() -> None:
+                with ipc.PIDClient(port):
+                    time.sleep(10)
+
+            def health_check() -> None:
+                assert time.time() < fail_time
+
+            # Only one worker to guarantee a failed healthcheck before all workers have connected.
+            procs = [
+                multiprocessing.Process(target=worker_proc),
+            ]
+
+            for p in procs:
+                p.start()
+
+            with pytest.raises(AssertionError):
+                pid_server.run(health_check, poll_period=0.05)
+
+            for p in procs:
+                p.join()
+
+            assert len(pid_server.graceful_shutdowns) == 0
+
+    def test_health_check_post_connect(self) -> None:
+        with ipc.PIDServer(addr=0, num_clients=2) as pid_server:
+            assert pid_server.listener
+            _, port = pid_server.listener.getsockname()
+
+            fail_time = time.time() + 0.2
+
+            def worker_proc() -> None:
+                with ipc.PIDClient(port):
+                    time.sleep(10)
+
+            def health_check() -> None:
+                assert time.time() < fail_time
+
+            procs = [
+                multiprocessing.Process(target=worker_proc),
+                multiprocessing.Process(target=worker_proc),
+            ]
+
+            for p in procs:
+                p.start()
+
+            with pytest.raises(AssertionError):
+                pid_server.run(health_check, poll_period=0.05)
+
+            for p in procs:
+                p.join()
+
+            assert len(pid_server.graceful_shutdowns) == 0

@@ -228,6 +228,7 @@ service Determined {
   rpc DisableAgent(DisableAgentRequest) returns (DisableAgentResponse) {
     option (google.api.http) = {
       post: "/api/v1/agents/{agent_id}/disable"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
@@ -513,19 +514,49 @@ service Determined {
       tags: "Experiments"
     };
   }
-  // Long poll preemption signals for the given trial. If the trial's current
-  // task has been preempted when called, it will return so immediately.
-  // Otherwise, the connection will be kept open until the timeout is reached or
-  // the task is preempted.
-  rpc TrialPreemptionSignal(TrialPreemptionSignalRequest)
-      returns (TrialPreemptionSignalResponse) {
+  // Long poll preemption signals for the given allocation. If the allocation
+  // has been preempted when called, it will return so immediately. Otherwise,
+  // the connection will be kept open until the timeout is reached or
+  // the allocation is preempted.
+  rpc AllocationPreemptionSignal(AllocationPreemptionSignalRequest)
+      returns (AllocationPreemptionSignalResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/signals/preemption"
+      get: "/api/v1/allocations/{allocation_id}/signals/preemption"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
     };
   }
+  // Acknowledge the receipt of a signal to stop the given allocation early.
+  // This is used indicate and exit 0 isn't final; specifically, it is used
+  // for HP search directed early stops and preemption signals (not necessarily
+  // just scheduler preemption).
+  rpc AckAllocationPreemptionSignal(AckAllocationPreemptionSignalRequest)
+      returns (AckAllocationPreemptionSignalResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/signals/ack_preemption"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Mark the given reservation (container, pod, etc) within an allocation as
+  // a daemon reservation. In the exit of a successful exit, Determined will
+  // wait for all reservations to exit - unless they are marked as daemon
+  // reservations, in which case Determined will clean them up regardless of
+  // exit status after all non-daemon reservations have exited.
+  rpc MarkAllocationReservationDaemon(MarkAllocationReservationDaemonRequest)
+      returns (MarkAllocationReservationDaemonResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/containers/{container_id}/daemon"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the current searcher operation.
   rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
       returns (GetCurrentTrialSearcherOperationResponse) {
@@ -573,6 +604,17 @@ service Determined {
       tags: "Internal"
     };
   }
+  // For bookkeeping, update trial runner metadata (currently just state).
+  rpc PostTrialRunnerMetadata(PostTrialRunnerMetadataRequest)
+      returns (PostTrialRunnerMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trials/{trial_id}/runner/metadata"
+      body: "metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
   // Record training metrics for specified training.
   rpc ReportTrialTrainingMetrics(ReportTrialTrainingMetricsRequest)
       returns (ReportTrialTrainingMetricsResponse) {
@@ -606,12 +648,13 @@ service Determined {
       tags: "Internal"
     };
   }
-  // Gather a trial's rendezvous info. Blocks until all trial containers connect
-  // to gather their rendezvous information and responds to them all at once.
-  rpc GetTrialRendezvousInfo(GetTrialRendezvousInfoRequest)
-      returns (GetTrialRendezvousInfoResponse) {
+  // Gather an allocation's rendezvous info. Blocks until all trial containers
+  // connect to gather their rendezvous information and responds to them all at
+  // once.
+  rpc AllocationRendezvousInfo(AllocationRendezvousInfoRequest)
+      returns (AllocationRendezvousInfoResponse) {
     option (google.api.http) = {
-      get: "/api/v1/trials/{trial_id}/rendezvous_info/{container_id}"
+      get: "/api/v1/allocations/{allocation_id}/rendezvous_info/{container_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -672,6 +715,16 @@ service Determined {
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Notebooks"
+    };
+  }
+  // Send notebook idle data to master
+  rpc IdleNotebook(IdleNotebookRequest) returns (IdleNotebookResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/notebooks/{notebook_id}/report_idle"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
     };
   }
   // Kill the requested notebook.
@@ -1047,6 +1100,7 @@ service Determined {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Cluster"
     };
+    option deprecated = true;
   }
 
   // Get an aggregated view of resource allocation during the given time period.

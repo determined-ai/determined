@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"regexp"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
@@ -23,13 +24,28 @@ type GenericCommandSpec struct {
 
 	Port     *int
 	ProxyTCP bool
+
+	WatchProxyIdleTimeout  bool
+	WatchRunnerIdleTimeout bool
+
+	LogReadinessCheck *regexp.Regexp
 }
 
 // ToTaskSpec generates a TaskSpec.
-func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken string) TaskSpec {
+func (s GenericCommandSpec) ToTaskSpec(
+	keys *ssh.PrivateAndPublicKeys,
+) TaskSpec {
 	res := s.Base
 
-	res.TaskToken = taskToken
+	res.Environment = s.Config.Environment.ToExpconf()
+
+	res.ResourcesConfig = s.Config.Resources.ToExpconf()
+
+	res.WorkDir = DefaultWorkDir
+	if s.Config.WorkDir != nil {
+		res.WorkDir = *s.Config.WorkDir
+	}
+	res.ResolveWorkDir()
 
 	if keys != nil {
 		s.AdditionalFiles = append(s.AdditionalFiles, archive.Archive{
@@ -53,7 +69,7 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken
 	}
 
 	res.ExtraArchives = []container.RunArchive{
-		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), ContainerWorkDir),
+		wrapArchive(s.Base.AgentUserGroup.OwnArchive(s.UserFiles), res.WorkDir),
 		wrapArchive(s.AdditionalFiles, rootDir),
 	}
 
@@ -61,15 +77,11 @@ func (s GenericCommandSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys, taskToken
 
 	res.Entrypoint = s.Config.Entrypoint
 
-	res.Environment = s.Config.Environment.ToExpconf()
-
-	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf())
+	res.Mounts = ToDockerMounts(s.Config.BindMounts.ToExpconf(), res.WorkDir)
 
 	if shm := s.Config.Resources.ShmSize; shm != nil {
 		res.ShmSize = int64(*shm)
 	}
-
-	res.ResourcesConfig = s.Config.Resources.ToExpconf()
 
 	return res
 }

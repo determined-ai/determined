@@ -88,6 +88,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			// Expose a fake number here just to signal to the UI
 			// that this RP does support the aux containers.
 			maxZeroSlotContainers: 1,
+			enabled:               true,
 		}
 
 	case
@@ -99,6 +100,10 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
+
+	case sproto.GetTaskHandler:
+		reschedule = false
+		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
 
 	case sproto.GetTaskSummary:
 		if resp := getTaskSummary(k.reqList, *msg.ID, k.groups, kubernetesScheduler); resp != nil {
@@ -161,7 +166,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 		SlotsAvailable:               int32(k.agent.numSlots()),
 		SlotsUsed:                    int32(k.agent.numUsedSlots()),
 		AuxContainerCapacity:         int32(k.agent.maxZeroSlotContainers),
-		AuxContainersRunning:         int32(k.agent.numZeroSlotContainers()),
+		AuxContainersRunning:         int32(k.agent.numUsedZeroSlots()),
 		DefaultComputePool:           true,
 		DefaultAuxPool:               true,
 		Preemptible:                  false,
@@ -208,8 +213,8 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
 	actors.NotifyOnStop(ctx, msg.TaskActor, sproto.ResourcesReleased{TaskActor: msg.TaskActor})
 
-	if len(msg.ID) == 0 {
-		msg.ID = sproto.TaskID(uuid.New().String())
+	if len(msg.AllocationID) == 0 {
+		msg.AllocationID = model.AllocationID(uuid.New().String())
 	}
 	if msg.Group == nil {
 		msg.Group = msg.TaskActor
@@ -220,8 +225,8 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	}
 
 	ctx.Log().Infof(
-		"resources are requested by %s (Task ID: %s)",
-		msg.TaskActor.Address(), msg.ID,
+		"resources are requested by %s (Allocation ID: %s)",
+		msg.TaskActor.Address(), msg.AllocationID,
 	)
 	k.reqList.AddTask(&msg)
 }
@@ -239,7 +244,7 @@ func (k *kubernetesResourceManager) assignResources(
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {
 		if k.config.MaxSlotsPerPod == 0 {
-			ctx.Log().WithField("task-id", req.ID).Error(
+			ctx.Log().WithField("allocation-id", req.AllocationID).Error(
 				"set max_slots_per_pod > 0 to schedule tasks with slots")
 			return
 		}
@@ -249,7 +254,7 @@ func (k *kubernetesResourceManager) assignResources(
 			slotsPerPod = req.SlotsNeeded
 		} else {
 			if req.SlotsNeeded%k.config.MaxSlotsPerPod != 0 {
-				ctx.Log().WithField("task-id", req.ID).Errorf(
+				ctx.Log().WithField("allocation-id", req.AllocationID).Errorf(
 					"task number of slots (%d) is not schedulable on the configured "+
 						"max_slots_per_pod (%d)", req.SlotsNeeded, k.config.MaxSlotsPerPod)
 				return
@@ -262,22 +267,22 @@ func (k *kubernetesResourceManager) assignResources(
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	allocations := make([]sproto.Allocation, 0, numPods)
+	allocations := make([]sproto.Reservation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
 		container := newContainer(req, k.agent, slotsPerPod)
-		allocations = append(allocations, &k8sAllocation{
+		allocations = append(allocations, &k8sPodReservation{
 			req:       req,
 			agent:     k.agent,
 			container: container,
 		})
 	}
 
-	assigned := sproto.ResourcesAllocated{ID: req.ID, Allocations: allocations}
+	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Reservations: allocations}
 	k.reqList.SetAllocations(req.TaskActor, &assigned)
 	req.TaskActor.System().Tell(req.TaskActor, assigned)
 
 	ctx.Log().
-		WithField("task-id", req.ID).
+		WithField("allocation-id", req.AllocationID).
 		WithField("task-handler", req.TaskActor.Address()).
 		Infof("resources assigned with %d pods", numPods)
 }
@@ -317,7 +322,7 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 		req := it.value()
 		group := k.groups[req.Group]
 		assigned := k.reqList.GetAllocations(req.TaskActor)
-		if unassigned := assigned == nil || len(assigned.Allocations) == 0; unassigned {
+		if unassigned := assigned == nil || len(assigned.Reservations) == 0; unassigned {
 			if maxSlots := group.maxSlots; maxSlots != nil {
 				if k.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue
@@ -329,36 +334,41 @@ func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
 	}
 }
 
-type k8sAllocation struct {
+type k8sPodReservation struct {
 	req       *sproto.AllocateRequest
 	container *container
 	agent     *agentState
 }
 
 // Summary summarizes a container allocation.
-func (p k8sAllocation) Summary() sproto.ContainerSummary {
+func (p k8sPodReservation) Summary() sproto.ContainerSummary {
 	return sproto.ContainerSummary{
-		TaskID: p.req.ID,
-		ID:     p.container.id,
-		Agent:  p.agent.handler.Address().Local(),
+		AllocationID: p.req.AllocationID,
+		ID:           p.container.id,
+		Agent:        p.agent.handler.Address().Local(),
 	}
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p k8sAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec, rank int) {
+func (p k8sPodReservation) Start(
+	ctx *actor.Context, spec tasks.TaskSpec, rri sproto.ReservationRuntimeInfo,
+) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
-	spec.TaskID = string(p.req.ID)
+	spec.AllocationID = string(p.req.AllocationID)
+	spec.AllocationSessionToken = rri.Token
+	spec.TaskID = string(p.req.TaskID)
+	spec.UseHostMode = rri.IsMultiAgent
 	ctx.Tell(handler, sproto.StartTaskPod{
 		TaskActor: p.req.TaskActor,
 		Spec:      spec,
 		Slots:     p.container.slots,
-		Rank:      rank,
+		Rank:      rri.AgentRank,
 	})
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p k8sAllocation) Kill(ctx *actor.Context) {
+func (p k8sPodReservation) Kill(ctx *actor.Context) {
 	handler := p.agent.handler
 	ctx.Tell(handler, sproto.KillTaskPod{
 		PodID: p.container.id,

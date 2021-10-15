@@ -90,17 +90,17 @@ def get_num_running_commands() -> int:
     return len([command for command in r.json()["commands"] if command["state"] == "STATE_RUNNING"])
 
 
-def get_command(id: str) -> Any:
+def get_command(command_id: str) -> Any:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    r = api.get(conf.make_master_url(), "api/v1/commands/" + id)
+    r = api.get(conf.make_master_url(), "api/v1/commands/" + command_id)
     assert r.status_code == requests.codes.ok, r.text
     return r.json()["command"]
 
 
-def get_command_config(command_type: str, id: str) -> str:
+def get_command_config(command_type: str, task_id: str) -> str:
     assert command_type in ["command", "notebook", "shell"]
-    command = ["det", "-m", conf.make_master_url(), command_type, "config", id]
+    command = ["det", "-m", conf.make_master_url(), command_type, "config", task_id]
     env = os.environ.copy()
     env["DET_DEBUG"] = "true"
     completed_process = subprocess.run(

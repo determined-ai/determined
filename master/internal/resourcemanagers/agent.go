@@ -11,9 +11,11 @@ import (
 // agentState holds the scheduler state for an agent. The implementation of agent-related operations
 // (e.g., socket I/O) is deferred to the actor.
 type agentState struct {
-	handler *actor.Ref
-	devices map[device.Device]*cproto.ID
-	label   string
+	handler  *actor.Ref
+	devices  map[device.Device]*cproto.ID
+	label    string
+	enabled  bool
+	draining bool
 
 	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
 	// one container, we add one additional field to keep track of zero-slot containers.
@@ -30,16 +32,29 @@ func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 		devices:               make(map[device.Device]*cproto.ID),
 		zeroSlotContainers:    make(map[cproto.ID]bool),
 		maxZeroSlotContainers: maxZeroSlotContainers,
+		enabled:               true,
 	}
 }
 
 func (a *agentState) numSlots() int {
-	return len(a.devices)
+	switch {
+	case a.draining:
+		return a.numUsedSlots()
+	case !a.enabled:
+		return 0
+	default:
+		return len(a.devices)
+	}
 }
 
 // numEmptySlots returns the number of slots that have not been allocated to containers.
 func (a *agentState) numEmptySlots() (slots int) {
-	return a.numSlots() - a.numUsedSlots()
+	switch {
+	case a.draining || !a.enabled:
+		return 0
+	default:
+		return a.numSlots() - a.numUsedSlots()
+	}
 }
 
 // numUsedSlots returns the number of slots that have been allocated to containers.
@@ -52,12 +67,32 @@ func (a *agentState) numUsedSlots() (slots int) {
 	return slots
 }
 
-func (a *agentState) numZeroSlotContainers() int {
+func (a *agentState) numUsedZeroSlots() int {
 	return len(a.zeroSlotContainers)
 }
 
+func (a *agentState) numZeroSlots() int {
+	switch {
+	case a.draining:
+		return a.numUsedZeroSlots()
+	case !a.enabled:
+		return 0
+	default:
+		return a.maxZeroSlotContainers
+	}
+}
+
+func (a *agentState) numEmptyZeroSlots() int {
+	switch {
+	case a.draining || !a.enabled:
+		return 0
+	default:
+		return a.numZeroSlots() - a.numUsedZeroSlots()
+	}
+}
+
 func (a *agentState) idle() bool {
-	return len(a.zeroSlotContainers) == 0 && a.numUsedSlots() == 0
+	return a.numUsedZeroSlots() == 0 && a.numUsedSlots() == 0
 }
 
 func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Device {
@@ -96,6 +131,8 @@ func (a *agentState) deepCopy() *agentState {
 		devices:               make(map[device.Device]*cproto.ID),
 		zeroSlotContainers:    make(map[cproto.ID]bool),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
+		enabled:               a.enabled,
+		draining:              a.draining,
 	}
 
 	for originalDevice, id := range a.devices {

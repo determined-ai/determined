@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { Primitive, RecordKey } from 'types';
-import { clone, isBoolean, isEqual, isNumber, isString } from 'utils/data';
+import { clone, hasObjectKeys, isBoolean, isEqual, isNumber, isString } from 'utils/data';
 import { Storage } from 'utils/storage';
 
 import usePrevious from './usePrevious';
@@ -50,7 +50,7 @@ export interface SettingsHookOptions {
   storagePath?: string;
 }
 
-interface SettingsHook<T> {
+export interface SettingsHook<T> {
   activeSettings: (keys?: string[]) => string[];
   resetSettings: (keys?: string[]) => void;
   settings: T;
@@ -145,21 +145,6 @@ export const settingsToQuery = <T>(config: SettingsConfig, settings: T): string 
   }, {} as Partial<T>);
 
   return queryString.stringify(fullSettings);
-};
-
-/*
- * Check to see if the two query strings have the same settings based on
- * the settings config. This function only compares the query params
- * specified in the settings config.
- */
-const isSameQuery = <T>(config: SettingsConfig, query1: string, query2: string): boolean => {
-  const settings1 = queryToSettings<T>(config, query1);
-  const settings2 = queryToSettings<T>(config, query2);
-  for (const prop of config.settings) {
-    const key = prop.key as keyof T;
-    if (!isEqual(settings1[key], settings2[key])) return false;
-  }
-  return true;
 };
 
 export const getConfigKeyMap = (config: SettingsConfig): Record<RecordKey, boolean> => {
@@ -279,16 +264,21 @@ const useSettings = <T>(config: SettingsConfig, options?: SettingsHookOptions): 
     /*
      * Set the initial query string if:
      * 1) current settings have set values
-     * 2) query settings do not match current settings
+     * 2) there are no user specified query settings set
+     *    (ignores defaults values since they are not user triggered)
      */
+    const locationSearch = location.search.substr(/^\?/.test(location.search) ? 1 : 0);
     const currentQuery = settingsToQuery(config, settings);
-    if (!isSameQuery(config, location.search, currentQuery)) {
-      history.replace(`${location.pathname}?${currentQuery}`);
+    const searchSettings = queryToSettings(config, locationSearch);
+    if (currentQuery && !hasObjectKeys(searchSettings)) {
+      const newQueries = [ currentQuery ];
+      if (locationSearch) newQueries.unshift(locationSearch);
+      history.replace(`${location.pathname}?${newQueries.join('&')}`);
     } else {
       // Otherwise read settings from the query string.
-      const defaultSettings = getDefaultSettings<T>(config, storage);
       setSettings(prevSettings => {
-        const querySettings = queryToSettings<Partial<T>>(config, location.search);
+        const defaultSettings = getDefaultSettings<T>(config, storage);
+        const querySettings = queryToSettings<Partial<T>>(config, locationSearch);
         return { ...prevSettings, ...defaultSettings, ...querySettings };
       });
     }

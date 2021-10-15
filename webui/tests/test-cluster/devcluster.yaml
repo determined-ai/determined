@@ -1,0 +1,43 @@
+temp_dir: /tmp/devcluster_webui
+
+stages:
+  - db:
+      container_name: determined_db_webui
+      port: 5433
+      db_name: determined
+      password: postgres
+      image_name: "postgres:10.14"
+
+  - master:
+      pre:
+        - sh: make -C proto build
+        - sh: make -C master build
+        - sh: make -C tools prep-root
+      config_file:
+        port: 8081
+        db:
+          port: 5433
+          host: localhost
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+
+  - agent:
+      pre:
+        - sh: make -C agent build
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        container_master_host: $DOCKER_LOCALHOST
+        agent_id: agent3
+        slot_type: cpu
+        fluent:
+          port: 24226  # default value is 24224
+          container_name: determined-fluent-3

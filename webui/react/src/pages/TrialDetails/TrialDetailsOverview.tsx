@@ -6,6 +6,7 @@ import { ExperimentBase, MetricName, MetricType, TrialDetails } from 'types';
 import { extractMetricNames } from 'utils/trial';
 
 import TrialChart from './TrialChart';
+import css from './TrialDetailsOverview.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
 import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
@@ -44,7 +45,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   }, [ updateSettings ]);
 
   return (
-    <>
+    <div className={css.base}>
       <TrialInfoBox experiment={experiment} trial={trial} />
       <TrialChart
         defaultMetricNames={defaultMetrics}
@@ -62,7 +63,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
         trial={trial}
         updateSettings={updateSettings}
       />
-    </>
+    </div>
   );
 };
 

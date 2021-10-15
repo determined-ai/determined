@@ -6,6 +6,7 @@ import { useHistory, useParams } from 'react-router';
 import Message, { MessageType } from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
+import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useCreateExperimentModal, { CreateExperimentType } from 'hooks/useCreateExperimentModal';
 import usePolling from 'hooks/usePolling';
@@ -47,8 +48,8 @@ const TrialDetailsComp: React.FC = () => {
   const [ source ] = useState(axios.CancelToken.source());
   const history = useHistory();
   const routeParams = useParams<Params>();
-
   const [ tabKey, setTabKey ] = useState<TabType>(routeParams.tab || DEFAULT_TAB_KEY);
+
   const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
     data: undefined,
     error: undefined,
@@ -57,7 +58,6 @@ const TrialDetailsComp: React.FC = () => {
   });
   const basePath = paths.trialDetails(routeParams.trialId, routeParams.experimentId);
   const trialId = parseInt(routeParams.trialId);
-
   const trial = trialDetails.data;
 
   const { showModal } = useCreateExperimentModal();
@@ -122,6 +122,11 @@ const TrialDetailsComp: React.FC = () => {
     history.replace(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`);
   }, [ basePath, history ]);
 
+  const handleViewLogs = useCallback(() => {
+    setTabKey(TabType.Logs);
+    history.replace(`${basePath}/${TabType.Logs}?tail`);
+  }, [ basePath, history ]);
+
   const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
@@ -161,6 +166,7 @@ const TrialDetailsComp: React.FC = () => {
 
   return (
     <Page
+      bodyNoPadding
       headerComponent={<TrialDetailsHeader
         experiment={experiment}
         fetchTrialDetails={fetchTrialDetails}
@@ -168,26 +174,29 @@ const TrialDetailsComp: React.FC = () => {
         trial={trial}
       />}
       stickyHeader
-      title={`Trial ${trialId}`}
-    >
-      <Tabs defaultActiveKey={tabKey} onChange={handleTabChange}>
-        <TabPane key={TabType.Overview} tab="Overview">
-          <TrialDetailsOverview experiment={experiment} trial={trial} />
-        </TabPane>
-        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          {
-            isSingleTrialExperiment(experiment) ?
+      title={`Trial ${trialId}`}>
+      <TrialLogPreview
+        hidePreview={tabKey === TabType.Logs}
+        trial={trial}
+        onViewLogs={handleViewLogs}>
+        <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
+          <TabPane key={TabType.Overview} tab="Overview">
+            <TrialDetailsOverview experiment={experiment} trial={trial} />
+          </TabPane>
+          <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
+            {isSingleTrialExperiment(experiment) ?
               <TrialDetailsHyperparameters experiment={experiment} trial={trial} /> :
               <TrialRangeHyperparameters experiment={experiment} trial={trial} />
-          }
-        </TabPane>
-        <TabPane key={TabType.Profiler} tab="Profiler">
-          <TrialDetailsProfiles experiment={experiment} trial={trial} />
-        </TabPane>
-        <TabPane key={TabType.Logs} tab="Logs">
-          <TrialDetailsLogs experiment={experiment} trial={trial} />
-        </TabPane>
-      </Tabs>
+            }
+          </TabPane>
+          <TabPane key={TabType.Profiler} tab="Profiler">
+            <TrialDetailsProfiles experiment={experiment} trial={trial} />
+          </TabPane>
+          <TabPane key={TabType.Logs} tab="Logs">
+            <TrialDetailsLogs experiment={experiment} trial={trial} />
+          </TabPane>
+        </Tabs>
+      </TrialLogPreview>
     </Page>
   );
 };
