@@ -71,9 +71,9 @@ npm run lint:js
 npm run lint:css
 ```
 
-Our Javascript linting rules and CSS linting rules can be found in `.eslintrc.js` and `.stylelintrc.js` respectively.
+Our Javascript linting rules and CSS linting rules can be found in [.eslintrc.js](.eslistrc.js) and [.stylelintrc.js](.stylelintrc.js) respectively.
 
-### Unit Testing
+### Unit and Interaction Testing
 
 To launch the unit test runner in the interactive watch mode.
 
@@ -91,7 +91,7 @@ npm run test -- --watchAll=false
 
 ### End-to-end Testing
 
-We are using [Gauge](https://gauge.org/) and [Taiko](https://taiko.dev/) to run end-to-end tests for both of our webapps. Refer to [this section](https://github.com/determined-ai/determined/blob/master/webui/README.md#end-to-end-testing) for details on how to run e2e tests.
+Refer to our [/webui/tests/README.md](../tests/README.md) for WebUI e2e testing details.
 
 ### Visual Testing with Storybook
 
