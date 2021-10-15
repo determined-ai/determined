@@ -7,8 +7,8 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.parallel  # type: ignore
-@pytest.mark.timeout(300)  # type: ignore
+@pytest.mark.parallel
+@pytest.mark.timeout(300)
 def test_gang_scheduling() -> None:
     total_slots = os.getenv("TOTAL_SLOTS")
     if total_slots is None:

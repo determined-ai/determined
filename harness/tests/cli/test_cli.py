@@ -63,7 +63,7 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
         )
 
 
-@pytest.mark.slow  # type: ignore
+@pytest.mark.slow
 def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 

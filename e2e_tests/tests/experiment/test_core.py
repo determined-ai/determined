@@ -10,7 +10,7 @@ from tests import experiment as exp
 from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_trial_error() -> None:
     exp.run_failure_test(
         conf.fixtures_path("trial_error/const.yaml"),
@@ -19,7 +19,7 @@ def test_trial_error() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_invalid_experiment() -> None:
     completed_process = exp.maybe_create_experiment(
         conf.fixtures_path("invalid_experiment/const.yaml"), conf.cv_examples_path("mnist_tf")
@@ -27,7 +27,7 @@ def test_invalid_experiment() -> None:
     assert completed_process.returncode != 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_metric_gathering() -> None:
     """
     Confirm that metrics are gathered from the trial the way that we expect.
@@ -76,7 +76,7 @@ def test_metric_gathering() -> None:
         assert structure_equal(expected, actual)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_experiment_archive_unarchive() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
@@ -122,7 +122,7 @@ def test_experiment_archive_unarchive() -> None:
     assert not infos[0]["archived"]
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_create_test_mode() -> None:
     # test-mode should succeed with a valid experiment.
     command = [
@@ -154,7 +154,7 @@ def test_create_test_mode() -> None:
         subprocess.check_call(command)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_trial_logs() -> None:
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
@@ -169,7 +169,7 @@ def test_trial_logs() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_labels() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None
@@ -196,7 +196,7 @@ def test_labels() -> None:
     assert label not in output
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_end_to_end_adaptive() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -269,7 +269,7 @@ def test_end_to_end_adaptive() -> None:
     assert checkpoint.metadata == db_check.metadata
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_log_null_bytes() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["write_null"] = True
@@ -283,13 +283,13 @@ def test_log_null_bytes() -> None:
     assert len(logs) > 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_graceful_trial_termination() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"))
     exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 2)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_fail_on_first_validation() -> None:
     error_log = "failed on first validation"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
@@ -301,7 +301,7 @@ def test_fail_on_first_validation() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_perform_initial_validation() -> None:
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config = conf.set_max_length(config, {"batches": 1})

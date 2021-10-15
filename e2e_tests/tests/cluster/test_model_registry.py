@@ -5,7 +5,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_model_registry() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
