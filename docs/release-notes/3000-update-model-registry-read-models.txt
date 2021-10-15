@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Model Registry Read Model APIs: Use unique Model ID instead of Model Name as primary key, and update get model and get models endpoints. This is a breaking change.
