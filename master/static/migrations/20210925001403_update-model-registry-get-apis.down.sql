@@ -13,5 +13,5 @@ ALTER TABLE public.model_versions DROP COLUMN model_id;
 ALTER TABLE public.models DROP COLUMN id CASCADE;
 ALTER TABLE public.models DROP COLUMN labels,
 DROP COLUMN readme,
-DROP COLUMN username,
+DROP COLUMN user_id,
 DROP COLUMN archived;
