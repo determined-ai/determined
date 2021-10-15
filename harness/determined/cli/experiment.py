@@ -644,7 +644,7 @@ def experiment_id_arg(help: str) -> Arg:  # noqa: A002
     return Arg("experiment_id", type=int, help=help, completer=experiment_id_completer)
 
 
-args_description = Cmd(
+main_cmd = Cmd(
     "e|xperiment",
     None,
     "manage experiments",
@@ -972,3 +972,5 @@ args_description = Cmd(
         ),
     ],
 )
+
+args_description = [main_cmd]  # type: List[Any]

@@ -63,12 +63,12 @@ publish:
 
 .PHONY: fmt
 fmt:
-	isort -y
+	isort .
 	black .
 
 .PHONY: check
 check:
-	isort --check-only
+	isort . --check-only
 	black . --check
 	flake8
 	mypy .

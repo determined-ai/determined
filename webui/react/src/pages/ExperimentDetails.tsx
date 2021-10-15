@@ -111,9 +111,14 @@ const ExperimentDetails: React.FC = () => {
       stickyHeader
       title={`Experiment ${experimentId}`}>
       {isSingleTrial ? (
-        <ExperimentSingleTrialTabs experiment={experiment} onTrialLoad={handleSingleTrialLoad} />
+        <ExperimentSingleTrialTabs
+          experiment={experiment}
+          fetchExperimentDetails={fetchExperimentDetails}
+          onTrialLoad={handleSingleTrialLoad} />
       ) : (
-        <ExperimentMultiTrialTabs experiment={experiment} />
+        <ExperimentMultiTrialTabs
+          experiment={experiment}
+          fetchExperimentDetails={fetchExperimentDetails} />
       )}
     </Page>
   );

@@ -5,6 +5,122 @@
 ###############
 
 **************
+ Version 0.17
+**************
+
+Version 0.17.0
+==============
+
+**Release Date:** September 28, 2021
+
+**Breaking Changes**
+
+-  Deploy: Remove ``--auto-bind-mount`` support from ``det deploy local``. The new
+   ``--auto-work-dir`` feature should be a strictly better experience. Users who depended on the
+   ``shared_fs`` directory created by ``--auto-bind-mount`` can implement the same behavior by
+   calling ``det deploy local cluster_up`` with a ``--master-config-path`` pointing to a
+   ``master.yaml`` file containing the following text:
+
+   .. code:: yaml
+
+      task_container_defaults:
+        bind_mounts:
+          container_path: ./shared_fs
+          host_path: /path/to/your/HOME/dir
+
+-  Deploy: This version of ``det deploy`` will not be able to deploy previous versions of
+   Determined. If you need to deploy an older version, please use a matching version of the
+   ``determined`` package.
+
+-  Experiment: Include ``maxval`` in ``int``-type hyperparameter ranges. Previously, the docs said
+   that the endpoints of the hyperparameter were both inclusive, but in reality the upper limit
+   ``maxval`` was never actually selected.
+
+   The reproducibility of hyperparameter selection may differ between Determined v0.16.5 and v0.17.0
+   for hyperparameter searches containing ``int``-type hyperparameters as a result of this fix.
+   However, the reproducibility of model training for any given set of hyperparameters should be
+   unaffected.
+
+-  API: Endpoints no longer return the start times of workloads (training, validation, and
+   checkpoints). This is part of a longer move to model metrics and workloads separately as part of
+   the upcoming generic API.
+
+-  CLI: ``det master config`` now outputs YAML instead of JSON by default. To obtain the old
+   behavior, run ``det master config -o json``.
+
+**New Features**
+
+-  Notebooks/TensorBoards: Support a configurable timeout field ``idle_timeout`` that will cause
+   notebook and TensorBoard instances to automatically shut down after a period of idleness. A
+   notebook is considered to be idle if no kernels or terminals are running and there is no network
+   traffic going to the server. A TensorBoard is considered to be idle if there is no network
+   traffic going to the server. Note that if you open a notebook file it might open a kernel for
+   you, and the kernels and the terminals will not be shut down automatically. You need to manually
+   shut down the kernels to make the idle timeout effective.
+
+-  Deploy: Add a new ``--auto-work-dir`` feature to ``det deploy local``. Setting ``--auto-work-dir
+   /some/path`` will have two effects: first, ``/some/path`` will be bind-mounted into the container
+   (still as ``/some/path``); second, interactive jobs (notebooks, shells, and commands) will run in
+   the provided working directory by default. Note that containers run as the root user by default,
+   so you may want to :ref:`configure your user <run-as-user>` with ``det user`` such that
+   interactive jobs run as your regular user.
+
+-  Commands/shells/notebooks: Support configuring the working directory using the ``work_dir``
+   configuration field for commands, shells, and notebooks. You can also optionally set it in the
+   ``task_container_defaults.work_dir`` field of the master configuration. The value set in the
+   master configuration will be ignored when a context directory is submitted.
+
+-  WebUI: Allow experiment owners to delete their own experiments, singly or in batches.
+
+   .. image:: https://user-images.githubusercontent.com/220971/134048799-cd663a75-cb24-4f44-9a8a-c2ff23222cef.png
+
+   .. image:: https://user-images.githubusercontent.com/220971/133659677-aea0d1bc-95ce-4652-8218-92b97d114358.png
+
+-  WebUI: Display the latest log entry available for a trial at the bottom of the trial's page. This
+   works for both single-trial experiments and trials within a multi-trial experiment.
+
+   .. image:: https://user-images.githubusercontent.com/220971/131391658-4be1a1f4-1d46-4766-a737-7eb8efcb65b4.png
+
+-  WebUI: Add support for displaying NaN and Infinity metric values.
+
+-  Model Hub: Support the `MMDetection <https://github.com/open-mmlab/mmdetection>`__ library to
+   easily train object detection models. MMDetection provides efficient implementations of popular
+   object detection methods like Mask R-CNN, Faster R-CNN, and DETR on par with Detectron2. In
+   addition, cutting-edge approaches from academia are regularly added to the library. See :ref:`the
+   documentation <model-hub-mmdetection>` for more information.
+
+-  Deploy: Add the ability to use customizable master configuration templates in ``det deploy
+   aws|gcp``.
+
+-  Images: Add an environment image for CPU-only TensorFlow 2.5 and 2.6.
+
+**Improvements**
+
+-  API: The aggregated historical resource allocation APIs
+   ``/api/v1/resources/allocation/aggregated`` and ``/allocation/aggregated`` now account for all
+   resources, not just those allocated to experiments.
+
+-  Images: Add CPU-only images for TF 2.5 and 2.6.
+
+-  Images: Upgrade JupyterLab to version 3.1.
+
+-  Images: TF 2.5 and 2.6 images will no longer include PyTorch builds. For PyTorch 1.9, please use
+   the combined TF 2.4/PyTorch 1.9 image.
+
+-  Images: TF 2.4, 2.5, 2.6, and PyTorch 1.9 images will now use Python 3.8. The legacy TF
+   1.15/PyTorch 1.7 image will continue to use Python 3.7.
+
+**Changes**
+
+-  WebUI: Change the task list page to open new tabs when user clicks on task links.
+-  WebUI: The trial detail page will no longer show workload-based start time information, including
+   training time, validation time, and checkpoint time.
+
+**Bug Fixes**
+
+-  WebUI: Fix continuing trials with nested hyperparameters.
+
+**************
  Version 0.16
 **************
 

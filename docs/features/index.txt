@@ -10,10 +10,6 @@ expertise. Determined AI is a deep learning training platform that simplifies in
 management for domain experts while enabling configuration-based deep learning functionality that is
 generally inconvenient to implement for engineering-oriented practitioners.
 
-***************
- Core Features
-***************
-
 Many current systems are point solutions for specific problems in deep learning, so combining the
 systems is tough and inefficient. Determined's cohesive end-to-end training platform provides
 best-in-class functionality for deep learning model training, with a suite of benefits, including:

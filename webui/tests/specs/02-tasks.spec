@@ -13,17 +13,17 @@ Specification to test the task list page.
   |-------------------|--------|
   |Kill               |false   |
 
-## Filter tasks by type
+// ## Filter tasks by type
 
-* Filter tasks by type
+// * Filter tasks by type
 
-  |aria-label |count|
-  |-----------|-----|
-  |Notebook   |2    |
-  |Tensorboard|2    |
-* Filter tasks by type
+//   |aria-label |count|
+//   |-----------|-----|
+//   |Notebook   |2    |
+//   |Tensorboard|2    |
+// * Filter tasks by type
 
-  |aria-label |count|
-  |-----------|-----|
-  |Shell      |0    |
-  |Command    |0    |
+//   |aria-label |count|
+//   |-----------|-----|
+//   |Shell      |0    |
+//   |Command    |0    |

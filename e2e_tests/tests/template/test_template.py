@@ -6,7 +6,7 @@ from tests import config as conf
 from tests import template as tpl
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_set_template() -> None:
     template_name = "test_set_template"
     template_path = conf.fixtures_path("templates/template.yaml")
@@ -15,8 +15,8 @@ def test_set_template() -> None:
     assert config == conf.load_config(template_path)
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_start_notebook_with_template() -> None:
     template_name = "test_start_notebook_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
@@ -25,8 +25,8 @@ def test_start_notebook_with_template() -> None:
         pass
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_start_command_with_template() -> None:
     template_name = "test_start_command_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))
@@ -37,8 +37,8 @@ def test_start_command_with_template() -> None:
         pass
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_start_shell_with_template() -> None:
     template_name = "test_start_shell_with_template"
     tpl.set_template(template_name, conf.fixtures_path("templates/template.yaml"))

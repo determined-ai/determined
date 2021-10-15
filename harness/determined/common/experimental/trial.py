@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Callable, Dict, Optional
 
 from determined.common import check
 from determined.common.experimental import checkpoint, session
@@ -121,10 +121,11 @@ class TrialReference:
             smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
 
         best_checkpoint_func = min if smaller_is_better else max
+        key: Callable[[Dict], Any] = lambda x: x["metrics"]["validationMetrics"][sort_by]
         return checkpoint.Checkpoint.from_json(
             best_checkpoint_func(
                 [c for c in checkpoints if c["metrics"] is not None],
-                key=lambda x: x["metrics"]["validationMetrics"][sort_by],
+                key=key,
             ),
             self._session,
         )

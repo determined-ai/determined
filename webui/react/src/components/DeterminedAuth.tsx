@@ -58,7 +58,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         message: e.message,
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
-        silent: true,
         type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
       });
     } finally {

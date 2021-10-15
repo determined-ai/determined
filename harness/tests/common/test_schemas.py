@@ -212,7 +212,7 @@ def all_cases() -> Iterator["str"]:
                     yield display_path + "::" + case["name"]
 
 
-@pytest.mark.parametrize("test_case", all_cases())  # type: ignore
+@pytest.mark.parametrize("test_case", all_cases())
 def test_schemas(test_case: str) -> None:
     cases_file, case_name = test_case.split("::", 1)
     with open(os.path.join(CASES_ROOT, cases_file)) as f:

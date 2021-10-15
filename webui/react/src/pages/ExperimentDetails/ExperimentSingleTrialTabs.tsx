@@ -2,13 +2,14 @@ import { Alert, Tabs } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router';
 
+import NotesCard from 'components/NotesCard';
 import Spinner from 'components/Spinner';
 import TrialLogPreview from 'components/TrialLogPreview';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { paths } from 'routes/utils';
-import { getExpTrials, getTrialDetails } from 'services/api';
+import { getExpTrials, getTrialDetails, patchExperiment } from 'services/api';
 import { ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -28,6 +29,7 @@ enum TabType {
   Overview = 'overview',
   Profiler = 'profiler',
   Workloads = 'workloads',
+  Notes = 'notes'
 }
 
 interface Params {
@@ -43,6 +45,7 @@ const ExperimentConfiguration = React.lazy(() => {
 
 export interface Props {
   experiment: ExperimentBase;
+  fetchExperimentDetails: () => void;
   onTrialLoad?: (trial: TrialDetails) => void;
 }
 
@@ -52,7 +55,9 @@ const NoDataAlert = (
   </div>
 );
 
-const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }: Props) => {
+const ExperimentSingleTrialTabs: React.FC<Props> = (
+  { experiment, fetchExperimentDetails, onTrialLoad }: Props,
+) => {
   const history = useHistory();
   const [ trialId, setFirstTrialId ] = useState<number>();
   const [ wontHaveTrials, setWontHaveTrials ] = useState<boolean>(false);
@@ -155,6 +160,23 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [ fetchTrialDetails, prevTrialId, trialId ]);
 
+  const handleNotesUpdate = useCallback(async (editedNotes: string) => {
+    try {
+      await patchExperiment({ body: { notes: editedNotes }, experimentId: experiment.id });
+      await fetchExperimentDetails();
+    } catch (e) {
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to update experiment notes.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ experiment.id, fetchExperimentDetails ]);
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -175,6 +197,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({ experiment, onTrialLoad }:
           <React.Suspense fallback={<Spinner tip="Loading text editor..." />}>
             <ExperimentConfiguration experiment={experiment} />
           </React.Suspense>
+        </TabPane>
+        <TabPane key="notes" tab="Notes">
+          <NotesCard
+            notes={experiment.notes ?? ''}
+            style={{ border: 0 }}
+            onSave={handleNotesUpdate}
+          />
         </TabPane>
         <TabPane key="profiler" tab="Profiler">
           {trialDetails

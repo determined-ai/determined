@@ -21,6 +21,7 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
 
 export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   return {
+    branding: data.branding,
     clusterId: data.clusterId,
     clusterName: data.clusterName,
     externalLoginUri: data.externalLoginUri,
@@ -285,6 +286,7 @@ export const mapV1GetExperimentResponse = (
     // numTrials
     // labels
     name: exp.name,
+    notes: exp.notes,
     progress: exp.progress != null ? exp.progress : undefined,
     resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
@@ -303,6 +305,7 @@ export const mapV1Experiment = (
     id: data.id,
     labels: data.labels || [],
     name: data.name,
+    notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',
