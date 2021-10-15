@@ -959,7 +959,7 @@ service Determined {
   rpc GetModelVersion(GetModelVersionRequest)
       returns (GetModelVersionResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions/{model_version}"
+      get: "/api/v1/models/{model_id}/versions/{model_version}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -969,7 +969,7 @@ service Determined {
   rpc GetModelVersions(GetModelVersionsRequest)
       returns (GetModelVersionsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions"
+      get: "/api/v1/models/{model_id}/versions"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -979,7 +979,7 @@ service Determined {
   rpc PostModelVersion(PostModelVersionRequest)
       returns (PostModelVersionResponse) {
     option (google.api.http) = {
-      post: "/api/v1/models/{model_name}/versions"
+      post: "/api/v1/models/{model_id}/versions"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

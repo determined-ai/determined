@@ -13,11 +13,11 @@ ALTER TABLE public.models DROP CONSTRAINT models_pkey CASCADE;
 ALTER TABLE public.models ADD PRIMARY KEY (id);
 ALTER TABLE public.models ADD COLUMN labels text[];
 ALTER TABLE public.models ADD COLUMN readme text;
-ALTER TABLE public.models ADD COLUMN username text DEFAULT 'determined' NOT NULL;
-ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (username) REFERENCES public.users(username);
+ALTER TABLE public.models ADD COLUMN user_id integer DEFAULT 2 NOT NULL;
+ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
 ALTER TABLE public.models ADD COLUMN archived boolean DEFAULT false NOT NULL;
 
-ALTER TABlE public.model_versions ADD COLUMN model_id INTEGER REFERENCES public.models(id); 
+ALTER TABLE public.model_versions ADD COLUMN model_id INTEGER REFERENCES public.models(id); 
 WITH id_name_map as (
     SELECT m.id, m.name
     FROM public.models as m

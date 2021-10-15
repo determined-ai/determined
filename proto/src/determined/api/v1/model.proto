@@ -67,9 +67,7 @@ message GetModelsRequest {
 // Response to GetModelsRequest.
 message GetModelsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: [ "models", "pagination" ]
-    }
+    json_schema: { required: [ "models", "pagination" ] }
   };
   // The list of returned models.
   repeated determined.model.v1.Model models = 1;
@@ -104,7 +102,7 @@ message PatchModelResponse {
 // Request for a version of a model in the regsitry.
 message GetModelVersionRequest {
   // The name of the model.
-  string model_name = 1;
+  string model_id = 1;
   // The version number.
   int32 model_version = 2;
 }
@@ -136,8 +134,8 @@ message GetModelVersionsRequest {
   int32 offset = 3;
   // Limit the number of model versions. A value of 0 denotes no limit.
   int32 limit = 4;
-  // The name of the model.
-  string model_name = 5;
+  // The id of the model.
+  int32 model_id = 5;
 }
 
 // Response for GetModelVersionRequest.
@@ -152,8 +150,8 @@ message GetModelVersionsResponse {
 
 // Request for creating a model version.
 message PostModelVersionRequest {
-  // The name of the model to add a version to.
-  string model_name = 1;
+  // The id of the model to add a version to.
+  int32 model_id = 1;
   // The checkpoint representing the new version.
   string checkpoint_uuid = 2;
 }

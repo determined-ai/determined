@@ -12,19 +12,24 @@ type Model struct {
 	Metadata        JSONObj   `db:"metadata" json:"metadata"`
 	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
 	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
-	NumVersions     int       `db:"num_versions" json:"num_versions"`
 	Labels          []string  `db:"labels" json:"labels"`
 	ReadMe          string    `db:"readme" json:"readme"`
 	Username        string    `db:"username" json:"username"`
 	Archived        bool      `db:"archived" json:"archived"`
+	NumVersions     int       `db:"num_versions" json:"num_versions"`
 }
 
 // ModelVersion represents a row from the `model_versions` table.
 type ModelVersion struct {
-	ID           int       `db:"id" json:"id"`
-	Version      int       `db:"version" json:"version"`
-	CheckpointID int       `db:"checkpoint_id" json:"checkpoint_id"`
-	CreationTime time.Time `db:"creation_time" json:"creation_time"`
-	ModelID      int       `db:"model_id" json:"model_id"`
-	Metadata     JSONObj   `db:"metadata" json:"metadata"`
+	ID              int       `db:"id" json:"id"`
+	Version         int       `db:"version" json:"version"`
+	CheckpointID    int       `db:"checkpoint_id" json:"checkpoint_id"`
+	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
+	ModelID         int       `db:"model_id" json:"model_id"`
+	Metadata        JSONObj   `db:"metadata" json:"metadata"`
+	Name            string    `db:"name" json:"name"`
+	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
+	Comment         string    `db:"comment" json:"comment"`
+	Readme          string    `db:"readme" json:"readme"`
+	Username        string    `db:"username" json:"username"`
 }
