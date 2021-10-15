@@ -1,7 +1,0 @@
-:orphan:
-
-**New Features**
-
--  WebUI: Add a Notes tab allowing for the input and viewing of Markdown on experiment pages. This
-   is applicable to both the single trial and multi-trial experiments. .. image::
-   https://user-images.githubusercontent.com/15078396/136809928-11c815cc-3751-4908-8c6e-34fef3b9858d.png
