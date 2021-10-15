@@ -4,7 +4,7 @@ WITH mv AS (
     checkpoint_uuid,
     creation_time
   FROM model_versions
-  WHERE model_name = $1
+  WHERE model_id = $1
 ),
 c AS (
   SELECT
@@ -35,4 +35,4 @@ SELECT
     mv.version,
     mv.creation_time
     FROM c, mv
-    WHERE c.uuid = mv.checkpoint_uuid::text
+    WHERE c.uuid = mv.checkpoint_uuid::text;
