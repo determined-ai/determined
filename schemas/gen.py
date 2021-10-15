@@ -80,6 +80,7 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
     lines.append("")
     lines.append("import (")
     lines.append('\t"encoding/json"')
+    lines.append('\t"sync"')
     lines.append(")")
     lines.append("")
 
@@ -94,6 +95,8 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
         lines.append(f"\tschema{schema.golang_title} interface{{}}")
         lines.append("")
     # Cached map of urls to schema values, initially nil.
+    lines.append("\tcacheLock sync.RWMutex")
+    lines.append("")
     lines.append("\tcachedSchemaMap map[string]interface{}")
     lines.append("")
     lines.append("\tcachedSchemaBytesMap map[string][]byte")
@@ -105,6 +108,15 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
         lines.extend(
             [
                 f"func Parsed{schema.golang_title}() interface{{}} {{",
+                "\tcacheLock.RLock()",
+                f"\tif schema{schema.golang_title} != nil {{",
+                "\t\tcacheLock.RUnlock()",
+                f"\t\treturn schema{schema.golang_title}",
+                "\t}",
+                "\tcacheLock.RUnlock()",
+                "",
+                "\tcacheLock.Lock()",
+                "\tdefer cacheLock.Unlock()",
                 f"\tif schema{schema.golang_title} != nil {{",
                 f"\t\treturn schema{schema.golang_title}",
                 "\t}",
@@ -120,6 +132,15 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
 
     # SchemaBytesMap, used internally by NewCompiler, which has to have a list of all schemas.
     lines.append("func schemaBytesMap() map[string][]byte {")
+    lines.append("\tcacheLock.RLock()")
+    lines.append("\tif cachedSchemaBytesMap != nil {")
+    lines.append("\t\tcacheLock.RUnlock()")
+    lines.append("\t\treturn cachedSchemaBytesMap")
+    lines.append("\t}")
+    lines.append("\tcacheLock.RUnlock()")
+    lines.append("")
+    lines.append("\tcacheLock.Lock()")
+    lines.append("\tdefer cacheLock.Unlock()")
     lines.append("\tif cachedSchemaBytesMap != nil {")
     lines.append("\t\treturn cachedSchemaBytesMap")
     lines.append("\t}")
