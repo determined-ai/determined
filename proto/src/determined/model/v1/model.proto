@@ -19,7 +19,7 @@ message Model {
         "metadata",
         "creation_time",
         "last_updated_time",
-        "num_ersions",
+        "num_versions",
         "username"
       ]
     }
