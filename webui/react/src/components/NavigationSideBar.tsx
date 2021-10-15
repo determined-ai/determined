@@ -57,6 +57,7 @@ const menuConfig = {
     { icon: 'experiment', label: 'Experiments', path: paths.experimentList() },
     { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
     { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
+    { icon: 'tasks', label: 'Jobs', path: paths.jobs() }, // TODO update icon
   ],
 };
 

@@ -3,7 +3,7 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 import { globalStorage } from 'globalStorage';
 import {
   Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, ResourceType,
+  DetailedUser, DeterminedInfo, ResourcePool, ResourceType,
 } from 'types';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
@@ -28,6 +28,7 @@ export interface State {
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  resourcePools: ResourcePool[];
   ui: UI;
   users: DetailedUser[];
 }
@@ -112,6 +113,7 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  resourcePools: [],
   ui: initUI,
   users: [],
 };

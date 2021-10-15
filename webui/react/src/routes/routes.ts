@@ -96,6 +96,12 @@ const routes: RouteConfig[] = [
     path: '/reload',
     title: 'Reload',
   },
+  {
+    id: 'jobs',
+    needAuth: true,
+    path: '/jobs',
+    title: 'Job Queue',
+  },
 ];
 
 export default routes;

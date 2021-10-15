@@ -19,6 +19,13 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
+export const mapV1Pagination = (data: Sdk.V1Pagination): types.Pagination => {
+  return {
+    limit: data.limit ?? 0,
+    offset: data.offset ?? 0,
+  };
+};
+
 export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
   // Validate branding against `BrandingType` enum.
   const branding = Object.values(types.BrandingType).reduce((acc, value) => {

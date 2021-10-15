@@ -1,60 +1,135 @@
+import { Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
+import React, { ReactNode } from 'react';
 
-import { ResourcePool } from 'types';
+import Avatar from 'components/Avatar';
+import Badge, { BadgeType } from 'components/Badge';
+import Icon from 'components/Icon';
+import Link from 'components/Link';
+import { relativeTimeRenderer } from 'components/Table';
+import { Job, ResourcePool } from 'types';
 import { alphanumericSorter, numericSorter } from 'utils/sort';
-import { V1ResourcePoolTypeToLabel } from 'utils/types';
+import { capitalize, truncate } from 'utils/string';
+import { jobTypeIconName, jobTypeLabel, V1ResourcePoolTypeToLabel } from 'utils/types';
 
-export const columns: ColumnType<ResourcePool>[] = [
+type Renderer<T> = (_: any, record: T) => ReactNode;
+export type JobTypeRenderer = Renderer<Job>;
+
+// #, id, type, job name, pri, sumbitted, slots, progress, runtime eta, user
+export const columns: ColumnType<Job>[] = [
   {
-    dataIndex: 'name',
-    key: 'name',
-    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.name, b.name),
-    title: 'Pool Name',
+    key: 'jobsAhead',
+    render: (_, record: Job): ReactNode => {
+      const cell = (
+        <div>
+          {record.summary.jobsAhead}
+          {!record.isPreemptible && <Icon name="lock" />}
+        </div>
+      );
+      return cell;
+    },
+    // TODO connect to the api
+    sorter: (a: Job, b: Job): number =>
+      numericSorter(a.summary.jobsAhead, b.summary.jobsAhead),
+    title: '#',
   },
   {
-    dataIndex: 'description',
-    key: 'description',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      alphanumericSorter(a.description, b.description),
-    title: 'Description',
-  },
-  {
-    key: 'chart',
-    title: 'GPU Slots Allocation',
+    dataIndex: 'jobId',
+    key: 'jobId',
+    render: (_, record: Job): ReactNode => {
+      const cell = <span>
+        {truncate(record.jobId, 6, '')}
+      </span>;
+      return cell;
+    },
+    title: 'ID',
   },
   {
     dataIndex: 'type',
     key: 'type',
-    render: (_, record) => V1ResourcePoolTypeToLabel[record.type],
-    sorter: (a: ResourcePool, b: ResourcePool): number => alphanumericSorter(a.type, b.type),
+    render: (_: string, record: Job): ReactNode => {
+      const title = jobTypeLabel(record.type);
+      const TypeCell = <Tooltip placement="topLeft" title={title}>
+        <div className={''}>
+          <Icon name={jobTypeIconName(record.type)} />
+        </div>
+      </Tooltip>;
+      return TypeCell;
+    },
     title: 'Type',
   },
   {
-    dataIndex: 'numAgents',
-    key: 'numAgents',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.numAgents, b.numAgents),
-    title: 'Agents',
+    key: 'name',
+    render: (_, record: Job): ReactNode => {
+      const cell = <Link path={'/dashboard'}>
+        {jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}
+      </Link>;
+      return cell;
+    },
+    title: 'Job Name',
   },
   {
-    dataIndex: 'slotsAvailable',
-    key: 'slotsAvailable',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.slotsAvailable, b.slotsAvailable),
-    title: 'Total Slots',
+    dataIndex: 'priority',
+    key: 'priority',
+    // render: (_, record) => V1JobTypeToLabel[record.type],
+    title: 'PRI', // TODO or weight? in fairshare
   },
   {
-    dataIndex: 'auxContainerCapacity',
-    key: 'auxContainerCapacity',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.auxContainerCapacity, b.auxContainerCapacity),
-    title: 'Max Aux Containers Per Agent',
+    dataIndex: 'submissionTime',
+    key: 'submitted',
+    render: (_: string, record: Job): ReactNode =>
+      relativeTimeRenderer(record.submissionTime),
+    title: 'Submitted',
   },
   {
-    dataIndex: 'auxContainersRunning',
-    key: 'auxContainersRunning',
-    sorter: (a: ResourcePool, b: ResourcePool): number =>
-      numericSorter(a.auxContainersRunning, b.auxContainersRunning),
-    title: 'CPUs Used',
+    key: 'slots',
+    render: (_: string, record: Job): ReactNode => {
+      return <span>
+        {record.allocatedSlots} / {record.requestedSlots}
+      </span>;
+    },
+    title: 'Slots (Acquired/Requested)',
+  },
+  {
+    key: 'state',
+    render: (_, record: Job): ReactNode => {
+      const cell = <Badge state={record.summary.state} type={BadgeType.State} />;
+      return cell;
+    },
+    title: 'State',
+  },
+  {
+    key: 'progress',
+    title: 'Progress',
+  },
+  {
+    key: 'runtime',
+    render: (_, record: Job): ReactNode => {
+      return 'unavailable';
+    },
+    title: 'Run Time',
+  },
+  {
+    key: 'eta',
+    render: (_, record: Job): ReactNode => {
+      return 'unavailable';
+    },
+    title: 'ETA',
+  },
+  {
+    dataIndex: 'user',
+    key: 'user',
+    render: (_, record: Job): ReactNode => {
+      return <Avatar name={record.user} />;
+    },
+    title: 'User',
+  },
+  {
+    align: 'right',
+    className: 'fullCell',
+    fixed: 'right',
+    key: 'actions',
+    title: '',
+    // width: 40,
   },
 ];
