@@ -4,7 +4,7 @@ import pathlib
 import shutil
 import time
 import uuid
-from typing import Dict, Generator, List, Optional, Tuple, cast
+from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
 import pexpect
@@ -22,8 +22,8 @@ EXPECT_TIMEOUT = 5
 ADMIN_CREDENTIALS = authentication.Credentials("admin", "")
 
 
-@pytest.fixture(scope="session")  # type: ignore
-def clean_auth() -> None:
+@pytest.fixture(scope="session")
+def clean_auth() -> Iterator[None]:
     """
     clean_auth is a session-level fixture that ensures that we run tests with no preconfigured
     authentication, and that any settings we save during tests are cleaned up afterwards.
@@ -179,7 +179,7 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
     return [(int(r[0]), r[1]) for r in rows]
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_logout(clean_auth: None) -> None:
     # Tests fallback to default determined user
     creds = create_test_user(ADMIN_CREDENTIALS, True)
@@ -227,7 +227,7 @@ def test_logout(clean_auth: None) -> None:
     # Clean up.
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_activate_deactivate(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -250,7 +250,7 @@ def test_activate_deactivate(clean_auth: None) -> None:
     assert log_in_user(creds) == 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_change_password(clean_auth: None) -> None:
     # Create a user without a password.
     creds = create_test_user(ADMIN_CREDENTIALS, False)
@@ -267,7 +267,7 @@ def test_change_password(clean_auth: None) -> None:
     assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_experiment_creation_and_listing(clean_auth: None) -> None:
     # Create 2 users.
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -302,7 +302,7 @@ def test_experiment_creation_and_listing(clean_auth: None) -> None:
         delete_experiments(experiment_id1, experiment_id2)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_login_wrong_password(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -322,7 +322,7 @@ def test_login_wrong_password(clean_auth: None) -> None:
     assert child.exitstatus != 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_login_as_non_existent_user(clean_auth: None) -> None:
     username = "doesNotExist"
 
@@ -342,7 +342,7 @@ def test_login_as_non_existent_user(clean_auth: None) -> None:
     assert child.exitstatus != 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_login_as_non_active_user(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -365,7 +365,7 @@ def test_login_as_non_active_user(clean_auth: None) -> None:
     assert child.exitstatus != 0
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_non_admin_user_link_with_agent_user(clean_auth: None) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
     unauth_error = r".*Forbidden\(user not authorized\)"
@@ -484,7 +484,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
         tids.remove(tensorboard_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_notebook_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -512,7 +512,7 @@ def test_notebook_creation_and_listing(clean_auth: None) -> None:
     kill_notebooks(notebook_id1, notebook_id2)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_tensorboard_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -549,7 +549,7 @@ def test_tensorboard_creation_and_listing(clean_auth: None) -> None:
         delete_experiments(experiment_id1, experiment_id2)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_command_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -600,7 +600,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
     return user_creds
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_link_with_agent_user(clean_auth: None) -> None:
     user = create_linked_user(200, "someuser", 300, "somegroup")
 
@@ -615,7 +615,7 @@ def test_link_with_agent_user(clean_auth: None) -> None:
             raise AssertionError(f"Did not find {expected_output} in output")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_link_with_large_uid(clean_auth: None) -> None:
     user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
@@ -630,7 +630,7 @@ def test_link_with_large_uid(clean_auth: None) -> None:
             raise AssertionError(f"Did not find {expected_output} in output")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_link_with_existing_agent_user(clean_auth: None) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
@@ -672,7 +672,7 @@ def non_tmp_shared_fs_path() -> Generator:
         shutil.rmtree(checkpoint_dir)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_non_root_experiment(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
@@ -702,7 +702,7 @@ def test_non_root_experiment(clean_auth: None, tmp_path: pathlib.Path) -> None:
                 exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_link_without_agent_user(clean_auth: None) -> None:
     user = create_test_user(ADMIN_CREDENTIALS, False)
 
@@ -720,7 +720,7 @@ def test_link_without_agent_user(clean_auth: None) -> None:
             raise AssertionError(f"Did not find {expected_output} in output:\n{output}")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(1234, "someuser", 1234, "somegroup")
 
@@ -737,7 +737,7 @@ def test_non_root_shell(clean_auth: None, tmp_path: pathlib.Path) -> None:
             raise AssertionError(f"Did not find {expected_output} in output")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_experiment_delete() -> None:
     user = create_test_user(ADMIN_CREDENTIALS)
     non_owner_user = create_test_user(ADMIN_CREDENTIALS)

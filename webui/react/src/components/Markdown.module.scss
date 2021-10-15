@@ -4,7 +4,9 @@
   color: #24292e;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji;
   font-size: 16px;
+  height: 100%;
   line-height: 1.5;
+  overflow: auto;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   word-wrap: break-word;
@@ -249,6 +251,7 @@
     }
   }
   p {
+    font-size: 16px;
     margin-bottom: 16px;
     margin-top: 0;
   }
@@ -752,5 +755,13 @@
       background: #ffea7f;
       cursor: pointer;
     }
+  }
+}
+.render {
+  padding: var(--theme-sizes-layout-big);
+
+  .placeholder {
+    color: var(--theme-colors-monochrome-9);
+    font-style: italic;
   }
 }

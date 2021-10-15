@@ -6,8 +6,8 @@ import determined as det
 from tests import command as cmd
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_gpu
 def test_start_and_write_to_shell(tmp_path: Path) -> None:
     with cmd.interactive_command("shell", "start") as shell:
         # Call our cli to ensure that PATH and PYTHONUSERBASE are properly set.

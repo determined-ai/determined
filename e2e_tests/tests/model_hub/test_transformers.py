@@ -18,7 +18,7 @@ def set_docker_image(config: Dict) -> Dict:
     return config
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_token_classification_ner() -> None:
     example_path = conf.model_hub_examples_path("huggingface/token-classification")
     config = conf.load_config(os.path.join(example_path, "ner_config.yaml"))
@@ -30,7 +30,7 @@ def test_token_classification_ner() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_language_modeling_clm() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "clm_config.yaml"))
@@ -42,7 +42,7 @@ def test_language_modeling_clm() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_language_modeling_mlm() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "mlm_config.yaml"))
@@ -54,7 +54,7 @@ def test_language_modeling_mlm() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_language_modeling_plm() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "plm_config.yaml"))
@@ -64,7 +64,7 @@ def test_language_modeling_plm() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_multiple_choice_swag() -> None:
     example_path = conf.model_hub_examples_path("huggingface/multiple-choice")
     config = conf.load_config(os.path.join(example_path, "swag_config.yaml"))
@@ -76,7 +76,7 @@ def test_multiple_choice_swag() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_text_classification_glue() -> None:
     example_path = conf.model_hub_examples_path("huggingface/text-classification")
     config = conf.load_config(os.path.join(example_path, "glue_config.yaml"))
@@ -86,7 +86,7 @@ def test_text_classification_glue() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_text_classification_xnli() -> None:
     example_path = conf.model_hub_examples_path("huggingface/text-classification")
     config = conf.load_config(os.path.join(example_path, "xnli_config.yaml"))
@@ -98,7 +98,7 @@ def test_text_classification_xnli() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_squad() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad.yaml"))
@@ -110,7 +110,7 @@ def test_squad() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_squad_with_beam_search() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_beam_search.yaml"))
@@ -122,7 +122,7 @@ def test_squad_with_beam_search() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_squad_v2() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_v2.yaml"))
@@ -134,7 +134,7 @@ def test_squad_v2() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers  # type: ignore
+@pytest.mark.model_hub_transformers
 def test_squad_v2_with_beam_search() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_v2_beam_search.yaml"))
@@ -147,7 +147,7 @@ def test_squad_v2_with_beam_search() -> None:
 
 
 # Same test with mixed precision enabled.
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_token_classification_ner_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/token-classification")
     config = conf.load_config(os.path.join(example_path, "ner_config.yaml"))
@@ -160,7 +160,7 @@ def test_token_classification_ner_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_language_modeling_clm_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "clm_config.yaml"))
@@ -173,7 +173,7 @@ def test_language_modeling_clm_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_language_modeling_mlm_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "mlm_config.yaml"))
@@ -186,7 +186,7 @@ def test_language_modeling_mlm_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_language_modeling_plm_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/language-modeling")
     config = conf.load_config(os.path.join(example_path, "plm_config.yaml"))
@@ -197,7 +197,7 @@ def test_language_modeling_plm_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_multiple_choice_swag_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/multiple-choice")
     config = conf.load_config(os.path.join(example_path, "swag_config.yaml"))
@@ -210,7 +210,7 @@ def test_multiple_choice_swag_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_text_classification_glue_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/text-classification")
     config = conf.load_config(os.path.join(example_path, "glue_config.yaml"))
@@ -221,7 +221,7 @@ def test_text_classification_glue_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_text_classification_xnli_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/text-classification")
     config = conf.load_config(os.path.join(example_path, "xnli_config.yaml"))
@@ -234,7 +234,7 @@ def test_text_classification_xnli_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_squad_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad.yaml"))
@@ -247,7 +247,7 @@ def test_squad_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_squad_with_beam_search_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_beam_search.yaml"))
@@ -260,7 +260,7 @@ def test_squad_with_beam_search_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_squad_v2_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_v2.yaml"))
@@ -273,7 +273,7 @@ def test_squad_v2_amp() -> None:
     exp.run_basic_test_with_temp_config(config, example_path, 1)
 
 
-@pytest.mark.model_hub_transformers_amp  # type: ignore
+@pytest.mark.model_hub_transformers_amp
 def test_squad_v2_with_beam_search_amp() -> None:
     example_path = conf.model_hub_examples_path("huggingface/question-answering")
     config = conf.load_config(os.path.join(example_path, "squad_v2_beam_search.yaml"))

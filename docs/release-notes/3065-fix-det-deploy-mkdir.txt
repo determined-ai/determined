@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Deploy: fix an issue where the default checkpoint storage directory was not created for some
+   users.

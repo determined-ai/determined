@@ -8,7 +8,7 @@ export const convertMetricsToUplotData = (
   const timeSerie: number[] = [];
 
   // Sort time keys are not guaranteed to arrive in order so we sort them first.
-  const timeKeys = Object.keys(data).map(k => parseInt(k)).sort();
+  const timeKeys = Object.keys(data).map(k => parseFloat(k)).sort();
 
   for (const key of timeKeys) {
     const list = data[key];

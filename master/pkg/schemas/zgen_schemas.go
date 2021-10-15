@@ -4,6 +4,7 @@ package schemas
 
 import (
 	"encoding/json"
+	"sync"
 )
 
 var (
@@ -3449,12 +3450,23 @@ var (
 
 	schemaTestUnionV0 interface{}
 
+	cacheLock sync.RWMutex
+
 	cachedSchemaMap map[string]interface{}
 
 	cachedSchemaBytesMap map[string][]byte
 )
 
 func ParsedAzureConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaAzureConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaAzureConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaAzureConfigV0 != nil {
 		return schemaAzureConfigV0
 	}
@@ -3466,6 +3478,15 @@ func ParsedAzureConfigV0() interface{} {
 }
 
 func ParsedBindMountV0() interface{} {
+	cacheLock.RLock()
+	if schemaBindMountV0 != nil {
+		cacheLock.RUnlock()
+		return schemaBindMountV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaBindMountV0 != nil {
 		return schemaBindMountV0
 	}
@@ -3477,6 +3498,15 @@ func ParsedBindMountV0() interface{} {
 }
 
 func ParsedBindMountsConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaBindMountsConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaBindMountsConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaBindMountsConfigV0 != nil {
 		return schemaBindMountsConfigV0
 	}
@@ -3488,6 +3518,15 @@ func ParsedBindMountsConfigV0() interface{} {
 }
 
 func ParsedCheckDataLayerCacheV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckDataLayerCacheV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckDataLayerCacheV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckDataLayerCacheV0 != nil {
 		return schemaCheckDataLayerCacheV0
 	}
@@ -3499,6 +3538,15 @@ func ParsedCheckDataLayerCacheV0() interface{} {
 }
 
 func ParsedCheckEpochNotUsedV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckEpochNotUsedV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckEpochNotUsedV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckEpochNotUsedV0 != nil {
 		return schemaCheckEpochNotUsedV0
 	}
@@ -3510,6 +3558,15 @@ func ParsedCheckEpochNotUsedV0() interface{} {
 }
 
 func ParsedCheckGlobalBatchSizeV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckGlobalBatchSizeV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckGlobalBatchSizeV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckGlobalBatchSizeV0 != nil {
 		return schemaCheckGlobalBatchSizeV0
 	}
@@ -3521,6 +3578,15 @@ func ParsedCheckGlobalBatchSizeV0() interface{} {
 }
 
 func ParsedCheckGridHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckGridHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckGridHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckGridHyperparameterV0 != nil {
 		return schemaCheckGridHyperparameterV0
 	}
@@ -3532,6 +3598,15 @@ func ParsedCheckGridHyperparameterV0() interface{} {
 }
 
 func ParsedCheckPositiveLengthV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckPositiveLengthV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckPositiveLengthV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckPositiveLengthV0 != nil {
 		return schemaCheckPositiveLengthV0
 	}
@@ -3543,6 +3618,15 @@ func ParsedCheckPositiveLengthV0() interface{} {
 }
 
 func ParsedCheckpointStorageConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaCheckpointStorageConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCheckpointStorageConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCheckpointStorageConfigV0 != nil {
 		return schemaCheckpointStorageConfigV0
 	}
@@ -3554,6 +3638,15 @@ func ParsedCheckpointStorageConfigV0() interface{} {
 }
 
 func ParsedGCSDataLayerConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaGCSDataLayerConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaGCSDataLayerConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaGCSDataLayerConfigV0 != nil {
 		return schemaGCSDataLayerConfigV0
 	}
@@ -3565,6 +3658,15 @@ func ParsedGCSDataLayerConfigV0() interface{} {
 }
 
 func ParsedS3DataLayerConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaS3DataLayerConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaS3DataLayerConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaS3DataLayerConfigV0 != nil {
 		return schemaS3DataLayerConfigV0
 	}
@@ -3576,6 +3678,15 @@ func ParsedS3DataLayerConfigV0() interface{} {
 }
 
 func ParsedSharedFSDataLayerConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSharedFSDataLayerConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSharedFSDataLayerConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSharedFSDataLayerConfigV0 != nil {
 		return schemaSharedFSDataLayerConfigV0
 	}
@@ -3587,6 +3698,15 @@ func ParsedSharedFSDataLayerConfigV0() interface{} {
 }
 
 func ParsedDataLayerConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaDataLayerConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDataLayerConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaDataLayerConfigV0 != nil {
 		return schemaDataLayerConfigV0
 	}
@@ -3598,6 +3718,15 @@ func ParsedDataLayerConfigV0() interface{} {
 }
 
 func ParsedDeviceV0() interface{} {
+	cacheLock.RLock()
+	if schemaDeviceV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDeviceV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaDeviceV0 != nil {
 		return schemaDeviceV0
 	}
@@ -3609,6 +3738,15 @@ func ParsedDeviceV0() interface{} {
 }
 
 func ParsedDevicesConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaDevicesConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDevicesConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaDevicesConfigV0 != nil {
 		return schemaDevicesConfigV0
 	}
@@ -3620,6 +3758,15 @@ func ParsedDevicesConfigV0() interface{} {
 }
 
 func ParsedEnvironmentImageMapV0() interface{} {
+	cacheLock.RLock()
+	if schemaEnvironmentImageMapV0 != nil {
+		cacheLock.RUnlock()
+		return schemaEnvironmentImageMapV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaEnvironmentImageMapV0 != nil {
 		return schemaEnvironmentImageMapV0
 	}
@@ -3631,6 +3778,15 @@ func ParsedEnvironmentImageMapV0() interface{} {
 }
 
 func ParsedEnvironmentImageV0() interface{} {
+	cacheLock.RLock()
+	if schemaEnvironmentImageV0 != nil {
+		cacheLock.RUnlock()
+		return schemaEnvironmentImageV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaEnvironmentImageV0 != nil {
 		return schemaEnvironmentImageV0
 	}
@@ -3642,6 +3798,15 @@ func ParsedEnvironmentImageV0() interface{} {
 }
 
 func ParsedEnvironmentVariablesMapV0() interface{} {
+	cacheLock.RLock()
+	if schemaEnvironmentVariablesMapV0 != nil {
+		cacheLock.RUnlock()
+		return schemaEnvironmentVariablesMapV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaEnvironmentVariablesMapV0 != nil {
 		return schemaEnvironmentVariablesMapV0
 	}
@@ -3653,6 +3818,15 @@ func ParsedEnvironmentVariablesMapV0() interface{} {
 }
 
 func ParsedEnvironmentVariablesV0() interface{} {
+	cacheLock.RLock()
+	if schemaEnvironmentVariablesV0 != nil {
+		cacheLock.RUnlock()
+		return schemaEnvironmentVariablesV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaEnvironmentVariablesV0 != nil {
 		return schemaEnvironmentVariablesV0
 	}
@@ -3664,6 +3838,15 @@ func ParsedEnvironmentVariablesV0() interface{} {
 }
 
 func ParsedEnvironmentConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaEnvironmentConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaEnvironmentConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaEnvironmentConfigV0 != nil {
 		return schemaEnvironmentConfigV0
 	}
@@ -3675,6 +3858,15 @@ func ParsedEnvironmentConfigV0() interface{} {
 }
 
 func ParsedExperimentConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaExperimentConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaExperimentConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaExperimentConfigV0 != nil {
 		return schemaExperimentConfigV0
 	}
@@ -3686,6 +3878,15 @@ func ParsedExperimentConfigV0() interface{} {
 }
 
 func ParsedGCSConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaGCSConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaGCSConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaGCSConfigV0 != nil {
 		return schemaGCSConfigV0
 	}
@@ -3697,6 +3898,15 @@ func ParsedGCSConfigV0() interface{} {
 }
 
 func ParsedHDFSConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaHDFSConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaHDFSConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaHDFSConfigV0 != nil {
 		return schemaHDFSConfigV0
 	}
@@ -3708,6 +3918,15 @@ func ParsedHDFSConfigV0() interface{} {
 }
 
 func ParsedCategoricalHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaCategoricalHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaCategoricalHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaCategoricalHyperparameterV0 != nil {
 		return schemaCategoricalHyperparameterV0
 	}
@@ -3719,6 +3938,15 @@ func ParsedCategoricalHyperparameterV0() interface{} {
 }
 
 func ParsedConstHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaConstHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaConstHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaConstHyperparameterV0 != nil {
 		return schemaConstHyperparameterV0
 	}
@@ -3730,6 +3958,15 @@ func ParsedConstHyperparameterV0() interface{} {
 }
 
 func ParsedDoubleHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaDoubleHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaDoubleHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaDoubleHyperparameterV0 != nil {
 		return schemaDoubleHyperparameterV0
 	}
@@ -3741,6 +3978,15 @@ func ParsedDoubleHyperparameterV0() interface{} {
 }
 
 func ParsedIntHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaIntHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaIntHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaIntHyperparameterV0 != nil {
 		return schemaIntHyperparameterV0
 	}
@@ -3752,6 +3998,15 @@ func ParsedIntHyperparameterV0() interface{} {
 }
 
 func ParsedLogHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaLogHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLogHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaLogHyperparameterV0 != nil {
 		return schemaLogHyperparameterV0
 	}
@@ -3763,6 +4018,15 @@ func ParsedLogHyperparameterV0() interface{} {
 }
 
 func ParsedHyperparameterV0() interface{} {
+	cacheLock.RLock()
+	if schemaHyperparameterV0 != nil {
+		cacheLock.RUnlock()
+		return schemaHyperparameterV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaHyperparameterV0 != nil {
 		return schemaHyperparameterV0
 	}
@@ -3774,6 +4038,15 @@ func ParsedHyperparameterV0() interface{} {
 }
 
 func ParsedHyperparametersV0() interface{} {
+	cacheLock.RLock()
+	if schemaHyperparametersV0 != nil {
+		cacheLock.RUnlock()
+		return schemaHyperparametersV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaHyperparametersV0 != nil {
 		return schemaHyperparametersV0
 	}
@@ -3785,6 +4058,15 @@ func ParsedHyperparametersV0() interface{} {
 }
 
 func ParsedInternalConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaInternalConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaInternalConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaInternalConfigV0 != nil {
 		return schemaInternalConfigV0
 	}
@@ -3796,6 +4078,15 @@ func ParsedInternalConfigV0() interface{} {
 }
 
 func ParsedKerberosConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaKerberosConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaKerberosConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaKerberosConfigV0 != nil {
 		return schemaKerberosConfigV0
 	}
@@ -3807,6 +4098,15 @@ func ParsedKerberosConfigV0() interface{} {
 }
 
 func ParsedLengthV0() interface{} {
+	cacheLock.RLock()
+	if schemaLengthV0 != nil {
+		cacheLock.RUnlock()
+		return schemaLengthV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaLengthV0 != nil {
 		return schemaLengthV0
 	}
@@ -3818,6 +4118,15 @@ func ParsedLengthV0() interface{} {
 }
 
 func ParsedNativeConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaNativeConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaNativeConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaNativeConfigV0 != nil {
 		return schemaNativeConfigV0
 	}
@@ -3829,6 +4138,15 @@ func ParsedNativeConfigV0() interface{} {
 }
 
 func ParsedOptimizationsConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaOptimizationsConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaOptimizationsConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaOptimizationsConfigV0 != nil {
 		return schemaOptimizationsConfigV0
 	}
@@ -3840,6 +4158,15 @@ func ParsedOptimizationsConfigV0() interface{} {
 }
 
 func ParsedProfilingConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaProfilingConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaProfilingConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaProfilingConfigV0 != nil {
 		return schemaProfilingConfigV0
 	}
@@ -3851,6 +4178,15 @@ func ParsedProfilingConfigV0() interface{} {
 }
 
 func ParsedRegistryAuthV0() interface{} {
+	cacheLock.RLock()
+	if schemaRegistryAuthV0 != nil {
+		cacheLock.RUnlock()
+		return schemaRegistryAuthV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaRegistryAuthV0 != nil {
 		return schemaRegistryAuthV0
 	}
@@ -3862,6 +4198,15 @@ func ParsedRegistryAuthV0() interface{} {
 }
 
 func ParsedReproducibilityConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaReproducibilityConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaReproducibilityConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaReproducibilityConfigV0 != nil {
 		return schemaReproducibilityConfigV0
 	}
@@ -3873,6 +4218,15 @@ func ParsedReproducibilityConfigV0() interface{} {
 }
 
 func ParsedResourcesConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaResourcesConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaResourcesConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaResourcesConfigV0 != nil {
 		return schemaResourcesConfigV0
 	}
@@ -3884,6 +4238,15 @@ func ParsedResourcesConfigV0() interface{} {
 }
 
 func ParsedS3ConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaS3ConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaS3ConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaS3ConfigV0 != nil {
 		return schemaS3ConfigV0
 	}
@@ -3895,6 +4258,15 @@ func ParsedS3ConfigV0() interface{} {
 }
 
 func ParsedAdaptiveASHAConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaAdaptiveASHAConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaAdaptiveASHAConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaAdaptiveASHAConfigV0 != nil {
 		return schemaAdaptiveASHAConfigV0
 	}
@@ -3906,6 +4278,15 @@ func ParsedAdaptiveASHAConfigV0() interface{} {
 }
 
 func ParsedAdaptiveSimpleConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaAdaptiveSimpleConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaAdaptiveSimpleConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaAdaptiveSimpleConfigV0 != nil {
 		return schemaAdaptiveSimpleConfigV0
 	}
@@ -3917,6 +4298,15 @@ func ParsedAdaptiveSimpleConfigV0() interface{} {
 }
 
 func ParsedAdaptiveConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaAdaptiveConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaAdaptiveConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaAdaptiveConfigV0 != nil {
 		return schemaAdaptiveConfigV0
 	}
@@ -3928,6 +4318,15 @@ func ParsedAdaptiveConfigV0() interface{} {
 }
 
 func ParsedAsyncHalvingConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaAsyncHalvingConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaAsyncHalvingConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaAsyncHalvingConfigV0 != nil {
 		return schemaAsyncHalvingConfigV0
 	}
@@ -3939,6 +4338,15 @@ func ParsedAsyncHalvingConfigV0() interface{} {
 }
 
 func ParsedGridConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaGridConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaGridConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaGridConfigV0 != nil {
 		return schemaGridConfigV0
 	}
@@ -3950,6 +4358,15 @@ func ParsedGridConfigV0() interface{} {
 }
 
 func ParsedPBTConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaPBTConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaPBTConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaPBTConfigV0 != nil {
 		return schemaPBTConfigV0
 	}
@@ -3961,6 +4378,15 @@ func ParsedPBTConfigV0() interface{} {
 }
 
 func ParsedRandomConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaRandomConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaRandomConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaRandomConfigV0 != nil {
 		return schemaRandomConfigV0
 	}
@@ -3972,6 +4398,15 @@ func ParsedRandomConfigV0() interface{} {
 }
 
 func ParsedSingleConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSingleConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSingleConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSingleConfigV0 != nil {
 		return schemaSingleConfigV0
 	}
@@ -3983,6 +4418,15 @@ func ParsedSingleConfigV0() interface{} {
 }
 
 func ParsedSyncHalvingConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSyncHalvingConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSyncHalvingConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSyncHalvingConfigV0 != nil {
 		return schemaSyncHalvingConfigV0
 	}
@@ -3994,6 +4438,15 @@ func ParsedSyncHalvingConfigV0() interface{} {
 }
 
 func ParsedSearcherConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSearcherConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSearcherConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSearcherConfigV0 != nil {
 		return schemaSearcherConfigV0
 	}
@@ -4005,6 +4458,15 @@ func ParsedSearcherConfigV0() interface{} {
 }
 
 func ParsedSecurityConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSecurityConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSecurityConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSecurityConfigV0 != nil {
 		return schemaSecurityConfigV0
 	}
@@ -4016,6 +4478,15 @@ func ParsedSecurityConfigV0() interface{} {
 }
 
 func ParsedSharedFSConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaSharedFSConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaSharedFSConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaSharedFSConfigV0 != nil {
 		return schemaSharedFSConfigV0
 	}
@@ -4027,6 +4498,15 @@ func ParsedSharedFSConfigV0() interface{} {
 }
 
 func ParsedTensorboardStorageConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaTensorboardStorageConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTensorboardStorageConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTensorboardStorageConfigV0 != nil {
 		return schemaTensorboardStorageConfigV0
 	}
@@ -4038,6 +4518,15 @@ func ParsedTensorboardStorageConfigV0() interface{} {
 }
 
 func ParsedTestRootV0() interface{} {
+	cacheLock.RLock()
+	if schemaTestRootV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTestRootV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTestRootV0 != nil {
 		return schemaTestRootV0
 	}
@@ -4049,6 +4538,15 @@ func ParsedTestRootV0() interface{} {
 }
 
 func ParsedTestSubV0() interface{} {
+	cacheLock.RLock()
+	if schemaTestSubV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTestSubV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTestSubV0 != nil {
 		return schemaTestSubV0
 	}
@@ -4060,6 +4558,15 @@ func ParsedTestSubV0() interface{} {
 }
 
 func ParsedTestUnionAV0() interface{} {
+	cacheLock.RLock()
+	if schemaTestUnionAV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTestUnionAV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTestUnionAV0 != nil {
 		return schemaTestUnionAV0
 	}
@@ -4071,6 +4578,15 @@ func ParsedTestUnionAV0() interface{} {
 }
 
 func ParsedTestUnionBV0() interface{} {
+	cacheLock.RLock()
+	if schemaTestUnionBV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTestUnionBV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTestUnionBV0 != nil {
 		return schemaTestUnionBV0
 	}
@@ -4082,6 +4598,15 @@ func ParsedTestUnionBV0() interface{} {
 }
 
 func ParsedTestUnionV0() interface{} {
+	cacheLock.RLock()
+	if schemaTestUnionV0 != nil {
+		cacheLock.RUnlock()
+		return schemaTestUnionV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if schemaTestUnionV0 != nil {
 		return schemaTestUnionV0
 	}
@@ -4093,6 +4618,15 @@ func ParsedTestUnionV0() interface{} {
 }
 
 func schemaBytesMap() map[string][]byte {
+	cacheLock.RLock()
+	if cachedSchemaBytesMap != nil {
+		cacheLock.RUnlock()
+		return cachedSchemaBytesMap
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
 	if cachedSchemaBytesMap != nil {
 		return cachedSchemaBytesMap
 	}

@@ -64,7 +64,7 @@ def agent_down(arguments: List) -> None:
     det_deploy(command)
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_cluster_down() -> None:
     master_host = "localhost"
     master_port = "8080"
@@ -86,7 +86,7 @@ def test_cluster_down() -> None:
     assert len(containers) == 0
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_custom_etc() -> None:
     master_host = "localhost"
     master_port = "8080"
@@ -103,7 +103,7 @@ def test_custom_etc() -> None:
     cluster_down([])
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_custom_port() -> None:
     name = "port_test"
     master_host = "localhost"
@@ -125,7 +125,7 @@ def test_custom_port() -> None:
     cluster_down(["--cluster-name", name])
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_agents_made() -> None:
     master_host = "localhost"
     master_port = "8080"
@@ -150,7 +150,7 @@ def test_agents_made() -> None:
     cluster_down(["--cluster-name", name])
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_master_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"
@@ -172,7 +172,7 @@ def test_master_up_down() -> None:
     assert len(containers) == 0
 
 
-@pytest.mark.det_deploy_local  # type: ignore
+@pytest.mark.det_deploy_local
 def test_agent_up_down() -> None:
     master_host = "localhost"
     master_port = "8080"

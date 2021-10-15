@@ -159,8 +159,6 @@ def master_up(
         make_temp_conf = True
 
     if storage_host_path is not None:
-        if not storage_host_path.exists():
-            storage_host_path.mkdir(parents=True)
         master_conf["checkpoint_storage"] = {
             "type": "shared_fs",
             "host_path": str(storage_host_path.resolve()),
@@ -174,6 +172,13 @@ def master_up(
             {"host_path": work_dir, "container_path": work_dir}
         )
         make_temp_conf = True
+
+    # Ensure checkpoint storage directory exists.
+    final_storage_host_path = master_conf.get("checkpoint_storage", {}).get("host_path")
+    if final_storage_host_path is not None:
+        final_storage_host_path = Path(final_storage_host_path)
+        if not final_storage_host_path.exists():
+            final_storage_host_path.mkdir(parents=True)
 
     if make_temp_conf:
         fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")

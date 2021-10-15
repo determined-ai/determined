@@ -223,7 +223,7 @@ class WorkloadSequencer(workload.Source):
         elif op.unit == _generic.Unit.RECORDS:
             op.report_progress(self.global_batch_size * self.state.latest_batch)
         elif op.unit == _generic.Unit.EPOCHS:
-            op.report_progress(self.state.latest_batch / self.as_batches(epochs=op.epochs))
+            op.report_progress(self.state.latest_batch / self.as_batches(epochs=1))
         else:
             raise ValueError(f"unrecognized searcher op unit: {op.unit}")
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import ReactMonacoEditor, { MonacoEditorProps } from 'react-monaco-editor';
 
 import useResize from 'hooks/useResize';
@@ -18,6 +18,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const editorRef = useRef<ReactMonacoEditor>(null);
   const resize = useResize(containerRef);
 
+  const handleEditorDidMount = useCallback((editor) => editor.focus(), []);
+
   useEffect(() => {
     editorRef.current?.editor?.layout();
   }, [ resize ]);
@@ -25,6 +27,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   return (
     <div className={css.base} ref={containerRef}>
       <ReactMonacoEditor
+        editorDidMount={handleEditorDidMount}
         height={height}
         language={language}
         options={{

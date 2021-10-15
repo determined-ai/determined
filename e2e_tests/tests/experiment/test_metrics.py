@@ -10,8 +10,8 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.timeout(600)  # type: ignore
+@pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
 def test_streaming_metrics_api() -> None:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
@@ -62,8 +62,8 @@ def test_streaming_metrics_api() -> None:
         pytest.fail("trials-sample (validation): %s. Results: %s" % valid_trials_sample_results)
 
 
-@pytest.mark.distributed  # type: ignore
-@pytest.mark.timeout(1800)  # type: ignore
+@pytest.mark.distributed
+@pytest.mark.timeout(1800)
 def test_hp_importance_api() -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
