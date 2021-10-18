@@ -67,45 +67,33 @@ func (a *apiServer) GetJobQueueStats(
 	return nil, notImplementedError
 }
 
-// UpdateJobQueue TODO.
+// UpdateJobQueue
 func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {
 	resp = &apiv1.UpdateJobQueueResponse{}
 
-	switch {
-	case sproto.UseAgentRM(a.m.system):
-		for _, update := range req.Updates {
-			qPosition := float64(update.GetQueuePosition())
-			priority := int(update.GetPriority())
-			weight := float64(update.GetWeight())
-			err = a.actorRequest(sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.SetJobOrder{
-				QPosition: qPosition,
-				Priority:  &priority,
-				Weight:    weight,
-				JobID:     model.JobID(update.GetJobId()),
-			}, resp)
-			if err != nil {
-				return nil, err
-			}
+	for _, update := range req.Updates {
+		qPosition := float64(update.GetQueuePosition())
+		priority := int(update.GetPriority())
+		weight := float64(update.GetWeight())
+		msg := resourcemanagers.SetJobOrder{
+			QPosition: qPosition,
+			Priority:  &priority,
+			Weight:    weight,
+			JobID:     model.JobID(update.GetJobId()),
 		}
-	case sproto.UseK8sRM(a.m.system):
-		for _, update := range req.Updates {
-			qPosition := float64(update.GetQueuePosition())
-			priority := int(update.GetPriority())
-			weight := float64(update.GetWeight())
-			err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.SetJobOrder{
-				QPosition: qPosition,
-				Weight:    weight,
-				Priority:  &priority,
-				JobID:     model.JobID(update.GetJobId()),
-			}, resp)
-			if err != nil {
-				return nil, err
-			}
+		switch {
+		case sproto.UseAgentRM(a.m.system):
+			err = a.actorRequest(sproto.AgentRMAddr.Child(update.ResourcePoolSource), msg, resp)
+		case sproto.UseK8sRM(a.m.system):
+			err = a.actorRequest(sproto.K8sRMAddr, msg, resp)
+		default:
+			err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 		}
-	default:
-		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+		if err != nil {
+			return resp, err
+		}
 	}
 	return resp, nil
 }

@@ -47,8 +47,6 @@ message UpdateJobQueueRequest {
   };
   // List of job queue control requests.
   repeated determined.job.v1.QueueControl updates = 1;
-  // The target resource-pool.
-  string resource_pool = 2;
 }
 // Response to UpdateJobQueueRequest.
 message UpdateJobQueueResponse {}
