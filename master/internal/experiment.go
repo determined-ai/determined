@@ -79,7 +79,6 @@ type (
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
-		job      *model.Job
 
 		faultToleranceEnabled bool
 		restored              bool
@@ -147,7 +146,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		warmStartCheckpoint: checkpoint,
 
 		taskSpec: taskSpec,
-		job:      &jobStruct,
 
 		faultToleranceEnabled: true,
 
@@ -268,8 +266,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case sproto.SetGroupOrder:
-		e.job.QPos = msg.QPosition
-		e.db.UpdateJob(e.job)
+		e.db.UpdateJob(e.JobID)
 		if !e.isRP(msg.Handler) {
 			ctx.Tell(e.rm, msg)
 		}
@@ -525,13 +522,6 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 		return errors.Wrap(err, "failed to restore searcher snapshot")
 	}
 	return nil
-}
-
-func (e *experiment) ChangePosition(ctx *actor.Context, position float64) error {
-	// we will use a position for each scheduler/resource pool
-	// we can translate that position to match priority or weight
-	e.job.QPos = position
-	return e.db.UpdateJob(e.job)
 }
 
 // isRP determines whether or not the message originated from an RP, in which case we will NOT forward the
