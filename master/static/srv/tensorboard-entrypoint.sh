@@ -16,6 +16,8 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
+
 # Install tensorboard if not already installed (for custom Pytorch images)
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
