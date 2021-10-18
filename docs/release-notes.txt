@@ -8,6 +8,42 @@
  Version 0.17
 **************
 
+Version 0.17.1
+==============
+
+**Release Date:** October 18, 2021
+
+**New Features**
+
+-  WebUI: Add a "Notes" tab allowing for the input and viewing of free-form Markdown text on
+   experiment pages. This works for both single-trial experiments and trials within a multi-trial
+   experiment.
+
+   .. image:: https://user-images.githubusercontent.com/15078396/136809928-11c815cc-3751-4908-8c6e-34fef3b9858d.png
+
+**Improvements**
+
+-  Docs: reorganize documents to be more user-friendly.
+
+   -  Merge some how-to guides, topic guides, and reference guides. Users should now need to read
+      very few documents to understand what they need to do in Determined rather than having to jump
+      around between documents.
+
+   -  Merge most information on best practices into how-to guides so that users find out about best
+      practices as soon as they learn how to use something.
+
+   -  Decompose the top-level FAQ document and move different parts of it to relevant pages so that
+      users can develop a better expectation of what common issues they might hit.
+
+-  Profiler: ``samples_per_second`` in PyTorch now reflects samples across all workers.
+
+-  Database migrations: Run upgrades in transactions to improve stability.
+
+**Bug Fixes**
+
+-  Deploy: Fix an issue where the default checkpoint storage directory was not created for some
+   users.
+
 Version 0.17.0
 ==============
 
