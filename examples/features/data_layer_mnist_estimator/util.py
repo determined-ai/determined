@@ -5,7 +5,6 @@ import tarfile
 import requests
 import tensorflow as tf
 
-WORK_DIRECTORY = "/tmp/pedl-mnist-estimator-work-dir"
 MNIST_TF_RECORDS_FILE = "mnist-tfrecord.tar.gz"
 MNIST_TF_RECORDS_URL = (
     "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/" + MNIST_TF_RECORDS_FILE
