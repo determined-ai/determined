@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Profiler: ``samples_per_second`` in PyTorch now reflects samples across all workers.
