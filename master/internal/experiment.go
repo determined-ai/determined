@@ -273,6 +273,19 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Tell(e.rm, msg)
 		}
 
+	case sproto.JobTaskInfo:
+		info := sproto.JobTaskInfo{
+			Name:           e.Config.Name().String(),
+			SubmissionTime: e.StartTime,
+		}
+
+		// TODO transition from ownerid to username on e actor. and restore from db
+		if e.OwnerID != nil {
+			info.Username = fmt.Sprintf("%s (ID)", *e.OwnerID)
+		}
+
+		ctx.Respond(info)
+
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {

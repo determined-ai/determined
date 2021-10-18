@@ -2584,7 +2584,7 @@ export interface V1Job {
      * @type {string}
      * @memberof V1Job
      */
-    user: string;
+    username: string;
     /**
      * Associated resource pool.
      * @type {string}
@@ -2621,6 +2621,24 @@ export interface V1Job {
      * @memberof V1Job
      */
     jobId: string;
+    /**
+     * Number of requested slots.
+     * @type {number}
+     * @memberof V1Job
+     */
+    requestedSlots: number;
+    /**
+     * Number of allocated slots.
+     * @type {number}
+     * @memberof V1Job
+     */
+    allocatedSlots: number;
+    /**
+     * Job name.
+     * @type {string}
+     * @memberof V1Job
+     */
+    name: string;
 }
 
 /**
@@ -3983,19 +4001,19 @@ export interface V1QueueStats {
      * @type {number}
      * @memberof V1QueueStats
      */
-    queuedCount?: number;
+    queuedCount: number;
     /**
      * Number of scheduled jobs in the queue.
      * @type {number}
      * @memberof V1QueueStats
      */
-    scheduledCount?: number;
+    scheduledCount: number;
     /**
      * Number of preemptible jobs in the queue.
      * @type {number}
      * @memberof V1QueueStats
      */
-    preemptibleCount?: number;
+    preemptibleCount: number;
 }
 
 /**

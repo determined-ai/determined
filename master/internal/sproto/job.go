@@ -1,6 +1,8 @@
 package sproto
 
 import (
+	"time"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -33,11 +35,27 @@ func (s SchedulingState) Proto() jobv1.State {
 	}
 }
 
-// JobSummary contains information about a task for external display.
+// JobSummary contains information about a job for external display.
 type JobSummary struct {
 	//Job      model.Job
-	JobID    model.JobID
-	JobType  model.JobType
-	EntityID string `json:"entity_id"`
-	State    SchedulingState
+	JobID          model.JobID
+	JobType        model.JobType
+	EntityID       string `json:"entity_id"`
+	State          SchedulingState
+	RequestedSlots int
+	AllocatedSlots int
+}
+
+// JobTaskInfo is a message that carries information needed to augment
+// jobs.
+type JobTaskInfo struct {
+	Username       string
+	Name           string
+	SubmissionTime time.Time
+}
+
+// ScheduledStates provides a list of ScheduledStates that are considered scheduled.
+var ScheduledStates = map[SchedulingState]bool{
+	SchedulingStateScheduled:           true,
+	SchedulingStateScheduledBackfilled: true,
 }

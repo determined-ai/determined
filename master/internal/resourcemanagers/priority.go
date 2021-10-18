@@ -72,12 +72,7 @@ func (p *priorityScheduler) OrderedAllocations(
 	}
 
 	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
-	// TODO remove logs
-	log.Debugf("scheduled tasks %v", priorityToScheduledTaskMap)
-	log.Debugf("scheduled job order %v", allocReqsToJobOrder(reqs))
 	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
-	log.Debugf("pendings tasks %v", priorityToPendingTasksMap)
-	log.Debugf("full job order %v", allocReqsToJobOrder(reqs))
 	return reqs
 }
 

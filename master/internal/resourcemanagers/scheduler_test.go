@@ -459,7 +459,7 @@ func TestFilterAllocateRequests(t *testing.T) {
 			},
 		})
 	}
-	jids := allocReqsToJobOrder(requests)
+	jids := allocReqsToJobOrder(requests, nil)
 	assert.Equal(t, len(jids), len(expectedOrder))
 	for i := 0; i < len(jids); i++ {
 		assert.DeepEqual(t, jids[i], expectedOrder[i])
