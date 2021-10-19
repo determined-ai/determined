@@ -145,3 +145,27 @@ export const deletePathList = (obj: RawJson, path: string[]): void => {
   const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
   if (parentObj) delete parentObj[path[lastIndex]];
 };
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateEnum = (enumObject: unknown, value?: unknown): any => {
+  if (isObject(enumObject) && value !== undefined) {
+    const enumRecord = enumObject as Record<string, string>;
+    const stringValue = value as string;
+    const validOptions = Object
+      .values(enumRecord)
+      .filter((_, index) => index % 2 === 0);
+    if (validOptions.includes(stringValue)) return stringValue;
+  }
+  return undefined;
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateEnumList = (enumObject: unknown, values?: unknown[]): any => {
+  if (!Array.isArray(values)) return undefined;
+
+  const enumValues = values
+    .map(value => validateEnum(enumObject, value))
+    .filter(value => !!value);
+
+  return enumValues.length !== 0 ? enumValues : undefined;
+};

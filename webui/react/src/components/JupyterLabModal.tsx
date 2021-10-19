@@ -6,41 +6,41 @@ import React, { Dispatch, useCallback, useEffect, useReducer, useState } from 'r
 
 import useStorage from 'hooks/useStorage';
 import { getResourcePools, getTaskTemplates } from 'services/api';
-import { NotebookConfig, RawJson, ResourcePool, Template } from 'types';
-import { launchNotebook, previewNotebook } from 'utils/task';
+import { JupyterLabConfig, RawJson, ResourcePool, Template } from 'types';
+import { launchJupyterLab, previewJupyterLab } from 'utils/task';
 
+import css from './JupyterLabModal.module.scss';
 import Link from './Link';
-import css from './NotebookModal.module.scss';
 import Spinner from './Spinner';
 
 const { Option } = Select;
 const { Item } = Form;
 
-const STORAGE_PATH = 'notebook-launch';
-const STORAGE_KEY = 'notebook-config';
+const STORAGE_PATH = 'jupyter-lab-launch';
+const STORAGE_KEY = 'jupyter-lab-config';
 const DEFAULT_SLOT_COUNT = 1;
 
 type DispatchFunction =
   (Dispatch<{
-    key: keyof NotebookConfig,
+    key: keyof JupyterLabConfig,
     value: string | number | undefined
   }>)
 
 function reducer(
-  state: NotebookConfig,
-  action: {key: keyof NotebookConfig, value: string | number | undefined},
-): NotebookConfig {
+  state: JupyterLabConfig,
+  action: {key: keyof JupyterLabConfig, value: string | number | undefined},
+): JupyterLabConfig {
   return { ...state, [action.key]: action.value };
 }
 
-const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
+const useJupyterLabForm = (): [JupyterLabConfig, DispatchFunction] => {
   const storage = useStorage(STORAGE_PATH);
   const [ state, dispatch ] = useReducer(
     reducer,
     storage.getWithDefault(STORAGE_KEY, { slots: DEFAULT_SLOT_COUNT }),
   );
 
-  const storeConfig = useCallback((values: NotebookConfig) => {
+  const storeConfig = useCallback((values: JupyterLabConfig) => {
     const { name, ...storedValues } = values;
     storage.set(STORAGE_KEY, storedValues);
   }, [ storage ]);
@@ -52,13 +52,13 @@ const useNotebookForm = (): [NotebookConfig, DispatchFunction] => {
   return [ state, dispatch ];
 };
 
-interface NotebookModalProps extends ModalProps {
+interface JupyterLabModalProps extends ModalProps {
   onLaunch?: () => void;
   visible?: boolean;
 }
 
 interface FormProps {
-  fields: NotebookConfig;
+  fields: JupyterLabConfig;
   onChange: DispatchFunction;
 }
 
@@ -77,18 +77,18 @@ interface ResourceInfo {
 
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
-const NotebookModal: React.FC<NotebookModalProps> = (
-  { visible = false, onLaunch, ...props }: NotebookModalProps,
+const JupyterLabModal: React.FC<JupyterLabModalProps> = (
+  { visible = false, onLaunch, ...props }: JupyterLabModalProps,
 ) => {
 
   const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ fields, dispatch ] = useNotebookForm();
+  const [ fields, dispatch ] = useJupyterLabForm();
   const [ config, setConfig ] = useState<string | undefined>();
   const [ buttonDisabled, setButtonDisabled ] = useState(false);
 
   const fetchConfig = useCallback(async () => {
     try {
-      const newConfig = await previewNotebook(
+      const newConfig = await previewJupyterLab(
         fields.slots,
         fields.template,
         fields.name,
@@ -113,9 +113,9 @@ const NotebookModal: React.FC<NotebookModalProps> = (
 
   const handleCreateEnvironment = useCallback(() => {
     if (showFullConfig) {
-      launchNotebook(yaml.load(config || '') as RawJson);
+      launchJupyterLab(yaml.load(config || '') as RawJson);
     } else {
-      launchNotebook(
+      launchJupyterLab(
         undefined,
         fields.slots,
         fields.template,
@@ -145,24 +145,20 @@ const NotebookModal: React.FC<NotebookModalProps> = (
       width={540}
       {...props}>
       {showFullConfig ?
-        <NotebookFullConfig
+        <JupyterLabFullConfig
           config={config}
           setButtonDisabled={setButtonDisabled}
           onChange={handleConfigChange} /> :
-        <NotebookForm fields={fields} onChange={dispatch} />
+        <JupyterLabForm fields={fields} onChange={dispatch} />
       }
     </Modal>
   );
 };
 
-const NotebookFullConfig:React.FC<FullConfigProps> = (
+const JupyterLabFullConfig:React.FC<FullConfigProps> = (
   { config, onChange, setButtonDisabled }: FullConfigProps,
 ) => {
   const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
-
-  useEffect(() => {
-    setField([ { name: 'config', value: config || '' } ]);
-  }, [ config ]);
 
   const handleConfigChange = useCallback((_, allFields) => {
     if (!Array.isArray(allFields) || allFields.length === 0) return;
@@ -172,13 +168,17 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
     } catch (e) {}
   }, [ onChange ]);
 
+  useEffect(() => {
+    setField([ { name: 'config', value: config || '' } ]);
+  }, [ config ]);
+
   return (
     <Form
       fields={field}
       onFieldsChange={handleConfigChange}>
       <div className={css.note}>
         <Link external path="/docs/reference/api/command-notebook-config.html">
-        Read about notebook settings
+        Read about JupyterLab settings
         </Link>
       </div>
       <React.Suspense
@@ -186,7 +186,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
         <Item
           name="config"
           rules={[
-            { message: 'Notebook config required', required: true },
+            { message: 'JupyterLab config required', required: true },
             {
               validator: (rule, value) => {
                 try {
@@ -208,7 +208,7 @@ const NotebookFullConfig:React.FC<FullConfigProps> = (
             }}
           />
         </Item>
-        {!config && <Alert message="Unable to load notebook config" type="error" />}
+        {!config && <Alert message="Unable to load JupyterLab config" type="error" />}
       </React.Suspense>
     </Form>
   );
@@ -225,7 +225,7 @@ const LabelledLine: React.FC<LabelledLineProps> = (
   return <div className={css.line}><p>{label}</p>{content}</div>;
 };
 
-const NotebookForm:React.FC<FormProps> = (
+const JupyterLabForm:React.FC<FormProps> = (
   { onChange, fields }: FormProps,
 ) => {
   const [ templates, setTemplates ] = useState<Template[]>([]);
@@ -325,4 +325,4 @@ const NotebookForm:React.FC<FormProps> = (
   );
 };
 
-export default NotebookModal;
+export default JupyterLabModal;

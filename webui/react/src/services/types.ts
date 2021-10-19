@@ -125,7 +125,7 @@ export interface LaunchTensorboardParams {
   trialIds?: Array<number>;
 }
 
-export interface LaunchNotebookParams {
+export interface LaunchJupyterLabParams {
   config?: {
     description?: string;
     resources?: {
@@ -154,7 +154,7 @@ export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetNotebooksParams extends FetchOptions, PaginationParams {
+export interface GetJupyterLabsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 

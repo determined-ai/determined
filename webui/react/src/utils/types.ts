@@ -170,7 +170,7 @@ export function stateToLabel(
 
 export const commandTypeToLabel: {[key in CommandType]: string} = {
   [CommandType.Command]: 'Command',
-  [CommandType.Notebook]: 'Notebook',
+  [CommandType.JupyterLab]: 'JupyterLab',
   [CommandType.Shell]: 'Shell',
   [CommandType.Tensorboard]: 'Tensorboard',
 };

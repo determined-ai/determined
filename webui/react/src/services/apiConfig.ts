@@ -8,9 +8,9 @@ import * as decoder from 'services/decoder';
 import {
   CommandIdParams, CreateExperimentParams, DetApi, EmptyParams,
   ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams,
-  GetExperimentParams, GetExperimentsParams, GetNotebooksParams,
+  GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
   GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
-  GetTrialsParams, HttpApi, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse,
+  GetTrialsParams, HttpApi, LaunchJupyterLabParams, LaunchTensorboardParams, LoginResponse,
   LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
@@ -80,7 +80,7 @@ export const saltAndHashPassword = (password?: string): string => {
 
 export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
-  [CommandType.Notebook]: '/notebooks',
+  [CommandType.JupyterLab]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
   [CommandType.Shell]: '/shells',
 };
@@ -379,11 +379,13 @@ export const getCommands: DetApi<GetCommandsParams, Api.V1GetCommandsResponse, C
   ),
 };
 
-export const getNotebooks: DetApi<GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]> = {
-  name: 'getNotebooks',
+export const getJupyterLabs: DetApi<
+  GetJupyterLabsParams, Api.V1GetNotebooksResponse, CommandTask[]
+> = {
+  name: 'getJupyterLabs',
   postProcess: (response) => (response.notebooks || [])
-    .map(notebook => decoder.mapV1Notebook(notebook)),
-  request: (params: GetNotebooksParams) => detApi.Notebooks.determinedGetNotebooks(
+    .map(jupyterLab => decoder.mapV1Notebook(jupyterLab)),
+  request: (params: GetJupyterLabsParams) => detApi.Notebooks.determinedGetNotebooks(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -424,8 +426,8 @@ export const killCommand: DetApi<CommandIdParams, Api.V1KillCommandResponse, voi
     .determinedKillCommand(params.commandId),
 };
 
-export const killNotebook: DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
-  name: 'killNotebook',
+export const killJupyterLab: DetApi<CommandIdParams, Api.V1KillNotebookResponse, void> = {
+  name: 'killJupyterLab',
   postProcess: noOp,
   request: (params: CommandIdParams) => detApi.Notebooks
     .determinedKillNotebook(params.commandId),
@@ -458,21 +460,21 @@ export const getTemplates: DetApi<GetTemplatesParams, Api.V1GetTemplatesResponse
   ),
 };
 
-export const launchNotebook: DetApi<
-  LaunchNotebookParams, Api.V1LaunchNotebookResponse, CommandTask
+export const launchJupyterLab: DetApi<
+  LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, CommandTask
 > = {
-  name: 'launchNotebook',
+  name: 'launchJupyterLab',
   postProcess: (response) => decoder.mapV1Notebook(response.notebook),
-  request: (params: LaunchNotebookParams) => detApi.Notebooks
+  request: (params: LaunchJupyterLabParams) => detApi.Notebooks
     .determinedLaunchNotebook(params),
 };
 
-export const previewNotebook: DetApi<
-  LaunchNotebookParams, Api.V1LaunchNotebookResponse, RawJson
+export const previewJupyterLab: DetApi<
+  LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
 > = {
-  name: 'previewNotebook',
+  name: 'previewJupyterLab',
   postProcess: (response) => response.config,
-  request: (params: LaunchNotebookParams) => detApi.Notebooks
+  request: (params: LaunchJupyterLabParams) => detApi.Notebooks
     .determinedLaunchNotebook(params),
 };
 
