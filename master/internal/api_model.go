@@ -47,7 +47,7 @@ func (a *apiServer) GetModels(
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetModelsRequest_SORT_BY_NAME:              "LOWER(name)",
+		apiv1.GetModelsRequest_SORT_BY_NAME:              "name",
 		apiv1.GetModelsRequest_SORT_BY_DESCRIPTION:       "description",
 		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
 		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
@@ -70,15 +70,15 @@ func (a *apiServer) GetModels(
 	default:
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
-	err := a.m.db.QueryProto(
+	err := a.m.db.QueryProtof(
 		"get_models",
+		[]interface{}{orderExpr},
 		&resp.Models,
 		archFilterExpr,
 		userFilterExpr,
 		labelFilterExpr,
 		nameFilterExpr,
 		descFilterExpr,
-		orderExpr,
 	)
 	if err != nil {
 		return nil, err

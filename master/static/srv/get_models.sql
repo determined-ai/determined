@@ -6,4 +6,4 @@ AND ($3 = '' OR (m.labels <@ string_to_array($3, ',')))
 AND ($4 = '' OR LOWER(m.name) LIKE $4)
 AND ($5 = '' OR LOWER(m.description) LIKE $5)
 GROUP BY m.id, u.id
-ORDER BY $6;
+ORDER BY %s;

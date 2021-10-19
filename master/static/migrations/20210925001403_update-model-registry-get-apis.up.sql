@@ -15,11 +15,11 @@ ALTER TABLE public.models ADD COLUMN labels text[];
 ALTER TABLE public.models ADD COLUMN readme text;
 ALTER TABLE public.models ADD COLUMN user_id integer;
 WITH det_id as (SELECT id from public.users where username LIKE 'determined') UPDATE public.models SET user_id = det_id.id FROM det_id WHERE user_id is NULL;
-ALTER TABLE public.models ALTER COLUMN user_id SET NOT NULL;
+/* ALTER TABLE public.models ALTER COLUMN user_id SET NOT NULL; */
 ALTER TABLE public.models ADD CONSTRAINT users_fk FOREIGN KEY (user_id) REFERENCES public.users(id);
 ALTER TABLE public.models ADD COLUMN archived boolean DEFAULT false NOT NULL;
 
-ALTER TABLE public.model_versions ADD COLUMN model_id INTEGER REFERENCES public.models(id); 
+ALTER TABLE public.model_versions ADD COLUMN model_id INTEGER REFERENCES public.models(id);
 WITH id_name_map as (
     SELECT m.id, m.name
     FROM public.models as m
