@@ -121,11 +121,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		}
 	}
 
-	jobStruct := model.Job{
-		JobID:   expModel.JobID,
-		JobType: model.JobTypeExperiment,
-	}
-
 	agentUserGroup, err := master.db.AgentUserGroup(*expModel.OwnerID)
 	if err != nil {
 		return nil, err
