@@ -45,30 +45,30 @@ func (a *apiServer) GetModels(
 	userFilterExpr := strings.Join(req.Users, ",")
 	labelFilterExpr := strings.Join(req.Labels, ",")
 	// Construct the ordering expression.
-	orderColMap := map[apiv1.GetModelsRequest_SortBy]string{
+	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
 		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetModelsRequest_SORT_BY_NAME:              "name",
+		apiv1.GetModelsRequest_SORT_BY_NAME:              "LOWER(name)",
 		apiv1.GetModelsRequest_SORT_BY_DESCRIPTION:       "description",
 		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
 		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
 		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
 	}
-	sortByMap := map[apiv1.OrderBy]string{
+	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
 		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
 		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
 	}
 	orderExpr := ""
-	switch _, ok := orderColMap[req.SortBy]; {
+	switch _, ok := sortColMap[req.SortBy]; {
 	case !ok:
 		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
-	case orderColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
+	case sortColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
 		orderExpr = fmt.Sprintf(
 			"%s %s, id %s",
-			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
+			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
 		)
 	default:
-		orderExpr = fmt.Sprintf("name %s", sortByMap[req.OrderBy])
+		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	err := a.m.db.QueryProto(
 		"get_models",
