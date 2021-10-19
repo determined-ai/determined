@@ -6,8 +6,8 @@ import { useParams } from 'react-router';
 import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Markdown from 'components/Markdown';
 import Message, { MessageType } from 'components/Message';
+import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
@@ -35,8 +35,6 @@ const ModelVersionDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ editingMetadata, setEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
-  const [ editingNotes, setEditingNotes ] = useState(false);
-  const [ editedNotes, setEditedNotes ] = useState<string>('');
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -96,12 +94,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     //save metadata to db
   }, []);
 
-  const editNotes = useCallback(() => {
-    setEditingNotes(true);
-  }, []);
-
   const saveNotes = useCallback(() => {
-    setEditingNotes(false);
     //save notes to db
   }, []);
 
@@ -200,21 +193,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                   updateMetadata={setEditedMetadata} />
               </Card>
             }
-            <Card
-              extra={(
-                <Tooltip title="Edit">
-                  {editingNotes ?
-                    <SaveOutlined onClick={saveNotes} /> :
-                    <EditOutlined onClick={editNotes} />}
-                </Tooltip>
-              )}
-              title="Notes">
-              <Markdown
-                editing={editingNotes}
-                height={200}
-                markdown={editingNotes ? editedNotes : ''}
-                onChange={setEditedNotes} />
-            </Card>
+            <NotesCard notes="" onSave={saveNotes} />
             <Card
               extra={(
                 <Tooltip title="Copied!" trigger="click">
