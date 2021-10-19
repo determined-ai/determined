@@ -20,23 +20,23 @@ def test_model_registry() -> None:
     assert mnist.metadata == {}
 
     mnist.add_metadata({"testing": "metadata"})
-    db_model = d.get_model("mnist")
+    db_model = d.get_model(mnist.model_id)
     # Make sure the model metadata is correct and correctly saved to the db.
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "metadata"}
 
     mnist.add_metadata({"some_key": "some_value"})
-    db_model = d.get_model("mnist")
+    db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "metadata", "some_key": "some_value"}
 
     mnist.add_metadata({"testing": "override"})
-    db_model = d.get_model("mnist")
+    db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "override", "some_key": "some_value"}
 
     mnist.remove_metadata(["some_key"])
-    db_model = d.get_model("mnist")
+    db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "override"}
 
