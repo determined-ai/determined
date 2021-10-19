@@ -63,11 +63,8 @@ const Dashboard: React.FC = () => {
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    console.log('fetchExperiments', filters.states);
     try {
       const states = (filters.states || []).map(state => encodeExperimentState(state as RunState));
-      console.log('states', states);
-      console.log('validated states', validateDetApiEnumList(Determinedexperimentv1State, states));
       const response = await getExperiments(
         {
           archived: false,
@@ -80,7 +77,6 @@ const Dashboard: React.FC = () => {
         { signal: canceler.signal },
       );
       setExperiments(prev => {
-        console.log('experiments CHANGED', !isEqual(prev, response.experiments));
         if (isEqual(prev, response.experiments)) return prev;
         return response.experiments;
       });
@@ -155,7 +151,6 @@ const Dashboard: React.FC = () => {
     ].sort(
       (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
     );
-    console.log('filteredTasks memo', filters);
     const filtered = filterTasks<TaskType, RecentTask>(sorted, filters, users || []);
     return filtered.slice(0, filters.limit);
   }, [ experiments, filters, tasks, users ]);
@@ -163,8 +158,7 @@ const Dashboard: React.FC = () => {
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
-    setExperiments(undefined);
-  }, [ setExperiments, setFilters, storage ]);
+  }, [ setFilters, storage ]);
 
   return (
     <Page docTitle="Overview" id="dashboard">

@@ -219,7 +219,7 @@ export const filterTasks = <
   return tasks
     .filter(task => {
       const isExperiment = isExperimentTask(task);
-      const type = isExperiment ? 'Experiment' : (task as CommandTask).type;
+      const type = isExperiment ? TaskType.Experiment : (task as CommandTask).type;
       return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
         matchesState<A>(task, filters.states || []) &&
