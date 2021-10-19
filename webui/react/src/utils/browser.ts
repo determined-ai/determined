@@ -18,18 +18,6 @@ export const updateFaviconType = (active: boolean, branding = BrandingType.Deter
   updateFavicon(`${process.env.PUBLIC_URL}/${branding}/favicon${suffixDev}${suffixActive}.png`);
 };
 
-export const updateBranding = (branding = BrandingType.Determined): void => {
-  const links = document.getElementsByTagName('link');
-  const brandRegex = /(determined|hpe)\//i;
-  const brandPath = branding === BrandingType.HPE ? BrandingType.HPE : BrandingType.Determined;
-  for (const link of links) {
-    const matches = link.href.match(brandRegex);
-    if (matches?.length === 2) {
-      link.setAttribute('href', link.href.replace(brandRegex, `${brandPath}/`));
-    }
-  }
-};
-
 export const getCookie = (name: string): string | null => {
   const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
   const value = document.cookie.replace(regex, '$1');
