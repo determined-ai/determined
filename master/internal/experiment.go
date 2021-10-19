@@ -261,7 +261,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case sproto.SetGroupOrder:
-		err := e.db.UpdateJob(e.JobID.String())
+		job := model.Job{
+			JobID: e.JobID,
+			QPos:  msg.QPosition,
+		}
+		err := e.db.UpdateJob(&job)
 		if err != nil {
 			return err
 		}
