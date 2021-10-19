@@ -205,17 +205,17 @@ def create_model(
 
 
 @_require_singleton
-def get_model(name: str) -> Model:
+def get_model(model_id: int) -> Model:
     """
     Get the :class:`~determined.experimental.client.Model` from the model registry
     with the provided name. If no model with that name is found in the registry,
     an exception is raised.
 
     Arguments:
-        name (string): The name of the model.
+        model_id (int): The unique id of the model.
     """
     assert _determined is not None
-    return _determined.get_model(name)
+    return _determined.get_model(model_id)
 
 
 @_require_singleton
