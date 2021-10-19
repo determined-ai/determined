@@ -217,7 +217,9 @@ class Model:
         }
 
     def __repr__(self) -> str:
-        return "Model(id={}, name={}, metadata={})".format(self.model_id, self.name, json.dumps(self.metadata))
+        return "Model(id={}, name={}, metadata={})".format(
+            self.model_id, self.name, json.dumps(self.metadata)
+        )
 
     @staticmethod
     def from_json(data: Dict[str, Any], session: session.Session) -> "Model":
