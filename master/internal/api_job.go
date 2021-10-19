@@ -85,7 +85,7 @@ func (a *apiServer) UpdateJobQueue(
 		}
 		switch {
 		case sproto.UseAgentRM(a.m.system):
-			err = a.actorRequest(sproto.AgentRMAddr.Child(update.ResourcePoolSource), msg, resp)
+			err = a.actorRequest(sproto.AgentRMAddr.Child(update.SourceResourcePool), msg, resp)
 		case sproto.UseK8sRM(a.m.system):
 			err = a.actorRequest(sproto.K8sRMAddr, msg, resp)
 		default:

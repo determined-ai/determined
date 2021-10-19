@@ -353,21 +353,21 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 			req := it.value()
 			if req.Job.JobID == msg.JobID {
 				group := rp.getOrCreateGroup(ctx, req.Group)
-				if msg.QPosition != 0 {
+				if msg.QPosition > 0 {
 					group.qPosition = msg.QPosition
 					ctx.Tell(req.Group, sproto.SetGroupOrder{
 						QPosition: msg.QPosition,
 						Handler:   ctx.Self(),
 					})
 				}
-				if *msg.Priority != 0 {
+				if *msg.Priority > 0 {
 					group.priority = msg.Priority
 					ctx.Tell(req.Group, sproto.SetGroupPriority{
 						Priority: msg.Priority,
 						Handler:  ctx.Self(),
 					})
 				}
-				if msg.Weight != 0 {
+				if msg.Weight > 0 {
 					group.weight = msg.Weight
 					ctx.Tell(req.Group, sproto.SetGroupWeight{
 						Weight:  msg.Weight,
