@@ -193,7 +193,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                   updateMetadata={setEditedMetadata} />
               </Card>
             }
-            <NotesCard notes="" onSave={saveNotes} />
+            <NotesCard
+              notes=""
+              style={{ height: 350 }}
+              onSave={saveNotes} />
             <Card
               extra={(
                 <Tooltip title="Copied!" trigger="click">
