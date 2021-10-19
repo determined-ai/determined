@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 
-import Logo, { LogoTypes } from 'components/Logo';
-import Page from 'components/Page';
-import { IndicatorUnpositioned } from 'components/Spinner';
+import Badge, { BadgeType } from 'components/Badge';
+import PageMessage from 'components/PageMessage';
+import Spinner from 'components/Spinner';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
@@ -27,12 +27,20 @@ interface Queries {
 }
 
 const Wait: React.FC = () => {
-  const { taskType } = useParams<Params>();
   const storeDispatch = useStoreDispatch();
+  const { taskType } = useParams<Params>();
   const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
-  const taskTypeCap = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType);
+  const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
+
+  let message = `Waiting for ${capitalizedTaskType} ...`;
+  if (!eventUrl || !serviceAddr) {
+    message = 'Missing required parameters.';
+  } else if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
+    message = `${capitalizedTaskType} has been terminated.`;
+  }
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.HideUIChrome });
@@ -59,7 +67,7 @@ const Wait: React.FC = () => {
       const msg = JSON.parse(messageEvent.data);
       if (msg.state) {
         const state = msg.state;
-        if (state === 'RUNNING' && msg.is_ready) {
+        if (state === CommandState.Running && msg.is_ready) {
           setWaitStatus({ isReady: true, state: CommandState.Running });
           client.close();
           window.location.assign(serverAddress(serviceAddr));
@@ -73,29 +81,20 @@ const Wait: React.FC = () => {
 
     // client.onclose = handleWsError;
     client.onerror = handleWsError;
-
   }, [ eventUrl, serviceAddr ]);
 
-  let message = `Waiting for ${taskTypeCap} ...`;
-  if ((!eventUrl || !serviceAddr)) {
-    message = 'Missing required parameters.';
-  }
-  if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
-    message = `${taskTypeCap} has been terminated.`;
-  }
-
   return (
-    <Page id="wait">
+    <PageMessage title={capitalizedTaskType}>
       <div className={css.base}>
-        <div className={css.content}>
-          <Logo type={LogoTypes.OnLightVertical} />
-          <p>Service State: {waitStatus?.state}</p>
-          <p>{message}</p>
-          <br />
-          {!waitStatus || !terminalCommandStates.has(waitStatus.state) && <IndicatorUnpositioned />}
-        </div>
+        <div className={css.message}>{message}</div>
+        {waitStatus && (
+          <div className={css.state}>
+            <Badge state={waitStatus?.state} type={BadgeType.State} />
+          </div>
+        )}
+        <Spinner spinning={isLoading} />
       </div>
-    </Page>
+    </PageMessage>
   );
 };
 

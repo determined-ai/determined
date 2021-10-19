@@ -16,23 +16,19 @@
   }
 }
 
-.spin {
-  animation: rotate 1s linear infinite;
-}
-.center {
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
+.base {
+  height: 100%;
+  position: relative;
+  width: 100%;
 
-  &.spin {
-    animation: rotateCentered 1s linear infinite;
+  .spin {
+    animation: rotate 1s linear infinite;
+    color: var(--theme-colors-brand-normal);
+    display: flex;
   }
 }
-.centerContainer {
+.base.center {
   align-items: center;
   display: flex;
-  height: 100%;
   justify-content: center;
-  width: 100%;
 }

@@ -6,12 +6,12 @@
   }
   button:focus,
   button:hover {
-    background-color: lighten(#f77b21, 10%);
-    border-color: lighten(#f77b21, 10%);
+    background-color: var(--theme-colors-brand-light);
+    border-color: var(--theme-colors-brand-light);
   }
   button:active {
-    background-color: darken(#f77b21, 10%);
-    border-color: darken(#f77b21, 10%);
+    background-color: var(--theme-colors-brand-dark);
+    border-color: var(--theme-colors-brand-dark);
   }
   .content > a {
     font-size: 12px;

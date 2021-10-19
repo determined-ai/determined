@@ -3,6 +3,7 @@ import { getTrialDetails } from 'services/api';
 import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
+import { BrandingType } from 'types';
 
 const updateFavicon = (iconPath: string): void => {
   const linkEl: HTMLLinkElement | null = document.querySelector("link[rel*='shortcut icon']");
@@ -11,10 +12,10 @@ const updateFavicon = (iconPath: string): void => {
   linkEl.href = iconPath;
 };
 
-export const updateFaviconType = (active: boolean): void => {
+export const updateFaviconType = (active: boolean, branding = BrandingType.Determined): void => {
   const suffixDev = process.env.IS_DEV ? '-dev' : '';
   const suffixActive = active ? '-active' : '';
-  updateFavicon(`${process.env.PUBLIC_URL}/favicons/favicon${suffixDev}${suffixActive}.png`);
+  updateFavicon(`${process.env.PUBLIC_URL}/${branding}/favicon${suffixDev}${suffixActive}.png`);
 };
 
 export const getCookie = (name: string): string | null => {

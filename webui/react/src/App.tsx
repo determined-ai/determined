@@ -1,5 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 
 import { setupAnalytics } from 'Analytics';
@@ -17,23 +17,26 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
+import { ThemeId } from 'themes';
+import { BrandingType } from 'types';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
-import { checkServerAlive, paths, serverAddress } from './routes/utils';
+import { paths, serverAddress } from './routes/utils';
 
 const AppView: React.FC = () => {
   const resize = useResize();
+  const storeDispatch = useStoreDispatch();
   const { info, ui } = useStore();
   const [ canceler ] = useState(new AbortController());
-  const [ isAlive, setIsAlive ] = useState<boolean>();
-  const storeDispatch = useStoreDispatch();
+  const { setThemeId } = useTheme();
+
+  const isServerReachable = useMemo(() => !!info.clusterId, [ info.clusterId ]);
 
   const fetchInfo = useFetchInfo(canceler);
 
   useKeyTracker();
   useRouteTracker();
-  useTheme();
 
   // Poll every 10 minutes
   usePolling(fetchInfo, { interval: 600000 });
@@ -65,6 +68,13 @@ const AppView: React.FC = () => {
     }
   }, [ info ]);
 
+  // Detect branding changes and update theme accordingly.
+  useEffect(() => {
+    if (info.checked) {
+      setThemeId(info.branding === BrandingType.HPE ? ThemeId.LightHPE : ThemeId.LightDetermined);
+    }
+  }, [ info.checked, info.branding, setThemeId ]);
+
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
@@ -89,34 +99,30 @@ const AppView: React.FC = () => {
     };
   }, [ ui.omnibar.isShowing, storeDispatch ]);
 
-  // Quick one time check to see if the server is reachable.
-  useEffect(() => {
-    checkServerAlive().then(alive => setIsAlive(alive));
-  }, []);
-
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [ resize ]);
 
+  if (!info.checked) {
+    return <Spinner center />;
+  }
+
   return (
-    <Spinner spinning={isAlive === undefined}>
-      <div className={css.base}>
-        {isAlive === true && (
-          <Navigation>
-            <main>
-              <Router routes={appRoutes} />
-            </main>
-          </Navigation>
-        )}
-        {isAlive === false && (
-          <PageMessage title="Server is Unreachable">
-            <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
+    <div className={css.base}>
+      {isServerReachable ? (
+        <Navigation>
+          <main>
+            <Router routes={appRoutes} />
+          </main>
+        </Navigation>
+      ) : (
+        <PageMessage title="Server is Unreachable">
+          <p>Unable to communicate with the server at &quot;{serverAddress()}&quot;.
               Please check the firewall and cluster settings.</p>
-            <Button onClick={refreshPage}>Try Again</Button>
-          </PageMessage>
-        )}
-        {ui.omnibar.isShowing && <Omnibar />}
-      </div>
-    </Spinner>
+          <Button onClick={refreshPage}>Try Again</Button>
+        </PageMessage>
+      )}
+      {ui.omnibar.isShowing && <Omnibar />}
+    </div>
   );
 };
 

@@ -15,7 +15,6 @@ export type Range<T = Primitive> = [ T, T ];
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
-export type PropsWithClassName<T> = T & { className?: string };
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
@@ -38,8 +37,14 @@ export interface SsoProvider {
   ssoUrl: string;
 }
 
+export enum BrandingType {
+  Determined = 'determined',
+  HPE = 'hpe',
+}
+
 export interface DeterminedInfo {
-  branding?: string;
+  branding: BrandingType;
+  checked: boolean,
   clusterId: string;
   clusterName: string;
   externalLoginUri?: string;

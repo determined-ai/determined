@@ -7,11 +7,11 @@ import { paths } from 'routes/utils';
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
 import Link from './Link';
-import Logo, { LogoTypes } from './Logo';
+import Logo, { LogoType } from './Logo';
 import css from './NavigationTopbar.module.scss';
 
 const NavigationTopbar: React.FC = () => {
-  const { auth, ui } = useStore();
+  const { auth, info, ui } = useStore();
 
   const username = auth.user?.username || 'Anonymous';
   const showNavigation = auth.isAuthenticated && ui.showChrome;
@@ -20,7 +20,7 @@ const NavigationTopbar: React.FC = () => {
 
   return (
     <nav className={css.base}>
-      <Logo type={LogoTypes.OnDarkHorizontal} />
+      <Logo branding={info.branding} type={LogoType.OnDarkHorizontal} />
       <div className={css.user}>
         <Dropdown
           content={<Menu>

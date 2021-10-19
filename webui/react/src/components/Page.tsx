@@ -39,7 +39,9 @@ const getFullDocTitle = (title?: string, clusterName?: string) => {
 const Page: React.FC<Props> = (props: Props) => {
   const classes = [ props.className, css.base ];
   const { info } = useStore();
+
   const showHeader = !props.headerComponent && (props.breadcrumb || props.title);
+  const brandingPath = `${process.env.PUBLIC_URL}/${info.branding}`;
 
   const docTitle = getFullDocTitle(
     props.docTitle || props.title,
@@ -53,6 +55,17 @@ const Page: React.FC<Props> = (props: Props) => {
     <main className={classes.join(' ')} id={props.id}>
       <Helmet>
         <title>{docTitle}</title>
+        {info.checked && (
+          <>
+            <link
+              href={`${brandingPath}/favicon.ico`}
+              rel="shortcut icon"
+              type="image/x-icon"
+            />
+            <link href={`${brandingPath}/apple-touch-icon.png`} rel="apple-touch-icon" />
+            <link href={`${brandingPath}/manifest.json`} rel="manifest" />
+          </>
+        )}
       </Helmet>
       {props.headerComponent}
       {showHeader && <PageHeader

@@ -123,19 +123,19 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         <header>
-          <div className={css.logo}>
-            <div className={css.logoIcon} />
-            <div className={css.logoLabel} />
-          </div>
-          <div className={css.version}>
-            {isVersionLong ? (
-              <Tooltip placement="right" title={`Version ${version}`}>
-                <span className={css.versionLabel}>{shortVersion}</span>
-              </Tooltip>
-            ) : (
-              <span className={css.versionLabel}>{version}</span>
-            )}
-          </div>
+          <Dropdown
+            content={<Menu>
+              <Menu.Item key="sign-out">
+                <Link path={paths.logout()}>Sign Out</Link>
+              </Menu.Item>
+            </Menu>}
+            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
+            placement={settings.navbarCollapsed ? Placement.Right : Placement.BottomLeft}>
+            <div className={css.user}>
+              <Avatar hideTooltip name={username} />
+              <span>{username}</span>
+            </div>
+          </Dropdown>
         </header>
         <main>
           <section className={css.launch}>
@@ -182,19 +182,15 @@ const NavigationSideBar: React.FC = () => {
           </section>
         </main>
         <footer>
-          <Dropdown
-            content={<Menu>
-              <Menu.Item key="sign-out">
-                <Link path={paths.logout()}>Sign Out</Link>
-              </Menu.Item>
-            </Menu>}
-            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.Right : Placement.TopLeft}>
-            <div className={css.user}>
-              <Avatar hideTooltip name={username} />
-              <span>{username}</span>
-            </div>
-          </Dropdown>
+          <div className={css.version}>
+            {isVersionLong ? (
+              <Tooltip placement="right" title={`Version ${version}`}>
+                <span className={css.versionLabel}>{shortVersion}</span>
+              </Tooltip>
+            ) : (
+              <span className={css.versionLabel}>{version}</span>
+            )}
+          </div>
         </footer>
       </nav>
     </CSSTransition>
