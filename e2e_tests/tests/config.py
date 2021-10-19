@@ -158,7 +158,7 @@ def set_s3_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
     config["data_layer"] = {}
     config["data_layer"]["type"] = "s3"
     config["data_layer"]["bucket"] = "yogadl-test"
-    config["data_layer"]["bucket_directory_path"] = "pedl_integration_tests"
+    config["data_layer"]["bucket_directory_path"] = "determined_integration_tests"
     return config
 
 
