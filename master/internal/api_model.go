@@ -68,7 +68,7 @@ func (a *apiServer) GetModels(
 			orderColMap[req.SortBy], sortByMap[req.OrderBy], sortByMap[req.OrderBy],
 		)
 	default:
-		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
+		orderExpr = fmt.Sprintf("name %s", sortByMap[req.OrderBy])
 	}
 	err := a.m.db.QueryProto(
 		"get_models",
@@ -112,8 +112,8 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 
 	if currModel.Description != req.Model.Description {
-		log.Infof("model (%s) description changing from \"%s\" to \"%s\"",
-			req.Model.Name, currModel.Description, req.Model.Description)
+		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
+			req.Model.Id, currModel.Description, req.Model.Description)
 		currModel.Description = req.Model.Description
 	}
 
@@ -132,16 +132,16 @@ func (a *apiServer) PatchModel(
 	}
 
 	if !bytes.Equal(currMeta, newMeta) {
-		log.Infof("model (%s) metadata changing from %s to %s",
-			req.Model.Name, currMeta, newMeta)
+		log.Infof("model (%d) metadata changing from %s to %s",
+			req.Model.Id, currMeta, newMeta)
 		currModel.Metadata = req.Model.Metadata
 	}
 
 	err = a.m.db.QueryProto(
-		"update_model", &modelv1.Model{}, req.Model.Name, currModel.Description, newMeta, time.Now())
+		"update_model", &modelv1.Model{}, req.Model.Id, currModel.Description, newMeta, time.Now())
 
 	return &apiv1.PatchModelResponse{Model: currModel},
-		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
+		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
 }
 
 func (a *apiServer) GetModelVersion(
@@ -214,5 +214,5 @@ func (a *apiServer) PostModelVersion(
 	respModelVersion.ModelVersion.Model = getResp.Model
 	respModelVersion.ModelVersion.Checkpoint = c
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelId)
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
 }
