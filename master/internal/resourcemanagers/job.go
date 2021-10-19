@@ -13,6 +13,7 @@ import (
 // we don't want a separate actor do we? could be useful for streaming job endpoints.
 type GetJobOrder struct{}
 
+// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
 type SetJobOrder struct {
 	QPosition float64
 	Weight    float64

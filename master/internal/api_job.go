@@ -67,7 +67,7 @@ func (a *apiServer) GetJobQueueStats(
 	return nil, notImplementedError
 }
 
-// UpdateJobQueue
+// UpdateJobQueue forwards the job queue message to the relevant resource pool.
 func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {

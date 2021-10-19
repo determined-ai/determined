@@ -55,8 +55,9 @@ func (p *priorityScheduler) OrderedAllocations(
 		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
 	// WARN scheduled here means that resources are allocated.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndPositionAndTimestamp(
-		rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(
+			rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
 
 	// FIXME there is gotta be a friendlier version of this.
 	// can we stick to slices together quickly in Go?
@@ -123,8 +124,8 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndPositionAndTimestamp(
-		taskList, groups, filter)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
 	localAgentsState := deepCopyAgents(agents)
 
@@ -321,26 +322,24 @@ func sortTasksByPriorityAndPositionAndTimestamp(
 }
 
 // comparePositions returns the following:
-// 1 if a is in front of b
-// 0 if a is equal to b in position
-// -1 if a is behind b
+// 1 if a is in front of b.
+// 0 if a is equal to b in position.
+// -1 if a is behind b.
 func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group) int {
 	aPosition := groups[a.Group].qPosition
 	bPosition := groups[b.Group].qPosition
-	if aPosition == bPosition {
+	switch {
+	case aPosition == bPosition:
 		return 0
-	} else if aPosition < 0 || bPosition < 0 {
+	case aPosition < 0 || bPosition < 0:
 		if aPosition > 0 {
 			return 1
-		} else {
-			return -1
 		}
-	} else {
-		if aPosition < bPosition {
-			return 1
-		} else {
-			return -1
-		}
+		return -1
+	case aPosition < bPosition:
+		return 1
+	default:
+		return -1
 	}
 }
 

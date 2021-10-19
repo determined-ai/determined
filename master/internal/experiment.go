@@ -261,7 +261,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case sproto.SetGroupOrder:
-		e.db.UpdateJob(e.JobID)
+		err := e.db.UpdateJob(e.JobID.String())
+		if err != nil {
+			return err
+		}
 		if !e.isRP(msg.Handler) {
 			ctx.Tell(e.rm, msg)
 		}
@@ -519,8 +522,8 @@ func (e *experiment) Restore(experimentSnapshot json.RawMessage) error {
 	return nil
 }
 
-// isRP determines whether or not the message originated from an RP, in which case we will NOT forward the
-// message to a resource manager
+// isRP determines whether or not the message originated from an RP; if so we will NOT forward the
+// message to a resource manager.
 func (e *experiment) isRP(handler *actor.Ref) bool {
 	if handler == nil {
 		return false
