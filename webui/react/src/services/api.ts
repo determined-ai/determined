@@ -2,9 +2,9 @@ import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetNotebooksParams,
+  GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
   GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
-  GetTrialsParams, LaunchNotebookParams, LaunchTensorboardParams, LoginResponse, LogsParams,
+  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorboardParams, LoginResponse, LogsParams,
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
@@ -144,9 +144,9 @@ export const getCommands = generateDetApi<
   GetCommandsParams, Api.V1GetCommandsResponse, CommandTask[]
 >(Config.getCommands);
 
-export const getNotebooks = generateDetApi<
-  GetNotebooksParams, Api.V1GetNotebooksResponse, CommandTask[]
->(Config.getNotebooks);
+export const getJupyterLabs = generateDetApi<
+  GetJupyterLabsParams, Api.V1GetNotebooksResponse, CommandTask[]
+>(Config.getJupyterLabs);
 
 export const getShells = generateDetApi<
   GetShellsParams, Api.V1GetShellsResponse, CommandTask[]
@@ -160,9 +160,9 @@ export const killCommand = generateDetApi<
   CommandIdParams, Api.V1KillCommandResponse, void
 >(Config.killCommand);
 
-export const killNotebook = generateDetApi<
+export const killJupyterLab = generateDetApi<
   CommandIdParams, Api.V1KillNotebookResponse, void
->(Config.killNotebook);
+>(Config.killJupyterLab);
 
 export const killShell = generateDetApi<
   CommandIdParams, Api.V1KillShellResponse, void
@@ -176,13 +176,13 @@ export const getTaskTemplates = generateDetApi<
 GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]
 >(Config.getTemplates);
 
-export const launchNotebook = generateDetApi<
-  LaunchNotebookParams, Api.V1LaunchNotebookResponse, CommandTask
->(Config.launchNotebook);
+export const launchJupyterLab = generateDetApi<
+  LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, CommandTask
+>(Config.launchJupyterLab);
 
-export const previewNotebook = generateDetApi<
-  LaunchNotebookParams, Api.V1LaunchNotebookResponse, RawJson
-  >(Config.previewNotebook);
+export const previewJupyterLab = generateDetApi<
+  LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
+  >(Config.previewJupyterLab);
 
 export const launchTensorboard = generateDetApi<
   LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
@@ -203,8 +203,8 @@ export const killTask = async (task: CommandTask): Promise<void> => {
   switch (task.type) {
     case CommandType.Command:
       return await killCommand({ commandId: task.id });
-    case CommandType.Notebook:
-      return await killNotebook({ commandId: task.id });
+    case CommandType.JupyterLab:
+      return await killJupyterLab({ commandId: task.id });
     case CommandType.Shell:
       return await killShell({ commandId: task.id });
     case CommandType.Tensorboard:

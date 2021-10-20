@@ -14,7 +14,7 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import {
-  getCommands, getExperiments, getNotebooks, getShells, getTensorboards,
+  getCommands, getExperiments, getJupyterLabs, getShells, getTensorboards,
 } from 'services/api';
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -24,7 +24,7 @@ import {
   ALL_VALUE, CommandTask, CommandType, ExperimentItem, RecentTask,
   ResourceType, RunState, TaskFilters, TaskType,
 } from 'types';
-import { isEqual } from 'utils/data';
+import { isEqual, validateEnumList } from 'utils/data';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, activeRunStates, commandToTask, experimentToTask } from 'utils/types';
 
@@ -46,13 +46,15 @@ const Dashboard: React.FC = () => {
   const { cluster: overview, users, auth: { user } } = useStore();
   const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(STORAGE_FILTERS_KEY, { ...defaultFilters });
-  const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
+  const [ filters, setFilters ] = useState<TaskFilters>(() => {
+    return { ...initFilters, types: validateEnumList(TaskType, initFilters.types) };
+  });
   const [ canceler ] = useState(new AbortController());
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ tasks, setTasks ] = useState<CommandTask[]>();
   const [ activeTaskTally, setActiveTaskTally ] = useState({
     [CommandType.Command]: 0,
-    [CommandType.Notebook]: 0,
+    [CommandType.JupyterLab]: 0,
     [CommandType.Shell]: 0,
     [CommandType.Tensorboard]: 0,
   });
@@ -101,16 +103,16 @@ const Dashboard: React.FC = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
+      const [ commands, jupyterLabs, shells, tensorboards ] = await Promise.all([
         getCommands({ signal: canceler.signal }),
-        getNotebooks({ signal: canceler.signal }),
+        getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
         getTensorboards({ signal: canceler.signal }),
       ]);
       setActiveTaskTally(prev => {
         const newTally = {
           [CommandType.Command]: countActiveCommand(commands),
-          [CommandType.Notebook]: countActiveCommand(notebooks),
+          [CommandType.JupyterLab]: countActiveCommand(jupyterLabs),
           [CommandType.Shell]: countActiveCommand(shells),
           [CommandType.Tensorboard]: countActiveCommand(tensorboards),
         };
@@ -118,7 +120,7 @@ const Dashboard: React.FC = () => {
         return prev;
       });
       setTasks(prev => {
-        const newTasks = [ ...commands, ...notebooks, ...shells, ...tensorboards ];
+        const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
         if (isEqual(prev, newTasks)) return prev;
         return newTasks;
       });
@@ -142,23 +144,21 @@ const Dashboard: React.FC = () => {
 
   /* Recent Tasks */
 
-  const loadedTasks = useMemo(() => ([
-    ...(experiments || []).map(experimentToTask),
-    ...(tasks || []).map(commandToTask),
-  ]), [ experiments, tasks ]);
-
-  const sortedTasks = loadedTasks.sort(
-    (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
-  );
-
-  const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users || [])
-    .slice(0, filters.limit);
+  const filteredTasks = useMemo(() => {
+    const sorted = [
+      ...(experiments || []).map(experimentToTask),
+      ...(tasks || []).map(commandToTask),
+    ].sort(
+      (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
+    );
+    const filtered = filterTasks<TaskType, RecentTask>(sorted, filters, users || []);
+    return filtered.slice(0, filters.limit);
+  }, [ experiments, filters, tasks, users ]);
 
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
-    setExperiments(undefined);
-  }, [ setExperiments, setFilters, storage ]);
+  }, [ setFilters, storage ]);
 
   return (
     <Page docTitle="Overview" id="dashboard">
@@ -178,8 +178,8 @@ const Dashboard: React.FC = () => {
           {activeExperimentCount ? <OverviewStats title="Active Experiments">
             {activeExperimentCount}
           </OverviewStats> : null}
-          {activeTaskTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
-            {activeTaskTally[CommandType.Notebook]}
+          {activeTaskTally[CommandType.JupyterLab] ? <OverviewStats title="Active JupyterLabs">
+            {activeTaskTally[CommandType.JupyterLab]}
           </OverviewStats> : null}
           {activeTaskTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
             {activeTaskTally[CommandType.Tensorboard]}

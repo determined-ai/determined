@@ -26,16 +26,15 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getCommands, getNotebooks, getShells, getTensorboards, killTask } from 'services/api';
+import { getCommands, getJupyterLabs, getShells, getTensorboards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
 import {
   alphanumericSorter, commandStateSorter, numericSorter, stringTimeSorter,
 } from 'utils/sort';
-import { capitalize } from 'utils/string';
 import { filterTasks } from 'utils/task';
-import { commandToTask, isTaskKillable } from 'utils/types';
+import { commandToTask, commandTypeToLabel, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import settingsConfig, { Settings } from './TaskList.settings';
@@ -116,13 +115,13 @@ const TaskList: React.FC = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const [ commands, notebooks, shells, tensorboards ] = await Promise.all([
+      const [ commands, jupyterLabs, shells, tensorboards ] = await Promise.all([
         getCommands({ signal: canceler.signal }),
-        getNotebooks({ signal: canceler.signal }),
+        getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
         getTensorboards({ signal: canceler.signal }),
       ]);
-      const newTasks = [ ...commands, ...notebooks, ...shells, ...tensorboards ];
+      const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
       setTasks(prev => {
         if (isEqual(prev, newTasks)) return prev;
         return newTasks;
@@ -280,7 +279,7 @@ const TaskList: React.FC = () => {
           text: (
             <div className={css.typeFilter}>
               <Icon name={value.toLocaleLowerCase()} />
-              <span>{capitalize(value)}</span>
+              <span>{commandTypeToLabel[value]}</span>
             </div>
           ),
           value,

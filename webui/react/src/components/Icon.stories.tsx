@@ -23,7 +23,7 @@ export const Command = (): React.ReactNode => <Icon name="command" />;
 export const Expand = (): React.ReactNode => <Icon name="expand" />;
 export const Experiment = (): React.ReactNode => <Icon name="experiment" />;
 export const Grid = (): React.ReactNode => <Icon name="grid" />;
-export const Jupyter = (): React.ReactNode => <Icon name="jupyter" />;
+export const JupyterLab = (): React.ReactNode => <Icon name="jupyter-lab" />;
 export const List = (): React.ReactNode => <Icon name="list" />;
 export const Lock = (): React.ReactNode => <Icon name="lock" />;
 export const Notebook = (): React.ReactNode => <Icon name="notebook" />;

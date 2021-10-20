@@ -134,7 +134,7 @@ export const mapV1Command = (command: Sdk.V1Command): types.CommandTask => {
 
 export const mapV1Notebook = (notebook: Sdk.V1Notebook): types.CommandTask => {
   return {
-    ...mapCommonV1Task(notebook, types.CommandType.Notebook),
+    ...mapCommonV1Task(notebook, types.CommandType.JupyterLab),
     serviceAddress: notebook.serviceAddress,
   };
 };

@@ -134,7 +134,7 @@ func (a *apiServer) LaunchNotebook(
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
 		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
-		spec.Config.Description = fmt.Sprintf("Notebook (%s)", petName)
+		spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)
 	}
 
 	if req.Preview {

@@ -13,26 +13,30 @@ import UserSelectFilter from './UserSelectFilter';
 
 const { Option } = Select;
 
-interface Props<T extends TaskType> {
+interface Props<T extends CommandType | TaskType> {
   filters: TaskFilters<T>;
   onChange: (filters: TaskFilters<T>) => void;
   showExperiments?: boolean;
   showLimit?: boolean;
 }
 
-type TaskFilterFC = <T extends TaskType = TaskType>(props: Props<T>) => React.ReactElement;
+type TaskFilterFC = <
+  T extends CommandType | TaskType = TaskType
+>(props: Props<T>) => React.ReactElement;
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const commandConfig = [
-  { id: CommandType.Notebook },
+export const commandConfig = [
+  { id: CommandType.JupyterLab },
   { id: CommandType.Tensorboard },
   { id: CommandType.Shell },
   { id: CommandType.Command },
 ];
-const experimentConfig = [ { id: 'Experiment' } ];
+export const experimentConfig = [
+  { id: TaskType.Experiment },
+];
 
-const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
+const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
   filters, onChange,
   showExperiments = true,
   showLimit = true,

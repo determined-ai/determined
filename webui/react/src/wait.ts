@@ -21,7 +21,7 @@ const commandToEventUrl = (command: Command | CommandTask): string => {
   const kind = isCommandTask(command) ? command.type : command.kind;
   let path = '';
   switch (kind) {
-    case CommandType.Notebook:
+    case CommandType.JupyterLab:
       path = `/notebooks/${command.id}/events`;
       break;
     case CommandType.Tensorboard:

@@ -158,10 +158,10 @@ export interface CommandAddress {
 }
 
 export enum CommandType {
-  Command = 'COMMAND',
-  Notebook = 'NOTEBOOK',
-  Shell = 'SHELL',
-  Tensorboard = 'TENSORBOARD',
+  Command = 'command',
+  JupyterLab = 'jupyter-lab',
+  Shell = 'shell',
+  Tensorboard = 'tensorboard',
 }
 
 export interface CommandMisc {
@@ -173,7 +173,7 @@ export interface CommandConfig {
   description: string;
 }
 
-// The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
+// The command type is shared between Commands, JupyterLabs, Tensorboards, and Shells.
 export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
@@ -187,7 +187,7 @@ export interface Command {
   user: User;
 }
 
-export interface NotebookConfig {
+export interface JupyterLabConfig {
   name?: string;
   pool?: string;
   slots?: number;
@@ -512,7 +512,13 @@ export type RecentTask = AnyTask & RecentEvent;
 export type RecentCommandTask = CommandTask & RecentEvent;
 export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
-export type TaskType = CommandType | 'Experiment';
+export enum TaskType {
+  Command = 'command',
+  Experiment = 'experiment',
+  JupyterLab = 'jupyter-lab',
+  Shell = 'shell',
+  Tensorboard = 'tensorboard',
+}
 
 export enum ArchiveFilter {
   Archived = 'archived',
@@ -530,7 +536,7 @@ export interface TrialFilters {
   states?: string[];
 }
 
-export interface TaskFilters<T extends TaskType = TaskType> {
+export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   limit: number;
   states?: string[];
   types?: T[];

@@ -11,9 +11,9 @@ import { ResourceType } from 'types';
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
+import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
-import NotebookModal from './NotebookModal';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -87,7 +87,7 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
   const { auth, cluster: overview, ui } = useStore();
-  const [ showNotebookModal, setShowNotebookModal ] = useState(false);
+  const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
@@ -142,19 +142,19 @@ const NavigationSideBar: React.FC = () => {
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => setShowNotebookModal(true)}>Launch JupyterLab</Button>
+                onClick={() => setShowJupyterLabModal(true)}>Launch JupyterLab</Button>
               {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => setShowNotebookModal(true)}>
+                <Button className={css.launchIcon} onClick={() => setShowJupyterLabModal(true)}>
                   <Icon
                     name={'add-small'}
                     size="tiny" />
                 </Button>
               ) : null}
             </div>
-            <NotebookModal
-              visible={showNotebookModal}
-              onCancel={() => setShowNotebookModal(false)}
-              onLaunch={() => setShowNotebookModal(false)} />
+            <JupyterLabModal
+              visible={showJupyterLabModal}
+              onCancel={() => setShowJupyterLabModal(false)}
+              onLaunch={() => setShowJupyterLabModal(false)} />
           </section>
           <section className={css.top}>
             {menuConfig.top.map(config => (
