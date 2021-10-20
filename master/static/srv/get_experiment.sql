@@ -12,6 +12,7 @@ SELECT
     (SELECT COUNT(*) FROM trials t WHERE e.id = t.experiment_id) AS num_trials,
     e.archived AS archived,
     COALESCE(e.progress, 0) AS progress,
+    e.job_id AS job_id,
     u.username AS username
 FROM
     experiments e

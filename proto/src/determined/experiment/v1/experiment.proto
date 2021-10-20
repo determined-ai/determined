@@ -79,6 +79,8 @@ message Experiment {
   string name = 13;
   // The experiment notes.
   string notes = 14;
+  // Associated job's id.
+  string job_id = 15;
 }
 
 // ValidationHistoryEntry is a single entry for a validation history for an

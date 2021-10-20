@@ -36,7 +36,7 @@ func (a *apiServer) GetJobs(
 	case sproto.UseK8sRM(a.m.system):
 		err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &resp.Jobs)
 	default:
-		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+		err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
 	}
 	if err != nil {
 		return nil, err
@@ -60,11 +60,37 @@ func (a *apiServer) GetJobs(
 	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
 }
 
-// GetJobQueueStats TODO.
+// GetJobQueueStats retrieves job queue stats for a set of resource pools.
 func (a *apiServer) GetJobQueueStats(
 	_ context.Context, req *apiv1.GetJobQueueStatsRequest,
 ) (resp *apiv1.GetJobQueueStatsResponse, err error) {
-	return nil, notImplementedError
+	if len(req.ResourcePools) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "missing resource_pools parameter")
+	}
+	resp = &apiv1.GetJobQueueStatsResponse{
+		Results: make([]*apiv1.RPQueueStat, 0),
+	}
+
+	for _, rp := range req.ResourcePools {
+		stats := jobv1.QueueStats{}
+		qStats := apiv1.RPQueueStat{ResourcePool: rp}
+		switch {
+		case sproto.UseAgentRM(a.m.system):
+			err = a.actorRequest(
+				sproto.AgentRMAddr.Child(rp), resourcemanagers.GetJobQStats{}, &stats,
+			)
+		case sproto.UseK8sRM(a.m.system):
+			err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobQStats{}, &stats)
+		default:
+			err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
+		}
+		if err != nil {
+			return nil, err
+		}
+		qStats.Stats = &stats
+		resp.Results = append(resp.Results, &qStats)
+	}
+	return resp, nil
 }
 
 // UpdateJobQueue forwards the job queue message to the relevant resource pool.

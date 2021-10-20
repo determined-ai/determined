@@ -8,9 +8,13 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// GetJobOrder requests a list of *jobv1.Job.
 // FIXME haven't decided if resource manager actor should be responsible for this or not
 // we don't want a separate actor do we? could be useful for streaming job endpoints.
+// CHECK do we define the following messages in sproto package?
+// QUESTION should we use proto defined messages more often internally or keep them at api level
+
+// GetJobOrder requests a list of *jobv1.Job.
+// Expected response: []*jobv1.Job.
 type GetJobOrder struct{}
 
 // SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
@@ -20,6 +24,16 @@ type SetJobOrder struct {
 	Priority  *int
 	JobID     model.JobID
 }
+
+// GetJobSummary requests a JobSummary.
+// Expected response: jobv1.JobSummary.
+type GetJobSummary struct {
+	JobID model.JobID
+}
+
+// GetJobQStats requests stats for a queue.
+// Expected response: jobv1.QueueStats.
+type GetJobQStats struct{}
 
 /* filterAllocateRequests
 1. filters allocations that are not associated with a job
@@ -60,15 +74,17 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
 func allocateReqToV1Job(
 	rp *ResourcePool,
 	req *sproto.AllocateRequest,
+	jobsAhead int,
 ) (job *jobv1.Job) {
 	if req.Job == nil {
 		return job
 	}
 	group := rp.groups[req.Group]
 	job = &jobv1.Job{
+		JobId: string(req.Job.JobID),
 		Summary: &jobv1.JobSummary{
-			JobId: string(req.Job.JobID),
-			State: req.Job.State.Proto(),
+			State:     req.Job.State.Proto(),
+			JobsAhead: int32(jobsAhead),
 		},
 		EntityId:       req.Job.EntityID,
 		Type:           req.Job.JobType.Proto(),
@@ -86,14 +102,27 @@ func allocateReqToV1Job(
 	return job
 }
 
+// getJobSummary given an ordered list of allocateRequests returns the
+// requested job summary.
+func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *jobv1.JobSummary {
+	requests = filterAllocateRequests(requests)
+	for idx, req := range requests {
+		if req.Job.JobID == jobID {
+			return allocateReqToV1Job(rp, req, idx).Summary
+		}
+	}
+	return nil
+}
+
 // getV1Jobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
+// CHECK should this be on the resourcepool struct?
 func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
 	v1Jobs := make([]*jobv1.Job, 0)
-	for _, req := range filterAllocateRequests(allocateRequests) {
-		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req))
+	for idx, req := range filterAllocateRequests(allocateRequests) {
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req, idx))
 	}
 	return v1Jobs
 }
@@ -103,4 +132,21 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 		return
 	}
 	req.Job.State = state
+}
+
+func jobStats(rp *ResourcePool) *jobv1.QueueStats {
+	stats := jobv1.QueueStats{}
+	reqs := rp.scheduler.OrderedAllocations(rp)
+	reqs = filterAllocateRequests(reqs)
+	for _, req := range reqs {
+		if req.Preemptible {
+			stats.PreemptibleCount++
+		}
+		if req.Job.State == sproto.SchedulingStateQueued {
+			stats.QueuedCount++
+		} else {
+			stats.ScheduledCount++
+		}
+	}
+	return &stats
 }
