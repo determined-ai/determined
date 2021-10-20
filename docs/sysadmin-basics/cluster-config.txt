@@ -719,6 +719,11 @@ The master supports the following configuration settings:
       -  ``cert``: Certificate file to use for serving TLS.
       -  ``key``: Key file to use for serving TLS.
 
+   -  ``ssh``: Specifies configuration settings for SSH.
+
+      -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
+         size is 16384.
+
 -  ``telemetry``: Specifies whether we collect and report anonymous information about the usage of
    Determined. See :ref:`telemetry` for details on what kinds of information are reported.
 

@@ -44,6 +44,7 @@ type TaskSpec struct {
 	ClusterID   string
 	HarnessPath string
 	MasterCert  *tls.Certificate
+	SSHRsaSize  int
 
 	SegmentEnabled bool
 	SegmentAPIKey  string

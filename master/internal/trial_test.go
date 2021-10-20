@@ -172,6 +172,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 		&model.Checkpoint{},
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},
+			SSHRsaSize:     1024,
 		},
 	)
 	self := system.MustActorOf(actor.Addr("trial"), tr)

@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	trialKeySize      = 1024
 	trialPEMBlockType = "RSA PRIVATE KEY"
 )
 
@@ -22,9 +21,9 @@ type PrivateAndPublicKeys struct {
 }
 
 // GenerateKey returns a private and public SSH key.
-func GenerateKey(passphrase *string) (PrivateAndPublicKeys, error) {
+func GenerateKey(rsaKeySize int, passphrase *string) (PrivateAndPublicKeys, error) {
 	var generatedKeys PrivateAndPublicKeys
-	privateKey, err := rsa.GenerateKey(rand.Reader, trialKeySize)
+	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if err != nil {
 		return generatedKeys, errors.Wrap(err, "unable to generate private key")
 	}

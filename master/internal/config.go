@@ -40,6 +40,9 @@ func DefaultConfig() *Config {
 				User:  "root",
 				Group: "root",
 			},
+			SSH: SSHConfig{
+				RsaKeySize: 1024,
+			},
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
 		Port:        0,
@@ -145,6 +148,12 @@ func (c *Config) Resolve() error {
 type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
 	TLS         TLSConfig            `json:"tls"`
+	SSH         SSHConfig            `json:"ssh"`
+}
+
+// SSHConfig is the configuration setting for SSH.
+type SSHConfig struct {
+	RsaKeySize int `json:"rsa_key_size"`
 }
 
 // TLSConfig is the configuration for setting up serving over TLS.
@@ -160,6 +169,17 @@ func (t *TLSConfig) Validate() []error {
 		errs = append(errs, errors.New("TLS key file provided without a cert file"))
 	} else if t.Key == "" && t.Cert != "" {
 		errs = append(errs, errors.New("TLS cert file provided without a key file"))
+	}
+	return errs
+}
+
+// Validate implements the check.Validatable interface.
+func (t *SSHConfig) Validate() []error {
+	var errs []error
+	if t.RsaKeySize < 1 {
+		errs = append(errs, errors.New("RSA Key size must be greater than 0"))
+	} else if t.RsaKeySize > 16384 {
+		errs = append(errs, errors.New("RSA Key size must be less than 16,384"))
 	}
 	return errs
 }

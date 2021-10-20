@@ -122,7 +122,7 @@ func (a *apiServer) LaunchShell(
 				passphrase = &typed
 			}
 		}
-		keys, err = ssh.GenerateKey(passphrase)
+		keys, err = ssh.GenerateKey(spec.Base.SSHRsaSize, passphrase)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
