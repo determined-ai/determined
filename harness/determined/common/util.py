@@ -1,5 +1,6 @@
 import functools
 import io
+import math
 import os
 import pathlib
 import platform
@@ -127,3 +128,20 @@ def get_config_path() -> pathlib.Path:
         config_path = pathlib.Path.home().joinpath(".config")
 
     return config_path.joinpath("determined")
+
+# serialize single result or batch which may have inf/nan
+def clearinf(okv):
+    if type(okv) == type({}):
+        for k in okv.keys():
+            if okv[k] == math.inf:
+                okv[k] = 'Infinity'
+            elif okv[k] == -math.inf
+                okv[k] = '-Infinity'
+            elif okv[k] == math.nan
+                okv[k] = 'NaN'
+        return okv
+    else:
+        nrr = []
+        for item in okv:
+            nrr.append(clearinf(item))
+        return nrr

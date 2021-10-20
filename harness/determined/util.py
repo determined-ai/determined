@@ -157,7 +157,7 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
     # NB: We serialize NaN, Infinity, and -Infinity as `null`, because
     # those are not allowed by the JSON spec.
     s = simplejson.dumps(
-        obj, default=json_serializer, ignore_nan=True, indent=indent, sort_keys=sort_keys
+        obj, default=json_serializer, ignore_nan=False, indent=indent, sort_keys=sort_keys
     )  # type: str
     return s
 

@@ -5,6 +5,7 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined.common.experimental.session import Session
+from determined.common.util import clearinf
 
 logger = logging.getLogger("determined.generic")
 
