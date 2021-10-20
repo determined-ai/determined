@@ -132,7 +132,7 @@ def get_config_path() -> pathlib.Path:
 
 # serialize single result or batch which may have inf/nan
 def clearinf(okv):
-    if type(okv) == type({}):
+    if isinstance(okv, dict):
         for k in okv.keys():
             if okv[k] == math.inf:
                 okv[k] = "Infinity"
