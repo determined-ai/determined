@@ -47,7 +47,7 @@ const ResponsiveTable: ResponsiveTable = ({ loading, scroll, ...props }) => {
 
   return <div ref={tableRef}>
     <Spinner spinning={spinning}>
-      <Table scroll={tableScroll} {...props} />
+      <Table scroll={tableScroll} tableLayout="auto" {...props} />
     </Spinner>
   </div>;
 };
