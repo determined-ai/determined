@@ -63,7 +63,7 @@ class Training:
             "metrics": clearinf(metrics),
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = clearinf(batch_metrics)
+            body["batch_metrics"] = list(map(clearinf, batch_metrics))
         logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
