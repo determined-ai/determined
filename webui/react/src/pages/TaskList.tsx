@@ -343,6 +343,7 @@ const TaskList: React.FC = () => {
       {
         align: 'right',
         className: 'fullCell',
+        fixed: 'right',
         key: 'action',
         render: actionRenderer,
         title: '',
