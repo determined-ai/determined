@@ -14,7 +14,8 @@ type groupActorStopped struct {
 type group struct {
 	handler *actor.Ref
 	// job      *sproto.JobSummary
-	maxSlots *int
-	weight   float64 // QUESTION why is prio a ptr but weight is not.
-	priority *int
+	maxSlots  *int
+	weight    float64 // QUESTION why is prio a ptr but weight is not.
+	priority  *int
+	qPosition float64
 }

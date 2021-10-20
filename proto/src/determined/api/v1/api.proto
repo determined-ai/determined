@@ -688,7 +688,8 @@ service Determined {
   // Control the job queues.
   rpc UpdateJobQueue(UpdateJobQueueRequest) returns (UpdateJobQueueResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/resource-pools/queues"
+      post: "/api/v1/resource-pools/queues"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Jobs"

@@ -52,11 +52,12 @@ func (p *priorityScheduler) OrderedAllocations(
 		3. convert the resulting ordered list of jobids into a Job type for job apis
 
 		Once jobs carry a queue position attribute with them it'll be what
-		sortTasksByPriorityAndTimestamp uses for returning tasks in order.
+		sortTasksByPriorityAndPositionAndTimestamp uses for returning tasks in order.
 	*/
 	// WARN scheduled here means that resources are allocated.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(
+			rp.taskList, rp.groups, func(r *sproto.AllocateRequest) bool { return true })
 
 	// FIXME there is gotta be a friendlier version of this.
 	// can we stick to slices together quickly in Go?
@@ -123,8 +124,8 @@ func (p *priorityScheduler) prioritySchedulerWithFilter(
 
 	// Sort tasks by priorities and timestamps. This sort determines the order in which
 	// tasks are scheduled and preempted.
-	priorityToPendingTasksMap, priorityToScheduledTaskMap := sortTasksByPriorityAndTimestamp(
-		taskList, groups, filter)
+	priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+		sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, filter)
 
 	localAgentsState := deepCopyAgents(agents)
 
@@ -263,10 +264,10 @@ func trySchedulingPendingTasksInPriority(
 	return successfulAllocations, unSuccessfulAllocations
 }
 
-// sortTasksByPriorityAndTimestamp sorts all pending and scheduled tasks
+// sortTasksByPriorityAndPositionAndTimestamp sorts all pending and scheduled tasks
 // separately by priority. Within each priority, tasks are ordered
-// based on their creation time.
-func sortTasksByPriorityAndTimestamp(
+// based on their queue position and then creation time.
+func sortTasksByPriorityAndPositionAndTimestamp(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
 	filter func(*sproto.AllocateRequest) bool,
@@ -277,6 +278,7 @@ func sortTasksByPriorityAndTimestamp(
 
 	for it := taskList.iterator(); it.next(); {
 		req := it.value()
+
 		if !filter(req) {
 			continue
 		}
@@ -303,12 +305,42 @@ func sortTasksByPriorityAndTimestamp(
 	} {
 		for _, tasks := range tasksMap {
 			sort.Slice(tasks, func(i, j int) bool {
-				return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				compareVal := comparePositions(tasks[i], tasks[j], groups)
+				switch compareVal {
+				case 1:
+					return true
+				case -1:
+					return false
+				default:
+					return tasks[i].TaskActor.RegisteredTime().Before(tasks[j].TaskActor.RegisteredTime())
+				}
 			})
 		}
 	}
 
 	return priorityToPendingTasksMap, priorityToScheduledTaskMap
+}
+
+// comparePositions returns the following:
+// 1 if a is in front of b.
+// 0 if a is equal to b in position.
+// -1 if a is behind b.
+func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group) int {
+	aPosition := groups[a.Group].qPosition
+	bPosition := groups[b.Group].qPosition
+	switch {
+	case aPosition == bPosition:
+		return 0
+	case aPosition < 0 || bPosition < 0:
+		if aPosition > 0 {
+			return 1
+		}
+		return -1
+	case aPosition < bPosition:
+		return 1
+	default:
+		return -1
+	}
 }
 
 func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {

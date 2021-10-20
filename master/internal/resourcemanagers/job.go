@@ -17,6 +17,14 @@ import (
 // Expected response: []*jobv1.Job.
 type GetJobOrder struct{}
 
+// SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
+type SetJobOrder struct {
+	QPosition float64
+	Weight    float64
+	Priority  *int
+	JobID     model.JobID
+}
+
 // GetJobSummary requests a JobSummary.
 // Expected response: jobv1.JobSummary.
 type GetJobSummary struct {
