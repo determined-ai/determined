@@ -35,7 +35,7 @@ func (s SchedulingState) Proto() jobv1.State {
 
 // JobSummary contains information about a task for external display.
 type JobSummary struct {
-	// model.Job
+	//Job      model.Job
 	JobID    model.JobID
 	JobType  model.JobType
 	EntityID string `json:"entity_id"`

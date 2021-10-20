@@ -238,6 +238,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetGroupWeight,
 		sproto.SetGroupPriority,
+		sproto.SetGroupOrder,
 		sproto.SetTaskName,
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased:
@@ -245,6 +246,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case
 		GetJobOrder,
+		SetJobOrder,
 		GetJobQStats,
 		GetJobSummary:
 		return rp.receiveJobQueueMsg(ctx)
@@ -348,6 +350,35 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case GetJobOrder:
 		ctx.Respond(getV1Jobs(rp))
+	case SetJobOrder:
+		for it := rp.taskList.iterator(); it.next(); {
+			req := it.value()
+			if req.Job.JobID == msg.JobID {
+				group := rp.getOrCreateGroup(ctx, req.Group)
+				if msg.QPosition > 0 {
+					group.qPosition = msg.QPosition
+					ctx.Tell(req.Group, sproto.SetGroupOrder{
+						QPosition: msg.QPosition,
+						Handler:   ctx.Self(),
+					})
+				}
+				if *msg.Priority > 0 {
+					group.priority = msg.Priority
+					ctx.Tell(req.Group, sproto.SetGroupPriority{
+						Priority: msg.Priority,
+						Handler:  ctx.Self(),
+					})
+				}
+				if msg.Weight > 0 {
+					group.weight = msg.Weight
+					ctx.Tell(req.Group, sproto.SetGroupWeight{
+						Weight:  msg.Weight,
+						Handler: ctx.Self(),
+					})
+				}
+			}
+		}
+		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
 	case GetJobSummary:
 		resp := getV1JobSummary(rp, msg.JobID, rp.scheduler.OrderedAllocations(rp))
 		ctx.Respond(resp)
@@ -379,6 +410,12 @@ func (rp *ResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 		if rp.config.Scheduler.Priority != nil {
 			ctx.Log().Infof("setting priority for group of %s to %d",
 				msg.Handler.Address().String(), *group.priority)
+		}
+
+	case sproto.SetGroupOrder:
+		group := rp.getOrCreateGroup(ctx, msg.Handler)
+		if msg.QPosition != 0 {
+			group.qPosition = msg.QPosition
 		}
 
 	case sproto.SetTaskName:

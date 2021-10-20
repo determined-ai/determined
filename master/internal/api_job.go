@@ -6,13 +6,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/pkg/model"
+
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
+//var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
 
 // GetJobs retrieves a list of jobs for a resource pool.
 func (a *apiServer) GetJobs(
@@ -91,9 +93,33 @@ func (a *apiServer) GetJobQueueStats(
 	return resp, nil
 }
 
-// UpdateJobQueue TODO.
+// UpdateJobQueue forwards the job queue message to the relevant resource pool.
 func (a *apiServer) UpdateJobQueue(
 	_ context.Context, req *apiv1.UpdateJobQueueRequest,
 ) (resp *apiv1.UpdateJobQueueResponse, err error) {
-	return nil, notImplementedError
+	resp = &apiv1.UpdateJobQueueResponse{}
+
+	for _, update := range req.Updates {
+		qPosition := float64(update.GetQueuePosition())
+		priority := int(update.GetPriority())
+		weight := float64(update.GetWeight())
+		msg := resourcemanagers.SetJobOrder{
+			QPosition: qPosition,
+			Priority:  &priority,
+			Weight:    weight,
+			JobID:     model.JobID(update.GetJobId()),
+		}
+		switch {
+		case sproto.UseAgentRM(a.m.system):
+			err = a.actorRequest(sproto.AgentRMAddr.Child(update.SourceResourcePool), msg, resp)
+		case sproto.UseK8sRM(a.m.system):
+			err = a.actorRequest(sproto.K8sRMAddr, msg, resp)
+		default:
+			err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
+		}
+		if err != nil {
+			return resp, err
+		}
+	}
+	return resp, nil
 }
