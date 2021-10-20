@@ -1,0 +1,8 @@
+:orphan:
+
+**Breaking Changes**
+
+- Model Registry APIs: use model ID (int) instead of name (str) as a lookup parameter
+in ``get_model`` and ``get_model_versions`` endpoints.
+
+- Adds search / sort options to Model Registry API's ``get_models`` endpoint.
