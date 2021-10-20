@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+-  Harness: pass infinite and nan value metrics to simplejson as strings
+-  Web UI: convert infinity and nan value strings to numeric metrics
