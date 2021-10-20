@@ -14,7 +14,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
+//var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
 
 // GetJobs retrieves a list of jobs for a resource pool.
 func (a *apiServer) GetJobs(
