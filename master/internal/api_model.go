@@ -3,6 +3,8 @@ package internal
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,34 +23,66 @@ import (
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
 	m := &modelv1.Model{}
-	switch err := a.m.db.QueryProto("get_model", m, req.ModelName); err {
+	switch err := a.m.db.QueryProto("get_model", m, req.ModelId); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s not found", req.ModelName)
+			codes.NotFound, "model %d not found", req.ModelId)
 	default:
 		return &apiv1.GetModelResponse{Model: m},
-			errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
+			errors.Wrapf(err, "error fetching model %d from database", req.ModelId)
 	}
 }
 
 func (a *apiServer) GetModels(
 	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
-	if err := a.m.db.QueryProto("get_models", &resp.Models); err != nil {
+	nameFilterExpr := strings.ToLower(req.Name)
+	descFilterExpr := strings.ToLower(req.Description)
+	archFilterExpr := ""
+	if req.Archived != nil {
+		archFilterExpr = strconv.FormatBool(req.Archived.Value)
+	}
+	userFilterExpr := strings.Join(req.Users, ",")
+	labelFilterExpr := strings.Join(req.Labels, ",")
+	// Construct the ordering expression.
+	sortColMap := map[apiv1.GetModelsRequest_SortBy]string{
+		apiv1.GetModelsRequest_SORT_BY_UNSPECIFIED:       "id",
+		apiv1.GetModelsRequest_SORT_BY_NAME:              "name",
+		apiv1.GetModelsRequest_SORT_BY_DESCRIPTION:       "description",
+		apiv1.GetModelsRequest_SORT_BY_CREATION_TIME:     "creation_time",
+		apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME: "last_updated_time",
+		apiv1.GetModelsRequest_SORT_BY_NUM_VERSIONS:      "num_versions",
+	}
+	orderByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	}
+	orderExpr := ""
+	switch _, ok := sortColMap[req.SortBy]; {
+	case !ok:
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	case sortColMap[req.SortBy] != "id": //nolint:goconst // Not actually the same constant.
+		orderExpr = fmt.Sprintf(
+			"%s %s, id %s",
+			sortColMap[req.SortBy], orderByMap[req.OrderBy], orderByMap[req.OrderBy],
+		)
+	default:
+		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
+	}
+	err := a.m.db.QueryProtof(
+		"get_models",
+		[]interface{}{orderExpr},
+		&resp.Models,
+		archFilterExpr,
+		userFilterExpr,
+		labelFilterExpr,
+		nameFilterExpr,
+		descFilterExpr,
+	)
+	if err != nil {
 		return nil, err
 	}
-
-	a.filter(&resp.Models, func(i int) bool {
-		v := resp.Models[i]
-
-		if !strings.Contains(strings.ToLower(v.Name), strings.ToLower(req.Name)) {
-			return false
-		}
-
-		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
-	})
-
-	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)
 	return resp, a.paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
 }
 
@@ -70,7 +104,7 @@ func (a *apiServer) PostModel(
 
 func (a *apiServer) PatchModel(
 	ctx context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.Model.Name})
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.Model.Id})
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +112,8 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 
 	if currModel.Description != req.Model.Description {
-		log.Infof("model (%s) description changing from \"%s\" to \"%s\"",
-			req.Model.Name, currModel.Description, req.Model.Description)
+		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
+			req.Model.Id, currModel.Description, req.Model.Description)
 		currModel.Description = req.Model.Description
 	}
 
@@ -98,16 +132,16 @@ func (a *apiServer) PatchModel(
 	}
 
 	if !bytes.Equal(currMeta, newMeta) {
-		log.Infof("model (%s) metadata changing from %s to %s",
-			req.Model.Name, currMeta, newMeta)
+		log.Infof("model (%d) metadata changing from %s to %s",
+			req.Model.Id, currMeta, newMeta)
 		currModel.Metadata = req.Model.Metadata
 	}
 
 	err = a.m.db.QueryProto(
-		"update_model", &modelv1.Model{}, req.Model.Name, currModel.Description, newMeta, time.Now())
+		"update_model", &modelv1.Model{}, req.Model.Id, currModel.Description, newMeta, time.Now())
 
 	return &apiv1.PatchModelResponse{Model: currModel},
-		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
+		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
 }
 
 func (a *apiServer) GetModelVersion(
@@ -116,10 +150,10 @@ func (a *apiServer) GetModelVersion(
 	resp.ModelVersion = &modelv1.ModelVersion{}
 
 	switch err := a.m.db.QueryProto(
-		"get_model_version", resp.ModelVersion, req.ModelName, req.ModelVersion); {
+		"get_model_version", resp.ModelVersion, req.ModelId, req.ModelVersion); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", req.ModelName, req.ModelVersion)
+			codes.NotFound, "model %s version %d not found", req.ModelId, req.ModelVersion)
 	default:
 		return resp, err
 	}
@@ -127,13 +161,13 @@ func (a *apiServer) GetModelVersion(
 
 func (a *apiServer) GetModelVersions(
 	ctx context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: getResp.Model}
-	if err := a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, req.ModelName); err != nil {
+	if err := a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, req.ModelId); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +178,7 @@ func (a *apiServer) GetModelVersions(
 func (a *apiServer) PostModelVersion(
 	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
 	}
@@ -173,12 +207,12 @@ func (a *apiServer) PostModelVersion(
 	err = a.m.db.QueryProto(
 		"insert_model_version",
 		respModelVersion.ModelVersion,
-		req.ModelName,
+		req.ModelId,
 		req.CheckpointUuid,
 	)
 
 	respModelVersion.ModelVersion.Model = getResp.Model
 	respModelVersion.ModelVersion.Checkpoint = c
 
-	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelName)
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
 }

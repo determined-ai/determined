@@ -53,6 +53,7 @@ class Model:
     versions and metadata.
 
     Arguments:
+        model_id (int): The unique id of this model.
         name (string): The name of the model.
         description (string, optional): The description of the model.
         creation_time (datetime): The time the model was created.
@@ -64,6 +65,7 @@ class Model:
     def __init__(
         self,
         session: session.Session,
+        model_id: int,
         name: str,
         description: str = "",
         creation_time: Optional[datetime.datetime] = None,
@@ -71,6 +73,7 @@ class Model:
         metadata: Optional[Dict[str, Any]] = None,
     ):
         self._session = session
+        self.model_id = model_id
         self.name = name
         self.description = description
         self.creation_time = creation_time
@@ -92,7 +95,7 @@ class Model:
         """
         if version == 0:
             resp = self._session.get(
-                "/api/v1/models/{}/versions/".format(self.name),
+                "/api/v1/models/{}/versions/".format(self.model_id),
                 {"limit": 1, "order_by": 2},
             )
 
@@ -110,7 +113,7 @@ class Model:
                 self._session,
             )
         else:
-            resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.name, version))
+            resp = self._session.get("/api/v1/models/{}/versions/{}".format(self.model_id, version))
 
         data = resp.json()
         return checkpoint.Checkpoint.from_json(data["modelVersion"]["checkpoint"], self._session)
@@ -127,7 +130,7 @@ class Model:
             order_by (enum): A member of the :class:`ModelOrderBy` enum.
         """
         resp = self._session.get(
-            "/api/v1/models/{}/versions/".format(self.name),
+            "/api/v1/models/{}/versions/".format(self.model_id),
             params={"order_by": order_by.value},
         )
         data = resp.json()
@@ -154,7 +157,7 @@ class Model:
             checkpoint_uuid: The UUID of the checkpoint to register.
         """
         resp = self._session.post(
-            "/api/v1/models/{}/versions".format(self.name),
+            "/api/v1/models/{}/versions".format(self.model_id),
             json={"checkpoint_uuid": checkpoint_uuid},
         )
 
@@ -182,7 +185,7 @@ class Model:
             self.metadata[key] = val
 
         self._session.patch(
-            "/api/v1/models/{}".format(self.name),
+            "/api/v1/models/{}".format(self.model_id),
             json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
@@ -199,13 +202,14 @@ class Model:
                 del self.metadata[key]
 
         self._session.patch(
-            "/api/v1/models/{}".format(self.name),
+            "/api/v1/models/{}".format(self.model_id),
             json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
     def to_json(self) -> Dict[str, Any]:
         return {
             "name": self.name,
+            "id": self.model_id,
             "description": self.description,
             "creation_time": self.creation_time,
             "last_updated_time": self.last_updated_time,
@@ -213,12 +217,15 @@ class Model:
         }
 
     def __repr__(self) -> str:
-        return "Model(name={}, metadata={})".format(self.name, json.dumps(self.metadata))
+        return "Model(id={}, name={}, metadata={})".format(
+            self.model_id, self.name, json.dumps(self.metadata)
+        )
 
     @staticmethod
     def from_json(data: Dict[str, Any], session: session.Session) -> "Model":
         return Model(
             session,
+            data["id"],
             data["name"],
             data.get("description", ""),
             data.get("creationTime"),

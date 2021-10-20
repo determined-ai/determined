@@ -2028,7 +2028,7 @@ export interface V1GetModelVersionsResponse {
 }
 
 /**
- * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+ * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
  * @export
  * @enum {string}
  */
@@ -2037,7 +2037,8 @@ export enum V1GetModelsRequestSortBy {
     NAME = <any> 'SORT_BY_NAME',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
     CREATIONTIME = <any> 'SORT_BY_CREATION_TIME',
-    LASTUPDATEDTIME = <any> 'SORT_BY_LAST_UPDATED_TIME'
+    LASTUPDATEDTIME = <any> 'SORT_BY_LAST_UPDATED_TIME',
+    NUMVERSIONS = <any> 'SORT_BY_NUM_VERSIONS'
 }
 
 /**
@@ -2051,13 +2052,13 @@ export interface V1GetModelsResponse {
      * @type {Array<V1Model>}
      * @memberof V1GetModelsResponse
      */
-    models?: Array<V1Model>;
+    models: Array<V1Model>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetModelsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3029,6 +3030,42 @@ export interface V1Model {
      * @memberof V1Model
      */
     lastUpdatedTime: Date;
+    /**
+     * The id of this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    id: number;
+    /**
+     * The number of versions associated with this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    numVersions: number;
+    /**
+     * Labels associated with this model.
+     * @type {Array<string>}
+     * @memberof V1Model
+     */
+    labels?: Array<string>;
+    /**
+     * README for model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    readme?: string;
+    /**
+     * User who created this model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    username: string;
+    /**
+     * Whether this model is archived or not.
+     * @type {boolean}
+     * @memberof V1Model
+     */
+    archived?: boolean;
 }
 
 /**
@@ -3042,25 +3079,67 @@ export interface V1ModelVersion {
      * @type {V1Model}
      * @memberof V1ModelVersion
      */
-    model?: V1Model;
+    model: V1Model;
     /**
      * The checkpoint of the model version.
      * @type {V1Checkpoint}
      * @memberof V1ModelVersion
      */
-    checkpoint?: V1Checkpoint;
+    checkpoint: V1Checkpoint;
     /**
      * The version number.
      * @type {number}
      * @memberof V1ModelVersion
      */
-    version?: number;
+    version: number;
     /**
      * The time the model version was created.
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    creationTime?: Date;
+    creationTime: Date;
+    /**
+     * Unique id for each model version.
+     * @type {number}
+     * @memberof V1ModelVersion
+     */
+    id: number;
+    /**
+     * Name for this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    name?: string;
+    /**
+     * Metadata associated with this model version.
+     * @type {any}
+     * @memberof V1ModelVersion
+     */
+    metadata?: any;
+    /**
+     * The time this model version was last updated.
+     * @type {Date}
+     * @memberof V1ModelVersion
+     */
+    lastUpdatedTime?: Date;
+    /**
+     * Comment associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    comment?: string;
+    /**
+     * Readme associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    readme?: string;
+    /**
+     * User who created this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    username: string;
 }
 
 /**
@@ -3287,11 +3366,11 @@ export interface V1PostModelResponse {
  */
 export interface V1PostModelVersionRequest {
     /**
-     * The name of the model to add a version to.
-     * @type {string}
+     * The id of the model to add a version to.
+     * @type {number}
      * @memberof V1PostModelVersionRequest
      */
-    modelName?: string;
+    modelId?: number;
     /**
      * The checkpoint representing the new version.
      * @type {string}
@@ -11445,17 +11524,17 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModel.');
+        determinedGetModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModel.');
             }
-            const localVarPath = `/api/v1/models/{modelName}`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11482,22 +11561,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {string} modelId The name of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersion.');
+        determinedGetModelVersion(modelId: string, modelVersion: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModelVersion.');
             }
             // verify required parameter 'modelVersion' is not null or undefined
             if (modelVersion === null || modelVersion === undefined) {
                 throw new RequiredError('modelVersion','Required parameter modelVersion was null or undefined when calling determinedGetModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersion}`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
                 .replace(`{${"modelVersion"}}`, encodeURIComponent(String(modelVersion)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11525,7 +11604,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11533,13 +11612,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersions.');
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModelVersions.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}/versions`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11582,16 +11661,19 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options: any = {}): FetchArgs {
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11630,6 +11712,18 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['description'] = description;
             }
 
+            if (labels) {
+                localVarQueryParameter['labels'] = labels;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            if (users) {
+                localVarQueryParameter['users'] = users;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -11643,22 +11737,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPatchModel.');
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPatchModel.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModel.');
             }
-            const localVarPath = `/api/v1/models/{model.name}`
-                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{model.id}`
+                .replace(`{${"model.id"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11735,22 +11829,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add a version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPostModelVersion.');
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPostModelVersion.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}/versions`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11790,12 +11884,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModel(modelName, options);
+        determinedGetModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModel(modelId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11809,13 +11903,13 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {string} modelId The name of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelName, modelVersion, options);
+        determinedGetModelVersion(modelId: string, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelId, modelVersion, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11829,7 +11923,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11837,8 +11931,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options);
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11852,17 +11946,20 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options);
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11876,13 +11973,13 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModel(modelName, body, options);
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModel(modelId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11916,13 +12013,13 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add a version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModelVersion(modelName, body, options);
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModelVersion(modelId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11945,28 +12042,28 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModel(modelName, options)(fetch, basePath);
+        determinedGetModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModel(modelId, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {string} modelId The name of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersion(modelName, modelVersion, options)(fetch, basePath);
+        determinedGetModelVersion(modelId: string, modelVersion: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModelVersion(modelId, modelVersion, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11974,34 +12071,37 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options)(fetch, basePath);
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPatchModel(modelName, body, options)(fetch, basePath);
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPatchModel(modelId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12017,13 +12117,13 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add a version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModelVersion(modelName, body, options)(fetch, basePath);
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPostModelVersion(modelId, body, options)(fetch, basePath);
         },
     };
 };
@@ -12038,32 +12138,32 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Get the requested model.
-     * @param {string} modelName The name of the template.
+     * @param {number} modelId The name of the template.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModel(modelName, options)(this.fetch, this.basePath);
+    public determinedGetModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModel(modelId, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get the requested model version.
-     * @param {string} modelName The name of the model.
+     * @param {string} modelId The name of the model.
      * @param {number} modelVersion The version number.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersion(modelName: string, modelVersion: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersion(modelName, modelVersion, options)(this.fetch, this.basePath);
+    public determinedGetModelVersion(modelId: string, modelVersion: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModelVersion(modelId, modelVersion, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get a list of versions for the requested model.
-     * @param {string} modelName The name of the model.
+     * @param {number} modelId The id of the model.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -12072,38 +12172,41 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get a list of models.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
      * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
      * @param {string} [name] Limit the models to those matching the name.
      * @param {string} [description] Limit the models to those matching the description.
+     * @param {Array<string>} [labels] Limit the models to those with the following labels.
+     * @param {boolean} [archived] Limit to unarchived models only.
+     * @param {Array<string>} [users] Limit the models to those made by the following users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options)(this.fetch, this.basePath);
+    public determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {string} modelName The name of the model.
+     * @param {number} modelId The id of this model.
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPatchModel(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPatchModel(modelId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -12122,14 +12225,14 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Create a model version.
-     * @param {string} modelName The name of the model to add a version to.
+     * @param {number} modelId The id of the model to add a version to.
      * @param {V1PostModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModelVersion(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPostModelVersion(modelId, body, options)(this.fetch, this.basePath);
     }
 
 }
