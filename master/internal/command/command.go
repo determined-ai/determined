@@ -271,6 +271,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
+	case sproto.SetGroupOrder, sproto.SetGroupWeight, sproto.SetGroupPriority:
+		// these operations do not require special handling by commands
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
