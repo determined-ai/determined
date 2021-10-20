@@ -61,6 +61,16 @@ def _fetch_slots() -> List[Dict[str, Any]]:
     return slots
 
 
+def _wait_for_slots(min_slots_expected: int, max_ticks: int = 60 * 2) -> List[Dict[str, Any]]:
+    for _ in range(max_ticks):
+        slots = _fetch_slots()
+        if len(slots) >= min_slots_expected:
+            return slots
+        time.sleep(1)
+
+    pytest.fail(f"Didn't detect {min_slots_expected} slots within {max_ticks} seconds")
+
+
 def _run_zero_slot_command(sleep: int = 30) -> str:
     command = [
         "det",
@@ -201,7 +211,7 @@ def test_drain_agent_sched() -> None:
     Start an experiment, drain it. Start a second one and make sure it schedules
     on the second agent *before* the first one has finished.
     """
-    slots = _fetch_slots()
+    slots = _wait_for_slots(2)
     assert len(slots) == 2
 
     exp_id1 = exp.create_experiment(
@@ -268,7 +278,7 @@ def test_drain_agent_sched_zeroslot() -> None:
     as well. Wait for them to finish, reenable both agents, and make sure
     next command schedules and succeeds.
     """
-    slots = _fetch_slots()
+    slots = _wait_for_slots(2)
     assert len(slots) == 2
 
     command_id1 = _run_zero_slot_command(60)
