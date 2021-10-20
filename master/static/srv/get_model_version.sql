@@ -4,7 +4,7 @@ WITH mv AS (
     WHERE model_id = $1 AND version = $2
 ),
 m AS (
-  Select * FROM models WHERE id = $1
+  SELECT * FROM models WHERE id = $1
 ),
 c AS (
   SELECT
