@@ -1,6 +1,7 @@
-from pydantic import BaseModel
 import json
 from typing import Any, Dict, List, Union
+
+from pydantic import BaseModel
 
 # def to_dict(o: BaseModel) -> Dict:
 #     rv = o
@@ -15,7 +16,7 @@ from typing import Any, Dict, List, Union
 
 
 def to_json(o: Union[BaseModel, List[BaseModel]], **dumps_kwargs):
-    if isinstance(o, List): # FIXME is this enough?
+    if isinstance(o, List):  # FIXME is this enough?
         return [to_json(i) for i in o]
     assert hasattr(o, "json")
-    return json.loads(o.json(**dumps_kwargs)) # CHECK do we need this? 
+    return json.loads(o.json(**dumps_kwargs))  # CHECK do we need this?
