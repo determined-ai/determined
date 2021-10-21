@@ -2,6 +2,9 @@
   "name": "determined-webui",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": "^14.16.0"
+  },
   "scripts": {
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "react-app-rewired start",
