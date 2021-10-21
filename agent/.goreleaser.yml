@@ -1,4 +1,4 @@
-project_name: determined-ee-agent
+project_name: hpe-mlde-agent
 
 snapshot:
   name_template: "{{ .Env.VERSION }}"

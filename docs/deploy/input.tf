@@ -4,5 +4,5 @@ variable "det_version" {
 }
 
 locals {
-  domain = "docs.determined.ai"
+  domain = "hpe-mlde.determined.ai"
 }

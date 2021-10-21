@@ -1249,10 +1249,10 @@ jobs:
           check: false
       - make-package
       - run: mkdir -p build/
-      - run: docker tag determinedai/determined-ee-master:${CIRCLE_SHA1}-amd64 determinedai/determined-ee-master:${CIRCLE_SHA1}
-      - run: docker save -o build/master.image determinedai/determined-ee-master:${CIRCLE_SHA1}
-      - run: docker tag determinedai/determined-ee-agent:${CIRCLE_SHA1}-amd64 determinedai/determined-ee-agent:${CIRCLE_SHA1}
-      - run: docker save -o build/agent.image determinedai/determined-ee-agent:${CIRCLE_SHA1}
+      - run: docker tag determinedai/hpe-mlde-master:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-master:${CIRCLE_SHA1}
+      - run: docker save -o build/master.image determinedai/hpe-mlde-master:${CIRCLE_SHA1}
+      - run: docker tag determinedai/hpe-mlde-agent:${CIRCLE_SHA1}-amd64 determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
+      - run: docker save -o build/agent.image determinedai/hpe-mlde-agent:${CIRCLE_SHA1}
       - persist_to_workspace:
           root: .
           paths:
@@ -1306,10 +1306,6 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - login-docker:
-          repository: nvcr.io
-          username: ${NGC_API_USERNAME}
-          password: ${NGC_API_KEY}
       - pre-package-and-push-system
       - make-package
       - run: make -C master publish
@@ -1334,10 +1330,6 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - login-docker:
-          repository: nvcr.io
-          username: ${NGC_API_USERNAME}
-          password: ${NGC_API_KEY}
       - pre-package-and-push-system
       - make-package
       - run: make -C master publish
@@ -1441,8 +1433,8 @@ jobs:
           at: .
       - run: export DEBIAN_FRONTEND=noninteractive
       - run: sudo apt-get update
-      - run: sudo apt-get install -yf $(pwd)/master/dist/determined-ee-master*.deb
-      - run: sudo apt-get install -yf $(pwd)/agent/dist/determined-ee-agent*.deb
+      - run: sudo apt-get install -y $(pwd)/master/dist/hpe-mlde-master*.deb
+      - run: sudo apt-get install -y $(pwd)/agent/dist/hpe-mlde-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
