@@ -26,6 +26,7 @@ import {
 import { truncate } from 'utils/string';
 
 import css from './JobQueue.module.scss';
+import ManageJob from './ManageJob';
 
 const STORAGE_PATH = 'job';
 const STORAGE_LIMIT_KEY = 'limit';
@@ -176,17 +177,7 @@ const JobQueue: React.FC = () => {
           // onRow={handleTableRow}
         />
       </Section>
-      {!!managingJob &&
-          <Modal
-            cancelButtonProps={{ style: { display: 'none' } }}
-            cancelText=""
-            mask
-            // style={{ minWidth: '600px' }}
-            title={'Manage Job ' + truncate(managingJob.jobId, 6, '')}
-            visible={!!managingJob}
-            onCancel={hideModal}
-            onOk={hideModal}
-          />}
+      <ManageJob job={managingJob} onFinish={hideModal} />
 
     </Page>
   );
