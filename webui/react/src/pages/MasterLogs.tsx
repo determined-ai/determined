@@ -6,6 +6,7 @@ import useRestApi from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
 import { V1MasterLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
+import { jsonToMasterLogs } from 'services/decoder';
 import { LogsParams } from 'services/types';
 import { consumeStream } from 'services/utils';
 import { Log } from 'types';
@@ -73,12 +74,17 @@ const MasterLogs: React.FC = () => {
 
   useEffect(() => {
     try {
-      consumeStream(
-        detApi.StreamingCluster.determinedMasterLogs(-50, 0, true, { signal: canceler.signal }),
+      consumeStream<V1MasterLogsResponse>(
+        detApi.StreamingCluster.determinedMasterLogs(
+          -TAIL_SIZE,
+          0,
+          true,
+          { signal: canceler.signal },
+        ),
         event => {
           const logEntry = (event as V1MasterLogsResponse).logEntry;
           if (logsRef.current && logEntry) {
-            logsRef.current?.addLogs([ { message: '', ...logEntry } ]);
+            logsRef.current?.addLogs(jsonToMasterLogs(logEntry));
           }
         },
       );
