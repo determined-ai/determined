@@ -137,6 +137,6 @@ def clearinf(okv: dict) -> dict:
             okv[k] = "Infinity"
         elif okv[k] == -1 * math.inf:
             okv[k] = "-Infinity"
-        elif okv[k] == math.nan:
+        elif isinstance(okv[k], float) and math.isnan(okv[k]):
             okv[k] = "NaN"
     return okv
