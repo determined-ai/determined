@@ -8,7 +8,7 @@ import Spinner from 'components/Spinner';
 import TableBatch from 'components/TableBatch';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isNewTabClickEvent, openBlank, paths, routeToReactUrl } from 'routes/utils';
-import { openOrCreateTensorboard } from 'services/api';
+import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { consumeStream } from 'services/utils';
@@ -164,7 +164,7 @@ const LearningCurve: React.FC<Props> = ({
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
-      return await openOrCreateTensorboard({ trialIds: selectedRowKeys });
+      return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
     } else if (action === Action.CompareTrials) {
       return setShowCompareTrials(true);
     }

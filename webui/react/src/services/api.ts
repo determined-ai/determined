@@ -3,8 +3,8 @@ import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
-  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorboardParams, LoginResponse, LogsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
+  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse, LogsParams,
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
@@ -152,9 +152,9 @@ export const getShells = generateDetApi<
   GetShellsParams, Api.V1GetShellsResponse, CommandTask[]
 >(Config.getShells);
 
-export const getTensorboards = generateDetApi<
-  GetTensorboardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
->(Config.getTensorboards);
+export const getTensorBoards = generateDetApi<
+  GetTensorBoardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
+>(Config.getTensorBoards);
 
 export const killCommand = generateDetApi<
   CommandIdParams, Api.V1KillCommandResponse, void
@@ -168,9 +168,9 @@ export const killShell = generateDetApi<
   CommandIdParams, Api.V1KillShellResponse, void
 >(Config.killShell);
 
-export const killTensorboard = generateDetApi<
+export const killTensorBoard = generateDetApi<
   CommandIdParams, Api.V1KillTensorboardResponse, void
->(Config.killTensorboard);
+>(Config.killTensorBoard);
 
 export const getTaskTemplates = generateDetApi<
 GetTemplatesParams, Api.V1GetTemplatesResponse, Template[]
@@ -184,19 +184,19 @@ export const previewJupyterLab = generateDetApi<
   LaunchJupyterLabParams, Api.V1LaunchNotebookResponse, RawJson
   >(Config.previewJupyterLab);
 
-export const launchTensorboard = generateDetApi<
-  LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
->(Config.launchTensorboard);
+export const launchTensorBoard = generateDetApi<
+  LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, CommandTask
+>(Config.launchTensorBoard);
 
-export const openOrCreateTensorboard = async (
-  params: LaunchTensorboardParams,
+export const openOrCreateTensorBoard = async (
+  params: LaunchTensorBoardParams,
 ): Promise<CommandTask> => {
-  const tensorboards = await getTensorboards({});
+  const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(tensorboard =>
     !terminalCommandStates.has(tensorboard.state)
     && tsbMatchesSource(tensorboard, params));
   if (match) return match;
-  return launchTensorboard(params);
+  return launchTensorBoard(params);
 };
 
 export const killTask = async (task: CommandTask): Promise<void> => {
@@ -207,8 +207,8 @@ export const killTask = async (task: CommandTask): Promise<void> => {
       return await killJupyterLab({ commandId: task.id });
     case CommandType.Shell:
       return await killShell({ commandId: task.id });
-    case CommandType.Tensorboard:
-      return await killTensorboard({ commandId: task.id });
+    case CommandType.TensorBoard:
+      return await killTensorBoard({ commandId: task.id });
   }
 };
 

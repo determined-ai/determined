@@ -27,7 +27,7 @@ const limitOptions: number[] = [ 10, 25, 50 ];
 
 export const commandConfig = [
   { id: CommandType.JupyterLab, label: 'JupyterLab' },
-  { id: CommandType.Tensorboard, label: 'Tensorboard' },
+  { id: CommandType.TensorBoard, label: 'TensorBoard' },
   { id: CommandType.Shell, label: 'Shell' },
   { id: CommandType.Command, label: 'Command' },
 ];

@@ -3,8 +3,8 @@ import dev from 'omnibar/tree-extension/trees/dev';
 import locations from 'omnibar/tree-extension/trees/goto';
 import { Children, LeafNode, NonLeafNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
-import { activateExperiment, archiveExperiment, getExperiments, getJupyterLabs, getTensorboards,
-  killExperiment, killJupyterLab, killTensorboard, openOrCreateTensorboard,
+import { activateExperiment, archiveExperiment, getExperiments, getJupyterLabs, getTensorBoards,
+  killExperiment, killJupyterLab, killTensorBoard, openOrCreateTensorBoard,
   pauseExperiment } from 'services/api';
 import { launchJupyterLab } from 'utils/task';
 import { activeRunStates, terminalCommandStates, terminalRunStates } from 'utils/types';
@@ -87,7 +87,7 @@ const root: NonLeafNode = {
         },
         {
           options: async (): Promise<Children> => {
-            const cmds = await getTensorboards({
+            const cmds = await getTensorBoards({
               orderBy: 'ORDER_BY_DESC',
               sortBy: 'SORT_BY_START_TIME',
             });
@@ -96,12 +96,12 @@ const root: NonLeafNode = {
               .filter(cmd => !terminalCommandStates.has(cmd.state))
               .map(cmd => (
                 {
-                  onAction: () => killTensorboard({ commandId: cmd.id }),
+                  onAction: () => killTensorBoard({ commandId: cmd.id }),
                   title: `${cmd.name}`,
                 }));
             return options;
           },
-          title: 'tensorboard',
+          title: 'tensorBoard',
         },
         {
           label: 'experiement <id>',
@@ -136,7 +136,7 @@ const root: NonLeafNode = {
                 return [
                   {
                     onAction: () => {
-                      openOrCreateTensorboard({ trialIds: parseIds(inp) });
+                      openOrCreateTensorBoard({ trialIds: parseIds(inp) });
                     },
                     title: inp,
                   },
@@ -150,7 +150,7 @@ const root: NonLeafNode = {
                 return [
                   {
                     onAction: () => {
-                      openOrCreateTensorboard({ experimentIds: parseIds(inp) });
+                      openOrCreateTensorBoard({ experimentIds: parseIds(inp) });
                     },
                     title: inp,
                   },
@@ -159,7 +159,7 @@ const root: NonLeafNode = {
               title: 'fromExperiments',
             },
           ],
-          title: 'tensorboard',
+          title: 'tensorBoard',
         },
         {
           options: [

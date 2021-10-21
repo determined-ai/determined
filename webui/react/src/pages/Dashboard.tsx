@@ -14,7 +14,7 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import {
-  getCommands, getExperiments, getJupyterLabs, getShells, getTensorboards,
+  getCommands, getExperiments, getJupyterLabs, getShells, getTensorBoards,
 } from 'services/api';
 import { Determinedexperimentv1State } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
     [CommandType.Command]: 0,
     [CommandType.JupyterLab]: 0,
     [CommandType.Shell]: 0,
-    [CommandType.Tensorboard]: 0,
+    [CommandType.TensorBoard]: 0,
   });
   const [ activeExperimentCount, setActiveExperimentCount ] = useState<number>();
 
@@ -107,14 +107,14 @@ const Dashboard: React.FC = () => {
         getCommands({ signal: canceler.signal }),
         getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
-        getTensorboards({ signal: canceler.signal }),
+        getTensorBoards({ signal: canceler.signal }),
       ]);
       setActiveTaskTally(prev => {
         const newTally = {
           [CommandType.Command]: countActiveCommand(commands),
           [CommandType.JupyterLab]: countActiveCommand(jupyterLabs),
           [CommandType.Shell]: countActiveCommand(shells),
-          [CommandType.Tensorboard]: countActiveCommand(tensorboards),
+          [CommandType.TensorBoard]: countActiveCommand(tensorboards),
         };
         if (!isEqual(prev, newTally)) return newTally;
         return prev;
@@ -181,8 +181,8 @@ const Dashboard: React.FC = () => {
           {activeTaskTally[CommandType.JupyterLab] ? <OverviewStats title="Active JupyterLabs">
             {activeTaskTally[CommandType.JupyterLab]}
           </OverviewStats> : null}
-          {activeTaskTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
-            {activeTaskTally[CommandType.Tensorboard]}
+          {activeTaskTally[CommandType.TensorBoard] ? <OverviewStats title="Active Tensorboards">
+            {activeTaskTally[CommandType.TensorBoard]}
           </OverviewStats> : null}
           {activeTaskTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
             {activeTaskTally[CommandType.Shell]}

@@ -143,10 +143,10 @@ export const mapV1Shell = (shell: Sdk.V1Shell): types.CommandTask => {
   return { ...mapCommonV1Task(shell, types.CommandType.Shell) };
 };
 
-export const mapV1Tensorboard =
+export const mapV1TensorBoard =
   (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
     return {
-      ...mapCommonV1Task(tensorboard, types.CommandType.Tensorboard),
+      ...mapCommonV1Task(tensorboard, types.CommandType.TensorBoard),
       misc: {
         experimentIds: tensorboard.experimentIds || [],
         trialIds: tensorboard.trialIds || [],
