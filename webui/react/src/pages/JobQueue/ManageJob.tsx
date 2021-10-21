@@ -18,18 +18,25 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
     async () => {
       if (!formRef.current) return;
       const formValues = formRef.current.getFieldsValue();
-      await detApi.Jobs.determinedUpdateJobQueue({
-        updates: [
+      try {
+        await detApi.Jobs.determinedUpdateJobQueue({
+          updates: [
           // TODO validate & avoid including all 3
-          {
-            jobId: job.jobId,
-            priority: parseInt(formValues.priority),
-            queuePosition: parseFloat(formValues.queuePosition),
-            sourceResourcePool: job.resourcePool,
-            weight: parseInt(formValues.weight),
-          },
-        ],
-      });
+            {
+              jobId: job.jobId,
+              priority: parseInt(formValues.priority),
+              // queuePosition: parseFloat(formValues.queuePosition),
+              sourceResourcePool: job.resourcePool,
+              // weight: parseInt(formValues.weight),
+            },
+          ],
+        });
+      } catch (e) {
+        console.error(
+          'https://github.com/determined-ai/determined/pull/3039#issuecomment-947265893',
+          e,
+        );
+      }
       onFinish();
     },
     [ formRef, onFinish, job.jobId, job.resourcePool ],
@@ -62,7 +69,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
           name="queuePosition"
           // rules={[ { message: 'Please provide a max length.', required: true } ]}
         >
-          <Input type="number" />
+          <Input disabled type="number" />
         </Form.Item>
         <Form.Item
           label="Priority"
@@ -76,7 +83,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
           name="weight"
           // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
         >
-          <Input type="number" />
+          <Input disabled type="number" />
         </Form.Item>
       </Form>
       <Json json={job} />

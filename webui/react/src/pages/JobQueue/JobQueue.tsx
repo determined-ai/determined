@@ -54,10 +54,15 @@ const JobQueue: React.FC = () => {
     try {
       const tJobs = await getJobQ({ resourcePool: selectedRp, ...pagination });
       setJobs(tJobs.jobs);
+      if (managingJob?.jobId) {
+        // TODO maybe managinJob should only store job id
+        const updatedJob = tJobs.jobs.find(j => j.jobId === managingJob.jobId);
+        if (updatedJob) setManagingJob(updatedJob);
+      }
       setPagination(decoder.mapV1Pagination(tJobs.pagination));
       return tJobs;
     } catch (e) {}
-  }, [ selectedRp ]);
+  }, [ selectedRp, pagination, managingJob?.jobId ]);
 
   // OPTIMIZE
   const fetchAll = useCallback(async () => {
