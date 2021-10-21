@@ -3941,6 +3941,18 @@ export interface V1QueueControl {
      */
     jobId: string;
     /**
+     * The resource pool to perform an action on.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    sourceResourcePool?: string;
+    /**
+     * Name of the target resource_pool to move the job to.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    resourcePool?: string;
+    /**
      * The desired job position in the queue.
      * @type {number}
      * @memberof V1QueueControl
@@ -3958,12 +3970,6 @@ export interface V1QueueControl {
      * @memberof V1QueueControl
      */
     weight?: number;
-    /**
-     * Name of the target resource_pool to move the job to.
-     * @type {string}
-     * @memberof V1QueueControl
-     */
-    resourcePool?: string;
 }
 
 /**
@@ -5518,6 +5524,20 @@ export interface V1UnarchiveExperimentResponse {
  * @interface V1UnarchiveModelResponse
  */
 export interface V1UnarchiveModelResponse {
+}
+
+/**
+ * Request to update the job queue.
+ * @export
+ * @interface V1UpdateJobQueueRequest
+ */
+export interface V1UpdateJobQueueRequest {
+    /**
+     * List of job queue control requests.
+     * @type {Array<V1QueueControl>}
+     * @memberof V1UpdateJobQueueRequest
+     */
+    updates: Array<V1QueueControl>;
 }
 
 /**
@@ -12152,13 +12172,18 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
         /**
          * 
          * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(options: any = {}): FetchArgs {
+        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedUpdateJobQueue.');
+            }
             const localVarPath = `/api/v1/resource-pools/queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
@@ -12170,10 +12195,14 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
 
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1UpdateJobQueueRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
                 url: url.format(localVarUrlObj),
@@ -12233,11 +12262,12 @@ export const JobsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedUpdateJobQueue(options);
+        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedUpdateJobQueue(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12283,11 +12313,12 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
         /**
          * 
          * @summary Control the job queues.
+         * @param {V1UpdateJobQueueRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(options?: any) {
-            return JobsApiFp(configuration).determinedUpdateJobQueue(options)(fetch, basePath);
+        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+            return JobsApiFp(configuration).determinedUpdateJobQueue(body, options)(fetch, basePath);
         },
     };
 };
@@ -12329,12 +12360,13 @@ export class JobsApi extends BaseAPI {
     /**
      * 
      * @summary Control the job queues.
+     * @param {V1UpdateJobQueueRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public determinedUpdateJobQueue(options?: any) {
-        return JobsApiFp(this.configuration).determinedUpdateJobQueue(options)(this.fetch, this.basePath);
+    public determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+        return JobsApiFp(this.configuration).determinedUpdateJobQueue(body, options)(this.fetch, this.basePath);
     }
 
 }
