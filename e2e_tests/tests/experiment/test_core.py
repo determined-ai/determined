@@ -75,6 +75,7 @@ def test_metric_gathering() -> None:
         expected = structure_to_metrics(value, validation_structure)
         assert structure_equal(expected, actual)
 
+
 @pytest.mark.e2e_cpu
 def test_nan_metrics() -> None:
     """
@@ -91,10 +92,10 @@ def test_nan_metrics() -> None:
     # Infinity and NaN cannot be processed in the YAML->JSON deserializer
     # Add them to expected values here
     training_structure = config["hyperparameters"]["training_structure"]["val"]
-    training_structure["inf"] = 'Infinity'
-    training_structure["nan"] = 'NaN'
+    training_structure["inf"] = "Infinity"
+    training_structure["nan"] = "NaN"
     validation_structure = config["hyperparameters"]["validation_structure"]["val"]
-    validation_structure["neg_inf"] = '-Infinity'
+    validation_structure["neg_inf"] = "-Infinity"
 
     # Check training metrics.
     full_trial_metrics = exp.trial_metrics(trials[0]["id"])
@@ -116,6 +117,7 @@ def test_nan_metrics() -> None:
         batches_trained = step["total_batches"]
         expected = structure_to_metrics(base_value, validation_structure)
         assert structure_equal(expected, actual)
+
 
 @pytest.mark.e2e_cpu
 def test_experiment_archive_unarchive() -> None:

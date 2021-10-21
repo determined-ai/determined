@@ -180,6 +180,8 @@ class MetricMakerTrial(det.Trial):
 
 class NANMetricMaker(MetricMaker):
     """
+    Insert Infinity and NaN values into metrics
+    because YAML->JSON parser cannot convert YAML's .inf value
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -203,6 +205,7 @@ class NANMetricMaker(MetricMaker):
     @staticmethod
     def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
         return NANMetricMaker(*args, **kwargs)
+
 
 class NANMetricMakerTrial(det.Trial):
     trial_controller_class = NANMetricMaker
