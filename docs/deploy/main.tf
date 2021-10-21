@@ -2,7 +2,7 @@ terraform {
   required_version = "~> 1.0"
 
   backend "s3" {
-    bucket = "determined-ai-docs-terraform"
+    bucket = "hpe-mlde-docs-terraform"
     key    = "terraform.tfstate"
     region = "us-west-2"
   }

@@ -18,7 +18,7 @@ services:
     init: true
     depends_on:
       - determined-db
-    image: determinedai/determined-ee-master:${DET_VERSION}
+    image: determinedai/hpe-mlde-master:${DET_VERSION}
     ports:
       - "8080:8080"
     environment:
@@ -31,7 +31,7 @@ services:
     restart: always
     depends_on:
       - determined-master
-    image: determinedai/determined-ee-agent:${DET_VERSION}
+    image: determinedai/hpe-mlde-agent:${DET_VERSION}
     environment:
       DET_LOG_LEVEL: info
       DET_PROXY_ADDR: host.docker.internal

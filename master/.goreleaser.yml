@@ -1,4 +1,4 @@
-project_name: determined-ee-master
+project_name: hpe-mlde-master
 
 before:
   hooks:
