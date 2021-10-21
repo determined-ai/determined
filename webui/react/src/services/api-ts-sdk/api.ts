@@ -2761,7 +2761,7 @@ export interface V1LaunchTensorboardResponse {
  */
 export interface V1LogEntry {
     /**
-     * The id of the log.
+     * The id.
      * @type {number}
      * @memberof V1LogEntry
      */
@@ -2772,6 +2772,18 @@ export interface V1LogEntry {
      * @memberof V1LogEntry
      */
     message?: string;
+    /**
+     * The timestamp.
+     * @type {Date}
+     * @memberof V1LogEntry
+     */
+    timestamp?: Date;
+    /**
+     * The log level.
+     * @type {V1LogLevel}
+     * @memberof V1LogEntry
+     */
+    level?: V1LogLevel;
 }
 
 /**
