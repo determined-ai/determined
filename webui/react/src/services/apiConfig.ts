@@ -35,6 +35,7 @@ export const detApi = {
   Internal: new Api.InternalApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
+  StreamingCluster: Api.ClusterApiFetchParamCreator(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),

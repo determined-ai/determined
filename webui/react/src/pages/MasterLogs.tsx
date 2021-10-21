@@ -4,10 +4,14 @@ import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
+import { V1MasterLogsResponse } from 'services/api-ts-sdk';
+import { detApi } from 'services/apiConfig';
 import { LogsParams } from 'services/types';
+import { consumeStream } from 'services/utils';
 import { Log } from 'types';
 
 const MasterLogs: React.FC = () => {
+  const [ canceler ] = useState(new AbortController());
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
@@ -33,7 +37,7 @@ const MasterLogs: React.FC = () => {
     fetchOlderLogs(oldestLogId);
   }, [ fetchOlderLogs ]);
 
-  usePolling(fetchNewerLogs);
+  /*   usePolling(fetchNewerLogs);
 
   useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;
@@ -65,7 +69,27 @@ const MasterLogs: React.FC = () => {
 
     // If there are new log entries, pass them onto the log viewer.
     if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
-  }, [ logIdRange, pollingLogsResponse.data ]);
+  }, [ logIdRange, pollingLogsResponse.data ]); */
+
+  useEffect(() => {
+    try {
+      consumeStream(
+        detApi.StreamingCluster.determinedMasterLogs(-50, 0, true, { signal: canceler.signal }),
+        event => {
+          const logEntry = (event as V1MasterLogsResponse).logEntry;
+          if (logsRef.current && logEntry) {
+            logsRef.current?.addLogs([ { message: '', ...logEntry } ]);
+          }
+        },
+      );
+    } catch (e) {
+      null;
+    }
+  }, [ canceler.signal ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <LogViewer
