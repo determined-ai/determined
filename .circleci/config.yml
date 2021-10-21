@@ -1117,7 +1117,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1125,7 +1125,7 @@ jobs:
 
   lint-webui-tests:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - run: make -C webui/tests get-deps
@@ -1137,7 +1137,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1154,7 +1154,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1162,7 +1162,7 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
