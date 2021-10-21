@@ -87,15 +87,20 @@ func (a *apiServer) GetModels(
 }
 
 func (a *apiServer) PostModel(
-	_ context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
+	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
 	b, err := protojson.Marshal(req.Model.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
 	}
 
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	m := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"insert_model", m, req.Model.Name, req.Model.Description, b, time.Now(), time.Now(),
+		"insert_model", m, req.Model.Name, req.Model.Description, b, strings.Join(req.Model.Labels, ","), user.User.Id, time.Now(), time.Now(),
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
@@ -127,7 +132,7 @@ func (a *apiServer) PatchModel(
 		return nil, errors.Wrap(err, "error marshaling request model metadata")
 	}
 
-	if currModel.Description == req.Model.Description && bytes.Equal(currMeta, newMeta) {
+	if currModel.Description == req.Model.Description && strings.Join(currModel.Labels, ",") == strings.Join(req.Model.Labels, ",") && bytes.Equal(currMeta, newMeta) {
 		return &apiv1.PatchModelResponse{Model: currModel}, nil
 	}
 
@@ -137,8 +142,14 @@ func (a *apiServer) PatchModel(
 		currModel.Metadata = req.Model.Metadata
 	}
 
+	if strings.Join(currModel.Labels, ",") != strings.Join(req.Model.Labels, ",") {
+		log.Infof("model (%d) labels changing from %s to %s",
+			req.Model.Id, currModel.Labels, req.Model.Labels)
+		currModel.Labels = req.Model.Labels
+	}
+
 	err = a.m.db.QueryProto(
-		"update_model", &modelv1.Model{}, req.Model.Id, currModel.Description, newMeta, time.Now())
+		"update_model", &modelv1.Model{}, req.Model.Id, currModel.Description, newMeta, strings.Join(currModel.Labels, ","), time.Now())
 
 	return &apiv1.PatchModelResponse{Model: currModel},
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)

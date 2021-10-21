@@ -134,7 +134,11 @@ class Determined:
         return checkpoint.Checkpoint.from_json(r["checkpoint"], self._session)
 
     def create_model(
-        self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        description: Optional[str] = "",
+        metadata: Optional[Dict[str, Any]] = None,
+        labels: Optional[List[str]] = [],
     ) -> model.Model:
         """
         Add a model to the model registry.
@@ -145,8 +149,8 @@ class Determined:
             metadata (dict, optional): Dictionary of metadata to add to the model.
         """
         r = self._session.post(
-            "/api/v1/models/{}".format(name),
-            json={"description": description, "metadata": metadata},
+            "/api/v1/models",
+            json={"description": description, "metadata": metadata, "name": name, "labels": labels},
         )
 
         return model.Model.from_json(r.json().get("model"), self._session)

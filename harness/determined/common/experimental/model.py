@@ -60,6 +60,7 @@ class Model:
         last_updated_time (datetime): The time the model was most recently updated.
         metadata (dict, optional): User-defined metadata associated with the checkpoint.
         master (string, optional): The address of the Determined master instance.
+        labels ([string]): User-defined text labels associated with the checkpoint.
     """
 
     def __init__(
@@ -71,6 +72,7 @@ class Model:
         creation_time: Optional[datetime.datetime] = None,
         last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        labels: Optional[List[str]] = [],
     ):
         self._session = session
         self.model_id = model_id
@@ -79,6 +81,7 @@ class Model:
         self.creation_time = creation_time
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
+        self.labels = labels
 
     def get_version(self, version: int = 0) -> Optional[checkpoint.Checkpoint]:
         """
@@ -206,6 +209,20 @@ class Model:
             json={"model": {"metadata": self.metadata, "description": self.description}},
         )
 
+    def set_labels(self, labels: List[str]) -> None:
+        """
+        Sets user-defined labels for the model. The ``labels`` argument must be an
+        array of strings. If the model previously had labels, they are replaced.
+
+        Arguments:
+            labels (List[string]): All labels to set on the model.
+        """
+        self.labels = labels
+        self._session.patch(
+            "/api/v1/models/{}".format(self.model_id),
+            json={"model": {"labels": self.labels}},
+        )
+
     def to_json(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -231,4 +248,5 @@ class Model:
             data.get("creationTime"),
             data.get("lastUpdatedTime"),
             data.get("metadata", {}),
+            data.get("labels", []),
         )

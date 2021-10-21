@@ -929,7 +929,7 @@ service Determined {
   // Create a model in the registry.
   rpc PostModel(PostModelRequest) returns (PostModelResponse) {
     option (google.api.http) = {
-      post: "/api/v1/models/{model.name}"
+      post: "/api/v1/models"
       body: "model"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
