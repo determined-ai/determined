@@ -12,6 +12,13 @@ TENSORFLOW_1_15="GHSA-2r8p-fg3c-wcj4 GHSA-4xfp-4pfp-89wg GHSA-5xwc-mrhx-5g3m GHS
 
 IGNORED_VULNERABILITIES=" ${DOCKER} ${FIXED_IN_JUPYTER_3_2_0} ${TENSORFLOW_1_15} "
 
+# Exit codes
+SUCCESS=0
+INVALID_ARGS=1
+MISSING_DEPENDENCIES=2
+VULNERABILITIES_FOUND=3
+
+
 function print_usage_and_exit_with_error() {
   echo ${MAJOR_SEPARATOR}
   echo Error: ${1}
@@ -20,7 +27,7 @@ function print_usage_and_exit_with_error() {
   echo 
   echo "    ${0} path/to/bumpenvs.yaml"
   echo ${MAJOR_SEPARATOR}
-  exit 1
+  exit ${INVALID_ARGS}
 }
 
 if [ ${#} -ne 1 ]; then
@@ -36,7 +43,7 @@ BUMPENVS=${1}
 for command in anchore-cli awk curl docker-compose grep jq yq; do
   if ! which ${command} > /dev/null; then
     echo ${0} requires ${command}
-    exit 2
+    exit ${MISSING_DEPENDENCIES}
   fi
 done
 
@@ -89,4 +96,8 @@ echo ${total_failures} critical or high severity vulnerabilities found in total
 
 docker-compose -f ${COMPOSE_FILE} down
 
-exit ${total_failures}
+if [ ${total_failures} -gt 0 ]; then
+  exit ${VULNERABILITIES_FOUND}
+fi
+
+exit ${SUCCESS}
