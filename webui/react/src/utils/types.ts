@@ -6,7 +6,7 @@ import {
   RecentTask, RecordKey, ResourceState, RunState, SlotState, Workload,
 } from 'types';
 
-import { LaunchTensorboardParams } from '../services/types';
+import { LaunchTensorBoardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
 import { isMetricsWorkload } from './workload';
@@ -172,7 +172,7 @@ export const commandTypeToLabel: {[key in CommandType]: string} = {
   [CommandType.Command]: 'Command',
   [CommandType.JupyterLab]: 'JupyterLab',
   [CommandType.Shell]: 'Shell',
-  [CommandType.Tensorboard]: 'Tensorboard',
+  [CommandType.TensorBoard]: 'TensorBoard',
 };
 
 export function hasKey<O>(obj: O, key: RecordKey): key is keyof O {
@@ -245,7 +245,7 @@ export const upgradeConfig = (config: RawJson): void => {
 
 // Checks whether tensorboard source matches a given source list.
 export const tsbMatchesSource =
-  (tensorboard: CommandTask, source: LaunchTensorboardParams): boolean => {
+  (tensorboard: CommandTask, source: LaunchTensorBoardParams): boolean => {
     if (source.experimentIds) {
       source.experimentIds?.sort();
       tensorboard.misc?.experimentIds?.sort();

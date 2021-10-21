@@ -120,7 +120,7 @@ export interface PatchExperimentParams extends ExperimentIdParams {
   }>
 }
 
-export interface LaunchTensorboardParams {
+export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
 }
@@ -162,7 +162,7 @@ export interface GetShellsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetTensorboardsParams extends FetchOptions, PaginationParams {
+export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 

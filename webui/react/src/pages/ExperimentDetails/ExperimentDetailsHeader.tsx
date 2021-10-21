@@ -13,7 +13,7 @@ import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentH
 import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
 import { handlePath, paths, routeToReactUrl } from 'routes/utils';
 import {
-  archiveExperiment, deleteExperiment, openOrCreateTensorboard, patchExperiment,
+  archiveExperiment, deleteExperiment, openOrCreateTensorBoard, patchExperiment,
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
@@ -42,7 +42,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   trial,
 }: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
-  const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
+  const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
   const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(
     experiment.state === RunState.Deleting,
@@ -152,17 +152,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
       tensorboard: {
         icon: <Icon name="tensorboard" size="small" />,
-        isLoading: isRunningTensorboard,
+        isLoading: isRunningTensorBoard,
         key: 'tensorboard',
         label: 'TensorBoard',
         onClick: async () => {
-          setIsRunningTensorboard(true);
+          setIsRunningTensorBoard(true);
           try {
-            const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
+            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ experiment.id ] });
             openCommand(tensorboard);
-            setIsRunningTensorboard(false);
+            setIsRunningTensorBoard(false);
           } catch (e) {
-            setIsRunningTensorboard(false);
+            setIsRunningTensorBoard(false);
           }
         },
       },
@@ -202,7 +202,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     experiment.username,
     fetchExperimentDetails,
     isRunningArchive,
-    isRunningTensorboard,
+    isRunningTensorBoard,
     isRunningUnarchive,
     showContinueTrial,
     showForkModal,

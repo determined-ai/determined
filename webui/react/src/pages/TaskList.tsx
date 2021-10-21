@@ -26,7 +26,7 @@ import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getCommands, getJupyterLabs, getShells, getTensorboards, killTask } from 'services/api';
+import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import { isEqual } from 'utils/data';
@@ -119,7 +119,7 @@ const TaskList: React.FC = () => {
         getCommands({ signal: canceler.signal }),
         getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
-        getTensorboards({ signal: canceler.signal }),
+        getTensorBoards({ signal: canceler.signal }),
       ]);
       const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
       setTasks(prev => {
@@ -224,7 +224,7 @@ const TaskList: React.FC = () => {
 
   const columns = useMemo(() => {
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
-      if (record.type !== CommandType.Tensorboard || !record.misc) {
+      if (record.type !== CommandType.TensorBoard || !record.misc) {
         return taskNameRenderer(_, record, index);
       }
 

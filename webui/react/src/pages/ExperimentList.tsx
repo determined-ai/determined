@@ -27,7 +27,7 @@ import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, getExperimentLabels,
-  getExperiments, killExperiment, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  getExperiments, killExperiment, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -418,7 +418,7 @@ const ExperimentList: React.FC = () => {
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | CommandTask> => {
     if (action === Action.OpenTensorBoard) {
-      return openOrCreateTensorboard({ experimentIds: settings.row });
+      return openOrCreateTensorBoard({ experimentIds: settings.row });
     }
     return Promise.all((settings.row || []).map(experimentId => {
       switch (action) {

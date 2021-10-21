@@ -9,8 +9,8 @@ import {
   CommandIdParams, CreateExperimentParams, DetApi, EmptyParams,
   ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams,
   GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
-  GetTrialsParams, HttpApi, LaunchJupyterLabParams, LaunchTensorboardParams, LoginResponse,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
+  GetTrialsParams, HttpApi, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse,
   LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import {
@@ -39,7 +39,7 @@ export const detApi = {
   StreamingInternal: Api.InternalApiFetchParamCreator(ApiConfig),
   StreamingProfiler: Api.ProfilerApiFetchParamCreator(ApiConfig),
   Templates: new Api.TemplatesApi(ApiConfig),
-  Tensorboards: new Api.TensorboardsApi(ApiConfig),
+  TensorBoards: new Api.TensorboardsApi(ApiConfig),
   Users: new Api.UsersApi(ApiConfig),
 };
 
@@ -65,7 +65,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
-  detApi.Tensorboards = new Api.TensorboardsApi(config);
+  detApi.TensorBoards = new Api.TensorboardsApi(config);
   detApi.Users = new Api.UsersApi(config);
   detApi.Templates = new Api.TemplatesApi(config);
 };
@@ -81,7 +81,7 @@ export const saltAndHashPassword = (password?: string): string => {
 export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.JupyterLab]: '/notebooks',
-  [CommandType.Tensorboard]: '/tensorboard',
+  [CommandType.TensorBoard]: '/tensorboard',
   [CommandType.Shell]: '/shells',
 };
 
@@ -405,13 +405,13 @@ export const getShells: DetApi<GetShellsParams, Api.V1GetShellsResponse, Command
   ),
 };
 
-export const getTensorboards: DetApi<
-  GetTensorboardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
+export const getTensorBoards: DetApi<
+  GetTensorBoardsParams, Api.V1GetTensorboardsResponse, CommandTask[]
 > = {
-  name: 'getTensorboards',
+  name: 'getTensorBoards',
   postProcess: (response) => (response.tensorboards || [])
-    .map(tensorboard => decoder.mapV1Tensorboard(tensorboard)),
-  request: (params: GetTensorboardsParams) => detApi.Tensorboards.determinedGetTensorboards(
+    .map(tensorboard => decoder.mapV1TensorBoard(tensorboard)),
+  request: (params: GetTensorBoardsParams) => detApi.TensorBoards.determinedGetTensorboards(
     params.sortBy,
     params.orderBy,
     params.offset,
@@ -440,10 +440,10 @@ export const killShell: DetApi<CommandIdParams, Api.V1KillShellResponse, void> =
     .determinedKillShell(params.commandId),
 };
 
-export const killTensorboard: DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
-  name: 'killTensorboard',
+export const killTensorBoard: DetApi<CommandIdParams, Api.V1KillTensorboardResponse, void> = {
+  name: 'killTensorBoard',
   postProcess: noOp,
-  request: (params: CommandIdParams) => detApi.Tensorboards
+  request: (params: CommandIdParams) => detApi.TensorBoards
     .determinedKillTensorboard(params.commandId),
 };
 
@@ -478,12 +478,12 @@ export const previewJupyterLab: DetApi<
     .determinedLaunchNotebook(params),
 };
 
-export const launchTensorboard: DetApi<
-  LaunchTensorboardParams, Api.V1LaunchTensorboardResponse, CommandTask
+export const launchTensorBoard: DetApi<
+  LaunchTensorBoardParams, Api.V1LaunchTensorboardResponse, CommandTask
 > = {
-  name: 'launchTensorboard',
-  postProcess: (response) => decoder.mapV1Tensorboard(response.tensorboard),
-  request: (params: LaunchTensorboardParams) => detApi.Tensorboards
+  name: 'launchTensorBoard',
+  postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
+  request: (params: LaunchTensorBoardParams) => detApi.TensorBoards
     .determinedLaunchTensorboard(params),
 };
 

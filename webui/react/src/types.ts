@@ -161,7 +161,7 @@ export enum CommandType {
   Command = 'command',
   JupyterLab = 'jupyter-lab',
   Shell = 'shell',
-  Tensorboard = 'tensorboard',
+  TensorBoard = 'tensor-board',
 }
 
 export interface CommandMisc {
@@ -173,7 +173,7 @@ export interface CommandConfig {
   description: string;
 }
 
-// The command type is shared between Commands, JupyterLabs, Tensorboards, and Shells.
+// The command type is shared between Commands, JupyterLabs, TensorBoards, and Shells.
 export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
@@ -517,7 +517,7 @@ export enum TaskType {
   Experiment = 'experiment',
   JupyterLab = 'jupyter-lab',
   Shell = 'shell',
-  Tensorboard = 'tensorboard',
+  TensorBoard = 'tensor-board',
 }
 
 export enum ArchiveFilter {
