@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
 func min(a, b int) int {
@@ -179,4 +181,24 @@ func (lb *LogBuffer) Fire(entry *logrus.Entry) error {
 // Levels implements the logrus.Hook interface.
 func (lb *LogBuffer) Levels() []logrus.Level {
 	return logrus.AllLevels
+}
+
+// LogrusLevelToProto translates a logrus level to a our protobuf log levels.
+func LogrusLevelToProto(l logrus.Level) logv1.LogLevel {
+	switch l {
+	case logrus.TraceLevel:
+		return logv1.LogLevel_LOG_LEVEL_TRACE
+	case logrus.DebugLevel:
+		return logv1.LogLevel_LOG_LEVEL_DEBUG
+	case logrus.InfoLevel:
+		return logv1.LogLevel_LOG_LEVEL_INFO
+	case logrus.WarnLevel:
+		return logv1.LogLevel_LOG_LEVEL_WARNING
+	case logrus.ErrorLevel:
+		return logv1.LogLevel_LOG_LEVEL_ERROR
+	case logrus.FatalLevel, logrus.PanicLevel:
+		return logv1.LogLevel_LOG_LEVEL_CRITICAL
+	default:
+		panic("invalid logrus log level")
+	}
 }
