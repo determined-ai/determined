@@ -177,7 +177,9 @@ const JobQueue: React.FC = () => {
           // onRow={handleTableRow}
         />
       </Section>
-      <ManageJob job={managingJob} onFinish={hideModal} />
+      {!!managingJob &&
+        <ManageJob job={managingJob} onFinish={hideModal} />
+      }
 
     </Page>
   );
