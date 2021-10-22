@@ -2,6 +2,7 @@ package sproto
 
 import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -10,4 +11,5 @@ type ContainerSummary struct {
 	AllocationID model.AllocationID `json:"allocation_id"`
 	ID           cproto.ID          `json:"id"`
 	Agent        string             `json:"agent"`
+	Devices      []device.Device    `json:"devices"`
 }

@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -137,6 +138,11 @@ func (rp *ResourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 	rp.taskList.SetAllocations(req.TaskActor, &allocated)
 	req.TaskActor.System().Tell(req.TaskActor, allocated)
 	ctx.Log().Infof("allocated resources to %s", req.TaskActor.Address())
+	for _, allocation := range allocated.Reservations {
+		prom.AssociateTaskActor(req.TaskActor.Address().String(),
+			allocation.Summary().AllocationID.String())
+		prom.AddAllocation(allocation.Summary())
+	}
 
 	return true
 }
@@ -389,6 +395,7 @@ func (c containerReservation) Summary() sproto.ContainerSummary {
 		AllocationID: c.req.AllocationID,
 		ID:           c.container.id,
 		Agent:        c.agent.handler.Address().Local(),
+		Devices:      c.devices,
 	}
 }
 

@@ -85,7 +85,7 @@ type Config struct {
 	ClusterName           string                            `json:"cluster_name"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	HPImportance          hpimportance.HPImportanceConfig   `json:"hyperparameter_importance"`
-
+	EnablePrometheus      bool                              `json:"enable_prometheus"`
 	*resourcemanagers.ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
@@ -189,5 +189,4 @@ type TelemetryConfig struct {
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
 	ExternalSessions  model.ExternalSessions `json:"external_sessions"`
-	PrometheusEnabled bool                   `json:"prometheus_enabled"`
 }

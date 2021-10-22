@@ -120,6 +120,8 @@ db:
   name: determined
   # password: database_password
 
+enable_prometheus: true
+
 ## A user friendly name to identify this cluster by.
 # cluster_name: Dev
 

@@ -18,6 +18,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/prom"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -425,7 +427,7 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 	}
 	start("gRPC server", func() error {
 		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
-			m.config.InternalConfig.PrometheusEnabled,
+			m.config.EnablePrometheus,
 			&m.config.InternalConfig.ExternalSessions)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
@@ -825,10 +827,12 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	if m.config.InternalConfig.PrometheusEnabled {
+	if m.config.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
 		p.Use(m.echo)
 		m.echo.Any("/debug/prom/metrics", echo.WrapHandler(promhttp.Handler()))
+		m.echo.Any("/debug/prom/det-metrics",
+			echo.WrapHandler(promhttp.HandlerFor(prom.DetStateMetrics, promhttp.HandlerOpts{})))
 	}
 
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
