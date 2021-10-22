@@ -11,7 +11,10 @@ cutting a new release.
 
 * Include an update to the release notes whenever you make a change that should
   be communicated to users. That includes bug fixes, new features, changes to
-  previous behavior/APIs, and improvements to existing features.
+  previous behavior/APIs, and improvements to existing features. Be sure to
+  highlight API changes and backward incompatibilities, discuss any steps that
+  must be taken to upgrade safely, and link to other locations in the documentation
+  as needed.
 
 * Update the release notes as part of landing the change itself (e.g., in the
   same PR or as part of a chain of PRs to land a large feature). The author of
@@ -27,17 +30,20 @@ cutting a new release.
   * The file should be in reStructuredText format and should start with
     `:orphan:` to avoid errors when building the docs.
   * The file should contain one or more list elements, which should be
-    categorized into one of **New Features**, **Improvements**, **Bug Fixes**.
-  * Be sure to highlight API changes and backward incompatibilities with a prefix
-    "**Breaking Change:**", discuss any steps that must be taken to upgrade safely,
-    and link to other locations in the documentation as needed. For example:
+    categorized into one of **Breaking Changes**, **New Features**, 
+    **Improvements**, **Bug Fixes**.
+  * Each item needs to have a prefix of which component it is about.
+    The prefix needs to be one of **WebUI**, **Notebook**, **TensorBoard**,
+    **Command**, **Shell**, **Experiment**, **API**, **Images**, or any
+    applicable component.
+  * For example:
 
     ```
     :orphan:
 
     **New Features**
 
-    - Add support for provisioning Nvidia A100 GPU instances on GCP.
+    - GCP: Add support for provisioning Nvidia A100 GPU instances.
 
       - Running workloads on A100 chips currently requires building a custom task
         environment with CUDA 11, because the default task environments provided by

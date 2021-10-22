@@ -1,0 +1,20 @@
+name: detectron2_const_e2e_tests
+environment:
+    image: "katport/detectron2:e2e-cuda-10.1"
+    environment_variables:
+      - DETECTRON2_DATASETS=.
+hyperparameters:
+  global_batch_size: 1
+  model_yaml: mask_rcnn_R_50_FPN_noaug_1x.yaml
+  output_dir: None
+  fake_data: True
+searcher:
+  name: single
+  metric: bboxAP
+  max_length: 
+    batches: 100
+  smaller_is_better: false
+resources:
+    slots_per_trial: 1
+entrypoint: model_def:DetectronTrial
+max_restarts: 0

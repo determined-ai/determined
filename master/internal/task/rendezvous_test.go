@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
@@ -25,11 +27,10 @@ func TestRendezvous(t *testing.T) {
 			// "task" with ranks is started.
 			t1 := model.NewAllocationID(uuid.New().String())
 			c1, c2 := cproto.NewID(), cproto.NewID()
-			ranks := map[cproto.ID]int{c1: 0, c2: 1}
-			r := NewRendezvous(t1, ranks)
-
-			assert.Equal(t, r.rank(c1), 0)
-			assert.Equal(t, r.rank(c2), 1)
+			r := NewRendezvous(t1, reservations{
+				c1: &reservationWithState{rank: 0},
+				c2: &reservationWithState{rank: 1},
+			})
 
 			var ws []RendezvousWatcher
 			watch := func(cID cproto.ID) func() {
@@ -42,7 +43,10 @@ func TestRendezvous(t *testing.T) {
 
 			startContainer := func(cID cproto.ID) func() {
 				return func() {
-					r.containerStarted(cID, addressesFromContainerID(cID))
+					r.reservations[cID].start = &sproto.TaskContainerStarted{
+						Addresses: addressesFromContainerID(cID),
+					}
+					r.try()
 				}
 			}
 
@@ -87,8 +91,8 @@ func TestRendezvous(t *testing.T) {
 func TestRendezvousValidation(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1 := cproto.NewID()
-	r := NewRendezvous(t1, map[cproto.ID]int{
-		c1: 0,
+	r := NewRendezvous(t1, reservations{
+		c1: &reservationWithState{rank: 0},
 	})
 
 	_, err := r.watch(t1, cproto.NewID())
@@ -104,15 +108,23 @@ func TestRendezvousValidation(t *testing.T) {
 func TestTerminationInRendezvous(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
-	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := NewRendezvous(t1, ranks)
+	r := NewRendezvous(t1, reservations{
+		c1: &reservationWithState{rank: 0},
+		c2: &reservationWithState{rank: 1},
+	})
 
-	r.containerStarted(c1, addressesFromContainerID(c1))
+	r.reservations[c1].start = &sproto.TaskContainerStarted{
+		Addresses: addressesFromContainerID(c1),
+	}
+	r.try()
 	_, err := r.watch(t1, c1)
 	assert.NilError(t, err)
-	r.containerTerminated(c1)
+	r.reservations[c1].exit = &sproto.TaskContainerStopped{}
 
-	r.containerStarted(c2, addressesFromContainerID(c2))
+	r.reservations[c2].start = &sproto.TaskContainerStarted{
+		Addresses: addressesFromContainerID(c2),
+	}
+	r.try()
 	_, err = r.watch(t1, c2)
 	assert.NilError(t, err)
 
@@ -122,15 +134,19 @@ func TestTerminationInRendezvous(t *testing.T) {
 func TestUnwatchInRendezvous(t *testing.T) {
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
-	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := NewRendezvous(t1, ranks)
+	r := NewRendezvous(t1, reservations{
+		c1: &reservationWithState{rank: 0},
+		c2: &reservationWithState{rank: 1},
+	})
 
-	r.containerStarted(c1, addressesFromContainerID(c1))
+	r.reservations[c1].start = &sproto.TaskContainerStarted{Addresses: addressesFromContainerID(c1)}
+	r.try()
 	_, err := r.watch(t1, c1)
 	assert.NilError(t, err)
 	r.unwatch(c1)
 
-	r.containerStarted(c2, addressesFromContainerID(c2))
+	r.reservations[c2].start = &sproto.TaskContainerStarted{Addresses: addressesFromContainerID(c2)}
+	r.try()
 	_, err = r.watch(t1, c2)
 	assert.NilError(t, err)
 
@@ -142,12 +158,15 @@ func TestRendezvousTimeout(t *testing.T) {
 
 	t1 := model.NewAllocationID(uuid.New().String())
 	c1, c2 := cproto.NewID(), cproto.NewID()
-	ranks := map[cproto.ID]int{c1: 0, c2: 1}
-	r := NewRendezvous(t1, ranks)
+	r := NewRendezvous(t1, reservations{
+		c1: &reservationWithState{rank: 0},
+		c2: &reservationWithState{rank: 1},
+	})
 
 	_, err := r.watch(t1, c1)
 	assert.NilError(t, err)
-	r.containerStarted(c1, addressesFromContainerID(c1))
+	r.reservations[c1].start = &sproto.TaskContainerStarted{Addresses: addressesFromContainerID(c1)}
+	r.try()
 
 	time.Sleep(-1)
 	assert.ErrorContains(t, r.checkTimeout(t1), "some containers are taking a long time")

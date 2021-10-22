@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import * as ioTypes from 'ioTypes';
 import * as types from 'types';
 import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
-import { flattenHyperparameters } from 'utils/experiment';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
@@ -20,12 +19,23 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
   return (data.users || []).map(user => mapV1User(user));
 };
 
-export const jsonToDeterminedInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+  // Validate branding against `BrandingType` enum.
+  const branding = Object.values(types.BrandingType).reduce((acc, value) => {
+    if (value === data.branding) acc = data.branding;
+    return acc;
+  }, types.BrandingType.Determined);
+
   return {
+    branding,
+    checked: true,
     clusterId: data.clusterId,
     clusterName: data.clusterName,
+    externalLoginUri: data.externalLoginUri,
+    externalLogoutUri: data.externalLogoutUri,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
+    ssoProviders: data.ssoProviders,
     version: data.version,
   };
 };
@@ -124,7 +134,7 @@ export const mapV1Command = (command: Sdk.V1Command): types.CommandTask => {
 
 export const mapV1Notebook = (notebook: Sdk.V1Notebook): types.CommandTask => {
   return {
-    ...mapCommonV1Task(notebook, types.CommandType.Notebook),
+    ...mapCommonV1Task(notebook, types.CommandType.JupyterLab),
     serviceAddress: notebook.serviceAddress,
   };
 };
@@ -133,10 +143,10 @@ export const mapV1Shell = (shell: Sdk.V1Shell): types.CommandTask => {
   return { ...mapCommonV1Task(shell, types.CommandType.Shell) };
 };
 
-export const mapV1Tensorboard =
+export const mapV1TensorBoard =
   (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
     return {
-      ...mapCommonV1Task(tensorboard, types.CommandType.Tensorboard),
+      ...mapCommonV1Task(tensorboard, types.CommandType.TensorBoard),
       misc: {
         experimentIds: tensorboard.experimentIds || [],
         trialIds: tensorboard.trialIds || [],
@@ -262,14 +272,16 @@ export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexpe
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeGetV1ExperimentRespToExperimentBase = (
+export const mapV1GetExperimentResponse = (
   { experiment: exp, config }: Sdk.V1GetExperimentResponse,
 ): types.ExperimentBase => {
   const ioConfig = ioTypes
     .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
-  const hyperparameters = flattenHyperparameters(
-    ioConfig.hyperparameters as types.Hyperparameters,
-  );
+  const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(
+    ioConfig.hyperparameters,
+    { continueFn },
+  ) as types.HyperparametersFlattened;
   return {
     archived: exp.archived,
     config: ioToExperimentConfig(ioConfig),
@@ -281,6 +293,7 @@ export const decodeGetV1ExperimentRespToExperimentBase = (
     // numTrials
     // labels
     name: exp.name,
+    notes: exp.notes,
     progress: exp.progress != null ? exp.progress : undefined,
     resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
@@ -299,6 +312,7 @@ export const mapV1Experiment = (
     id: data.id,
     labels: data.labels || [],
     name: data.name,
+    notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',
@@ -327,7 +341,6 @@ const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorklo
   return {
     endTime: data.endTime as unknown as string,
     metrics: data.metrics ? filterNonScalarMetrics(data.metrics) : undefined,
-    startTime: data.startTime as unknown as string,
     totalBatches: data.totalBatches,
   };
 };
@@ -342,7 +355,6 @@ const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.Checkpo
   return {
     endTime: data.endTime as unknown as string,
     resources,
-    startTime: data.startTime as unknown as string,
     state: decodeCheckpointState(data.state),
     totalBatches: data.totalBatches,
     uuid: data.uuid,
@@ -360,7 +372,6 @@ export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CheckpointDetail
     endTime: data.endTime && data.endTime as unknown as string,
     experimentId: data.experimentId,
     resources,
-    startTime: data.startTime as unknown as string,
     state: decodeCheckpointState(data.state),
     trialId: data.trialId,
     uuid: data.uuid,
@@ -466,7 +477,7 @@ export const jsonToTaskLogs = (data: unknown): types.Log[] => {
   return io
     .filter(log => !log.service_ready_event)
     .map(log => {
-      const description = log.snapshot.config.description || '';
+      const description = log.description || '';
       let message = '';
       if (log.scheduled_event) {
         message = `Scheduling ${log.parent_id} (id: ${description})...`;

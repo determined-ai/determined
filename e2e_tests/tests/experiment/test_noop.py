@@ -12,7 +12,7 @@ from tests import config as conf
 from tests import experiment as exp
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_noop_long_train_step() -> None:
     exp.run_basic_test(
         conf.fixtures_path("no_op/single-long-train-step.yaml"),
@@ -21,7 +21,7 @@ def test_noop_long_train_step() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
@@ -63,7 +63,7 @@ def test_noop_pause() -> None:
     exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_noop_pause_of_experiment_without_trials() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment
@@ -90,7 +90,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_noop_single_warm_start() -> None:
     experiment_id1 = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
@@ -157,7 +157,7 @@ def test_noop_single_warm_start() -> None:
     ] == pytest.approx(0.9 ** 3)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_cancel_one_experiment() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"),
@@ -167,7 +167,7 @@ def test_cancel_one_experiment() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_cancel_one_active_experiment_unready() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"),
@@ -184,8 +184,8 @@ def test_cancel_one_active_experiment_unready() -> None:
     exp.cancel_single_v1(experiment_id, should_have_trial=True)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.timeout(3 * 60)  # type: ignore
+@pytest.mark.e2e_cpu
+@pytest.mark.timeout(3 * 60)
 def test_cancel_one_active_experiment_ready() -> None:
     experiment_id = exp.create_experiment(
         conf.tutorials_path("mnist_pytorch/const.yaml"),
@@ -201,7 +201,7 @@ def test_cancel_one_active_experiment_ready() -> None:
     exp.assert_performed_final_checkpoint(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_cancel_one_paused_experiment() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"),
@@ -212,7 +212,7 @@ def test_cancel_one_paused_experiment() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_cancel_ten_experiments() -> None:
     experiment_ids = [
         exp.create_experiment(
@@ -226,7 +226,7 @@ def test_cancel_ten_experiments() -> None:
         exp.cancel_single(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_cancel_ten_paused_experiments() -> None:
     experiment_ids = [
         exp.create_experiment(
@@ -241,7 +241,7 @@ def test_cancel_ten_paused_experiments() -> None:
         exp.cancel_single(experiment_id)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_startup_hook() -> None:
     exp.run_basic_test(
         conf.fixtures_path("no_op/startup-hook.yaml"),
@@ -250,7 +250,7 @@ def test_startup_hook() -> None:
     )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_large_model_def_experiment() -> None:
     with tempfile.TemporaryDirectory() as td:
         shutil.copy(conf.fixtures_path("no_op/model_def.py"), td)
@@ -314,8 +314,8 @@ def _test_rng_restore(fixture: str, metrics: list, tf2: Union[None, bool] = None
             ), f"failures on iteration: {step} with metric: {metric}"
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.parametrize(  # type: ignore
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
     "tf2",
     [
         pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
@@ -326,24 +326,24 @@ def test_keras_rng_restore(tf2: bool) -> None:
     _test_rng_restore("keras_no_op", ["val_rand_rand", "val_np_rand", "val_tf_rand"], tf2=tf2)
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-@pytest.mark.tensorflow1_cpu  # type: ignore
-@pytest.mark.tensorflow2_cpu  # type: ignore
+@pytest.mark.e2e_cpu
+@pytest.mark.tensorflow1_cpu
+@pytest.mark.tensorflow2_cpu
 def test_estimator_rng_restore() -> None:
     _test_rng_restore("estimator_no_op", ["rand_rand", "np_rand"])
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_pytorch_cpu_rng_restore() -> None:
     _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand"])
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
 def test_pytorch_gpu_rng_restore() -> None:
     _test_rng_restore("pytorch_no_op", ["np_rand", "rand_rand", "torch_rand", "gpu_rand"])
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_noop_experiment_config_override() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     with tempfile.NamedTemporaryFile() as tf:

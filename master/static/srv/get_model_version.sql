@@ -1,10 +1,10 @@
 WITH mv AS (
   SELECT version, checkpoint_uuid
     FROM model_versions
-    WHERE model_name = $1 AND version = $2
+    WHERE model_id = $1 AND version = $2
 ),
 m AS (
-  Select * FROM models WHERE name = $1
+  SELECT * FROM models WHERE id = $1
 ),
 c AS (
   SELECT
@@ -14,7 +14,6 @@ c AS (
     t.id AS trial_id,
     t.hparams as hparams,
     s.total_batches AS batch_number,
-    s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,
     COALESCE(c.metadata, '{}') AS metadata,
@@ -36,4 +35,4 @@ SELECT
     to_json(m) AS model,
     version AS version,
     creation_time
-    FROM c, m, mv
+    FROM c, m, mv;

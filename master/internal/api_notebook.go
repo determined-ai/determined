@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -38,7 +39,7 @@ const (
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
-	notebookDefaultPage = "/run/determined/workdir/test.ipynb"
+	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
 var notebooksAddr = actor.Addr("notebooks")
@@ -112,6 +113,8 @@ func (a *apiServer) NotebookLogs(
 	).AwaitTermination()
 }
 
+var jupyterReadyPattern = regexp.MustCompile("Jupyter Server .*is running at")
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
@@ -126,11 +129,12 @@ func (a *apiServer) LaunchNotebook(
 
 	spec.WatchProxyIdleTimeout = true
 	spec.WatchRunnerIdleTimeout = true
+	spec.LogReadinessCheck = jupyterReadyPattern
 
 	// Postprocess the spec.
 	if spec.Config.Description == "" {
 		petName := petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep)
-		spec.Config.Description = fmt.Sprintf("Notebook (%s)", petName)
+		spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)
 	}
 
 	if req.Preview {
@@ -150,6 +154,7 @@ func (a *apiServer) LaunchNotebook(
 	spec.Base.ExtraEnvVars = map[string]string{
 		"NOTEBOOK_PORT":   strconv.Itoa(port),
 		"NOTEBOOK_CONFIG": string(configBytes),
+		"DET_TASK_TYPE":   model.TaskTypeNotebook,
 	}
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"notebook": port}

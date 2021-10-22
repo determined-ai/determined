@@ -174,7 +174,7 @@ The implementation of ``build_validation_data_loader`` is similar:
 
        return test_images, test_labels
 
-For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
+For more information on loading data in Determined, refer to the :ref:`prepare-data` document.
 
 ********************
  Training the Model
@@ -258,5 +258,4 @@ ID (xxx) or via its description.
 
 -  :ref:`model-definitions_best-practices`
 -  :ref:`experiment-configuration`
--  :ref:`benefits-of-determined`
--  :ref:`terminology-concepts`
+-  :ref:`features`

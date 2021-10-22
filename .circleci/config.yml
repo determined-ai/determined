@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.0.dev0
+    default: 0.17.2.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a173dcd
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-35cccd2
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.9-lightning-1.3-tf-2.4-cpu-a173dcd
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-35cccd2
 
   login-docker:
     parameters:
@@ -438,7 +438,7 @@ commands:
           when: always
           command: |
             det deploy aws down \
-              --cluster-id <<parameters.cluster-id>>
+              --cluster-id <<parameters.cluster-id>> --no-prompt
 
   setup-aws-cluster:
     parameters:
@@ -632,7 +632,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
         type: string
     steps:
       - set-cluster-id:
@@ -875,7 +875,7 @@ jobs:
       - helm/install-helm-client
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.8.1"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -909,7 +909,7 @@ jobs:
 
   package-and-push-system-local:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -935,7 +935,7 @@ jobs:
 
   package-and-push-system-dev:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -969,7 +969,7 @@ jobs:
 
   package-and-push-system-rc:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -995,7 +995,7 @@ jobs:
 
   package-and-push-system-release:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     resource_class: medium+
@@ -1092,7 +1092,7 @@ jobs:
   test-e2e-webui:
     machine:
       image: ubuntu-2004:202101-01
-    resource_class: large
+    resource_class: medium
     steps:
       - checkout
       - attach_workspace:
@@ -1172,7 +1172,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1186,7 +1186,7 @@ jobs:
 
   build-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1203,7 +1203,7 @@ jobs:
 
   build-proto:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1217,7 +1217,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: cimg/go:1.16
+      - image: cimg/go:1.17
         environment:
           GO111MODULE: "on"
     steps:
@@ -1284,7 +1284,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "torch==1.8.1"
+          extras-requires: "torch==1.9.0"
           model-hub: true
           extra-requirements-file: "requirements.txt"
           executor: determinedai/cimg-base:stable
@@ -1305,7 +1305,7 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1 torch==1.7.1 torchvision==0.8.2"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test
@@ -1317,10 +1317,22 @@ jobs:
       - checkout
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.4.1"
+          extras-requires: "tensorflow==2.4.3"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
+
+  test-unit-storage:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined: true
+          extras-requires: "tensorflow==2.4.3"
+          extra-requirements-file: "harness/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: pytest -v --durations=0 --require-secrets -m cloud harness/tests
 
   test-unit-model-hub:
     docker:
@@ -1555,7 +1567,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1638,7 +1650,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1664,7 +1676,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -1742,6 +1754,24 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
+  scan-docker-images:
+    machine:
+      image: ubuntu-2004:202101-01
+    steps:
+      - checkout
+      - set-slack-user-id
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
+          extras-requires: anchorecli
+      - run: sudo snap install yq
+      - run: sudo apt-get install -y jq
+      - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
+      - slack/status:
+          fail_only: True
+          only_for_branches: master
+          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          channel: "devops-ag"
+
 workflows:
   lint:
     jobs:
@@ -1780,6 +1810,9 @@ workflows:
       - test-unit-harness-tf2
       - test-unit-model-hub
       - test-examples
+      - test-unit-storage:
+          context: storage-unit-tests
+          filters: *upstream-feature-branch
 
   test-intg:
     jobs:
@@ -2161,8 +2194,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2181,8 +2213,44 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-single-gpu-tfonly
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cuda-11
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-parallel-tfonly
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cuda-11
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2349,8 +2417,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2365,8 +2432,47 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4
-                - determinedai/environments:cuda-11.2-pytorch-1.7-lightning-1.2-tf-2.5-gpu-0.16.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-single-gpu-tfonly
+          context: gcp
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+
+      - test-e2e-gke-cuda-11:
+          name: test-e2e-gke-parallel-tfonly
+          context: gcp
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel and tensorflow2"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+              environment-image:
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+
+  weekly-vuln-scan:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - scan-docker-images
 
   release:
     jobs:

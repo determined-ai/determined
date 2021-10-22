@@ -1,6 +1,6 @@
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { launchNotebook as apiLaunchNotebook } from 'services/api';
-import { previewNotebook as apiPreviewNotebook } from 'services/api';
+import { launchJupyterLab as apiLaunchJupyterLab } from 'services/api';
+import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
   ExperimentItem, ExperimentOld, ExperimentTask, RawJson, RecentCommandTask, RecentEvent,
@@ -9,7 +9,7 @@ import {
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
-export const launchNotebook = async (
+export const launchJupyterLab = async (
   config?: RawJson,
   slots?: number,
   templateName?: string,
@@ -17,35 +17,35 @@ export const launchNotebook = async (
   pool?:string,
 ): Promise<void> => {
   try {
-    const notebook = await apiLaunchNotebook({
+    const jupyterLab = await apiLaunchJupyterLab({
       config: config || {
         description: name === '' ? undefined : name,
         resources: { resource_pool: pool === '' ? undefined : pool, slots },
       },
       templateName: templateName === '' ? undefined : templateName,
     });
-    openCommand(notebook);
+    openCommand(jupyterLab);
   } catch (e) {
     handleError({
       error: e,
       level: ErrorLevel.Error,
       message: e.message,
       publicMessage: 'Please try again later.',
-      publicSubject: 'Unable to Launch Notebook',
+      publicSubject: 'Unable to Launch JupyterLab',
       silent: false,
       type: ErrorType.Server,
     });
   }
 };
 
-export const previewNotebook = async (
+export const previewJupyterLab = async (
   slots?: number,
   templateName?: string,
   name?: string,
   pool?: string,
 ): Promise<RawJson> => {
   try {
-    const config = await apiPreviewNotebook({
+    const config = await apiPreviewJupyterLab({
       config: {
         description: name === '' ? undefined : name,
         resources: { resource_pool: pool === '' ? undefined : pool, slots },
@@ -55,7 +55,7 @@ export const previewNotebook = async (
     });
     return config;
   } catch (e) {
-    throw new Error('Unable to load notebook config.');
+    throw new Error('Unable to load JupyterLab config.');
   }
 };
 
@@ -210,13 +210,16 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
   return users.findIndex(user => task.username === user) !== -1;
 };
 
-export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
+export const filterTasks = <
+  T extends CommandType | TaskType = TaskType,
+  A extends CommandTask | AnyTask = AnyTask
+>(
   tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
 ): A[] => {
   return tasks
     .filter(task => {
       const isExperiment = isExperimentTask(task);
-      const type = isExperiment ? 'Experiment' : (task as CommandTask).type;
+      const type = isExperiment ? TaskType.Experiment : (task as CommandTask).type;
       return (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
         matchesState<A>(task, filters.states || []) &&

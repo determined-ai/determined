@@ -19,6 +19,7 @@ import (
 type DB interface {
 	StartUserSession(user *model.User) (string, error)
 	UserByToken(token string) (*model.User, *model.UserSession, error)
+	UserByExternalToken(token string, tokenKey string) (*model.User, *model.UserSession, error)
 	DeleteUserSessionByID(sessionID model.SessionID) error
 	UserByUsername(username string) (*model.User, error)
 	AddUser(user *model.User, ug *model.AgentUserGroup) error
@@ -27,7 +28,7 @@ type DB interface {
 	UserList() (values []model.FullUser, err error)
 	UserByID(userID model.UserID) (*model.FullUser, error)
 	AgentUserGroup(userID model.UserID) (*model.AgentUserGroup, error)
-	Migrate(migrationURL string) error
+	Migrate(migrationURL string, actions []string) error
 	Close() error
 	GetClusterID() (string, error)
 	ExperimentWithTrialSummariesRaw(id int) ([]byte, error)

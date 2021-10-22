@@ -102,7 +102,7 @@ const webpackConfig = override(
   // Webapp version is hardcoded but handled by `bumpversion`
   addWebpackPlugin(
     new webpack.DefinePlugin({
-      'process.env.VERSION': '"0.17.0.dev0"',
+      'process.env.VERSION': '"0.17.2.dev0"',
       'process.env.IS_DEV': JSON.stringify(IS_DEV),
       'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
     })
@@ -111,7 +111,7 @@ const webpackConfig = override(
   addWebpackPlugin(
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      languages: ['yaml'],
+      languages: ['markdown', 'yaml'],
       features: [
         'codelens',
         'colorDetector',

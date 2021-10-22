@@ -7,6 +7,7 @@ import (
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -19,11 +20,14 @@ import (
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
 	return &apiv1.GetMasterResponse{
-		Version:          a.m.Version,
-		MasterId:         a.m.MasterID,
-		ClusterId:        a.m.ClusterID,
-		ClusterName:      a.m.config.ClusterName,
-		TelemetryEnabled: a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		Version:           a.m.Version,
+		MasterId:          a.m.MasterID,
+		ClusterId:         a.m.ClusterID,
+		ClusterName:       a.m.config.ClusterName,
+		TelemetryEnabled:  a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		ExternalLoginUri:  a.m.config.InternalConfig.ExternalSessions.LoginURI,
+		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
+		Branding:          "determined",
 	}, nil
 }
 
@@ -63,7 +67,12 @@ func (a *apiServer) MasterLogs(
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
 			return resp.Send(&apiv1.MasterLogsResponse{
-				LogEntry: &logv1.LogEntry{Id: int32(lr.ID), Message: lr.Message},
+				LogEntry: &logv1.LogEntry{
+					Id:        int32(lr.ID),
+					Message:   lr.Message,
+					Timestamp: timestamppb.New(lr.Time),
+					Level:     logger.LogrusLevelToProto(lr.Level),
+				},
 			})
 		})
 	}

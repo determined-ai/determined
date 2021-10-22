@@ -28,19 +28,49 @@ export const hasObjectKeys = (data: unknown): boolean => {
 
 export const flattenObject = <T = Primitive>(
   object: UnknownRecord,
-  keys: RecordKey[] = [],
+  options?: {
+    continueFn?: (value: unknown) => boolean,
+    delimiter?: string,
+    keys?: RecordKey[],
+  },
 ): Record<RecordKey, T> => {
+  const continueFn = options?.continueFn ?? isObject;
+  const delimiter = options?.delimiter ?? '.';
+  const keys = options?.keys ?? [];
   return Object.keys(object).reduce((acc, key) => {
     const value = object[key] as UnknownRecord;
     const newKeys = [ ...keys, key ];
-    if (isObject(value)) {
-      acc = { ...acc, ...flattenObject<T>(value, newKeys) };
+    if (continueFn(value)) {
+      acc = { ...acc, ...flattenObject<T>(value, { continueFn, delimiter, keys: newKeys }) };
     } else {
-      const keyPath = newKeys.join('.');
+      const keyPath = newKeys.join(delimiter);
       acc[keyPath] = value as T;
     }
     return acc;
   }, {} as Record<RecordKey, T>);
+};
+
+export const unflattenObject = <T = unknown>(
+  object: Record<RecordKey, T>,
+  delimiter = '.',
+): UnknownRecord => {
+  const unflattened: UnknownRecord = {};
+  const regexSafeDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`^(.+?)${regexSafeDelimiter}(.+)$`);
+  Object.entries(object).forEach(([ paramPath, value ]) => {
+    let key = paramPath;
+    let matches = key.match(regex);
+    let pathRef = unflattened;
+    while (matches?.length === 3) {
+      const prefix = matches[1];
+      key = matches[2];
+      pathRef[prefix] = pathRef[prefix] ?? {};
+      pathRef = pathRef[prefix] as UnknownRecord;
+      matches = key.match(regex);
+    }
+    pathRef[key] = value;
+  });
+  return unflattened;
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -73,8 +103,8 @@ export const getPathOrElse = <T>(
 };
 
 /*
-  Categorize a list of items based on `keyFn` condition.
-*/
+ * Categorize a list of items based on `keyFn` condition.
+ */
 export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
   const d: Record<string, T[]> = {};
   array.forEach(item => {
@@ -114,4 +144,28 @@ export const deletePathList = (obj: RawJson, path: string[]): void => {
   const lastIndex = path.length - 1;
   const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
   if (parentObj) delete parentObj[path[lastIndex]];
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateEnum = (enumObject: unknown, value?: unknown): any => {
+  if (isObject(enumObject) && value !== undefined) {
+    const enumRecord = enumObject as Record<string, string>;
+    const stringValue = value as string;
+    const validOptions = Object
+      .values(enumRecord)
+      .filter((_, index) => index % 2 === 0);
+    if (validOptions.includes(stringValue)) return stringValue;
+  }
+  return undefined;
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const validateEnumList = (enumObject: unknown, values?: unknown[]): any => {
+  if (!Array.isArray(values)) return undefined;
+
+  const enumValues = values
+    .map(value => validateEnum(enumObject, value))
+    .filter(value => !!value);
+
+  return enumValues.length !== 0 ? enumValues : undefined;
 };

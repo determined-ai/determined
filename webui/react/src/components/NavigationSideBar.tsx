@@ -11,9 +11,9 @@ import { ResourceType } from 'types';
 import Avatar from './Avatar';
 import Dropdown, { Placement } from './Dropdown';
 import Icon from './Icon';
+import JupyterLabModal from './JupyterLabModal';
 import Link, { Props as LinkProps } from './Link';
 import css from './NavigationSideBar.module.scss';
-import NotebookModal from './NotebookModal';
 
 interface ItemProps extends LinkProps {
   badge?: number;
@@ -87,7 +87,7 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
   const { auth, cluster: overview, ui } = useStore();
-  const [ showNotebookModal, setShowNotebookModal ] = useState(false);
+  const [ showJupyterLabModal, setShowJupyterLabModal ] = useState(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
   const showNavigation = auth.isAuthenticated && ui.showChrome;
@@ -123,38 +123,38 @@ const NavigationSideBar: React.FC = () => {
       timeout={200}>
       <nav className={css.base} ref={nodeRef}>
         <header>
-          <div className={css.logo}>
-            <div className={css.logoIcon} />
-            <div className={css.logoLabel} />
-          </div>
-          <div className={css.version}>
-            {isVersionLong ? (
-              <Tooltip placement="right" title={`Version ${version}`}>
-                <span className={css.versionLabel}>{shortVersion}</span>
-              </Tooltip>
-            ) : (
-              <span className={css.versionLabel}>{version}</span>
-            )}
-          </div>
+          <Dropdown
+            content={<Menu>
+              <Menu.Item key="sign-out">
+                <Link path={paths.logout()}>Sign Out</Link>
+              </Menu.Item>
+            </Menu>}
+            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
+            placement={settings.navbarCollapsed ? Placement.Right : Placement.BottomLeft}>
+            <div className={css.user}>
+              <Avatar hideTooltip name={username} />
+              <span>{username}</span>
+            </div>
+          </Dropdown>
         </header>
         <main>
           <section className={css.launch}>
             <div className={css.launchBlock}>
               <Button
                 className={css.launchButton}
-                onClick={() => setShowNotebookModal(true)}>Launch JupyterLab</Button>
+                onClick={() => setShowJupyterLabModal(true)}>Launch JupyterLab</Button>
               {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => setShowNotebookModal(true)}>
+                <Button className={css.launchIcon} onClick={() => setShowJupyterLabModal(true)}>
                   <Icon
                     name={'add-small'}
                     size="tiny" />
                 </Button>
               ) : null}
             </div>
-            <NotebookModal
-              visible={showNotebookModal}
-              onCancel={() => setShowNotebookModal(false)}
-              onLaunch={() => setShowNotebookModal(false)} />
+            <JupyterLabModal
+              visible={showJupyterLabModal}
+              onCancel={() => setShowJupyterLabModal(false)}
+              onLaunch={() => setShowJupyterLabModal(false)} />
           </section>
           <section className={css.top}>
             {menuConfig.top.map(config => (
@@ -182,19 +182,15 @@ const NavigationSideBar: React.FC = () => {
           </section>
         </main>
         <footer>
-          <Dropdown
-            content={<Menu>
-              <Menu.Item>
-                <Link path={paths.logout()}>Sign Out</Link>
-              </Menu.Item>
-            </Menu>}
-            offset={settings.navbarCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
-            placement={settings.navbarCollapsed ? Placement.Right : Placement.TopLeft}>
-            <div className={css.user}>
-              <Avatar hideTooltip name={username} />
-              <span>{username}</span>
-            </div>
-          </Dropdown>
+          <div className={css.version}>
+            {isVersionLong ? (
+              <Tooltip placement="right" title={`Version ${version}`}>
+                <span className={css.versionLabel}>{shortVersion}</span>
+              </Tooltip>
+            ) : (
+              <span className={css.versionLabel}>{version}</span>
+            )}
+          </div>
         </footer>
       </nav>
     </CSSTransition>

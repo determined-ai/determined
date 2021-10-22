@@ -4,7 +4,7 @@ WITH mv AS (
     checkpoint_uuid,
     creation_time
   FROM model_versions
-  WHERE model_name = $1
+  WHERE model_id = $1
 ),
 c AS (
   SELECT
@@ -14,7 +14,6 @@ c AS (
     t.id AS trial_id,
     t.hparams as hparams,
     s.total_batches AS batch_number,
-    s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,
     COALESCE(c.metadata, '{}') AS metadata,
@@ -36,4 +35,4 @@ SELECT
     mv.version,
     mv.creation_time
     FROM c, mv
-    WHERE c.uuid = mv.checkpoint_uuid::text
+    WHERE c.uuid = mv.checkpoint_uuid::text;

@@ -35,6 +35,8 @@ import numpy as np
 import torch
 
 import determined.pytorch as det_torch
+from determined.common import set_logger
+from determined.common.api.analytics import send_analytics
 from model_hub.mmdetection import _callbacks as callbacks
 from model_hub.mmdetection import _data as data
 from model_hub.mmdetection import _data_backends as data_backends
@@ -42,7 +44,19 @@ from model_hub.mmdetection import utils as utils
 
 
 class MMDetTrial(det_torch.PyTorchTrial):
+    """
+    This trial serves as the trainer for MMDetection models.  It replaces the
+    `mmcv runner used by MMDetection
+    <https://github.com/open-mmlab/mmdetection/blob/master/mmdet/apis/train.py>`_.
+
+    For nearly all use cases, you can just use this trial definition and control behavior
+    by changing the MMDetection config.  If you want to customize the trial further, you
+    can use this trial as the starting point.
+    """
+
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        send_analytics("MMDetTrial Created")
+
         self.context = context
         self.hparams = attrdict.AttrDict(context.get_hparams())
         self.data_config = attrdict.AttrDict(context.get_data_config())
@@ -58,9 +72,9 @@ class MMDetTrial(det_torch.PyTorchTrial):
         # We need to convert pytorch SyncBatchNorm layers to horovod's.
         utils.convert_syncbn_model(self.model)
 
+        # Initialize model
         self.model.init_weights()
-
-        # Load pretrained weights for the specified mmcv config if available.
+        # If use_pretrained, try loading pretrained weights for the mmcv config if available.
         if self.hparams.use_pretrained:
             ckpt_path, ckpt = utils.get_pretrained_ckpt_path("/tmp", self.hparams.config_file)
             if ckpt_path is not None:
@@ -81,7 +95,6 @@ class MMDetTrial(det_torch.PyTorchTrial):
             mmcv.runner.build_optimizer(self.model, self.cfg.optimizer)
         )
         self.model.zero_grad()
-        self.optimizer.zero_grad()
 
         self.clip_grads_fn = None
         if self.cfg.optimizer_config.grad_clip is not None:
@@ -90,6 +103,10 @@ class MMDetTrial(det_torch.PyTorchTrial):
                 self.cfg.optimizer_config.grad_clip.max_norm,
                 self.cfg.optimizer_config.grad_clip.norm_type,
             )
+
+        # mmdet sets loggers in the package that interrupt with Determined logging.
+        # We reset the root logger after mmdet models are initialized.
+        set_logger(bool(self.context.env.experiment_config.get("debug", False)))
 
     def build_mmdet_config(self) -> mmcv.Config:
         """
@@ -136,13 +153,13 @@ class MMDetTrial(det_torch.PyTorchTrial):
 
     def setup_torch_amp(self, fp16_cfg: mmcv.Config) -> None:
         """
-        Build the torch amp gradient scalar according to the fp16_cfg.
+        Build the torch amp gradient scaler according to the fp16_cfg.
         Please refer to :meth:`model_hub.mmdetection.build_fp16_loss_scaler` function
         to see how to configure fp16 training.
         """
         mmcv.runner.wrap_fp16_model(self.model)
         loss_scaler = utils.build_fp16_loss_scaler(fp16_cfg.loss_scale)
-        self.loss_scalar = self.context.wrap_scaler(loss_scaler)
+        self.loss_scaler = self.context.wrap_scaler(loss_scaler)
         self.context.experimental._auto_amp = True
 
     def build_callbacks(self) -> Dict[str, det_torch.PyTorchCallback]:
@@ -163,9 +180,9 @@ class MMDetTrial(det_torch.PyTorchTrial):
         if self.lr_updater is not None:
             self.lr_updater.on_batch_start()
         batch = {key: batch[key].data[0] for key in batch}
+
         losses = self.model(**batch)
         loss, log_vars = self.model._parse_losses(losses)
-
         self.model.zero_grad()
         self.context.backward(loss)
         self.context.step_optimizer(

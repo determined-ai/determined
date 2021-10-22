@@ -13,6 +13,7 @@ import determined as det
 from determined import horovod, layers, pytorch, util, workload
 from determined.common import check, experimental, storage
 from determined.common.api import certs
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 from determined.util import has_param
 
@@ -26,6 +27,7 @@ except ImportError:
 class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        send_analytics("PyTorchTrial Created")
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
@@ -315,6 +317,9 @@ class PyTorchTrialController(det.TrialController):
             for i in range(start_idx, batch_idx + 1):
                 if (i + 1) % lr_scheduler._frequency == 0:
                     lr_scheduler.step()
+        elif lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_OPTIMIZER_STEP:
+            if (batch_idx + 1) % lr_scheduler._frequency == 0:
+                lr_scheduler.step()
         elif lr_scheduler._step_mode == pytorch.LRScheduler.StepMode.STEP_EVERY_EPOCH:
             # We will step if the next optimizer step will land in the next epoch.
             epoch_idx = self.get_epoch_idx(batch_idx)
@@ -352,7 +357,7 @@ class PyTorchTrialController(det.TrialController):
         for batch_idx in range(start, end):
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
-            with self.prof.record_timing("dataloader_next"):
+            with self.prof.record_timing("dataloader_next", requires_sync=False):
                 batch = next(self.training_iterator)
             batch_inputs = self.trial.get_batch_length(batch)
             num_inputs += batch_inputs
@@ -370,7 +375,7 @@ class PyTorchTrialController(det.TrialController):
                         callback.on_training_epoch_start()
             self.context._loss_ids = {}
 
-            with self.prof.record_timing("train_batch"):
+            with self.prof.record_timing("train_batch", requires_sync=False):
                 if self.context.profiler:
                     with self.context.profiler as torch_profiler:
                         tr_metrics = self.trial.train_batch(
@@ -412,6 +417,8 @@ class PyTorchTrialController(det.TrialController):
 
             batch_dur = time.time() - batch_start_time
             samples_per_second = batch_inputs / batch_dur
+            if self.hvd_config.use:
+                samples_per_second *= hvd.size()
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 

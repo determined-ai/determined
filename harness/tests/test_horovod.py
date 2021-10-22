@@ -1,49 +1,12 @@
-from typing import Any, Dict
-
 import pytest
 
-import determined as det
 from determined import constants, horovod
 
 
-def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvContext:
-    det_trial_runner_network_interface = constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE
-    return det.EnvContext(
-        experiment_config=experiment_config,
-        master_addr="",
-        master_port=0,
-        use_tls=False,
-        master_cert_file=None,
-        master_cert_name=None,
-        container_id="",
-        hparams={"global_batch_size": 32},
-        latest_checkpoint=None,
-        latest_batch=0,
-        use_gpu=False,
-        container_gpus=[],
-        slot_ids=[],
-        debug=False,
-        det_rendezvous_port="",
-        det_trial_unique_port_offset=0,
-        det_trial_runner_network_interface=det_trial_runner_network_interface,
-        det_trial_id="1",
-        det_agent_id="1",
-        det_experiment_id="1",
-        det_allocation_token="",
-        det_cluster_id="uuid-123",
-        trial_seed=0,
-        trial_run_id=1,
-        allocation_id="",
-        managed_training=True,
-        test_mode=False,
-        on_cluster=False,
-    )
-
-
-@pytest.mark.parametrize("debug", [True, False])  # type: ignore
-@pytest.mark.parametrize("auto_tune", [True, False])  # type: ignore
-@pytest.mark.parametrize("tensor_fusion_threshold", [64, 128, 512])  # type: ignore
-@pytest.mark.parametrize("tensor_fusion_cycle_time", [5, 20])  # type: ignore
+@pytest.mark.parametrize("debug", [True, False])
+@pytest.mark.parametrize("auto_tune", [True, False])
+@pytest.mark.parametrize("tensor_fusion_threshold", [64, 128, 512])
+@pytest.mark.parametrize("tensor_fusion_cycle_time", [5, 20])
 def test_create_run_command(
     debug: bool, auto_tune: bool, tensor_fusion_threshold: int, tensor_fusion_cycle_time: int
 ) -> None:
@@ -54,11 +17,6 @@ def test_create_run_command(
         "tensor_fusion_threshold": tensor_fusion_threshold,
         "tensor_fusion_cycle_time": tensor_fusion_cycle_time,
     }
-    experiment_config = {
-        "optimizations": optimizations,
-        "resources": {"slots_per_trial": 1, "native_parallel": False},
-    }
-    env = create_default_env_context(experiment_config)
 
     expected_horovod_run_cmd = [
         "horovodrun",
@@ -101,10 +59,12 @@ def test_create_run_command(
     created_horovod_run_cmd = horovod.create_run_command(
         num_proc_per_machine=num_proc_per_machine,
         ip_addresses=ip_addresses,
-        env=env,
+        inter_node_network_interface=None,
+        optimizations=optimizations,
         debug=debug,
         optional_args=[],
     )
+
     assert expected_horovod_run_cmd == created_horovod_run_cmd
 
 

@@ -1,16 +1,15 @@
 import argparse
+import socket
 import sys
 from pathlib import Path
 from typing import Callable, Dict
-
-import appdirs
 
 from determined.common.declarative_argparse import Arg, BoolOptArg, Cmd, Group
 
 from . import cluster_utils
 from .preflight import check_docker_install
 
-DEFAULT_STORAGE_HOST_PATH = Path(appdirs.user_data_dir("determined"))
+AGENT_NAME_DEFAULT = "det-agent-<hostname>"
 
 
 def handle_cluster_up(args: argparse.Namespace) -> None:
@@ -29,8 +28,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         gpu=args.gpu,
         autorestart=(not args.no_autorestart),
-        auto_bind_mount=args.auto_bind_mount,
-        no_auto_bind_mount=args.no_auto_bind_mount,
+        auto_work_dir=args.auto_work_dir,
     )
 
 
@@ -53,9 +51,8 @@ def handle_master_up(args: argparse.Namespace) -> None:
         db_password=args.db_password,
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
-        auto_bind_mount=args.auto_bind_mount,
-        no_auto_bind_mount=args.no_auto_bind_mount,
         cluster_name=args.cluster_name,
+        auto_work_dir=args.auto_work_dir,
     )
 
 
@@ -64,11 +61,16 @@ def handle_master_down(args: argparse.Namespace) -> None:
 
 
 def handle_agent_up(args: argparse.Namespace) -> None:
+
+    agent_name = args.agent_name
+    if args.agent_name == AGENT_NAME_DEFAULT:
+        agent_name = f"det-agent-{socket.gethostname()}"
+
     cluster_utils.agent_up(
         master_host=args.master_host,
         master_port=args.master_port,
         gpu=args.gpu,
-        agent_name=args.agent_name,
+        agent_name=agent_name,
         agent_label=args.agent_label,
         agent_resource_pool=args.agent_resource_pool,
         image_repo_prefix=args.image_repo_prefix,
@@ -80,10 +82,15 @@ def handle_agent_up(args: argparse.Namespace) -> None:
 
 
 def handle_agent_down(args: argparse.Namespace) -> None:
+
+    agent_name = args.agent_name
+    if args.agent_name == AGENT_NAME_DEFAULT:
+        agent_name = f"det-agent-{socket.gethostname()}"
+
     if args.all:
         cluster_utils.stop_all_agents()
     else:
-        cluster_utils.stop_agent(agent_name=args.agent_name)
+        cluster_utils.stop_agent(agent_name=agent_name)
 
 
 def deploy_local(args: argparse.Namespace) -> None:
@@ -119,7 +126,7 @@ args_description = Cmd(
                     Arg(
                         "--storage-host-path",
                         type=Path,
-                        default=DEFAULT_STORAGE_HOST_PATH,
+                        default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
@@ -162,15 +169,10 @@ args_description = Cmd(
                     action="store_true",
                 ),
                 Arg(
-                    "--auto-bind-mount",
-                    type=str,
+                    "--auto-work-dir",
+                    type=Path,
                     default=None,
-                    help="directory to mount into task containers (default: user's home directory)",
-                ),
-                Arg(
-                    "--no-auto-bind-mount",
-                    help="disable mounting user's home directory into task containers",
-                    action="store_true",
+                    help="the default work dir, used for interactive jobs",
                 ),
             ],
         ),
@@ -207,7 +209,7 @@ args_description = Cmd(
                     Arg(
                         "--storage-host-path",
                         type=str,
-                        default=DEFAULT_STORAGE_HOST_PATH,
+                        default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
                 ),
@@ -236,21 +238,16 @@ args_description = Cmd(
                     action="store_true",
                 ),
                 Arg(
-                    "--auto-bind-mount",
-                    type=str,
-                    default=str(Path.home()),
-                    help="directory to mount into task containers (default: user's home directory)",
-                ),
-                Arg(
-                    "--no-auto-bind-mount",
-                    help="disable mounting user's home directory into task containers",
-                    action="store_true",
-                ),
-                Arg(
                     "--cluster-name",
                     type=str,
                     default="determined",
                     help="name for the cluster resources",
+                ),
+                Arg(
+                    "--auto-work-dir",
+                    type=Path,
+                    default=None,
+                    help="the default work dir, used for interactive jobs",
                 ),
             ],
         ),
@@ -300,7 +297,7 @@ args_description = Cmd(
                 Arg("master_host", type=str, help="master hostname"),
                 Arg("--master-port", type=int, default=8080, help="master port"),
                 Arg("--det-version", type=str, default=None, help="version or commit to use"),
-                Arg("--agent-name", type=str, default="det-agent", help="agent name"),
+                Arg("--agent-name", type=str, default=AGENT_NAME_DEFAULT, help="agent name"),
                 Arg("--agent-label", type=str, default=None, help="agent label"),
                 Arg("--agent-resource-pool", type=str, default=None, help="agent resource pool"),
                 BoolOptArg(
@@ -329,7 +326,7 @@ args_description = Cmd(
             handle_agent_down,
             "Stop a Determined agent",
             [
-                Arg("--agent-name", type=str, default="det-agent", help="agent name"),
+                Arg("--agent-name", type=str, default=AGENT_NAME_DEFAULT, help="agent name"),
                 Arg("--all", help="stop all running agents", action="store_true"),
                 Arg(
                     "--cluster-name",

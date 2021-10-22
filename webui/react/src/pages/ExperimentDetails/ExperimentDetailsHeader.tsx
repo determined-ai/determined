@@ -13,13 +13,13 @@ import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentH
 import ExperimentState from 'pages/ExperimentDetails/Header/ExperimentHeaderState';
 import { handlePath, paths, routeToReactUrl } from 'routes/utils';
 import {
-  archiveExperiment, deleteExperiment, openOrCreateTensorboard, patchExperiment,
+  archiveExperiment, deleteExperiment, openOrCreateTensorBoard, patchExperiment,
   unarchiveExperiment,
 } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { DetailedUser, ExperimentBase, RecordKey, RunState, TrialDetails } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { terminalRunStates } from 'utils/types';
+import { deletableRunStates, terminalRunStates } from 'utils/types';
 import { openCommand } from 'wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -42,7 +42,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   trial,
 }: Props) => {
   const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
-  const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
+  const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
   const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
   const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(
     experiment.state === RunState.Deleting,
@@ -139,7 +139,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       downloadModel: {
         icon: <Icon name="download" size="small" />,
         key: 'download-model',
-        label: 'Download Model',
+        label: 'Download Experiment Code',
         onClick: (e) => {
           handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
         },
@@ -152,17 +152,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
       tensorboard: {
         icon: <Icon name="tensorboard" size="small" />,
-        isLoading: isRunningTensorboard,
+        isLoading: isRunningTensorBoard,
         key: 'tensorboard',
         label: 'TensorBoard',
         onClick: async () => {
-          setIsRunningTensorboard(true);
+          setIsRunningTensorBoard(true);
           try {
-            const tensorboard = await openOrCreateTensorboard({ experimentIds: [ experiment.id ] });
+            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ experiment.id ] });
             openCommand(tensorboard);
-            setIsRunningTensorboard(false);
+            setIsRunningTensorBoard(false);
           } catch (e) {
-            setIsRunningTensorboard(false);
+            setIsRunningTensorBoard(false);
           }
         },
       },
@@ -189,18 +189,20 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       terminalRunStates.has(experiment.state) && (
         experiment.archived ? options.archive : options.unarchive
       ),
-      curUser?.isAdmin && terminalRunStates.has(experiment.state) && options.delete,
+      deletableRunStates.has(experiment.state) &&
+        curUser && (curUser.isAdmin || curUser.username === experiment.username) && options.delete,
     ].filter(option => !!option) as Option[];
   }, [
+    curUser,
     deleteExperimentHandler,
     isRunningDelete,
-    curUser?.isAdmin,
     experiment.archived,
     experiment.id,
     experiment.state,
+    experiment.username,
     fetchExperimentDetails,
     isRunningArchive,
-    isRunningTensorboard,
+    isRunningTensorBoard,
     isRunningUnarchive,
     showContinueTrial,
     showForkModal,
@@ -217,7 +219,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 allowNewline
                 isOnDark
                 maxLength={500}
-                placeholder="experiment description"
+                placeholder="Add description"
                 value={experiment.description || ''}
                 onSave={handleDescriptionUpdate} />
             </div>

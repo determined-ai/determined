@@ -10,8 +10,9 @@ import urllib3.exceptions
 from google.api_core import retry
 from google.cloud import storage
 
+from determined import errors
 from determined.common import util
-from determined.common.storage.base import StorageManager, StorageMetadata
+from determined.common.storage.base import StorageManager
 
 retry_network_errors = retry.Retry(
     retry.if_exception_type(
@@ -48,34 +49,35 @@ class GCSStorageManager(StorageManager):
         self.client = storage.Client()
         self.bucket = self.client.bucket(bucket)
 
-    def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
+    def post_store_path(self, storage_id: str, storage_dir: str) -> None:
         """post_store_path uploads the checkpoint to gcs and deletes the original files."""
         try:
-            logging.info("Uploading checkpoint {} to GCS".format(storage_id))
-            self.upload(metadata, storage_dir)
+            logging.info(f"Uploading checkpoint {storage_id} to GCS")
+            self.upload(storage_id, storage_dir)
         finally:
-            self._remove_checkpoint_directory(metadata.storage_id)
+            self._remove_checkpoint_directory(storage_id)
 
     @contextlib.contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
+    def restore_path(self, storage_id: str) -> Iterator[str]:
+        storage_dir = os.path.join(self._base_path, storage_id)
         os.makedirs(storage_dir, exist_ok=True)
 
-        logging.info("Downloading checkpoint {} from GCS".format(metadata.storage_id))
-        self.download(metadata, storage_dir)
+        logging.info(f"Downloading checkpoint {storage_id} from GCS")
+        self.download(storage_id, storage_dir)
 
         try:
-            yield os.path.join(self._base_path, metadata.storage_id)
+            yield os.path.join(self._base_path, storage_id)
         finally:
-            self._remove_checkpoint_directory(metadata.storage_id)
+            self._remove_checkpoint_directory(storage_id)
 
     @util.preserve_random_state
-    def upload(self, metadata: StorageMetadata, storage_dir: str) -> None:
-        for rel_path in metadata.resources.keys():
-            blob_name = "{}/{}".format(metadata.storage_id, rel_path)
+    def upload(self, storage_id: str, storage_dir: str) -> None:
+        storage_prefix = storage_id
+        for rel_path in sorted(self._list_directory(storage_dir)):
+            blob_name = f"{storage_prefix}/{rel_path}"
             blob = self.bucket.blob(blob_name)
 
-            logging.debug("Uploading to GCS: {}".format(blob_name))
+            logging.debug(f"Uploading to GCS: {blob_name}")
 
             if rel_path.endswith("/"):
                 # Create empty blobs for subdirectories. This ensures
@@ -86,29 +88,37 @@ class GCSStorageManager(StorageManager):
                 retry_network_errors(blob.upload_from_filename)(abs_path)
 
     @util.preserve_random_state
-    def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
-        for rel_path in metadata.resources.keys():
-            abs_path = os.path.join(storage_dir, rel_path)
-            os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+    def download(self, storage_id: str, storage_dir: str) -> None:
+        storage_prefix = storage_id
+        found = False
+        # Listing blobs with prefix set and no delimiter is equivalent to a recursive listing.  If
+        # you include a `delimiter="/"` you will get only the file-like blobs inside of a
+        # directory-like blob.
+        for blob in self.bucket.list_blobs(prefix=storage_prefix):
+            found = True
+            dst = os.path.join(storage_dir, os.path.relpath(blob.name, storage_prefix))
+            dst_dir = os.path.dirname(dst)
+            if not os.path.exists(dst_dir):
+                os.makedirs(dst_dir, exist_ok=True)
 
             # Only create empty directory for keys that end with "/".
             # See `upload` method for more context.
-            if rel_path.endswith("/"):
+            if blob.name.endswith("/"):
+                os.makedirs(dst, exist_ok=True)
                 continue
 
-            blob_name = "{}/{}".format(metadata.storage_id, rel_path)
-            blob = self.bucket.blob(blob_name)
+            logging.debug(f"Downloading from GCS: {blob.name}")
 
-            logging.debug("Downloading from GCS: {}".format(blob_name))
+            blob.download_to_filename(dst)
 
-            blob.download_to_filename(abs_path)
+        if not found:
+            raise errors.CheckpointNotFound(f"Did not find checkpoint {storage_id} in GCS")
 
     @util.preserve_random_state
-    def delete(self, metadata: StorageMetadata) -> None:
-        logging.info("Deleting checkpoint {} from GCS".format(metadata.storage_id))
+    def delete(self, storage_id: str) -> None:
+        logging.info(f"Deleting checkpoint {storage_id} from GCS")
 
-        for rel_path in metadata.resources.keys():
-            logging.debug("Deleting {} from GCS".format(rel_path))
-            blob_name = "{}/{}".format(metadata.storage_id, rel_path)
-            blob = self.bucket.blob(blob_name)
+        storage_prefix = storage_id
+        for blob in self.bucket.list_blobs(prefix=storage_prefix):
+            logging.debug(f"Deleting {blob.name} from GCS")
             blob.delete()

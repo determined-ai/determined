@@ -48,40 +48,51 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 
 // Service describes a user manager.
 type Service struct {
-	db     *db.PgDB
-	system *actor.System
+	db        *db.PgDB
+	system    *actor.System
+	extConfig *model.ExternalSessions
 }
 
 // New creates a new user service.
-func New(db *db.PgDB, system *actor.System) (*Service, error) {
-	return &Service{db, system}, nil
+func New(db *db.PgDB, system *actor.System, extConfig *model.ExternalSessions) (*Service, error) {
+	return &Service{db, system, extConfig}, nil
+}
+
+// The middleware looks for a token in two places (in this order):
+// 1. The HTTP Authorization header.
+// 2. A cookie named "auth".
+func (s *Service) extractToken(c echo.Context) (string, error) {
+	authRaw := c.Request().Header.Get("Authorization")
+	if authRaw != "" {
+		// We attempt to parse out the token, which should be
+		// transmitted as a Bearer authentication token.
+		if !strings.HasPrefix(authRaw, "Bearer ") {
+			return "", echo.ErrUnauthorized
+		}
+		return strings.TrimPrefix(authRaw, "Bearer "), nil
+	} else if cookie, err := c.Cookie("auth"); err == nil {
+		return cookie.Value, nil
+	}
+	// If we found no token, then abort the request with an HTTP 401.
+	return "", echo.NewHTTPError(http.StatusUnauthorized)
 }
 
 // ProcessAuthentication is a middleware processing function that attempts
-// to authenticate incoming HTTP requests.  Note that the middleware looks
-// for an authentication in three places (in the following order):
-// 1. The HTTP Authorization header.
-// 2. A cookie named "auth".
-// 3. A Query parameter named "_auth".
+// to authenticate incoming HTTP requests.
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authRaw := c.Request().Header.Get("Authorization")
-		var token string
-		if authRaw != "" {
-			// We attempt to parse out the token, which should be
-			// transmitted as a Bearer authentication token.
-			if !strings.HasPrefix(authRaw, "Bearer ") {
-				return echo.ErrUnauthorized
-			}
-			token = strings.TrimPrefix(authRaw, "Bearer ")
-		} else if cookie, err := c.Cookie("auth"); err == nil {
-			token = cookie.Value
-		} else {
-			// If we found no token, then abort the request with an HTTP 401.
-			return echo.NewHTTPError(http.StatusUnauthorized)
+		token, err := s.extractToken(c)
+		if err != nil {
+			return err
 		}
 
-		user, userSession, err := s.db.UserByToken(token)
+		var user *model.User
+		var session *model.UserSession
+		if s.extConfig.JwtKey == "" {
+			user, session, err = s.db.UserByToken(token)
+		} else {
+			user, session, err = s.db.UserByExternalToken(token, s.extConfig.JwtKey)
+		}
 		switch err {
 		case nil:
 			if !user.Active {
@@ -90,7 +101,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			// Set data on the request context that might be useful to
 			// event handlers.
 			c.(*context.DetContext).SetUser(*user)
-			c.(*context.DetContext).SetUserSession(*userSession)
+			c.(*context.DetContext).SetUserSession(*session)
 			return next(c)
 		case db.ErrNotFound:
 			return echo.NewHTTPError(http.StatusUnauthorized)
@@ -119,6 +130,11 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 }
 
 func (s *Service) postLogin(c echo.Context) (interface{}, error) {
+	if s.extConfig.JwtKey != "" {
+		return nil, echo.NewHTTPError(http.StatusMisdirectedRequest,
+			"authentication is configured to be external")
+	}
+
 	type (
 		request struct {
 			Username string `json:"username"`

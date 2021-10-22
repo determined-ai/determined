@@ -107,7 +107,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
         controller = xor_trial_controller(
@@ -153,7 +153,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
 
         controller = xor_trial_controller(
             self.hparams,
@@ -173,7 +173,7 @@ class TestXORTrial:
         # in the checkpoint directory. Within the "inference" subdirectory,
         # there should be a single timestamped subdirectory that contains the
         # exported SavedModel.
-        export_path = os.path.join(checkpoint_dir, latest_checkpoint["uuid"], "inference")
+        export_path = os.path.join(checkpoint_dir, latest_checkpoint, "inference")
         assert os.path.exists(export_path)
         _, dirs, _ = next(os.walk(export_path))
         assert len(dirs) == 1
@@ -241,7 +241,7 @@ class TestXORTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
         def verify_callback(checkpoint_dir: str, checkpoint_num: int) -> None:
@@ -256,7 +256,7 @@ class TestXORTrial:
             checkpoint_dir=checkpoint_dir,
         )
         controller.run()
-        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint["uuid"]), checkpoint_num=1)
+        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint), checkpoint_num=1)
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=estimator_xor_model.XORTrialWithCustomHook,
@@ -268,7 +268,7 @@ class TestXORTrial:
             latest_batch=latest_batch,
         )
         controller.run()
-        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint["uuid"]), checkpoint_num=2)
+        verify_callback(os.path.join(checkpoint_dir, latest_checkpoint), checkpoint_num=2)
 
     def test_end_of_training_hook(self):
         with tempfile.TemporaryDirectory() as temp_directory:

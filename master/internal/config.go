@@ -188,5 +188,6 @@ type TelemetryConfig struct {
 
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
-	PrometheusEnabled bool `json:"prometheus_enabled"`
+	ExternalSessions  model.ExternalSessions `json:"external_sessions"`
+	PrometheusEnabled bool                   `json:"prometheus_enabled"`
 }

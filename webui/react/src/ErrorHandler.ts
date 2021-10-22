@@ -3,8 +3,8 @@ import axios from 'axios';
 
 import { getAnalytics } from 'Analytics';
 import history from 'routes/history';
-import { paths } from 'routes/utils';
-import { clone, isAsyncFunction } from 'utils/data';
+import { filterOutLoginLocation, paths } from 'routes/utils';
+import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
 
@@ -77,9 +77,7 @@ const handleError = (e: DaError): DaError => {
   if (axios.isCancel(e)) return e;
 
   if (e.type === ErrorType.Auth) {
-    if (!window.location.pathname.endsWith('login')) {
-      history.push(paths.logout(), { loginRedirect: clone(window.location) });
-    }
+    history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
     return e;
   }
 

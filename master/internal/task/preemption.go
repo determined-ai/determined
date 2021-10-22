@@ -61,8 +61,8 @@ func NewPreemption(allocationID model.AllocationID) *Preemption {
 	}
 }
 
-// Receive implements actor.Actor.
-func (p *Preemption) Receive(ctx *actor.Context) error {
+// ReceiveMsg receives preemption-specific messages.
+func (p *Preemption) ReceiveMsg(ctx *actor.Context) error {
 	if p == nil {
 		return ErrAllocationUnfulfilled{Action: fmt.Sprintf("%T", ctx.Message())}
 	}

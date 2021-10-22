@@ -33,25 +33,29 @@ USER = "determined-ai"
 PROJECT = "environments"
 BASE_URL = f"https://circleci.com/api/v1.1/project/github/{USER}/{PROJECT}"
 
+JOB_SUFFIXES = [
+    "tf1-cpu",
+    "tf2-cpu",
+    "tf25-cpu",
+    "tf26-cpu",
+    "tf1-gpu",
+    "tf2-gpu",
+    "tf25-gpu",
+    "tf26-gpu",
+]
+
 EXPECT_JOBS = {
     "publish-cloud-images",
-    "build-and-publish-docker-tf1-cpu",
-    "build-and-publish-docker-tf2-cpu",
-    "build-and-publish-docker-tf1-gpu",
-    "build-and-publish-docker-tf2-gpu",
-    "build-and-publish-docker-tf25-gpu",
-    "build-and-publish-docker-tf26-gpu",
+    *(f"build-and-publish-docker-{suffix}" for suffix in JOB_SUFFIXES),
 }
 
-EXPECT_ARTIFACTS = {
+PACKER_ARTIFACTS = {
     "packer-log",
-    "publish-tf1-cpu",
-    "publish-tf2-cpu",
-    "publish-tf1-gpu",
-    "publish-tf2-gpu",
-    "publish-tf25-gpu",
-    "publish-tf26-gpu",
 }
+
+DOCKER_ARTIFACTS = {f"publish-{suffix}" for suffix in JOB_SUFFIXES}
+
+EXPECT_ARTIFACTS = PACKER_ARTIFACTS | DOCKER_ARTIFACTS
 
 
 class Build:
@@ -200,15 +204,13 @@ if __name__ == "__main__":
     builds = get_all_builds(commit)
     artifacts = get_all_artifacts(builds)
 
-    new_tags = {
-        **yaml.safe_load(artifacts["publish-tf1-cpu"]),
-        **yaml.safe_load(artifacts["publish-tf2-cpu"]),
-        **yaml.safe_load(artifacts["publish-tf1-gpu"]),
-        **yaml.safe_load(artifacts["publish-tf2-gpu"]),
-        **yaml.safe_load(artifacts["publish-tf25-gpu"]),
-        **yaml.safe_load(artifacts["publish-tf26-gpu"]),
-        **parse_packer_log(artifacts["packer-log"]),
-    }
+    tag_list = [
+        *(parse_packer_log(artifacts[artifact]) for artifact in PACKER_ARTIFACTS),
+        *(yaml.safe_load(artifacts[artifact]) for artifact in DOCKER_ARTIFACTS),
+    ]
+
+    # Flatten tag_list dicts into one dict.
+    new_tags = {k: v for d in tag_list for (k, v) in d.items()}
 
     saw_change = False
     for image_type, new_tag in new_tags.items():

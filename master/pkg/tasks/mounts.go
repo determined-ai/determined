@@ -9,12 +9,12 @@ import (
 )
 
 // ToDockerMounts converts expconf bind mounts to container mounts.
-func ToDockerMounts(bindMounts []expconf.BindMount) []mount.Mount {
+func ToDockerMounts(bindMounts []expconf.BindMount, workDir string) []mount.Mount {
 	dockerMounts := make([]mount.Mount, 0, len(bindMounts))
 	for _, m := range bindMounts {
 		target := m.ContainerPath()
 		if !filepath.IsAbs(target) {
-			target = filepath.Join(ContainerWorkDir, target)
+			target = filepath.Join(workDir, target)
 		}
 		dockerMounts = append(dockerMounts, mount.Mount{
 			Type:     mount.TypeBind,

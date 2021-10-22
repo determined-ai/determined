@@ -13,7 +13,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 message Model {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "name", "metadata", "creation_time", "last_updated_time" ]
+      required: [
+        "id",
+        "name",
+        "metadata",
+        "creation_time",
+        "last_updated_time",
+        "num_versions",
+        "username"
+      ]
     }
   };
   // The name of the model.
@@ -28,12 +36,36 @@ message Model {
   google.protobuf.Timestamp creation_time = 4;
   // The time the model was last updated.
   google.protobuf.Timestamp last_updated_time = 5;
+  // The id of this model.
+  int32 id = 6;
+  // The number of versions associated with this model.
+  int32 num_versions = 7;
+  // Labels associated with this model.
+  repeated string labels = 8;
+  // README for model.
+  string readme = 9;
+  // User who created this model.
+  string username = 10;
+  // Whether this model is archived or not.
+  bool archived = 11;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
 // a version of a model and use the model name and version to locate a
 // checkpoint.
 message ModelVersion {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "model",
+        "checkpoint",
+        "version",
+        "creation_time",
+        "username"
+      ]
+    }
+  };
   // The model the version is related to.
   Model model = 1;
   // The checkpoint of the model version.
@@ -42,4 +74,18 @@ message ModelVersion {
   int32 version = 3;
   // The time the model version was created.
   google.protobuf.Timestamp creation_time = 4;
+  // Unique id for each model version.
+  int32 id = 5;
+  // Name for this model version.
+  string name = 6;
+  //  Metadata associated with this model version.
+  google.protobuf.Struct metadata = 7;
+  // The time this model version was last updated.
+  google.protobuf.Timestamp last_updated_time = 8;
+  // Comment associated with this model version.
+  string comment = 9;
+  // Readme associated with this model version.
+  string readme = 10;
+  // User who created this model version.
+  string username = 11;
 }

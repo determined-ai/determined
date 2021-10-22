@@ -33,6 +33,20 @@ type TrialSpec struct {
 func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 	res := s.Base
 
+	env := s.ExperimentConfig.Environment()
+	ports := env.Ports()
+	if ports == nil {
+		ports = make(map[string]int)
+	}
+	// TODO: remove this, but without breaking rendezvous api.
+	ports["trial"] = 1734
+	env.SetPorts(ports)
+	res.Environment = env
+
+	res.ResourcesConfig = s.ExperimentConfig.Resources()
+
+	res.WorkDir = DefaultWorkDir
+
 	additionalFiles := archive.Archive{
 		s.Base.AgentUserGroup.OwnedArchiveItem(
 			trialEntrypointFile,
@@ -76,17 +90,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			rootDir,
 		),
 		wrapArchive(additionalFiles, rootDir),
-		wrapArchive(
-			archive.Archive{
-				s.Base.AgentUserGroup.OwnedArchiveItem(
-					"checkpoint.json",
-					[]byte(jsonify(s.LatestCheckpoint)),
-					0600,
-					tar.TypeReg,
-				),
-			},
-			trainDir,
-		),
 	}
 
 	res.Description = fmt.Sprintf(
@@ -97,29 +100,21 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
 
-	env := s.ExperimentConfig.Environment()
-	ports := env.Ports()
-	if ports == nil {
-		ports = make(map[string]int)
-	}
-	ports["trial"] = rendezvousPort(trialUniquePortOffset(s.Base.Devices))
-	env.SetPorts(ports)
-	res.Environment = env
-
-	portOffset := trialUniquePortOffset(s.Base.Devices)
-	portStr := rendezvousPort(portOffset)
 	envVars := map[string]string{
-		"DET_EXPERIMENT_ID":            strconv.Itoa(s.ExperimentID),
-		"DET_TRIAL_ID":                 strconv.Itoa(s.TrialID),
-		"DET_TRIAL_RUN_ID":             strconv.Itoa(s.TrialRunID),
-		"DET_TRIAL_SEED":               strconv.FormatUint(uint64(s.TrialSeed), 10),
-		"DET_EXPERIMENT_CONFIG":        jsonify(s.ExperimentConfig),
-		"DET_HPARAMS":                  jsonify(s.HParams),
-		"DET_LATEST_BATCH":             strconv.Itoa(s.LatestBatch),
-		"DET_LATEST_CHECKPOINT":        "/run/determined/train/checkpoint.json",
-		"DET_RENDEZVOUS_PORT":          strconv.Itoa(portStr),
-		"DET_TRIAL_UNIQUE_PORT_OFFSET": strconv.Itoa(portOffset),
+		"DET_EXPERIMENT_ID":      strconv.Itoa(s.ExperimentID),
+		"DET_TRIAL_ID":           strconv.Itoa(s.TrialID),
+		"DET_TRIAL_RUN_ID":       strconv.Itoa(s.TrialRunID),
+		"DET_TRIAL_SEED":         strconv.FormatUint(uint64(s.TrialSeed), 10),
+		"DET_EXPERIMENT_CONFIG":  jsonify(s.ExperimentConfig),
+		"DET_HPARAMS":            jsonify(s.HParams),
+		"DET_LATEST_BATCH":       strconv.Itoa(s.LatestBatch),
+		"DET_UNIQUE_PORT_OFFSET": strconv.Itoa(trialUniquePortOffset(s.Base.Devices)),
+		"DET_TASK_TYPE":          model.TaskTypeTrial,
 	}
+	if s.LatestCheckpoint != nil && s.LatestCheckpoint.UUID != nil {
+		envVars["DET_LATEST_CHECKPOINT"] = *s.LatestCheckpoint.UUID
+	}
+
 	res.ExtraEnvVars = envVars
 
 	res.LoggingFields = map[string]string{
@@ -132,9 +127,7 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 		res.ShmSize = int64(*shm)
 	}
 
-	res.ResourcesConfig = s.ExperimentConfig.Resources()
-
-	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts())
+	mounts := ToDockerMounts(s.ExperimentConfig.BindMounts(), res.WorkDir)
 	addMount := func(source, target string, bindOpts *mount.BindOptions) {
 		mounts = append(mounts, mount.Mount{
 			Type: mount.TypeBind, Source: source, Target: target, BindOptions: bindOpts,

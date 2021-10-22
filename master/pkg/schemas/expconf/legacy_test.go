@@ -3,6 +3,9 @@ package expconf
 import (
 	"testing"
 
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/google/go-cmp/cmp"
 	"gotest.tools/assert"
 
@@ -134,7 +137,24 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
                     gpu: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
-                  pod_spec: null
+                  pod_spec:
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                      labels:
+                        customLabel: test-label
+                    spec:
+                      schedulerName: coscheduler
+                      priorityClassName: determined-medium-priority
+                      containers:
+                        - name: determined-container
+                          volumeMounts:
+                          - name: test-volume
+                            mountPath: /test
+                      volumes:
+                      - name: test-volume
+                        hostPath:
+                          path: /data
                   ports: null
                 hyperparameters:
                   global_batch_size:
@@ -197,6 +217,7 @@ func TestLegacyConfig(t *testing.T) {
 					RawCPU: []string{"HOME=/where/the/heart/is"},
 					RawGPU: []string{"HOME=/where/the/cuda/is"},
 				},
+				podSpec: getTestPodSpec(),
 			},
 		},
 		// Test case with a 0.15.5 experiment config.
@@ -233,9 +254,26 @@ func TestLegacyConfig(t *testing.T) {
                     gpu: []
                   force_pull_image: false
                   image:
-                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-a173dcd
-                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-a173dcd
-                  pod_spec: null
+                    cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-35cccd2
+                    gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-35cccd2
+                  pod_spec:
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                      labels:
+                        customLabel: test-label
+                    spec:
+                      schedulerName: coscheduler
+                      priorityClassName: determined-medium-priority
+                      containers:
+                        - name: determined-container
+                          volumeMounts:
+                          - name: test-volume
+                            mountPath: /test
+                      volumes:
+                      - name: test-volume
+                        hostPath:
+                          path: /data
                   ports: {}
                   registry_auth: null
                 hyperparameters:
@@ -309,6 +347,7 @@ func TestLegacyConfig(t *testing.T) {
 					RawCPU: []string{},
 					RawGPU: []string{},
 				},
+				podSpec: getTestPodSpec(),
 			},
 		},
 	}
@@ -326,4 +365,40 @@ func TestLegacyConfig(t *testing.T) {
 			)
 		})
 	}
+}
+
+func getTestPodSpec() *PodSpec {
+	output := &PodSpec{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Labels: map[string]string{"customLabel": "test-label"},
+		},
+		Spec: k8sV1.PodSpec{
+			Volumes: []k8sV1.Volume{{
+				Name: "test-volume",
+				VolumeSource: k8sV1.VolumeSource{
+					HostPath: &k8sV1.HostPathVolumeSource{
+						Path: "/data",
+						Type: nil,
+					},
+				},
+			},
+			},
+			Containers: []k8sV1.Container{{
+				Name:      "determined-container",
+				Resources: k8sV1.ResourceRequirements{},
+				VolumeMounts: []k8sV1.VolumeMount{{
+					Name:      "test-volume",
+					MountPath: "/test",
+				}},
+			}},
+			SchedulerName:     "coscheduler",
+			PriorityClassName: "determined-medium-priority",
+		},
+		Status: k8sV1.PodStatus{},
+	}
+	return output
 }

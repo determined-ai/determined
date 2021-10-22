@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"crypto/tls"
 	"fmt"
+	"strings"
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -16,10 +17,11 @@ import (
 )
 
 const (
-	// ContainerWorkDir is the working directory for tasks.
-	ContainerWorkDir  = "/run/determined/workdir"
+	// DefaultWorkDir is the default workdir.
+	DefaultWorkDir    = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
+	infoDir           = "/run/determined/info"
 	trainDir          = "/run/determined/train"
 	modelCopy         = "/run/determined/train/model"
 	rootDir           = "/"
@@ -48,10 +50,16 @@ type TaskSpec struct {
 	HarnessPath string
 	MasterCert  *tls.Certificate
 
+	SegmentEnabled bool
+	SegmentAPIKey  string
+
 	// Fields that are set on the per-request basis.
+	// TaskContainerDefaults should be removed from TaskSpec once we move to using the same
+	// schema for the cluster-level defaults and the request-level configuration.
 	TaskContainerDefaults model.TaskContainerDefaultsConfig
 	Environment           expconf.EnvironmentConfig
 	ResourcesConfig       expconf.ResourcesConfig
+	WorkDir               string
 	Owner                 *model.User
 	AgentUserGroup        *model.AgentUserGroup
 	ExtraArchives         []container.RunArchive
@@ -73,11 +81,25 @@ type TaskSpec struct {
 	Devices                []device.Device
 }
 
+// ResolveWorkDir resolves the work dir.
+func (t *TaskSpec) ResolveWorkDir() {
+	agentUser := ""
+	detUser := ""
+	if t.AgentUserGroup != nil {
+		agentUser = t.AgentUserGroup.User
+	}
+	if t.Owner != nil {
+		detUser = t.Owner.Username
+	}
+	workDir := strings.Replace(t.WorkDir, "$AGENT_USER", agentUser, -1)
+	t.WorkDir = strings.Replace(workDir, "$DET_USER", detUser, -1)
+}
+
 // Archives returns all the archives.
 func (t *TaskSpec) Archives() []container.RunArchive {
 	res := []container.RunArchive{
-		workDirArchive(t.AgentUserGroup),
-		injectUserArchive(t.AgentUserGroup),
+		workDirArchive(t.AgentUserGroup, t.WorkDir, t.WorkDir == DefaultWorkDir),
+		injectUserArchive(t.AgentUserGroup, t.WorkDir),
 		harnessArchive(t.HarnessPath, t.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
 	}
@@ -90,10 +112,10 @@ func (t TaskSpec) EnvVars() map[string]string {
 	e := map[string]string{
 		// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 		// the user inside the container.
-		"PYTHONUSERBASE":               userPythonBaseDir,
-		"DET_TASK_ID":                  t.TaskID,
-		"DET_ALLOCATION_ID":            t.AllocationID,
-		"DET_ALLOCATION_SESSION_TOKEN": t.AllocationSessionToken,
+		"PYTHONUSERBASE":    userPythonBaseDir,
+		"DET_TASK_ID":       t.TaskID,
+		"DET_ALLOCATION_ID": t.AllocationID,
+		"DET_SESSION_TOKEN": t.AllocationSessionToken,
 	}
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		e["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
@@ -103,16 +125,20 @@ func (t TaskSpec) EnvVars() map[string]string {
 	}
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
-	if networkInterface == "" {
-		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
+	if networkInterface != "" {
+		e["DET_INTER_NODE_NETWORK_INTERFACE"] = networkInterface
 	}
-	e["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
 
 	if t.MasterCert != nil {
 		e["DET_USE_TLS"] = "true"
 		e["DET_MASTER_CERT_FILE"] = certPath
 	} else {
 		e["DET_USE_TLS"] = "false"
+	}
+
+	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+	if t.SegmentEnabled {
+		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
 	}
 
 	for k, v := range t.ExtraEnvVars {
@@ -173,7 +199,7 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 				Env:          envVars,
 				Cmd:          t.Entrypoint,
 				Image:        env.Image().For(deviceType),
-				WorkingDir:   ContainerWorkDir,
+				WorkingDir:   t.WorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     network,
@@ -196,24 +222,27 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 }
 
 // workDirArchive ensures that the workdir is created and owned by the user.
-func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
-	return wrapArchive(
-		archive.Archive{
-			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
-		},
-		rootDir,
-	)
+func workDirArchive(
+	aug *model.AgentUserGroup, workDir string, createWorkDir bool,
+) container.RunArchive {
+	a := archive.Archive{
+		aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
+		aug.OwnedArchiveItem(infoDir, nil, 0755, tar.TypeDir),
+		aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+	}
+	if createWorkDir {
+		a = append(a, aug.OwnedArchiveItem(workDir, nil, 0700, tar.TypeDir))
+	}
+	return wrapArchive(a, rootDir)
 }
 
 // injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files
 // to /run/determined/etc, which will be read by libnss_determined inside the container. If
 // libnss_determined is not present in the container, these files will be simply ignored and some
 // non-root container features will not work properly.
-func injectUserArchive(aug *model.AgentUserGroup) container.RunArchive {
+func injectUserArchive(aug *model.AgentUserGroup, workDir string) container.RunArchive {
 	passwdBytes := []byte(
-		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, ContainerWorkDir),
+		fmt.Sprintf("%v:x:%v:%v::%v:/bin/bash\n", aug.User, aug.UID, aug.GID, workDir),
 	)
 	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
 	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))

@@ -4,7 +4,9 @@
  Model Hub
 ###########
 
-.. rubric:: **Overview**
+**********
+ Overview
+**********
 
 Determined's **model-hub** library makes it easy to train models from popular third-party libraries
 with a Determined cluster. With **model-hub**, use trusted implementations of model architectures
@@ -19,7 +21,9 @@ Each supported third-party library in **model-hub** is accompanied by:
 -  A suite of helper functions (if applicable) to allow users to easily write their own Trial
    classes for use with the third-party library.
 
-.. rubric:: **Getting Started**
+*****************
+ Getting Started
+*****************
 
 For a given task, deep learning practitioners often adapt existing model implementations from a
 trusted third-party library, such as HuggingFace Transformers. When beginning your deep learning
@@ -33,15 +37,17 @@ project in this way, we suggest using **model-hub** with the following steps:
 
 For detailed instructions, check out the documentation for your Model Hub library of choice.
 
-.. rubric:: **Available Libraries**
+*********************
+ Available Libraries
+*********************
 
 Released libraries
 
--  :ref:`Model Hub Transformers <model-hub-transformers>`
+-  :ref:`Huggingface Transformers <model-hub-transformers>`
+-  :ref:`MMDetection <model-hub-mmdetection>`
 
 Future libraries on our roadmap
 
--  `mmdetection <https://github.com/open-mmlab/mmdetection>`_
 -  `detectron2 <https://github.com/facebookresearch/detectron2>`_
 
 Our initial release of **model-hub** includes support for the `Huggingface transformers library
@@ -51,10 +57,9 @@ see supported in **model-hub** please let us know by filing an issue on `GitHub
 <https://github.com/determined-ai/determined>`_ or reaching out on our community `Slack.
 <https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew>`_
 
-For next steps, learn more about :ref:`Model Hub Transformers <model-hub-transformers>`!
-
 .. toctree::
    :maxdepth: 1
    :hidden:
 
    transformers/index
+   mmdetection/index

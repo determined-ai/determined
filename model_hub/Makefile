@@ -5,22 +5,28 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-2409e48
+DEFAULT_GPU_IMAGE := determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-35cccd2
+
+############REMINDER############
+# When bumping third-party library versions, remember to bump versions in 
+# tests/requirements.txt and docs/requirements.txt to match.
+############REMINDER############
+
 # Transformers Args
 TRANSFORMERS_VERSION := 4.8.2
 DATASETS_VERSION := 1.9.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 # MMDetection Args
-# Remember to bump versions in tests/requirements.txt to match.
 MMCV_CUDA_VERSION := cu111 # Needs to match DEFAULT_GPU_IMAGE
 TORCH_VERSION := 1.9.0 # Needs to match DEFAULT_GPU_IMAGE
-MMCV_VERSION := 1.3.9
-MMDETECTION_VERSION := 2.14.0
+MMCV_VERSION := 1.3.12
+MMDETECTION_VERSION := 2.16.0
 MMDETECTION_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection
 
 # Example dirs
 HF_EXAMPLES := $(wildcard examples/huggingface/*/.)
 HF_EXAMPLES_DIRS := $(patsubst examples/huggingface/%/., build-examples/%.tgz, $(HF_EXAMPLES))
+MMDET_EXAMPLE_DIR := build-examples/mmdetection.tgz
 
 .PHONY: clean
 clean:
@@ -39,9 +45,14 @@ build:
 	python setup.py -q bdist_wheel
 
 .PHONY: examples
-examples: $(HF_EXAMPLES_DIRS)
+examples: $(HF_EXAMPLES_DIRS) $(MMDET_EXAMPLE_DIR)
 
-build-examples/%.tgz: examples/*/%/
+build-examples/%.tgz: examples/*/%/ 
+	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
+	mkdir -p $$(dirname "$@")
+	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
+
+build-examples/%.tgz: examples/%/ 
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
@@ -52,12 +63,12 @@ publish:
 
 .PHONY: fmt
 fmt:
-	isort -y
+	isort .
 	black .
 
 .PHONY: check
 check:
-	isort --check-only
+	isort . --check-only
 	black . --check
 	flake8
 	mypy .

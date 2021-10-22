@@ -17,13 +17,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -40,7 +38,7 @@ type (
 	}
 	trialReportEarlyExit struct {
 		requestID model.RequestID
-		reason    workload.ExitedReason
+		reason    model.ExitedReason
 	}
 	trialReportProgress struct {
 		requestID model.RequestID
@@ -73,7 +71,6 @@ type (
 		experimentState
 
 		*model.Experiment
-		modelDefinition     archive.Archive
 		rm                  *actor.Ref
 		trialLogger         *actor.Ref
 		hpImportance        *actor.Ref
@@ -118,12 +115,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		return nil, err
 	}
 
-	// Decompress the model definition from .tar.gz into an Archive.
-	modelDefinition, err := archive.FromTarGz(expModel.ModelDefinitionBytes)
-	if err != nil {
-		return nil, err
-	}
-
 	if expModel.ID == 0 {
 		if err = master.db.AddExperiment(expModel); err != nil {
 			return nil, err
@@ -142,7 +133,6 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 
 	return &experiment{
 		Experiment:          expModel,
-		modelDefinition:     modelDefinition,
 		rm:                  master.rm,
 		trialLogger:         master.trialLogger,
 		hpImportance:        master.hpImportance,
@@ -423,7 +413,7 @@ func (e *experiment) processOperations(
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
 				trialTaskID(e.ID, op.RequestID), e.ID, e.State, state, e.rm, e.trialLogger, e.db,
-				config, checkpoint, e.taskSpec, e.modelDefinition,
+				config, checkpoint, e.taskSpec,
 			))
 		case searcher.ValidateAfter:
 			state := e.TrialSearcherState[op.RequestID]

@@ -1,14 +1,13 @@
-FROM debian:10.3-slim
+FROM ubuntu:20.04
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
-    && apt-get upgrade -s \
-        | grep "^Inst" \
-        | grep -e "Debian" -e "Debian-Security" \
-        | awk -F " " {'print $2'} \
-        | DEBIAN_FRONTEND=noninteractive xargs apt-get upgrade -yq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-        ca-certificates \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates \
+      unattended-upgrades \
+    && unattended-upgrade \
+    && apt-get remove -y unattended-upgrades \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packaging/master.yaml /etc/determined/master.yaml

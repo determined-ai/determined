@@ -7,9 +7,12 @@
   <meta name="theme-color" content="#000000" />
   <meta name="description" content="Determined Deep Learning Training Platform" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
-  <link rel="shortcut icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico" />
-  <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicons/apple-touch-icon.png" />
-  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <!--
+    Even though react-helmet-async is dynamically setting favicons,
+    it is still included here in order for Safari to at least show one.
+    https://stackoverflow.com/questions/63781987/cant-change-favicon-with-javascript-in-safari
+  -->
+  <link rel="shortcut icon" type="image/x-icon" href="%PUBLIC_URL%/determined/favicon.ico" />
   <title>Determined</title>
 </head>
 

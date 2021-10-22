@@ -19,6 +19,7 @@ from determined import horovod, keras, layers, util, workload
 from determined._tf_rng import get_rng_state, set_rng_state
 from determined.common import check, experimental, storage
 from determined.common.api import certs
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 
 # In TF 2.6, we have to import some keras internals directly from `keras`.
@@ -218,7 +219,7 @@ class TFKerasTrialController(det.TrialController):
 
     @staticmethod
     def compile_model(
-        context: keras.TFKerasContext,
+        context: keras.TFKerasTrialContext,
         compile_args: inspect.BoundArguments,
         env: det.EnvContext,
         hvd_config: horovod.HorovodContext,
@@ -310,6 +311,7 @@ class TFKerasTrialController(det.TrialController):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+        send_analytics("TFKerasTrial Created")
 
         self.model = model
         self.session = session
@@ -952,7 +954,7 @@ class TFKerasTrial(det.Trial):
     TensorFlow 2.x, specify a TensorFlow 2.x image in the
     :ref:`environment.image <exp-environment-image>` field of the experiment
     configuration (e.g.,
-    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4``).
+    ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``).
 
     Trials default to using eager execution with TensorFlow 2.x but not with
     TensorFlow 1.x. To override the default behavior, call the appropriate

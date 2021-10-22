@@ -116,15 +116,16 @@ export interface PatchExperimentParams extends ExperimentIdParams {
     description: string,
     labels: string[],
     name: string,
+    notes: string;
   }>
 }
 
-export interface LaunchTensorboardParams {
+export interface LaunchTensorBoardParams {
   experimentIds?: Array<number>;
   trialIds?: Array<number>;
 }
 
-export interface LaunchNotebookParams {
+export interface LaunchJupyterLabParams {
   config?: {
     description?: string;
     resources?: {
@@ -153,7 +154,7 @@ export interface GetCommandsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetNotebooksParams extends FetchOptions, PaginationParams {
+export interface GetJupyterLabsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
@@ -161,7 +162,7 @@ export interface GetShellsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 
-export interface GetTensorboardsParams extends FetchOptions, PaginationParams {
+export interface GetTensorBoardsParams extends FetchOptions, PaginationParams {
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
 }
 

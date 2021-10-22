@@ -3,7 +3,12 @@
 - We use [JSON Schema](https://json-schema.org/) to define the schema of 
   the experiment configuration. This helps apply cross-language policies 
   for validation, null handling, default values, and some custom rules.
-  See `schemas/expconf/v0` for the V0 definitions.
+
+- To make changes to the configuration schema, change the according files below:
+    - See `schemas/expconf` for logics that are shared across languages.
+    - See `schemas/test_cases` for test cases that are shared across languages.
+    - See `master/pkg/schemas/expconf` for go struct definitions.
+    - See `harness/determined/common/schemas/expconf` for python class definitions.
 
 - We generate code that contains the definitions and utility functions of 
   structs.  See `schemas/gen.py`.

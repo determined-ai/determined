@@ -51,6 +51,8 @@ type agent struct {
 
 	masterProto  string
 	masterClient *http.Client
+
+	reconnecting bool
 }
 
 func newAgent(version string, options Options) *agent {
@@ -68,8 +70,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		switch {
 		case msg.MasterSetAgentOptions != nil:
 			if a.MasterSetAgentOptions != nil {
-				return fmt.Errorf("received MasterStepAgentOptions more than once: %v",
+				ctx.Log().Debugf("received MasterStepAgentOptions more than once: %v",
 					*msg.MasterSetAgentOptions)
+				return nil
 			}
 			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
 			return a.setup(ctx)
@@ -102,6 +105,9 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		switch msg.Child {
 		case a.socket:
+			if a.attemptReconnect(ctx) {
+				return nil
+			}
 			ctx.Log().Warn("master socket disconnected, shutting down agent...")
 		case a.cm:
 			ctx.Log().Warn("container manager failed, shutting down agent...")
@@ -309,17 +315,51 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool)
+	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&resource_pool=%s&reconnect=%t",
+		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.ResourcePool, a.reconnecting)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.Dial(masterAddr, nil)
-	if err != nil {
-		return errors.Wrap(err, "error connecting to master")
-	} else if err = resp.Body.Close(); err != nil {
-		return errors.Wrap(err, "failed to read master response on connection")
+	if resp != nil {
+		defer func() {
+			if err = resp.Body.Close(); err != nil {
+				ctx.Log().WithError(err).Error("failed to read master response on connection")
+			}
+		}()
 	}
+	if err != nil {
+		if resp == nil {
+			return errors.Wrap(err, "error dialing master")
+		}
+
+		b, rErr := ioutil.ReadAll(resp.Body)
+		if rErr == nil && strings.Contains(string(b), proto.ErrAgentMustReconnect.Error()) {
+			return proto.ErrAgentMustReconnect
+		}
+
+		return errors.Wrapf(err, "error dialing master: %s", b)
+	}
+
 	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 	return nil
+}
+
+func (a *agent) attemptReconnect(ctx *actor.Context) bool {
+	a.reconnecting = true
+	defer func() {
+		a.reconnecting = false
+	}()
+	for i := 0; i < proto.AgentReconnectAttempts; i++ {
+		switch err := a.connect(ctx); {
+		case err == nil:
+			return true
+		case errors.Is(err, proto.ErrAgentMustReconnect):
+			return false
+		default:
+			ctx.Log().WithError(err).Error("error to reconnecting to master")
+		}
+		time.Sleep(proto.AgentReconnectBackoff)
+	}
+	return false
 }
 
 func (a *agent) connect(ctx *actor.Context) error {

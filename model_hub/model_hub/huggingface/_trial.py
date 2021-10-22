@@ -1,6 +1,6 @@
 import dataclasses
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import attrdict
 import datasets as hf_datasets
@@ -10,6 +10,7 @@ import transformers.optimization as hf_opt
 
 import determined.pytorch as det_torch
 import model_hub.utils
+from determined.common.api.analytics import send_analytics
 from model_hub.huggingface import _config_parser as hf_parse
 
 MODEL_MODES = {
@@ -147,7 +148,12 @@ def build_default_lr_scheduler(
 
 def default_load_dataset(
     data_config: Union[Dict, attrdict.AttrDict]
-) -> Union[hf_datasets.DatasetDict, hf_datasets.Dataset]:
+) -> Union[
+    hf_datasets.Dataset,
+    hf_datasets.IterableDataset,
+    hf_datasets.DatasetDict,
+    hf_datasets.IterableDatasetDict,
+]:
     """
     Creates the dataset using HuggingFace datasets' load_dataset method.
     If a dataset_name is provided, we will use that long with the dataset_config_name.
@@ -165,6 +171,9 @@ def default_load_dataset(
         datasets = hf_datasets.load_dataset(
             data_config.dataset_name, data_config.dataset_config_name
         )
+        assert hasattr(datasets, "keys"), "Expected a dictionary of datasets."
+        datasets = cast(Union[hf_datasets.DatasetDict, hf_datasets.IterableDatasetDict], datasets)
+
         if "validation" not in datasets.keys():
             assert (
                 "validation_split_percentage" in data_config
@@ -203,6 +212,8 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+
+        send_analytics("BaseTransformerTrial Created")
         self.context = context
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.

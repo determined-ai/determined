@@ -46,10 +46,6 @@ func (c configKey) FlagName() string {
 	return strings.Join(c, "-")
 }
 
-func registerEnv(name configKey) {
-	_ = v.BindEnv(name.AccessPath(), name.EnvName())
-}
-
 func registerString(flags *pflag.FlagSet, name configKey, value string, usage string) {
 	flags.String(name.FlagName(), value, usage)
 	_ = v.BindEnv(name.AccessPath(), name.EnvName())
@@ -81,7 +77,7 @@ func registerConfig() {
 	defaults := internal.DefaultConfig()
 
 	// Register flags and environment variables, and set default values for the flags.
-	flags := rootCmd.Flags()
+	flags := rootCmd.PersistentFlags()
 	name := func(components ...string) configKey { return components }
 
 	registerString(flags, name("config-file"),
@@ -133,12 +129,4 @@ func registerConfig() {
 		defaults.Telemetry.SegmentMasterKey, "the Segment write key for the master")
 	registerString(flags, name("telemetry", "segment-webui-key"),
 		defaults.Telemetry.SegmentWebUIKey, "the Segment write key for the WebUI")
-
-	// These env vars are used by `det deploy` to override host_path.
-	// We don't register pflags for these to avoid setting a default.
-	registerEnv(name("checkpoint-storage", "type"))
-	registerEnv(name("checkpoint-storage", "host-path"))
-
-	// This env var is used by `det deploy` to override bind_mounts.
-	registerEnv(name("auto-bind-mount"))
 }

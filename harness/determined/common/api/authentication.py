@@ -4,12 +4,12 @@ import functools
 import getpass
 import hashlib
 import json
-import os
 import pathlib
 from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
 
 import filelock
 
+import determined as det
 from determined.common import api, constants, util
 from determined.common.api import certs
 
@@ -17,11 +17,12 @@ Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
 
-_cur_allocation_token = os.environ.get("DET_ALLOCATION_SESSION_TOKEN", "")
-
 
 def get_allocation_token() -> str:
-    return _cur_allocation_token
+    info = det.get_cluster_info()
+    if info is None:
+        return ""
+    return info.session_token
 
 
 def salt_and_hash(password: str) -> str:
@@ -171,7 +172,7 @@ class TokenStore:
         self.path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         # Decide on paths for a lock file and a temp files (during writing)
         self.temp = pathlib.Path(str(self.path) + ".temp")
-        self.lock = pathlib.Path(str(self.path) + ".lock")
+        self.lock = str(self.path) + ".lock"
 
         with filelock.FileLock(self.lock):
             store = self._load_store_file()

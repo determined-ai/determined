@@ -358,7 +358,7 @@ class EstimatorTrialController(det.TrialController):
         user_train_spec: tf.estimator.TrainSpec,
         val_spec: tf.estimator.EvalSpec,
         serving_input_receiver_fns: Dict[str, estimator.ServingInputReceiverFn],
-        context: estimator.EstimatorContext,
+        context: estimator.EstimatorTrialContext,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -660,7 +660,7 @@ class EstimatorTrialController(det.TrialController):
         self._init_session_config(session_config, self.env, self.hvd_config)
 
         if not self.hvd_config.use and len(self.env.container_gpus) > 1:
-            check.true(len(self.rendezvous_info.get_addrs()) == 1)
+            check.true(len(self.rendezvous_info.container_addrs) == 1)
             train_distribute = tf.distribute.MirroredStrategy()
             eval_distribute = tf.distribute.MirroredStrategy()
 
@@ -778,7 +778,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.16.4``).
+    (e.g. ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

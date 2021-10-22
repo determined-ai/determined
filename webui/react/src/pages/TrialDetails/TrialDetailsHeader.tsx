@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
-import { openOrCreateTensorboard } from 'services/api';
+import { openOrCreateTensorBoard } from 'services/api';
 import { getStateColorCssVar } from 'themes';
 import { ExperimentAction as Action, ExperimentBase, TrialDetails } from 'types';
 import { terminalRunStates } from 'utils/types';
@@ -28,7 +28,7 @@ interface Props {
 const TrialDetailsHeader: React.FC<Props> = (
   { experiment, fetchTrialDetails, handleActionClick, trial }: Props,
 ) => {
-  const [ isRunningTensorboard, setIsRunningTensorboard ] = useState<boolean>(false);
+  const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
 
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
@@ -36,15 +36,15 @@ const TrialDetailsHeader: React.FC<Props> = (
     if (!trialWillNeverHaveData(trial)) {
       options.push({
         icon: <Icon name="tensorboard" size="small" />,
-        isLoading: isRunningTensorboard,
+        isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
         label: 'TensorBoard',
         onClick: async () => {
-          setIsRunningTensorboard(true);
-          const tensorboard = await openOrCreateTensorboard({ trialIds: [ trial.id ] });
+          setIsRunningTensorBoard(true);
+          const tensorboard = await openOrCreateTensorBoard({ trialIds: [ trial.id ] });
           openCommand(tensorboard);
           await fetchTrialDetails();
-          setIsRunningTensorboard(false);
+          setIsRunningTensorBoard(false);
         },
       });
     }
@@ -69,7 +69,7 @@ const TrialDetailsHeader: React.FC<Props> = (
   }, [
     fetchTrialDetails,
     handleActionClick,
-    isRunningTensorboard,
+    isRunningTensorBoard,
     trial,
   ]);
 

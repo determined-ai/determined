@@ -10,7 +10,6 @@ import {
 } from 'types';
 import { humanReadableBytes } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
-import { trialDurations } from 'utils/trial';
 import { checkpointSize } from 'utils/types';
 
 interface Props {
@@ -42,8 +41,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [ trial.workloads ]);
 
-  const durations = useMemo(() => trialDurations(trial.workloads), [ trial.workloads ]);
-
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
 
@@ -57,15 +54,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         }
         <OverviewStats title="Start Time">
           {shortEnglishHumannizer(getDuration({ startTime: trial.startTime }))} ago
-        </OverviewStats>
-        <OverviewStats title="Training Time">
-          {shortEnglishHumannizer(durations.train)}
-        </OverviewStats>
-        <OverviewStats title="Validation Time">
-          {shortEnglishHumannizer(durations.validation)}
-        </OverviewStats>
-        <OverviewStats title="Checkpointing Time">
-          {shortEnglishHumannizer(durations.checkpoint)}
         </OverviewStats>
         <OverviewStats title="Total Checkpoint Size">
           {totalCheckpointsSize}

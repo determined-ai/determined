@@ -138,6 +138,8 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             return float(obj)
         if isinstance(obj, np.float32):
             return float(obj)
+        if isinstance(obj, np.float16):
+            return float(obj)
         if isinstance(obj, np.int64):
             return int(obj)
         if isinstance(obj, np.int32):

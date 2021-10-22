@@ -144,6 +144,15 @@ html {
   .ant-spin-nested-loading > div > .ant-spin-spinning {
     max-height: inherit;
   }
+  .ant-spin-show-text {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .ant-spin .ant-spin-dot {
+    display: flex;
+  }
   .ant-spin .ant-spin-text {
     color: var(--theme-colors-monochrome-8);
     font-style: italic;
@@ -176,13 +185,8 @@ html {
   .ant-table-thead > tr > th:only-child {
     border-width: var(--theme-sizes-border-width);
   }
-  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger-container {
+  .ant-table-thead > tr > th:hover > .ant-table-filter-column > .ant-table-filter-trigger {
     background-color: var(--theme-colors-monochrome-13);
-  }
-  .ant-table-thead > tr > th > .ant-table-filter-column > .ant-table-filter-trigger-container > .ant-table-filter-trigger {
-    align-items: center;
-    display: flex;
-    justify-content: center;
   }
   .ant-table-tbody > tr [class*=tagPlus] {
     opacity: 0;

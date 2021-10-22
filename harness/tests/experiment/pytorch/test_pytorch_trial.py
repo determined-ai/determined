@@ -113,7 +113,6 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-    @pytest.mark.usefixtures("expose_gpus")
     def test_xor_nonscalar_validation(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
@@ -130,6 +129,7 @@ class TestPyTorchTrial:
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,
+            expose_gpus=True,
         )
         controller.run()
 
@@ -168,7 +168,7 @@ class TestPyTorchTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
         controller1 = utils.make_trial_controller_from_trial_implementation(
@@ -210,7 +210,6 @@ class TestPyTorchTrial:
 
         utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
 
-    @pytest.mark.usefixtures("expose_gpus")
     def test_custom_eval(self) -> None:
         training_metrics = {}
         validation_metrics = {}
@@ -236,6 +235,7 @@ class TestPyTorchTrial:
             hparams=self.hparams,
             workloads=make_workloads("B"),
             trial_seed=self.trial_seed,
+            expose_gpus=True,
         )
         controller.run()
 
@@ -338,7 +338,7 @@ class TestPyTorchTrial:
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = 1
             assert controller.trial.counter.__dict__ == {
                 "validation_steps_started": 1,

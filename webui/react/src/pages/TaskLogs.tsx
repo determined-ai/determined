@@ -9,7 +9,7 @@ import { paths } from 'routes/utils';
 import { getTaskLogs } from 'services/api';
 import { TaskLogsParams } from 'services/types';
 import { CommandType, Log } from 'types';
-import { capitalize } from 'utils/string';
+import { commandTypeToLabel } from 'utils/types';
 
 interface Params {
   taskId: string;
@@ -23,7 +23,8 @@ interface Queries {
 const TaskLogs: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
   const queries: Queries = queryString.parse(location.search);
-  const title = `${capitalize(taskType)} Logs${queries.id ? ` (${queries.id})` : ''}`;
+  const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
+  const title = `${taskTypeLabel} Logs${queries.id ? ` (${queries.id})` : ''}`;
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
@@ -31,7 +32,7 @@ const TaskLogs: React.FC = () => {
   const baseParams = useMemo(() => ({
     tail: TAIL_SIZE,
     taskId,
-    taskType: taskType.toLocaleUpperCase() as CommandType,
+    taskType: taskType as CommandType,
   }), [ taskId, taskType ]);
   const [ logsResponse, setLogsParams ] =
     useRestApi<TaskLogsParams, Log[]>(getTaskLogs, baseParams);
@@ -95,7 +96,7 @@ const TaskLogs: React.FC = () => {
       pageProps={{
         breadcrumb: [
           { breadcrumbName: 'Tasks', path: paths.taskList() },
-          { breadcrumbName: `${capitalize(taskType)} ${taskId.substr(0, 4)}`, path: '#' },
+          { breadcrumbName: `${taskTypeLabel} ${taskId.substr(0, 4)}`, path: '#' },
         ],
         title,
       }}

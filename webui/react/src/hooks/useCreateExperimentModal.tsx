@@ -9,7 +9,8 @@ import { paths, routeToReactUrl } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { ExperimentBase, RawJson, TrialDetails, TrialHyperparameters } from 'types';
 import { clone } from 'utils/data';
-import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
+import { trialHParamsToExperimentHParams } from 'utils/experiment';
+import { upgradeConfig } from 'utils/types';
 
 import css from './useCreateExperimentModal.module.scss';
 import usePrevious from './usePrevious';

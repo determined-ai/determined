@@ -53,7 +53,8 @@ class MetricReducer:
                     eval_metric_ops={"my_avg_prediction": my_avg_prediction},
                 )
 
-    See also: :func:`context.make_metric() <determined.estimator.EstimatorContext.make_metric>`.
+    See also: :func:`context.make_metric()
+    <determined.estimator.EstimatorTrialContext.make_metric>`.
     """
 
     @abc.abstractmethod

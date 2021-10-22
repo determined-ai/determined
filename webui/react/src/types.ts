@@ -15,7 +15,6 @@ export type Range<T = Primitive> = [ T, T ];
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
 
-export type PropsWithClassName<T> = T & { className?: string };
 export type PropsWithStoragePath<T> = T & { storagePath?: string };
 
 export interface User {
@@ -33,11 +32,26 @@ export interface Auth {
   user?: DetailedUser;
 }
 
+export interface SsoProvider {
+  name: string;
+  ssoUrl: string;
+}
+
+export enum BrandingType {
+  Determined = 'determined',
+  HPE = 'hpe',
+}
+
 export interface DeterminedInfo {
+  branding: BrandingType;
+  checked: boolean,
   clusterId: string;
   clusterName: string;
+  externalLoginUri?: string;
+  externalLogoutUri?: string;
   isTelemetryEnabled: boolean;
   masterId: string;
+  ssoProviders?: SsoProvider[];
   version: string;
 }
 
@@ -109,8 +123,11 @@ export interface ClusterOverviewResource {
 
 export type ClusterOverview = Record<ResourceType, ClusterOverviewResource>;
 
-export interface StartEndTimes {
+export interface EndTimes {
   endTime?: string;
+}
+
+export interface StartEndTimes extends EndTimes {
   startTime: string;
 }
 
@@ -141,10 +158,10 @@ export interface CommandAddress {
 }
 
 export enum CommandType {
-  Command = 'COMMAND',
-  Notebook = 'NOTEBOOK',
-  Shell = 'SHELL',
-  Tensorboard = 'TENSORBOARD',
+  Command = 'command',
+  JupyterLab = 'jupyter-lab',
+  Shell = 'shell',
+  TensorBoard = 'tensor-board',
 }
 
 export interface CommandMisc {
@@ -156,7 +173,7 @@ export interface CommandConfig {
   description: string;
 }
 
-// The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
+// The command type is shared between Commands, JupyterLabs, TensorBoards, and Shells.
 export interface Command {
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
@@ -170,7 +187,7 @@ export interface Command {
   user: User;
 }
 
-export interface NotebookConfig {
+export interface JupyterLabConfig {
   name?: string;
   pool?: string;
   slots?: number;
@@ -343,7 +360,7 @@ export interface MetricName {
   type: MetricType;
 }
 
-export interface Checkpoint extends StartEndTimes {
+export interface Checkpoint extends EndTimes {
   resources?: Record<string, number>;
   state: CheckpointState;
   trialId: number;
@@ -351,7 +368,7 @@ export interface Checkpoint extends StartEndTimes {
   validationMetric? : number;
 }
 
-export interface Workload extends StartEndTimes {
+export interface Workload extends EndTimes {
   totalBatches: number;
 }
 
@@ -417,6 +434,7 @@ export interface ExperimentItem {
   id: number;
   labels: string[];
   name: string;
+  notes?: string;
   numTrials: number;
   progress?: number;
   resourcePool: string
@@ -434,6 +452,7 @@ export interface ExperimentBase {
   hyperparameters: HyperparametersFlattened;    // nested hp keys are flattened, eg) foo.bar
   id: number;
   name: string;
+  notes?: string;
   progress?: number;
   resourcePool: string;
   startTime: string;
@@ -493,7 +512,13 @@ export type RecentTask = AnyTask & RecentEvent;
 export type RecentCommandTask = CommandTask & RecentEvent;
 export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
-export type TaskType = CommandType | 'Experiment';
+export enum TaskType {
+  Command = 'command',
+  Experiment = 'experiment',
+  JupyterLab = 'jupyter-lab',
+  Shell = 'shell',
+  TensorBoard = 'tensor-board',
+}
 
 export enum ArchiveFilter {
   Archived = 'archived',
@@ -511,7 +536,7 @@ export interface TrialFilters {
   states?: string[];
 }
 
-export interface TaskFilters<T extends TaskType = TaskType> {
+export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   limit: number;
   states?: string[];
   types?: T[];

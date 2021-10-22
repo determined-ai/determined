@@ -1,4 +1,3 @@
-import distutils.util
 import os
 import pathlib
 import tempfile
@@ -10,7 +9,7 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import constants, experimental, gpu, horovod, keras, load, workload
+from determined import experimental, gpu, horovod, keras, load, workload
 from determined.common import check
 
 
@@ -118,21 +117,22 @@ def make_default_env_context(
     hparams: Dict[str, Any],
     experiment_config: Dict,
     trial_seed: int = 0,
-    latest_checkpoint: Optional[Dict[str, Any]] = None,
+    latest_checkpoint: Optional[str] = None,
     latest_batch: int = 0,
+    expose_gpus: bool = False,
 ) -> det.EnvContext:
-    # TODO(ryan): Fix the parameter passing so that this doesn't read from environment variables,
-    # and we can get rid of the @expose_gpus fixture.
-    use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
-    gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu)
-
     assert (latest_checkpoint is None) == (latest_batch == 0)
+
+    if expose_gpus:
+        gpu_uuids = gpu.get_gpu_uuids()
+        use_gpu = bool(gpu_uuids)
+    else:
+        gpu_uuids = []
+        use_gpu = False
 
     return det.EnvContext(
         experiment_config=experiment_config,
-        master_addr="",
-        master_port=0,
-        use_tls=False,
+        master_url="",
         master_cert_file=None,
         master_cert_name=None,
         container_id="",
@@ -143,14 +143,11 @@ def make_default_env_context(
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        det_rendezvous_port="",
         det_trial_unique_port_offset=0,
-        det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_experiment_id="1",
         det_agent_id="1",
         det_cluster_id="uuid-123",
-        det_allocation_token="",
         trial_seed=trial_seed,
         trial_run_id=1,
         allocation_id="",
@@ -161,7 +158,7 @@ def make_default_env_context(
 
 
 def make_default_rendezvous_info() -> det.RendezvousInfo:
-    return det.RendezvousInfo(addrs=[f"127.0.0.1:{constants.LOCAL_RENDEZVOUS_PORT}"], rank=0)
+    return det.RendezvousInfo(container_addrs=["127.0.0.1"], container_rank=0)
 
 
 def make_default_hvd_config() -> horovod.HorovodContext:
@@ -239,8 +236,9 @@ def make_trial_controller_from_trial_implementation(
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
     checkpoint_dir: Optional[str] = None,
-    latest_checkpoint: Optional[Dict[str, Any]] = None,
+    latest_checkpoint: Optional[str] = None,
     latest_batch: int = 0,
+    expose_gpus: bool = False,
 ) -> det.TrialController:
     if not exp_config:
         assert hasattr(
@@ -256,6 +254,7 @@ def make_trial_controller_from_trial_implementation(
         trial_seed=trial_seed,
         latest_checkpoint=latest_checkpoint,
         latest_batch=latest_batch,
+        expose_gpus=expose_gpus,
     )
 
     rendezvous_info = make_default_rendezvous_info()
@@ -323,7 +322,7 @@ RestorableMakeControllerFn = Callable[
     [
         workload.Stream,
         DefaultNamedArg(Optional[str], "checkpoint_dir"),  # noqa: F821
-        DefaultNamedArg(Optional[Dict], "latest_checkpoint"),  # noqa: F821
+        DefaultNamedArg(Optional[str], "latest_checkpoint"),  # noqa: F821
         DefaultNamedArg(int, "latest_batch"),  # noqa: F821
     ],
     det.TrialController,
@@ -383,7 +382,7 @@ def checkpointing_and_restoring_test(
             interceptor = workload.WorkloadResponseInterceptor()
             yield from interceptor.send(workload.checkpoint_workload())
             nonlocal latest_checkpoint, latest_batch
-            latest_checkpoint = interceptor.metrics_result()
+            latest_checkpoint = interceptor.metrics_result()["uuid"]
             latest_batch = trainer.get_latest_batch()
 
     controller_A1 = make_trial_controller_fn(

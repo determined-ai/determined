@@ -20,8 +20,7 @@ const ActionSheetContainer = () => {
   return (
     <ActionSheet
       actions={[
-        { icon: 'notebook', label: 'Launch Notebook' },
-        { icon: 'notebook', label: 'Launch CPU-only Notebook' },
+        { icon: 'jupyter-lab', label: 'Launch JupyterLab' },
         { icon: 'logs', label: 'Master Logs', path: paths.masterLogs(), popout: true },
         {
           external: true,

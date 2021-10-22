@@ -186,6 +186,7 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 // @Success 200 {} string "A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
 //nolint:godot
 // @Router /allocation/raw [get]
+// @Deprecated
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
 	args := struct {
 		Start string `query:"timestamp_after"`
@@ -423,7 +424,9 @@ func (m *Master) startServers(ctx context.Context, cert *tls.Certificate) error 
 		}()
 	}
 	start("gRPC server", func() error {
-		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m}, m.config.InternalConfig.PrometheusEnabled)
+		srv := grpcutil.NewGRPCServer(m.db, &apiServer{m: m},
+			m.config.InternalConfig.PrometheusEnabled,
+			&m.config.InternalConfig.ExternalSessions)
 		// We should defer srv.Stop() here, but cmux does not unblock accept calls when underlying
 		// listeners close and grpc-go depends on cmux unblocking and closing, Stop() blocks
 		// indefinitely when using cmux.
@@ -568,6 +571,8 @@ func (m *Master) Run(ctx context.Context) error {
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
 		MasterCert:            cert,
+		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
+		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
 	}
 
 	go m.cleanUpExperimentSnapshots()
@@ -591,7 +596,14 @@ func (m *Master) Run(ctx context.Context) error {
 	//     +- Experiment (internal.experiment: <experiment-id>)
 	//         +- Trial (internal.trial: <trial-request-id>)
 	//             +- Websocket (actors.WebSocket: <remote-address>)
-	m.system = actor.NewSystem("master")
+	m.system = actor.NewSystemWithRoot("master", actor.ActorFunc(root))
+
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		sErr := m.system.Ref.AwaitTermination()
+		log.WithError(sErr).Error("actor system exited")
+		cancel()
+	}()
 
 	switch {
 	case m.config.Logging.DefaultLoggingConfig != nil:
@@ -607,7 +619,7 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.trialLogBackend))
 
-	userService, err := user.New(m.db, m.system)
+	userService, err := user.New(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	if err != nil {
 		return errors.Wrap(err, "cannot initialize user manager")
 	}
@@ -707,7 +719,10 @@ func (m *Master) Run(ctx context.Context) error {
 		go m.tryRestoreExperiment(sema, exp)
 	}
 	if err = m.db.FailDeletingExperiment(); err != nil {
-		return errors.Wrap(err, "couldn't force fail deleting experiments after crash")
+		return err
+	}
+	if err = m.db.CloseOpenAllocations(); err != nil {
+		return err
 	}
 
 	// Docs and WebUI.

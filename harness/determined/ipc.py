@@ -1,3 +1,4 @@
+import logging
 import os
 import selectors
 import signal
@@ -101,8 +102,8 @@ class ZMQBroadcastServer:
 
         context = zmq.Context()  # type: ignore
 
-        self._pub_socket = context.socket(zmq.PUB)
-        self._pull_socket = context.socket(zmq.PULL)
+        self._pub_socket = context.socket(zmq.PUB)  # type: ignore
+        self._pull_socket = context.socket(zmq.PULL)  # type: ignore
 
         self._pub_port = None  # type: Optional[int]
         self._pull_port = None  # type: Optional[int]
@@ -221,12 +222,12 @@ class ZMQBroadcastClient:
     def __init__(self, srv_pub_url: str, srv_pull_url: str) -> None:
         context = zmq.Context()  # type: ignore
 
-        self._sub_socket = context.socket(zmq.SUB)
+        self._sub_socket = context.socket(zmq.SUB)  # type: ignore
         # Subscriber always listens to ALL messages.
         self._sub_socket.subscribe(b"")
         self._sub_socket.connect(srv_pub_url)
 
-        self._push_socket = context.socket(zmq.PUSH)
+        self._push_socket = context.socket(zmq.PUSH)  # type: ignore
         self._push_socket.connect(srv_pull_url)
 
         self._send_serial = 0
@@ -328,7 +329,7 @@ class ZMQServer:
 
     def _bind_to_specified_ports(self, ports: List[int]) -> None:
         for port in ports:
-            socket = self.context.socket(zmq.REP)
+            socket = self.context.socket(zmq.REP)  # type: ignore
             try:
                 socket.bind(f"tcp://*:{port}")
             except ZMQError as e:
@@ -339,7 +340,7 @@ class ZMQServer:
     def _bind_to_random_ports(self, port_range: Tuple[int, int], num_connections: int) -> None:
         check.lt(num_connections, port_range[1] - port_range[0])
         for _ in range(num_connections):
-            socket = self.context.socket(zmq.REP)
+            socket = self.context.socket(zmq.REP)  # type: ignore
             try:
                 selected_port = socket.bind_to_random_port(
                     addr="tcp://*", min_port=port_range[0], max_port=port_range[1]
@@ -418,7 +419,7 @@ class ZMQClient:
 
     def __init__(self, ip_address: str, port: int) -> None:
         self.context = zmq.Context()  # type: ignore
-        self.socket = self.context.socket(zmq.REQ)
+        self.socket = self.context.socket(zmq.REQ)  # type: ignore
         self.socket.connect(f"tcp://{ip_address}:{port}")
 
     def __enter__(self) -> "ZMQClient":
@@ -682,12 +683,24 @@ class PIDServer:
                 # Let things finish logging, exiting on their own, etc.
                 time.sleep(grace_period)
                 p.send_signal(on_fail)
+                if on_fail != signal.SIGKILL:
+                    try:
+                        return p.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        logging.error(f"killing worker which didn't exit after {on_fail.name}")
+                        p.send_signal(signal.SIGKILL)
             return p.wait()
 
         # All workers exited normally.
         if on_exit is not None:
             time.sleep(grace_period)
             p.send_signal(on_exit)
+            if on_exit != signal.SIGKILL:
+                try:
+                    return p.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    logging.error(f"killing worker which didn't exit after {on_exit.name}")
+                    p.send_signal(signal.SIGKILL)
         return p.wait()
 
 

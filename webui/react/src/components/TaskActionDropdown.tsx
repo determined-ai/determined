@@ -10,14 +10,16 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
-  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
 } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
-import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
+import {
+  cancellableRunStates, deletableRunStates, isTaskKillable, terminalRunStates,
+} from 'utils/types';
 import { openCommand } from 'wait';
 
 import Link from './Link';
@@ -44,8 +46,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
-  const isDeletable = curUser?.isAdmin && isExperimentTask(task) ?
-    terminalRunStates.has(task.state) : false;
+  const isDeletable = (
+    isExperimentTask(task) && curUser && (curUser.isAdmin || curUser.username === task.username)
+  ) ? deletableRunStates.has(task.state) : false;
 
   const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
@@ -66,16 +69,39 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
           if (onComplete) onComplete(action);
           break;
         case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorboard({ experimentIds: [ id ] });
+          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }
         case Action.Kill:
           if (isExperiment) {
-            await killExperiment({ experimentId: id });
-            if (onComplete) onComplete(action);
+            Modal.confirm({
+              content: `
+              Are you sure you want to kill
+              experiment ${id}?
+            `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killExperiment({ experimentId: id });
+                onComplete?.(action);
+              },
+              title: 'Confirm Experiment Kill',
+            });
           } else {
-            await killTask(task as CommandTask);
+            Modal.confirm({
+              content: `
+              Are you sure you want to kill
+              this task?
+            `,
+              icon: <ExclamationCircleOutlined />,
+              okText: 'Kill',
+              onOk: async () => {
+                await killTask(task as CommandTask);
+                onComplete?.(action);
+              },
+              title: 'Confirm Task Kill',
+            });
           }
           break;
         case Action.Pause:

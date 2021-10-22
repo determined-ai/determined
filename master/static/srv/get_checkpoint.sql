@@ -5,7 +5,6 @@ SELECT
     t.id AS trial_id,
     t.hparams as hparams,
     c.total_batches AS batch_number,
-    c.start_time AS start_time,
     c.end_time AS end_time,
     c.resources AS resources,
     COALESCE(c.metadata, '{}') AS metadata,

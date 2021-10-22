@@ -166,12 +166,12 @@ def build_dataloader(
     Returns:
         dataset and dataloader
     """
+    assert split in ["train", "val", "test"], "argument split must be one of train, val, or test."
     num_samples_per_gpu = context.get_per_slot_batch_size()
     num_replicas = context.distributed.get_size()
     num_workers = cfg.workers_per_gpu
     test_mode = False if split == "train" else True
 
-    assert split in ["train", "val", "test"], "argument split must be one of train, val, or test."
     cfg = eval(f"cfg.{split}")
     maybe_download_ann_file(cfg)
 

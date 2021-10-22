@@ -26,7 +26,7 @@ const flattenTheme = (theme: SubTheme, basePath = 'theme'): SubTheme => {
  * `useTheme` hook is meant to be used only once in the top level component such as App
  * and storybook Theme decorators and not individual components.
  */
-export const useTheme = (): { dispatch: Dispatch<SetStateAction<ThemeId>>; state: ThemeId } => {
+export const useTheme = (): { setThemeId: Dispatch<SetStateAction<ThemeId>>, themeId: ThemeId } => {
   const [ themeId, setThemeId ] = useState<ThemeId>(defaultThemeId);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export const useTheme = (): { dispatch: Dispatch<SetStateAction<ThemeId>>; state
     Object.keys(cssVars).forEach(key => root.style.setProperty(`--${key}`, cssVars[key]));
   }, [ themeId ]);
 
-  return { dispatch: setThemeId, state: themeId };
+  return { setThemeId, themeId };
 };
 
 export default useTheme;

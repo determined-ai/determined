@@ -16,8 +16,8 @@ from tests import config as conf
 from tests.filetree import FileTree
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_cold_and_warm_start(tmp_path: Path) -> None:
     for _ in range(3):
         subprocess.check_call(
@@ -88,7 +88,7 @@ def _run_cmd_with_config_expecting_failure(
             )
 
 
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.e2e_cpu
 def test_exit_code_reporting() -> None:
     """
     Confirm that failed commands are not reported as successful, and confirm
@@ -98,8 +98,8 @@ def test_exit_code_reporting() -> None:
         _run_and_verify_exit_code_zero(["det", "-m", conf.make_master_url(), "cmd", "run", "false"])
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_basic_workflows(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
         _run_and_verify_exit_code_zero(
@@ -153,8 +153,8 @@ def test_basic_workflows(tmp_path: Path) -> None:
         )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_large_uploads(tmp_path: Path) -> None:
     with pytest.raises(subprocess.CalledProcessError):
         with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
@@ -202,8 +202,8 @@ def test_large_uploads(tmp_path: Path) -> None:
         )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_configs(tmp_path: Path) -> None:
     with FileTree(
         tmp_path,
@@ -240,16 +240,16 @@ if test != "TEST":
         )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_singleton_command() -> None:
     _run_and_verify_exit_code_zero(
         ["det", "-m", conf.make_master_url(), "cmd", "run", "echo hello && echo world"]
     )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_absolute_bind_mount(tmp_path: Path) -> None:
     _run_and_verify_exit_code_zero(
         [
@@ -294,8 +294,8 @@ bind_mounts:
         )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_relative_bind_mount(tmp_path: Path) -> None:
     _run_and_verify_exit_code_zero(
         [
@@ -339,8 +339,8 @@ bind_mounts:
         )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_cmd_kill() -> None:
     """Start a command, extract its task ID, and then kill it."""
 
@@ -354,8 +354,8 @@ def test_cmd_kill() -> None:
                 break
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_image_pull_after_remove() -> None:
     """
     Remove pulled image and verify that it will be pulled again with auth.
@@ -380,8 +380,8 @@ def test_image_pull_after_remove() -> None:
     )
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_killed_pending_command_terminates() -> None:
     # Specify an outrageous number of slots to be sure that it can't be scheduled.
     with cmd.interactive_command(
@@ -401,8 +401,8 @@ def test_killed_pending_command_terminates() -> None:
         raise AssertionError(f"Task was in state {state} rather than STATE_TERMINATED")
 
 
-@pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.parametrize("sidecar", [True, False])  # type: ignore
+@pytest.mark.e2e_gpu
+@pytest.mark.parametrize("sidecar", [True, False])
 def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
     if not using_k8s:
         pytest.skip("only need to run test on kubernetes")
@@ -449,7 +449,7 @@ def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
     _run_cmd_with_config_expecting_success(cmd=f"sleep 3; touch {mount_path}", config=config)
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
 def test_k8_init_containers(using_k8s: bool) -> None:
     if not using_k8s:
         pytest.skip("only need to run test on kubernetes")
@@ -479,7 +479,7 @@ def test_k8_init_containers(using_k8s: bool) -> None:
     _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
 
 
-@pytest.mark.e2e_gpu  # type: ignore
+@pytest.mark.e2e_gpu
 def test_k8_sidecars(using_k8s: bool) -> None:
     if not using_k8s:
         pytest.skip("only need to run test on kubernetes")
