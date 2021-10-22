@@ -138,7 +138,7 @@ class Determined:
         name: str,
         description: Optional[str] = "",
         metadata: Optional[Dict[str, Any]] = None,
-        labels: Optional[List[str]] = [],
+        labels: Optional[List[str]] = None,
     ) -> model.Model:
         """
         Add a model to the model registry.

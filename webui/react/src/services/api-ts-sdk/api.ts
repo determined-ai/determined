@@ -11795,22 +11795,16 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPostModel.');
-            }
+        determinedPostModel(body: V1Model, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModel.');
             }
-            const localVarPath = `/api/v1/models/{model.name}`
-                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -12005,13 +11999,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModel(modelName, body, options);
+        determinedPostModel(body: V1Model, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModel(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12118,13 +12111,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModel(modelName, body, options)(fetch, basePath);
+        determinedPostModel(body: V1Model, options?: any) {
+            return ModelsApiFp(configuration).determinedPostModel(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -12224,14 +12216,13 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Create a model in the registry.
-     * @param {string} modelName The name of the model.
      * @param {V1Model} body The model to create.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModel(modelName: string, body: V1Model, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModel(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPostModel(body: V1Model, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPostModel(body, options)(this.fetch, this.basePath);
     }
 
     /**

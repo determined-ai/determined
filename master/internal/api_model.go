@@ -99,8 +99,10 @@ func (a *apiServer) PostModel(
 	}
 
 	m := &modelv1.Model{}
+	reqLabels := strings.Join(req.Model.Labels, ",")
 	err = a.m.db.QueryProto(
-		"insert_model", m, req.Model.Name, req.Model.Description, b, strings.Join(req.Model.Labels, ","), user.User.Id, time.Now(), time.Now(),
+		"insert_model", m, req.Model.Name, req.Model.Description, b,
+		reqLabels, user.User.Id, time.Now(), time.Now(),
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
@@ -139,7 +141,9 @@ func (a *apiServer) PatchModel(
 		madeChanges = true
 	}
 
-	if strings.Join(currModel.Labels, ",") != strings.Join(req.Model.Labels, ",") {
+	currLabels := strings.Join(currModel.Labels, ",")
+	reqLabels := strings.Join(req.Model.Labels, ",")
+	if currLabels != reqLabels {
 		log.Infof("model (%d) labels changing from %s to %s",
 			req.Model.Id, currModel.Labels, req.Model.Labels)
 		madeChanges = true
@@ -151,7 +155,7 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, req.Model.Id, req.Model.Description, newMeta, strings.Join(req.Model.Labels, ","), time.Now())
+		"update_model", finalModel, req.Model.Id, req.Model.Description, newMeta, reqLabels, time.Now())
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)

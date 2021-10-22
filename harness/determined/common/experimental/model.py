@@ -72,7 +72,7 @@ class Model:
         creation_time: Optional[datetime.datetime] = None,
         last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        labels: Optional[List[str]] = [],
+        labels: Optional[List[str]] = None,
     ):
         self._session = session
         self.model_id = model_id
