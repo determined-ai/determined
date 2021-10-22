@@ -115,11 +115,12 @@ func (a *apiServer) PatchModel(
 	}
 
 	currModel := getResp.Model
+	madeChanges := false
 
 	if currModel.Description != req.Model.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
 			req.Model.Id, currModel.Description, req.Model.Description)
-		currModel.Description = req.Model.Description
+		madeChanges = true
 	}
 
 	currMeta, err := protojson.Marshal(currModel.Metadata)
@@ -132,26 +133,27 @@ func (a *apiServer) PatchModel(
 		return nil, errors.Wrap(err, "error marshaling request model metadata")
 	}
 
-	if currModel.Description == req.Model.Description && strings.Join(currModel.Labels, ",") == strings.Join(req.Model.Labels, ",") && bytes.Equal(currMeta, newMeta) {
-		return &apiv1.PatchModelResponse{Model: currModel}, nil
-	}
-
 	if !bytes.Equal(currMeta, newMeta) {
 		log.Infof("model (%d) metadata changing from %s to %s",
 			req.Model.Id, currMeta, newMeta)
-		currModel.Metadata = req.Model.Metadata
+		madeChanges = true
 	}
 
 	if strings.Join(currModel.Labels, ",") != strings.Join(req.Model.Labels, ",") {
 		log.Infof("model (%d) labels changing from %s to %s",
 			req.Model.Id, currModel.Labels, req.Model.Labels)
-		currModel.Labels = req.Model.Labels
+		madeChanges = true
 	}
 
-	err = a.m.db.QueryProto(
-		"update_model", &modelv1.Model{}, req.Model.Id, currModel.Description, newMeta, strings.Join(currModel.Labels, ","), time.Now())
+	if !madeChanges {
+		return &apiv1.PatchModelResponse{Model: currModel}, nil
+	}
 
-	return &apiv1.PatchModelResponse{Model: currModel},
+	finalModel := &modelv1.Model{}
+	err = a.m.db.QueryProto(
+		"update_model", finalModel, req.Model.Id, req.Model.Description, newMeta, strings.Join(req.Model.Labels, ","), time.Now())
+
+	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
 }
 
