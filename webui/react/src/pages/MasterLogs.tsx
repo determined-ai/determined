@@ -73,24 +73,20 @@ const MasterLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]); */
 
   useEffect(() => {
-    try {
-      consumeStream<V1MasterLogsResponse>(
-        detApi.StreamingCluster.determinedMasterLogs(
-          -TAIL_SIZE,
-          0,
-          true,
-          { signal: canceler.signal },
-        ),
-        event => {
-          const logEntry = (event as V1MasterLogsResponse).logEntry;
-          if (logsRef.current && logEntry) {
-            logsRef.current?.addLogs(jsonToMasterLogs(logEntry));
-          }
-        },
-      );
-    } catch (e) {
-      null;
-    }
+    consumeStream<V1MasterLogsResponse>(
+      detApi.StreamingCluster.determinedMasterLogs(
+        -TAIL_SIZE,
+        0,
+        true,
+        { signal: canceler.signal },
+      ),
+      event => {
+        const logEntry = (event as V1MasterLogsResponse).logEntry;
+        if (logsRef.current && logEntry) {
+          logsRef.current?.addLogs(jsonToMasterLogs(logEntry));
+        }
+      },
+    );
   }, [ canceler.signal ]);
 
   useEffect(() => {
