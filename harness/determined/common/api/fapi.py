@@ -3,11 +3,6 @@ import functools
 import json
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar
 
-from pydantic import (  # FIXME this doesn't get resolved in my IDE's language server
-    BaseModel,
-    parse_obj_as,
-)
-
 from determined.common.api.authentication import Authentication
 from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi
 from determined.common.api.request import do_request
@@ -35,7 +30,7 @@ class ApiClient:
             path_params = {}
         url = (self.host or "") + url.format(**path_params)
         response = do_request(method, self.host, url, auth=self.auth, **kwargs)
-        return parse_obj_as(type_, response.json())
+        return  type_.from_dict(response.json()) # type: ignore
 
 
 client = ApiClient(host="http://localhost:8080")

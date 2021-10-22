@@ -130,7 +130,6 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
     """
     During calls to .from_dict(), use the type annotation to create a new object from value.
     """
-    print('getting instance from', anno, type(anno))
 
     if anno == 'Any':
         # In the special case of typing.Any, we just return the value directly.
