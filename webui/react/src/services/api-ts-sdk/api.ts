@@ -3295,6 +3295,68 @@ export interface V1PatchExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1PatchModel
+ */
+export interface V1PatchModel {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PatchModel
+     */
+    id: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    description?: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1PatchModel
+     */
+    metadata?: any;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1PatchModel
+     */
+    creationTime?: Date;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1PatchModel
+     */
+    lastUpdatedTime?: Date;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof V1PatchModel
+     */
+    labels?: Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    readme?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof V1PatchModel
+     */
+    archived?: boolean;
+}
+
+/**
  * Request for updating a model in the registry.
  * @export
  * @interface V1PatchModelRequest
@@ -3302,10 +3364,10 @@ export interface V1PatchExperimentResponse {
 export interface V1PatchModelRequest {
     /**
      * The model desired model fields and values.
-     * @type {V1Model}
+     * @type {V1PatchModel}
      * @memberof V1PatchModelRequest
      */
-    model?: V1Model;
+    model?: V1PatchModel;
 }
 
 /**
@@ -11750,7 +11812,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId 
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11980,7 +12042,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId 
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12101,7 +12163,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId 
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12204,7 +12266,7 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {number} modelId The id of this model.
+     * @param {number} modelId 
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

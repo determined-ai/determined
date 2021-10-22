@@ -25,6 +25,9 @@ def test_model_registry() -> None:
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "metadata"}
 
+    # Confirm DB assigned username
+    assert db_model.username == "determined"
+
     mnist.add_metadata({"some_key": "some_value"})
     db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
@@ -44,6 +47,9 @@ def test_model_registry() -> None:
     db_model = d.get_model(mnist.model_id)
     assert mnist.labels == db_model.labels
     assert db_model.labels == ["hello", "world"]
+
+    # confirm patch does not overwrite other fields
+    assert db_model.metadata == {"testing": "override"}
 
     # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()

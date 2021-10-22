@@ -7,6 +7,7 @@ import "determined/checkpoint/v1/checkpoint.proto";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Model is a named collection of model versions.
@@ -48,6 +49,25 @@ message Model {
   string username = 10;
   // Whether this model is archived or not.
   bool archived = 11;
+}
+
+// PatchModel is a partial update to a model with only id required
+message PatchModel {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  int32 id                         = 1;
+  google.protobuf.StringValue name = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        min_length: 1
+      }];
+  google.protobuf.StringValue description     = 3;
+  google.protobuf.Struct metadata             = 4;
+  google.protobuf.Timestamp creation_time     = 5;
+  google.protobuf.Timestamp last_updated_time = 6;
+  repeated google.protobuf.StringValue labels = 7;
+  google.protobuf.StringValue readme          = 8;
+  google.protobuf.BoolValue archived          = 9;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as

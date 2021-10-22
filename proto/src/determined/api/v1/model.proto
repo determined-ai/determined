@@ -93,7 +93,7 @@ message PostModelResponse {
 // Request for updating a model in the registry.
 message PatchModelRequest {
   // The model desired model fields and values.
-  determined.model.v1.Model model = 1;
+  determined.model.v1.PatchModel model = 1;
 }
 
 // Response to PatchModelRequest.

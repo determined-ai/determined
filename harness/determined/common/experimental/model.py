@@ -73,6 +73,7 @@ class Model:
         last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
         labels: Optional[List[str]] = None,
+        username: str = "",
     ):
         self._session = session
         self.model_id = model_id
@@ -82,6 +83,7 @@ class Model:
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
         self.labels = labels
+        self.username = username
 
     def get_version(self, version: int = 0) -> Optional[checkpoint.Checkpoint]:
         """
@@ -249,4 +251,5 @@ class Model:
             data.get("lastUpdatedTime"),
             data.get("metadata", {}),
             data.get("labels", []),
+            data.get("username", ""),
         )

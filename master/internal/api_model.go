@@ -119,34 +119,44 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 	madeChanges := false
 
-	if currModel.Description != req.Model.Description {
+	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
 			req.Model.Id, currModel.Description, req.Model.Description)
 		madeChanges = true
+		currModel.Description = req.Model.Description.Value
 	}
 
 	currMeta, err := protojson.Marshal(currModel.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling database model metadata")
 	}
+	if req.Model.Metadata != nil {
+		newMeta, err := protojson.Marshal(req.Model.Metadata)
+		if err != nil {
+			return nil, errors.Wrap(err, "error marshaling request model metadata")
+		}
 
-	newMeta, err := protojson.Marshal(req.Model.Metadata)
-	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling request model metadata")
-	}
-
-	if !bytes.Equal(currMeta, newMeta) {
-		log.Infof("model (%d) metadata changing from %s to %s",
-			req.Model.Id, currMeta, newMeta)
-		madeChanges = true
+		if !bytes.Equal(currMeta, newMeta) {
+			log.Infof("model (%d) metadata changing from %s to %s",
+				req.Model.Id, currMeta, newMeta)
+			madeChanges = true
+			currMeta = newMeta
+		}
 	}
 
 	currLabels := strings.Join(currModel.Labels, ",")
-	reqLabels := strings.Join(req.Model.Labels, ",")
-	if currLabels != reqLabels {
-		log.Infof("model (%d) labels changing from %s to %s",
-			req.Model.Id, currModel.Labels, req.Model.Labels)
-		madeChanges = true
+	if req.Model.Labels != nil {
+		var reqLabelList []string
+		for i := 0; i < len(req.Model.Labels); i++ {
+			reqLabelList = append(reqLabelList, req.Model.Labels[i].Value)
+		}
+		reqLabels := strings.Join(reqLabelList, ",")
+		if currLabels != reqLabels {
+			log.Infof("model (%d) labels changing from %s to %s",
+				req.Model.Id, currModel.Labels, req.Model.Labels)
+			madeChanges = true
+		}
+		currLabels = reqLabels
 	}
 
 	if !madeChanges {
@@ -155,7 +165,7 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, req.Model.Id, req.Model.Description, newMeta, reqLabels, time.Now())
+		"update_model", finalModel, req.Model.Id, currModel.Description, currMeta, currLabels, time.Now())
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
