@@ -1,6 +1,8 @@
 import enum
 import numbers
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, cast
+
+# from determined.common.api.fastapi_client.models import eval_model_types
 
 from determined.common import schemas
 from determined.common.schemas import expconf
@@ -8,7 +10,7 @@ from determined.common.schemas import expconf
 PRIMITIVE_JSON_TYPES = (numbers.Number, str, bool, type(None))
 
 # `typing` has some awkward APIs for type inspection.  In general, the only thing we can rely on
-# across python versions is that annotations are hashable, and equality tests work.  As there is
+# across python versions is that annotations are hashable, and equality tests work. As there is
 # only a small, fixed number of types that we actually need to know how to work with, we just build
 # some lookup tables.
 KNOWN_OPTIONAL_TYPES = {}  # type: Dict[Any, Any]
@@ -17,8 +19,14 @@ KNOWN_DICT_TYPES = {}  # type: Dict[Any, Any]
 
 KNOWN_LIST_TYPES = {}  # type: Dict[Any, Any]
 
+KNOWN_STR_TYPE: Dict[str, Any] = {}
+
 R = TypeVar("R")
 
+
+def register_str_type(key: str, cls: R) -> R:
+    global KNOWN_STR_TYPE
+    KNOWN_STR_TYPE[key] = cls
 
 def register_known_type(cls: R) -> R:
     KNOWN_OPTIONAL_TYPES[Optional[cls]] = cls
@@ -39,6 +47,11 @@ register_known_type(float)
 register_known_type(bool)
 register_known_type(str)
 register_known_type(Any)
+
+register_str_type('int', int)
+register_str_type('float', float)
+register_str_type('bool', bool)
+register_str_type('str', str)
 
 
 def _to_dict(val: Any, explicit_nones: bool) -> Any:
@@ -112,11 +125,85 @@ def _merge(obj: Any, src: Any) -> Any:
         return obj
     raise ValueError(f"invalid type in merge: {type(obj).__name__}")
 
+# from determined.common.api.fastapi_client.models import V1Model
+def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = False) -> Any:
+    """
+    During calls to .from_dict(), use the type annotation to create a new object from value.
+    """
+    print('getting instance from', anno, type(anno))
+
+    if anno == 'Any':
+        # In the special case of typing.Any, we just return the value directly.
+        return value
+
+    # Handle Optionals (strip the Optional part).
+    if anno.startswith("Optional"):
+        anno = anno.strip("Optional[")[:-1]
+        return _instance_from_annotation_str(anno, value, prevalidated)
+    # elif Optional[anno] == anno:
+    #     raise TypeError(f"unrecognized Optional ({anno}), maybe use @schemas.register_known_type?")
+
+    # Detect List[*] types, where issubclass(x, List) is unsafe.
+    if anno.startswith("List"):
+        anno = anno.strip("List[")[:-1]
+        if value is None:
+            return None
+        if not isinstance(value, Sequence):
+            raise TypeError(f"unable to create instance of {anno} from {value}")
+        return [_instance_from_annotation_str(anno, v, prevalidated) for v in value]
+
+    # Detect Dict[*] types, where issubclass(x, Dict) is unsafe.
+    if anno.startswith("Dict"):
+        anno = anno.strip("Dict[")[:-1]
+    # if anno in KNOWN_DICT_TYPES:
+    #     subanno = KNOWN_DICT_TYPES[anno]
+        if value is None:
+            return None
+        if not isinstance(value, Mapping):
+            raise TypeError(f"unable to create instance of {anno} from {value}")
+        return {k: _instance_from_annotation_str(anno, v, prevalidated) for k, v in value.items()}
+
+    # Detect Union[*] types and convert them to their UnionBase class.
+    if anno.startswith("Union"):
+        raise TypeError(f"no union support")
+        anno = anno.strip("Union[")[:-1]
+
+    # Any valid annotations must be plain types by now, which will allow us to use issubclass().
+    if anno not in KNOWN_STR_TYPE:
+        print(anno)
+        raise TypeError(
+            f"invalid compound annotation {anno}, maybe use @schemas.register_known_type?"
+        )
+    anno = KNOWN_STR_TYPE[anno]
+    annot = cast(type, anno) # type ignore
+
+    if not isinstance(anno, type):
+        raise TypeError(
+            f"invalid compound annotation {anno}, maybe use @schemas.register_known_type?"
+        )
+
+    if issubclass(anno, enum.Enum):
+        return anno(value)
+    if issubclass(anno, SchemaBase):
+        # For subclasses of SchemaBase we just call either from_dict() or from_none().
+        if value is None:
+            return anno.from_none()
+        return anno.from_dict(value, prevalidated)
+    if issubclass(anno, PRIMITIVE_JSON_TYPES):
+        # For json literal types, we just include them directly.
+        return value
+
+    raise TypeError(f"invalid type annotation on SchemaBase object: {anno}")
+
 
 def _instance_from_annotation(anno: type, value: Any, prevalidated: bool = False) -> Any:
     """
     During calls to .from_dict(), use the type annotation to create a new object from value.
     """
+    print('getting instance from', anno, type(anno))
+    if type(anno) == str:
+        return _instance_from_annotation_str(cast(str, anno), value, prevalidated)
+
     if anno == Any:
         # In the special case of typing.Any, we just return the value directly.
         return value

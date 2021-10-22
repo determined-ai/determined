@@ -3,7 +3,8 @@ from enum import Enum
 from typing import Any  # noqa
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from determined.common.api.tmp_hdantic import BaseModel, Field
+# from determined.common import schemas
 
 
 class Determinedcheckpointv1State(str, Enum):
@@ -793,8 +794,8 @@ class V1Model(BaseModel):
     name: "str" = Field(..., alias="name")
     description: "Optional[str]" = Field(None, alias="description")
     metadata: "Any" = Field(..., alias="metadata")
-    creation_time: "datetime" = Field(..., alias="creationTime")
-    last_updated_time: "datetime" = Field(..., alias="lastUpdatedTime")
+    # creation_time: "datetime" = Field(..., alias="creationTime")
+    # last_updated_time: "datetime" = Field(..., alias="lastUpdatedTime")
 
 
 class V1ModelVersion(BaseModel):
@@ -1233,3 +1234,6 @@ class V1ValidationHistoryEntry(BaseModel):
     trial_id: "int" = Field(..., alias="trialId")
     end_time: "datetime" = Field(..., alias="endTime")
     searcher_metric: "float" = Field(..., alias="searcherMetric")
+
+# def eval_model_types(text: str) -> type:
+#     return eval(text)
