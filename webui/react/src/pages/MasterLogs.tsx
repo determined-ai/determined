@@ -1,76 +1,39 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
-import { getMasterLogs } from 'services/api';
 import { V1MasterLogsResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { jsonToMasterLogs } from 'services/decoder';
-import { LogsParams } from 'services/types';
 import { consumeStream } from 'services/utils';
-import { Log } from 'types';
 
 const MasterLogs: React.FC = () => {
   const [ canceler ] = useState(new AbortController());
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
-  const [ logIdRange, setLogIdRange ] =
-    useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
-  const [ logsResponse, triggerOldLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
-  const [ pollingLogsResponse, triggerNewLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
 
   const fetchOlderLogs = useCallback((oldestLogId: number) => {
     const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
     if (startLogId >= oldestFetchedId) return;
     setOldestFetchedId(startLogId);
-    triggerOldLogsRequest({ greaterThanId: startLogId, tail: TAIL_SIZE });
-  }, [ oldestFetchedId, triggerOldLogsRequest ]);
-
-  const fetchNewerLogs = useCallback(() => {
-    if (logIdRange.max < 0) return;
-    triggerNewLogsRequest({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
-  }, [ logIdRange.max, triggerNewLogsRequest ]);
+    consumeStream<V1MasterLogsResponse>(
+      detApi.StreamingCluster.determinedMasterLogs(
+        startLogId,
+        oldestLogId-startLogId,
+        false,
+        { signal: canceler.signal },
+      ),
+      event => {
+        const logEntry = (event as V1MasterLogsResponse).logEntry;
+        if (logsRef.current && logEntry) {
+          logsRef.current?.addLogs(jsonToMasterLogs(logEntry), true);
+        }
+      },
+    );
+  }, [ oldestFetchedId, canceler.signal ]);
 
   const handleScrollToTop = useCallback((oldestLogId: number) => {
     fetchOlderLogs(oldestLogId);
   }, [ fetchOlderLogs ]);
-
-  /*   usePolling(fetchNewerLogs);
-
-  useEffect(() => {
-    if (!logsResponse.data || logsResponse.data.length === 0) return;
-
-    const minLogId = logsResponse.data.first().id;
-    const maxLogId = logsResponse.data.last().id;
-    if (minLogId >= logIdRange.min) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(logsResponse.data, true);
-  }, [ logIdRange, logsResponse ]);
-
-  useEffect(() => {
-    if (!pollingLogsResponse.data || pollingLogsResponse.data.length === 0) return;
-
-    const minLogId: number = pollingLogsResponse.data[0].id;
-    const maxLogId: number = pollingLogsResponse.data.last().id;
-    if (maxLogId <= logIdRange.max) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
-  }, [ logIdRange, pollingLogsResponse.data ]); */
 
   useEffect(() => {
     consumeStream<V1MasterLogsResponse>(
