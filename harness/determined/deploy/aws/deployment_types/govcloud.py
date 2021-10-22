@@ -42,7 +42,7 @@ class Govcloud(base.DeterminedDeployment):
         constants.cloudformation.MASTER_CONFIG_TEMPLATE,
     ]
 
-    def deploy(self) -> None:
+    def deploy(self, no_prompt: bool) -> None:
         cfn_parameters = self.consolidate_parameters()
         self.before_deploy_print()
         with open(self.template_path) as f:
@@ -54,5 +54,6 @@ class Govcloud(base.DeterminedDeployment):
             keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
+            no_prompt=no_prompt,
         )
         self.print_results()

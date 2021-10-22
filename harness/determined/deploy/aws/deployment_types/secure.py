@@ -51,7 +51,7 @@ class Secure(base.DeterminedDeployment):
         constants.cloudformation.MASTER_CONFIG_TEMPLATE,
     ]
 
-    def deploy(self) -> None:
+    def deploy(self, no_prompt: bool) -> None:
         self.before_deploy_print()
         cfn_parameters = self.consolidate_parameters()
         with open(self.template_path) as f:
@@ -63,6 +63,7 @@ class Secure(base.DeterminedDeployment):
             keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
+            no_prompt=no_prompt,
         )
         self.print_results()
 

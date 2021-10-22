@@ -207,7 +207,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     try:
-        deployment_object.deploy()
+        deployment_object.deploy(args.no_prompt)
     except NoCredentialsError:
         error_no_credentials()
     except Exception as e:
@@ -487,6 +487,11 @@ args_description = Cmd(
                     help="preexisting FSx that will be mounted into the task containers; "
                     "if not provided, a new FSx instance will be created.  Note that you need"
                     "to ensure that the agents can connect to the FSx instance.",
+                ),
+                Arg(
+                    "--no-prompt",
+                    action="store_true",
+                    help="no prompt when deleting existing resources",
                 ),
             ],
         ),

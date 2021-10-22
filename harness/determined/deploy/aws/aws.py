@@ -308,6 +308,7 @@ def deploy_stack(
     template_body: str,
     keypair: str,
     boto3_session: boto3.session.Session,
+    no_prompt: bool,
     parameters: Optional[List] = None,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
@@ -316,6 +317,15 @@ def deploy_stack(
     check_keypair(keypair, boto3_session)
     if stack_exists(stack_name, boto3_session):
         print("True - Updating Stack")
+
+        if not no_prompt:
+            val = input(
+                "If --deployment-type has changed, updating the stack may reset the database. "
+                "Are you sure you want to proceed? [y/n]"
+            )
+            if val.lower() != "y":
+                print("Update cancelled.")
+                sys.exit(1)
 
         update_stack(stack_name, template_body, boto3_session, parameters)
     else:
