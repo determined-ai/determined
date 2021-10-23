@@ -10,6 +10,7 @@
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:css": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss}\"",
     "test": "react-app-rewired test",
+    "test:coverage": "CI=true npm test -- --env=jsdom --coverage",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
@@ -128,5 +129,10 @@
     "stylelint-scss": "^3.18.0",
     "throttle-debounce": "^3.0.1",
     "typescript": "^4.2.4"
+  },
+  "jest": {
+    "coveragePathIgnorePatterns": [
+      "/src/services/api-ts-sdk/"
+    ]
   }
 }
