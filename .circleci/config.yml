@@ -1138,6 +1138,11 @@ jobs:
         default: false
     docker:
       - image: cimg/node:14.16
+        environment: # TODO remove me
+          DET_NODE_ENV: development
+          NODE_ENV: development
+          ESLINT_NO_DEV_ERRORS: 'true'
+          DISABLE_ESLINT_PLUGIN: 'true'
     steps:
       - checkout
       - react-get-deps
