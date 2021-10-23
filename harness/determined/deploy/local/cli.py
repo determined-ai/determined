@@ -43,7 +43,7 @@ def handle_logs(args: argparse.Namespace) -> None:
 def handle_master_up(args: argparse.Namespace) -> None:
     cluster_utils.master_up(
         port=args.master_port,
-        master_config_path=args.master_config_path,
+        master_config_path=Path(args.master_config_path),
         storage_host_path=args.storage_host_path,
         master_name=args.master_name,
         image_repo_prefix=args.image_repo_prefix,
