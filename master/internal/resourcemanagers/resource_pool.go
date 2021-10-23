@@ -2,6 +2,7 @@ package resourcemanagers
 
 import (
 	"crypto/tls"
+
 	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/determined-ai/determined/master/pkg/model"

@@ -188,5 +188,5 @@ type TelemetryConfig struct {
 
 // InternalConfig is the configuration for internal knobs.
 type InternalConfig struct {
-	ExternalSessions  model.ExternalSessions `json:"external_sessions"`
+	ExternalSessions model.ExternalSessions `json:"external_sessions"`
 }

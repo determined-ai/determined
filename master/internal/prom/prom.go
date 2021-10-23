@@ -2,9 +2,10 @@ package prom
 
 import (
 	"encoding/json"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"io/ioutil"
 	"os"
+
+	"github.com/determined-ai/determined/master/internal/sproto"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -113,7 +114,6 @@ func AddAllocation(summary sproto.ContainerSummary) {
 	AssociateContainerGPUs(cID, summary.Devices...)
 }
 
-
 // DisassociateTaskContainer records the given task no longer owns the given container.
 func DisassociateTaskContainer(tID string, cID string) {
 	containerIDToAllocationID.WithLabelValues(cID, tID).Dec()
@@ -122,6 +122,7 @@ func DisassociateTaskContainer(tID string, cID string) {
 func AssociateTaskActor(actor string, aID string) {
 	taskActorToAllocation.WithLabelValues(actor, aID).Inc()
 }
+
 // DisassociateTaskActor records the given task owns the given container.
 func DisassociateTaskActor(tID string, actor string) {
 	taskActorToAllocation.WithLabelValues(tID, actor).Dec()

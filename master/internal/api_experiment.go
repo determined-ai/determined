@@ -5,12 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/prom"
 	"math"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/prom"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
