@@ -1,7 +1,7 @@
 import argparse
 import functools
 import json
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar
 
 from determined.common.api.authentication import Authentication
 from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi

@@ -1,5 +1,5 @@
 from typing import Any, ClassVar, Dict, List, Type, TypeVar, Optional, Union  # , get_origin new in 3.8
-from determined.common import schemas
+# from determined.common.schemas import SchemaBase
 
 # removing pydantic the startup cost is ~30ms
 
@@ -28,7 +28,7 @@ def Field(*args, **kwargs) -> Any:
     return field_value
 
 
-class SchemaBased(schemas.SchemaBase):
+class SchemaBased():
     _id: str = 'abc'
     # @schemas.auto_init
     def __init__(self, *args, **kwargs):
