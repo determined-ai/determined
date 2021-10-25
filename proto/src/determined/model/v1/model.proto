@@ -56,18 +56,23 @@ message PatchModel {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
-  int32 id                         = 1;
+  // The id of this model.
+  int32 id = 1;
+  // An updated name for the model.
   google.protobuf.StringValue name = 2
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         min_length: 1
       }];
-  google.protobuf.StringValue description     = 3;
-  google.protobuf.Struct metadata             = 4;
-  google.protobuf.Timestamp creation_time     = 5;
-  google.protobuf.Timestamp last_updated_time = 6;
-  repeated google.protobuf.StringValue labels = 7;
-  google.protobuf.StringValue readme          = 8;
-  google.protobuf.BoolValue archived          = 9;
+  // An updated description for the model.
+  google.protobuf.StringValue description = 3;
+  // An updated metadata object for the model.
+  google.protobuf.Struct metadata = 4;
+  // An updated label list for the model.
+  repeated google.protobuf.StringValue labels = 5;
+  // An updated readme for the model.
+  google.protobuf.StringValue readme = 6;
+  // An updated archived status for the model.
+  google.protobuf.BoolValue archived = 7;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
@@ -110,18 +115,23 @@ message ModelVersion {
   string username = 11;
 }
 
+// PatchModel is a partial update to a ModelVersion with only id required
 message PatchModelVersion {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
+  // An updated checkpoint to associate with the model version.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
-  int32 version                                  = 2;
-  google.protobuf.Timestamp creation_time        = 3;
-  int32 id                                       = 4;
-  google.protobuf.StringValue name               = 5;
-  google.protobuf.Struct metadata                = 6;
-  google.protobuf.Timestamp last_updated_time    = 7;
-  google.protobuf.StringValue comment            = 8;
-  google.protobuf.StringValue readme             = 9;
-  google.protobuf.StringValue username           = 10;
+  // An updated version number.
+  int32 version = 2;
+  // The id of the model version.
+  int32 id = 3;
+  // An updated name for the model version.
+  google.protobuf.StringValue name = 4;
+  // An updated metadata object for the model version.
+  google.protobuf.Struct metadata = 5;
+  // An updated comment for the model version.
+  google.protobuf.StringValue comment = 6;
+  // An updated readme for the model version.
+  google.protobuf.StringValue readme = 7;
 }

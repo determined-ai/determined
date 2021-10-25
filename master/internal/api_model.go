@@ -131,9 +131,9 @@ func (a *apiServer) PatchModel(
 		return nil, errors.Wrap(err, "error marshaling database model metadata")
 	}
 	if req.Model.Metadata != nil {
-		newMeta, err := protojson.Marshal(req.Model.Metadata)
+		newMeta, err2 := protojson.Marshal(req.Model.Metadata)
 		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling request model metadata")
+			return nil, errors.Wrap(err2, "error marshaling request model metadata")
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
@@ -180,7 +180,7 @@ func (a *apiServer) GetModelVersion(
 		"get_model_version", resp.ModelVersion, req.ModelId, req.ModelVersion); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", req.ModelId, req.ModelVersion)
+			codes.NotFound, "model %d version %d not found", req.ModelId, req.ModelVersion)
 	default:
 		return resp, err
 	}
@@ -245,9 +245,10 @@ func (a *apiServer) PostModelVersion(
 }
 
 func (a *apiServer) PatchModelVersion(
-	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse, error) {
+	c context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse, error) {
 
-	getResp, err := a.GetModelVersion(ctx, &apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
+	getResp, err := a.GetModelVersion(c,
+		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
 	if err != nil {
 		return nil, err
 	}
@@ -281,8 +282,8 @@ func (a *apiServer) PatchModelVersion(
 	}
 
 	finalModelVersion := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto(
-		"update_model_version", finalModelVersion, req.ModelVersion.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Readme, req.ModelId, time.Now())
+	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersion.Id,
+		currModelVersion.Name, currModelVersion.Comment, currModelVersion.Readme, req.ModelId, time.Now())
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
 		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
