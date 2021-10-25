@@ -52,7 +52,7 @@ cluster creation with either command line arguments or a cluster config file. Be
 config that deploys a managed node group for Determined's master instance, as well as an autoscaling
 GPU node group for workers. To fill in the template, insert the cluster name and S3 bucket name.
 
-.. code:: YAML
+.. code:: yaml
 
    apiVersion: eksctl.io/v1alpha5
    kind: ClusterConfig
@@ -220,7 +220,7 @@ After finding the particular release you want, click on the release and scroll t
 a list of image URLs. Example:
 https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.20.0
 
-.. code:: YAML
+.. code:: yaml
 
    apiVersion: apps/v1
    kind: Deployment
@@ -300,7 +300,7 @@ account must be specified in order to allow Determined to save checkpoints to S3
 there are tainted nodes, must be listed for the experiment to be scheduled. An example of the
 necessary changes is shown here:
 
-.. code:: YAML
+.. code:: yaml
 
    environment:
      pod_spec:
