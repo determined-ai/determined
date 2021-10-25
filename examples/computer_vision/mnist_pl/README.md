@@ -2,7 +2,7 @@
 This tutorial shows how to build a simple CNN on the MNIST dataset using
 Determined's PyTorch API and the corresponding Lightning Adapter.
 This example is adapted from [PyTorch Lightning MNIST tutorial]
-(https://colab.research.google.com/github/PytorchLightning/pytorch-lightning/blob/master/notebooks/01-mnist-hello-world.ipynb#scrollTo=4DNItffri95Q).
+(https://colab.research.google.com/github/PyTorchLightning/pytorch-lightning/blob/master/notebooks/01-mnist-hello-world.ipynb#scrollTo=4DNItffri95Q).
 
 ## Files
 * **model_def.py**: The code for implementing `LightningAdapter` API.

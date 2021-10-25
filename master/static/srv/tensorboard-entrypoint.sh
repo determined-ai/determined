@@ -18,7 +18,7 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
 
-# Install tensorboard if not already installed (for custom Pytorch images)
+# Install tensorboard if not already installed (for custom PyTorch images)
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard
 "$DET_PYTHON_EXECUTABLE" -m pip install tensorboard-plugin-profile
 

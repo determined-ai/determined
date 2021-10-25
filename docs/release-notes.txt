@@ -426,9 +426,9 @@ Version 0.16.0
 
 **New Features**
 
--  Python SDK: Extend the :ref:`Checkpoint Export API <exporting-checkpoints>` into a Python SDK
-   capable of launching and controlling experiments on the cluster directly from Python. See the
-   documentation and examples in the :mod:`~determined.experimental.client` module.
+-  Python SDK: Extend the Checkpoint Export API into a Python SDK capable of launching and
+   controlling experiments on the cluster directly from Python. See the documentation and examples
+   in the :mod:`~determined.experimental.client` module.
 
 -  Trials: Add new support for profiling model code. For all frameworks, collecting system metrics,
    such as GPU utilization and memory, is supported. For PyTorch, additional profiling for timing is
@@ -567,7 +567,7 @@ Version 0.15.3
 
 **Bug Fixes**
 
--  Images: Fix GPU support in CUDA 10.2 + Tensorflow 1.15 images.
+-  Images: Fix GPU support in CUDA 10.2 + TensorFlow 1.15 images.
 -  Trials: Update to match ``websockets>= 9.0`` library API change.
 -  Trials: Fix a bug that caused trials to panic upon receiving too many rendezvous addresses.
 
@@ -615,7 +615,7 @@ Version 0.15.2
    non-numeric arrays will simply remain on the CPU. This is especially useful to NLP practitioners
    who wish to make use of Numpy's string manipulations anywhere in their data pipelines.
 
--  TFKerasTrial: Fix support for Tensorflow v2.2.x.
+-  TFKerasTrial: Fix support for TensorFlow v2.2.x.
 
 -  WebUI: Fix the issue of the WebUI crashing when user selects a row in experiment list page then
    changes the user filter.
@@ -700,7 +700,7 @@ Version 0.14.6
    allocation information.
 
 -  PyTorch Lightning: Add an adapter to support ``LightningModule`` from PyTorch Lightning in the
-   PyTorchTrial API. See :ref:`lightning-adapter` for more information.
+   PyTorchTrial API. See :doc:`/training-apis/api-pytorch-lightning` for more information.
 
 **Improvements**
 
@@ -931,8 +931,8 @@ Version 0.13.13
 **Deprecated Features**
 
 -  The old PyTorch API was deprecated in 0.12.13 and will be removed in the next release. See the
-   `migration guide
-   <https://docs.determined.ai/0.13.13/reference/api/pytorch.html#migration-from-deprecated-interface>`_
+   `PyTorch migration guide
+   <https://docs.determined.ai/0.12.13/reference/api/pytorch.html#migration-from-deprecated-interface>`_
    for details on updating your PyTorch model code to use the new API.
 
 Version 0.13.12
@@ -1051,7 +1051,7 @@ Version 0.13.8
 **New Features**
 
 -  API: Add support for models that subclass ``tf.keras.Model`` when using the Determined
-   TFKerasTrial API. This is a new feature that became available starting in Tensorflow 2.2,
+   TFKerasTrial API. This is a new feature that became available starting in TensorFlow 2.2,
    allowing user to further customize their training process.
 
 -  Deployment: When using the ``simple`` deployment type with ``det-deploy aws``, you can now use
@@ -1094,14 +1094,14 @@ Version 0.13.8
    See :ref:`Agent configuration <agent-configuration>` for details.
 
 -  API: Add ``self.context.wrap_optimizer()`` to the Determined TFKerasTrial API. Please see
-   :ref:`tf-keras-trial` for detail.
+   :doc:`/training-apis/api-keras` for detail.
 
 -  API: Add tf.keras DCGAN example that subclasses ``tf.keras.Model``.
 
 -  API: Add ``self.context.configure_fit()`` to the Determined TFKerasTrial API. Many parameters
    which would be passed to ``model.fit()``, such as ``class_weight``, ``verbose``, or ``workers``,
    can now be passed to ``configure_fit()`` and will be honored by ``TFKerasTrial``. Please see
-   :ref:`tf-keras-trial` for detail.
+   :doc:`/training-apis/api-keras` for detail.
 
 -  Kubernetes: Add option to configure the service type of the Determined deployed database in the
    Determined Helm Chart. This is useful if your cluster does not support ClusterIP, which is the
@@ -1498,8 +1498,8 @@ to the following changes:
    Before upgrading, **terminate all active and paused experiments** (e.g., via ``det experiment
    cancel`` or ``det experiment kill``). The format of the experiment config file has changed --
    configuration files that worked with previous versions of Determined will need to be updated to
-   work with Determined >= 0.13.0. For more details, see the notes below or the :ref:`migration
-   guide <migration-guide_remove-steps>`.
+   work with Determined >= 0.13.0. For more details, see the notes below or the `migration guide
+   <https://docs.determined.ai/0.17.3/training-apis/experiment-config.html#migration-from-v0-12-13-to-v0-13-0>`_.
 
 -  The WebUI has been partially rewritten, moving several components that were implemented in Elm to
    now being written in React and TypeScript. As part of this change, many improvements to the
@@ -1527,9 +1527,9 @@ to the following changes:
 
 -  **Remove Steps from the UX:** Remove the concept of a "step" from the CLI, WebUI, and
    configuration files. Add new configuration settings to allow settings previously in terms of
-   steps to be configured instead in terms of records, batches or epochs. See the :ref:`migration
-   guide <migration-guide_remove-steps>` for details on migrating from the old configuration to the
-   new configuration.
+   steps to be configured instead in terms of records, batches or epochs. See the `migration guide
+   <https://docs.determined.ai/0.17.3/training-apis/experiment-config.html#migration-from-v0-12-13-to-v0-13-0>`_
+   for details on migrating from the old configuration to the new configuration.
 
    -  Many configuration settings can now be set in terms of records, batches or epochs. For
       example, a single searcher can be configured to run for 100 records by setting ``max_length:
@@ -1698,7 +1698,7 @@ Version 0.12.13
 
 -  **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep
    learning experiments that use multiple models, optimizers, and LR schedulers. The old API is
-   still supported but is now deprecated and will be removed in a future release. See the `Pytorch
+   still supported but is now deprecated and will be removed in a future release. See the `PyTorch
    migration guide
    <https://docs.determined.ai/0.12.13/reference/api/pytorch.html#migration-from-deprecated-interface>`_
    for details on updating your PyTorch model code. *Deprecated methods will be supported until at
@@ -1764,8 +1764,8 @@ Version 0.12.12
    ``on_validation_step_end``, and introduce new callback ``on_validation_end`` with same
    functionality. Add helper methods ``is_epoch_start`` and ``is_epoch_end`` to PyTorch context.
 
--  Add a new API to support custom reducers in ``EstimatorTrial``. See :ref:``estimator-trial`` for
-   details.
+-  Add a new API to support custom reducers in ``EstimatorTrial``. See
+   :doc:`/training-apis/api-estimator` for details.
 
 -  CLI: Add the ``register_version`` command for registering a new version of a model.
 
@@ -1836,8 +1836,7 @@ Version 0.12.10
 -  CLI: Add the ``det user rename`` command for administrators to change the username of existing
    users.
 -  Expand documentation on :ref:`use-trained-models` by including checkpoint metadata management.
--  Reorganize examples by splitting :ref:`model-definitions_trial-api` examples into separate
-   folders.
+-  Reorganize examples by splitting the Trial examples into separate folders.
 
 **Bug Fixes**
 

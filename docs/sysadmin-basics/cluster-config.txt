@@ -113,7 +113,7 @@ ports will be chosen randomly from the unprivileged port range (1024-65535).
 Default Checkpoint Storage
 ==========================
 
-See :ref:`checkpoint-storage-configuration` for details.
+See :ref:`checkpoint-storage` for details.
 
 .. _telemetry:
 

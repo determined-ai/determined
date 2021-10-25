@@ -17,7 +17,7 @@ class OnesDataset(torch.utils.data.Dataset):
         return torch.Tensor([float(1)])
 
 
-class NoopPytorchTrial(pytorch.PyTorchTrial):
+class NoopPyTorchTrial(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext):
         self.context = context
 
@@ -89,4 +89,4 @@ if __name__ == "__main__":
       batches: 1
     """
     )
-    experimental.create(NoopPytorchTrial, conf, context_dir=".")
+    experimental.create(NoopPyTorchTrial, conf, context_dir=".")

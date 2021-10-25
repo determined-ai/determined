@@ -1,50 +1,39 @@
-#################################
- Python API determined.estimator
-#################################
+###############
+ Estimator API
+###############
 
-.. _estimator-trial:
+**********
+ Overview
+**********
 
-*****************************************
- ``determined.estimator.EstimatorTrial``
-*****************************************
+This document lists how you should implement the Estimator API. You need to implement a trial class
+that inherits :class:`~determined.estimator.EstimatorTrial` and specify it as the entrypoint in the
+:doc:`experiment configuration </training-apis/experiment-config>`.
 
-.. autoclass:: determined.estimator.EstimatorTrial
-   :members:
-   :exclude-members: trial_controller_class
-   :inherited-members:
-   :member-order: bysource
-   :special-members: __init__
+To learn about this API, you can start by reading the trial definitions from the following examples:
 
-.. _estimator-context:
+-  :download:`MNIST example </examples/mnist_estimator.tgz>`
 
-************************************************
- ``determined.estimator.EstimatorTrialContext``
-************************************************
+*********************************
+ Defining Optimizer and Datasets
+*********************************
+
+.. note::
+
+   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   different sources of data.
 
 To use ``tf.estimator`` models with Determined, users need to wrap their optimizer and datasets
-using the following functions inherited from :class:`determined.estimator.EstimatorTrialContext`.
-Note that the concrete context object where these functions will be found will be in
+using :meth:`~determined.estimator.EstimatorTrialContext.wrap_optimizer` and
+:meth:`~determined.estimator.EstimatorTrialContext.wrap_dataset`. Note that the concrete context
+object where these functions will be found will be in
 :class:`determined.estimator.EstimatorTrialContext`.
-
-.. autoclass:: determined.estimator.EstimatorTrialContext
-   :members:
-   :inherited-members:
-   :member-order: bysource
-
-   EstimatorTrialContext always has a :class:`~determined._core._distributed.DistributedContext`
-   accessible via ``context.distributed`` for information related to distributed training.
-
-   EstimatorTrialContext always has a :class:`~determined.estimator.EstimatorExperimentalContext`
-   accessible via ``context.experimental`` for information related to experimental features.
-
-.. autoclass:: determined.estimator.EstimatorExperimentalContext
-   :members: cache_train_dataset, cache_validation_dataset
-   :member-order: bysource
 
 .. _estimators-custom-reducers:
 
-Reducing Metrics
-================
+******************
+ Reducing Metrics
+******************
 
 Determined supports proper reduction of arbitrary validation metrics during distributed training by
 allowing users to define custom reducers for their metrics. Custom reducers can be either a function
@@ -53,23 +42,31 @@ or an implementation of the :class:`determined.estimator.MetricReducer` interfac
 See :func:`context.make_metric() <determined.estimator.EstimatorTrialContext.make_metric>` for more
 details.
 
-.. autoclass:: determined.estimator.MetricReducer
-   :members: accumulate, cross_slot_reduce
-   :member-order: bysource
+***************
+ Checkpointing
+***************
 
-Callbacks
-=========
+A checkpoint includes the model definition (Python source code), experiment configuration file,
+network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
+When using a stateful optimizer during training, checkpoints will also include the state of the
+optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+:ref:`Python API <store-checkpoint-metadata>`.
+
+TensorFlow Estimator trials are checkpointed using the `SavedModel
+<https://www.tensorflow.org/guide/saved_model>`__ format. Please consult the TensorFlow
+documentation for details on how to restore models from the SavedModel format.
+
+***********
+ Callbacks
+***********
 
 To execute arbitrary Python code during the lifecycle of a ``EstimatorTrial``,
-``determined.estimator.RunHook`` extends `tf.estimator.SessionRunHook
+:class:`~determined.estimator.RunHook` extends `tf.estimator.SessionRunHook
 <https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_. When utilizing
-``determined.estimator.RunHook``, users can use native estimator hooks such as ``before_run()`` and
-Determined hooks such as ``on_checkpoint_end()``.
+:class:`determined.estimator.RunHook`, users can use native estimator hooks such as ``before_run()``
+and Determined hooks such as ``on_checkpoint_end()``.
 
-.. autoclass:: determined.estimator.RunHook
-   :members: on_checkpoint_load, on_checkpoint_end, on_trial_close
-
-Example usage of ``determined.estimator.RunHook`` which adds custom metadata checkpoints:
+Example usage of :class:`determined.estimator.RunHook` which adds custom metadata checkpoints:
 
 .. code:: python
 
@@ -92,14 +89,14 @@ Example usage of ``determined.estimator.RunHook`` which adds custom metadata che
                hooks=[MyHook(self.context, "my_metadata")],
            )
 
-***********
- Debugging
-***********
+************
+ Learn More
+************
 
-Please see :ref:`model-debug`.
+See the full list of documents.
 
-**********
- Examples
-**********
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
--  :download:`MNIST example </examples/mnist_estimator.tgz>`
+   api-estimator-reference

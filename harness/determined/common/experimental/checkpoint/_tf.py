@@ -47,7 +47,7 @@ def load_saved_model(ckpt_dir: pathlib.Path, tags: Optional[List[str]] = None) -
             )
         )
 
-    # Tensorflow uses tags to determine which metagraph to load. Most
+    # TensorFlow uses tags to determine which metagraph to load. Most
     # commonly, users will attempt to serve or otherwise use the model for
     # inference. Therefore we default to the serve graph tag which disables
     # operations that are only relevant for training.

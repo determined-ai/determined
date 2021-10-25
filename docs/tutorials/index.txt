@@ -5,14 +5,25 @@
 ###########
 
 Tutorials are simple step-by-step guides about getting started with different topics of Determined.
-These are a good place to get started with using the product.
 
-To get started using Determined, check out the :ref:`quick-start`.
+*********
+ PyTorch
+*********
 
-Next, follow the tutorial for your preferred deep learning framework:
+For PyTorch users, you can start with :doc:`the tutorial that uses the simplest model MNIST
+</tutorials/tf-mnist-tutorial>`. If you come with the code that is already able to run, you can
+follow :doc:`/tutorials/pytorch-porting-tutorial` to port your code to use our Pytorch APIs.
 
--  :ref:`pytorch-mnist-tutorial`
--  :ref:`tf-mnist-tutorial`
+******************
+ TensorFlow Keras
+******************
+
+For TensorFlow Keras users, you can start with :doc:`the tutorial that uses the simplest model MNIST
+</tutorials/pytorch-mnist-tutorial>`.
+
+************
+ Learn More
+************
 
 The full list of our tutorials can be found below:
 
@@ -20,4 +31,6 @@ The full list of our tutorials can be found below:
    :maxdepth: 1
    :glob:
 
-   *
+   pytorch-mnist-tutorial
+   pytorch-porting-tutorial
+   tf-mnist-tutorial

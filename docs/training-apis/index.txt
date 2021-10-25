@@ -1,25 +1,168 @@
-.. _model-definitions:
+#########################
+ Implement Training APIs
+#########################
 
-###################################
- Training: Implement Training APIs
-###################################
+**********
+ Overview
+**********
 
-The training APIs is the interface between Determined and the user's application framework (e.g.,
-Keras, TensorFlow), in terms of loading training data, describing a model architecture, and
-specifying the underlying iterative optimization training algorithms.
+The training APIs allows users to configure the training procedure and what objects to use in the
+training procedure, including the model architecture, data loader, optimizer, learning rate
+scheduler, callbacks, and etc,.
 
-The interface is called the Trial API. With the :ref:`Trial API <model-definitions_trial-api>`,
-developers expose the components of their model and training to Determined's training loop
-implementation.
+The training APIs is composed of two parts, the **trial definition** and the **experiment
+configuration**.
 
-To read more about the Trial API, see:
+The trial definition contains the definition of all the objects that might be used in the training
+procedure. You need to choose one of the following APIs:
 
--  :ref:`model-definitions_trial-api`
-      -  :ref:`pytorch-trial`
-      -  :ref:`tf-keras-trial`
-      -  :ref:`estimator-trial`
+-  :doc:`/training-apis/api-pytorch`
+-  :doc:`/training-apis/api-keras`
+-  :doc:`/training-apis/api-estimator`
 
--  :ref:`examples`
+In addition to the trial definition, we also require an :doc:`experiment configuration
+</training-apis/experiment-config>` in the format of :doc:`YAML </concepts/yaml>`.
+
+We also provide a rich list of :doc:`examples </examples>` for users to refer to.
+
+****************
+ Best Practices
+****************
+
+General Tips for the Trial Definition
+=====================================
+
+Do:
+
+-  Use framework abstractions to implement learning rate scheduling instead of directly changing the
+   learning rate. See `tf.keras.optimizers.schedules.LearningRateSchedule
+   <https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/LearningRateSchedule>`__
+   and :class:`determined.pytorch.LRScheduler` as examples.
+
+-  For code that needs to download artifacts (e.g., data, configurations, pretrained weights),
+   download to a `tempfile.TemporaryDirectory <https://docs.python.org/3/library/tempfile.html>`__
+   unique to the Python process. This will avoid race conditions when using :ref:`distributed
+   training <multi-gpu-training>`, in which Determined executes multiple Python processes in the
+   same task container.
+
+Do not:
+
+-  Use instance attributes on a trial class to save any state over time (e.g., storing metric
+   history in a ``self`` attribute). The ``Trial`` instance will only save and restore model weights
+   and optimizer state over time; ``self`` attributes may be reset to their initial state at any
+   time if the Determined cluster reschedules the trial to another task container.
+
+Separate Configuration from Code
+================================
+
+We encourage a clean separation of code from configuration via the :ref:`experiment configuration
+<experiment-configuration>`. Specifically, you are encouraged to use the pre-defined fields in the
+experiment configuration, such as the ``searcher``, ``hyperparameters``, ``optimizations``, and
+``resources``. This not only allows you to reuse the trial definition when you tune different
+configuration fields but also improve the visualibility because those fields can be browsed in our
+WebUI.
+
+Do:
+
+-  Move any hardcoded scalar values to the :ref:`hyperparameters
+   <experiment-configuration_hyperparameters>` or :ref:`data <experiment-config-data>` fields in the
+   experiment configuration. Use :func:`context.get_hparam() <determined.TrialContext.get_hparam>`
+   or :func:`context.get_data_config() <determined.TrialContext.get_data_config>` to reference them
+   in code.
+
+-  Move any hardcoded filesystem paths (e.g., ``/data/train.csv``) to the ``data`` field of the
+   experiment configuration. Use ``context.get_data_config()`` to reference them in code.
+
+Do not:
+
+-  Use global variables in your model definition; consider moving them to the experiment
+   configuration.
+
+Understand Dependencies
+=======================
+
+We encourage tracking the dependencies associated with every workflow via the :ref:`environment
+<experiment-configuration>` field. Understanding and standardizing the environment you use to
+execute Python in your development environment will pay off dividends in **portability**, allowing
+you to flexibly move between local, cloud, and on-premise cluster environments.
+
+Do:
+
+-  Ramp up quickly by using our :ref:`default environment Docker image <default-environment>`,
+   optionally specifying additional PyPI dependencies by using ``pip install`` in
+   ``startup-hook.sh``.
+
+-  As your dependencies increase in complexity, invest in :ref:`building and using a custom Docker
+   image <custom-env>` that meets your needs.
+
+-  Pin Python package dependencies to specific versions (e.g., ``<package>==<version>``) in build
+   tools.
+
+Do not:
+
+-  Modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries by circumventing
+   the Python packaging system.
+
+*********
+ Support
+*********
+
+TensorFlow
+==========
+
+TensorFlow Core Models
+----------------------
+
+Determined has support for TensorFlow models that use the :doc:`/training-apis/api-keras` or
+:doc:`/training-apis/api-estimator` APIs. For models that use the low-level TensorFlow Core APIs, we
+recommend porting your model to use :doc:`/training-apis/api-estimator`. `Example of converting a
+TensorFlow graph into an Estimator
+<https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
+
+TensorFlow 1 vs 2
+-----------------
+
+Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is used for a particular
+experiment is controlled by the container image that has been configured for that experiment.
+Determined provides prebuilt Docker images that include TensorFlow 2.4, 1.15, 2.5, 2.6, and 2.7,
+respectively:
+
+-  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.6`` (default)
+-  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.6``
+-  ``determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.6``
+-  ``determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.6``
+-  ``determinedai/environments:cuda-11.2-tf-2.7-gpu-0.17.6``
+
+We also provide lightweight CPU-only counterparts:
+
+-  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.6``
+-  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.6``
+-  ``determinedai/environments:py-3.8-tf-2.5-cpu-0.17.6``
+-  ``determinedai/environments:py-3.8-tf-2.6-cpu-0.17.6``
+-  ``determinedai/environments:py-3.8-tf-2.7-cpu-0.17.6``
+
+To change the container image used for an experiment, specify :ref:`environment.image
+<exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
+for more details about configuring training environments and a more complete list of prebuilt Docker
+images.
+
+ROCm
+====
+
+.. _rocm-support:
+
+Can I use AMD GPUs or ROCm with Determined?
+===========================================
+
+Determined has experimental support for ROCm. It is . Determined provides a prebuilt Docker image
+that includes ROCm 4.2, Pytorch 1.9 and Tensorflow 2.5:
+
+-  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.17.6``
+
+Known limitations:
+
+-  Only agent-based deployments are available, kubernetes is not yet supported.
+-  GPU profiling is not yet supported.
 
 ************
  Learn More
@@ -31,4 +174,9 @@ See the full list of documents.
    :maxdepth: 1
    :glob:
 
-   *
+   api-pytorch
+   api-pytorch-lightning
+   api-keras
+   api-estimator
+   data-layer
+   experiment-config

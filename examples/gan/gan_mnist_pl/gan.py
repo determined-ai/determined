@@ -1,5 +1,5 @@
-# The classes Generator, Discriminator, and GAN are modified from the Pytorch
-# Lightning example: https://colab.research.google.com/github/PytorchLightning/
+# The classes Generator, Discriminator, and GAN are modified from the PyTorch
+# Lightning example: https://colab.research.google.com/github/PyTorchLightning/
 # pytorch-lightning/blob/master/notebooks/03-basic-gan.ipynb
 #
 # Copyright The PyTorch Lightning team.

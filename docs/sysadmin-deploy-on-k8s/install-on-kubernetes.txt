@@ -408,7 +408,6 @@ To uninstall Determined run:
  Next Steps
 ************
 
--  :ref:`quick-start`
 -  :ref:`helm-config`
 -  :ref:`determined-on-kubernetes`
 -  :ref:`custom-pod-specs`

@@ -1,26 +1,32 @@
-#############################
- Python API determined.keras
-#############################
+###########
+ Keras API
+###########
 
-.. _tf-keras-trial:
+**********
+ Overview
+**********
 
-***********************************
- ``determined.keras.TFKerasTrial``
-***********************************
+This document lists how you should implement the Keras API. You need to implement a trial class that
+inherits :class:`~determined.keras.TFKerasTrial` and specify it as the entrypoint in the
+:doc:`experiment configuration </training-apis/experiment-config>`.
 
-.. autoclass:: determined.keras.TFKerasTrial
-   :members:
-   :exclude-members: trial_controller_class, trial_context_class
-   :inherited-members:
-   :member-order: bysource
-   :special-members: __init__
+To learn about this API, you can start by reading the trial definitions from the following examples:
 
-.. _keras-data-loading:
+-  :download:`Fashion MNIST example </examples/fashion_mnist_tf_keras.tgz>`
+-  :download:`CIFAR-10 example </examples/cifar10_tf_keras.tgz>`
 
-Data Loading
-============
+**************
+ Loading Data
+**************
 
-There are five supported data types for loading data into ``tf.keras`` models:
+.. note::
+
+   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   different sources of data.
+
+Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`
+and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader` methods. Each should return
+one of the following data types:
 
 #. A tuple ``(x, y)`` of Numpy arrays. x must be a NumPy array (or array-like), a list of arrays (in
    case the model has multiple inputs), or a dict mapping input names to the corresponding array, if
@@ -34,79 +40,59 @@ There are five supported data types for loading data into ``tf.keras`` models:
 #. A ``keras.utils.Sequence`` returning a tuple of either (inputs, targets) or (inputs, targets,
    sample weights).
 
-Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader`
-and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader` methods. Each should return
-one of the supported data types mentioned above.
-
-Passing Additional arguments to ``model.fit()``
-===============================================
-
-The ``TFKerasTrial`` interface allows the user to configure how ``model.fit`` is called by calling
-:meth:`self.context.configure_fit() <determined.keras.TFKerasTrialContext.configure_fit>`.
-
-Required Wrappers
-=================
-
-Users are required wrap their model prior to compiling it using :meth:`self.context.wrap_model
-<determined.keras.TFKerasTrialContext.wrap_model>`. This is typically done inside
-:meth:`~determined.keras.TFKerasTrial.build_model`.
-
 If using ``tf.data.Dataset``, users are required to wrap both their training and validation dataset
 using :meth:`self.context.wrap_dataset <determined.keras.TFKerasTrialContext.wrap_dataset>`. This
 wrapper is used to shard the dataset for :ref:`multi-gpu-training`. For optimal performance, users
 should wrap a dataset immediately after creating it.
 
-Trial Context
-=============
+****************
+ Defining Model
+****************
 
-``determined.keras.TFKerasTrialContext`` is a sub-class of :class:`determined.TrialContext` that
-provides useful methods for writing ``tf.keras`` trial definitions, as well as functions to wrap the
-model and dataset.
+Users are required wrap their model prior to compiling it using :meth:`self.context.wrap_model
+<determined.keras.TFKerasTrialContext.wrap_model>`. This is typically done inside
+:meth:`~determined.keras.TFKerasTrial.build_model`.
 
-.. autoclass:: determined.keras.TFKerasTrialContext
-   :members: wrap_model, wrap_dataset, wrap_optimizer, configure_fit
-   :member-order: bysource
+********************************************
+ Customizing Calling Model Fitting Function
+********************************************
 
-   TFKerasTrialContext always has a :class:`~determined._core._distributed.DistributedContext`
-   accessible via ``context.distributed`` for information related to distributed training.
+The :class:`~determined.keras.TFKerasTrial` interface allows the user to configure how ``model.fit``
+is called by calling :meth:`self.context.configure_fit()
+<determined.keras.TFKerasTrialContext.configure_fit>`.
 
-   TFKerasTrialContext always has a :class:`~determined.keras.TFKerasExperimentalContext` accessible
-   via ``context.experimental`` for information related to experimental features.
+***************
+ Checkpointing
+***************
 
-.. autoclass:: determined.keras.TFKerasExperimentalContext
-   :members: cache_train_dataset, cache_validation_dataset
-   :member-order: bysource
+A checkpoint includes the model definition (Python source code), experiment configuration file,
+network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
+When using a stateful optimizer during training, checkpoints will also include the state of the
+optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+:ref:`Python API <store-checkpoint-metadata>`.
 
-Callbacks
-=========
+TensorFlow Keras trials are checkpointed to a file named ``determined-keras-model.h5`` using
+``tf.keras.models.save_model``. You can learn more from the `TF Keras docs
+<https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
 
-To execute arbitrary Python code during the lifecycle of a ``TFKerasTrial``, implement the
-:class:`determined.keras.callbacks.Callback` interface (an extension of the
-``tf.keras.callbacks.Callbacks`` interface) and supply them to the ``TFKerasTrial`` by implementing
+***********
+ Callbacks
+***********
+
+To execute arbitrary Python code during the lifecycle of a :class:`~determined.keras.TFKerasTrial`,
+implement the :class:`determined.keras.callbacks.Callback` interface (an extension of the
+``tf.keras.callbacks.Callbacks`` interface) and supply them to the
+:class:`~determined.keras.TFKerasTrial` by implementing
 :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
-********************************
- ``determined.keras.callbacks``
-********************************
+************
+ Learn More
+************
 
-.. autoclass:: determined.keras.callbacks.Callback
-   :members:
+See the full list of documents.
 
-.. autoclass:: determined.keras.callbacks.EarlyStopping
+.. toctree::
+   :maxdepth: 1
+   :glob:
 
-.. autoclass:: determined.keras.callbacks.ReduceLROnPlateau
-
-.. autoclass:: determined.keras.callbacks.TensorBoard
-
-***********
- Debugging
-***********
-
-Please see :ref:`model-debug`.
-
-**********
- Examples
-**********
-
--  :download:`Fashion MNIST example </examples/fashion_mnist_tf_keras.tgz>`
--  :download:`CIFAR-10 example </examples/cifar10_tf_keras.tgz>`
+   api-keras-reference

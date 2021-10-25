@@ -1,6 +1,6 @@
-##################
- SysAdmin: Basics
-##################
+########
+ Basics
+########
 
 Two main components are required to use Determined: the :ref:`Determined CLI <install-cli>` and a
 :ref:`Determined cluster <install-cluster>`. All users should install the Determined CLI on their

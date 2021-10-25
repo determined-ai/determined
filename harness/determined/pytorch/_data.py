@@ -49,11 +49,11 @@ class DataLoader:
     done so that Determined can ensure that sampling restarts from the right location
     and distributed sampling is handled correctly.
 
-    <ARGUMENTS DOCUMENTATION FROM PYTORCH>
+    Note that the arguments are from PyTorch.
+
     Arguments:
         dataset (Dataset): dataset from which to load the data.
-        batch_size (int, optional): how many samples per batch to load
-            (default: ``1``).
+        batch_size (int, optional): how many samples per batch to load (default: ``1``).
         shuffle (bool, optional): set to ``True`` to have the data reshuffled
             at every epoch (default: ``False``).
         sampler (Sampler, optional): defines the strategy to draw samples from

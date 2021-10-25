@@ -1,8 +1,8 @@
 .. _client:
 
-###########################################
- Python API determined.experimental.client
-###########################################
+############
+ Python API
+############
 
 You can interact with a Determined cluster with the Python API. Here are the classes that we
 provide.

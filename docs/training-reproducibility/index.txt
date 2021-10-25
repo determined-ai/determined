@@ -1,8 +1,8 @@
 .. _reproducibility:
 
-###########################
- Training: Reproducibility
-###########################
+#################
+ Reproducibility
+#################
 
 Determined aims to support *reproducible* machine learning experiments: that is, the result of
 running a Determined experiment should be deterministic, so that rerunning a previous experiment

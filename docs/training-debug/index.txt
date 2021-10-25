@@ -1,8 +1,8 @@
 .. _model-debug:
 
-#################
- Training: Debug
-#################
+###########
+ Debugging
+###########
 
 This document aims to provide useful guidelines for debugging models with Determined. Hopefully, it
 will help you become a power user of Determined, but please don't hesitate to contact us on `Slack
@@ -15,9 +15,9 @@ already successfully :ref:`installed Determined <install-cluster>`.
 Successfully running code on a Determined cluster differs from normal training scripts in the
 following ways:
 
--  Your code will conform to Determined's :ref:`Trial API <model-definitions_trial-api>` by being
-   organized into a subclass of Determined's ``Trial`` class (indirectly through one of its concrete
-   subclasses, such as :class:`~determined.pytorch.PyTorchTrial`).
+-  Your code will conform to the Trial APIs by being organized into a subclass of Determined's
+   ``Trial`` class (indirectly through one of its concrete subclasses, such as
+   :class:`~determined.pytorch.PyTorchTrial`).
 
 -  The code will run in a Docker container on another machine.
 

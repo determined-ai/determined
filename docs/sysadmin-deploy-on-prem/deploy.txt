@@ -37,8 +37,7 @@ Install ``determined`` python package by running
 
 A configuration file is needed to set important values in the master, such as where to save model
 checkpoints. For information about how to create a configuration file, see
-:ref:`cluster-configuration`. There are also :ref:`sample configuration files available
-<config-template>`.
+:ref:`cluster-configuration`. There are also sample configuration files available.
 
 .. note::
 

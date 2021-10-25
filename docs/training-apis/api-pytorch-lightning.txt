@@ -1,27 +1,31 @@
-#########################################
- Python API determined.pytorch.lightning
-#########################################
+#######################
+ PyTorch Lightning API
+#######################
 
-.. _lightning-adapter:
+**********
+ Overview
+**********
 
-***************************************************
- ``determined.pytorch.lightning.LightningAdapter``
-***************************************************
+This document lists how you should implement the PyTorch Lightning API. You need to implement a
+trial class that inherits :class:`~determined.pytorch.lightning.LightningAdapter` and specify it as
+the entrypoint in the :doc:`experiment configuration </training-apis/experiment-config>`.
 
-Pytorch Lightning Adapter, defined here as ``LightningAdapter``, provides a quick way to train your
-Pytorch Lightning models with all the Determined features, such as mid-epoch preemption, easy
+PyTorch Lightning Adapter, defined here as ``LightningAdapter``, provides a quick way to train your
+PyTorch Lightning models with all the Determined features, such as mid-epoch preemption, easy
 distributed training, simple job submission to the Determined cluster, and so on.
 
-LightningAdapter is built on top of our :ref:`PyTorchTrial <pytorch-trial>` API, which has a
+LightningAdapter is built on top of our :doc:`PyTorch API </training-apis/api-pytorch>`, which has a
 built-in training loop that integrates with the Determined features. However, it only supports
 `LightningModule <https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html>`_
 (v1.2.0). To migrate your code from the `Trainer
 <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_, please read more about
-:ref:`PyTorchTrial <pytorch-trial>` and :ref:`experiment-configuration`.
+:doc:`PyTorch API </training-apis/api-pytorch>` and :ref:`experiment-configuration`.
 
-Porting your ``PyTorchLightning`` code is often pretty simple: 1. Bring in your ``LightningModule``
-and ``LightningDataModule`` and initialize them 2. Create a new trial based on ``LightningAdapter``
-and initialize it. 3. Define the dataloaders.
+Porting your ``PyTorchLightning`` code is often pretty simple:
+
+#. Bring in your ``LightningModule`` and ``LightningDataModule`` and initialize them
+#. Create a new trial based on ``LightningAdapter`` and initialize it.
+#. Define the dataloaders.
 
 Here is an example:
 
@@ -62,13 +66,6 @@ Here is an example:
                dl.dataset, batch_size=dl.batch_size, num_workers=dl.num_workers
            )
 
-.. autoclass:: determined.pytorch.lightning.LightningAdapter
-   :members:
-   :exclude-members: trial_controller_class, trial_context_class, evaluate_full_dataset, train_batch, evaluate_batch, setup_optimizers_schedulers
-   :inherited-members:
-   :member-order: bysource
-   :special-members: __init__
-
 In this approach, the ``LightningModule`` is not paired with the PyTorch Lightning ``Trainer`` so
 that there are some methods and hooks that are not supported. Read about those here:
 
@@ -100,25 +97,37 @@ In addition, we also patched some ``LightningModule`` methods to make porting yo
    Determined will automatically log the metrics you return from ``training_step`` and
    ``validation_step`` to Tensorboard.
 
-Data Loading
-============
+To learn about this API, you can start by reading the trial definitions from the following examples:
 
-Loading your dataset when using the :ref:`LightningAdapter <lightning-adapter>` works the same way
-as it does with :ref:`PyTorch Trial <pytorch-trial>`.
+-  :download:`gan_mnist_pl.tgz </examples/gan_mnist_pl.tgz>`
+-  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
+
+**************
+ Loading Data
+**************
+
+.. note::
+
+   Before loading data, read this document :doc:`/prepare-data/index` to understand how to work with
+   different sources of data.
+
+Loading your dataset when using the :doc:`/training-apis/api-pytorch-lightning` works the same way
+as it does with :doc:`PyTorch API </training-apis/api-pytorch>`.
 
 If you already have a ``LightningDataModule`` you can bring it in and use it to implement
 ``build_training_data_loader`` and ``build_validation_data_loader`` methods easily. For more
 information read PyTorchTrial's section on Data Loading.
 
-***********
- Debugging
-***********
+***************
+ API Reference
+***************
 
-Please see :ref:`model-debug`.
+``determined.pytorch.lightning.LightningAdapter``
+=================================================
 
-**********
- Examples
-**********
-
--  :download:`gan_mnist_pl.tgz </examples/gan_mnist_pl.tgz>`
--  :download:`mnist_pl.tgz </examples/mnist_pl.tgz>`
+.. autoclass:: determined.pytorch.lightning.LightningAdapter
+   :members:
+   :exclude-members: trial_controller_class, trial_context_class, evaluate_full_dataset, train_batch, evaluate_batch, setup_optimizers_schedulers
+   :inherited-members:
+   :member-order: bysource
+   :special-members: __init__

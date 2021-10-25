@@ -26,7 +26,7 @@
       type: shared_fs
     debug: false
     description: pytorch-noop description
-    entrypoint: long.module.path.model_def:NoopPytorchTrial
+    entrypoint: long.module.path.model_def:NoopPyTorchTrial
     environment:
       environment_variables: {}
       force_pull_image: false
