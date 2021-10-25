@@ -60,6 +60,10 @@ def test_model_registry() -> None:
     assert latest_version is not None
     assert latest_version.uuid == checkpoint.uuid
 
+    latest_version.set_name("Test 2021")
+    db_version = mnist.get_version()
+    assert db_version.name == "Test 2021"
+
     # Run another basic test and register its checkpoint as a version as well.
     # Validate the latest has been updated.
     exp_id = exp.run_basic_test(

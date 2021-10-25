@@ -50,11 +50,15 @@ class Checkpoint(object):
         resources: Dict[str, Any],
         validation: Dict[str, Any],
         metadata: Dict[str, Any],
+        name: Optional[str] = "",
+        comment: Optional[str] = "",
+        readme: Optional[str] = "",
+        model_id: Optional[int] = 0,
+        model_version_id: Optional[int] = 0,
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
         format: Optional[str] = None,  # noqa: A002
         model_version: Optional[int] = None,
-        model_name: Optional[str] = None,
     ):
         self._session = session
         self.uuid = uuid
@@ -71,7 +75,11 @@ class Checkpoint(object):
         self.format = format
         self.determined_version = determined_version
         self.model_version = model_version
-        self.model_name = model_name
+        self.model_version_id = model_version_id
+        self.model_id = model_id
+        self.name = name
+        self.comment = comment
+        self.readme = readme
         self.metadata = metadata
 
     def _find_shared_fs_path(self) -> pathlib.Path:
@@ -228,6 +236,20 @@ class Checkpoint(object):
             json={"checkpoint": {"metadata": self.metadata}},
         )
 
+    def set_name(self, name: str) -> None:
+        """
+        Sets the human-friendly name for this model version
+
+        Arguments:
+            name (string): New name for model version
+        """
+
+        self.name = name
+        self._session.patch(
+            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            json={"model_version": {"name": self.name}},
+        )
+
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
         """
@@ -292,9 +314,9 @@ class Checkpoint(object):
         raise AssertionError("Unknown checkpoint format")
 
     def __repr__(self) -> str:
-        if self.model_name is not None:
+        if self.model_id is not None:
             return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
-                self.uuid, self.trial_id, self.model_name, self.model_version
+                self.uuid, self.trial_id, self.model_id, self.model_version
             )
         return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
@@ -318,9 +340,13 @@ class Checkpoint(object):
             data["resources"],
             validation,
             data.get("metadata", {}),
+            name=data.get("name"),
+            comment=data.get("comment"),
+            readme=data.get("readme"),
+            model_id=data.get("model_id"),
             framework=data.get("framework"),
             format=data.get("format"),
             determined_version=data.get("determined_version", data.get("determinedVersion")),
             model_version=data.get("model_version"),
-            model_name=data.get("model_name"),
+            model_version_id=data.get("model_version_id"),
         )

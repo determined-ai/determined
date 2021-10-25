@@ -121,7 +121,7 @@ func (a *apiServer) PatchModel(
 
 	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
-			req.Model.Id, currModel.Description, req.Model.Description)
+			req.Model.Id, currModel.Description, req.Model.Description.Value)
 		madeChanges = true
 		currModel.Description = req.Model.Description.Value
 	}
@@ -153,7 +153,7 @@ func (a *apiServer) PatchModel(
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
 			log.Infof("model (%d) labels changing from %s to %s",
-				req.Model.Id, currModel.Labels, req.Model.Labels)
+				req.Model.Id, currModel.Labels, reqLabels)
 			madeChanges = true
 		}
 		currLabels = reqLabels
@@ -242,4 +242,48 @@ func (a *apiServer) PostModelVersion(
 	respModelVersion.ModelVersion.Checkpoint = c
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
+}
+
+func (a *apiServer) PatchModelVersion(
+	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse, error) {
+
+	getResp, err := a.GetModelVersion(ctx, &apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	currModelVersion := getResp.ModelVersion
+	madeChanges := false
+
+	if req.ModelVersion.Name != nil && req.ModelVersion.Name.Value != currModelVersion.Name {
+		log.Infof("model version (%d) name changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Name, req.ModelVersion.Name.Value)
+		madeChanges = true
+		currModelVersion.Name = req.ModelVersion.Name.Value
+	}
+
+	if req.ModelVersion.Comment != nil && req.ModelVersion.Comment.Value != currModelVersion.Comment {
+		log.Infof("model version (%d) comment changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Comment, req.ModelVersion.Comment.Value)
+		madeChanges = true
+		currModelVersion.Comment = req.ModelVersion.Comment.Value
+	}
+
+	if req.ModelVersion.Readme != nil && req.ModelVersion.Readme.Value != currModelVersion.Readme {
+		log.Infof("model version (%d) readme changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Readme, req.ModelVersion.Readme.Value)
+		madeChanges = true
+		currModelVersion.Readme = req.ModelVersion.Readme.Value
+	}
+
+	if !madeChanges {
+		return &apiv1.PatchModelVersionResponse{ModelVersion: currModelVersion}, nil
+	}
+
+	finalModelVersion := &modelv1.ModelVersion{}
+	err = a.m.db.QueryProto(
+		"update_model_version", finalModelVersion, req.ModelVersion.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Readme, req.ModelId, time.Now())
+
+	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
+		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
 }

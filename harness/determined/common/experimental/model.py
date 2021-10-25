@@ -113,7 +113,11 @@ class Model:
                 {
                     **latest_version["checkpoint"],
                     "model_version": latest_version["version"],
-                    "model_name": data["model"]["name"],
+                    "model_version_id": latest_version["id"],
+                    "model_id": latest_version["model"]["id"],
+                    "name": latest_version["name"],
+                    "readme": latest_version["readme"],
+                    "comment": latest_version["comment"],
                 },
                 self._session,
             )
@@ -145,7 +149,11 @@ class Model:
                 {
                     **version["checkpoint"],
                     "model_version": version["version"],
-                    "model_name": data["model"]["name"],
+                    "model_version_id": version["id"],
+                    "model_id": version["model"]["id"],
+                    "name": version["name"],
+                    "readme": version["readme"],
+                    "comment": version["comment"],
                 },
                 self._session,
             )
@@ -167,12 +175,16 @@ class Model:
         )
 
         data = resp.json()
-
+        version = data["modelVersion"]
         return checkpoint.Checkpoint.from_json(
             {
-                **data["modelVersion"]["checkpoint"],
-                "model_version": data["modelVersion"]["version"],
-                "model_name": data["modelVersion"]["model"]["name"],
+                **version["checkpoint"],
+                "model_version": version["version"],
+                "model_version_id": version["id"],
+                "model_id": version["model"]["id"],
+                "name": version["name"],
+                "readme": version["readme"],
+                "comment": version["comment"],
             },
             self._session,
         )

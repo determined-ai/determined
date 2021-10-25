@@ -3385,6 +3385,108 @@ export interface V1PatchModelResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1PatchModelVersion
+ */
+export interface V1PatchModelVersion {
+    /**
+     * 
+     * @type {V1Checkpoint}
+     * @memberof V1PatchModelVersion
+     */
+    checkpoint?: V1Checkpoint;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PatchModelVersion
+     */
+    version?: number;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1PatchModelVersion
+     */
+    creationTime?: Date;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PatchModelVersion
+     */
+    id: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    name?: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof V1PatchModelVersion
+     */
+    metadata?: any;
+    /**
+     * 
+     * @type {Date}
+     * @memberof V1PatchModelVersion
+     */
+    lastUpdatedTime?: Date;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    comment?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    readme?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    username?: string;
+}
+
+/**
+ * Request for updating a model version in the registry.
+ * @export
+ * @interface V1PatchModelVersionRequest
+ */
+export interface V1PatchModelVersionRequest {
+    /**
+     * The id of the model being updated.
+     * @type {number}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelId?: number;
+    /**
+     * The model version being updated.
+     * @type {V1PatchModelVersion}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelVersion?: V1PatchModelVersion;
+}
+
+/**
+ * Response to PatchModelVersionRequest.
+ * @export
+ * @interface V1PatchModelVersionResponse
+ */
+export interface V1PatchModelVersionResponse {
+    /**
+     * The model version created.
+     * @type {V1ModelVersion}
+     * @memberof V1PatchModelVersionResponse
+     */
+    modelVersion?: V1ModelVersion;
+}
+
+/**
  * Response to PauseExperimentRequest.
  * @export
  * @interface V1PauseExperimentResponse
@@ -11636,12 +11738,12 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelId The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelId: string, modelVersion: number, options: any = {}): FetchArgs {
+        determinedGetModelVersion(modelId: number, modelVersion: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelId' is not null or undefined
             if (modelId === null || modelId === undefined) {
                 throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModelVersion.');
@@ -11857,6 +11959,58 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId 
+         * @param {V1PatchModelVersionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPatchModelVersion.');
+            }
+            // verify required parameter 'modelVersionId' is not null or undefined
+            if (modelVersionId === null || modelVersionId === undefined) {
+                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling determinedPatchModelVersion.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModelVersion.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion.id}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
+                .replace(`{${"modelVersion.id"}}`, encodeURIComponent(String(modelVersionId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchModelVersionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a model in the registry.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
@@ -11972,12 +12126,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelId The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelId: string, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+        determinedGetModelVersion(modelId: number, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
             const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelId, modelVersion, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -12061,6 +12215,27 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId 
+         * @param {V1PatchModelVersionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a model in the registry.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
@@ -12120,12 +12295,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelId The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelId: string, modelVersion: number, options?: any) {
+        determinedGetModelVersion(modelId: number, modelVersion: number, options?: any) {
             return ModelsApiFp(configuration).determinedGetModelVersion(modelId, modelVersion, options)(fetch, basePath);
         },
         /**
@@ -12173,6 +12348,18 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId 
+         * @param {V1PatchModelVersionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a model in the registry.
          * @param {V1Model} body The model to create.
          * @param {*} [options] Override http request option.
@@ -12217,13 +12404,13 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Get the requested model version.
-     * @param {string} modelId The name of the model.
+     * @param {number} modelId The id of the model.
      * @param {number} modelVersion The version number.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersion(modelId: string, modelVersion: number, options?: any) {
+    public determinedGetModelVersion(modelId: number, modelVersion: number, options?: any) {
         return ModelsApiFp(this.configuration).determinedGetModelVersion(modelId, modelVersion, options)(this.fetch, this.basePath);
     }
 
@@ -12274,6 +12461,20 @@ export class ModelsApi extends BaseAPI {
      */
     public determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any) {
         return ModelsApiFp(this.configuration).determinedPatchModel(modelId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a model version's fields.
+     * @param {number} modelId The id of the model being updated.
+     * @param {number} modelVersionId 
+     * @param {V1PatchModelVersionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options)(this.fetch, this.basePath);
     }
 
     /**

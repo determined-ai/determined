@@ -987,6 +987,18 @@ service Determined {
     };
   }
 
+  // Patch a model version's fields.
+  rpc PatchModelVersion(PatchModelVersionRequest)
+      returns (PatchModelVersionResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/models/{model_id}/versions/{model_version.id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+
   // Get the requested checkpoint.
   rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
     option (google.api.http) = {

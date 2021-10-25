@@ -109,3 +109,19 @@ message ModelVersion {
   // User who created this model version.
   string username = 11;
 }
+
+message PatchModelVersion {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+  int32 version                                  = 2;
+  google.protobuf.Timestamp creation_time        = 3;
+  int32 id                                       = 4;
+  google.protobuf.StringValue name               = 5;
+  google.protobuf.Struct metadata                = 6;
+  google.protobuf.Timestamp last_updated_time    = 7;
+  google.protobuf.StringValue comment            = 8;
+  google.protobuf.StringValue readme             = 9;
+  google.protobuf.StringValue username           = 10;
+}

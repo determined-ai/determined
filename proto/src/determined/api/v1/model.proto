@@ -104,8 +104,8 @@ message PatchModelResponse {
 
 // Request for a version of a model in the regsitry.
 message GetModelVersionRequest {
-  // The name of the model.
-  string model_id = 1;
+  // The id of the model.
+  int32 model_id = 1;
   // The version number.
   int32 model_version = 2;
 }
@@ -162,5 +162,19 @@ message PostModelVersionRequest {
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
   // The model version requested.
+  determined.model.v1.ModelVersion model_version = 1;
+}
+
+// Request for updating a model version in the registry.
+message PatchModelVersionRequest {
+  // The id of the model being updated.
+  int32 model_id = 1;
+  // The model version being updated.
+  determined.model.v1.PatchModelVersion model_version = 2;
+}
+
+// Response to PatchModelVersionRequest.
+message PatchModelVersionResponse {
+  // The model version created.
   determined.model.v1.ModelVersion model_version = 1;
 }
