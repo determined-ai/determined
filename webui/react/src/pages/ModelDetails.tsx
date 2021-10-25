@@ -41,13 +41,13 @@ const ModelDetails: React.FC = () => {
   const fetchModel = useCallback(async () => {
     try {
       const modelData = await getModelDetails(
-        { modelName: 'mnist-prod', sortBy: 'SORT_BY_VERSION' },
+        { modelId: id, sortBy: 'SORT_BY_VERSION' },
       );
       if (!isEqual(modelData, model)) setModel(modelData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [ model, pageError ]);
+  }, [ id, model, pageError ]);
 
   usePolling(fetchModel);
 

@@ -413,7 +413,7 @@ export const getModel: DetApi<GetModelParams, Api.V1GetModelResponse, ModelItem 
     return response.model ? decoder.mapV1Model(response.model) : undefined;
   },
   request: (params: GetModelParams) => detApi.Models.determinedGetModel(
-    params.modelName,
+    params.modelId,
   ),
 };
 
@@ -425,7 +425,7 @@ GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
       decoder.mapV1ModelDetails(response) : undefined;
   },
   request: (params: GetModelDetailsParams) => detApi.Models.determinedGetModelVersions(
-    params.modelName,
+    params.modelId,
     params.sortBy,
   ),
 };
@@ -438,7 +438,7 @@ GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
   request: (params: GetModelVersionParams) => detApi.Models.determinedGetModelVersion(
-    params.modelName,
+    params.modelId,
     params.versionId,
   ),
 };

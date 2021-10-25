@@ -39,13 +39,13 @@ const ModelVersionDetails: React.FC = () => {
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion(
-        { modelName: 'mnist-prod', versionId: 2 },
+        { modelId: modelId, versionId: parseInt(versionId) },
       );
       if (!isEqual(versionData, modelVersion)) setModelVersion(versionData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [ modelVersion, pageError ]);
+  }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
 

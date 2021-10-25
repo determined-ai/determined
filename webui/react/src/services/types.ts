@@ -114,16 +114,16 @@ export interface GetModelsParams extends PaginationParams {
 }
 
 export interface GetModelParams {
-  modelName: string;
+  modelId: number;
 }
 
 export interface GetModelDetailsParams extends PaginationParams {
-  modelName: string;
+  modelId: number;
   sortBy: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'
 }
 
 export interface GetModelVersionParams {
-  modelName: string;
+  modelId: string;
   versionId: number;
 }
 
