@@ -71,8 +71,6 @@ message PatchModel {
   repeated google.protobuf.StringValue labels = 5;
   // An updated readme for the model.
   google.protobuf.StringValue readme = 6;
-  // An updated archived status for the model.
-  google.protobuf.BoolValue archived = 7;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
@@ -103,7 +101,7 @@ message ModelVersion {
   int32 id = 5;
   // Name for this model version.
   string name = 6;
-  //  Metadata associated with this model version.
+  // Metadata associated with this model version.
   google.protobuf.Struct metadata = 7;
   // The time this model version was last updated.
   google.protobuf.Timestamp last_updated_time = 8;
@@ -113,6 +111,8 @@ message ModelVersion {
   string readme = 10;
   // User who created this model version.
   string username = 11;
+  // Labels associated with this model version.
+  repeated string labels = 12;
 }
 
 // PatchModel is a partial update to a ModelVersion with only id required
@@ -122,16 +122,14 @@ message PatchModelVersion {
   };
   // An updated checkpoint to associate with the model version.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
-  // An updated version number.
-  int32 version = 2;
   // The id of the model version.
-  int32 id = 3;
+  int32 id = 2;
   // An updated name for the model version.
-  google.protobuf.StringValue name = 4;
+  google.protobuf.StringValue name = 3;
   // An updated metadata object for the model version.
-  google.protobuf.Struct metadata = 5;
+  google.protobuf.Struct metadata = 4;
   // An updated comment for the model version.
-  google.protobuf.StringValue comment = 6;
-  // An updated readme for the model version.
-  google.protobuf.StringValue readme = 7;
+  google.protobuf.StringValue comment = 5;
+  // An updated label list for the model version.
+  repeated google.protobuf.StringValue labels = 6;
 }

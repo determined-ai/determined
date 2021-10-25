@@ -3153,6 +3153,12 @@ export interface V1ModelVersion {
      * @memberof V1ModelVersion
      */
     username: string;
+    /**
+     * Labels associated with this model version.
+     * @type {Array<string>}
+     * @memberof V1ModelVersion
+     */
+    labels?: Array<string>;
 }
 
 /**
@@ -3301,59 +3307,41 @@ export interface V1PatchExperimentResponse {
  */
 export interface V1PatchModel {
     /**
-     * 
+     * The id of this model.
      * @type {number}
      * @memberof V1PatchModel
      */
     id: number;
     /**
-     * 
+     * An updated name for the model.
      * @type {string}
      * @memberof V1PatchModel
      */
     name?: string;
     /**
-     * 
+     * An updated description for the model.
      * @type {string}
      * @memberof V1PatchModel
      */
     description?: string;
     /**
-     * 
+     * An updated metadata object for the model.
      * @type {any}
      * @memberof V1PatchModel
      */
     metadata?: any;
     /**
-     * 
-     * @type {Date}
-     * @memberof V1PatchModel
-     */
-    creationTime?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof V1PatchModel
-     */
-    lastUpdatedTime?: Date;
-    /**
-     * 
+     * An updated label list for the model.
      * @type {Array<string>}
      * @memberof V1PatchModel
      */
     labels?: Array<string>;
     /**
-     * 
+     * An updated readme for the model.
      * @type {string}
      * @memberof V1PatchModel
      */
     readme?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof V1PatchModel
-     */
-    archived?: boolean;
 }
 
 /**
@@ -3391,65 +3379,41 @@ export interface V1PatchModelResponse {
  */
 export interface V1PatchModelVersion {
     /**
-     * 
+     * An updated checkpoint to associate with the model version.
      * @type {V1Checkpoint}
      * @memberof V1PatchModelVersion
      */
     checkpoint?: V1Checkpoint;
     /**
-     * 
-     * @type {number}
-     * @memberof V1PatchModelVersion
-     */
-    version?: number;
-    /**
-     * 
-     * @type {Date}
-     * @memberof V1PatchModelVersion
-     */
-    creationTime?: Date;
-    /**
-     * 
+     * The id of the model version.
      * @type {number}
      * @memberof V1PatchModelVersion
      */
     id: number;
     /**
-     * 
+     * An updated name for the model version.
      * @type {string}
      * @memberof V1PatchModelVersion
      */
     name?: string;
     /**
-     * 
+     * An updated metadata object for the model version.
      * @type {any}
      * @memberof V1PatchModelVersion
      */
     metadata?: any;
     /**
-     * 
-     * @type {Date}
-     * @memberof V1PatchModelVersion
-     */
-    lastUpdatedTime?: Date;
-    /**
-     * 
+     * An updated comment for the model version.
      * @type {string}
      * @memberof V1PatchModelVersion
      */
     comment?: string;
     /**
-     * 
-     * @type {string}
+     * An updated label list for the model version.
+     * @type {Array<string>}
      * @memberof V1PatchModelVersion
      */
-    readme?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1PatchModelVersion
-     */
-    username?: string;
+    labels?: Array<string>;
 }
 
 /**
@@ -3549,11 +3513,11 @@ export interface V1PostModelVersionRequest {
      */
     modelId?: number;
     /**
-     * The checkpoint representing the new version.
-     * @type {string}
+     * 
+     * @type {V1ModelVersion}
      * @memberof V1PostModelVersionRequest
      */
-    checkpointUuid?: string;
+    modelVersion?: V1ModelVersion;
 }
 
 /**
@@ -11914,7 +11878,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId 
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -11961,7 +11925,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId 
+         * @param {number} modelVersionId The id of the model version.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12196,7 +12160,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId 
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12217,7 +12181,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId 
+         * @param {number} modelVersionId The id of the model version.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12338,7 +12302,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId 
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12350,7 +12314,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId 
+         * @param {number} modelVersionId The id of the model version.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12453,7 +12417,7 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {number} modelId 
+     * @param {number} modelId The id of this model.
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -12467,7 +12431,7 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model version's fields.
      * @param {number} modelId The id of the model being updated.
-     * @param {number} modelVersionId 
+     * @param {number} modelVersionId The id of the model version.
      * @param {V1PatchModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

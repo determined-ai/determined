@@ -1,5 +1,5 @@
 WITH mv AS (
-  SELECT version, checkpoint_uuid, id, creation_time, name, comment, readme
+  SELECT version, checkpoint_uuid, id, creation_time, name, comment, metadata, labels
     FROM model_versions
     WHERE model_id = $1 AND id = $2
 ),
@@ -39,7 +39,8 @@ c AS (
 SELECT
     to_json(c) AS checkpoint,
     to_json(m) AS model,
+    array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
     mv.creation_time,
-    mv.name, mv.comment, mv.readme
+    mv.name, mv.comment, mv.metadata
     FROM c, m, mv;

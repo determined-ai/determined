@@ -155,8 +155,8 @@ message GetModelVersionsResponse {
 message PostModelVersionRequest {
   // The id of the model to add a version to.
   int32 model_id = 1;
-  // The checkpoint representing the new version.
-  string checkpoint_uuid = 2;
+  // The Model Version being created
+  determined.model.v1.ModelVersion model_version = 2;
 }
 
 // Response for PostModelVersionRequest.

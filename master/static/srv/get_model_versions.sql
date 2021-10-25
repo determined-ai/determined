@@ -5,8 +5,9 @@ WITH mv AS (
     creation_time,
     name,
     comment,
-    readme,
-    id
+    id,
+    metadata,
+    labels
   FROM model_versions
   WHERE model_id = $1
 ),
@@ -46,8 +47,9 @@ c AS (
 SELECT
     to_json(c) AS checkpoint,
     to_json(m) AS model,
+    array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
     mv.creation_time,
-    mv.name, mv.comment, mv.readme
+    mv.name, mv.comment, mv.metadata
     FROM c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;
