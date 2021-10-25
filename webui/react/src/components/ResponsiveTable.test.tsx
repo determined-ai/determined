@@ -173,6 +173,14 @@ describe('ResponsiveTable', () => {
 
     screen.getByRole('button', { name: 'right' }).click();
 
+    /*
+     * `toHaveBeenCalledWith()` requires all the params to be matching,
+     * so in the case of the `onChange` callback, it is called with 4 parameters.
+     * All 4 parameters are objects and so a `expect.objectContaining({})` is
+     * provided to indicate that we just care that it's an object but not expecting
+     * the sub properties to match and shape or data type. Without it, the assertion
+     * will fail and complain about not matching the shape of the callback parameters.
+     */
     expect(handlers.onChange).toHaveBeenCalledWith(
       expect.objectContaining({ current: (paginationConfig?.current ?? 0) + 1 }),
       expect.objectContaining({}),
