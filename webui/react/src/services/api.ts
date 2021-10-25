@@ -212,6 +212,4 @@ export const killTask = async (task: CommandTask): Promise<void> => {
   }
 };
 
-export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
-
 export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);

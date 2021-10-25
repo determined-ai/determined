@@ -6,7 +6,6 @@ import { flattenObject, isNumber, isObject, isPrimitive } from 'utils/data';
 import { capitalize } from 'utils/string';
 
 import * as Sdk from './api-ts-sdk'; // API Bindings
-import { V1LogEntry } from './api-ts-sdk';
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {
@@ -432,7 +431,7 @@ export const jsonToLogs = (data: unknown): types.Log[] => {
   }));
 };
 
-export const jsonToMasterLogs = (data: V1LogEntry | V1LogEntry[]): types.Log[] => {
+export const jsonToMasterLogs = (data: Sdk.V1LogEntry | Sdk.V1LogEntry[]): types.Log[] => {
   const arrayData = Array.isArray(data) ? data : [ data ];
   return arrayData.map(log => ({
     id: log.id,

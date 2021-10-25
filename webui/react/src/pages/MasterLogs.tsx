@@ -18,13 +18,13 @@ const MasterLogs: React.FC = () => {
     consumeStream<V1MasterLogsResponse>(
       detApi.StreamingCluster.determinedMasterLogs(
         startLogId,
-        oldestLogId-startLogId,
+        Math.max(0, oldestLogId-startLogId),
         false,
         { signal: canceler.signal },
       ),
       event => {
         const logEntry = (event as V1MasterLogsResponse).logEntry;
-        if (logsRef.current && logEntry) {
+        if (logEntry) {
           logsRef.current?.addLogs(jsonToMasterLogs(logEntry), true);
         }
       },

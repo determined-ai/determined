@@ -63,6 +63,7 @@ export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
   detApi.Internal = new Api.InternalApi(config);
   detApi.Notebooks = new Api.NotebooksApi(config);
   detApi.Shells = new Api.ShellsApi(config);
+  detApi.StreamingCluster = Api.ClusterApiFetchParamCreator(config);
   detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
   detApi.StreamingInternal = Api.InternalApiFetchParamCreator(config);
   detApi.StreamingProfiler = Api.ProfilerApiFetchParamCreator(config);
@@ -495,12 +496,6 @@ const buildQuery = (params: LogsParams): string => {
   if (params.tail) queryParams['tail'] = params.tail;
   if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
   return queryString.stringify(queryParams);
-};
-
-export const getMasterLogs: HttpApi<LogsParams, Log[]> = {
-  httpOptions: (params: LogsParams) => ({ url: [ '/logs', buildQuery(params) ].join('?') }),
-  name: 'getMasterLogs',
-  postProcess: response => decoder.jsonToLogs(response.data),
 };
 
 export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
