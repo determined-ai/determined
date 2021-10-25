@@ -16,6 +16,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "matplotlib",
+        "pyparsing<3.0.0",
         "packaging",
         "numpy>=1.16.2",
         "psutil",
