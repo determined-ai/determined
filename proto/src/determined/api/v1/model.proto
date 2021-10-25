@@ -77,6 +77,9 @@ message GetModelsResponse {
 
 // Request for creating a model in the registry.
 message PostModelRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "name" ] }
+  };
   // The model to create.
   determined.model.v1.Model model = 1;
 }

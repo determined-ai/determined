@@ -16,7 +16,7 @@ def test_model_registry() -> None:
     d = Determined(conf.make_master_url())
 
     # Create a model and validate twiddling the metadata.
-    mnist = d.create_model("mnist", "simple computer vision model")
+    mnist = d.create_model("mnist", "simple computer vision model", labels=["a", "b"])
     assert mnist.metadata == {}
 
     mnist.add_metadata({"testing": "metadata"})
@@ -39,6 +39,11 @@ def test_model_registry() -> None:
     db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "override"}
+
+    mnist.set_labels(["hello", "world"])
+    db_model = d.get_model(mnist.model_id)
+    assert mnist.labels == db_model.labels
+    assert db_model.labels == ["hello", "world"]
 
     # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
