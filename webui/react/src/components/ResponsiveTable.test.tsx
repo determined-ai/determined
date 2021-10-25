@@ -10,7 +10,9 @@ import { alphanumericSorter, numericSorter } from 'utils/sort';
 import { generateAlphaNumeric } from 'utils/string';
 
 import ResponsiveTable from './ResponsiveTable';
-import TableFilterDropdown, { ARIA_LABEL_CONTAINER, ARIA_LABEL_INPUT } from './TableFilterDropdown';
+import TableFilterDropdown, {
+  ARIA_LABEL_APPLY, ARIA_LABEL_CONTAINER, ARIA_LABEL_INPUT,
+} from './TableFilterDropdown';
 
 enum ColumnValueType {
   Decimal = 'decimal',
@@ -35,7 +37,6 @@ interface TableItem {
 
 const ARIA_LABEL_FILTER = 'filter';
 const ARIA_LABEL_FILTER_CLEAR = 'close-circle';
-const ARIA_LABEL_FILTER_APPLY = 'Apply Filter';
 const DATA_ENTRY_COUNT = 100;
 
 const columns: ColumnType<TableItem>[] = [
@@ -259,7 +260,7 @@ describe('ResponsiveTable', () => {
     }
 
     // Apply filter.
-    const filterApply = screen.getByLabelText(ARIA_LABEL_FILTER_APPLY);
+    const filterApply = screen.getByLabelText(ARIA_LABEL_APPLY);
     userEvent.click(filterApply);
 
     expect(handlers.onIdFilter).toHaveBeenCalledWith(idSearchList);

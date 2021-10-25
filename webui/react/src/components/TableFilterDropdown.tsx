@@ -19,6 +19,8 @@ interface Props extends FilterDropdownProps {
 
 export const ARIA_LABEL_CONTAINER = 'table-filter-dropdown-container';
 export const ARIA_LABEL_INPUT = 'table-filter-dropdown-input';
+export const ARIA_LABEL_RESET = 'table-filter-reset';
+export const ARIA_LABEL_APPLY = 'table-filter-apply';
 
 const ITEM_HEIGHT = 28;
 
@@ -145,13 +147,13 @@ const TableFilterDropdown: React.FC<Props> = ({
       </FixedSizeList>
       <div className={css.footer}>
         <Button
-          aria-label="Reset Filter"
+          aria-label={ARIA_LABEL_RESET}
           disabled={Object.keys(selectedMap).length === 0}
           size="small"
           type="link"
           onClick={handleReset}>Reset</Button>
         <Button
-          aria-label="Apply Filter"
+          aria-label={ARIA_LABEL_APPLY}
           size="small"
           type="primary"
           onClick={handleFilter}>Ok</Button>
