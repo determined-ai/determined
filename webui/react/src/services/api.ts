@@ -3,8 +3,8 @@ import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
   GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
-  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse, LogsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorboardsParams,
+  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorboardParams, LoginResponse,
   PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
