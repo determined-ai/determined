@@ -23,6 +23,7 @@ language = "en"
 
 source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
 templates_path = ["_templates"]
+html_static_path = ["assets"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "examples", "requirements.txt", "site"]
 html_baseurl = "https://docs.determined.ai" # Base URL for sitemap.
 highlight_language = "none"
