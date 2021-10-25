@@ -1,0 +1,9 @@
+:orphan:
+
+**Improvement**
+
+-  Docs: use furo sphinx theme.
+
+**Bug Fixes**
+
+-  Docs: fix searching.
