@@ -32,6 +32,8 @@ enum State {
   STATE_DELETING = 10;
   // The experiment failed to delete.
   STATE_DELETE_FAILED = 11;
+  // The experiment is killed and is shutting down.
+  STATE_STOPPING_KILLED = 12;
 }
 
 // Experiment is a collection of one or more trials that are exploring a
