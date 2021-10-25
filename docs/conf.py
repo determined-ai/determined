@@ -32,7 +32,6 @@ todo_include_todos = True
 html_show_sourcelink = False
 html_show_sphinx = False
 html_theme = "furo"
-html_logo = "assets/images/logo-determined-ai.svg"
 html_favicon = "assets/images/favicon.ico"
 html_last_updated_fmt = None
 # See https://pradyunsg.me/furo/
@@ -48,6 +47,8 @@ html_sidebars = {"**": [
 pygments_style = "sphinx"
 pygments_dark_style = "monokai"
 html_theme_options = {
+    "light_logo": "images/logo-determined-ai.svg",
+    "dark_logo": "images/logo-determined-ai-white.svg",
     "sidebar_hide_name": True,
     "light_css_variables": {
         "color-brand-primary": "#f37a22",
@@ -192,5 +193,5 @@ redirects = {
     "reference/cluster/helm-config": "../../sysadmin-deploy-on-k8s/helm-config.html",
     "reference/helm-config": "../../sysadmin-deploy-on-k8s/helm-config.html",
     "examples": "training-apis/examples.html",
-    "reference/attributions": "attributions.html"
+    "reference/attributions": "attributions.html",
 }

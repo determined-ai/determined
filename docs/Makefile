@@ -32,7 +32,7 @@ build: build-examples build-helm attributions.txt
 .PHONY: clean
 clean:
 	rm -rf site
-	rm attributions.txt
+	rm -f attributions.txt
 
 .PHONY: pre-publish
 pre-publish:
