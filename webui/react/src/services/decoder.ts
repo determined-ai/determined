@@ -420,17 +420,6 @@ export const decodeTrialResponseToTrialDetails = (
   };
 };
 
-export const jsonToLogs = (data: unknown): types.Log[] => {
-  const io = ioTypes.decode<ioTypes.ioTypeLogs>(ioTypes.ioLogs, data);
-  return io.map(log => ({
-    id: log.id,
-    level: log.level ?
-      types.LogLevel[capitalize(log.level) as keyof typeof types.LogLevel] : undefined,
-    message: log.message,
-    time: log.time || undefined,
-  }));
-};
-
 export const jsonToMasterLogs = (data: Sdk.V1LogEntry | Sdk.V1LogEntry[]): types.Log[] => {
   const arrayData = Array.isArray(data) ? data : [ data ];
   return arrayData.map(log => ({
