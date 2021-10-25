@@ -1,0 +1,8 @@
+:orphan:
+
+..
+   note:
+
+-  It is strongly recommended to use nvidia-container-toolkit on agent hosts instead of relying on
+   an older NVIDIA runtime. In this release, `det deploy` will now use cloud images that do this,
+   and Determined will no longer override the default container runtime according to the workload.
