@@ -563,11 +563,11 @@ export interface Log {
   level?: LogLevel;
   message: string;
   meta?: string;
-  time?: string;
+  time: string;
 }
 
 export interface TrialLog {
-  id: string;
+  id: number;
   level?: LogLevel;
   message: string;
   time: string;

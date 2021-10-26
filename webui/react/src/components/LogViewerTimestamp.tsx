@@ -18,7 +18,7 @@ import useResize from 'hooks/useResize';
 import { LogViewerTimestampFilterComponentProp } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
-import { LogLevel, TrialLog } from 'types';
+import { Log, LogLevel, TrialLog } from 'types';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
 
@@ -34,11 +34,11 @@ export interface LogViewerTimestampFilter {
 
 interface Props {
   FilterComponent?: React.ComponentType<LogViewerTimestampFilterComponentProp>,
-  fetchToLogConverter: (data: unknown) => TrialLog,
+  fetchToLogConverter: (data: unknown) => Log,
   onDownloadClick?: () => void;
   onFetchLogAfter: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
-  onFetchLogFilter: (canceler: AbortController) => FetchArgs;
+  onFetchLogFilter?: (canceler: AbortController) => FetchArgs;
   onFetchLogTail?: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
 }
 
@@ -52,7 +52,7 @@ enum Direction {
   BottomToTop = 'bottom-to-top', // show newest logs and infinite-scroll oldest ones at the top
 }
 
-const formatClipboardHeader = (log: TrialLog): string => {
+const formatClipboardHeader = (log: Log): string => {
   const format = `%${MAX_DATETIME_LENGTH - 1}s `;
   const level = `<${log.level || ''}>`;
   const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
@@ -93,7 +93,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     [],
   );
 
-  const addLogs = useCallback((addedLogs: TrialLog[], isPrepend = false): void => {
+  const addLogs = useCallback((addedLogs: Log[], isPrepend = false): void => {
     const newLogs = addedLogs
       .map(log => {
         // If the line is probably a TQDM line, hide it
@@ -151,7 +151,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
     if (fetchArgs) {
       setIsLoading(true);
 
-      let buffer: TrialLog[] = [];
+      let buffer: Log[] = [];
       consumeStream(
         fetchArgs,
         event => {
@@ -306,6 +306,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
    * Fetch filters data.
    */
   useEffect(() => {
+    if (!onFetchLogFilter) return;
     const canceler = new AbortController();
 
     consumeStream(
@@ -322,6 +323,9 @@ const LogViewerTimestamp: React.FC<Props> = ({
   useEffect(() => {
     clearLogs();
     const canceler = fetchAndAppendLogs(direction, filter);
+    if (direction === Direction.TopToBottom) {
+      listRef.current?.scrollTo(1);
+    }
     return () => canceler.abort();
   }, [ clearLogs, direction, fetchAndAppendLogs, filter ]);
 
@@ -333,7 +337,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     const canceler = new AbortController();
 
-    let buffer: TrialLog[] = [];
+    let buffer: Log[] = [];
     const throttleFunc = throttle(THROTTLE_TIME, () => {
       addLogs(buffer);
       buffer = [];
