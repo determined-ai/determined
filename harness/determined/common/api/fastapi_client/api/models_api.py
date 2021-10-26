@@ -112,18 +112,10 @@ class _ModelsApi:
             json=body,
         )
 
-    def _build_for_determined_post_model(self, model_name: str, body: m.V1Model) -> Awaitable[m.V1PostModelResponse]:
-        path_params = {"model.name": str(model_name)}
-
+    def _build_for_determined_post_model(self, body: m.V1Model) -> Awaitable[m.V1PostModelResponse]:
         body = jsonable_encoder(body)
 
-        return self.api_client.request(
-            type_=m.V1PostModelResponse,
-            method="POST",
-            url="/api/v1/models/{model.name}",
-            path_params=path_params,
-            json=body,
-        )
+        return self.api_client.request(type_=m.V1PostModelResponse, method="POST", url="/api/v1/models", json=body)
 
     def _build_for_determined_post_model_version(
         self, model_id: int, body: m.V1PostModelVersionRequest
@@ -182,8 +174,8 @@ class AsyncModelsApi(_ModelsApi):
     async def determined_patch_model(self, model_id: int, body: m.V1PatchModelRequest) -> m.V1PatchModelResponse:
         return await self._build_for_determined_patch_model(model_id=model_id, body=body)
 
-    async def determined_post_model(self, model_name: str, body: m.V1Model) -> m.V1PostModelResponse:
-        return await self._build_for_determined_post_model(model_name=model_name, body=body)
+    async def determined_post_model(self, body: m.V1Model) -> m.V1PostModelResponse:
+        return await self._build_for_determined_post_model(body=body)
 
     async def determined_post_model_version(
         self, model_id: int, body: m.V1PostModelVersionRequest
@@ -237,8 +229,8 @@ class SyncModelsApi(_ModelsApi):
         coroutine = self._build_for_determined_patch_model(model_id=model_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_post_model(self, model_name: str, body: m.V1Model) -> m.V1PostModelResponse:
-        coroutine = self._build_for_determined_post_model(model_name=model_name, body=body)
+    def determined_post_model(self, body: m.V1Model) -> m.V1PostModelResponse:
+        coroutine = self._build_for_determined_post_model(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
     def determined_post_model_version(
