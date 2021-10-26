@@ -53,7 +53,7 @@ class ModelVersion:
 
         return ModelVersion(
             session,
-            model_version_id=data.get("id"),
+            model_version_id=data.get("id", 1),
             checkpoint=ckpt,
             metadata=data.get("metadata", {}),
             name=data.get("name"),
@@ -210,7 +210,7 @@ class Model:
         """
         resp = self._session.post(
             "/api/v1/models/{}/versions".format(self.model_id),
-            json={"model_version": {"checkpoint": {"uuid": checkpoint_uuid}}},
+            json={"checkpointUuid": checkpoint_uuid},
         )
 
         data = resp.json()

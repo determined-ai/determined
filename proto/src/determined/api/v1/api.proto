@@ -930,7 +930,7 @@ service Determined {
   rpc PostModel(PostModelRequest) returns (PostModelResponse) {
     option (google.api.http) = {
       post: "/api/v1/models"
-      body: "model"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"

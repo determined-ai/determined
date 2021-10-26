@@ -87,7 +87,7 @@ func (a *apiServer) GetModels(
 
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
-	b, err := protojson.Marshal(req.Model.Metadata)
+	b, err := protojson.Marshal(req.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
 	}
@@ -98,14 +98,14 @@ func (a *apiServer) PostModel(
 	}
 
 	m := &modelv1.Model{}
-	reqLabels := strings.Join(req.Model.Labels, ",")
+	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
-		"insert_model", m, req.Model.Name, req.Model.Description, b,
+		"insert_model", m, req.Name, req.Description, b,
 		reqLabels, user.User.Id,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
-		errors.Wrapf(err, "error creating model %s in database", req.Model.Name)
+		errors.Wrapf(err, "error creating model %s in database", req.Name)
 }
 
 func (a *apiServer) PatchModel(
@@ -212,10 +212,10 @@ func (a *apiServer) PostModelVersion(
 	// make sure the checkpoint exists
 	c := &checkpointv1.Checkpoint{}
 
-	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.ModelVersion.Checkpoint.Uuid); {
+	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
 	case getCheckpointErr == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "checkpoint %s not found", req.ModelVersion.Checkpoint.Uuid)
+			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
 	case getCheckpointErr != nil:
 		return nil, getCheckpointErr
 	}
@@ -230,11 +230,12 @@ func (a *apiServer) PostModelVersion(
 	respModelVersion := &apiv1.PostModelVersionResponse{}
 	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
-	mdata, err := protojson.Marshal(req.ModelVersion.Metadata)
+	mdata, err := protojson.Marshal(req.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling ModelVersion.Metadata")
 	}
-	reqLabels := strings.Join(req.ModelVersion.Labels, ",")
+
+	reqLabels := strings.Join(req.Labels, ",")
 
 	err = a.m.db.QueryProto(
 		"insert_model_version",
@@ -251,7 +252,6 @@ func (a *apiServer) PostModelVersion(
 func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
 	error) {
-
 	getResp, err := a.GetModelVersion(ctx,
 		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
 	if err != nil {
@@ -314,7 +314,7 @@ func (a *apiServer) PatchModelVersion(
 
 	finalModelVersion := &modelv1.ModelVersion{}
 	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersion.Id,
-		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Metadata, currLabels)
+		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currMeta, currLabels)
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
 		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
