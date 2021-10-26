@@ -63,19 +63,16 @@ def Field(*args, **kwargs) -> Any:
 
 T = TypeVar("T", bound="FApiSchemaBase")
 class FApiSchemaBase(SchemaBase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         if self.__annotations__ is None:
             return
         cls_attrs = self.__annotations__.keys()
-        # print('args', kwargs)
-        # print(self.__class__.__name__)
         for attr in cls_attrs:
             attr_getter, _ = self.__getattribute__(attr)
             # pass the input value to validator to compute
             # the default and enforce validations
             val = attr_getter(attr, kwargs.get(attr))
             self.__setattr__(attr, val)
-        pass
 
     @classmethod
     def attr_aliases(cls) -> Dict[str, str]:
@@ -120,7 +117,7 @@ class MyEncoder(JSONEncoder):
 
 
 def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
-    if isinstance(o, List):  # FIXME is this enough?
+    if isinstance(o, List):
         return [to_jsonable(i) for i in o]
     if isinstance(o, Dict):
         for k, v in o.items():

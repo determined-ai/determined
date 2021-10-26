@@ -35,10 +35,3 @@ from determined.common.api.profiler import (
     TrialProfilerMetricsBatch,
     get_trial_profiler_available_series,
 )
-from determined.common.api.fastapi_client import (
-    models,
-)
-
-from determined.common.api.fastapi_client.api import (
-    experiments_api
-)

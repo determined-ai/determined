@@ -1,6 +1,7 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
 BIN_VER := 2.4.21
 CODEGEN_BIN := swagger-codegen-cli-$(BIN_VER).jar
+PYAPI_OUT_DIR := ../harness/determined/common/api/fastapi_client
 
 .PHONY: all
 all: get-deps
@@ -25,19 +26,17 @@ build/python-fastapi: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	touch build/python-fastapi
 	$(MAKE) fapi-postprocess
 
+.PHONY: fapi-postprocess
 fapi-postprocess:
-	# TODO modify after copy
 	rm -r build/python-fastapi/fastapi_client/docs/ || exit 0
 	rm build/python-fastapi/fastapi_client/api_client.py || exit 0
 	rm build/python-fastapi/fastapi_client/exceptions.py || exit 0
-	rm -rf ../harness/determined/common/api/fastapi_client || exit 0
-	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
-	fd -t f api build/python-fastapi/fastapi_client/api | xargs sed 's/^.*fastapi.*jsonable.*/from determined.common.api.fapi import to_jsonable as jsonable_encoder/' -i
-	fd -t f api build/python-fastapi/fastapi_client/api | xargs sed 's/^.*fastapi_client.api_cli.*/    from determined.common.api.fapi import ApiClient/' -i
-	sed 's/^from.*Field/from determined.common.api.fapi import BaseModel, Field/' -i build/python-fastapi/fastapi_client/models.py
-	# :%s/(BaseModel)/()/g
-	# :%s/ = field(.*$//g
-	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api
+	rm -rf $(PYAPI_OUT_DIR) || exit 0
+	cp -r build/python-fastapi/fastapi_client $(PYAPI_OUT_DIR)
+	cp ./fastapi.override.py $(PYAPI_OUT_DIR)/__init__.py
+	fd -t f api $(PYAPI_OUT_DIR)/api | xargs sed 's/^.*fastapi.*jsonable.*/from determined.common.api.fapi import to_jsonable as jsonable_encoder/' -i
+	fd -t f api $(PYAPI_OUT_DIR)/api | xargs sed 's/^.*fastapi_client.api_cli.*/    from determined.common.api.fapi import ApiClient/' -i
+	sed 's/^from.*Field/from determined.common.api.fapi import BaseModel, Field/' -i $(PYAPI_OUT_DIR)/models.py
 
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
