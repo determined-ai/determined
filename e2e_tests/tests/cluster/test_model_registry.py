@@ -62,6 +62,7 @@ def test_model_registry() -> None:
 
     latest_version.set_name("Test 2021")
     db_version = mnist.get_version()
+    assert db_version is not None
     assert db_version.name == "Test 2021"
 
     # Run another basic test and register its checkpoint as a version as well.

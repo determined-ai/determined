@@ -163,12 +163,12 @@ message GetModelVersionsResponse {
 // Request for creating a model version.
 message PostModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "model_id", "checkpointUuid" ] }
+    json_schema: { required: [ "model_id", "checkpoint_uuid" ] }
   };
   // The id of the model to add this version to.
   int32 model_id = 1;
   // UUID of the checkpoint.
-  string checkpointUuid = 2;
+  string checkpoint_uuid = 2;
   // User-friendly name for the model version.
   string name = 3;
   // User-written comment for the model version.
