@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Type, TypeVar, Optional, Union  # , get_orig
 from determined.common.schemas import SchemaBase
 from json import JSONEncoder
 
-from determined.common.api.authentication import Authentication
+from determined.common.api.authentication import Authentication, cli_auth, must_cli_auth
 from determined.common.api.request import do_request
 
 
@@ -15,10 +15,9 @@ T = TypeVar("T")
 class ApiClient:
     def __init__(self, host: str = "http://localhost:8080"):
         self.host = host
-        self.auth: Optional[Authentication] = None
 
-    def set_auth(self, auth: Authentication):
-        self.auth = auth
+    def set_host(self, host: str):
+        self.host = host
 
     async def request(
         self, type_: Type[T], method: str, url: str, path_params: Dict[str, Any] = None, **kwargs
@@ -26,7 +25,7 @@ class ApiClient:
         if path_params is None:
             path_params = {}
         url = (self.host or "") + url.format(**path_params)
-        response = do_request(method, self.host, url, auth=self.auth, **kwargs)
+        response = do_request(method, self.host, url, auth=cli_auth, **kwargs)
         json_val = response.json()
         if hasattr(type_, 'from_dict'):
             return  type_.from_dict(json_val) # type: ignore
@@ -34,21 +33,18 @@ class ApiClient:
             return json_val
 
 
-client = ApiClient(host="http://localhost:8080")
+client = ApiClient()
 
-def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
-    """
-    A decorator for cli functions.
-    """
 
+def set_host(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
+    """
+    A decorator for cli functions to set the host (aka master) address.
+    """
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
-        global client
-        client.set_auth(Authentication(namespace.master, namespace.user, try_reauth=True))
+        client.set_host(namespace.master)
         return func(namespace)
-
     return f
-
 
 def Field(*args, **kwargs) -> Any:
     alias = kwargs['alias']

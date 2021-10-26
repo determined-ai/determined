@@ -3,8 +3,6 @@ import numbers
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, cast
 from datetime import datetime
 
-# from determined.common.api.fastapi_client.models import eval_model_types
-
 from determined.common import schemas
 from determined.common.schemas import expconf
 
@@ -25,7 +23,7 @@ KNOWN_STR_TYPE: Dict[str, Any] = {}
 R = TypeVar("R")
 
 
-def register_str_type(key: str, cls: R) -> R:
+def register_str_type(key: str, cls):
     global KNOWN_STR_TYPE
     KNOWN_STR_TYPE[key] = cls
 
@@ -179,7 +177,6 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
             f"invalid compound annotation {anno}, maybe use @schemas.register_known_type?"
         )
     anno = KNOWN_STR_TYPE[anno]
-    # anno = cast(anno, anno) # type ignore
 
     if not isinstance(anno, type):
         raise TypeError(

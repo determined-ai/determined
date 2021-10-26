@@ -372,7 +372,7 @@ def validate_token_store_v1(store: Any) -> bool:
 
 
 # cli_auth is the process-wide authentication used for api calls originating from the cli.
-cli_auth = None  # type: Optional[Authentication]
+cli_auth: Optional[Authentication] = None
 
 
 def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
