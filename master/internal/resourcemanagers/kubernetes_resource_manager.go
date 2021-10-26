@@ -3,6 +3,9 @@ package resourcemanagers
 import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -239,6 +242,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case GetJobOrder:
+		ctx.Respond(k.getOrderedJobs())
 		return nil
 	case SetJobOrder:
 		for it := k.reqList.iterator(); it.next(); {
@@ -272,6 +276,42 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+// getOrderedJobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
+// CHECK should this be on the resourcepool struct?
+func (k *kubernetesResourceManager) getOrderedJobs() []*jobv1.Job {
+	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
+	v1Jobs := make([]*jobv1.Job, 0)
+	for idx, req := range filterAllocateRequests(reqs) {
+		v1Jobs = append(v1Jobs, k.allocateK8sReqToV1Job(req, idx))
+	}
+	return v1Jobs
+}
+
+func (k *kubernetesResourceManager) allocateK8sReqToV1Job(
+	req *sproto.AllocateRequest,
+	jobsAhead int,
+) (job *jobv1.Job) {
+	if req.Job == nil {
+		return job
+	}
+	group := k.groups[req.Group]
+	job = &jobv1.Job{
+		JobId: string(req.Job.JobID),
+		Summary: &jobv1.JobSummary{
+			State:     req.Job.State.Proto(),
+			JobsAhead: int32(jobsAhead),
+		},
+		EntityId:       req.Job.EntityID,
+		Type:           req.Job.JobType.Proto(),
+		IsPreemptible:  req.Preemptible,
+		ResourcePool:   req.ResourcePool,
+		User:           "demo-hamid", // TODO
+		SubmissionTime: timestamppb.New(req.TaskActor.RegisteredTime()),
+		Priority:       int32(*group.priority),
+	}
+	return job
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {

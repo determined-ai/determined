@@ -343,6 +343,48 @@ func comparePositions(a, b *sproto.AllocateRequest, groups map[*actor.Ref]*group
 	}
 }
 
+func sortTasksWithPosition(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+) ([]*sproto.AllocateRequest, bool) {
+	reqs := make([]*sproto.AllocateRequest, taskList.len())
+	positionSet := false
+
+	for it := taskList.iterator(); it.next(); {
+		if groups[it.value().Group].qPosition != -1 {
+			positionSet = true
+		}
+		reqs = append(reqs, it.value())
+	}
+
+	sort.Slice(reqs, func(i, j int) bool {
+		p1 := *groups[reqs[i].Group].priority
+		p2 := *groups[reqs[j].Group].priority
+		switch {
+		case p1 > p2:
+			return true
+		case p2 > p1:
+			return false
+		}
+
+		if positionSet {
+			pos1 := groups[reqs[i].Group].qPosition
+			pos2 := groups[reqs[j].Group].qPosition
+			switch {
+			case pos1 > 0 && pos2 < 0:
+				return true
+			case pos1 < 0 && pos2 > 0:
+				return false
+			case pos1 < pos2:
+				return true
+			}
+		}
+		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
+	})
+
+	return reqs, positionSet
+}
+
 func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {
 	copiedAgents := make(map[*actor.Ref]*agentState)
 	for key, agent := range agents {
