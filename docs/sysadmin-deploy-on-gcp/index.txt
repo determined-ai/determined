@@ -28,7 +28,7 @@ with the master via a designated port configured during installation.
 
 The diagram below outlines the high level architecture of a Determined cluster in GCP.
 
-.. image:: /assets/images/det-arch-gcp.png
+.. image:: /assets/images/det-cloud-architecture.png
 
 Following the diagram, a standard execution would be:
 
