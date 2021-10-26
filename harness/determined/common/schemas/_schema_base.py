@@ -1,6 +1,7 @@
 import enum
 import numbers
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, cast
+from datetime import datetime
 
 # from determined.common.api.fastapi_client.models import eval_model_types
 
@@ -52,6 +53,7 @@ register_str_type('int', int)
 register_str_type('float', float)
 register_str_type('bool', bool)
 register_str_type('str', str)
+register_str_type('datetime', datetime)
 
 
 def _to_dict(val: Any, explicit_nones: bool) -> Any:
@@ -130,21 +132,24 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
     """
     During calls to .from_dict(), use the type annotation to create a new object from value.
     """
+    # print('getting str instance from', anno, type(anno), value, type(value))
 
     if anno == 'Any':
         # In the special case of typing.Any, we just return the value directly.
         return value
 
     # Handle Optionals (strip the Optional part).
-    if anno.startswith("Optional"):
-        anno = anno.strip("Optional[")[:-1]
+    tag = "Optional"
+    if anno.startswith(tag):
+        anno = anno[len(tag)+1:-1]
         return _instance_from_annotation_str(anno, value, prevalidated)
     # elif Optional[anno] == anno:
     #     raise TypeError(f"unrecognized Optional ({anno}), maybe use @schemas.register_known_type?")
 
     # Detect List[*] types, where issubclass(x, List) is unsafe.
-    if anno.startswith("List"):
-        anno = anno.strip("List[")[:-1]
+    tag = "List"
+    if anno.startswith(tag):
+        anno = anno[len(tag)+1:-1]
         if value is None:
             return None
         if not isinstance(value, Sequence):
@@ -152,8 +157,9 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
         return [_instance_from_annotation_str(anno, v, prevalidated) for v in value]
 
     # Detect Dict[*] types, where issubclass(x, Dict) is unsafe.
-    if anno.startswith("Dict"):
-        anno = anno.strip("Dict[")[:-1]
+    tag = "Dict"
+    if anno.startswith(tag):
+        anno = anno[len(tag)+1:-1]
     # if anno in KNOWN_DICT_TYPES:
     #     subanno = KNOWN_DICT_TYPES[anno]
         if value is None:
@@ -169,12 +175,11 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
 
     # Any valid annotations must be plain types by now, which will allow us to use issubclass().
     if anno not in KNOWN_STR_TYPE:
-        print(anno)
         raise TypeError(
             f"invalid compound annotation {anno}, maybe use @schemas.register_known_type?"
         )
     anno = KNOWN_STR_TYPE[anno]
-    annot = cast(type, anno) # type ignore
+    # anno = cast(anno, anno) # type ignore
 
     if not isinstance(anno, type):
         raise TypeError(
@@ -183,6 +188,12 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
 
     if issubclass(anno, enum.Enum):
         return anno(value)
+
+    if issubclass(anno, datetime):
+        return value # treat as str? we know what the format is here but not always # FIXME
+        # https://docs.python.org/3/library/datetime.html#datetime.datetime.fromisoformat
+        # return datetime.fromisoformat # py 3.7
+
     if issubclass(anno, SchemaBase):
         # For subclasses of SchemaBase we just call either from_dict() or from_none().
         if value is None:
@@ -199,9 +210,8 @@ def _instance_from_annotation(anno: type, value: Any, prevalidated: bool = False
     """
     During calls to .from_dict(), use the type annotation to create a new object from value.
     """
-    print('getting instance from', anno, type(anno))
     if type(anno) == str:
-        return _instance_from_annotation_str(cast(str, anno), value, prevalidated)
+        return _instance_from_annotation_str(cast(str, anno), value, True)
 
     if anno == Any:
         # In the special case of typing.Any, we just return the value directly.
