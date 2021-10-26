@@ -41,10 +41,12 @@ nfpms:
       - rpm
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
+      "packaging/prometheus.yml": "/etc/determined/prometheus.yml"
     files:
       "build/**/*": "/usr/share/determined/master"
       "static/**/*": "/usr/share/determined/master/static"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
+      "packaging/determined-prom.service": "/lib/systemd/system/determined-prom.service"
     overrides:
       deb:
         scripts:

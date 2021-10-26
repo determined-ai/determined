@@ -84,7 +84,7 @@ const (
 	detResourcePoolLabel = "det_resource_pool"
 	detAgentName         = "det_label"
 
-	targetsFile = "./prometheus/targets.json"
+	targetsFile = "/etc/determined/targets.json"
 )
 
 type fileSDConfigEntry struct {
