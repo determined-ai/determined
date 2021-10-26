@@ -116,8 +116,9 @@ class Model:
         creation_time (datetime): The time the model was created.
         last_updated_time (datetime): The time the model was most recently updated.
         metadata (dict, optional): User-defined metadata associated with the checkpoint.
-        master (string, optional): The address of the Determined master instance.
         labels ([string]): User-defined text labels associated with the checkpoint.
+        username (string): The user who initially created this model.
+        archived (boolean): The status (archived or not) for this model.
     """
 
     def __init__(
@@ -131,6 +132,7 @@ class Model:
         metadata: Optional[Dict[str, Any]] = None,
         labels: Optional[List[str]] = None,
         username: str = "",
+        archived: bool = False,
     ):
         self._session = session
         self.model_id = model_id
@@ -141,6 +143,7 @@ class Model:
         self.metadata = metadata or {}
         self.labels = labels
         self.username = username
+        self.archived = archived
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
         """
@@ -267,6 +270,24 @@ class Model:
             json={"model": {"labels": self.labels}},
         )
 
+    def archive(self) -> None:
+        """
+        Sets the model's state to archived
+        """
+        self.archived = True
+        self._session.post(
+            "/api/v1/models/{}/archive".format(self.model_id),
+        )
+
+    def unarchive(self) -> None:
+        """
+        Removes the model's archived state
+        """
+        self.archived = False
+        self._session.post(
+            "/api/v1/models/{}/unarchive".format(self.model_id),
+        )
+
     def to_json(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -275,6 +296,7 @@ class Model:
             "creation_time": self.creation_time,
             "last_updated_time": self.last_updated_time,
             "metadata": self.metadata,
+            "archived": self.archived,
         }
 
     def __repr__(self) -> str:
@@ -294,4 +316,5 @@ class Model:
             data.get("metadata", {}),
             data.get("labels", []),
             data.get("username", ""),
+            data.get("archived", False),
         )

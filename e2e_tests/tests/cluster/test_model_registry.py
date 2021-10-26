@@ -51,6 +51,15 @@ def test_model_registry() -> None:
     # confirm patch does not overwrite other fields
     assert db_model.metadata == {"testing": "override"}
 
+    # archive and unarchive
+    assert mnist.archived == False
+    mnist.archive()
+    db_model = d.get_model(mnist.model_id)
+    assert db_model.archived == True
+    mnist.unarchive()
+    db_model = d.get_model(mnist.model_id)
+    assert db_model.archived == False
+
     # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint.uuid)

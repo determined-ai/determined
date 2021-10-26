@@ -170,6 +170,34 @@ func (a *apiServer) PatchModel(
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
 }
 
+func (a *apiServer) ArchiveModel(
+	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
+	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &modelv1.Model{}
+	err = a.m.db.QueryProto("archive_model", holder, req.ModelId)
+
+	return &apiv1.ArchiveModelResponse{},
+		errors.Wrapf(err, "error archiving model %d", req.ModelId)
+}
+
+func (a *apiServer) UnarchiveModel(
+	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
+	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &modelv1.Model{}
+	err = a.m.db.QueryProto("unarchive_model", holder, req.ModelId)
+
+	return &apiv1.UnarchiveModelResponse{},
+		errors.Wrapf(err, "error unarchiving model %d", req.ModelId)
+}
+
 func (a *apiServer) GetModelVersion(
 	_ context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
 	resp := &apiv1.GetModelVersionResponse{}
