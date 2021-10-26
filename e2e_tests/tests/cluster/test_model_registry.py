@@ -52,13 +52,13 @@ def test_model_registry() -> None:
     assert db_model.metadata == {"testing": "override"}
 
     # archive and unarchive
-    assert mnist.archived == False
+    assert mnist.archived is False
     mnist.archive()
     db_model = d.get_model(mnist.model_id)
-    assert db_model.archived == True
+    assert db_model.archived is True
     mnist.unarchive()
     db_model = d.get_model(mnist.model_id)
-    assert db_model.archived == False
+    assert db_model.archived is False
 
     # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
