@@ -12,10 +12,22 @@ fmt:
 	black .
 
 .PHONY: check
-check: check-gen
-	isort . --check-only
-	black . --check
+check: check-gen check-isort check-black check-flake8 check-mypy
+
+.PHONY: check-flake8
+check-flake8:
 	flake8
+
+.PHONY: check-black
+check-black:
+	black . --check
+
+.PHONY: check-isort
+check-isort:
+	isort . --check-only
+
+.PHONY: check-mypy
+check-mypy:
 	mypy .
 
 .PHONY: test
