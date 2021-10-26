@@ -497,6 +497,9 @@ class V1GetMasterResponse(BaseModel):
     cluster_name: "str" = Field(..., alias="clusterName")
     telemetry_enabled: "Optional[bool]" = Field(None, alias="telemetryEnabled")
     sso_providers: "Optional[List[V1SSOProvider]]" = Field(None, alias="ssoProviders")
+    external_login_uri: "Optional[str]" = Field(None, alias="externalLoginUri")
+    external_logout_uri: "Optional[str]" = Field(None, alias="externalLogoutUri")
+    branding: "Optional[str]" = Field(None, alias="branding")
 
 
 class V1GetModelDefResponse(BaseModel):
@@ -529,11 +532,12 @@ class V1GetModelsRequestSortBy(str, Enum):
     DESCRIPTION = "SORT_BY_DESCRIPTION"
     CREATION_TIME = "SORT_BY_CREATION_TIME"
     LAST_UPDATED_TIME = "SORT_BY_LAST_UPDATED_TIME"
+    NUM_VERSIONS = "SORT_BY_NUM_VERSIONS"
 
 
 class V1GetModelsResponse(BaseModel):
-    models: "Optional[List[V1Model]]" = Field(None, alias="models")
-    pagination: "Optional[V1Pagination]" = Field(None, alias="pagination")
+    models: "List[V1Model]" = Field(..., alias="models")
+    pagination: "V1Pagination" = Field(..., alias="pagination")
 
 
 class V1GetNotebookResponse(BaseModel):
@@ -728,6 +732,8 @@ class V1LaunchTensorboardResponse(BaseModel):
 class V1LogEntry(BaseModel):
     id: "int" = Field(..., alias="id")
     message: "Optional[str]" = Field(None, alias="message")
+    timestamp: "Optional[datetime]" = Field(None, alias="timestamp")
+    level: "Optional[V1LogLevel]" = Field(None, alias="level")
 
 
 class V1LogLevel(str, Enum):
@@ -793,15 +799,28 @@ class V1Model(BaseModel):
     name: "str" = Field(..., alias="name")
     description: "Optional[str]" = Field(None, alias="description")
     metadata: "Any" = Field(..., alias="metadata")
-    # creation_time: "datetime" = Field(..., alias="creationTime")
-    # last_updated_time: "datetime" = Field(..., alias="lastUpdatedTime")
+    creation_time: "datetime" = Field(..., alias="creationTime")
+    last_updated_time: "datetime" = Field(..., alias="lastUpdatedTime")
+    id: "int" = Field(..., alias="id")
+    num_versions: "int" = Field(..., alias="numVersions")
+    labels: "Optional[List[str]]" = Field(None, alias="labels")
+    readme: "Optional[str]" = Field(None, alias="readme")
+    username: "str" = Field(..., alias="username")
+    archived: "Optional[bool]" = Field(None, alias="archived")
 
 
 class V1ModelVersion(BaseModel):
-    model: "Optional[V1Model]" = Field(None, alias="model")
-    checkpoint: "Optional[V1Checkpoint]" = Field(None, alias="checkpoint")
-    version: "Optional[int]" = Field(None, alias="version")
-    creation_time: "Optional[datetime]" = Field(None, alias="creationTime")
+    model: "V1Model" = Field(..., alias="model")
+    checkpoint: "V1Checkpoint" = Field(..., alias="checkpoint")
+    version: "int" = Field(..., alias="version")
+    creation_time: "datetime" = Field(..., alias="creationTime")
+    id: "int" = Field(..., alias="id")
+    name: "Optional[str]" = Field(None, alias="name")
+    metadata: "Optional[Any]" = Field(None, alias="metadata")
+    last_updated_time: "Optional[datetime]" = Field(None, alias="lastUpdatedTime")
+    comment: "Optional[str]" = Field(None, alias="comment")
+    readme: "Optional[str]" = Field(None, alias="readme")
+    username: "str" = Field(..., alias="username")
 
 
 class V1Notebook(BaseModel):
@@ -859,7 +878,7 @@ class V1PostModelResponse(BaseModel):
 
 
 class V1PostModelVersionRequest(BaseModel):
-    model_name: "Optional[str]" = Field(None, alias="modelName")
+    model_id: "Optional[int]" = Field(None, alias="modelId")
     checkpoint_uuid: "Optional[str]" = Field(None, alias="checkpointUuid")
 
 
@@ -1233,6 +1252,3 @@ class V1ValidationHistoryEntry(BaseModel):
     trial_id: "int" = Field(..., alias="trialId")
     end_time: "datetime" = Field(..., alias="endTime")
     searcher_metric: "float" = Field(..., alias="searcherMetric")
-
-# def eval_model_types(text: str) -> type:
-#     return eval(text)

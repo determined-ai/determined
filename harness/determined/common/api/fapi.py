@@ -123,7 +123,7 @@ class FApiSchemaBase(SchemaBase):
         aliases = self.attr_aliases()
         for json_key, py_key in aliases.items():
             val = self.__getattribute__(py_key)
-            d[json_key] = to_jsonoable(val)
+            d[json_key] = to_jsonable(val)
         return d
 
 class MyEncoder(JSONEncoder):
@@ -133,12 +133,12 @@ class MyEncoder(JSONEncoder):
             return super().default(o)
 
 
-def to_jsonoable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase], **dumps_kwargs):
+def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
     if isinstance(o, List):  # FIXME is this enough?
-        return [to_jsonoable(i) for i in o]
+        return [to_jsonable(i) for i in o]
     if isinstance(o, Dict):
         for k, v in o.items():
-            o[k] = to_jsonoable(v)
+            o[k] = to_jsonable(v)
     if isinstance(o, FApiSchemaBase):
         return o.to_jsonble()
     return o

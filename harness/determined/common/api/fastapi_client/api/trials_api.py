@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Awaitable, List
 from determined.common.api.fastapi_client import models as m
 
 if TYPE_CHECKING:
-    from determined.common.api.fastapi_client.api_client import ApiClient
+    from determined.common.api.fapi import ApiClient
 
 
 class _TrialsApi:

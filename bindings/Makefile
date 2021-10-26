@@ -34,7 +34,7 @@ fapi-postprocess:
 	cp ./fastapi.override.py build/python-fastapi/fastapi_client/__init__.py
 	fd -t f api build/python-fastapi/fastapi_client/api | xargs sed 's/^.*fastapi.*jsonable.*/from determined.common.api.fapi import to_jsonable as jsonable_encoder/' -i
 	fd -t f api build/python-fastapi/fastapi_client/api | xargs sed 's/^.*fastapi_client.api_cli.*/    from determined.common.api.fapi import ApiClient/' -i
-	sed 's/^from.*Field/from determined.common.api.fapi import BaseModel, Field/' -i build/python-fastapi/fastapi_client/api 
+	sed 's/^from.*Field/from determined.common.api.fapi import BaseModel, Field/' -i build/python-fastapi/fastapi_client/models.py
 	# :%s/(BaseModel)/()/g
 	# :%s/ = field(.*$//g
 	cp -r build/python-fastapi/fastapi_client ../harness/determined/common/api

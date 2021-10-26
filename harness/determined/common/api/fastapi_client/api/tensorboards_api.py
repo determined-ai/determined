@@ -3,10 +3,10 @@ from asyncio import get_event_loop
 from typing import TYPE_CHECKING, Awaitable, List
 
 from determined.common.api.fastapi_client import models as m
-from determined.common.api.fapi_helper import to_json as jsonable_encoder
+from determined.common.api.fapi import to_jsonable as jsonable_encoder
 
 if TYPE_CHECKING:
-    from determined.common.api.fastapi_client.api_client import ApiClient
+    from determined.common.api.fapi import ApiClient
 
 
 class _TensorboardsApi:

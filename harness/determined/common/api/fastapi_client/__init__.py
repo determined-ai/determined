@@ -1,7 +1,7 @@
 import inspect
 
 from determined.common.api.fastapi_client import models
-from determined.common.schemas import register_str_type
+from determined.common.schemas._schema_base import register_str_type
 
 for model in inspect.getmembers(models, inspect.isclass):
     if model[1].__module__ == "determined.common.api.fastapi_client.models":

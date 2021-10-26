@@ -1,44 +1,44 @@
 # flake8: noqa E501
 from asyncio import get_event_loop
-from typing import TYPE_CHECKING, Awaitable
+from typing import TYPE_CHECKING, Awaitable, List
 
 from determined.common.api.fastapi_client import models as m
-from determined.common.api.fapi_helper import to_json as jsonable_encoder
+from determined.common.api.fapi import to_jsonable as jsonable_encoder
 
 if TYPE_CHECKING:
-    from determined.common.api.fastapi_client.api_client import ApiClient
+    from determined.common.api.fapi import ApiClient
 
 
 class _ModelsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_model(self, model_name: str) -> Awaitable[m.V1GetModelResponse]:
-        path_params = {"modelName": str(model_name)}
+    def _build_for_determined_get_model(self, model_id: int) -> Awaitable[m.V1GetModelResponse]:
+        path_params = {"modelId": str(model_id)}
 
         return self.api_client.request(
             type_=m.V1GetModelResponse,
             method="GET",
-            url="/api/v1/models/{modelName}",
+            url="/api/v1/models/{modelId}",
             path_params=path_params,
         )
 
     def _build_for_determined_get_model_version(
-        self, model_name: str, model_version: int
+        self, model_id: str, model_version: int
     ) -> Awaitable[m.V1GetModelVersionResponse]:
-        path_params = {"modelName": str(model_name), "modelVersion": str(model_version)}
+        path_params = {"modelId": str(model_id), "modelVersion": str(model_version)}
 
         return self.api_client.request(
             type_=m.V1GetModelVersionResponse,
             method="GET",
-            url="/api/v1/models/{modelName}/versions/{modelVersion}",
+            url="/api/v1/models/{modelId}/versions/{modelVersion}",
             path_params=path_params,
         )
 
     def _build_for_determined_get_model_versions(
-        self, model_name: str, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
+        self, model_id: int, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
     ) -> Awaitable[m.V1GetModelVersionsResponse]:
-        path_params = {"modelName": str(model_name)}
+        path_params = {"modelId": str(model_id)}
 
         query_params = {}
         if sort_by is not None:
@@ -53,7 +53,7 @@ class _ModelsApi:
         return self.api_client.request(
             type_=m.V1GetModelVersionsResponse,
             method="GET",
-            url="/api/v1/models/{modelName}/versions",
+            url="/api/v1/models/{modelId}/versions",
             path_params=path_params,
             params=query_params,
         )
@@ -66,6 +66,9 @@ class _ModelsApi:
         limit: int = None,
         name: str = None,
         description: str = None,
+        labels: List[str] = None,
+        archived: bool = None,
+        users: List[str] = None,
     ) -> Awaitable[m.V1GetModelsResponse]:
         query_params = {}
         if sort_by is not None:
@@ -80,6 +83,12 @@ class _ModelsApi:
             query_params["name"] = str(name)
         if description is not None:
             query_params["description"] = str(description)
+        if labels is not None:
+            query_params["labels"] = [str(labels_item) for labels_item in labels]
+        if archived is not None:
+            query_params["archived"] = str(archived)
+        if users is not None:
+            query_params["users"] = [str(users_item) for users_item in users]
 
         return self.api_client.request(
             type_=m.V1GetModelsResponse,
@@ -89,16 +98,16 @@ class _ModelsApi:
         )
 
     def _build_for_determined_patch_model(
-        self, model_name: str, body: m.V1PatchModelRequest
+        self, model_id: int, body: m.V1PatchModelRequest
     ) -> Awaitable[m.V1PatchModelResponse]:
-        path_params = {"model.name": str(model_name)}
+        path_params = {"model.id": str(model_id)}
 
         body = jsonable_encoder(body)
 
         return self.api_client.request(
             type_=m.V1PatchModelResponse,
             method="PATCH",
-            url="/api/v1/models/{model.name}",
+            url="/api/v1/models/{model.id}",
             path_params=path_params,
             json=body,
         )
@@ -117,33 +126,33 @@ class _ModelsApi:
         )
 
     def _build_for_determined_post_model_version(
-        self, model_name: str, body: m.V1PostModelVersionRequest
+        self, model_id: int, body: m.V1PostModelVersionRequest
     ) -> Awaitable[m.V1PostModelVersionResponse]:
-        path_params = {"modelName": str(model_name)}
+        path_params = {"modelId": str(model_id)}
 
         body = jsonable_encoder(body)
 
         return self.api_client.request(
             type_=m.V1PostModelVersionResponse,
             method="POST",
-            url="/api/v1/models/{modelName}/versions",
+            url="/api/v1/models/{modelId}/versions",
             path_params=path_params,
             json=body,
         )
 
 
 class AsyncModelsApi(_ModelsApi):
-    async def determined_get_model(self, model_name: str) -> m.V1GetModelResponse:
-        return await self._build_for_determined_get_model(model_name=model_name)
+    async def determined_get_model(self, model_id: int) -> m.V1GetModelResponse:
+        return await self._build_for_determined_get_model(model_id=model_id)
 
-    async def determined_get_model_version(self, model_name: str, model_version: int) -> m.V1GetModelVersionResponse:
-        return await self._build_for_determined_get_model_version(model_name=model_name, model_version=model_version)
+    async def determined_get_model_version(self, model_id: str, model_version: int) -> m.V1GetModelVersionResponse:
+        return await self._build_for_determined_get_model_version(model_id=model_id, model_version=model_version)
 
     async def determined_get_model_versions(
-        self, model_name: str, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
+        self, model_id: int, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
     ) -> m.V1GetModelVersionsResponse:
         return await self._build_for_determined_get_model_versions(
-            model_name=model_name, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit
+            model_id=model_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit
         )
 
     async def determined_get_models(
@@ -154,37 +163,48 @@ class AsyncModelsApi(_ModelsApi):
         limit: int = None,
         name: str = None,
         description: str = None,
+        labels: List[str] = None,
+        archived: bool = None,
+        users: List[str] = None,
     ) -> m.V1GetModelsResponse:
         return await self._build_for_determined_get_models(
-            sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, name=name, description=description
+            sort_by=sort_by,
+            order_by=order_by,
+            offset=offset,
+            limit=limit,
+            name=name,
+            description=description,
+            labels=labels,
+            archived=archived,
+            users=users,
         )
 
-    async def determined_patch_model(self, model_name: str, body: m.V1PatchModelRequest) -> m.V1PatchModelResponse:
-        return await self._build_for_determined_patch_model(model_name=model_name, body=body)
+    async def determined_patch_model(self, model_id: int, body: m.V1PatchModelRequest) -> m.V1PatchModelResponse:
+        return await self._build_for_determined_patch_model(model_id=model_id, body=body)
 
     async def determined_post_model(self, model_name: str, body: m.V1Model) -> m.V1PostModelResponse:
         return await self._build_for_determined_post_model(model_name=model_name, body=body)
 
     async def determined_post_model_version(
-        self, model_name: str, body: m.V1PostModelVersionRequest
+        self, model_id: int, body: m.V1PostModelVersionRequest
     ) -> m.V1PostModelVersionResponse:
-        return await self._build_for_determined_post_model_version(model_name=model_name, body=body)
+        return await self._build_for_determined_post_model_version(model_id=model_id, body=body)
 
 
 class SyncModelsApi(_ModelsApi):
-    def determined_get_model(self, model_name: str) -> m.V1GetModelResponse:
-        coroutine = self._build_for_determined_get_model(model_name=model_name)
+    def determined_get_model(self, model_id: int) -> m.V1GetModelResponse:
+        coroutine = self._build_for_determined_get_model(model_id=model_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_model_version(self, model_name: str, model_version: int) -> m.V1GetModelVersionResponse:
-        coroutine = self._build_for_determined_get_model_version(model_name=model_name, model_version=model_version)
+    def determined_get_model_version(self, model_id: str, model_version: int) -> m.V1GetModelVersionResponse:
+        coroutine = self._build_for_determined_get_model_version(model_id=model_id, model_version=model_version)
         return get_event_loop().run_until_complete(coroutine)
 
     def determined_get_model_versions(
-        self, model_name: str, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
+        self, model_id: int, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None
     ) -> m.V1GetModelVersionsResponse:
         coroutine = self._build_for_determined_get_model_versions(
-            model_name=model_name, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit
+            model_id=model_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit
         )
         return get_event_loop().run_until_complete(coroutine)
 
@@ -196,14 +216,25 @@ class SyncModelsApi(_ModelsApi):
         limit: int = None,
         name: str = None,
         description: str = None,
+        labels: List[str] = None,
+        archived: bool = None,
+        users: List[str] = None,
     ) -> m.V1GetModelsResponse:
         coroutine = self._build_for_determined_get_models(
-            sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, name=name, description=description
+            sort_by=sort_by,
+            order_by=order_by,
+            offset=offset,
+            limit=limit,
+            name=name,
+            description=description,
+            labels=labels,
+            archived=archived,
+            users=users,
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_patch_model(self, model_name: str, body: m.V1PatchModelRequest) -> m.V1PatchModelResponse:
-        coroutine = self._build_for_determined_patch_model(model_name=model_name, body=body)
+    def determined_patch_model(self, model_id: int, body: m.V1PatchModelRequest) -> m.V1PatchModelResponse:
+        coroutine = self._build_for_determined_patch_model(model_id=model_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
     def determined_post_model(self, model_name: str, body: m.V1Model) -> m.V1PostModelResponse:
@@ -211,7 +242,7 @@ class SyncModelsApi(_ModelsApi):
         return get_event_loop().run_until_complete(coroutine)
 
     def determined_post_model_version(
-        self, model_name: str, body: m.V1PostModelVersionRequest
+        self, model_id: int, body: m.V1PostModelVersionRequest
     ) -> m.V1PostModelVersionResponse:
-        coroutine = self._build_for_determined_post_model_version(model_name=model_name, body=body)
+        coroutine = self._build_for_determined_post_model_version(model_id=model_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
