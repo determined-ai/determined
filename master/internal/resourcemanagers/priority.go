@@ -347,7 +347,7 @@ func sortTasksWithPosition(
 	taskList *taskList,
 	groups map[*actor.Ref]*group,
 ) ([]*sproto.AllocateRequest, bool) {
-	reqs := make([]*sproto.AllocateRequest, taskList.len())
+	var reqs []*sproto.AllocateRequest
 	positionSet := false
 
 	for it := taskList.iterator(); it.next(); {

@@ -21,6 +21,7 @@ import (
 
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
+const kubernetesDefaultPriority = 50
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -390,7 +391,8 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	defaultPriority := kubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &defaultPriority}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 
