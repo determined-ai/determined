@@ -46,7 +46,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAborted = (e: any): boolean => {
-  return e && e.name && e.name === 'AbortError'|| axios.isCancel(e);
+  return e?.name === 'AbortError'|| axios.isCancel(e);
 };
 
 /* HTTP Helpers */
@@ -146,7 +146,7 @@ export const consumeStream = async <T = unknown>(
     const reader = ndjsonStream(response.body).getReader();
 
     // Cancel reader if an abort signal is received.
-    if (options && options.signal) {
+    if (options?.signal) {
       const signal: AbortSignal = options.signal;
       const abortHandler = () => {
         reader.cancel();
