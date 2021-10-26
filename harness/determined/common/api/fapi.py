@@ -1,27 +1,22 @@
 import argparse
 import functools
-import json
+from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar
-from typing import Any, ClassVar, Dict, List, Type, TypeVar, Optional, Union  # , get_origin new in 3.8
-from determined.common.schemas import SchemaBase, register_str_type
+from typing import Any, Dict, List, Type, TypeVar, Optional, Union  # , get_origin new in 3.8
+from determined.common.schemas import SchemaBase
 from json import JSONEncoder
 
 from determined.common.api.authentication import Authentication
 from determined.common.api.request import do_request
 
-# TODO fix isinstance isn't returning true
-# if hasattr(model_class, 'update_forward_refs'):
-
 
 T = TypeVar("T")
-
 
 class ApiClient:
     def __init__(self, host: str = "http://localhost:8080"):
         self.host = host
         self.auth: Optional[Authentication] = None
 
-    # @setter
     def set_auth(self, auth: Authentication):
         self.auth = auth
 
@@ -32,7 +27,11 @@ class ApiClient:
             path_params = {}
         url = (self.host or "") + url.format(**path_params)
         response = do_request(method, self.host, url, auth=self.auth, **kwargs)
-        return  type_.from_dict(response.json()) # type: ignore
+        json_val = response.json()
+        if hasattr(type_, 'from_dict'):
+            return  type_.from_dict(json_val) # type: ignore
+        else:
+            return json_val
 
 
 client = ApiClient(host="http://localhost:8080")
@@ -53,6 +52,7 @@ def auth_required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., An
 
 def Field(*args, **kwargs) -> Any:
     alias = kwargs['alias']
+
     def validator(name, val) -> Any:
         default = args[0]
         if val is None:
@@ -60,18 +60,7 @@ def Field(*args, **kwargs) -> Any:
                 return default
             else:
                 raise AttributeError(f"missing required param {name}")
-        # t = self.__annotations__[name]
-        # # if type(val) != t:
-        # #     raise AttributeError(f'bad input {name} type. expected {t}')
-
-        # if isinstance(val, Dict):
-        #     return default  # unsupported
-        # elif isinstance(val, Dict):
-        #     return default
-
         return val
-        # alias = kwargs['alias']
-        # print(default)
 
     return (validator, alias)
 
@@ -126,6 +115,7 @@ class FApiSchemaBase(SchemaBase):
             d[json_key] = to_jsonable(val)
         return d
 
+
 class MyEncoder(JSONEncoder):
         def default(self, o):
             if isinstance(o, FApiSchemaBase):
@@ -141,35 +131,8 @@ def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
             o[k] = to_jsonable(v)
     if isinstance(o, FApiSchemaBase):
         return o.to_jsonble()
+    if isinstance(o, Enum):
+        return o.value
     return o
-    # return json.dumps(o, **dumps_kwargs)
-    # return json.loads(o.json(**dumps_kwargs))  # CHECK do we need this?
 
-class BaseModel2:
-    def __init__(self, *args, **kwargs):
-        # print(self.__annotations__)
-        print(args, kwargs)
-        if self.__annotations__ is None:
-            return
-        cls_attrs = self.__annotations__.keys()
-        for attr in cls_attrs:
-            fvalue = self.__getattribute__(attr)
-            # pass the input value to field_value to compute
-            # the default and enforce validations
-            self.__setattr__(attr, fvalue(attr, kwargs.get(attr)))
-
-        # for k, v in kwargs.items():
-        #     if k not in self.__annotations__:
-        #         raise Exception(f'bad input {k}')
-        #     print('setting', k, v)
-        #     self.__setattr__(k, v)
-        # print(self.__class__.__name__, args, kwargs)
-
-    # def __getattribute__(self, name: str):
-    #     # print('getattr', args, kwargs)
-    #     # return self[name]
-    #     return super().__getattribute__(name)
-
-
-# BaseModel = BaseModel2
 BaseModel = FApiSchemaBase

@@ -4,9 +4,8 @@ from typing import Any, List
 
 import yaml
 
-from determined.common.api.fapi import MyEncoder, auth_required, client
+from determined.common.api.fapi import auth_required, client
 from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi
-# from determined.common.api.fapi_helper import to_json
 from determined.common.declarative_argparse import Arg, Cmd
 
 experiments_api = SyncExperimentsApi(client)  # type: ignore
@@ -17,8 +16,6 @@ def list(args: Namespace) -> None:
     # print(response.experiments[0].name)
     # print(json.dumps(response, cls=MyEncoder))
     # print(json.dumps(response.to_jsonble()))
-    # print(response.to_jsonble())
-    # experiments_json = to_json(response.experiments)
     jsonable_e_list = [e.to_jsonble() for e in response.experiments]
     if args.output == "yaml":
         print(yaml.safe_dump(jsonable_e_list, default_flow_style=False))
@@ -30,6 +27,18 @@ def list(args: Namespace) -> None:
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
+@auth_required
+def archive(args: Namespace) -> None:
+    experiments_api.determined_archive_experiment(args.experiment_id)
+    print("Archived experiment {}".format(args.experiment_id))
+
+@auth_required
+def unarchive(args: Namespace) -> None:
+    experiments_api.determined_unarchive_experiment(args.experiment_id)
+    print("Archived experiment {}".format(args.experiment_id))
+
+def experiment_id_arg(help: str) -> Arg:  # noqa: A002
+    return Arg("experiment_id", type=int, help=help)
 
 args_description = [
     Cmd(
@@ -51,6 +60,18 @@ args_description = [
                     ),
                     Arg("-rp", "--resource-pool", type=str, default="default", help=""),
                 ],
+            ),
+            Cmd(
+                "archive",
+                archive,
+                "archive experiment",
+                [experiment_id_arg("experiment ID to archive")],
+            ),
+            Cmd(
+                "unarchive",
+                unarchive,
+                "unarchive experiment",
+                [experiment_id_arg("experiment ID to unarchive")],
             ),
         ],
     )
