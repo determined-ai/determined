@@ -1,16 +1,15 @@
 import argparse
 import functools
 from enum import Enum
-from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar
-from typing import Any, Dict, List, Type, TypeVar, Optional, Union  # , get_origin new in 3.8
-from determined.common.schemas import SchemaBase
 from json import JSONEncoder
+from typing import Any, Awaitable, Callable, Dict, List, Type, TypeVar, Union
 
-from determined.common.api.authentication import Authentication, cli_auth, must_cli_auth
+from determined.common.api.authentication import cli_auth
 from determined.common.api.request import do_request
-
+from determined.common.schemas import SchemaBase
 
 T = TypeVar("T")
+
 
 class ApiClient:
     def __init__(self, host: str = "http://localhost:8080"):
@@ -27,8 +26,8 @@ class ApiClient:
         url = (self.host or "") + url.format(**path_params)
         response = do_request(method, self.host, url, auth=cli_auth, **kwargs)
         json_val = response.json()
-        if hasattr(type_, 'from_dict'):
-            return  type_.from_dict(json_val) # type: ignore
+        if hasattr(type_, "from_dict"):
+            return type_.from_dict(json_val)  # type: ignore
         else:
             return json_val
 
@@ -40,14 +39,17 @@ def set_host(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     """
     A decorator for cli functions to set the host (aka master) address.
     """
+
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         client.set_host(namespace.master)
         return func(namespace)
+
     return f
 
+
 def Field(*args, **kwargs) -> Any:
-    alias = kwargs['alias']
+    alias = kwargs["alias"]
 
     def validator(name, val) -> Any:
         default = args[0]
@@ -62,6 +64,8 @@ def Field(*args, **kwargs) -> Any:
 
 
 T = TypeVar("T", bound="FApiSchemaBase")
+
+
 class FApiSchemaBase(SchemaBase):
     def __init__(self, **kwargs):
         if self.__annotations__ is None:
@@ -110,10 +114,10 @@ class FApiSchemaBase(SchemaBase):
 
 
 class MyEncoder(JSONEncoder):
-        def default(self, o):
-            if isinstance(o, FApiSchemaBase):
-                return super().default(o.to_jsonble())
-            return super().default(o)
+    def default(self, o):
+        if isinstance(o, FApiSchemaBase):
+            return super().default(o.to_jsonble())
+        return super().default(o)
 
 
 def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
@@ -127,5 +131,6 @@ def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
     if isinstance(o, Enum):
         return o.value
     return o
+
 
 BaseModel = FApiSchemaBase

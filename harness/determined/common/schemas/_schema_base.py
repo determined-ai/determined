@@ -1,7 +1,7 @@
 import enum
 import numbers
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, cast
 from datetime import datetime
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar, cast
 
 from determined.common import schemas
 from determined.common.schemas import expconf
@@ -27,6 +27,7 @@ def register_str_type(key: str, cls):
     global KNOWN_STR_TYPE
     KNOWN_STR_TYPE[key] = cls
 
+
 def register_known_type(cls: R) -> R:
     KNOWN_OPTIONAL_TYPES[Optional[cls]] = cls
     KNOWN_OPTIONAL_TYPES[Optional[List[cls]]] = List[cls]  # type: ignore
@@ -47,11 +48,11 @@ register_known_type(bool)
 register_known_type(str)
 register_known_type(Any)
 
-register_str_type('int', int)
-register_str_type('float', float)
-register_str_type('bool', bool)
-register_str_type('str', str)
-register_str_type('datetime', datetime)
+register_str_type("int", int)
+register_str_type("float", float)
+register_str_type("bool", bool)
+register_str_type("str", str)
+register_str_type("datetime", datetime)
 
 
 def _to_dict(val: Any, explicit_nones: bool) -> Any:
@@ -125,6 +126,7 @@ def _merge(obj: Any, src: Any) -> Any:
         return obj
     raise ValueError(f"invalid type in merge: {type(obj).__name__}")
 
+
 # from determined.common.api.fastapi_client.models import V1Model
 def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = False) -> Any:
     """
@@ -132,22 +134,20 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
     """
     # print('getting str instance from', anno, type(anno), value, type(value))
 
-    if anno == 'Any':
+    if anno == "Any":
         # In the special case of typing.Any, we just return the value directly.
         return value
 
     # Handle Optionals (strip the Optional part).
     tag = "Optional"
     if anno.startswith(tag):
-        anno = anno[len(tag)+1:-1]
+        anno = anno[len(tag) + 1 : -1]
         return _instance_from_annotation_str(anno, value, prevalidated)
-    # elif Optional[anno] == anno:
-    #     raise TypeError(f"unrecognized Optional ({anno}), maybe use @schemas.register_known_type?")
 
     # Detect List[*] types, where issubclass(x, List) is unsafe.
     tag = "List"
     if anno.startswith(tag):
-        anno = anno[len(tag)+1:-1]
+        anno = anno[len(tag) + 1 : -1]
         if value is None:
             return None
         if not isinstance(value, Sequence):
@@ -157,9 +157,9 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
     # Detect Dict[*] types, where issubclass(x, Dict) is unsafe.
     tag = "Dict"
     if anno.startswith(tag):
-        anno = anno[len(tag)+1:-1]
-    # if anno in KNOWN_DICT_TYPES:
-    #     subanno = KNOWN_DICT_TYPES[anno]
+        anno = anno[len(tag) + 1 : -1]
+        # if anno in KNOWN_DICT_TYPES:
+        #     subanno = KNOWN_DICT_TYPES[anno]
         if value is None:
             return None
         if not isinstance(value, Mapping):
@@ -168,8 +168,7 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
 
     # Detect Union[*] types and convert them to their UnionBase class.
     if anno.startswith("Union"):
-        raise TypeError(f"no union support")
-        anno = anno.strip("Union[")[:-1]
+        raise TypeError("no union support")
 
     # Any valid annotations must be plain types by now, which will allow us to use issubclass().
     if anno not in KNOWN_STR_TYPE:
@@ -187,7 +186,7 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
         return anno(value)
 
     if issubclass(anno, datetime):
-        return value # treat as str? we know what the format is here but not always # FIXME
+        return value  # treat as str? we know what the format is here but not always # FIXME
         # https://docs.python.org/3/library/datetime.html#datetime.datetime.fromisoformat
         # return datetime.fromisoformat # py 3.7
 
