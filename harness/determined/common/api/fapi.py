@@ -2,32 +2,39 @@ import argparse
 import functools
 from enum import Enum
 from json import JSONEncoder
-from typing import Any, Awaitable, Callable, Dict, List, Type, TypeVar, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from determined.common.api.authentication import cli_auth
 from determined.common.api.request import do_request
 from determined.common.schemas import SchemaBase
 
 T = TypeVar("T")
+Primitives = Union[str, bool, int, float, None]
+Jsonable = Union[Primitives, List["Jsonable"], Dict[str, "Jsonable"]]
 
 
 class ApiClient:
     def __init__(self, host: str = "http://localhost:8080"):
         self.host = host
 
-    def set_host(self, host: str):
+    def set_host(self, host: str) -> None:
         self.host = host
 
     async def request(
-        self, type_: Type[T], method: str, url: str, path_params: Dict[str, Any] = None, **kwargs
-    ) -> Awaitable[T]:
+        self,
+        type_: Type[SchemaBase],
+        method: str,
+        url: str,
+        path_params: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> Awaitable[SchemaBase]:
         if path_params is None:
             path_params = {}
         url = (self.host or "") + url.format(**path_params)
         response = do_request(method, self.host, url, auth=cli_auth, **kwargs)
         json_val = response.json()
         if hasattr(type_, "from_dict"):
-            return type_.from_dict(json_val)  # type: ignore
+            return type_.from_dict(json_val)
         else:
             return json_val
 
@@ -102,10 +109,10 @@ class FApiSchemaBase(SchemaBase):
     def from_dict(cls: Type[T], d: dict, camelCase: bool = True) -> T:
         if camelCase:
             d = cls.translate_dict(d)
-        return super().from_dict(d, prevalidated=True)
+        return super(FApiSchemaBase, cls).from_dict(d, prevalidated=True)
 
-    def to_jsonble(self):
-        d: Dict[str, Union[str, Dict, List]] = {}
+    def to_jsonble(self) -> Jsonable:
+        d: Dict[str, Jsonable] = {}
         aliases = self.attr_aliases()
         for json_key, py_key in aliases.items():
             val = self.__getattribute__(py_key)
@@ -120,7 +127,7 @@ class MyEncoder(JSONEncoder):
         return super().default(o)
 
 
-def to_jsonable(o: Union[Any, List[Any], Dict[str, Any], FApiSchemaBase]):
+def to_jsonable(o: Union[Jsonable, FApiSchemaBase]) -> Jsonable:
     if isinstance(o, List):
         return [to_jsonable(i) for i in o]
     if isinstance(o, Dict):

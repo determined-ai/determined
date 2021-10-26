@@ -18,12 +18,12 @@ KNOWN_DICT_TYPES = {}  # type: Dict[Any, Any]
 
 KNOWN_LIST_TYPES = {}  # type: Dict[Any, Any]
 
-KNOWN_STR_TYPE: Dict[str, Any] = {}
+KNOWN_STR_TYPE: Dict[str, type] = {}
 
 R = TypeVar("R")
 
 
-def register_str_type(key: str, cls):
+def register_str_type(key: str, cls: Type) -> None:
     global KNOWN_STR_TYPE
     KNOWN_STR_TYPE[key] = cls
 
@@ -195,6 +195,7 @@ def _instance_from_annotation_str(anno: str, value: Any, prevalidated: bool = Fa
         if value is None:
             return anno.from_none()
         return anno.from_dict(value, prevalidated)
+
     if issubclass(anno, PRIMITIVE_JSON_TYPES):
         # For json literal types, we just include them directly.
         return value
