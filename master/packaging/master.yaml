@@ -115,7 +115,7 @@ checkpoint_storage:
 ## Configure the connection to the Postgres database.
 db:
   user: postgres
-  host: determined-db
+  # host: determined-db
   port: 5432
   name: determined
   # password: database_password
