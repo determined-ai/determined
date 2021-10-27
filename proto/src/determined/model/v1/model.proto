@@ -7,6 +7,7 @@ import "determined/checkpoint/v1/checkpoint.proto";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 // Model is a named collection of model versions.
@@ -50,6 +51,28 @@ message Model {
   bool archived = 11;
 }
 
+// PatchModel is a partial update to a model with only id required
+message PatchModel {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // The id of this model.
+  int32 id = 1;
+  // An updated name for the model.
+  google.protobuf.StringValue name = 2
+      [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
+        min_length: 1
+      }];
+  // An updated description for the model.
+  google.protobuf.StringValue description = 3;
+  // An updated metadata object for the model.
+  google.protobuf.Struct metadata = 4;
+  // An updated label list for the model.
+  repeated google.protobuf.StringValue labels = 5;
+  // An updated readme for the model.
+  google.protobuf.StringValue readme = 6;
+}
+
 // A version of a model containing a checkpoint. Users can label checkpoints as
 // a version of a model and use the model name and version to locate a
 // checkpoint.
@@ -78,7 +101,7 @@ message ModelVersion {
   int32 id = 5;
   // Name for this model version.
   string name = 6;
-  //  Metadata associated with this model version.
+  // Metadata associated with this model version.
   google.protobuf.Struct metadata = 7;
   // The time this model version was last updated.
   google.protobuf.Timestamp last_updated_time = 8;
@@ -88,4 +111,25 @@ message ModelVersion {
   string readme = 10;
   // User who created this model version.
   string username = 11;
+  // Labels associated with this model version.
+  repeated string labels = 12;
+}
+
+// PatchModel is a partial update to a ModelVersion with only id required
+message PatchModelVersion {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // An updated checkpoint to associate with the model version.
+  determined.checkpoint.v1.Checkpoint checkpoint = 1;
+  // The id of the model version.
+  int32 id = 2;
+  // An updated name for the model version.
+  google.protobuf.StringValue name = 3;
+  // An updated metadata object for the model version.
+  google.protobuf.Struct metadata = 4;
+  // An updated comment for the model version.
+  google.protobuf.StringValue comment = 5;
+  // An updated label list for the model version.
+  repeated google.protobuf.StringValue labels = 6;
 }

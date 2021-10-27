@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -88,7 +87,7 @@ func (a *apiServer) GetModels(
 
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
-	b, err := protojson.Marshal(req.Model.Metadata)
+	b, err := protojson.Marshal(req.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
 	}
@@ -99,14 +98,14 @@ func (a *apiServer) PostModel(
 	}
 
 	m := &modelv1.Model{}
-	reqLabels := strings.Join(req.Model.Labels, ",")
+	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
-		"insert_model", m, req.Model.Name, req.Model.Description, b,
-		reqLabels, user.User.Id, time.Now(), time.Now(),
+		"insert_model", m, req.Name, req.Description, b,
+		reqLabels, user.User.Id,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
-		errors.Wrapf(err, "error creating model %s in database", req.Model.Name)
+		errors.Wrapf(err, "error creating model %s in database", req.Name)
 }
 
 func (a *apiServer) PatchModel(
@@ -119,34 +118,44 @@ func (a *apiServer) PatchModel(
 	currModel := getResp.Model
 	madeChanges := false
 
-	if currModel.Description != req.Model.Description {
+	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
-			req.Model.Id, currModel.Description, req.Model.Description)
+			req.Model.Id, currModel.Description, req.Model.Description.Value)
 		madeChanges = true
+		currModel.Description = req.Model.Description.Value
 	}
 
 	currMeta, err := protojson.Marshal(currModel.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling database model metadata")
 	}
+	if req.Model.Metadata != nil {
+		newMeta, err2 := protojson.Marshal(req.Model.Metadata)
+		if err != nil {
+			return nil, errors.Wrap(err2, "error marshaling request model metadata")
+		}
 
-	newMeta, err := protojson.Marshal(req.Model.Metadata)
-	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling request model metadata")
-	}
-
-	if !bytes.Equal(currMeta, newMeta) {
-		log.Infof("model (%d) metadata changing from %s to %s",
-			req.Model.Id, currMeta, newMeta)
-		madeChanges = true
+		if !bytes.Equal(currMeta, newMeta) {
+			log.Infof("model (%d) metadata changing from %s to %s",
+				req.Model.Id, currMeta, newMeta)
+			madeChanges = true
+			currMeta = newMeta
+		}
 	}
 
 	currLabels := strings.Join(currModel.Labels, ",")
-	reqLabels := strings.Join(req.Model.Labels, ",")
-	if currLabels != reqLabels {
-		log.Infof("model (%d) labels changing from %s to %s",
-			req.Model.Id, currModel.Labels, req.Model.Labels)
-		madeChanges = true
+	if req.Model.Labels != nil {
+		var reqLabelList []string
+		for i := 0; i < len(req.Model.Labels); i++ {
+			reqLabelList = append(reqLabelList, req.Model.Labels[i].Value)
+		}
+		reqLabels := strings.Join(reqLabelList, ",")
+		if currLabels != reqLabels {
+			log.Infof("model (%d) labels changing from %s to %s",
+				req.Model.Id, currModel.Labels, reqLabels)
+			madeChanges = true
+		}
+		currLabels = reqLabels
 	}
 
 	if !madeChanges {
@@ -155,7 +164,7 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, req.Model.Id, req.Model.Description, newMeta, reqLabels, time.Now())
+		"update_model", finalModel, req.Model.Id, currModel.Description, currMeta, currLabels)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
@@ -170,7 +179,7 @@ func (a *apiServer) GetModelVersion(
 		"get_model_version", resp.ModelVersion, req.ModelId, req.ModelVersion); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s version %d not found", req.ModelId, req.ModelVersion)
+			codes.NotFound, "model %d version %d not found", req.ModelId, req.ModelVersion)
 	default:
 		return resp, err
 	}
@@ -195,7 +204,7 @@ func (a *apiServer) GetModelVersions(
 func (a *apiServer) PostModelVersion(
 	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
 	}
@@ -221,15 +230,92 @@ func (a *apiServer) PostModelVersion(
 	respModelVersion := &apiv1.PostModelVersionResponse{}
 	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
+	mdata, err := protojson.Marshal(req.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling ModelVersion.Metadata")
+	}
+
+	reqLabels := strings.Join(req.Labels, ",")
+
 	err = a.m.db.QueryProto(
 		"insert_model_version",
 		respModelVersion.ModelVersion,
 		req.ModelId,
-		req.CheckpointUuid,
+		c.Uuid,
+		mdata,
+		reqLabels,
 	)
 
-	respModelVersion.ModelVersion.Model = getResp.Model
-	respModelVersion.ModelVersion.Checkpoint = c
-
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
+}
+
+func (a *apiServer) PatchModelVersion(
+	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
+	error) {
+	getResp, err := a.GetModelVersion(ctx,
+		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	currModelVersion := getResp.ModelVersion
+	madeChanges := false
+
+	if req.ModelVersion.Name != nil && req.ModelVersion.Name.Value != currModelVersion.Name {
+		log.Infof("model version (%d) name changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Name, req.ModelVersion.Name.Value)
+		madeChanges = true
+		currModelVersion.Name = req.ModelVersion.Name.Value
+	}
+
+	if req.ModelVersion.Comment != nil && req.ModelVersion.Comment.Value != currModelVersion.Comment {
+		log.Infof("model version (%d) comment changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Comment, req.ModelVersion.Comment.Value)
+		madeChanges = true
+		currModelVersion.Comment = req.ModelVersion.Comment.Value
+	}
+
+	currMeta, err := protojson.Marshal(currModelVersion.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling database model version metadata")
+	}
+	if req.ModelVersion.Metadata != nil {
+		newMeta, err2 := protojson.Marshal(req.ModelVersion.Metadata)
+		if err != nil {
+			return nil, errors.Wrap(err2, "error marshaling request model version metadata")
+		}
+
+		if !bytes.Equal(currMeta, newMeta) {
+			log.Infof("model version (%d) metadata changing from %s to %s",
+				req.ModelVersion.Id, currMeta, newMeta)
+			madeChanges = true
+			currMeta = newMeta
+		}
+	}
+
+	currLabels := strings.Join(currModelVersion.Labels, ",")
+	if req.ModelVersion.Labels != nil {
+		var reqLabelList []string
+		for i := 0; i < len(req.ModelVersion.Labels); i++ {
+			reqLabelList = append(reqLabelList, req.ModelVersion.Labels[i].Value)
+		}
+		reqLabels := strings.Join(reqLabelList, ",")
+		if currLabels != reqLabels {
+			log.Infof("model version (%d) labels changing from %s to %s",
+				req.ModelVersion.Id, currModelVersion.Labels, reqLabels)
+			madeChanges = true
+		}
+		currLabels = reqLabels
+	}
+
+	if !madeChanges {
+		return &apiv1.PatchModelVersionResponse{ModelVersion: currModelVersion}, nil
+	}
+
+	finalModelVersion := &modelv1.ModelVersion{}
+	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersion.Id,
+		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currMeta, currLabels)
+
+	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
+		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
 }

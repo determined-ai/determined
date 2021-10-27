@@ -930,7 +930,7 @@ service Determined {
   rpc PostModel(PostModelRequest) returns (PostModelResponse) {
     option (google.api.http) = {
       post: "/api/v1/models"
-      body: "model"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -980,6 +980,18 @@ service Determined {
       returns (PostModelVersionResponse) {
     option (google.api.http) = {
       post: "/api/v1/models/{model_id}/versions"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+
+  // Patch a model version's fields.
+  rpc PatchModelVersion(PatchModelVersionRequest)
+      returns (PatchModelVersionResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/models/{model_id}/versions/{model_version.id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

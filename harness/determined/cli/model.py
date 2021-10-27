@@ -5,7 +5,13 @@ from typing import Any, List
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import Checkpoint, Determined, Model, ModelOrderBy, ModelSortBy
+from determined.common.experimental import (
+    Determined,
+    Model,
+    ModelOrderBy,
+    ModelSortBy,
+    ModelVersion,
+)
 
 from . import render
 
@@ -24,7 +30,8 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_version(checkpoint: Checkpoint) -> None:
+def render_model_version(model_version: ModelVersion) -> None:
+    checkpoint = model_version.checkpoint
     headers = [
         "Version #",
         "Trial ID",
@@ -36,7 +43,7 @@ def render_model_version(checkpoint: Checkpoint) -> None:
 
     values = [
         [
-            checkpoint.model_version,
+            model_version.model_version,
             checkpoint.trial_id,
             checkpoint.batch_number,
             checkpoint.uuid,
@@ -88,14 +95,14 @@ def list_versions(args: Namespace) -> None:
 
         values = [
             [
-                ckpt.model_version,
-                ckpt.trial_id,
-                ckpt.batch_number,
-                ckpt.uuid,
-                json.dumps(ckpt.validation, indent=2),
-                json.dumps(ckpt.metadata, indent=2),
+                version.model_version,
+                version.checkpoint.trial_id,
+                version.checkpoint.batch_number,
+                version.checkpoint.uuid,
+                json.dumps(version.checkpoint.validation, indent=2),
+                json.dumps(version.checkpoint.metadata, indent=2),
             ]
-            for ckpt in model.get_versions()
+            for version in model.get_versions()
         ]
 
         render.tabulate_or_csv(headers, values, False)
@@ -112,15 +119,15 @@ def create(args: Namespace) -> None:
 
 def describe(args: Namespace) -> None:
     model = Determined(args.master, None).get_model(args.name)
-    checkpoint = model.get_version(args.version)
+    model_version = model.get_version(args.version)
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))
     else:
         render_model(model)
-        if checkpoint is not None:
+        if model_version is not None:
             print("\n")
-            render_model_version(checkpoint)
+            render_model_version(model_version)
 
 
 @authentication.required
@@ -129,16 +136,16 @@ def register_version(args: Namespace) -> None:
         resp = api.post(
             args.master,
             "/api/v1/models/{}/versions".format(args.name),
-            json={"checkpoint_uuid": args.uuid},
+            json={"checkpointUuid": args.uuid},
         )
 
         print(json.dumps(resp.json(), indent=2))
     else:
         model = Determined(args.master, None).get_model(args.name)
-        checkpoint = model.register_version(args.uuid)
+        model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
-        render_model_version(checkpoint)
+        render_model_version(model_version)
 
 
 args_description = [

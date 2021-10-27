@@ -54,7 +54,7 @@ class Checkpoint(object):
         framework: Optional[str] = None,
         format: Optional[str] = None,  # noqa: A002
         model_version: Optional[int] = None,
-        model_name: Optional[str] = None,
+        model_id: Optional[int] = None,
     ):
         self._session = session
         self.uuid = uuid
@@ -71,7 +71,7 @@ class Checkpoint(object):
         self.format = format
         self.determined_version = determined_version
         self.model_version = model_version
-        self.model_name = model_name
+        self.model_id = model_id
         self.metadata = metadata
 
     def _find_shared_fs_path(self) -> pathlib.Path:
@@ -292,9 +292,9 @@ class Checkpoint(object):
         raise AssertionError("Unknown checkpoint format")
 
     def __repr__(self) -> str:
-        if self.model_name is not None:
+        if self.model_id is not None:
             return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
-                self.uuid, self.trial_id, self.model_name, self.model_version
+                self.uuid, self.trial_id, self.model_id, self.model_version
             )
         return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
@@ -318,9 +318,9 @@ class Checkpoint(object):
             data["resources"],
             validation,
             data.get("metadata", {}),
+            model_id=data.get("model_id"),
             framework=data.get("framework"),
             format=data.get("format"),
             determined_version=data.get("determined_version", data.get("determinedVersion")),
             model_version=data.get("model_version"),
-            model_name=data.get("model_name"),
         )

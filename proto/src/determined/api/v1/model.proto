@@ -3,6 +3,7 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
@@ -80,8 +81,16 @@ message PostModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "name" ] }
   };
-  // The model to create.
-  determined.model.v1.Model model = 1;
+  // The name of the model.
+  string name = 1;
+  // The description of the model.
+  string description = 2;
+  // The user-defined metadata of the model.
+  google.protobuf.Struct metadata = 3;
+  // Labels associated with this model.
+  repeated string labels = 4;
+  // User who is creating this model.
+  string username = 5;
 }
 
 // Response to PostModelRequest.
@@ -93,7 +102,7 @@ message PostModelResponse {
 // Request for updating a model in the registry.
 message PatchModelRequest {
   // The model desired model fields and values.
-  determined.model.v1.Model model = 1;
+  determined.model.v1.PatchModel model = 1;
 }
 
 // Response to PatchModelRequest.
@@ -104,8 +113,8 @@ message PatchModelResponse {
 
 // Request for a version of a model in the regsitry.
 message GetModelVersionRequest {
-  // The name of the model.
-  string model_id = 1;
+  // The id of the model.
+  int32 model_id = 1;
   // The version number.
   int32 model_version = 2;
 }
@@ -153,14 +162,39 @@ message GetModelVersionsResponse {
 
 // Request for creating a model version.
 message PostModelVersionRequest {
-  // The id of the model to add a version to.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "model_id", "checkpoint_uuid" ] }
+  };
+  // The id of the model to add this version to.
   int32 model_id = 1;
-  // The checkpoint representing the new version.
+  // UUID of the checkpoint.
   string checkpoint_uuid = 2;
+  // User-friendly name for the model version.
+  string name = 3;
+  // User-written comment for the model version.
+  string comment = 4;
+  // The user-defined metadata of the model version.
+  google.protobuf.Struct metadata = 5;
+  // Labels associated with this model version.
+  repeated string labels = 6;
 }
 
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
   // The model version requested.
+  determined.model.v1.ModelVersion model_version = 1;
+}
+
+// Request for updating a model version in the registry.
+message PatchModelVersionRequest {
+  // The id of the model being updated.
+  int32 model_id = 1;
+  // The model version being updated.
+  determined.model.v1.PatchModelVersion model_version = 2;
+}
+
+// Response to PatchModelVersionRequest.
+message PatchModelVersionResponse {
+  // The model version created.
   determined.model.v1.ModelVersion model_version = 1;
 }

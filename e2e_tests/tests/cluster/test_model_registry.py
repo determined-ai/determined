@@ -25,6 +25,9 @@ def test_model_registry() -> None:
     assert mnist.metadata == db_model.metadata
     assert mnist.metadata == {"testing": "metadata"}
 
+    # Confirm DB assigned username
+    assert db_model.username == "determined"
+
     mnist.add_metadata({"some_key": "some_value"})
     db_model = d.get_model(mnist.model_id)
     assert mnist.metadata == db_model.metadata
@@ -45,6 +48,9 @@ def test_model_registry() -> None:
     assert mnist.labels == db_model.labels
     assert db_model.labels == ["hello", "world"]
 
+    # confirm patch does not overwrite other fields
+    assert db_model.metadata == {"testing": "override"}
+
     # Register a version for the model and validate the latest.
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint.uuid)
@@ -52,7 +58,12 @@ def test_model_registry() -> None:
 
     latest_version = mnist.get_version()
     assert latest_version is not None
-    assert latest_version.uuid == checkpoint.uuid
+    assert latest_version.checkpoint.uuid == checkpoint.uuid
+
+    latest_version.set_name("Test 2021")
+    db_version = mnist.get_version()
+    assert db_version is not None
+    assert db_version.name == "Test 2021"
 
     # Run another basic test and register its checkpoint as a version as well.
     # Validate the latest has been updated.
@@ -67,7 +78,7 @@ def test_model_registry() -> None:
 
     latest_version = mnist.get_version()
     assert latest_version is not None
-    assert latest_version.uuid == checkpoint.uuid
+    assert latest_version.checkpoint.uuid == checkpoint.uuid
 
     # Ensure the correct number of versions are present.
     all_versions = mnist.get_versions()
