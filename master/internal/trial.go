@@ -35,6 +35,7 @@ import (
 type trial struct {
 	id           int
 	taskID       model.TaskID
+	jobID        model.JobID
 	idSet        bool
 	experimentID int
 
@@ -67,6 +68,7 @@ type trial struct {
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
 	taskID model.TaskID,
+	jobID model.JobID,
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
@@ -77,8 +79,8 @@ func newTrial(
 	taskSpec *tasks.TaskSpec,
 ) *trial {
 	return &trial{
-		taskID: taskID,
-
+		taskID:       taskID,
+		jobID:        jobID,
 		experimentID: experimentID,
 		state:        initialState,
 		searcher:     searcher,
@@ -199,10 +201,17 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		name = fmt.Sprintf("Trial (Experiment %d)", t.experimentID)
 	}
 
+	jobSummary := sproto.JobSummary{
+		JobID:    t.jobID,
+		EntityID: fmt.Sprint(t.experimentID),
+		JobType:  model.JobTypeExperiment,
+	}
+
 	ctx.Log().Info("decided to allocate trial")
 	t.allocation, _ = ctx.ActorOf(t.runID, taskAllocator(sproto.AllocateRequest{
 		AllocationID: model.NewAllocationID(fmt.Sprintf("%s.%d", t.taskID, t.runID)),
 		TaskID:       t.taskID,
+		Job:          &jobSummary,
 		Name:         name,
 		TaskActor:    ctx.Self(),
 		Group:        ctx.Self().Parent(),
