@@ -18,7 +18,7 @@ import useResize from 'hooks/useResize';
 import { LogViewerTimestampFilterComponentProp } from 'pages/TrialDetails/Logs/TrialLogFilters';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
-import { Log, LogLevel, TrialLog } from 'types';
+import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
 
