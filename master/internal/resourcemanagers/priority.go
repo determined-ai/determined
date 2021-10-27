@@ -348,11 +348,11 @@ func sortTasksWithPosition(
 	groups map[*actor.Ref]*group,
 ) ([]*sproto.AllocateRequest, bool) {
 	var reqs []*sproto.AllocateRequest
-	positionSet := false
+	isPositionSet := false
 
 	for it := taskList.iterator(); it.next(); {
 		if groups[it.value().Group].qPosition != -1 {
-			positionSet = true
+			isPositionSet = true
 		}
 		reqs = append(reqs, it.value())
 	}
@@ -367,7 +367,7 @@ func sortTasksWithPosition(
 			return false
 		}
 
-		if positionSet {
+		if isPositionSet {
 			pos1 := groups[reqs[i].Group].qPosition
 			pos2 := groups[reqs[j].Group].qPosition
 			switch {
@@ -382,7 +382,7 @@ func sortTasksWithPosition(
 		return reqs[i].TaskActor.RegisteredTime().Before(reqs[j].TaskActor.RegisteredTime())
 	})
 
-	return reqs, positionSet
+	return reqs, isPositionSet
 }
 
 func deepCopyAgents(agents map[*actor.Ref]*agentState) map[*actor.Ref]*agentState {
