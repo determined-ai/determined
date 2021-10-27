@@ -2,7 +2,7 @@ import { Button, notification, Space, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import queryString from 'query-string';
 import React, {
-  Reducer, useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState,
+  Reducer, useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -163,7 +163,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
             ? buffer.unshift(logEntry) : buffer.push(logEntry);
         },
       ).then(() => {
-        if (!canceler.signal.aborted && buffer.length < TAIL_SIZE) {
+        const bufferIds = buffer.map(log => log.id);
+        if ((!canceler.signal.aborted && buffer.length < TAIL_SIZE) || bufferIds.includes(0)) {
           setIsLastReached(true);
         }
         addLogs(buffer, isPrepend);
