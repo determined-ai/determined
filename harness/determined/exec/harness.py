@@ -94,20 +94,22 @@ def main(chief_ip: Optional[str]) -> int:
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
-        if not hvd_config.use:
-            rank_info = None
-        else:
-            rank_info = _generic.RankInfo(
+        if hvd_config.use:
+            distributed = _generic.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),
                 local_rank=horovod.hvd.local_rank(),
                 local_size=horovod.hvd.local_size(),
                 cross_rank=horovod.hvd.cross_rank(),
                 cross_size=horovod.hvd.cross_size(),
+                chief_ip=chief_ip,
+                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
+        else:
+            distributed = _generic.DummyDistributed()
 
         # Step 4: Let generic.init() create the generic.Context.
-        with _generic.init(rank_info=rank_info, chief_ip=chief_ip) as generic_context:
+        with _generic.init(distributed=distributed) as generic_context:
             trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
 
             # Step 5: Instantiate the user's Trial.
@@ -123,10 +125,6 @@ def main(chief_ip: Optional[str]) -> int:
             )
 
             controller.run()
-
-        # XXX: callout to reviewer:
-        # no det._catch_sys_exit() anymore!  With push arch, exit() has well-defined behavior.
-        # no try/except det.InvalidHP anymore!  That's handled in generic.Context.__exit__()
 
     return 0
 

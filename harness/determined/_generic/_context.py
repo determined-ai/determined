@@ -19,32 +19,19 @@ class Context:
 
     def __init__(
         self,
-        distributed: _generic.DistributedContext,
         checkpointing: _generic.Checkpointing,
-        preemption: _generic.Preemption,
-        training: Optional[_generic.Training],
-        searcher: Optional[_generic.AdvancedSearcher],
+        distributed: Optional[_generic.DistributedContext] = None,
+        preemption: Optional[_generic.Preemption] = None,
+        training: Optional[_generic.Training] = None,
+        searcher: Optional[_generic.AdvancedSearcher] = None,
     ) -> None:
-        self.distributed = distributed
         self.checkpointing = checkpointing
-        self.preemption = preemption
-        self._training = training
-        # XXX: why is the AdvancedSearcher called ".searcher"?
-        self._searcher = searcher
-
-    @property
-    def training(self) -> _generic.Training:
-        assert (
-            self._training
-        ), "this generic.Context has no .training attribute, are you in a training task?"
-        return self._training
-
-    @property
-    def searcher(self) -> _generic.AdvancedSearcher:
-        assert (
-            self._searcher
-        ), "this generic.Context has no .searcher attribute, are you in a training task?"
-        return self._searcher
+        self.distributed = distributed or _generic.DummyDistributed()
+        self.preemption = preemption or _generic.DummyPreemption()
+        self.training = training or _generic.DummyTraining()
+        # TODO(DET-6083): Finalize BasicSearcher.  Figure out if calling this .searcher is going to
+        # create a name conflict between AdvancedSearcher and BasicSearcher
+        self.searcher = searcher or _generic.DummyAdvancedSearcher()
 
     def __enter__(self) -> "Context":
         self.preemption.start()
@@ -52,6 +39,7 @@ class Context:
 
     def __exit__(self, typ: type, value: Exception, tb: Any) -> None:
         self.preemption.close()
+        self.distributed.close()
         # Detect some specific exceptions that are part of the user-facing API.
         if isinstance(value, det.InvalidHP):
             self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
@@ -61,9 +49,8 @@ class Context:
 
 def _dummy_init(
     *,
-    rank_info: Optional[_generic.RankInfo] = None,
-    chief_ip: Optional[str] = None,
-    # TODO: figure out a better way to deal with checkpointing in the local training case.
+    distributed: Optional[_generic.DistributedContext] = None,
+    # TODO(DET-6153): allow a Union[StorageManager, str] here.
     storage_manager: Optional[storage.StorageManager] = None,
 ) -> Context:
     """
@@ -71,7 +58,7 @@ def _dummy_init(
     when it is detected that there is no ClusterInfo available, but can be invoked directly for
     e.g. local test mode.
     """
-    distributed = _generic.DistributedContext(rank_info=rank_info, chief_ip=chief_ip)
+    distributed = distributed or _generic.DummyDistributed()
     preemption = _generic.DummyPreemption()
 
     if storage_manager is None:
@@ -80,7 +67,6 @@ def _dummy_init(
         storage_manager = storage.SharedFSStorageManager(base_path)
     checkpointing = _generic.DummyCheckpointing(distributed, storage_manager)
 
-    # XXX: when running off-cluster, do we give a dummy Training/Searcher, or None?
     training = _generic.DummyTraining()
     searcher = _generic.DummyAdvancedSearcher()
 
@@ -95,34 +81,34 @@ def _dummy_init(
 
 # The '*' is because we expect to add parameters to this method.  To keep a backwards-compatible
 # API, we either need to always append to the parameters (preserving order of positional parameters)
-# or force users to always use kwargs.  Since rank_info and chief_ip seem like crappy first
-# parameters in a future state where we let you pass in a master_url, it seems that whether or not
-# we choose to keep the kwarg-only requirement forever, these two should be kwarg-only for now.
+# or force users to always use kwargs.  We haven't decided what the right positional arguments are
+# yet, so the '*' lets us delay that decision until we are ready.
 def init(
     *,
-    rank_info: Optional[_generic.RankInfo] = None,
-    chief_ip: Optional[str] = None,
+    distributed: Optional[_generic.DistributedContext] = None,
     # TODO: figure out a better way to deal with checkpointing in the local training case.
     storage_manager: Optional[storage.StorageManager] = None,
 ) -> Context:
     info = det.get_cluster_info()
     if info is None:
-        return _dummy_init(rank_info=rank_info, chief_ip=chief_ip, storage_manager=storage_manager)
-
-    distributed = _generic.DistributedContext(
-        rank_info=rank_info,
-        chief_ip=chief_ip,
-        port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
-    )
+        return _dummy_init(distributed=distributed, storage_manager=storage_manager)
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
     session = Session(info.master_url, None, None, cert)
 
-    # XXX: what would off-cluster tensorboard support look like?
+    distributed = distributed or _generic.DummyDistributed()
+
+    naddrs = len(info.container_addrs)
+    if naddrs > 1 and isinstance(distributed, _generic.DummyDistributed):
+        raise ValueError("you must provide a valid DistributedContext for a multi-container task")
+
+    preemption = _generic.Preemption(session, info.allocation_id, distributed)
+
+    # At present, we only support tensorboards in Trial tasks.
     tbd_mgr = None
     tbd_writer = None
-    # XXX: when running in non-trial tasks, do we give a dummy Training/Searcher, or None?
+
     training = None
     searcher = None
 
@@ -149,7 +135,6 @@ def init(
             session, info.trial.trial_id, info.trial._trial_run_id, info.allocation_id
         )
 
-        # XXX: should we even allow users to override the checkpoint manager for trials?
         if storage_manager is None:
             storage_manager = storage.build(
                 info.trial._config["checkpoint_storage"],
@@ -173,8 +158,6 @@ def init(
             logger.info("no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpointing = _generic.DummyCheckpointing(distributed, storage_manager)
-
-    preemption = _generic.Preemption(session, info.allocation_id, distributed)
 
     return Context(
         distributed=distributed,

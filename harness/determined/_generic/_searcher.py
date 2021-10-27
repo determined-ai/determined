@@ -159,7 +159,7 @@ class DummySearcherOp(SearcherOp):
     def report_progress(self, length: float) -> None:
         if self._completed and length != self._length:
             raise RuntimeError("you must not call op.report_progress() after op.complete()")
-        print("progress report: {length}/{self._length}")
+        logger.info("progress report: {length}/{self._length}")
 
     def complete(self, searcher_metric: float) -> None:
         if self._completed:
@@ -167,7 +167,7 @@ class DummySearcherOp(SearcherOp):
         if math.isnan(searcher_metric):
             raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
-        print(f"SearcherOp Complete: searcher_metric={det.util.json_encode(searcher_metric)}")
+        logger.info(f"SearcherOp Complete: searcher_metric={det.util.json_encode(searcher_metric)}")
 
 
 class DummyAdvancedSearcher(AdvancedSearcher):

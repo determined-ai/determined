@@ -162,7 +162,7 @@ class DummyTraining(Training):
         pass
 
     def set_status(self, status: str) -> None:
-        print(f"status: {status}")
+        logger.info(f"status: {status}")
 
     def get_last_validation(self) -> Optional[int]:
         return None

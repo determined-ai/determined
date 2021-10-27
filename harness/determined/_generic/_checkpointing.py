@@ -147,4 +147,4 @@ class DummyCheckpointing(Checkpointing):
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         # No master to report to; just log the event.
-        print(f"saved checkpoint {uuid}")
+        logger.info(f"saved checkpoint {uuid}")

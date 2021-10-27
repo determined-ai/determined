@@ -1,4 +1,4 @@
-from determined._generic._distributed import DistributedContext, RankInfo
+from determined._generic._distributed import DistributedContext, DummyDistributed
 from determined._generic._checkpointing import Checkpointing, DummyCheckpointing
 from determined._generic._training import Training, DummyTraining, EarlyExitReason
 from determined._generic._searcher import AdvancedSearcher, DummyAdvancedSearcher, SearcherOp, Unit

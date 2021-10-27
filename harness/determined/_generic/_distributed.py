@@ -9,11 +9,20 @@ from typing import Any, Callable, List, Optional
 from determined import constants, ipc
 
 
-class RankInfo:
+class DistributedContext:
     """
-    RankInfo was worker identity information that is:
-     - dependent on the launch layer
-     - created/used in the worker process
+    DistributedContext provides useful methods for effective distributed training.
+
+    A DistributedContext has the following required args:
+     - rank: the index of this worker in the entire job
+     - size: the number of workers in the entire job
+     - local_rank: the index of this worker on this machine
+     - local_size: the number of workers on this machine
+     - cross_rank: the index of this machine in the entire job
+     - cross_size: the number of this machines in the entire job
+
+    Additionally, any time that cross_size > 0, you must also provide:
+     - chief_ip: the ip address to reach the chief worker (where rank==0)
     """
 
     def __init__(
@@ -25,67 +34,25 @@ class RankInfo:
         local_size: int,
         cross_rank: int,
         cross_size: int,
-    ) -> None:
-        self._rank = rank
-        self._size = size
-        self._local_rank = local_rank
-        self._local_size = local_size
-        self._cross_rank = cross_rank
-        self._cross_size = cross_size
-
-    @property
-    def rank(self) -> int:
-        return self._rank
-
-    @property
-    def size(self) -> int:
-        return self._size
-
-    @property
-    def local_rank(self) -> int:
-        return self._local_rank
-
-    @property
-    def local_size(self) -> int:
-        return self._local_size
-
-    @property
-    def cross_rank(self) -> int:
-        return self._cross_rank
-
-    @property
-    def cross_size(self) -> int:
-        return self._cross_size
-
-
-class DistributedContext:
-    """
-    DistributedContext provides useful methods for effective distributed training.
-    """
-
-    def __init__(
-        self,
-        rank_info: Optional[RankInfo] = None,
         chief_ip: Optional[str] = None,
         pub_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_1,
         pull_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_2,
         port_offset: int = 0,
         force_tcp: bool = False,
     ) -> None:
-        if rank_info is not None:
-            self.rank = rank_info.rank
-            self.size = rank_info.size
-            self.local_rank = rank_info.local_rank
-            self.local_size = rank_info.local_size
-            self.cross_rank = rank_info.cross_rank
-            self.cross_size = rank_info.cross_size
-        else:
-            self.rank = 0
-            self.size = 1
-            self.local_rank = 0
-            self.local_size = 1
-            self.cross_rank = 0
-            self.cross_size = 1
+        rank_args = (rank, size, local_rank, local_size, cross_rank, cross_size)
+        if sum(x is not None for x in rank_args) not in (0, 6):
+            raise ValueError(
+                "rank, size, local_rank, local_size, cross_rank, and cross_size must all be "
+                "provided if any are provided"
+            )
+
+        self.rank = rank if rank is not None else 0
+        self.size = size if size is not None else 1
+        self.local_rank = local_rank if local_rank is not None else 0
+        self.local_size = local_size if local_size is not None else 1
+        self.cross_rank = cross_rank if cross_rank is not None else 0
+        self.cross_size = cross_size if cross_size is not None else 1
 
         self._pub_port = pub_port + port_offset
         self._pull_port = pull_port + port_offset
@@ -104,6 +71,8 @@ class DistributedContext:
         else:
             # When cross_size == 1, always contact the chief as localhost.
             self._chief_ip = "127.0.0.1"
+
+        self._closed = False
 
         self._init_ipc(force_tcp)
 
@@ -188,7 +157,7 @@ class DistributedContext:
 
     def close(self) -> None:
         # if statements in close() mirror the if statements of _init_ipc().
-        if self.size < 2:
+        if self._closed or self.size < 2:
             return
 
         # Global broadcast server.
@@ -370,3 +339,15 @@ class DistributedContext:
                     _ = self._zmq_gather_local(None)
 
         return _fn
+
+
+class DummyDistributed(DistributedContext):
+    def __init__(self) -> None:
+        super().__init__(
+            rank=0,
+            size=1,
+            local_rank=0,
+            local_size=1,
+            cross_rank=0,
+            cross_size=1,
+        )
