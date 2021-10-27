@@ -266,13 +266,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.setPriority(ctx, int(msg.Priority))
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
-	case sproto.JobTaskInfo:
-		ctx.Respond(sproto.JobTaskInfo{
-			Name:           c.Config.Description,
-			SubmissionTime: ctx.Self().RegisteredTime(),
-			Username:       c.Base.Owner.Username,
-		})
-
 	case sproto.ContainerLog:
 
 	case terminateForGC:

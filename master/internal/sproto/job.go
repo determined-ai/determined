@@ -1,8 +1,6 @@
 package sproto
 
 import (
-	"time"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -44,14 +42,6 @@ type JobSummary struct {
 	State          SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
-}
-
-// JobTaskInfo is a message that carries information needed to augment
-// jobs.
-type JobTaskInfo struct {
-	Username       string
-	Name           string
-	SubmissionTime time.Time
 }
 
 // ScheduledStates provides a list of ScheduledStates that are considered scheduled.

@@ -1,8 +1,6 @@
 package resourcemanagers
 
 import (
-	"fmt"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -106,7 +104,7 @@ Input:
 reqs: a list of allocateRequests sorted by expected order of execution from the scheduler.
 extended: whether the costlier job attributes should be filled or not.
 */
-func mergeToJobs(reqs AllocReqs, rp *ResourcePool, extended bool) []*jobv1.Job {
+func mergeToJobs(reqs AllocReqs, rp *ResourcePool) []*jobv1.Job {
 	isAdded := make(map[model.JobID]*jobv1.Job)
 	v1Jobs := make([]*jobv1.Job, 0)
 	jobsAhead := 0
@@ -122,19 +120,6 @@ func mergeToJobs(reqs AllocReqs, rp *ResourcePool, extended bool) []*jobv1.Job {
 		v1Job, exists := isAdded[curJob.JobID]
 		if !exists {
 			v1Job = allocateReqToV1Job(rp, req, jobsAhead)
-			if extended {
-				// TODO talk to task actor and its parent to get: owner, job name, and a submission time.
-				fmt.Printf("task actor %s\n", req.TaskActor.Address().String())
-				// TODO need to route to the correct actor. cant assume parent. can we?
-				resp := req.TaskActor.System().Ask(req.Group, sproto.JobTaskInfo{})
-				if resp.Error() != nil {
-					panic("actor error while extending job") // TODO error handling
-				}
-				info := resp.Get().(sproto.JobTaskInfo)
-				v1Job.SubmissionTime = timestamppb.New(info.SubmissionTime)
-				v1Job.Username = info.Username
-				v1Job.Name = info.Name
-			}
 			isAdded[curJob.JobID] = v1Job
 			v1Jobs = append(v1Jobs, v1Job)
 			jobsAhead++
@@ -151,7 +136,7 @@ func mergeToJobs(reqs AllocReqs, rp *ResourcePool, extended bool) []*jobv1.Job {
 
 // allocReqsToJobOrder converts sorted allocation requests to job order.
 func allocReqsToJobOrder(reqs []*sproto.AllocateRequest, rp *ResourcePool) (jobIds []string) {
-	for _, job := range mergeToJobs(reqs, rp, false) {
+	for _, job := range mergeToJobs(reqs, rp) {
 		jobIds = append(jobIds, job.JobId)
 	}
 	return jobIds
@@ -160,7 +145,7 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest, rp *ResourcePool) (jobI
 // getJobSummary given an ordered list of allocateRequests returns the
 // requested job summary.
 func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *jobv1.JobSummary {
-	jobs := mergeToJobs(requests, rp, false)
+	jobs := mergeToJobs(requests, rp)
 	for _, job := range jobs {
 		if job.JobId == jobID.String() {
 			return job.Summary
@@ -175,7 +160,7 @@ func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
-	return mergeToJobs(allocateRequests, rp, true)
+	return mergeToJobs(allocateRequests, rp)
 }
 
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
@@ -188,7 +173,7 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 	stats := jobv1.QueueStats{}
 	reqs := rp.scheduler.OrderedAllocations(rp)
-	jobs := mergeToJobs(reqs, rp, false)
+	jobs := mergeToJobs(reqs, rp)
 	for _, job := range jobs {
 		if job.IsPreemptible {
 			stats.PreemptibleCount++
