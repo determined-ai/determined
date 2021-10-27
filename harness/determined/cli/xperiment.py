@@ -15,7 +15,7 @@ experiments_api = SyncExperimentsApi(client)  # type: ignore
 @authentication.required
 @set_host
 def list_experiments(args: Namespace) -> None:
-    response = experiments_api.determined_get_experiments(limit=5)
+    response = experiments_api.get_experiments(limit=5)
     # print(response.experiments[0].name)
     # print(json.dumps(response, cls=MyEncoder))
     # print(json.dumps(response.to_jsonble()))
@@ -34,14 +34,14 @@ def list_experiments(args: Namespace) -> None:
 @authentication.required
 @set_host
 def archive(args: Namespace) -> None:
-    experiments_api.determined_archive_experiment(args.experiment_id)
+    experiments_api.archive_experiment(args.experiment_id)
     print("Archived experiment {}".format(args.experiment_id))
 
 
 @authentication.required
 @set_host
 def unarchive(args: Namespace) -> None:
-    experiments_api.determined_unarchive_experiment(args.experiment_id)
+    experiments_api.unarchive_experiment(args.experiment_id)
     print("Archived experiment {}".format(args.experiment_id))
 
 
