@@ -2,7 +2,7 @@
 
 **Improvement**
 
-- PATCH endpoints to update attributes of a model and a model_version
+-  PATCH endpoints to update attributes of a model and a model_version
 
 **Bug Fixes**
 
