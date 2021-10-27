@@ -133,7 +133,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       const range = constraint.range;
       const values = chartData.data[key];
       values.forEach((value, index) => {
-        if (constraint.values && constraint.values.includes(value)) return;
+        if (constraint.values?.includes(value)) return;
         if (!constraint.values && value >= range[0] && value <= range[1]) return;
         const trialId = chartData.trialIds[index];
         newFilteredTrialIdMap[trialId] = false;

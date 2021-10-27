@@ -69,7 +69,7 @@ const PageHeaderFoldable: React.FC<Props> = (
         )}
 
         <div className={css.options}>
-          {options && options.slice(0, 3).map((opt, i) => (
+          {options?.slice(0, 3).map((opt, i) => (
             <Button
               className={css.optionsMainButton}
               disabled={!opt.onClick}

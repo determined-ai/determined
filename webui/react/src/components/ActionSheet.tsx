@@ -23,7 +23,7 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
 
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     // Prevent `onCancel` from getting called if the sheet (not the overlay) was clicked
-    if (sheetRef.current && sheetRef.current.contains(e.target as HTMLElement)) return;
+    if (sheetRef.current?.contains(e.target as HTMLElement)) return;
     if (onCancel) onCancel();
   }, [ onCancel ]);
 
