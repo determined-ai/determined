@@ -18,7 +18,7 @@ from . import render
 
 def render_model(model: Model) -> None:
     table = [
-        ["ID", model.id],
+        ["ID", model.model_id],
         ["Name", model.name],
         ["Description", model.description],
         ["Creation Time", model.creation_time],
@@ -67,7 +67,7 @@ def list_models(args: Namespace) -> None:
 
         values = [
             [
-                m.id,
+                m.model_id,
                 m.name,
                 m.creation_time,
                 m.last_updated_time,
