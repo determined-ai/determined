@@ -285,7 +285,7 @@ func (k *kubernetesResourceManager) getOrderedJobs() []*jobv1.Job {
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
 	v1Jobs := make([]*jobv1.Job, 0)
 	for idx, req := range filterAllocateRequests(reqs) {
-		v1Jobs = append(v1Jobs, k.allocateK8sReqToV1Job(req, idx))
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(k.groups, kubernetesScheduler, req, idx))
 	}
 	return v1Jobs
 }
