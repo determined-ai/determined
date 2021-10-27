@@ -43,7 +43,7 @@ export const useFetchMetrics = (
     setData(internalData);
 
     consumeStream(
-      detApi.StreamingProfiler.determinedGetTrialProfilerMetrics(
+      detApi.StreamingProfiler.getTrialProfilerMetrics(
         trialId,
         labelsName,
         labelsAgentId,

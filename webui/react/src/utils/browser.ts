@@ -50,7 +50,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
   await consumeStream<V1TrialLogsResponse>(
-    detApi.StreamingExperiments.determinedTrialLogs(trialId),
+    detApi.StreamingExperiments.trialLogs(trialId),
     (ev) => {
       downloadStringBuffer += ev.message;
       if (downloadStringBuffer.length > MAX_PART_SIZE) {

@@ -95,7 +95,7 @@ const LearningCurve: React.FC<Props> = ({
     setHasLoaded(false);
 
     consumeStream<V1TrialsSampleResponse>(
-      detApi.StreamingInternal.determinedTrialsSample(
+      detApi.StreamingInternal.trialsSample(
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],

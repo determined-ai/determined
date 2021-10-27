@@ -88,7 +88,7 @@ const ScatterPlots: React.FC<Props> = ({
     setHasLoaded(false);
 
     consumeStream<V1TrialsSnapshotResponse>(
-      detApi.StreamingInternal.determinedTrialsSnapshot(
+      detApi.StreamingInternal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
