@@ -38,6 +38,7 @@ interface Props {
   onDownloadClick?: () => void;
   onFetchLogAfter: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
   onFetchLogBefore: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
+  onFetchLogEndpoints?: (oldest?: number, latest?: number) => void;
   onFetchLogFilter?: (canceler: AbortController) => FetchArgs;
   onFetchLogTail?: (filters: LogViewerTimestampFilter, canceler: AbortController) => FetchArgs;
 }
@@ -65,6 +66,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
   onDownloadClick,
   onFetchLogAfter,
   onFetchLogBefore,
+  onFetchLogEndpoints,
   onFetchLogFilter,
   onFetchLogTail,
 }: Props) => {
@@ -125,7 +127,8 @@ const LogViewerTimestamp: React.FC<Props> = ({
     logsDispatch({ type: LogStoreActionType.Clear });
     listRef.current?.resetAfterIndex(0);
     setIsLastReached(false);
-  }, [ logsDispatch ]);
+    onFetchLogEndpoints?.(undefined, undefined);
+  }, [ logsDispatch, onFetchLogEndpoints ]);
 
   const fetchAndAppendLogs = useCallback((
     direction: Direction,
@@ -218,7 +221,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
   const handleScrollToTop = useCallback(() => {
     setDirection(Direction.TopToBottom);
-  }, []);
+  }, [ ]);
 
   const handleItemsRendered = useCallback((
     { visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps,
@@ -395,6 +398,11 @@ const LogViewerTimestamp: React.FC<Props> = ({
 
     return () => ref?.resetAfterIndex(0);
   }, [ containerSize.width, containerSize.height ]);
+
+  useEffect(() => {
+    if (logs.length === 0) return;
+    onFetchLogEndpoints?.(logs[0].id, logs[logs.length-1].id);
+  }, [ logs, onFetchLogEndpoints ]);
 
   const logOptions = (
     <div className={css.options}>
