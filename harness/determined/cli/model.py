@@ -66,7 +66,13 @@ def list_models(args: Namespace) -> None:
         headers = ["ID", "Name", "Creation Time", "Last Updated Time", "Metadata"]
 
         values = [
-            [m.id, m.name, m.creation_time, m.last_updated_time, json.dumps(m.metadata or {}, indent=2)]
+            [
+                m.id,
+                m.name,
+                m.creation_time,
+                m.last_updated_time,
+                json.dumps(m.metadata or {}, indent=2),
+            ]
             for m in models
         ]
 
