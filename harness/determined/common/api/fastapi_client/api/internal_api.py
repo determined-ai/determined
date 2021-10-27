@@ -13,7 +13,7 @@ class _InternalApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_ack_allocation_preemption_signal(
+    def _build_for_ack_allocation_preemption_signal(
         self, allocation_id: str, body: m.V1AckAllocationPreemptionSignalRequest
     ) -> Awaitable[m.Any]:
         path_params = {"allocationId": str(allocation_id)}
@@ -28,7 +28,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_allocation_preemption_signal(
+    def _build_for_allocation_preemption_signal(
         self, allocation_id: str, timeout_seconds: int = None
     ) -> Awaitable[m.V1AllocationPreemptionSignalResponse]:
         path_params = {"allocationId": str(allocation_id)}
@@ -45,7 +45,7 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_allocation_rendezvous_info(
+    def _build_for_allocation_rendezvous_info(
         self, allocation_id: str, container_id: str
     ) -> Awaitable[m.V1AllocationRendezvousInfoResponse]:
         path_params = {"allocationId": str(allocation_id), "containerId": str(container_id)}
@@ -57,7 +57,7 @@ class _InternalApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_complete_trial_searcher_validation(
+    def _build_for_complete_trial_searcher_validation(
         self, trial_id: int, body: m.V1CompleteValidateAfterOperation
     ) -> Awaitable[m.Any]:
         path_params = {"trialId": str(trial_id)}
@@ -72,7 +72,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_compute_hp_importance(self, experiment_id: int) -> Awaitable[m.Any]:
+    def _build_for_compute_hp_importance(self, experiment_id: int) -> Awaitable[m.Any]:
         path_params = {"experimentId": str(experiment_id)}
 
         return self.api_client.request(
@@ -82,7 +82,7 @@ class _InternalApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_create_experiment(
+    def _build_for_create_experiment(
         self, body: m.V1CreateExperimentRequest
     ) -> Awaitable[m.V1CreateExperimentResponse]:
         body = jsonable_encoder(body)
@@ -91,7 +91,7 @@ class _InternalApi:
             type_=m.V1CreateExperimentResponse, method="POST", url="/api/v1/experiments", json=body
         )
 
-    def _build_for_determined_get_best_searcher_validation_metric(
+    def _build_for_get_best_searcher_validation_metric(
         self, experiment_id: int
     ) -> Awaitable[m.V1GetBestSearcherValidationMetricResponse]:
         path_params = {"experimentId": str(experiment_id)}
@@ -103,7 +103,7 @@ class _InternalApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_current_trial_searcher_operation(
+    def _build_for_get_current_trial_searcher_operation(
         self, trial_id: int
     ) -> Awaitable[m.V1GetCurrentTrialSearcherOperationResponse]:
         path_params = {"trialId": str(trial_id)}
@@ -115,7 +115,7 @@ class _InternalApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_hp_importance(
+    def _build_for_get_hp_importance(
         self, experiment_id: int, period_seconds: int = None
     ) -> Awaitable[m.StreamResultOfV1GetHPImportanceResponse]:
         path_params = {"experimentId": str(experiment_id)}
@@ -132,7 +132,7 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_resource_pools(
+    def _build_for_get_resource_pools(
         self, offset: int = None, limit: int = None
     ) -> Awaitable[m.V1GetResourcePoolsResponse]:
         query_params = {}
@@ -148,7 +148,7 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_telemetry(
+    def _build_for_get_telemetry(
         self,
     ) -> Awaitable[m.V1GetTelemetryResponse]:
         return self.api_client.request(
@@ -157,7 +157,7 @@ class _InternalApi:
             url="/api/v1/master/telemetry",
         )
 
-    def _build_for_determined_idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> Awaitable[m.Any]:
+    def _build_for_idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> Awaitable[m.Any]:
         path_params = {"notebookId": str(notebook_id)}
 
         body = jsonable_encoder(body)
@@ -170,7 +170,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_mark_allocation_reservation_daemon(
+    def _build_for_mark_allocation_reservation_daemon(
         self, allocation_id: str, container_id: str, body: m.V1MarkAllocationReservationDaemonRequest
     ) -> Awaitable[m.Any]:
         path_params = {"allocationId": str(allocation_id), "containerId": str(container_id)}
@@ -185,7 +185,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_metric_batches(
+    def _build_for_metric_batches(
         self, experiment_id: int, metric_name: str, metric_type: str, period_seconds: int = None
     ) -> Awaitable[m.StreamResultOfV1MetricBatchesResponse]:
         path_params = {"experimentId": str(experiment_id)}
@@ -205,7 +205,7 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_metric_names(
+    def _build_for_metric_names(
         self, experiment_id: int, period_seconds: int = None
     ) -> Awaitable[m.StreamResultOfV1MetricNamesResponse]:
         path_params = {"experimentId": str(experiment_id)}
@@ -222,16 +222,14 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_post_trial_profiler_metrics_batch(
+    def _build_for_post_trial_profiler_metrics_batch(
         self, body: m.V1PostTrialProfilerMetricsBatchRequest
     ) -> Awaitable[m.Any]:
         body = jsonable_encoder(body)
 
         return self.api_client.request(type_=m.Any, method="POST", url="/api/v1/trials/profiler/metrics", json=body)
 
-    def _build_for_determined_post_trial_runner_metadata(
-        self, trial_id: int, body: m.V1TrialRunnerMetadata
-    ) -> Awaitable[m.Any]:
+    def _build_for_post_trial_runner_metadata(self, trial_id: int, body: m.V1TrialRunnerMetadata) -> Awaitable[m.Any]:
         path_params = {"trialId": str(trial_id)}
 
         body = jsonable_encoder(body)
@@ -244,7 +242,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_report_trial_checkpoint_metadata(
+    def _build_for_report_trial_checkpoint_metadata(
         self, checkpoint_metadata_trial_id: int, body: m.V1CheckpointMetadata
     ) -> Awaitable[m.Any]:
         path_params = {"checkpointMetadata.trialId": str(checkpoint_metadata_trial_id)}
@@ -259,7 +257,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_report_trial_progress(self, trial_id: int, body: float) -> Awaitable[m.Any]:
+    def _build_for_report_trial_progress(self, trial_id: int, body: float) -> Awaitable[m.Any]:
         path_params = {"trialId": str(trial_id)}
 
         body = jsonable_encoder(body)
@@ -268,9 +266,7 @@ class _InternalApi:
             type_=m.Any, method="POST", url="/api/v1/trials/{trialId}/progress", path_params=path_params, json=body
         )
 
-    def _build_for_determined_report_trial_searcher_early_exit(
-        self, trial_id: int, body: m.V1TrialEarlyExit
-    ) -> Awaitable[m.Any]:
+    def _build_for_report_trial_searcher_early_exit(self, trial_id: int, body: m.V1TrialEarlyExit) -> Awaitable[m.Any]:
         path_params = {"trialId": str(trial_id)}
 
         body = jsonable_encoder(body)
@@ -279,7 +275,7 @@ class _InternalApi:
             type_=m.Any, method="POST", url="/api/v1/trials/{trialId}/early_exit", path_params=path_params, json=body
         )
 
-    def _build_for_determined_report_trial_training_metrics(
+    def _build_for_report_trial_training_metrics(
         self, training_metrics_trial_id: int, body: m.V1TrialMetrics
     ) -> Awaitable[m.Any]:
         path_params = {"trainingMetrics.trialId": str(training_metrics_trial_id)}
@@ -294,7 +290,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_report_trial_validation_metrics(
+    def _build_for_report_trial_validation_metrics(
         self, validation_metrics_trial_id: int, body: m.V1TrialMetrics
     ) -> Awaitable[m.Any]:
         path_params = {"validationMetrics.trialId": str(validation_metrics_trial_id)}
@@ -309,7 +305,7 @@ class _InternalApi:
             json=body,
         )
 
-    def _build_for_determined_trials_sample(
+    def _build_for_trials_sample(
         self,
         experiment_id: int,
         metric_name: str,
@@ -345,7 +341,7 @@ class _InternalApi:
             params=query_params,
         )
 
-    def _build_for_determined_trials_snapshot(
+    def _build_for_trials_snapshot(
         self,
         experiment_id: int,
         metric_name: str,
@@ -376,121 +372,107 @@ class _InternalApi:
 
 
 class AsyncInternalApi(_InternalApi):
-    async def determined_ack_allocation_preemption_signal(
+    async def ack_allocation_preemption_signal(
         self, allocation_id: str, body: m.V1AckAllocationPreemptionSignalRequest
     ) -> m.Any:
-        return await self._build_for_determined_ack_allocation_preemption_signal(allocation_id=allocation_id, body=body)
+        return await self._build_for_ack_allocation_preemption_signal(allocation_id=allocation_id, body=body)
 
-    async def determined_allocation_preemption_signal(
+    async def allocation_preemption_signal(
         self, allocation_id: str, timeout_seconds: int = None
     ) -> m.V1AllocationPreemptionSignalResponse:
-        return await self._build_for_determined_allocation_preemption_signal(
+        return await self._build_for_allocation_preemption_signal(
             allocation_id=allocation_id, timeout_seconds=timeout_seconds
         )
 
-    async def determined_allocation_rendezvous_info(
+    async def allocation_rendezvous_info(
         self, allocation_id: str, container_id: str
     ) -> m.V1AllocationRendezvousInfoResponse:
-        return await self._build_for_determined_allocation_rendezvous_info(
-            allocation_id=allocation_id, container_id=container_id
-        )
+        return await self._build_for_allocation_rendezvous_info(allocation_id=allocation_id, container_id=container_id)
 
-    async def determined_complete_trial_searcher_validation(
+    async def complete_trial_searcher_validation(
         self, trial_id: int, body: m.V1CompleteValidateAfterOperation
     ) -> m.Any:
-        return await self._build_for_determined_complete_trial_searcher_validation(trial_id=trial_id, body=body)
+        return await self._build_for_complete_trial_searcher_validation(trial_id=trial_id, body=body)
 
-    async def determined_compute_hp_importance(self, experiment_id: int) -> m.Any:
-        return await self._build_for_determined_compute_hp_importance(experiment_id=experiment_id)
+    async def compute_hp_importance(self, experiment_id: int) -> m.Any:
+        return await self._build_for_compute_hp_importance(experiment_id=experiment_id)
 
-    async def determined_create_experiment(self, body: m.V1CreateExperimentRequest) -> m.V1CreateExperimentResponse:
-        return await self._build_for_determined_create_experiment(body=body)
+    async def create_experiment(self, body: m.V1CreateExperimentRequest) -> m.V1CreateExperimentResponse:
+        return await self._build_for_create_experiment(body=body)
 
-    async def determined_get_best_searcher_validation_metric(
+    async def get_best_searcher_validation_metric(
         self, experiment_id: int
     ) -> m.V1GetBestSearcherValidationMetricResponse:
-        return await self._build_for_determined_get_best_searcher_validation_metric(experiment_id=experiment_id)
+        return await self._build_for_get_best_searcher_validation_metric(experiment_id=experiment_id)
 
-    async def determined_get_current_trial_searcher_operation(
-        self, trial_id: int
-    ) -> m.V1GetCurrentTrialSearcherOperationResponse:
-        return await self._build_for_determined_get_current_trial_searcher_operation(trial_id=trial_id)
+    async def get_current_trial_searcher_operation(self, trial_id: int) -> m.V1GetCurrentTrialSearcherOperationResponse:
+        return await self._build_for_get_current_trial_searcher_operation(trial_id=trial_id)
 
-    async def determined_get_hp_importance(
+    async def get_hp_importance(
         self, experiment_id: int, period_seconds: int = None
     ) -> m.StreamResultOfV1GetHPImportanceResponse:
-        return await self._build_for_determined_get_hp_importance(
-            experiment_id=experiment_id, period_seconds=period_seconds
-        )
+        return await self._build_for_get_hp_importance(experiment_id=experiment_id, period_seconds=period_seconds)
 
-    async def determined_get_resource_pools(
-        self, offset: int = None, limit: int = None
-    ) -> m.V1GetResourcePoolsResponse:
-        return await self._build_for_determined_get_resource_pools(offset=offset, limit=limit)
+    async def get_resource_pools(self, offset: int = None, limit: int = None) -> m.V1GetResourcePoolsResponse:
+        return await self._build_for_get_resource_pools(offset=offset, limit=limit)
 
-    async def determined_get_telemetry(
+    async def get_telemetry(
         self,
     ) -> m.V1GetTelemetryResponse:
-        return await self._build_for_determined_get_telemetry()
+        return await self._build_for_get_telemetry()
 
-    async def determined_idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> m.Any:
-        return await self._build_for_determined_idle_notebook(notebook_id=notebook_id, body=body)
+    async def idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> m.Any:
+        return await self._build_for_idle_notebook(notebook_id=notebook_id, body=body)
 
-    async def determined_mark_allocation_reservation_daemon(
+    async def mark_allocation_reservation_daemon(
         self, allocation_id: str, container_id: str, body: m.V1MarkAllocationReservationDaemonRequest
     ) -> m.Any:
-        return await self._build_for_determined_mark_allocation_reservation_daemon(
+        return await self._build_for_mark_allocation_reservation_daemon(
             allocation_id=allocation_id, container_id=container_id, body=body
         )
 
-    async def determined_metric_batches(
+    async def metric_batches(
         self, experiment_id: int, metric_name: str, metric_type: str, period_seconds: int = None
     ) -> m.StreamResultOfV1MetricBatchesResponse:
-        return await self._build_for_determined_metric_batches(
+        return await self._build_for_metric_batches(
             experiment_id=experiment_id, metric_name=metric_name, metric_type=metric_type, period_seconds=period_seconds
         )
 
-    async def determined_metric_names(
+    async def metric_names(
         self, experiment_id: int, period_seconds: int = None
     ) -> m.StreamResultOfV1MetricNamesResponse:
-        return await self._build_for_determined_metric_names(experiment_id=experiment_id, period_seconds=period_seconds)
+        return await self._build_for_metric_names(experiment_id=experiment_id, period_seconds=period_seconds)
 
-    async def determined_post_trial_profiler_metrics_batch(
-        self, body: m.V1PostTrialProfilerMetricsBatchRequest
-    ) -> m.Any:
-        return await self._build_for_determined_post_trial_profiler_metrics_batch(body=body)
+    async def post_trial_profiler_metrics_batch(self, body: m.V1PostTrialProfilerMetricsBatchRequest) -> m.Any:
+        return await self._build_for_post_trial_profiler_metrics_batch(body=body)
 
-    async def determined_post_trial_runner_metadata(self, trial_id: int, body: m.V1TrialRunnerMetadata) -> m.Any:
-        return await self._build_for_determined_post_trial_runner_metadata(trial_id=trial_id, body=body)
+    async def post_trial_runner_metadata(self, trial_id: int, body: m.V1TrialRunnerMetadata) -> m.Any:
+        return await self._build_for_post_trial_runner_metadata(trial_id=trial_id, body=body)
 
-    async def determined_report_trial_checkpoint_metadata(
+    async def report_trial_checkpoint_metadata(
         self, checkpoint_metadata_trial_id: int, body: m.V1CheckpointMetadata
     ) -> m.Any:
-        return await self._build_for_determined_report_trial_checkpoint_metadata(
+        return await self._build_for_report_trial_checkpoint_metadata(
             checkpoint_metadata_trial_id=checkpoint_metadata_trial_id, body=body
         )
 
-    async def determined_report_trial_progress(self, trial_id: int, body: float) -> m.Any:
-        return await self._build_for_determined_report_trial_progress(trial_id=trial_id, body=body)
+    async def report_trial_progress(self, trial_id: int, body: float) -> m.Any:
+        return await self._build_for_report_trial_progress(trial_id=trial_id, body=body)
 
-    async def determined_report_trial_searcher_early_exit(self, trial_id: int, body: m.V1TrialEarlyExit) -> m.Any:
-        return await self._build_for_determined_report_trial_searcher_early_exit(trial_id=trial_id, body=body)
+    async def report_trial_searcher_early_exit(self, trial_id: int, body: m.V1TrialEarlyExit) -> m.Any:
+        return await self._build_for_report_trial_searcher_early_exit(trial_id=trial_id, body=body)
 
-    async def determined_report_trial_training_metrics(
-        self, training_metrics_trial_id: int, body: m.V1TrialMetrics
-    ) -> m.Any:
-        return await self._build_for_determined_report_trial_training_metrics(
+    async def report_trial_training_metrics(self, training_metrics_trial_id: int, body: m.V1TrialMetrics) -> m.Any:
+        return await self._build_for_report_trial_training_metrics(
             training_metrics_trial_id=training_metrics_trial_id, body=body
         )
 
-    async def determined_report_trial_validation_metrics(
-        self, validation_metrics_trial_id: int, body: m.V1TrialMetrics
-    ) -> m.Any:
-        return await self._build_for_determined_report_trial_validation_metrics(
+    async def report_trial_validation_metrics(self, validation_metrics_trial_id: int, body: m.V1TrialMetrics) -> m.Any:
+        return await self._build_for_report_trial_validation_metrics(
             validation_metrics_trial_id=validation_metrics_trial_id, body=body
         )
 
-    async def determined_trials_sample(
+    async def trials_sample(
         self,
         experiment_id: int,
         metric_name: str,
@@ -501,7 +483,7 @@ class AsyncInternalApi(_InternalApi):
         end_batches: int = None,
         period_seconds: int = None,
     ) -> m.StreamResultOfV1TrialsSampleResponse:
-        return await self._build_for_determined_trials_sample(
+        return await self._build_for_trials_sample(
             experiment_id=experiment_id,
             metric_name=metric_name,
             metric_type=metric_type,
@@ -512,7 +494,7 @@ class AsyncInternalApi(_InternalApi):
             period_seconds=period_seconds,
         )
 
-    async def determined_trials_snapshot(
+    async def trials_snapshot(
         self,
         experiment_id: int,
         metric_name: str,
@@ -521,7 +503,7 @@ class AsyncInternalApi(_InternalApi):
         batches_margin: int = None,
         period_seconds: int = None,
     ) -> m.StreamResultOfV1TrialsSnapshotResponse:
-        return await self._build_for_determined_trials_snapshot(
+        return await self._build_for_trials_snapshot(
             experiment_id=experiment_id,
             metric_name=metric_name,
             metric_type=metric_type,
@@ -532,137 +514,121 @@ class AsyncInternalApi(_InternalApi):
 
 
 class SyncInternalApi(_InternalApi):
-    def determined_ack_allocation_preemption_signal(
+    def ack_allocation_preemption_signal(
         self, allocation_id: str, body: m.V1AckAllocationPreemptionSignalRequest
     ) -> m.Any:
-        coroutine = self._build_for_determined_ack_allocation_preemption_signal(allocation_id=allocation_id, body=body)
+        coroutine = self._build_for_ack_allocation_preemption_signal(allocation_id=allocation_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_allocation_preemption_signal(
+    def allocation_preemption_signal(
         self, allocation_id: str, timeout_seconds: int = None
     ) -> m.V1AllocationPreemptionSignalResponse:
-        coroutine = self._build_for_determined_allocation_preemption_signal(
+        coroutine = self._build_for_allocation_preemption_signal(
             allocation_id=allocation_id, timeout_seconds=timeout_seconds
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_allocation_rendezvous_info(
-        self, allocation_id: str, container_id: str
-    ) -> m.V1AllocationRendezvousInfoResponse:
-        coroutine = self._build_for_determined_allocation_rendezvous_info(
-            allocation_id=allocation_id, container_id=container_id
-        )
+    def allocation_rendezvous_info(self, allocation_id: str, container_id: str) -> m.V1AllocationRendezvousInfoResponse:
+        coroutine = self._build_for_allocation_rendezvous_info(allocation_id=allocation_id, container_id=container_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_complete_trial_searcher_validation(
-        self, trial_id: int, body: m.V1CompleteValidateAfterOperation
-    ) -> m.Any:
-        coroutine = self._build_for_determined_complete_trial_searcher_validation(trial_id=trial_id, body=body)
+    def complete_trial_searcher_validation(self, trial_id: int, body: m.V1CompleteValidateAfterOperation) -> m.Any:
+        coroutine = self._build_for_complete_trial_searcher_validation(trial_id=trial_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_compute_hp_importance(self, experiment_id: int) -> m.Any:
-        coroutine = self._build_for_determined_compute_hp_importance(experiment_id=experiment_id)
+    def compute_hp_importance(self, experiment_id: int) -> m.Any:
+        coroutine = self._build_for_compute_hp_importance(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_create_experiment(self, body: m.V1CreateExperimentRequest) -> m.V1CreateExperimentResponse:
-        coroutine = self._build_for_determined_create_experiment(body=body)
+    def create_experiment(self, body: m.V1CreateExperimentRequest) -> m.V1CreateExperimentResponse:
+        coroutine = self._build_for_create_experiment(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_best_searcher_validation_metric(
-        self, experiment_id: int
-    ) -> m.V1GetBestSearcherValidationMetricResponse:
-        coroutine = self._build_for_determined_get_best_searcher_validation_metric(experiment_id=experiment_id)
+    def get_best_searcher_validation_metric(self, experiment_id: int) -> m.V1GetBestSearcherValidationMetricResponse:
+        coroutine = self._build_for_get_best_searcher_validation_metric(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_current_trial_searcher_operation(
-        self, trial_id: int
-    ) -> m.V1GetCurrentTrialSearcherOperationResponse:
-        coroutine = self._build_for_determined_get_current_trial_searcher_operation(trial_id=trial_id)
+    def get_current_trial_searcher_operation(self, trial_id: int) -> m.V1GetCurrentTrialSearcherOperationResponse:
+        coroutine = self._build_for_get_current_trial_searcher_operation(trial_id=trial_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_hp_importance(
+    def get_hp_importance(
         self, experiment_id: int, period_seconds: int = None
     ) -> m.StreamResultOfV1GetHPImportanceResponse:
-        coroutine = self._build_for_determined_get_hp_importance(
-            experiment_id=experiment_id, period_seconds=period_seconds
-        )
+        coroutine = self._build_for_get_hp_importance(experiment_id=experiment_id, period_seconds=period_seconds)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_resource_pools(self, offset: int = None, limit: int = None) -> m.V1GetResourcePoolsResponse:
-        coroutine = self._build_for_determined_get_resource_pools(offset=offset, limit=limit)
+    def get_resource_pools(self, offset: int = None, limit: int = None) -> m.V1GetResourcePoolsResponse:
+        coroutine = self._build_for_get_resource_pools(offset=offset, limit=limit)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_telemetry(
+    def get_telemetry(
         self,
     ) -> m.V1GetTelemetryResponse:
-        coroutine = self._build_for_determined_get_telemetry()
+        coroutine = self._build_for_get_telemetry()
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> m.Any:
-        coroutine = self._build_for_determined_idle_notebook(notebook_id=notebook_id, body=body)
+    def idle_notebook(self, notebook_id: str, body: m.V1IdleNotebookRequest) -> m.Any:
+        coroutine = self._build_for_idle_notebook(notebook_id=notebook_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_mark_allocation_reservation_daemon(
+    def mark_allocation_reservation_daemon(
         self, allocation_id: str, container_id: str, body: m.V1MarkAllocationReservationDaemonRequest
     ) -> m.Any:
-        coroutine = self._build_for_determined_mark_allocation_reservation_daemon(
+        coroutine = self._build_for_mark_allocation_reservation_daemon(
             allocation_id=allocation_id, container_id=container_id, body=body
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_metric_batches(
+    def metric_batches(
         self, experiment_id: int, metric_name: str, metric_type: str, period_seconds: int = None
     ) -> m.StreamResultOfV1MetricBatchesResponse:
-        coroutine = self._build_for_determined_metric_batches(
+        coroutine = self._build_for_metric_batches(
             experiment_id=experiment_id, metric_name=metric_name, metric_type=metric_type, period_seconds=period_seconds
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_metric_names(
-        self, experiment_id: int, period_seconds: int = None
-    ) -> m.StreamResultOfV1MetricNamesResponse:
-        coroutine = self._build_for_determined_metric_names(experiment_id=experiment_id, period_seconds=period_seconds)
+    def metric_names(self, experiment_id: int, period_seconds: int = None) -> m.StreamResultOfV1MetricNamesResponse:
+        coroutine = self._build_for_metric_names(experiment_id=experiment_id, period_seconds=period_seconds)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_post_trial_profiler_metrics_batch(self, body: m.V1PostTrialProfilerMetricsBatchRequest) -> m.Any:
-        coroutine = self._build_for_determined_post_trial_profiler_metrics_batch(body=body)
+    def post_trial_profiler_metrics_batch(self, body: m.V1PostTrialProfilerMetricsBatchRequest) -> m.Any:
+        coroutine = self._build_for_post_trial_profiler_metrics_batch(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_post_trial_runner_metadata(self, trial_id: int, body: m.V1TrialRunnerMetadata) -> m.Any:
-        coroutine = self._build_for_determined_post_trial_runner_metadata(trial_id=trial_id, body=body)
+    def post_trial_runner_metadata(self, trial_id: int, body: m.V1TrialRunnerMetadata) -> m.Any:
+        coroutine = self._build_for_post_trial_runner_metadata(trial_id=trial_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_report_trial_checkpoint_metadata(
+    def report_trial_checkpoint_metadata(
         self, checkpoint_metadata_trial_id: int, body: m.V1CheckpointMetadata
     ) -> m.Any:
-        coroutine = self._build_for_determined_report_trial_checkpoint_metadata(
+        coroutine = self._build_for_report_trial_checkpoint_metadata(
             checkpoint_metadata_trial_id=checkpoint_metadata_trial_id, body=body
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_report_trial_progress(self, trial_id: int, body: float) -> m.Any:
-        coroutine = self._build_for_determined_report_trial_progress(trial_id=trial_id, body=body)
+    def report_trial_progress(self, trial_id: int, body: float) -> m.Any:
+        coroutine = self._build_for_report_trial_progress(trial_id=trial_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_report_trial_searcher_early_exit(self, trial_id: int, body: m.V1TrialEarlyExit) -> m.Any:
-        coroutine = self._build_for_determined_report_trial_searcher_early_exit(trial_id=trial_id, body=body)
+    def report_trial_searcher_early_exit(self, trial_id: int, body: m.V1TrialEarlyExit) -> m.Any:
+        coroutine = self._build_for_report_trial_searcher_early_exit(trial_id=trial_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_report_trial_training_metrics(self, training_metrics_trial_id: int, body: m.V1TrialMetrics) -> m.Any:
-        coroutine = self._build_for_determined_report_trial_training_metrics(
+    def report_trial_training_metrics(self, training_metrics_trial_id: int, body: m.V1TrialMetrics) -> m.Any:
+        coroutine = self._build_for_report_trial_training_metrics(
             training_metrics_trial_id=training_metrics_trial_id, body=body
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_report_trial_validation_metrics(
-        self, validation_metrics_trial_id: int, body: m.V1TrialMetrics
-    ) -> m.Any:
-        coroutine = self._build_for_determined_report_trial_validation_metrics(
+    def report_trial_validation_metrics(self, validation_metrics_trial_id: int, body: m.V1TrialMetrics) -> m.Any:
+        coroutine = self._build_for_report_trial_validation_metrics(
             validation_metrics_trial_id=validation_metrics_trial_id, body=body
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trials_sample(
+    def trials_sample(
         self,
         experiment_id: int,
         metric_name: str,
@@ -673,7 +639,7 @@ class SyncInternalApi(_InternalApi):
         end_batches: int = None,
         period_seconds: int = None,
     ) -> m.StreamResultOfV1TrialsSampleResponse:
-        coroutine = self._build_for_determined_trials_sample(
+        coroutine = self._build_for_trials_sample(
             experiment_id=experiment_id,
             metric_name=metric_name,
             metric_type=metric_type,
@@ -685,7 +651,7 @@ class SyncInternalApi(_InternalApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trials_snapshot(
+    def trials_snapshot(
         self,
         experiment_id: int,
         metric_name: str,
@@ -694,7 +660,7 @@ class SyncInternalApi(_InternalApi):
         batches_margin: int = None,
         period_seconds: int = None,
     ) -> m.StreamResultOfV1TrialsSnapshotResponse:
-        coroutine = self._build_for_determined_trials_snapshot(
+        coroutine = self._build_for_trials_snapshot(
             experiment_id=experiment_id,
             metric_name=metric_name,
             metric_type=metric_type,

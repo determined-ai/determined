@@ -14,7 +14,7 @@ class _ClusterApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_disable_agent(
+    def _build_for_disable_agent(
         self, agent_id: str, body: m.V1DisableAgentRequest
     ) -> Awaitable[m.V1DisableAgentResponse]:
         path_params = {"agentId": str(agent_id)}
@@ -29,7 +29,7 @@ class _ClusterApi:
             json=body,
         )
 
-    def _build_for_determined_disable_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1DisableSlotResponse]:
+    def _build_for_disable_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1DisableSlotResponse]:
         path_params = {"agentId": str(agent_id), "slotId": str(slot_id)}
 
         return self.api_client.request(
@@ -39,7 +39,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_enable_agent(self, agent_id: str) -> Awaitable[m.V1EnableAgentResponse]:
+    def _build_for_enable_agent(self, agent_id: str) -> Awaitable[m.V1EnableAgentResponse]:
         path_params = {"agentId": str(agent_id)}
 
         return self.api_client.request(
@@ -49,7 +49,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_enable_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1EnableSlotResponse]:
+    def _build_for_enable_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1EnableSlotResponse]:
         path_params = {"agentId": str(agent_id), "slotId": str(slot_id)}
 
         return self.api_client.request(
@@ -59,7 +59,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_agent(self, agent_id: str) -> Awaitable[m.V1GetAgentResponse]:
+    def _build_for_get_agent(self, agent_id: str) -> Awaitable[m.V1GetAgentResponse]:
         path_params = {"agentId": str(agent_id)}
 
         return self.api_client.request(
@@ -69,7 +69,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_agents(
+    def _build_for_get_agents(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, label: str = None
     ) -> Awaitable[m.V1GetAgentsResponse]:
         query_params = {}
@@ -91,7 +91,19 @@ class _ClusterApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_master(
+    def _build_for_get_aggregated_resource_allocation_csv(
+        self, start_date: str, end_date: str, period: str
+    ) -> Awaitable[None]:
+        query_params = {"start_date": str(start_date), "end_date": str(end_date), "period": str(period)}
+
+        return self.api_client.request(
+            type_=None,
+            method="GET",
+            url="/allocation/aggregated",
+            params=query_params,
+        )
+
+    def _build_for_get_master(
         self,
     ) -> Awaitable[m.V1GetMasterResponse]:
         return self.api_client.request(
@@ -100,7 +112,7 @@ class _ClusterApi:
             url="/api/v1/master",
         )
 
-    def _build_for_determined_get_master_config(
+    def _build_for_get_master_config(
         self,
     ) -> Awaitable[m.V1GetMasterConfigResponse]:
         return self.api_client.request(
@@ -109,7 +121,19 @@ class _ClusterApi:
             url="/api/v1/master/config",
         )
 
-    def _build_for_determined_get_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1GetSlotResponse]:
+    def _build_for_get_raw_resource_allocation_csv(
+        self, timestamp_after: str, timestamp_before: str
+    ) -> Awaitable[None]:
+        query_params = {"timestamp_after": str(timestamp_after), "timestamp_before": str(timestamp_before)}
+
+        return self.api_client.request(
+            type_=None,
+            method="GET",
+            url="/allocation/raw",
+            params=query_params,
+        )
+
+    def _build_for_get_slot(self, agent_id: str, slot_id: str) -> Awaitable[m.V1GetSlotResponse]:
         path_params = {"agentId": str(agent_id), "slotId": str(slot_id)}
 
         return self.api_client.request(
@@ -119,7 +143,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_slots(self, agent_id: str) -> Awaitable[m.V1GetSlotsResponse]:
+    def _build_for_get_slots(self, agent_id: str) -> Awaitable[m.V1GetSlotsResponse]:
         path_params = {"agentId": str(agent_id)}
 
         return self.api_client.request(
@@ -129,7 +153,7 @@ class _ClusterApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_master_logs(
+    def _build_for_master_logs(
         self, offset: int = None, limit: int = None, follow: bool = None
     ) -> Awaitable[m.StreamResultOfV1MasterLogsResponse]:
         query_params = {}
@@ -147,7 +171,7 @@ class _ClusterApi:
             params=query_params,
         )
 
-    def _build_for_determined_resource_allocation_aggregated(
+    def _build_for_resource_allocation_aggregated(
         self, start_date: str = None, end_date: str = None, period: str = None
     ) -> Awaitable[m.V1ResourceAllocationAggregatedResponse]:
         query_params = {}
@@ -165,7 +189,7 @@ class _ClusterApi:
             params=query_params,
         )
 
-    def _build_for_determined_resource_allocation_raw(
+    def _build_for_resource_allocation_raw(
         self, timestamp_after: datetime = None, timestamp_before: datetime = None
     ) -> Awaitable[m.V1ResourceAllocationRawResponse]:
         query_params = {}
@@ -181,87 +205,28 @@ class _ClusterApi:
             params=query_params,
         )
 
-    def _build_for_get_aggregated_resource_allocation_csv(
-        self, start_date: str, end_date: str, period: str
-    ) -> Awaitable[None]:
-        query_params = {"start_date": str(start_date), "end_date": str(end_date), "period": str(period)}
-
-        return self.api_client.request(
-            type_=None,
-            method="GET",
-            url="/allocation/aggregated",
-            params=query_params,
-        )
-
-    def _build_for_get_raw_resource_allocation_csv(
-        self, timestamp_after: str, timestamp_before: str
-    ) -> Awaitable[None]:
-        query_params = {"timestamp_after": str(timestamp_after), "timestamp_before": str(timestamp_before)}
-
-        return self.api_client.request(
-            type_=None,
-            method="GET",
-            url="/allocation/raw",
-            params=query_params,
-        )
-
 
 class AsyncClusterApi(_ClusterApi):
-    async def determined_disable_agent(self, agent_id: str, body: m.V1DisableAgentRequest) -> m.V1DisableAgentResponse:
-        return await self._build_for_determined_disable_agent(agent_id=agent_id, body=body)
+    async def disable_agent(self, agent_id: str, body: m.V1DisableAgentRequest) -> m.V1DisableAgentResponse:
+        return await self._build_for_disable_agent(agent_id=agent_id, body=body)
 
-    async def determined_disable_slot(self, agent_id: str, slot_id: str) -> m.V1DisableSlotResponse:
-        return await self._build_for_determined_disable_slot(agent_id=agent_id, slot_id=slot_id)
+    async def disable_slot(self, agent_id: str, slot_id: str) -> m.V1DisableSlotResponse:
+        return await self._build_for_disable_slot(agent_id=agent_id, slot_id=slot_id)
 
-    async def determined_enable_agent(self, agent_id: str) -> m.V1EnableAgentResponse:
-        return await self._build_for_determined_enable_agent(agent_id=agent_id)
+    async def enable_agent(self, agent_id: str) -> m.V1EnableAgentResponse:
+        return await self._build_for_enable_agent(agent_id=agent_id)
 
-    async def determined_enable_slot(self, agent_id: str, slot_id: str) -> m.V1EnableSlotResponse:
-        return await self._build_for_determined_enable_slot(agent_id=agent_id, slot_id=slot_id)
+    async def enable_slot(self, agent_id: str, slot_id: str) -> m.V1EnableSlotResponse:
+        return await self._build_for_enable_slot(agent_id=agent_id, slot_id=slot_id)
 
-    async def determined_get_agent(self, agent_id: str) -> m.V1GetAgentResponse:
-        return await self._build_for_determined_get_agent(agent_id=agent_id)
+    async def get_agent(self, agent_id: str) -> m.V1GetAgentResponse:
+        return await self._build_for_get_agent(agent_id=agent_id)
 
-    async def determined_get_agents(
+    async def get_agents(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, label: str = None
     ) -> m.V1GetAgentsResponse:
-        return await self._build_for_determined_get_agents(
+        return await self._build_for_get_agents(
             sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, label=label
-        )
-
-    async def determined_get_master(
-        self,
-    ) -> m.V1GetMasterResponse:
-        return await self._build_for_determined_get_master()
-
-    async def determined_get_master_config(
-        self,
-    ) -> m.V1GetMasterConfigResponse:
-        return await self._build_for_determined_get_master_config()
-
-    async def determined_get_slot(self, agent_id: str, slot_id: str) -> m.V1GetSlotResponse:
-        return await self._build_for_determined_get_slot(agent_id=agent_id, slot_id=slot_id)
-
-    async def determined_get_slots(self, agent_id: str) -> m.V1GetSlotsResponse:
-        return await self._build_for_determined_get_slots(agent_id=agent_id)
-
-    async def determined_master_logs(
-        self, offset: int = None, limit: int = None, follow: bool = None
-    ) -> m.StreamResultOfV1MasterLogsResponse:
-        return await self._build_for_determined_master_logs(offset=offset, limit=limit, follow=follow)
-
-    async def determined_resource_allocation_aggregated(
-        self, start_date: str = None, end_date: str = None, period: str = None
-    ) -> m.V1ResourceAllocationAggregatedResponse:
-        return await self._build_for_determined_resource_allocation_aggregated(
-            start_date=start_date, end_date=end_date, period=period
-        )
-
-    async def determined_resource_allocation_raw(
-        self, timestamp_after: datetime = None, timestamp_before: datetime = None
-    ) -> m.V1ResourceAllocationRawResponse:
-        return await self._build_for_determined_resource_allocation_raw(
-            timestamp_after=timestamp_after, timestamp_before=timestamp_before
         )
 
     async def get_aggregated_resource_allocation_csv(self, start_date: str, end_date: str, period: str) -> None:
@@ -269,80 +234,73 @@ class AsyncClusterApi(_ClusterApi):
             start_date=start_date, end_date=end_date, period=period
         )
 
+    async def get_master(
+        self,
+    ) -> m.V1GetMasterResponse:
+        return await self._build_for_get_master()
+
+    async def get_master_config(
+        self,
+    ) -> m.V1GetMasterConfigResponse:
+        return await self._build_for_get_master_config()
+
     async def get_raw_resource_allocation_csv(self, timestamp_after: str, timestamp_before: str) -> None:
         return await self._build_for_get_raw_resource_allocation_csv(
             timestamp_after=timestamp_after, timestamp_before=timestamp_before
         )
 
+    async def get_slot(self, agent_id: str, slot_id: str) -> m.V1GetSlotResponse:
+        return await self._build_for_get_slot(agent_id=agent_id, slot_id=slot_id)
 
-class SyncClusterApi(_ClusterApi):
-    def determined_disable_agent(self, agent_id: str, body: m.V1DisableAgentRequest) -> m.V1DisableAgentResponse:
-        coroutine = self._build_for_determined_disable_agent(agent_id=agent_id, body=body)
-        return get_event_loop().run_until_complete(coroutine)
+    async def get_slots(self, agent_id: str) -> m.V1GetSlotsResponse:
+        return await self._build_for_get_slots(agent_id=agent_id)
 
-    def determined_disable_slot(self, agent_id: str, slot_id: str) -> m.V1DisableSlotResponse:
-        coroutine = self._build_for_determined_disable_slot(agent_id=agent_id, slot_id=slot_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_enable_agent(self, agent_id: str) -> m.V1EnableAgentResponse:
-        coroutine = self._build_for_determined_enable_agent(agent_id=agent_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_enable_slot(self, agent_id: str, slot_id: str) -> m.V1EnableSlotResponse:
-        coroutine = self._build_for_determined_enable_slot(agent_id=agent_id, slot_id=slot_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_agent(self, agent_id: str) -> m.V1GetAgentResponse:
-        coroutine = self._build_for_determined_get_agent(agent_id=agent_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_agents(
-        self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, label: str = None
-    ) -> m.V1GetAgentsResponse:
-        coroutine = self._build_for_determined_get_agents(
-            sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, label=label
-        )
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_master(
-        self,
-    ) -> m.V1GetMasterResponse:
-        coroutine = self._build_for_determined_get_master()
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_master_config(
-        self,
-    ) -> m.V1GetMasterConfigResponse:
-        coroutine = self._build_for_determined_get_master_config()
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_slot(self, agent_id: str, slot_id: str) -> m.V1GetSlotResponse:
-        coroutine = self._build_for_determined_get_slot(agent_id=agent_id, slot_id=slot_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_get_slots(self, agent_id: str) -> m.V1GetSlotsResponse:
-        coroutine = self._build_for_determined_get_slots(agent_id=agent_id)
-        return get_event_loop().run_until_complete(coroutine)
-
-    def determined_master_logs(
+    async def master_logs(
         self, offset: int = None, limit: int = None, follow: bool = None
     ) -> m.StreamResultOfV1MasterLogsResponse:
-        coroutine = self._build_for_determined_master_logs(offset=offset, limit=limit, follow=follow)
-        return get_event_loop().run_until_complete(coroutine)
+        return await self._build_for_master_logs(offset=offset, limit=limit, follow=follow)
 
-    def determined_resource_allocation_aggregated(
+    async def resource_allocation_aggregated(
         self, start_date: str = None, end_date: str = None, period: str = None
     ) -> m.V1ResourceAllocationAggregatedResponse:
-        coroutine = self._build_for_determined_resource_allocation_aggregated(
+        return await self._build_for_resource_allocation_aggregated(
             start_date=start_date, end_date=end_date, period=period
         )
-        return get_event_loop().run_until_complete(coroutine)
 
-    def determined_resource_allocation_raw(
+    async def resource_allocation_raw(
         self, timestamp_after: datetime = None, timestamp_before: datetime = None
     ) -> m.V1ResourceAllocationRawResponse:
-        coroutine = self._build_for_determined_resource_allocation_raw(
+        return await self._build_for_resource_allocation_raw(
             timestamp_after=timestamp_after, timestamp_before=timestamp_before
+        )
+
+
+class SyncClusterApi(_ClusterApi):
+    def disable_agent(self, agent_id: str, body: m.V1DisableAgentRequest) -> m.V1DisableAgentResponse:
+        coroutine = self._build_for_disable_agent(agent_id=agent_id, body=body)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def disable_slot(self, agent_id: str, slot_id: str) -> m.V1DisableSlotResponse:
+        coroutine = self._build_for_disable_slot(agent_id=agent_id, slot_id=slot_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def enable_agent(self, agent_id: str) -> m.V1EnableAgentResponse:
+        coroutine = self._build_for_enable_agent(agent_id=agent_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def enable_slot(self, agent_id: str, slot_id: str) -> m.V1EnableSlotResponse:
+        coroutine = self._build_for_enable_slot(agent_id=agent_id, slot_id=slot_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def get_agent(self, agent_id: str) -> m.V1GetAgentResponse:
+        coroutine = self._build_for_get_agent(agent_id=agent_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def get_agents(
+        self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, label: str = None
+    ) -> m.V1GetAgentsResponse:
+        coroutine = self._build_for_get_agents(
+            sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, label=label
         )
         return get_event_loop().run_until_complete(coroutine)
 
@@ -352,8 +310,50 @@ class SyncClusterApi(_ClusterApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
+    def get_master(
+        self,
+    ) -> m.V1GetMasterResponse:
+        coroutine = self._build_for_get_master()
+        return get_event_loop().run_until_complete(coroutine)
+
+    def get_master_config(
+        self,
+    ) -> m.V1GetMasterConfigResponse:
+        coroutine = self._build_for_get_master_config()
+        return get_event_loop().run_until_complete(coroutine)
+
     def get_raw_resource_allocation_csv(self, timestamp_after: str, timestamp_before: str) -> None:
         coroutine = self._build_for_get_raw_resource_allocation_csv(
+            timestamp_after=timestamp_after, timestamp_before=timestamp_before
+        )
+        return get_event_loop().run_until_complete(coroutine)
+
+    def get_slot(self, agent_id: str, slot_id: str) -> m.V1GetSlotResponse:
+        coroutine = self._build_for_get_slot(agent_id=agent_id, slot_id=slot_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def get_slots(self, agent_id: str) -> m.V1GetSlotsResponse:
+        coroutine = self._build_for_get_slots(agent_id=agent_id)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def master_logs(
+        self, offset: int = None, limit: int = None, follow: bool = None
+    ) -> m.StreamResultOfV1MasterLogsResponse:
+        coroutine = self._build_for_master_logs(offset=offset, limit=limit, follow=follow)
+        return get_event_loop().run_until_complete(coroutine)
+
+    def resource_allocation_aggregated(
+        self, start_date: str = None, end_date: str = None, period: str = None
+    ) -> m.V1ResourceAllocationAggregatedResponse:
+        coroutine = self._build_for_resource_allocation_aggregated(
+            start_date=start_date, end_date=end_date, period=period
+        )
+        return get_event_loop().run_until_complete(coroutine)
+
+    def resource_allocation_raw(
+        self, timestamp_after: datetime = None, timestamp_before: datetime = None
+    ) -> m.V1ResourceAllocationRawResponse:
+        coroutine = self._build_for_resource_allocation_raw(
             timestamp_after=timestamp_after, timestamp_before=timestamp_before
         )
         return get_event_loop().run_until_complete(coroutine)

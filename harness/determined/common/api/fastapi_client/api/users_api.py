@@ -13,7 +13,7 @@ class _UsersApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_user(self, username: str) -> Awaitable[m.V1GetUserResponse]:
+    def _build_for_get_user(self, username: str) -> Awaitable[m.V1GetUserResponse]:
         path_params = {"username": str(username)}
 
         return self.api_client.request(
@@ -23,7 +23,7 @@ class _UsersApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_users(
+    def _build_for_get_users(
         self,
     ) -> Awaitable[m.V1GetUsersResponse]:
         return self.api_client.request(
@@ -32,14 +32,12 @@ class _UsersApi:
             url="/api/v1/users",
         )
 
-    def _build_for_determined_post_user(self, body: m.V1PostUserRequest) -> Awaitable[m.V1PostUserResponse]:
+    def _build_for_post_user(self, body: m.V1PostUserRequest) -> Awaitable[m.V1PostUserResponse]:
         body = jsonable_encoder(body)
 
         return self.api_client.request(type_=m.V1PostUserResponse, method="POST", url="/api/v1/users", json=body)
 
-    def _build_for_determined_set_user_password(
-        self, username: str, body: str
-    ) -> Awaitable[m.V1SetUserPasswordResponse]:
+    def _build_for_set_user_password(self, username: str, body: str) -> Awaitable[m.V1SetUserPasswordResponse]:
         path_params = {"username": str(username)}
 
         body = jsonable_encoder(body)
@@ -54,36 +52,36 @@ class _UsersApi:
 
 
 class AsyncUsersApi(_UsersApi):
-    async def determined_get_user(self, username: str) -> m.V1GetUserResponse:
-        return await self._build_for_determined_get_user(username=username)
+    async def get_user(self, username: str) -> m.V1GetUserResponse:
+        return await self._build_for_get_user(username=username)
 
-    async def determined_get_users(
+    async def get_users(
         self,
     ) -> m.V1GetUsersResponse:
-        return await self._build_for_determined_get_users()
+        return await self._build_for_get_users()
 
-    async def determined_post_user(self, body: m.V1PostUserRequest) -> m.V1PostUserResponse:
-        return await self._build_for_determined_post_user(body=body)
+    async def post_user(self, body: m.V1PostUserRequest) -> m.V1PostUserResponse:
+        return await self._build_for_post_user(body=body)
 
-    async def determined_set_user_password(self, username: str, body: str) -> m.V1SetUserPasswordResponse:
-        return await self._build_for_determined_set_user_password(username=username, body=body)
+    async def set_user_password(self, username: str, body: str) -> m.V1SetUserPasswordResponse:
+        return await self._build_for_set_user_password(username=username, body=body)
 
 
 class SyncUsersApi(_UsersApi):
-    def determined_get_user(self, username: str) -> m.V1GetUserResponse:
-        coroutine = self._build_for_determined_get_user(username=username)
+    def get_user(self, username: str) -> m.V1GetUserResponse:
+        coroutine = self._build_for_get_user(username=username)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_users(
+    def get_users(
         self,
     ) -> m.V1GetUsersResponse:
-        coroutine = self._build_for_determined_get_users()
+        coroutine = self._build_for_get_users()
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_post_user(self, body: m.V1PostUserRequest) -> m.V1PostUserResponse:
-        coroutine = self._build_for_determined_post_user(body=body)
+    def post_user(self, body: m.V1PostUserRequest) -> m.V1PostUserResponse:
+        coroutine = self._build_for_post_user(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_set_user_password(self, username: str, body: str) -> m.V1SetUserPasswordResponse:
-        coroutine = self._build_for_determined_set_user_password(username=username, body=body)
+    def set_user_password(self, username: str, body: str) -> m.V1SetUserPasswordResponse:
+        coroutine = self._build_for_set_user_password(username=username, body=body)
         return get_event_loop().run_until_complete(coroutine)

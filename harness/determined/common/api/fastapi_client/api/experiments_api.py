@@ -14,7 +14,7 @@ class _ExperimentsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_activate_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_activate_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -24,7 +24,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_archive_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_archive_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -34,7 +34,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_cancel_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_cancel_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -44,7 +44,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_delete_experiment(self, experiment_id: int) -> Awaitable[m.Any]:
+    def _build_for_delete_experiment(self, experiment_id: int) -> Awaitable[m.Any]:
         path_params = {"experimentId": str(experiment_id)}
 
         return self.api_client.request(
@@ -54,7 +54,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_experiment(self, experiment_id: int) -> Awaitable[m.V1GetExperimentResponse]:
+    def _build_for_get_experiment(self, experiment_id: int) -> Awaitable[m.V1GetExperimentResponse]:
         path_params = {"experimentId": str(experiment_id)}
 
         return self.api_client.request(
@@ -64,7 +64,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_experiment_checkpoints(
+    def _build_for_get_experiment_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -100,7 +100,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_experiment_labels(
+    def _build_for_get_experiment_labels(
         self,
     ) -> Awaitable[m.V1GetExperimentLabelsResponse]:
         return self.api_client.request(
@@ -109,7 +109,7 @@ class _ExperimentsApi:
             url="/api/v1/experiment/labels",
         )
 
-    def _build_for_determined_get_experiment_trials(
+    def _build_for_get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -140,7 +140,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_experiment_validation_history(
+    def _build_for_get_experiment_validation_history(
         self, experiment_id: int
     ) -> Awaitable[m.V1GetExperimentValidationHistoryResponse]:
         path_params = {"experimentId": str(experiment_id)}
@@ -152,7 +152,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_experiments(
+    def _build_for_get_experiments(
         self,
         sort_by: str = None,
         order_by: str = None,
@@ -194,7 +194,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_model_def(self, experiment_id: int) -> Awaitable[m.V1GetModelDefResponse]:
+    def _build_for_get_model_def(self, experiment_id: int) -> Awaitable[m.V1GetModelDefResponse]:
         path_params = {"experimentId": str(experiment_id)}
 
         return self.api_client.request(
@@ -204,7 +204,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_trial(self, trial_id: int) -> Awaitable[m.V1GetTrialResponse]:
+    def _build_for_get_trial(self, trial_id: int) -> Awaitable[m.V1GetTrialResponse]:
         path_params = {"trialId": str(trial_id)}
 
         return self.api_client.request(
@@ -214,7 +214,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_trial_checkpoints(
+    def _build_for_get_trial_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -250,7 +250,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_kill_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_kill_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -260,7 +260,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_kill_trial(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_kill_trial(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -270,7 +270,7 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_patch_experiment(
+    def _build_for_patch_experiment(
         self, experiment_id: int, body: m.V1Experiment
     ) -> Awaitable[m.V1PatchExperimentResponse]:
         path_params = {"experiment.id": str(experiment_id)}
@@ -285,7 +285,7 @@ class _ExperimentsApi:
             json=body,
         )
 
-    def _build_for_determined_pause_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_pause_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -295,16 +295,14 @@ class _ExperimentsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_preview_hp_search(
-        self, body: m.V1PreviewHPSearchRequest
-    ) -> Awaitable[m.V1PreviewHPSearchResponse]:
+    def _build_for_preview_hp_search(self, body: m.V1PreviewHPSearchRequest) -> Awaitable[m.V1PreviewHPSearchResponse]:
         body = jsonable_encoder(body)
 
         return self.api_client.request(
             type_=m.V1PreviewHPSearchResponse, method="POST", url="/api/v1/preview-hp-search", json=body
         )
 
-    def _build_for_determined_trial_logs(
+    def _build_for_trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -353,7 +351,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_trial_logs_fields(
+    def _build_for_trial_logs_fields(
         self, trial_id: int, follow: bool = None
     ) -> Awaitable[m.StreamResultOfV1TrialLogsFieldsResponse]:
         path_params = {"trialId": str(trial_id)}
@@ -370,7 +368,7 @@ class _ExperimentsApi:
             params=query_params,
         )
 
-    def _build_for_determined_unarchive_experiment(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_unarchive_experiment(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -382,22 +380,22 @@ class _ExperimentsApi:
 
 
 class AsyncExperimentsApi(_ExperimentsApi):
-    async def determined_activate_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_activate_experiment(id=id)
+    async def activate_experiment(self, id: int) -> m.Any:
+        return await self._build_for_activate_experiment(id=id)
 
-    async def determined_archive_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_archive_experiment(id=id)
+    async def archive_experiment(self, id: int) -> m.Any:
+        return await self._build_for_archive_experiment(id=id)
 
-    async def determined_cancel_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_cancel_experiment(id=id)
+    async def cancel_experiment(self, id: int) -> m.Any:
+        return await self._build_for_cancel_experiment(id=id)
 
-    async def determined_delete_experiment(self, experiment_id: int) -> m.Any:
-        return await self._build_for_determined_delete_experiment(experiment_id=experiment_id)
+    async def delete_experiment(self, experiment_id: int) -> m.Any:
+        return await self._build_for_delete_experiment(experiment_id=experiment_id)
 
-    async def determined_get_experiment(self, experiment_id: int) -> m.V1GetExperimentResponse:
-        return await self._build_for_determined_get_experiment(experiment_id=experiment_id)
+    async def get_experiment(self, experiment_id: int) -> m.V1GetExperimentResponse:
+        return await self._build_for_get_experiment(experiment_id=experiment_id)
 
-    async def determined_get_experiment_checkpoints(
+    async def get_experiment_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -407,7 +405,7 @@ class AsyncExperimentsApi(_ExperimentsApi):
         validation_states: List[str] = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentCheckpointsResponse:
-        return await self._build_for_determined_get_experiment_checkpoints(
+        return await self._build_for_get_experiment_checkpoints(
             id=id,
             sort_by=sort_by,
             order_by=order_by,
@@ -417,12 +415,12 @@ class AsyncExperimentsApi(_ExperimentsApi):
             states=states,
         )
 
-    async def determined_get_experiment_labels(
+    async def get_experiment_labels(
         self,
     ) -> m.V1GetExperimentLabelsResponse:
-        return await self._build_for_determined_get_experiment_labels()
+        return await self._build_for_get_experiment_labels()
 
-    async def determined_get_experiment_trials(
+    async def get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -431,16 +429,14 @@ class AsyncExperimentsApi(_ExperimentsApi):
         limit: int = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentTrialsResponse:
-        return await self._build_for_determined_get_experiment_trials(
+        return await self._build_for_get_experiment_trials(
             experiment_id=experiment_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, states=states
         )
 
-    async def determined_get_experiment_validation_history(
-        self, experiment_id: int
-    ) -> m.V1GetExperimentValidationHistoryResponse:
-        return await self._build_for_determined_get_experiment_validation_history(experiment_id=experiment_id)
+    async def get_experiment_validation_history(self, experiment_id: int) -> m.V1GetExperimentValidationHistoryResponse:
+        return await self._build_for_get_experiment_validation_history(experiment_id=experiment_id)
 
-    async def determined_get_experiments(
+    async def get_experiments(
         self,
         sort_by: str = None,
         order_by: str = None,
@@ -453,7 +449,7 @@ class AsyncExperimentsApi(_ExperimentsApi):
         states: List[str] = None,
         users: List[str] = None,
     ) -> m.V1GetExperimentsResponse:
-        return await self._build_for_determined_get_experiments(
+        return await self._build_for_get_experiments(
             sort_by=sort_by,
             order_by=order_by,
             offset=offset,
@@ -466,13 +462,13 @@ class AsyncExperimentsApi(_ExperimentsApi):
             users=users,
         )
 
-    async def determined_get_model_def(self, experiment_id: int) -> m.V1GetModelDefResponse:
-        return await self._build_for_determined_get_model_def(experiment_id=experiment_id)
+    async def get_model_def(self, experiment_id: int) -> m.V1GetModelDefResponse:
+        return await self._build_for_get_model_def(experiment_id=experiment_id)
 
-    async def determined_get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
-        return await self._build_for_determined_get_trial(trial_id=trial_id)
+    async def get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
+        return await self._build_for_get_trial(trial_id=trial_id)
 
-    async def determined_get_trial_checkpoints(
+    async def get_trial_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -482,7 +478,7 @@ class AsyncExperimentsApi(_ExperimentsApi):
         validation_states: List[str] = None,
         states: List[str] = None,
     ) -> m.V1GetTrialCheckpointsResponse:
-        return await self._build_for_determined_get_trial_checkpoints(
+        return await self._build_for_get_trial_checkpoints(
             id=id,
             sort_by=sort_by,
             order_by=order_by,
@@ -492,24 +488,22 @@ class AsyncExperimentsApi(_ExperimentsApi):
             states=states,
         )
 
-    async def determined_kill_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_kill_experiment(id=id)
+    async def kill_experiment(self, id: int) -> m.Any:
+        return await self._build_for_kill_experiment(id=id)
 
-    async def determined_kill_trial(self, id: int) -> m.Any:
-        return await self._build_for_determined_kill_trial(id=id)
+    async def kill_trial(self, id: int) -> m.Any:
+        return await self._build_for_kill_trial(id=id)
 
-    async def determined_patch_experiment(
-        self, experiment_id: int, body: m.V1Experiment
-    ) -> m.V1PatchExperimentResponse:
-        return await self._build_for_determined_patch_experiment(experiment_id=experiment_id, body=body)
+    async def patch_experiment(self, experiment_id: int, body: m.V1Experiment) -> m.V1PatchExperimentResponse:
+        return await self._build_for_patch_experiment(experiment_id=experiment_id, body=body)
 
-    async def determined_pause_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_pause_experiment(id=id)
+    async def pause_experiment(self, id: int) -> m.Any:
+        return await self._build_for_pause_experiment(id=id)
 
-    async def determined_preview_hp_search(self, body: m.V1PreviewHPSearchRequest) -> m.V1PreviewHPSearchResponse:
-        return await self._build_for_determined_preview_hp_search(body=body)
+    async def preview_hp_search(self, body: m.V1PreviewHPSearchRequest) -> m.V1PreviewHPSearchResponse:
+        return await self._build_for_preview_hp_search(body=body)
 
-    async def determined_trial_logs(
+    async def trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -524,7 +518,7 @@ class AsyncExperimentsApi(_ExperimentsApi):
         timestamp_after: datetime = None,
         order_by: str = None,
     ) -> m.StreamResultOfV1TrialLogsResponse:
-        return await self._build_for_determined_trial_logs(
+        return await self._build_for_trial_logs(
             trial_id=trial_id,
             limit=limit,
             follow=follow,
@@ -539,37 +533,35 @@ class AsyncExperimentsApi(_ExperimentsApi):
             order_by=order_by,
         )
 
-    async def determined_trial_logs_fields(
-        self, trial_id: int, follow: bool = None
-    ) -> m.StreamResultOfV1TrialLogsFieldsResponse:
-        return await self._build_for_determined_trial_logs_fields(trial_id=trial_id, follow=follow)
+    async def trial_logs_fields(self, trial_id: int, follow: bool = None) -> m.StreamResultOfV1TrialLogsFieldsResponse:
+        return await self._build_for_trial_logs_fields(trial_id=trial_id, follow=follow)
 
-    async def determined_unarchive_experiment(self, id: int) -> m.Any:
-        return await self._build_for_determined_unarchive_experiment(id=id)
+    async def unarchive_experiment(self, id: int) -> m.Any:
+        return await self._build_for_unarchive_experiment(id=id)
 
 
 class SyncExperimentsApi(_ExperimentsApi):
-    def determined_activate_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_activate_experiment(id=id)
+    def activate_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_activate_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_archive_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_archive_experiment(id=id)
+    def archive_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_archive_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_cancel_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_cancel_experiment(id=id)
+    def cancel_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_cancel_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_delete_experiment(self, experiment_id: int) -> m.Any:
-        coroutine = self._build_for_determined_delete_experiment(experiment_id=experiment_id)
+    def delete_experiment(self, experiment_id: int) -> m.Any:
+        coroutine = self._build_for_delete_experiment(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiment(self, experiment_id: int) -> m.V1GetExperimentResponse:
-        coroutine = self._build_for_determined_get_experiment(experiment_id=experiment_id)
+    def get_experiment(self, experiment_id: int) -> m.V1GetExperimentResponse:
+        coroutine = self._build_for_get_experiment(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiment_checkpoints(
+    def get_experiment_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -579,7 +571,7 @@ class SyncExperimentsApi(_ExperimentsApi):
         validation_states: List[str] = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentCheckpointsResponse:
-        coroutine = self._build_for_determined_get_experiment_checkpoints(
+        coroutine = self._build_for_get_experiment_checkpoints(
             id=id,
             sort_by=sort_by,
             order_by=order_by,
@@ -590,13 +582,13 @@ class SyncExperimentsApi(_ExperimentsApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiment_labels(
+    def get_experiment_labels(
         self,
     ) -> m.V1GetExperimentLabelsResponse:
-        coroutine = self._build_for_determined_get_experiment_labels()
+        coroutine = self._build_for_get_experiment_labels()
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiment_trials(
+    def get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -605,18 +597,16 @@ class SyncExperimentsApi(_ExperimentsApi):
         limit: int = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentTrialsResponse:
-        coroutine = self._build_for_determined_get_experiment_trials(
+        coroutine = self._build_for_get_experiment_trials(
             experiment_id=experiment_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, states=states
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiment_validation_history(
-        self, experiment_id: int
-    ) -> m.V1GetExperimentValidationHistoryResponse:
-        coroutine = self._build_for_determined_get_experiment_validation_history(experiment_id=experiment_id)
+    def get_experiment_validation_history(self, experiment_id: int) -> m.V1GetExperimentValidationHistoryResponse:
+        coroutine = self._build_for_get_experiment_validation_history(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_experiments(
+    def get_experiments(
         self,
         sort_by: str = None,
         order_by: str = None,
@@ -629,7 +619,7 @@ class SyncExperimentsApi(_ExperimentsApi):
         states: List[str] = None,
         users: List[str] = None,
     ) -> m.V1GetExperimentsResponse:
-        coroutine = self._build_for_determined_get_experiments(
+        coroutine = self._build_for_get_experiments(
             sort_by=sort_by,
             order_by=order_by,
             offset=offset,
@@ -643,15 +633,15 @@ class SyncExperimentsApi(_ExperimentsApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_model_def(self, experiment_id: int) -> m.V1GetModelDefResponse:
-        coroutine = self._build_for_determined_get_model_def(experiment_id=experiment_id)
+    def get_model_def(self, experiment_id: int) -> m.V1GetModelDefResponse:
+        coroutine = self._build_for_get_model_def(experiment_id=experiment_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
-        coroutine = self._build_for_determined_get_trial(trial_id=trial_id)
+    def get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
+        coroutine = self._build_for_get_trial(trial_id=trial_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_trial_checkpoints(
+    def get_trial_checkpoints(
         self,
         id: int,
         sort_by: str = None,
@@ -661,7 +651,7 @@ class SyncExperimentsApi(_ExperimentsApi):
         validation_states: List[str] = None,
         states: List[str] = None,
     ) -> m.V1GetTrialCheckpointsResponse:
-        coroutine = self._build_for_determined_get_trial_checkpoints(
+        coroutine = self._build_for_get_trial_checkpoints(
             id=id,
             sort_by=sort_by,
             order_by=order_by,
@@ -672,27 +662,27 @@ class SyncExperimentsApi(_ExperimentsApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_kill_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_kill_experiment(id=id)
+    def kill_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_kill_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_kill_trial(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_kill_trial(id=id)
+    def kill_trial(self, id: int) -> m.Any:
+        coroutine = self._build_for_kill_trial(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_patch_experiment(self, experiment_id: int, body: m.V1Experiment) -> m.V1PatchExperimentResponse:
-        coroutine = self._build_for_determined_patch_experiment(experiment_id=experiment_id, body=body)
+    def patch_experiment(self, experiment_id: int, body: m.V1Experiment) -> m.V1PatchExperimentResponse:
+        coroutine = self._build_for_patch_experiment(experiment_id=experiment_id, body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_pause_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_pause_experiment(id=id)
+    def pause_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_pause_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_preview_hp_search(self, body: m.V1PreviewHPSearchRequest) -> m.V1PreviewHPSearchResponse:
-        coroutine = self._build_for_determined_preview_hp_search(body=body)
+    def preview_hp_search(self, body: m.V1PreviewHPSearchRequest) -> m.V1PreviewHPSearchResponse:
+        coroutine = self._build_for_preview_hp_search(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trial_logs(
+    def trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -707,7 +697,7 @@ class SyncExperimentsApi(_ExperimentsApi):
         timestamp_after: datetime = None,
         order_by: str = None,
     ) -> m.StreamResultOfV1TrialLogsResponse:
-        coroutine = self._build_for_determined_trial_logs(
+        coroutine = self._build_for_trial_logs(
             trial_id=trial_id,
             limit=limit,
             follow=follow,
@@ -723,12 +713,10 @@ class SyncExperimentsApi(_ExperimentsApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trial_logs_fields(
-        self, trial_id: int, follow: bool = None
-    ) -> m.StreamResultOfV1TrialLogsFieldsResponse:
-        coroutine = self._build_for_determined_trial_logs_fields(trial_id=trial_id, follow=follow)
+    def trial_logs_fields(self, trial_id: int, follow: bool = None) -> m.StreamResultOfV1TrialLogsFieldsResponse:
+        coroutine = self._build_for_trial_logs_fields(trial_id=trial_id, follow=follow)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_unarchive_experiment(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_unarchive_experiment(id=id)
+    def unarchive_experiment(self, id: int) -> m.Any:
+        coroutine = self._build_for_unarchive_experiment(id=id)
         return get_event_loop().run_until_complete(coroutine)

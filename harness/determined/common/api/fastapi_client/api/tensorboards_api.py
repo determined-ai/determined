@@ -13,7 +13,7 @@ class _TensorboardsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_tensorboard(self, tensorboard_id: str) -> Awaitable[m.V1GetTensorboardResponse]:
+    def _build_for_get_tensorboard(self, tensorboard_id: str) -> Awaitable[m.V1GetTensorboardResponse]:
         path_params = {"tensorboardId": str(tensorboard_id)}
 
         return self.api_client.request(
@@ -23,7 +23,7 @@ class _TensorboardsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_tensorboards(
+    def _build_for_get_tensorboards(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> Awaitable[m.V1GetTensorboardsResponse]:
         query_params = {}
@@ -45,7 +45,7 @@ class _TensorboardsApi:
             params=query_params,
         )
 
-    def _build_for_determined_kill_tensorboard(self, tensorboard_id: str) -> Awaitable[m.V1KillTensorboardResponse]:
+    def _build_for_kill_tensorboard(self, tensorboard_id: str) -> Awaitable[m.V1KillTensorboardResponse]:
         path_params = {"tensorboardId": str(tensorboard_id)}
 
         return self.api_client.request(
@@ -55,7 +55,7 @@ class _TensorboardsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_launch_tensorboard(
+    def _build_for_launch_tensorboard(
         self, body: m.V1LaunchTensorboardRequest
     ) -> Awaitable[m.V1LaunchTensorboardResponse]:
         body = jsonable_encoder(body)
@@ -64,7 +64,7 @@ class _TensorboardsApi:
             type_=m.V1LaunchTensorboardResponse, method="POST", url="/api/v1/tensorboards", json=body
         )
 
-    def _build_for_determined_set_tensorboard_priority(
+    def _build_for_set_tensorboard_priority(
         self, tensorboard_id: str, body: m.V1SetTensorboardPriorityRequest
     ) -> Awaitable[m.V1SetTensorboardPriorityResponse]:
         path_params = {"tensorboardId": str(tensorboard_id)}
@@ -81,51 +81,51 @@ class _TensorboardsApi:
 
 
 class AsyncTensorboardsApi(_TensorboardsApi):
-    async def determined_get_tensorboard(self, tensorboard_id: str) -> m.V1GetTensorboardResponse:
-        return await self._build_for_determined_get_tensorboard(tensorboard_id=tensorboard_id)
+    async def get_tensorboard(self, tensorboard_id: str) -> m.V1GetTensorboardResponse:
+        return await self._build_for_get_tensorboard(tensorboard_id=tensorboard_id)
 
-    async def determined_get_tensorboards(
+    async def get_tensorboards(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> m.V1GetTensorboardsResponse:
-        return await self._build_for_determined_get_tensorboards(
+        return await self._build_for_get_tensorboards(
             sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, users=users
         )
 
-    async def determined_kill_tensorboard(self, tensorboard_id: str) -> m.V1KillTensorboardResponse:
-        return await self._build_for_determined_kill_tensorboard(tensorboard_id=tensorboard_id)
+    async def kill_tensorboard(self, tensorboard_id: str) -> m.V1KillTensorboardResponse:
+        return await self._build_for_kill_tensorboard(tensorboard_id=tensorboard_id)
 
-    async def determined_launch_tensorboard(self, body: m.V1LaunchTensorboardRequest) -> m.V1LaunchTensorboardResponse:
-        return await self._build_for_determined_launch_tensorboard(body=body)
+    async def launch_tensorboard(self, body: m.V1LaunchTensorboardRequest) -> m.V1LaunchTensorboardResponse:
+        return await self._build_for_launch_tensorboard(body=body)
 
-    async def determined_set_tensorboard_priority(
+    async def set_tensorboard_priority(
         self, tensorboard_id: str, body: m.V1SetTensorboardPriorityRequest
     ) -> m.V1SetTensorboardPriorityResponse:
-        return await self._build_for_determined_set_tensorboard_priority(tensorboard_id=tensorboard_id, body=body)
+        return await self._build_for_set_tensorboard_priority(tensorboard_id=tensorboard_id, body=body)
 
 
 class SyncTensorboardsApi(_TensorboardsApi):
-    def determined_get_tensorboard(self, tensorboard_id: str) -> m.V1GetTensorboardResponse:
-        coroutine = self._build_for_determined_get_tensorboard(tensorboard_id=tensorboard_id)
+    def get_tensorboard(self, tensorboard_id: str) -> m.V1GetTensorboardResponse:
+        coroutine = self._build_for_get_tensorboard(tensorboard_id=tensorboard_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_tensorboards(
+    def get_tensorboards(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> m.V1GetTensorboardsResponse:
-        coroutine = self._build_for_determined_get_tensorboards(
+        coroutine = self._build_for_get_tensorboards(
             sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, users=users
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_kill_tensorboard(self, tensorboard_id: str) -> m.V1KillTensorboardResponse:
-        coroutine = self._build_for_determined_kill_tensorboard(tensorboard_id=tensorboard_id)
+    def kill_tensorboard(self, tensorboard_id: str) -> m.V1KillTensorboardResponse:
+        coroutine = self._build_for_kill_tensorboard(tensorboard_id=tensorboard_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_launch_tensorboard(self, body: m.V1LaunchTensorboardRequest) -> m.V1LaunchTensorboardResponse:
-        coroutine = self._build_for_determined_launch_tensorboard(body=body)
+    def launch_tensorboard(self, body: m.V1LaunchTensorboardRequest) -> m.V1LaunchTensorboardResponse:
+        coroutine = self._build_for_launch_tensorboard(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_set_tensorboard_priority(
+    def set_tensorboard_priority(
         self, tensorboard_id: str, body: m.V1SetTensorboardPriorityRequest
     ) -> m.V1SetTensorboardPriorityResponse:
-        coroutine = self._build_for_determined_set_tensorboard_priority(tensorboard_id=tensorboard_id, body=body)
+        coroutine = self._build_for_set_tensorboard_priority(tensorboard_id=tensorboard_id, body=body)
         return get_event_loop().run_until_complete(coroutine)

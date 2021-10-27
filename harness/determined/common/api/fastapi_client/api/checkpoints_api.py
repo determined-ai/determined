@@ -13,7 +13,7 @@ class _CheckpointsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_checkpoint(self, checkpoint_uuid: str) -> Awaitable[m.V1GetCheckpointResponse]:
+    def _build_for_get_checkpoint(self, checkpoint_uuid: str) -> Awaitable[m.V1GetCheckpointResponse]:
         path_params = {"checkpointUuid": str(checkpoint_uuid)}
 
         return self.api_client.request(
@@ -23,7 +23,7 @@ class _CheckpointsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_post_checkpoint_metadata(
+    def _build_for_post_checkpoint_metadata(
         self, checkpoint_uuid: str, body: m.V1PostCheckpointMetadataRequest
     ) -> Awaitable[m.V1PostCheckpointMetadataResponse]:
         path_params = {"checkpoint.uuid": str(checkpoint_uuid)}
@@ -40,22 +40,22 @@ class _CheckpointsApi:
 
 
 class AsyncCheckpointsApi(_CheckpointsApi):
-    async def determined_get_checkpoint(self, checkpoint_uuid: str) -> m.V1GetCheckpointResponse:
-        return await self._build_for_determined_get_checkpoint(checkpoint_uuid=checkpoint_uuid)
+    async def get_checkpoint(self, checkpoint_uuid: str) -> m.V1GetCheckpointResponse:
+        return await self._build_for_get_checkpoint(checkpoint_uuid=checkpoint_uuid)
 
-    async def determined_post_checkpoint_metadata(
+    async def post_checkpoint_metadata(
         self, checkpoint_uuid: str, body: m.V1PostCheckpointMetadataRequest
     ) -> m.V1PostCheckpointMetadataResponse:
-        return await self._build_for_determined_post_checkpoint_metadata(checkpoint_uuid=checkpoint_uuid, body=body)
+        return await self._build_for_post_checkpoint_metadata(checkpoint_uuid=checkpoint_uuid, body=body)
 
 
 class SyncCheckpointsApi(_CheckpointsApi):
-    def determined_get_checkpoint(self, checkpoint_uuid: str) -> m.V1GetCheckpointResponse:
-        coroutine = self._build_for_determined_get_checkpoint(checkpoint_uuid=checkpoint_uuid)
+    def get_checkpoint(self, checkpoint_uuid: str) -> m.V1GetCheckpointResponse:
+        coroutine = self._build_for_get_checkpoint(checkpoint_uuid=checkpoint_uuid)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_post_checkpoint_metadata(
+    def post_checkpoint_metadata(
         self, checkpoint_uuid: str, body: m.V1PostCheckpointMetadataRequest
     ) -> m.V1PostCheckpointMetadataResponse:
-        coroutine = self._build_for_determined_post_checkpoint_metadata(checkpoint_uuid=checkpoint_uuid, body=body)
+        coroutine = self._build_for_post_checkpoint_metadata(checkpoint_uuid=checkpoint_uuid, body=body)
         return get_event_loop().run_until_complete(coroutine)

@@ -13,7 +13,7 @@ class _TrialsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_experiment_trials(
+    def _build_for_get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -44,7 +44,7 @@ class _TrialsApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_trial(self, trial_id: int) -> Awaitable[m.V1GetTrialResponse]:
+    def _build_for_get_trial(self, trial_id: int) -> Awaitable[m.V1GetTrialResponse]:
         path_params = {"trialId": str(trial_id)}
 
         return self.api_client.request(
@@ -54,7 +54,7 @@ class _TrialsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_kill_trial(self, id: int) -> Awaitable[m.Any]:
+    def _build_for_kill_trial(self, id: int) -> Awaitable[m.Any]:
         path_params = {"id": str(id)}
 
         return self.api_client.request(
@@ -64,7 +64,7 @@ class _TrialsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_trial_logs(
+    def _build_for_trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -113,7 +113,7 @@ class _TrialsApi:
             params=query_params,
         )
 
-    def _build_for_determined_trial_logs_fields(
+    def _build_for_trial_logs_fields(
         self, trial_id: int, follow: bool = None
     ) -> Awaitable[m.StreamResultOfV1TrialLogsFieldsResponse]:
         path_params = {"trialId": str(trial_id)}
@@ -132,7 +132,7 @@ class _TrialsApi:
 
 
 class AsyncTrialsApi(_TrialsApi):
-    async def determined_get_experiment_trials(
+    async def get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -141,17 +141,17 @@ class AsyncTrialsApi(_TrialsApi):
         limit: int = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentTrialsResponse:
-        return await self._build_for_determined_get_experiment_trials(
+        return await self._build_for_get_experiment_trials(
             experiment_id=experiment_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, states=states
         )
 
-    async def determined_get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
-        return await self._build_for_determined_get_trial(trial_id=trial_id)
+    async def get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
+        return await self._build_for_get_trial(trial_id=trial_id)
 
-    async def determined_kill_trial(self, id: int) -> m.Any:
-        return await self._build_for_determined_kill_trial(id=id)
+    async def kill_trial(self, id: int) -> m.Any:
+        return await self._build_for_kill_trial(id=id)
 
-    async def determined_trial_logs(
+    async def trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -166,7 +166,7 @@ class AsyncTrialsApi(_TrialsApi):
         timestamp_after: datetime = None,
         order_by: str = None,
     ) -> m.StreamResultOfV1TrialLogsResponse:
-        return await self._build_for_determined_trial_logs(
+        return await self._build_for_trial_logs(
             trial_id=trial_id,
             limit=limit,
             follow=follow,
@@ -181,14 +181,12 @@ class AsyncTrialsApi(_TrialsApi):
             order_by=order_by,
         )
 
-    async def determined_trial_logs_fields(
-        self, trial_id: int, follow: bool = None
-    ) -> m.StreamResultOfV1TrialLogsFieldsResponse:
-        return await self._build_for_determined_trial_logs_fields(trial_id=trial_id, follow=follow)
+    async def trial_logs_fields(self, trial_id: int, follow: bool = None) -> m.StreamResultOfV1TrialLogsFieldsResponse:
+        return await self._build_for_trial_logs_fields(trial_id=trial_id, follow=follow)
 
 
 class SyncTrialsApi(_TrialsApi):
-    def determined_get_experiment_trials(
+    def get_experiment_trials(
         self,
         experiment_id: int,
         sort_by: str = None,
@@ -197,20 +195,20 @@ class SyncTrialsApi(_TrialsApi):
         limit: int = None,
         states: List[str] = None,
     ) -> m.V1GetExperimentTrialsResponse:
-        coroutine = self._build_for_determined_get_experiment_trials(
+        coroutine = self._build_for_get_experiment_trials(
             experiment_id=experiment_id, sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, states=states
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
-        coroutine = self._build_for_determined_get_trial(trial_id=trial_id)
+    def get_trial(self, trial_id: int) -> m.V1GetTrialResponse:
+        coroutine = self._build_for_get_trial(trial_id=trial_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_kill_trial(self, id: int) -> m.Any:
-        coroutine = self._build_for_determined_kill_trial(id=id)
+    def kill_trial(self, id: int) -> m.Any:
+        coroutine = self._build_for_kill_trial(id=id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trial_logs(
+    def trial_logs(
         self,
         trial_id: int,
         limit: int = None,
@@ -225,7 +223,7 @@ class SyncTrialsApi(_TrialsApi):
         timestamp_after: datetime = None,
         order_by: str = None,
     ) -> m.StreamResultOfV1TrialLogsResponse:
-        coroutine = self._build_for_determined_trial_logs(
+        coroutine = self._build_for_trial_logs(
             trial_id=trial_id,
             limit=limit,
             follow=follow,
@@ -241,8 +239,6 @@ class SyncTrialsApi(_TrialsApi):
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_trial_logs_fields(
-        self, trial_id: int, follow: bool = None
-    ) -> m.StreamResultOfV1TrialLogsFieldsResponse:
-        coroutine = self._build_for_determined_trial_logs_fields(trial_id=trial_id, follow=follow)
+    def trial_logs_fields(self, trial_id: int, follow: bool = None) -> m.StreamResultOfV1TrialLogsFieldsResponse:
+        coroutine = self._build_for_trial_logs_fields(trial_id=trial_id, follow=follow)
         return get_event_loop().run_until_complete(coroutine)

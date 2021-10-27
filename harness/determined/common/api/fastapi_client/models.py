@@ -36,6 +36,7 @@ class Determinedexperimentv1State(str, Enum):
     DELETED = "STATE_DELETED"
     DELETING = "STATE_DELETING"
     DELETE_FAILED = "STATE_DELETE_FAILED"
+    STOPPING_KILLED = "STATE_STOPPING_KILLED"
 
 
 class Determinedtaskv1State(str, Enum):

@@ -13,7 +13,7 @@ class _CommandsApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_command(self, command_id: str) -> Awaitable[m.V1GetCommandResponse]:
+    def _build_for_get_command(self, command_id: str) -> Awaitable[m.V1GetCommandResponse]:
         path_params = {"commandId": str(command_id)}
 
         return self.api_client.request(
@@ -23,7 +23,7 @@ class _CommandsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_get_commands(
+    def _build_for_get_commands(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> Awaitable[m.V1GetCommandsResponse]:
         query_params = {}
@@ -45,7 +45,7 @@ class _CommandsApi:
             params=query_params,
         )
 
-    def _build_for_determined_kill_command(self, command_id: str) -> Awaitable[m.V1KillCommandResponse]:
+    def _build_for_kill_command(self, command_id: str) -> Awaitable[m.V1KillCommandResponse]:
         path_params = {"commandId": str(command_id)}
 
         return self.api_client.request(
@@ -55,16 +55,14 @@ class _CommandsApi:
             path_params=path_params,
         )
 
-    def _build_for_determined_launch_command(
-        self, body: m.V1LaunchCommandRequest
-    ) -> Awaitable[m.V1LaunchCommandResponse]:
+    def _build_for_launch_command(self, body: m.V1LaunchCommandRequest) -> Awaitable[m.V1LaunchCommandResponse]:
         body = jsonable_encoder(body)
 
         return self.api_client.request(
             type_=m.V1LaunchCommandResponse, method="POST", url="/api/v1/commands", json=body
         )
 
-    def _build_for_determined_set_command_priority(
+    def _build_for_set_command_priority(
         self, command_id: str, body: m.V1SetCommandPriorityRequest
     ) -> Awaitable[m.V1SetCommandPriorityResponse]:
         path_params = {"commandId": str(command_id)}
@@ -81,51 +79,51 @@ class _CommandsApi:
 
 
 class AsyncCommandsApi(_CommandsApi):
-    async def determined_get_command(self, command_id: str) -> m.V1GetCommandResponse:
-        return await self._build_for_determined_get_command(command_id=command_id)
+    async def get_command(self, command_id: str) -> m.V1GetCommandResponse:
+        return await self._build_for_get_command(command_id=command_id)
 
-    async def determined_get_commands(
+    async def get_commands(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> m.V1GetCommandsResponse:
-        return await self._build_for_determined_get_commands(
+        return await self._build_for_get_commands(
             sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, users=users
         )
 
-    async def determined_kill_command(self, command_id: str) -> m.V1KillCommandResponse:
-        return await self._build_for_determined_kill_command(command_id=command_id)
+    async def kill_command(self, command_id: str) -> m.V1KillCommandResponse:
+        return await self._build_for_kill_command(command_id=command_id)
 
-    async def determined_launch_command(self, body: m.V1LaunchCommandRequest) -> m.V1LaunchCommandResponse:
-        return await self._build_for_determined_launch_command(body=body)
+    async def launch_command(self, body: m.V1LaunchCommandRequest) -> m.V1LaunchCommandResponse:
+        return await self._build_for_launch_command(body=body)
 
-    async def determined_set_command_priority(
+    async def set_command_priority(
         self, command_id: str, body: m.V1SetCommandPriorityRequest
     ) -> m.V1SetCommandPriorityResponse:
-        return await self._build_for_determined_set_command_priority(command_id=command_id, body=body)
+        return await self._build_for_set_command_priority(command_id=command_id, body=body)
 
 
 class SyncCommandsApi(_CommandsApi):
-    def determined_get_command(self, command_id: str) -> m.V1GetCommandResponse:
-        coroutine = self._build_for_determined_get_command(command_id=command_id)
+    def get_command(self, command_id: str) -> m.V1GetCommandResponse:
+        coroutine = self._build_for_get_command(command_id=command_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_commands(
+    def get_commands(
         self, sort_by: str = None, order_by: str = None, offset: int = None, limit: int = None, users: List[str] = None
     ) -> m.V1GetCommandsResponse:
-        coroutine = self._build_for_determined_get_commands(
+        coroutine = self._build_for_get_commands(
             sort_by=sort_by, order_by=order_by, offset=offset, limit=limit, users=users
         )
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_kill_command(self, command_id: str) -> m.V1KillCommandResponse:
-        coroutine = self._build_for_determined_kill_command(command_id=command_id)
+    def kill_command(self, command_id: str) -> m.V1KillCommandResponse:
+        coroutine = self._build_for_kill_command(command_id=command_id)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_launch_command(self, body: m.V1LaunchCommandRequest) -> m.V1LaunchCommandResponse:
-        coroutine = self._build_for_determined_launch_command(body=body)
+    def launch_command(self, body: m.V1LaunchCommandRequest) -> m.V1LaunchCommandResponse:
+        coroutine = self._build_for_launch_command(body=body)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_set_command_priority(
+    def set_command_priority(
         self, command_id: str, body: m.V1SetCommandPriorityRequest
     ) -> m.V1SetCommandPriorityResponse:
-        coroutine = self._build_for_determined_set_command_priority(command_id=command_id, body=body)
+        coroutine = self._build_for_set_command_priority(command_id=command_id, body=body)
         return get_event_loop().run_until_complete(coroutine)

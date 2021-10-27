@@ -12,7 +12,7 @@ class _ProfilerApi:
     def __init__(self, api_client: "ApiClient"):
         self.api_client = api_client
 
-    def _build_for_determined_get_trial_profiler_available_series(
+    def _build_for_get_trial_profiler_available_series(
         self, trial_id: int, follow: bool = None
     ) -> Awaitable[m.StreamResultOfV1GetTrialProfilerAvailableSeriesResponse]:
         path_params = {"trialId": str(trial_id)}
@@ -29,7 +29,7 @@ class _ProfilerApi:
             params=query_params,
         )
 
-    def _build_for_determined_get_trial_profiler_metrics(
+    def _build_for_get_trial_profiler_metrics(
         self,
         labels_trial_id: int,
         labels_name: str = None,
@@ -62,12 +62,12 @@ class _ProfilerApi:
 
 
 class AsyncProfilerApi(_ProfilerApi):
-    async def determined_get_trial_profiler_available_series(
+    async def get_trial_profiler_available_series(
         self, trial_id: int, follow: bool = None
     ) -> m.StreamResultOfV1GetTrialProfilerAvailableSeriesResponse:
-        return await self._build_for_determined_get_trial_profiler_available_series(trial_id=trial_id, follow=follow)
+        return await self._build_for_get_trial_profiler_available_series(trial_id=trial_id, follow=follow)
 
-    async def determined_get_trial_profiler_metrics(
+    async def get_trial_profiler_metrics(
         self,
         labels_trial_id: int,
         labels_name: str = None,
@@ -76,7 +76,7 @@ class AsyncProfilerApi(_ProfilerApi):
         labels_metric_type: str = None,
         follow: bool = None,
     ) -> m.StreamResultOfV1GetTrialProfilerMetricsResponse:
-        return await self._build_for_determined_get_trial_profiler_metrics(
+        return await self._build_for_get_trial_profiler_metrics(
             labels_trial_id=labels_trial_id,
             labels_name=labels_name,
             labels_agent_id=labels_agent_id,
@@ -87,13 +87,13 @@ class AsyncProfilerApi(_ProfilerApi):
 
 
 class SyncProfilerApi(_ProfilerApi):
-    def determined_get_trial_profiler_available_series(
+    def get_trial_profiler_available_series(
         self, trial_id: int, follow: bool = None
     ) -> m.StreamResultOfV1GetTrialProfilerAvailableSeriesResponse:
-        coroutine = self._build_for_determined_get_trial_profiler_available_series(trial_id=trial_id, follow=follow)
+        coroutine = self._build_for_get_trial_profiler_available_series(trial_id=trial_id, follow=follow)
         return get_event_loop().run_until_complete(coroutine)
 
-    def determined_get_trial_profiler_metrics(
+    def get_trial_profiler_metrics(
         self,
         labels_trial_id: int,
         labels_name: str = None,
@@ -102,7 +102,7 @@ class SyncProfilerApi(_ProfilerApi):
         labels_metric_type: str = None,
         follow: bool = None,
     ) -> m.StreamResultOfV1GetTrialProfilerMetricsResponse:
-        coroutine = self._build_for_determined_get_trial_profiler_metrics(
+        coroutine = self._build_for_get_trial_profiler_metrics(
             labels_trial_id=labels_trial_id,
             labels_name=labels_name,
             labels_agent_id=labels_agent_id,
