@@ -12,6 +12,7 @@ from . import render
 
 def render_model(model: Model) -> None:
     table = [
+        ["ID", model.model_id],
         ["Name", model.name],
         ["Description", model.description],
         ["Creation Time", model.creation_time],
@@ -55,10 +56,16 @@ def list_models(args: Namespace) -> None:
     if args.json:
         print(json.dumps([m.to_json() for m in models], indent=2))
     else:
-        headers = ["Name", "Creation Time", "Last Updated Time", "Metadata"]
+        headers = ["ID", "Name", "Creation Time", "Last Updated Time", "Metadata"]
 
         values = [
-            [m.name, m.creation_time, m.last_updated_time, json.dumps(m.metadata or {}, indent=2)]
+            [
+                m.model_id,
+                m.name,
+                m.creation_time,
+                m.last_updated_time,
+                json.dumps(m.metadata or {}, indent=2),
+            ]
             for m in models
         ]
 
@@ -68,12 +75,12 @@ def list_models(args: Namespace) -> None:
 @authentication.required
 def list_versions(args: Namespace) -> None:
     if args.json:
-        r = api.get(args.master, "models/{}/versions".format(args.name))
+        r = api.get(args.master, "models/{}/versions".format(args.id))
         data = r.json()
         print(json.dumps(data, indent=2))
 
     else:
-        model = Determined(args.master).get_model(args.name)
+        model = Determined(args.master).get_model(args.id)
         render_model(model)
         print("\n")
 
@@ -111,7 +118,7 @@ def create(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    model = Determined(args.master, None).get_model(args.name)
+    model = Determined(args.master, None).get_model(args.id)
     checkpoint = model.get_version(args.version)
 
     if args.json:
@@ -128,13 +135,13 @@ def register_version(args: Namespace) -> None:
     if args.json:
         resp = api.post(
             args.master,
-            "/api/v1/models/{}/versions".format(args.name),
+            "/api/v1/models/{}/versions".format(args.id),
             json={"checkpoint_uuid": args.uuid},
         )
 
         print(json.dumps(resp.json(), indent=2))
     else:
-        model = Determined(args.master, None).get_model(args.name)
+        model = Determined(args.master, None).get_model(args.id)
         checkpoint = model.register_version(args.uuid)
         render_model(model)
         print("\n")
@@ -175,7 +182,7 @@ args_description = [
                 register_version,
                 "register a new version of a model",
                 [
-                    Arg("name", type=str, help="name of the model"),
+                    Arg("id", type=int, help="id of the model"),
                     Arg("uuid", type=str, help="uuid to register as the next version of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
@@ -185,7 +192,7 @@ args_description = [
                 describe,
                 "describe model",
                 [
-                    Arg("name", type=str, help="model to describe"),
+                    Arg("id", type=int, help="model to describe"),
                     Arg("--json", action="store_true", help="print as JSON"),
                     Arg(
                         "--version",
@@ -200,7 +207,7 @@ args_description = [
                 list_versions,
                 "list the versions of a model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
+                    Arg("id", type=int, help="unique ID of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -209,7 +216,7 @@ args_description = [
                 create,
                 "create model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
+                    Arg("name", type=str, help="name for the model"),
                     Arg("--description", type=str, help="description of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
