@@ -331,7 +331,9 @@ const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefin
   if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
   for (const key in metrics){
-    if (isNumber(metrics[key])) {
+    if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
+      scalarMetrics[key] = Number(metrics[key]);
+    } else if (isNumber(metrics[key])) {
       scalarMetrics[key] = metrics[key];
     }
   }

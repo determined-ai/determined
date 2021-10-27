@@ -1,3 +1,4 @@
+import math
 import pathlib
 import pickle
 from typing import Any, Dict
@@ -172,6 +173,42 @@ class MetricMaker(det.TrialController):
 
 class MetricMakerTrial(det.Trial):
     trial_controller_class = MetricMaker
+
+    def __init__(self, context: det.TrialContext) -> None:
+        self.context = context
+
+
+class NANMetricMaker(MetricMaker):
+    """
+    Insert Infinity and NaN values into metrics
+    because YAML->JSON parser cannot convert YAML's .inf value
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.value = self.env.hparams["starting_base_value"]
+        self.training_structure = self.env.hparams["training_structure"]
+        self.training_structure["inf"] = math.inf
+        self.training_structure["nan"] = math.nan
+        self.validation_structure = self.env.hparams["validation_structure"]
+        self.validation_structure["neg_inf"] = -1 * math.inf
+        self.gain_per_batch = 0
+
+        self.wlsq = None
+        if self.workloads is None:
+            session = client.Session(None, None, None, certs.cli_cert)
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                session, self.env, self.context.distributed
+            )
+
+    @staticmethod
+    def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
+        return NANMetricMaker(*args, **kwargs)
+
+
+class NANMetricMakerTrial(det.Trial):
+    trial_controller_class = NANMetricMaker
 
     def __init__(self, context: det.TrialContext) -> None:
         self.context = context

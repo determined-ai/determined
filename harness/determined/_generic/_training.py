@@ -7,6 +7,7 @@ import determined as det
 from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
+from determined.common.util import clearinf
 
 logger = logging.getLogger("determined.generic")
 
@@ -59,10 +60,10 @@ class Training:
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": metrics,
+            "metrics": clearinf(metrics),
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = batch_metrics
+            body["batch_metrics"] = list(map(clearinf, batch_metrics))
         logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
@@ -114,7 +115,7 @@ class Training:
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": reportable_metrics,
+            "metrics": clearinf(reportable_metrics),
         }
         logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
