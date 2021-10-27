@@ -6,10 +6,10 @@ usage: swagger.py GENERATED_JSON PATCH_JSON
 """
 
 import json
-import os
 import sys
 from typing import Dict
 
+SERVICE_NAME = "Determined"
 
 def merge_dict(d1: Dict, d2: Dict) -> None:
     """
@@ -53,6 +53,15 @@ def clean(path: str, patch: str) -> None:
 
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
+
+    # remove operationId prefix from the main service.
+    operationid_prefix = SERVICE_NAME + "_"
+    for url, value in spec["paths"].items():
+        for method, api in value.items():
+            cur_id = str(api["operationId"])
+            if cur_id.startswith(operationid_prefix):
+                spec["paths"][url][method]["operationId"] = cur_id[len(operationid_prefix):]
+
 
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))
