@@ -2,8 +2,6 @@ package model
 
 import (
 	"github.com/google/uuid"
-
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // JobID is the unique ID of a job among all jobs.
@@ -33,24 +31,6 @@ const (
 	// JobTypeExperiment is the "EXPERIMENT" job type for the enum.job_type in Postgres.
 	JobTypeExperiment JobType = "EXPERIMENT"
 )
-
-// Proto returns the proto representation of the job type.
-func (jt JobType) Proto() jobv1.Type {
-	switch jt {
-	case JobTypeExperiment:
-		return jobv1.Type_TYPE_EXPERIMENT
-	case JobTypeCommand:
-		return jobv1.Type_TYPE_COMMAND
-	case JobTypeShell:
-		return jobv1.Type_TYPE_SHELL
-	case JobTypeNotebook:
-		return jobv1.Type_TYPE_NOTEBOOK
-	case JobTypeTensorboard:
-		return jobv1.Type_TYPE_TENSORBOARD
-	default:
-		return jobv1.Type_TYPE_UNSPECIFIED
-	}
-}
 
 // Job is the model for a job in the database.
 type Job struct {
