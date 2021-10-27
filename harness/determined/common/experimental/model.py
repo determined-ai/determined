@@ -158,7 +158,7 @@ class Model:
         if version == -1:
             resp = self._session.get(
                 "/api/v1/models/{}/versions/".format(self.model_id),
-                {"limit": 1, "order_by": ModelOrderBy.DESC},
+                {"limit": 1, "order_by": ModelOrderBy.DESC.value},
             )
 
             data = resp.json()
