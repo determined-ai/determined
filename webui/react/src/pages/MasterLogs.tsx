@@ -15,7 +15,7 @@ const MasterLogs: React.FC = () => {
 
   const fetchLogAfter = useCallback(() => {
     return detApi.StreamingCluster.determinedMasterLogs(
-      oldestFetchedId.current ?? 0,
+      latestFetchedId.current ?? 0,
       TAIL_SIZE,
       false,
       { signal: canceler.signal },
@@ -23,9 +23,9 @@ const MasterLogs: React.FC = () => {
   }, [ canceler.signal ]);
 
   const fetchLogBefore = useCallback(() => {
-    const startLogId = Math.max(0, latestFetchedId.current ?? 0 - TAIL_SIZE);
+    const offset = (oldestFetchedId.current ?? 0) - (latestFetchedId.current ?? 0) - TAIL_SIZE;
     return detApi.StreamingCluster.determinedMasterLogs(
-      startLogId,
+      offset,
       TAIL_SIZE,
       false,
       { signal: canceler.signal },
