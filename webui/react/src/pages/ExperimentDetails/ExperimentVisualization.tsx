@@ -283,7 +283,7 @@ const ExperimentVisualization: React.FC<Props> = ({
               Learn about&nbsp;
               <Link
                 external
-                path={paths.docs('/reference/experiment-config.html#searcher')}
+                path={paths.docs('/training-apis/experiment-config.html#searcher')}
                 popout>how to run a hyperparameter search</Link>.
             </>
           )}
