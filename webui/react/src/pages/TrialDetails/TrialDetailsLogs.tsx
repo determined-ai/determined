@@ -27,7 +27,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       filters: TrialLogFiltersInterface,
       canceler: AbortController,
     ) => {
-      return detApi.StreamingExperiments.determinedTrialLogs(
+      return detApi.StreamingExperiments.trialLogs(
         trial.id,
         0,
         true,
@@ -49,7 +49,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     filters: TrialLogFiltersInterface,
     canceler: AbortController,
   ) => {
-    return detApi.StreamingExperiments.determinedTrialLogs(
+    return detApi.StreamingExperiments.trialLogs(
       trial.id,
       TAIL_SIZE,
       false,
@@ -70,7 +70,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     filters: TrialLogFiltersInterface,
     canceler: AbortController,
   ) => {
-    return detApi.StreamingExperiments.determinedTrialLogs(
+    return detApi.StreamingExperiments.trialLogs(
       trial.id,
       TAIL_SIZE,
       false,
@@ -88,7 +88,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [ trial.id ]);
 
   const fetchLogFilter = useCallback((canceler: AbortController) => {
-    return detApi.StreamingExperiments.determinedTrialLogsFields(
+    return detApi.StreamingExperiments.trialLogsFields(
       trial.id,
       true,
       { signal: canceler.signal },
