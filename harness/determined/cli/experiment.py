@@ -20,6 +20,8 @@ from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication
+from determined.common.api.fapi import client, set_host
+from determined.common.api.fastapi_client.api.experiments_api import SyncExperimentsApi
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -28,6 +30,8 @@ from .checkpoint import render_checkpoint
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
 FLUSH = False
+
+experiments_api = SyncExperimentsApi(client)  # type: ignore
 
 
 def patch_experiment(args: Namespace, verb: str, patch_doc: Dict[str, Any]) -> None:
@@ -41,9 +45,17 @@ def activate(args: Namespace) -> None:
 
 
 @authentication.required
+@set_host
 def archive(args: Namespace) -> None:
-    patch_experiment(args, "archive", {"archived": True})
+    experiments_api.archive_experiment(args.experiment_id)
     print("Archived experiment {}".format(args.experiment_id))
+
+
+@authentication.required
+@set_host
+def unarchive(args: Namespace) -> None:
+    experiments_api.unarchive_experiment(args.experiment_id)
+    print("Unarchived experiment {}".format(args.experiment_id))
 
 
 @authentication.required
@@ -415,6 +427,24 @@ def wait(args: Namespace) -> None:
 
 
 @authentication.required
+@set_host
+def list_experiments_v2(args: Namespace) -> None:
+    response = experiments_api.get_experiments(limit=5)
+    # print(response.experiments[0].name)
+    # print(json.dumps(response, cls=MyEncoder))
+    # print(json.dumps(response.to_jsonble()))
+    jsonable_e_list = [e.to_jsonble() for e in response.experiments]
+    if args.output == "yaml":
+        print(yaml.safe_dump(jsonable_e_list, default_flow_style=False))
+    elif args.output == "json":
+        print(json.dumps(jsonable_e_list, indent=4, default=str))
+    elif ["csv", "table"].count(args.output) > 0:
+        raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
+    else:
+        raise ValueError(f"Bad output format: {args.output}")
+
+
+@authentication.required
 def list_experiments(args: Namespace) -> None:
     params = {}
     if args.all:
@@ -622,12 +652,6 @@ def set_gc_policy(args: Namespace) -> None:
         print("Aborting operations.")
 
 
-@authentication.required
-def unarchive(args: Namespace) -> None:
-    patch_experiment(args, "archive", {"archived": False})
-    print("Unarchived experiment {}".format(args.experiment_id))
-
-
 def none_or_int(string: str) -> Optional[int]:
     if string.lower().strip() in ("null", "none"):
         return None
@@ -664,6 +688,21 @@ main_cmd = Cmd(
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
             is_default=True,
+        ),
+        Cmd(
+            "list-v2",
+            list_experiments_v2,
+            "list experiments v2",
+            [
+                Arg(
+                    "-o",
+                    "--output",
+                    type=str,
+                    default="yaml",
+                    help="Output format, one of json|yaml",
+                ),
+                Arg("-rp", "--resource-pool", type=str, default="default", help=""),
+            ],
         ),
         Cmd("config", config, "display experiment config", [experiment_id_arg("experiment ID")]),
         Cmd(

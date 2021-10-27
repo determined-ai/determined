@@ -34,7 +34,6 @@ from determined.cli.trial import args_description as trial_args_description
 from determined.cli.user import args_description as user_args_description
 from determined.cli.version import args_description as version_args_description
 from determined.cli.version import check_version
-from determined.cli.xperiment import args_description as xperiment_args_description
 from determined.common import api, yaml
 from determined.common.api import authentication, certs
 from determined.common.check import check_not_none
@@ -140,7 +139,6 @@ all_args_description = (
     + trial_args_description
     + remote_args_description
     + user_args_description
-    + xperiment_args_description
     + version_args_description
     + auth_args_description
     + oauth_args_description
