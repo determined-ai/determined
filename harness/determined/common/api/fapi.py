@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from requests import Response
 
-from build.lib.determined.common.api import certs
+from determined.common.api import certs,
 from determined.common.api.authentication import cli_auth
 from determined.common.api.request import do_request
 from determined.common.schemas import SchemaBase
