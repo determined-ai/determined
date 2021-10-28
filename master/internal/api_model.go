@@ -131,7 +131,7 @@ func (a *apiServer) PatchModel(
 	}
 	if req.Model.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.Model.Metadata)
-		if err != nil {
+		if err2 != nil {
 			return nil, errors.Wrap(err2, "error marshaling request model metadata")
 		}
 
@@ -200,7 +200,7 @@ func (a *apiServer) UnarchiveModel(
 
 func (a *apiServer) DeleteModel(
 	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse, error) {
-	inpModel, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,8 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 
-	err = a.m.db.QueryProto("delete_model", &inpModel.Model, req.ModelId, user.User.Id)
+	holder := &modelv1.Model{}
+	err = a.m.db.QueryProto("delete_model", holder, req.ModelId, user.User.Id)
 
 	return &apiv1.DeleteModelResponse{},
 		errors.Wrapf(err, "error deleting model %d", req.ModelId)

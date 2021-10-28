@@ -1,12 +1,13 @@
-WITH v AS (
+WITH m AS (
+  SELECT * FROM models
+  WHERE id = $1 AND user_id = $2
+),
+v AS (
   DELETE FROM model_versions
-  USING models
   WHERE (
-    model_versions.id = $1
-    AND models.user_id = $2
-    AND models.id = model_versions.model_id
+    model_versions.model_id IN (SELECT id FROM m)
   )
 )
 DELETE FROM models
-WHERE id = $1 AND user_id = $2
+WHERE id IN (SELECT id FROM m)
 RETURNING id;
