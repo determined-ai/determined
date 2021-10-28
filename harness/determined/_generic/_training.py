@@ -65,6 +65,9 @@ class Training:
         if batch_metrics is not None:
             body["batch_metrics"] = list(map(clearinf, batch_metrics))
         logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.info(f"report_training_metrics::body::{body}")
+        logger.info(f"report_training_metrics::batch_metrics::{batch_metrics}")
+        logger.info(f"report_training_metrics::json_encoded(body)::{det.util.json_encode(body)}")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
             data=det.util.json_encode(body),
