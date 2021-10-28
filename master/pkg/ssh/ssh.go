@@ -5,6 +5,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"math"
+	"runtime"
 
 	"github.com/pkg/errors"
 	sshlib "golang.org/x/crypto/ssh"
@@ -21,8 +23,20 @@ type PrivateAndPublicKeys struct {
 	PublicKey  []byte
 }
 
+var (
+	// For each 4 cores, allow another concurrent call.
+	maxConcurrentKeyGenCalls = int(math.Ceil(float64(runtime.NumCPU()) / 4))
+	// keyGenSemaphore limits the number of concurrent calls to GenerateKey
+	// since it can be fairly costly and lock the master. Callers will see this
+	// as calls just taking longer.
+	keyGenSemaphore = make(chan struct{}, maxConcurrentKeyGenCalls)
+)
+
 // GenerateKey returns a private and public SSH key.
 func GenerateKey(passphrase *string) (PrivateAndPublicKeys, error) {
+	keyGenSemaphore <- struct{}{}
+	defer func() { <-keyGenSemaphore }()
+
 	var generatedKeys PrivateAndPublicKeys
 	privateKey, err := rsa.GenerateKey(rand.Reader, trialKeySize)
 	if err != nil {
