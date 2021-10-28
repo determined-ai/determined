@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -51,7 +52,8 @@ when can create allocreq so we can also track requested slots
 
 */
 func allocateReqToV1Job(
-	rp *ResourcePool,
+	group *group,
+	schedulerType string,
 	req *sproto.AllocateRequest,
 	jobsAhead int,
 ) (job *jobv1.Job) {
@@ -77,9 +79,8 @@ func allocateReqToV1Job(
 		RequestedSlots: int32(req.Job.RequestedSlots),
 		AllocatedSlots: int32(req.Job.AllocatedSlots),
 	}
-	if rp != nil { // to allow for testing.
-		group := rp.groups[req.Group]
-		switch schdType := rp.config.Scheduler.GetType(); schdType {
+	if group != nil {
+		switch schedulerType {
 		case fairShareScheduling:
 			job.Weight = group.weight
 		case priorityScheduling:
@@ -104,14 +105,14 @@ Input:
 reqs: a list of allocateRequests sorted by expected order of execution from the scheduler.
 extended: whether the costlier job attributes should be filled or not.
 */
-func mergeToJobs(reqs AllocReqs, rp *ResourcePool) []*jobv1.Job {
+func mergeToJobs(
+	reqs AllocReqs,
+	groups map[*actor.Ref]*group,
+	schedulerType string,
+) []*jobv1.Job {
 	isAdded := make(map[model.JobID]*jobv1.Job)
 	v1Jobs := make([]*jobv1.Job, 0)
 	jobsAhead := 0
-	// We'll allow a version without RP for testing. CHECK maybe it should be a separate func?
-	// if rp == nil {
-	// 	return v1Jobs
-	// }
 	for _, req := range reqs {
 		curJob := req.Job
 		if curJob == nil {
@@ -119,7 +120,7 @@ func mergeToJobs(reqs AllocReqs, rp *ResourcePool) []*jobv1.Job {
 		}
 		v1Job, exists := isAdded[curJob.JobID]
 		if !exists {
-			v1Job = allocateReqToV1Job(rp, req, jobsAhead)
+			v1Job = allocateReqToV1Job(groups[req.Group], schedulerType, req, jobsAhead)
 			isAdded[curJob.JobID] = v1Job
 			v1Jobs = append(v1Jobs, v1Job)
 			jobsAhead++
@@ -135,8 +136,8 @@ func mergeToJobs(reqs AllocReqs, rp *ResourcePool) []*jobv1.Job {
 }
 
 // allocReqsToJobOrder converts sorted allocation requests to job order.
-func allocReqsToJobOrder(reqs []*sproto.AllocateRequest, rp *ResourcePool) (jobIds []string) {
-	for _, job := range mergeToJobs(reqs, rp) {
+func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
+	for _, job := range mergeToJobs(reqs, nil, DefaultSchedulerConfig().GetType()) {
 		jobIds = append(jobIds, job.JobId)
 	}
 	return jobIds
@@ -145,7 +146,7 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest, rp *ResourcePool) (jobI
 // getJobSummary given an ordered list of allocateRequests returns the
 // requested job summary.
 func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *jobv1.JobSummary {
-	jobs := mergeToJobs(requests, rp)
+	jobs := mergeToJobs(requests, rp.groups, rp.config.Scheduler.GetType())
 	for _, job := range jobs {
 		if job.JobId == jobID.String() {
 			return job.Summary
@@ -160,7 +161,7 @@ func getV1Jobs( // TODO rename
 	rp *ResourcePool,
 ) []*jobv1.Job {
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
-	return mergeToJobs(allocateRequests, rp)
+	return mergeToJobs(allocateRequests, rp.groups, rp.config.Scheduler.GetType())
 }
 
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
@@ -173,7 +174,7 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 	stats := jobv1.QueueStats{}
 	reqs := rp.scheduler.OrderedAllocations(rp)
-	jobs := mergeToJobs(reqs, rp)
+	jobs := mergeToJobs(reqs, rp.groups, rp.config.Scheduler.GetType())
 	for _, job := range jobs {
 		if job.IsPreemptible {
 			stats.PreemptibleCount++
