@@ -201,9 +201,8 @@ class NANMetricMaker(MetricMaker):
 
         self.wlsq = None
         if self.workloads is None:
-            session = client.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
     @staticmethod
