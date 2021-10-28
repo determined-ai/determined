@@ -82,3 +82,25 @@ const (
 	// AgentError denotes that the agent failed to launch the container.
 	AgentError = FailureType("agent failed to launch the container")
 )
+
+// IsRestartableSystemError checks if the error is caused by the system and
+// shouldn't count against `max_restarts`.
+func IsRestartableSystemError(err error) bool {
+	switch contErr := err.(type) {
+	case ContainerFailure:
+		switch contErr.FailureType {
+		case ContainerFailed, TaskError:
+			return false
+		// Questionable, could be considered failures, but for now we don't.
+		case AgentError, AgentFailed:
+			return true
+		// Definitely not a failure.
+		case TaskAborted:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}

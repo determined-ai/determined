@@ -140,6 +140,7 @@ commands:
       - run: PATH=$HOME/.local/bin:$PATH make -C proto build
       - run: make -C master get-deps
       - run: make -C agent get-deps
+      - install-devcluster
       - start-devcluster:
           target-stage: elastic
           devcluster-config: elastic.devcluster.yaml
@@ -295,6 +296,9 @@ commands:
       master-cert-name:
         type: string
         default: ""
+      managed-devcluster:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Split tests
@@ -313,10 +317,13 @@ commands:
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
-      - wait-for-master:
-          scheme: <<parameters.master-scheme>>
-          host: <<parameters.master-host>>
-          port: <<parameters.master-port>>
+      - unless:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - wait-for-master:
+                scheme: <<parameters.master-scheme>>
+                host: <<parameters.master-host>>
+                port: <<parameters.master-port>>
 
       - run:
           name: Run e2e tests
@@ -836,6 +843,10 @@ commands:
       - run: make -C master check
       - run: make -C agent check
 
+  install-devcluster:
+    steps:
+      - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
+
   start-devcluster:
     parameters:
       devcluster-config:
@@ -845,7 +856,6 @@ commands:
         type: string
         default: agent1
     steps:
-      - run: pip install git+https://github.com/determined-ai/devcluster.git@1b9749e26271bbfae8a672f1ffe4ba82884bb9f7#egg=devcluster
       - run:
           command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>>
           background: true
@@ -1081,6 +1091,7 @@ jobs:
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - setup-python-venv:
           executor: ubuntu-2004:202101-01
+      - install-devcluster
       - start-devcluster:
           target-stage: db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
@@ -1105,6 +1116,7 @@ jobs:
           executor: ubuntu-2004:202101-01
 
       - run: make -C master get-deps
+      - install-devcluster
       - start-devcluster
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
 
@@ -1406,6 +1418,9 @@ jobs:
       target-stage:
         type: string
         default: agent1
+      managed-devcluster:
+        type: boolean
+        default: false
     machine:
       image: ubuntu-2004:202101-01
     resource_class: large
@@ -1424,9 +1439,13 @@ jobs:
           name: Get master dependencies
           command: make -C master get-deps
 
-      - start-devcluster:
-          devcluster-config: <<parameters.devcluster-config>>
-          target-stage: <<parameters.target-stage>>
+      - install-devcluster
+      - unless:
+          condition: <<parameters.managed-devcluster>>
+          steps:
+            - start-devcluster:
+                devcluster-config: <<parameters.devcluster-config>>
+                target-stage: <<parameters.target-stage>>
 
       - pull-task-images:
           tf1: <<parameters.tf1>>
@@ -1435,6 +1454,7 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
+          managed-devcluster: <<parameters.managed-devcluster>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -1884,6 +1904,16 @@ workflows:
           tf2: true
           mark: e2e_cpu_2a
           target-stage: agent2
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          mark: managed_devcluster
+          managed-devcluster: true
 
       - test-e2e-webui:
           requires:
