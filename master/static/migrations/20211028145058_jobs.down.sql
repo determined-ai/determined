@@ -1,6 +1,3 @@
-/* ALTER TABLE public.tasks */
-/*     DROP COLUMN job_id; */
-
 ALTER TABLE public.experiments
     DROP COLUMN job_id;
 
