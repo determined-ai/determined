@@ -47,9 +47,6 @@ information we need out of scheduler, RP, and RM:
 
 task actors get ResourcesAllocated & released messages and we can compute state of jobs
 and busy slots from there.
-
-when can create allocreq so we can also track requested slots
-
 */
 func allocateReqToV1Job(
 	group *group,
