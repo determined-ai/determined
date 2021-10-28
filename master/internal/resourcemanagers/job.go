@@ -58,7 +58,7 @@ func allocateReqToV1Job(
 		return nil
 	}
 	var submissionTime *timestamp.Timestamp
-	if req.Job.JobType != model.JobTypeExperiment {
+	if req.Job.JobType != model.JobTypeExperiment && req.TaskActor != nil {
 		submissionTime = timestamppb.New(req.TaskActor.RegisteredTime())
 	}
 
