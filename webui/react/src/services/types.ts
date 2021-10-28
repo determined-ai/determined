@@ -123,7 +123,7 @@ export interface GetModelDetailsParams extends PaginationParams {
 }
 
 export interface GetModelVersionParams {
-  modelId: string;
+  modelId: number;
   versionId: number;
 }
 
