@@ -163,9 +163,13 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
   return {
     creationTime: model.creationTime as unknown as string,
     description: model.description,
+    id: model.id,
+    labels: model.labels,
     lastUpdatedTime: model.lastUpdatedTime as unknown as string,
     metadata: model.metadata,
     name: model.name,
+    numVersions: model.numVersions,
+    username: model.username,
   };
 };
 

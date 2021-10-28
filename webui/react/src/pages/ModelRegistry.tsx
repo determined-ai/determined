@@ -6,7 +6,8 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import { modelNameRenderer, relativeTimeRenderer } from 'components/Table';
+import { modelNameRenderer, relativeTimeRenderer, userRenderer } from 'components/Table';
+import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -58,6 +59,13 @@ const ModelRegistry: React.FC = () => {
   }, [ deleteModel ]);
 
   const columns = useMemo(() => {
+    const labelsRenderer = (value: string, record: ModelItem) => (
+      <TagList
+        compact
+        tags={record.labels ?? []}
+      />
+    );
+
     const overflowRenderer = (_:string, record: ModelItem) => {
       const isDeletable = user?.isAdmin;
       return (
@@ -99,7 +107,7 @@ const ModelRegistry: React.FC = () => {
         sorter: true,
         title: 'Description',
       },
-      { dataIndex: 'versions', title: 'Versions', width: 1 },
+      { dataIndex: 'numVersions', title: 'Versions', width: 1 },
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
@@ -108,9 +116,9 @@ const ModelRegistry: React.FC = () => {
         title: 'Last updated',
         width: 1,
       },
-      { dataIndex: 'tags', title: 'Tags' },
-      { dataIndex: 'username', title: 'User', width: 1 },
-      { render: overflowRenderer, title: '', width: 1 },
+      { dataIndex: 'labels', render: labelsRenderer, title: 'Tags' },
+      { dataIndex: 'username', render: userRenderer, title: 'User' },
+      { fixed: 'right', render: overflowRenderer, title: '', width: 1 },
     ];
 
     return tableColumns;

@@ -482,11 +482,16 @@ export enum ExperimentVisualizationType {
 }
 
 export interface ModelItem {
+  archived?: boolean;
   creationTime: string;
   description?: string;
+  id: number;
+  labels?: string[];
   lastUpdatedTime: string;
   metadata: RawJson;
   name: string;
+  numVersions: number;
+  username: string;
 }
 
 export interface ModelVersion {
