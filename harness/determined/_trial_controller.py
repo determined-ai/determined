@@ -3,7 +3,7 @@ import logging
 from typing import Any, Optional
 
 import determined as det
-from determined import _generic, horovod, profiler, workload
+from determined import horovod, profiler, workload
 from determined.common import check
 from determined.horovod import hvd
 
@@ -18,26 +18,22 @@ class TrialController(metaclass=abc.ABCMeta):
         self,
         context: Any,
         env: det.EnvContext,
-        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> None:
         self.context = context
         self.env = env
-        self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
         # The only time that workloads should be non-None here is unit tests or test mode.
         self.workloads = workloads
 
         self.prof = profiler.ProfilerAgent.from_env(
             env,
-            rendezvous_info.container_rank,
-            context.distributed.get_rank(),
+            context.distributed.cross_rank,
+            context.distributed.rank,
         )
 
         self._check_if_trial_supports_configurations(env)
-
-        self._generic = _generic.Context(env, self.context.distributed)
 
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
@@ -68,7 +64,6 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        rendezvous_info: det.RendezvousInfo,
         hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> "TrialController":

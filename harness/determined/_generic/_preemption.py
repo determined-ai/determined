@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import requests
 
-import determined as det
+from determined import _generic
 from determined.common.experimental.session import Session
 
 logger = logging.getLogger("determined.generic")
@@ -129,7 +129,7 @@ class Preemption:
         self,
         session: Session,
         allocation_id: str,
-        dist: det.DistributedContext,
+        dist: _generic.DistributedContext,
     ) -> None:
         self._session = session
         self._allocation_id = allocation_id
@@ -216,3 +216,28 @@ class Preemption:
         """
         logger.debug("acknowledge_preemption_signal()")
         self._session.post(f"/api/v1/allocations/{self._allocation_id}/signals/ack_preemption")
+
+
+class DummyPreemption(Preemption):
+    """Present an Preemption API that never returns True."""
+
+    def __init__(self) -> None:
+        pass
+
+    def start(self) -> "Preemption":
+        return self
+
+    def close(self) -> None:
+        pass
+
+    def __enter__(self) -> "Preemption":
+        return self.start()
+
+    def __exit__(self, *_: Any) -> None:
+        pass
+
+    def should_preempt(self, chief_only: bool = False, auto_ack: bool = True) -> bool:
+        return False
+
+    def acknowledge_preemption_signal(self) -> None:
+        pass

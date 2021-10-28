@@ -12,9 +12,7 @@ import numpy as np
 
 import determined as det
 from determined import horovod, layers, workload
-from determined.common import check, storage
-from determined.common.api import certs
-from determined.experimental import client
+from determined.common import check
 
 
 class NoOpTrialController(det.TrialController):
@@ -64,13 +62,14 @@ class NoOpTrialController(det.TrialController):
 
         self.wlsq = None
         if self.workloads is None:
-            session = client.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
+        self.latest_batch = self.env.latest_batch
+
         if self.env.latest_checkpoint is not None:
-            with self._generic._download_initial_checkpoint(
+            with self.context._generic.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self.load(pathlib.Path(load_path))
@@ -92,12 +91,16 @@ class NoOpTrialController(det.TrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = self.compute_validation_metrics(w.step_id)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                with self._generic._storage_mgr.store_path() as (storage_id, path):
-                    self.save(pathlib.Path(path))
-                    response = {
-                        "uuid": storage_id,
-                        "resources": storage.StorageManager._list_directory(path),
-                    }
+                metadata = {"latest_batch": self.latest_batch}
+                if self.is_chief:
+                    with self.context._generic.checkpointing.store_path(metadata) as (
+                        storage_id,
+                        path,
+                    ):
+                        self.save(pathlib.Path(path))
+                    response = {"uuid": storage_id}
+                else:
+                    response = {}
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -133,6 +136,7 @@ class NoOpTrialController(det.TrialController):
             ),
             "stop_requested": self.context.get_stop_requested(),
         }
+        self.latest_batch += num_batches
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:

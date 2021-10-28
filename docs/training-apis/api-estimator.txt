@@ -31,7 +31,7 @@ Note that the concrete context object where these functions will be found will b
    :inherited-members:
    :member-order: bysource
 
-   EstimatorTrialContext always has a :class:`~determined._train_context.DistributedContext`
+   EstimatorTrialContext always has a :class:`~determined._generic._distributed.DistributedContext`
    accessible via ``context.distributed`` for information related to distributed training.
 
    EstimatorTrialContext always has a :class:`~determined.estimator.EstimatorExperimentalContext`
