@@ -19,4 +19,9 @@ type (
 	KillTaskPod struct {
 		PodID container.ID
 	}
+
+	// GetTaskInfo notifies the pods actor to query for pod statuses
+	GetTaskInfo struct {
+		PodID container.ID
+	}
 )

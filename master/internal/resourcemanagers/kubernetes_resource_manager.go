@@ -4,6 +4,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
+
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -18,6 +20,7 @@ import (
 
 const kubernetesScheduler = "kubernetes"
 const kubernetesDummyResourcePool = "kubernetes"
+const kubernetesDefaultPriority = 50
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
@@ -239,6 +242,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case GetJobOrder:
+		ctx.Respond(k.getOrderedJobs())
 		return nil
 	case SetJobOrder:
 		for it := k.reqList.iterator(); it.next(); {
@@ -272,6 +276,17 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+// getOrderedJobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
+// CHECK should this be on the resourcepool struct?
+func (k *kubernetesResourceManager) getOrderedJobs() []*jobv1.Job {
+	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
+	v1Jobs := make([]*jobv1.Job, 0)
+	for idx, req := range filterAllocateRequests(reqs) {
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(k.groups, kubernetesScheduler, req, idx))
+	}
+	return v1Jobs
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {
@@ -350,7 +365,8 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	if g, ok := k.groups[handler]; ok {
 		return g
 	}
-	g := &group{handler: handler, weight: 1}
+	defaultPriority := kubernetesDefaultPriority
+	g := &group{handler: handler, weight: 1, priority: &defaultPriority}
 	k.groups[handler] = g
 	k.slotsUsedPerGroup[g] = 0
 

@@ -3,6 +3,8 @@ package resourcemanagers
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -72,14 +74,15 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
 }
 
 func allocateReqToV1Job(
-	rp *ResourcePool,
+	groups map[*actor.Ref]*group,
+	schedulerType string,
 	req *sproto.AllocateRequest,
 	jobsAhead int,
 ) (job *jobv1.Job) {
 	if req.Job == nil {
 		return job
 	}
-	group := rp.groups[req.Group]
+	group := groups[req.Group]
 	job = &jobv1.Job{
 		JobId: string(req.Job.JobID),
 		Summary: &jobv1.JobSummary{
@@ -93,7 +96,7 @@ func allocateReqToV1Job(
 		User:           "demo-hamid", // TODO
 		SubmissionTime: timestamppb.New(req.TaskActor.RegisteredTime()),
 	}
-	switch schdType := rp.config.Scheduler.GetType(); schdType {
+	switch schedulerType {
 	case fairShareScheduling:
 		job.Weight = group.weight
 	case priorityScheduling:
@@ -108,7 +111,7 @@ func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *j
 	requests = filterAllocateRequests(requests)
 	for idx, req := range requests {
 		if req.Job.JobID == jobID {
-			return allocateReqToV1Job(rp, req, idx).Summary
+			return allocateReqToV1Job(rp.groups, rp.config.Scheduler.GetType(), req, idx).Summary
 		}
 	}
 	return nil
@@ -122,7 +125,7 @@ func getV1Jobs( // TODO rename
 	allocateRequests := rp.scheduler.OrderedAllocations(rp)
 	v1Jobs := make([]*jobv1.Job, 0)
 	for idx, req := range filterAllocateRequests(allocateRequests) {
-		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp, req, idx))
+		v1Jobs = append(v1Jobs, allocateReqToV1Job(rp.groups, rp.config.Scheduler.GetType(), req, idx))
 	}
 	return v1Jobs
 }
