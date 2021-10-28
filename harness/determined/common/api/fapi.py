@@ -2,8 +2,11 @@ import argparse
 import functools
 from enum import Enum
 from json import JSONEncoder
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
 
+from requests import Response
+
+from build.lib.determined.common.api import certs
 from determined.common.api.authentication import cli_auth
 from determined.common.api.request import do_request
 from determined.common.schemas import SchemaBase
@@ -14,24 +17,43 @@ Jsonable = Union[Primitives, List["Jsonable"], Dict[str, "Jsonable"]]
 
 
 class ApiClient:
-    def __init__(self, host: str = "http://localhost:8080"):
+    def __init__(self, host: str = "http://localhost:8080", cert: certs.Cert = None):
         self.host = host
+        self.cert = cert  # QUESTION _cert? no setters or getters
 
     def set_host(self, host: str) -> None:
         self.host = host
 
+    def _request(
+        self,
+        *args,
+        **kwargs,
+        # method: str,
+        # host: str,
+        # path: str,
+        # params: Optional[Dict[str, Any]] = None,
+        # json: Any = None,
+        # data: Optional[str] = None,
+        # headers: Optional[Dict[str, str]] = None,
+        # authenticated: bool = True,
+        # auth: Optional[Authentication] = None,
+        # stream: bool = False,
+        # timeout: Optional[Union[Tuple, float]] = None,
+    ) -> Response:
+        return do_request(*args, cert=self.cert, **kwargs)
+
     async def request(
         self,
-        type_: Type[SchemaBase],
+        type_: Type[T],
         method: str,
         url: str,
         path_params: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ) -> Awaitable[SchemaBase]:
+    ) -> T:
         if path_params is None:
             path_params = {}
-        url = (self.host or "") + url.format(**path_params)
-        response = do_request(method, self.host, url, auth=cli_auth, **kwargs)
+        path = url.format(**path_params)
+        response = self._request(method, self.host, path=path, auth=cli_auth, **kwargs)
         json_val = response.json()
         if hasattr(type_, "from_dict"):
             return type_.from_dict(json_val)

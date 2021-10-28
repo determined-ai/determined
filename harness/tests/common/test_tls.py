@@ -9,6 +9,7 @@ import pytest
 import requests
 
 from determined.common.api import certs, request
+from determined.common.api.fapi import client
 
 TRUSTED_DOMAIN = "https://example.com"
 UNTRUSTED_DIR = os.path.join(os.path.dirname(__file__), "untrusted-root")
@@ -48,6 +49,7 @@ def test_custom_tls_certs() -> None:
         with open(UNTRUSTED_CERT) as f:
             untrusted_pem = f.read()
 
+        client.set_host(TRUSTED_DOMAIN)
         for kwargs, raises in [
             ({"noverify": True}, False),
             ({"noverify": False}, True),
@@ -56,9 +58,12 @@ def test_custom_tls_certs() -> None:
         ]:
             assert isinstance(kwargs, dict)
             cert = certs.Cert(**kwargs)
+            client.cert = cert
 
             # Trusted domains should always work.
             request.get(TRUSTED_DOMAIN, "", authenticated=False, cert=cert)
+
+            client._request("get", TRUSTED_DOMAIN, "", authenticated=False)
 
             with contextlib.ExitStack() as ctx:
                 if raises:
