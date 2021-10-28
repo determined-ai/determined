@@ -427,24 +427,6 @@ def wait(args: Namespace) -> None:
 
 
 @authentication.required
-@set_host
-def list_experiments_v2(args: Namespace) -> None:
-    response = experiments_api.get_experiments(limit=5)
-    # print(response.experiments[0].name)
-    # print(json.dumps(response, cls=MyEncoder))
-    # print(json.dumps(response.to_jsonble()))
-    jsonable_e_list = [e.to_jsonble() for e in response.experiments]
-    if args.output == "yaml":
-        print(yaml.safe_dump(jsonable_e_list, default_flow_style=False))
-    elif args.output == "json":
-        print(json.dumps(jsonable_e_list, indent=4, default=str))
-    elif ["csv", "table"].count(args.output) > 0:
-        raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
-    else:
-        raise ValueError(f"Bad output format: {args.output}")
-
-
-@authentication.required
 def list_experiments(args: Namespace) -> None:
     params = {}
     if args.all:
@@ -688,21 +670,6 @@ main_cmd = Cmd(
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
             is_default=True,
-        ),
-        Cmd(
-            "list-v2",
-            list_experiments_v2,
-            "list experiments v2",
-            [
-                Arg(
-                    "-o",
-                    "--output",
-                    type=str,
-                    default="yaml",
-                    help="Output format, one of json|yaml",
-                ),
-                Arg("-rp", "--resource-pool", type=str, default="default", help=""),
-            ],
         ),
         Cmd("config", config, "display experiment config", [experiment_id_arg("experiment ID")]),
         Cmd(

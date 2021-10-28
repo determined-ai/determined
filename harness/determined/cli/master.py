@@ -7,8 +7,12 @@ from requests import Response
 
 from determined.common import api, yaml
 from determined.common.api import authentication
+from determined.common.api.fapi import client, set_host
+from determined.common.api.fastapi_client.api.cluster_api import SyncClusterApi
 from determined.common.check import check_gt
 from determined.common.declarative_argparse import Arg, Cmd
+
+cluster_api = SyncClusterApi(client)  # type: ignore
 
 
 @authentication.required
@@ -18,6 +22,19 @@ def config(args: Namespace) -> None:
         print(json.dumps(response.json(), indent=4))
     elif args.output == "yaml":
         print(yaml.safe_dump(response.json(), default_flow_style=False))
+    else:
+        raise ValueError(f"Bad output format: {args.output}")
+
+
+@set_host
+def info(args: Namespace) -> None:
+    response = cluster_api.get_master()
+    if args.output == "yaml":
+        print(yaml.safe_dump(response.to_jsonble(), default_flow_style=False))
+    elif args.output == "json":
+        print(json.dumps(response.to_jsonble(), indent=4, default=str))
+    elif ["csv", "table"].count(args.output) > 0:
+        raise NotImplementedError(f"Output not implemented, adopt a cat to unlock: {args.output}")
     else:
         raise ValueError(f"Bad output format: {args.output}")
 
@@ -71,6 +88,15 @@ args_description = [
             Arg("--tail", type=int,
                 help="number of lines to show, counting from the end "
                 "of the log (default is all)")
+        ]),
+        Cmd("i|nfo", info, "fetch information about master", [
+            Arg(
+                "-o",
+                "--output",
+                type=str,
+                default="yaml",
+                help="Output format, one of json|yaml",
+            ),
         ]),
     ])
 ]  # type: List[Any]
