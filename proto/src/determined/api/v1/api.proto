@@ -946,6 +946,24 @@ service Determined {
       tags: "Models"
     };
   }
+  // Archive a model
+  rpc ArchiveModel(ArchiveModelRequest) returns (ArchiveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+  // Unarchive a model
+  rpc UnarchiveModel(UnarchiveModelRequest) returns (UnarchiveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
   // Get a list of models.
   rpc GetModels(GetModelsRequest) returns (GetModelsResponse) {
     option (google.api.http) = {

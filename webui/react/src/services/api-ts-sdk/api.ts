@@ -831,6 +831,14 @@ export interface V1ArchiveExperimentResponse {
 /**
  * 
  * @export
+ * @interface V1ArchiveModelResponse
+ */
+export interface V1ArchiveModelResponse {
+}
+
+/**
+ * 
+ * @export
  * @interface V1AwsCustomTag
  */
 export interface V1AwsCustomTag {
@@ -5188,6 +5196,14 @@ export interface V1TrialsSnapshotResponseTrial {
  * @interface V1UnarchiveExperimentResponse
  */
 export interface V1UnarchiveExperimentResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1UnarchiveModelResponse
+ */
+export interface V1UnarchiveModelResponse {
 }
 
 /**
@@ -11726,6 +11742,43 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
     return {
         /**
          * 
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedArchiveModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedArchiveModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/archive`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12121,6 +12174,43 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedUnarchiveModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/unarchive`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -12130,6 +12220,25 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
  */
 export const ModelsApiFp = function(configuration?: Configuration) {
     return {
+        /**
+         * 
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedArchiveModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedArchiveModel(modelId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
         /**
          * 
          * @summary Get the requested model.
@@ -12299,6 +12408,25 @@ export const ModelsApiFp = function(configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedUnarchiveModel(modelId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -12308,6 +12436,16 @@ export const ModelsApiFp = function(configuration?: Configuration) {
  */
 export const ModelsApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
+        /**
+         * 
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedArchiveModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedArchiveModel(modelId, options)(fetch, basePath);
+        },
         /**
          * 
          * @summary Get the requested model.
@@ -12405,6 +12543,16 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
             return ModelsApiFp(configuration).determinedPostModelVersion(modelId, body, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedUnarchiveModel(modelId, options)(fetch, basePath);
+        },
     };
 };
 
@@ -12415,6 +12563,18 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
  * @extends {BaseAPI}
  */
 export class ModelsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Archive a model
+     * @param {number} modelId The id of the model to archive.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedArchiveModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedArchiveModel(modelId, options)(this.fetch, this.basePath);
+    }
+
     /**
      * 
      * @summary Get the requested model.
@@ -12526,6 +12686,18 @@ export class ModelsApi extends BaseAPI {
      */
     public determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
         return ModelsApiFp(this.configuration).determinedPostModelVersion(modelId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Unarchive a model
+     * @param {number} modelId The id of the model to un-archive.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedUnarchiveModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedUnarchiveModel(modelId, options)(this.fetch, this.basePath);
     }
 
 }

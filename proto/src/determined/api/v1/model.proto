@@ -111,7 +111,25 @@ message PatchModelResponse {
   determined.model.v1.Model model = 1;
 }
 
-// Request for a version of a model in the regsitry.
+// Request for archiving a model in the registry.
+message ArchiveModelRequest {
+  // The id of the model to archive.
+  int32 model_id = 1;
+}
+
+// Response to ArchiveModelRequest
+message ArchiveModelResponse {}
+
+// Request for un-archiving a model in the registry.
+message UnarchiveModelRequest {
+  // The id of the model to un-archive.
+  int32 model_id = 1;
+}
+
+// Response to UnarchiveModelRequest
+message UnarchiveModelResponse {}
+
+// Request for a version of a model in the registry.
 message GetModelVersionRequest {
   // The id of the model.
   int32 model_id = 1;
