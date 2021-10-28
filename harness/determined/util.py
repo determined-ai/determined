@@ -11,7 +11,6 @@ import uuid
 import warnings
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, cast
 
-import numpy as np
 import simplejson
 
 from determined import constants
@@ -103,6 +102,7 @@ def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
 
 def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Make metrics dict including aggregates given individual data points."""
+    import numpy as np
 
     metric_dict = _list_to_dict(batch_metrics)
     validate_batch_metrics(batch_metrics)
@@ -129,6 +129,8 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
 
 
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
+    import numpy as np
+
     def json_serializer(obj: Any) -> Any:
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()

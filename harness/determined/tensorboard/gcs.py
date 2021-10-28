@@ -1,8 +1,6 @@
 import logging
 from typing import Any
 
-from google.cloud import storage
-
 from determined.common import util
 from determined.tensorboard import base
 
@@ -20,7 +18,9 @@ class GCSTensorboardManager(base.TensorboardManager):
 
     def __init__(self, bucket: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.client = storage.Client()
+        import google.cloud.storage
+
+        self.client = google.cloud.storage.Client()
         self.bucket = self.client.bucket(bucket)
 
     @util.preserve_random_state
