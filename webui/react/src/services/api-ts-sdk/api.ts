@@ -11833,8 +11833,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Delete a model version
-         * @param {number} modelId The id of the model version to delete.
-         * @param {number} modelVersionId 
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12357,8 +12357,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Delete a model version
-         * @param {number} modelId The id of the model version to delete.
-         * @param {number} modelVersionId 
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12594,8 +12594,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Delete a model version
-         * @param {number} modelId The id of the model version to delete.
-         * @param {number} modelVersionId 
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12746,8 +12746,8 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Delete a model version
-     * @param {number} modelId The id of the model version to delete.
-     * @param {number} modelVersionId 
+     * @param {number} modelId The id of the model associated with the model version.
+     * @param {number} modelVersionId THe id of the model version to delete.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
