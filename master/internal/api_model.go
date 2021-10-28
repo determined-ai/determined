@@ -198,6 +198,19 @@ func (a *apiServer) UnarchiveModel(
 		errors.Wrapf(err, "error unarchiving model %d", req.ModelId)
 }
 
+func (a *apiServer) DeleteModel(
+	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse, error) {
+	inpModel, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.m.db.QueryProto("delete_model", &inpModel, req.ModelId)
+
+	return &apiv1.DeleteModelResponse{},
+		errors.Wrapf(err, "error deleting model %d", req.ModelId)
+}
+
 func (a *apiServer) GetModelVersion(
 	_ context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
 	resp := &apiv1.GetModelVersionResponse{}
@@ -346,4 +359,18 @@ func (a *apiServer) PatchModelVersion(
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
 		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
+}
+
+func (a *apiServer) DeleteModelVersion(
+	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse, error) {
+	getResp, err := a.GetModelVersion(ctx,
+		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersionId})
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.m.db.QueryProto("delete_model_version", getResp.ModelVersion, req.ModelVersionId)
+
+	return &apiv1.DeleteModelVersionResponse{},
+		errors.Wrapf(err, "error deleting model version %d", req.ModelVersionId)
 }

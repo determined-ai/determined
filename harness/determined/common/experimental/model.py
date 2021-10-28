@@ -46,6 +46,14 @@ class ModelVersion:
             json={"model_version": {"name": self.name}},
         )
 
+    def delete(self) -> None:
+        """
+        Deletes the model version in the registry
+        """
+        self._session.delete(
+            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+        )
+
     @staticmethod
     def from_json(data: Dict[str, Any], session: session.Session) -> "ModelVersion":
         ckpt_data = data.get("checkpoint", {})
@@ -286,6 +294,14 @@ class Model:
         self.archived = False
         self._session.post(
             "/api/v1/models/{}/unarchive".format(self.model_id),
+        )
+
+    def delete(self) -> None:
+        """
+        Deletes the model in the registry
+        """
+        self._session.delete(
+            "/api/v1/models/{}".format(self.model_id),
         )
 
     def to_json(self) -> Dict[str, Any]:

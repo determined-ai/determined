@@ -129,6 +129,15 @@ message UnarchiveModelRequest {
 // Response to UnarchiveModelRequest
 message UnarchiveModelResponse {}
 
+// Request for deleting a model in the registry.
+message DeleteModelRequest {
+  // The id of the model to delete.
+  int32 model_id = 1;
+}
+
+// Response to DeleteModelRequest
+message DeleteModelResponse {}
+
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
   // The id of the model.
@@ -216,3 +225,14 @@ message PatchModelVersionResponse {
   // The model version created.
   determined.model.v1.ModelVersion model_version = 1;
 }
+
+// Request for deleting a model version in the registry.
+message DeleteModelVersionRequest {
+  // The id of the model associated with the model version.
+  int32 model_id = 1;
+  // THe id of the model version to delete.
+  int32 model_version_id = 2;
+}
+
+// Response to DeleteModelVersionRequest
+message DeleteModelVersionResponse {}

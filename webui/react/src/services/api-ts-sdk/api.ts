@@ -1261,6 +1261,22 @@ export interface V1DeleteExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1DeleteModelResponse
+ */
+export interface V1DeleteModelResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteModelVersionResponse
+ */
+export interface V1DeleteModelVersionResponse {
+}
+
+/**
  * Response to DeleteTemplateRequest.
  * @export
  * @interface V1DeleteTemplateResponse
@@ -11779,6 +11795,86 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedDeleteModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model version to delete.
+         * @param {number} modelVersionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedDeleteModelVersion.');
+            }
+            // verify required parameter 'modelVersionId' is not null or undefined
+            if (modelVersionId === null || modelVersionId === undefined) {
+                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling determinedDeleteModelVersion.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersionId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
+                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12241,6 +12337,45 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModel(modelId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model version to delete.
+         * @param {number} modelVersionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModelVersion(modelId, modelVersionId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12448,6 +12583,27 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedDeleteModel(modelId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model version to delete.
+         * @param {number} modelVersionId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedDeleteModelVersion(modelId, modelVersionId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12573,6 +12729,31 @@ export class ModelsApi extends BaseAPI {
      */
     public determinedArchiveModel(modelId: number, options?: any) {
         return ModelsApiFp(this.configuration).determinedArchiveModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Delete a model
+     * @param {number} modelId The id of the model to delete.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedDeleteModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedDeleteModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Delete a model version
+     * @param {number} modelId The id of the model version to delete.
+     * @param {number} modelVersionId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedDeleteModelVersion(modelId, modelVersionId, options)(this.fetch, this.basePath);
     }
 
     /**
