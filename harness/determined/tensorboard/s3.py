@@ -1,8 +1,6 @@
 import logging
 from typing import Any, Optional
 
-import boto3
-
 from determined.common import util
 from determined.tensorboard import base
 
@@ -22,6 +20,8 @@ class S3TensorboardManager(base.TensorboardManager):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
+        import boto3
+
         self.bucket = bucket
         self.client = boto3.client(
             "s3",

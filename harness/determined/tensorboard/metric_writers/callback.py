@@ -1,14 +1,12 @@
 import abc
-from typing import Any, Dict, List, Optional, Union
-
-import numpy as np
+from typing import Any, Dict, List, Optional
 
 from determined.tensorboard.metric_writers import util
 
 
 class MetricWriter(abc.ABC):
     @abc.abstractmethod
-    def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
+    def add_scalar(self, name: str, value: Any, step: int) -> None:
         pass
 
     @abc.abstractmethod

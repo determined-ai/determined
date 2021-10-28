@@ -1,7 +1,6 @@
 from typing import Any, Optional
 
 from determined.common import util
-from determined.common.storage.azure_client import AzureStorageClient
 from determined.tensorboard import base
 
 
@@ -20,7 +19,11 @@ class AzureTensorboardManager(base.TensorboardManager):
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.client = AzureStorageClient(container, connection_string, account_url, credential)
+        from determined.common.storage import azure_client
+
+        self.client = azure_client.AzureStorageClient(
+            container, connection_string, account_url, credential
+        )
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state

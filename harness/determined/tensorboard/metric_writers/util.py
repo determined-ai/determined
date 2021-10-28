@@ -1,7 +1,5 @@
 from typing import Any
 
-import numpy as np
-
 
 def is_numerical_scalar(n: Any) -> bool:
     """
@@ -15,6 +13,7 @@ def is_numerical_scalar(n: Any) -> bool:
     [1] https://docs.scipy.org/doc/numpy/user/basics.types.html#array-scalars
     [2] https://docs.scipy.org/doc/numpy/reference/arrays.scalars.html
     """
+    import numpy as np
 
     if isinstance(n, (int, float)):
         return True

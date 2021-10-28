@@ -8,8 +8,6 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import psutil
-import zmq
-from zmq.error import ZMQBindError, ZMQError
 
 import determined as det
 from determined.common import check
@@ -99,6 +97,8 @@ class ZMQBroadcastServer:
         self, num_connections: int, pub_url: Optional[str] = None, pull_url: Optional[str] = None
     ) -> None:
         self._num_connections = num_connections
+
+        import zmq
 
         context = zmq.Context()  # type: ignore
 
@@ -220,6 +220,8 @@ class ZMQBroadcastServer:
 
 class ZMQBroadcastClient:
     def __init__(self, srv_pub_url: str, srv_pull_url: str) -> None:
+        import zmq
+
         context = zmq.Context()  # type: ignore
 
         self._sub_socket = context.socket(zmq.SUB)  # type: ignore
@@ -305,6 +307,8 @@ class ZMQServer:
         ports: Optional[List[int]] = None,
         port_range: Optional[Tuple[int, int]] = None,
     ) -> None:
+        import zmq
+
         self.context = zmq.Context()  # type: ignore
         self.sockets = []  # type: List[zmq.Socket]
         self.ports = []  # type: List[int]
@@ -328,16 +332,22 @@ class ZMQServer:
         self.close()
 
     def _bind_to_specified_ports(self, ports: List[int]) -> None:
+        import zmq
+        import zmq.error
+
         for port in ports:
             socket = self.context.socket(zmq.REP)  # type: ignore
             try:
                 socket.bind(f"tcp://*:{port}")
-            except ZMQError as e:
+            except zmq.error.ZMQError as e:
                 raise det.errors.InternalException(f"Failed to bind to port {port}.") from e
             self.sockets.append(socket)
             self.ports.append(port)
 
     def _bind_to_random_ports(self, port_range: Tuple[int, int], num_connections: int) -> None:
+        import zmq
+        import zmq.error
+
         check.lt(num_connections, port_range[1] - port_range[0])
         for _ in range(num_connections):
             socket = self.context.socket(zmq.REP)  # type: ignore
@@ -346,7 +356,7 @@ class ZMQServer:
                     addr="tcp://*", min_port=port_range[0], max_port=port_range[1]
                 )
                 self.ports.append(selected_port)
-            except ZMQBindError as e:
+            except zmq.error.ZMQBindError as e:
                 raise det.errors.InternalException(
                     f"Failed to bind to port range {port_range}."
                 ) from e
@@ -418,6 +428,8 @@ class ZMQClient:
     """
 
     def __init__(self, ip_address: str, port: int) -> None:
+        import zmq
+
         self.context = zmq.Context()  # type: ignore
         self.socket = self.context.socket(zmq.REQ)  # type: ignore
         self.socket.connect(f"tcp://{ip_address}:{port}")
