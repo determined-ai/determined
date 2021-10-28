@@ -61,15 +61,15 @@ The following example demonstrates how to add a new model to the registry;
 :class:`~determined.experimental.Model` class. The new model will not have any versions (model
 checkpoints) associated with it; adding versions to a model is described below.
 
-.. code:: Python
+.. code:: python
 
    from determined.experimental import Determined
 
    model = Determined().create_model(
-             "model_name",
-             description="optional description",
-             metadata={"optional": "JSON serializable dictionary"}
-           )
+       "model_name",
+       description="optional description",
+       metadata={"optional": "JSON serializable dictionary"},
+   )
 
 Similarly, you can create a model from the CLI using the following command.
 

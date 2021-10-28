@@ -314,7 +314,7 @@ Tolerations
 
 To specify a toleration, use the ``toleration`` field in the PodSpec.
 
-.. code:: YAML
+.. code:: yaml
 
    tolerations:
       - key: "${TAINT_TYPE}"
@@ -325,7 +325,7 @@ To specify a toleration, use the ``toleration`` field in the PodSpec.
 The following example is a toleration for when a node has the ``accelerator`` taint type equal to
 the ``gpu`` taint value.
 
-.. code:: YAML
+.. code:: yaml
 
    tolerations:
       - key: "accelerator"
@@ -335,7 +335,7 @@ the ``gpu`` taint value.
 
 The next example is a toleration for when a node has the ``gpu`` taint type.
 
-.. code:: YAML
+.. code:: yaml
 
    tolerations:
       - key: "gpu"
