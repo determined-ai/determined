@@ -164,7 +164,7 @@ const LogViewerTimestamp: React.FC<Props> = ({
         },
       ).then(() => {
         const bufferIds = buffer.map(log => log.id);
-        if ((!canceler.signal.aborted && buffer.length < TAIL_SIZE) || bufferIds.includes(0)) {
+        if (!canceler.signal.aborted && (buffer.length < TAIL_SIZE || bufferIds.includes(0))) {
           setIsLastReached(true);
         }
         addLogs(buffer, isPrepend);
