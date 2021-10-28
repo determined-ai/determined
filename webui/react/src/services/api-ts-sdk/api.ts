@@ -1477,7 +1477,7 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    jobId?: string;
+    jobId: string;
 }
 
 /**
