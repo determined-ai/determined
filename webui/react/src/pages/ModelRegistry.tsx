@@ -7,7 +7,7 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import { archivedRenderer, modelNameRenderer,
+import { archivedRenderer, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
@@ -27,6 +27,7 @@ const ModelRegistry: React.FC = () => {
   const { auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
+  const [ total, setTotal ] = useState(0);
 
   const {
     settings,
@@ -43,6 +44,7 @@ const ModelRegistry: React.FC = () => {
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
         },
       );
+      setTotal(response.pagination.total || 0);
       setModels(prev => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
@@ -57,8 +59,8 @@ const ModelRegistry: React.FC = () => {
   usePolling(fetchModels);
 
   /*
-   * Get new experiments based on changes to the
-   * filters, pagination, search and sorter.
+   * Get new models based on changes to the
+   * pagination and sorter.
    */
   useEffect(() => {
     fetchModels();
@@ -129,7 +131,7 @@ const ModelRegistry: React.FC = () => {
         key: V1GetModelsRequestSortBy.CREATIONTIME,
         sorter: true,
         title: 'ID',
-        width: 1,
+        width: 60,
       },
       {
         dataIndex: 'name',
@@ -150,7 +152,7 @@ const ModelRegistry: React.FC = () => {
         key: V1GetModelsRequestSortBy.NUMVERSIONS,
         sorter: true,
         title: 'Versions',
-        width: 1,
+        width: 100,
       },
       {
         dataIndex: 'lastUpdatedTime',
@@ -158,7 +160,7 @@ const ModelRegistry: React.FC = () => {
         render: relativeTimeRenderer,
         sorter: true,
         title: 'Last updated',
-        width: 1,
+        width: 150,
       },
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags' },
       {
@@ -166,8 +168,9 @@ const ModelRegistry: React.FC = () => {
         key: 'archived',
         render: archivedRenderer,
         title: 'Archived',
+        width: 120,
       },
-      { dataIndex: 'username', render: userRenderer, title: 'User' },
+      { dataIndex: 'username', render: userRenderer, title: 'User', width: 100 },
       { fixed: 'right', render: overflowRenderer, title: '', width: 1 },
     ];
 
@@ -204,7 +207,12 @@ const ModelRegistry: React.FC = () => {
           columns={columns}
           dataSource={models}
           loading={isLoading}
+          pagination={getFullPaginationConfig({
+            limit: settings.tableLimit,
+            offset: settings.tableOffset,
+          }, total)}
           showSorterTooltip={false}
+          size="small"
           onChange={handleTableChange} />
       </Section>
     </Page>
