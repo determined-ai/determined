@@ -111,9 +111,9 @@ func (a *apiServer) UpdateJobQueue(
 		}
 		switch {
 		case sproto.UseAgentRM(a.m.system):
-			err = a.actorRequest(sproto.AgentRMAddr.Child(update.SourceResourcePool), msg, resp)
+			a.m.system.Tell(a.m.system.Get(sproto.AgentRMAddr.Child(update.SourceResourcePool)), msg)
 		case sproto.UseK8sRM(a.m.system):
-			err = a.actorRequest(sproto.K8sRMAddr, msg, resp)
+			a.m.system.Tell(a.m.system.Get(sproto.K8sRMAddr), msg)
 		default:
 			err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
 		}
