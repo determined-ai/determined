@@ -8,6 +8,39 @@
  Version 0.17
 **************
 
+Version 0.17.2
+==============
+
+**Release Date:** October 29, 2021
+
+**New Features**
+
+-  Model Registry APIs: Add new APIs to create a model with labels and to update the labels of an
+   existing model.
+
+**Improvement**
+
+-  **Breaking Change:** Deploy: ``det deploy`` now uses cloud images that use the NVIDIA Container
+   Toolkit on agent hosts instead of relying on an older NVIDIA runtime, and custom images should be
+   updated to do the same. Determined will no longer override the default container runtime
+   according to the workload.
+
+-  **Breaking Change:** Model Registry APIs: Require name in the body rather than the URL for the
+   ``post_model`` endpoint.
+
+-  **Breaking Change:** Model Registry APIs: Use model ID (integer) instead of name (string) as the
+   lookup parameter for the ``get_model`` and ``get_model_versions`` endpoints.
+
+-  Docs: Switch to the `Furo <https://pradyunsg.me/furo/>`__ Sphinx theme, which fixes searching in
+   the docs.
+
+**Bug Fixes**
+
+-  Model Registry APIs: Sort models by name, description, and other attributes.
+-  Harness: Represent infinite and NaN metric values as strings in JSON.
+-  WebUI: Convert infinite and NaN value strings to numeric metrics.
+-  WebUI: Report login failures caused by the cluster being unreachable.
+
 Version 0.17.1
 ==============
 
