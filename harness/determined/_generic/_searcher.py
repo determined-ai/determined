@@ -5,7 +5,6 @@ from typing import Iterator, Optional
 
 import determined as det
 from determined.common.experimental.session import Session
-from determined.common.util import clearinf
 
 logger = logging.getLogger("determined.generic")
 
@@ -77,15 +76,13 @@ class SearcherOp:
         if math.isnan(searcher_metric):
             raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
-        body = clearinf(
+        body = det.util.clearinf(
             {
                 "op": {
-                    "length": clearinf(
-                        {
-                            "length": self._length,
-                            "unit": self._unit.value,
-                        }
-                    )
+                    "length": {
+                        "length": self._length,
+                        "unit": self._unit.value,
+                    }
                 },
                 "searcherMetric": searcher_metric,
             }
