@@ -36,18 +36,16 @@ const ModelVersionDetails: React.FC = () => {
   const [ editingMetadata, setEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
 
-  const id = parseInt(modelId);
-
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion(
-        { modelId: id, versionId: parseInt(versionId) },
+        { modelId: parseInt(modelId), versionId: parseInt(versionId) },
       );
       if (!isEqual(versionData, modelVersion)) setModelVersion(versionData);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [ id, modelVersion, pageError, versionId ]);
+  }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
 

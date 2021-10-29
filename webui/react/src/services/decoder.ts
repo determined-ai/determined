@@ -175,12 +175,19 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
 
 export const mapV1ModelVersion = (
   modelVersion: Sdk.V1ModelVersion,
-): types.ModelVersion | undefined => {
-  if (!modelVersion.checkpoint || !modelVersion.version) return;
+): types.ModelVersion => {
   return {
     checkpoint: decodeCheckpoint(modelVersion.checkpoint),
+    comment: modelVersion.comment,
     creationTime: modelVersion.creationTime as unknown as string,
-    model: modelVersion.model ? mapV1Model(modelVersion.model): undefined,
+    id: modelVersion.id,
+    labels: modelVersion.labels,
+    lastUpdatedTime: modelVersion.lastUpdatedTime as unknown as string,
+    metadata: modelVersion.metadata,
+    model: mapV1Model(modelVersion.model),
+    name: modelVersion.name,
+    notes: modelVersion.readme,
+    username: modelVersion.username,
     version: modelVersion.version,
   };
 };

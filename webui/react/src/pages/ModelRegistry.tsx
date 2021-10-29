@@ -129,6 +129,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'id',
         key: V1GetModelsRequestSortBy.CREATIONTIME,
+        render: modelNameRenderer,
         sorter: true,
         title: 'ID',
         width: 60,

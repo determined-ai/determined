@@ -496,8 +496,16 @@ export interface ModelItem {
 
 export interface ModelVersion {
   checkpoint: CheckpointDetail;
+  comment?: string;
   creationTime: string;
-  model?: ModelItem;
+  id: number;
+  labels?: string[];
+  lastUpdatedTime?: string;
+  metadata?: RawJson;
+  model: ModelItem;
+  name?: string;
+  notes?: string;
+  username: string;
   version: number;
 }
 
