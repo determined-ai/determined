@@ -451,7 +451,21 @@ PatchModelParams, Api.V1PatchModelResponse, ModelItem | undefined>
    request: (params: PatchModelParams) =>
      detApi.Models.determinedPatchModel(
        params.modelId,
-       { model: { id: params.modelId, ...params } },
+       { model: params.body },
+     ),
+ };
+
+export const patchModelVersion: DetApi<
+PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefined>
+ = {
+   name: 'patchModel',
+   postProcess: (response) => response.modelVersion ?
+     decoder.mapV1ModelVersion(response.modelVersion) : undefined,
+   request: (params: PatchModelVersionParams) =>
+     detApi.Models.determinedPatchModelVersion(
+       params.modelId,
+       params.versionId,
+       { modelVersion: params.body },
      ),
  };
 

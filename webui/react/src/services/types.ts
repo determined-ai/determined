@@ -139,6 +139,18 @@ export interface PatchModelParams {
   modelId: number;
 }
 
+export interface PatchModelVersionParams {
+  body: {
+    comment?: string;
+    id: number;
+    labels?: string[];
+    metadata?: RawJson;
+    name?: string;
+  }
+  modelId: number;
+  versionId: number;
+}
+
 export interface CreateExperimentParams {
   experimentConfig: string;
   parentId: number;
