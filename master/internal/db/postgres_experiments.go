@@ -1117,16 +1117,16 @@ FROM (
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
+func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
 	return db.withTransaction("add_experiment", func(tx *sqlx.Tx) error {
 		job := model.Job{
 			JobID:   experiment.JobID,
-			JobType: "EXPERIMENT",
+			JobType: model.JobTypeExperiment,
 		}
-		if err = addJob(tx, &job); err != nil {
+		if err := addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
 		}
 		err := namedGet(tx, &experiment.ID, `

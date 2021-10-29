@@ -170,7 +170,6 @@ func (m *Master) retrieveExperimentSnapshot(expModel *model.Experiment) ([]byte,
 	case err != nil:
 		return nil, errors.Wrap(err, "failed to retrieve experiment snapshot")
 	default:
-		// TODO snapshot restore
 		if snapshot, err = shimExperimentSnapshot(snapshot, version); err != nil {
 			return nil, errors.Wrap(err, "failed to shim trial snapshot")
 		}

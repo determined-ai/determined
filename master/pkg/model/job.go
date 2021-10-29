@@ -8,7 +8,7 @@ import (
 type JobID string
 
 func (id JobID) String() string {
-	return string(id) // FIXME does this add any value? is this a common interface in go?
+	return string(id)
 }
 
 // JobType is the type of a job.
@@ -36,5 +36,4 @@ const (
 type Job struct {
 	JobID   JobID   `db:"job_id"`
 	JobType JobType `db:"job_type"`
-	QPos    float64 `db:"q_position"`
 }
