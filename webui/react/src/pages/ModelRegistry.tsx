@@ -1,40 +1,72 @@
 import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import { SorterResult } from 'antd/lib/table/interface';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
-import { modelNameRenderer, relativeTimeRenderer, userRenderer } from 'components/Table';
+import { archivedRenderer, modelNameRenderer,
+  relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
+import useSettings from 'hooks/useSettings';
 import { getModels } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import { validateDetApiEnum } from 'services/utils';
 import { ModelItem } from 'types';
 import { isEqual } from 'utils/data';
 
 import css from './ModelRegistry.module.scss';
+import settingsConfig, { Settings } from './ModelRegistry.settings';
 
 const ModelRegistry: React.FC = () => {
   const { auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
+  const [ isLoading, setIsLoading ] = useState(true);
+
+  const {
+    settings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModels = useCallback(async () => {
     try {
-      const response = await getModels({});
+      const response = await getModels(
+        {
+          limit: settings.tableLimit,
+          offset: settings.tableOffset,
+          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+          sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
+        },
+      );
       setModels(prev => {
         if (isEqual(prev, response.models)) return prev;
         return response.models;
       });
+      setIsLoading(false);
     } catch(e) {
       handleError({ message: 'Unable to fetch models.', silent: true, type: ErrorType.Api });
+      setIsLoading(false);
     }
-  }, []);
+  }, [ settings ]);
 
   usePolling(fetchModels);
+
+  /*
+   * Get new experiments based on changes to the
+   * filters, pagination, search and sorter.
+   */
+  useEffect(() => {
+    fetchModels();
+    setIsLoading(true);
+  }, [
+    fetchModels,
+    settings,
+  ]);
 
   const deleteModel = useCallback((model: ModelItem) => {
     //send delete api request
@@ -74,7 +106,7 @@ const ModelRegistry: React.FC = () => {
             <Menu>
               <Menu.Item
                 onClick={() => switchArchived(record)}>
-                  Archive
+                {record.archived ? 'Unarchive' : 'Archive'}
               </Menu.Item>
               <Menu.Item
                 danger
@@ -92,7 +124,13 @@ const ModelRegistry: React.FC = () => {
     };
 
     const tableColumns: ColumnsType<ModelItem> = [
-      { dataIndex: 'id', sorter: true, title: 'ID', width: 1 },
+      {
+        dataIndex: 'id',
+        key: V1GetModelsRequestSortBy.CREATIONTIME,
+        sorter: true,
+        title: 'ID',
+        width: 1,
+      },
       {
         dataIndex: 'name',
         key: V1GetModelsRequestSortBy.NAME,
@@ -107,7 +145,13 @@ const ModelRegistry: React.FC = () => {
         sorter: true,
         title: 'Description',
       },
-      { dataIndex: 'numVersions', title: 'Versions', width: 1 },
+      {
+        dataIndex: 'numVersions',
+        key: V1GetModelsRequestSortBy.NUMVERSIONS,
+        sorter: true,
+        title: 'Versions',
+        width: 1,
+      },
       {
         dataIndex: 'lastUpdatedTime',
         key: V1GetModelsRequestSortBy.LASTUPDATEDTIME,
@@ -117,12 +161,41 @@ const ModelRegistry: React.FC = () => {
         width: 1,
       },
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags' },
+      {
+        dataIndex: 'archived',
+        key: 'archived',
+        render: archivedRenderer,
+        title: 'Archived',
+      },
       { dataIndex: 'username', render: userRenderer, title: 'User' },
       { fixed: 'right', render: overflowRenderer, title: '', width: 1 },
     ];
 
-    return tableColumns;
-  }, [ showConfirmDelete, switchArchived, user ]);
+    return tableColumns.map(column => {
+      column.sortOrder = null;
+      if (column.key === settings.sortKey) {
+        column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
+      }
+      return column;
+    });
+  }, [ showConfirmDelete, switchArchived, user, settings ]);
+
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
+
+    const { columnKey, order } = tableSorter as SorterResult<ModelItem>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    const newSettings = {
+      sortDesc: order === 'descend',
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortKey: columnKey as any,
+      tableLimit: tablePagination.pageSize,
+      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+    };
+    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+    updateSettings(newSettings, shouldPush);
+  }, [ columns, settings.tableOffset, updateSettings ]);
 
   return (
     <Page docTitle="Model Registry" id="models">
@@ -130,7 +203,9 @@ const ModelRegistry: React.FC = () => {
         <ResponsiveTable
           columns={columns}
           dataSource={models}
-          showSorterTooltip={false} />
+          loading={isLoading}
+          showSorterTooltip={false}
+          onChange={handleTableChange} />
       </Section>
     </Page>
   );
