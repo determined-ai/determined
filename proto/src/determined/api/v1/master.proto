@@ -46,6 +46,8 @@ message GetMasterResponse {
   string external_login_uri = 7;
   // Redirect for ending external sessions.
   string external_logout_uri = 8;
+  // Branding style to use on front-end.
+  string branding = 9;
 }
 
 // Get telemetry information.

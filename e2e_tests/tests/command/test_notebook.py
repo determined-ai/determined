@@ -6,8 +6,8 @@ import pytest
 from tests import command as cmd
 
 
-@pytest.mark.slow  # type: ignore
-@pytest.mark.e2e_cpu  # type: ignore
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
 def test_basic_notebook_start_and_kill() -> None:
     lines = []  # type: List[str]
     with cmd.interactive_command("notebook", "start") as notebook:

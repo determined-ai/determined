@@ -118,7 +118,9 @@ class _PolyLogs:
                     self.np_logs = tf_utils.to_numpy_or_python_type(self.tf_logs)
                 except AttributeError:  # New method as of TF 2.5.
                     self.np_logs = tf_utils.sync_to_numpy_or_python_type(self.tf_logs)
-            return self.np_logs
+            # `to_numpy_or_python_type` will return a dict if `self.tf_logs` is a dict,
+            # but current type annotations aren't good enough to describe that.
+            return self.np_logs  # type: ignore
 
 
 class _MultiplexerBase(tf.keras.callbacks.Callback):  # type: ignore
@@ -656,7 +658,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.ReduceLROnPlateau, Callback):  # type
 class TensorBoard(tf.keras.callbacks.TensorBoard, Callback):  # type: ignore
     """
     This is a thin wrapper over the TensorBoard callback that ships with ``tf.keras``.  For more
-    information, see the :ref:`TensorBoard Guide <how-to-tensorboard>` or the upstream docs for
+    information, see the :ref:`TensorBoard Guide <tensorboards>` or the upstream docs for
     `tf.keras.callbacks.TensorBoard
     <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/TensorBoard>`__.
 

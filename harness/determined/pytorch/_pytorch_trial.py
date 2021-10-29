@@ -11,8 +11,8 @@ import torch
 
 import determined as det
 from determined import horovod, layers, pytorch, util, workload
-from determined.common import check, experimental, storage
-from determined.common.api import certs
+from determined.common import check
+from determined.common.api.analytics import send_analytics
 from determined.horovod import hvd
 from determined.util import has_param
 
@@ -26,6 +26,7 @@ except ImportError:
 class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        send_analytics("PyTorchTrial Created")
 
         check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
         self.trial = cast(PyTorchTrial, trial_inst)
@@ -57,10 +58,11 @@ class PyTorchTrialController(det.TrialController):
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
         if self.workloads is None:
-            session = experimental.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
+
+        self.latest_batch = self.env.latest_batch
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
@@ -185,7 +187,8 @@ class PyTorchTrialController(det.TrialController):
         try:
             # If a load path is provided load weights and restore the data location.
             if self.env.latest_checkpoint is not None:
-                with self._generic._download_initial_checkpoint(
+                logging.info(f"Restoring trial from checkpoint {self.env.latest_checkpoint}")
+                with self.context._generic.checkpointing.restore_path(
                     self.env.latest_checkpoint
                 ) as load_path:
                     self._load(pathlib.Path(load_path))
@@ -233,14 +236,17 @@ class PyTorchTrialController(det.TrialController):
                 elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                     action = "checkpointing"
                     if self.is_chief:
-                        with self._generic._storage_mgr.store_path() as (storage_id, path):
+                        metadata = {
+                            "latest_batch": self.latest_batch,
+                            "framework": f"torch-{torch.__version__}",
+                            "format": "pickle",
+                        }
+                        with self.context._generic.checkpointing.store_path(metadata) as (
+                            storage_id,
+                            path,
+                        ):
                             self._save(pathlib.Path(path))
-                            response = {
-                                "uuid": storage_id,
-                                "resources": storage.StorageManager._list_directory(path),
-                                "framework": f"torch-{torch.__version__}",
-                                "format": "pickle",
-                            }
+                        response = {"uuid": storage_id}
                     else:
                         response = {}
 
@@ -354,6 +360,7 @@ class PyTorchTrialController(det.TrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
+            self.latest_batch += 1
             batch_start_time = time.time()
             self.prof.update_batch_idx(batch_idx)
             with self.prof.record_timing("dataloader_next", requires_sync=False):
@@ -416,6 +423,8 @@ class PyTorchTrialController(det.TrialController):
 
             batch_dur = time.time() - batch_start_time
             samples_per_second = batch_inputs / batch_dur
+            if self.hvd_config.use:
+                samples_per_second *= hvd.size()
             self.prof.record_metric("samples_per_second", samples_per_second)
             per_batch_metrics.append(tr_metrics)
 

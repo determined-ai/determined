@@ -46,6 +46,7 @@ module.exports = {
       'error',
       { args: 'after-used', ignoreRestSiblings: true },
     ],
+    '@typescript-eslint/prefer-optional-chain': [ 'error' ],
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
     'arrow-spacing': [ 'error', { after: true, before: true } ],

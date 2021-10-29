@@ -20,7 +20,15 @@ export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[
 };
 
 export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.DeterminedInfo => {
+  // Validate branding against `BrandingType` enum.
+  const branding = Object.values(types.BrandingType).reduce((acc, value) => {
+    if (value === data.branding) acc = data.branding;
+    return acc;
+  }, types.BrandingType.Determined);
+
   return {
+    branding,
+    checked: true,
     clusterId: data.clusterId,
     clusterName: data.clusterName,
     externalLoginUri: data.externalLoginUri,
@@ -126,7 +134,7 @@ export const mapV1Command = (command: Sdk.V1Command): types.CommandTask => {
 
 export const mapV1Notebook = (notebook: Sdk.V1Notebook): types.CommandTask => {
   return {
-    ...mapCommonV1Task(notebook, types.CommandType.Notebook),
+    ...mapCommonV1Task(notebook, types.CommandType.JupyterLab),
     serviceAddress: notebook.serviceAddress,
   };
 };
@@ -135,10 +143,10 @@ export const mapV1Shell = (shell: Sdk.V1Shell): types.CommandTask => {
   return { ...mapCommonV1Task(shell, types.CommandType.Shell) };
 };
 
-export const mapV1Tensorboard =
+export const mapV1TensorBoard =
   (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
     return {
-      ...mapCommonV1Task(tensorboard, types.CommandType.Tensorboard),
+      ...mapCommonV1Task(tensorboard, types.CommandType.TensorBoard),
       misc: {
         experimentIds: tensorboard.experimentIds || [],
         trialIds: tensorboard.trialIds || [],
@@ -244,6 +252,7 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
+  [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
 };
 
 export const decodeCheckpointState = (
@@ -285,6 +294,7 @@ export const mapV1GetExperimentResponse = (
     // numTrials
     // labels
     name: exp.name,
+    notes: exp.notes,
     progress: exp.progress != null ? exp.progress : undefined,
     resourcePool: exp.resourcePool || '',
     startTime: exp.startTime as unknown as string,
@@ -303,6 +313,7 @@ export const mapV1Experiment = (
     id: data.id,
     labels: data.labels || [],
     name: data.name,
+    notes: data.notes,
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     resourcePool: data.resourcePool || '',
@@ -320,7 +331,9 @@ const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefin
   if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
   for (const key in metrics){
-    if (isNumber(metrics[key])) {
+    if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
+      scalarMetrics[key] = Number(metrics[key]);
+    } else if (isNumber(metrics[key])) {
       scalarMetrics[key] = metrics[key];
     }
   }

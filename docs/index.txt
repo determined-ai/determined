@@ -3,12 +3,24 @@
    :maxdepth: 2
 
    tutorials/index
-   how-to/index
-   topic-guides/index
-   reference/index
-   faq
-   examples
+   features/index
+   interact/index
+   prepare-environment/index
+   prepare-data/index
+   training-apis/index
+   training-debug/index
+   training-distributed/index
+   training-hyperparameter/index
+   training-reproducibility/index
+   post-training/index
    model-hub/index
+   sysadmin-basics/index
+   sysadmin-deploy-on-aws/index
+   sysadmin-deploy-on-gcp/index
+   sysadmin-deploy-on-prem/index
+   sysadmin-deploy-on-k8s/index
+   ecosystem-integration
+   attributions
    release-notes
 
 ###############
@@ -105,74 +117,4 @@ love to hear from you!
 Learn More
 ==========
 
-Use the links below to start learning more about Determined's capabilities.
-
-**General Concepts**
-
--  :ref:`benefits-of-determined`
--  :ref:`det-system-architecture`
--  :ref:`terminology-concepts`
-
-**Tutorials**
-
--  :ref:`pytorch-mnist-tutorial`
--  :ref:`tf-mnist-tutorial`
--  :ref:`data-access`
-
-**Hyperparameter Tuning**
-
--  :ref:`topic-guides_hp-tuning-basics`
--  :ref:`topic-guides_hp-tuning-det`
-
-**Distributed Training**
-
--  :ref:`multi-gpu-training`
--  :ref:`optimizing-multi-gpu-training`
--  :ref:`effective-distributed-training`
-
-**Elastic Infrastructure**
-
--  :ref:`elastic-infrastructure`
--  :ref:`dynamic-agents-aws`
--  :ref:`dynamic-agents-gcp`
-
-**Reproducibility, TensorBoard, and Notebooks**
-
--  :ref:`reproducibility`
--  :ref:`notebook-tutorial`
--  :ref:`how-to-notebooks`
--  :ref:`how-to-tensorboard`
-
-**Kubernetes**
-
--  :ref:`install-on-kubernetes`
--  :ref:`determined-on-kubernetes`
-
-**Installation**
-
--  :ref:`install-cli`
-
--  :ref:`install-cluster`
-
-   -  :ref:`install-using-deploy`
-   -  :ref:`install-aws`
-   -  :ref:`install-gcp`
-   -  :ref:`install-using-linux-packages`
-   -  :ref:`install-on-kubernetes`
-
-*************************
- Documentation Structure
-*************************
-
-The Determined documentation is divided up into five main categories:
-
--  **Tutorials** are simple step-by-step guides about getting started with different topics of
-   Determined. Tutorials are a good place to get started with using the product.
--  **Topic Guides** discuss concepts and topics at a high level. They provide useful information and
-   explanation.
--  **Reference** guides contain technical reference for our APIs. They describe how to use it;
-   however, these guides assume you have a working understanding of key concepts of Determined.
--  **How-to** guides take you through the steps needed to address key use-cases. You can think of
-   them as advanced tutorials that assume some knowledge of key concepts of Determined.
--  **System administration** guides take you through what's needed to set up and configure the
-   Determined system.
+Choose the topics on the left side to start learning more about Determined's capabilities.

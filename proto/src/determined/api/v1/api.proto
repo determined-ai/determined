@@ -920,7 +920,7 @@ service Determined {
   // Get the requested model.
   rpc GetModel(GetModelRequest) returns (GetModelResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}"
+      get: "/api/v1/models/{model_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -929,8 +929,8 @@ service Determined {
   // Create a model in the registry.
   rpc PostModel(PostModelRequest) returns (PostModelResponse) {
     option (google.api.http) = {
-      post: "/api/v1/models/{model.name}"
-      body: "model"
+      post: "/api/v1/models"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -939,8 +939,26 @@ service Determined {
   // Patch a model's fields.
   rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/models/{model.name}"
+      patch: "/api/v1/models/{model.id}"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+  // Archive a model
+  rpc ArchiveModel(ArchiveModelRequest) returns (ArchiveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+  // Unarchive a model
+  rpc UnarchiveModel(UnarchiveModelRequest) returns (UnarchiveModelResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/models/{model_id}/unarchive"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -959,7 +977,7 @@ service Determined {
   rpc GetModelVersion(GetModelVersionRequest)
       returns (GetModelVersionResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions/{model_version}"
+      get: "/api/v1/models/{model_id}/versions/{model_version}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -969,7 +987,7 @@ service Determined {
   rpc GetModelVersions(GetModelVersionsRequest)
       returns (GetModelVersionsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions"
+      get: "/api/v1/models/{model_id}/versions"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -979,7 +997,19 @@ service Determined {
   rpc PostModelVersion(PostModelVersionRequest)
       returns (PostModelVersionResponse) {
     option (google.api.http) = {
-      post: "/api/v1/models/{model_name}/versions"
+      post: "/api/v1/models/{model_id}/versions"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
+
+  // Patch a model version's fields.
+  rpc PatchModelVersion(PatchModelVersionRequest)
+      returns (PatchModelVersionResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/models/{model_id}/versions/{model_version.id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

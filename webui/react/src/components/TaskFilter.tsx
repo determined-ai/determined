@@ -3,7 +3,6 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import { ALL_VALUE, CommandType, TaskFilters, TaskType } from 'types';
-import { capitalize } from 'utils/string';
 
 import IconFilterButtons from './IconFilterButtons';
 import ResponsiveFilters from './ResponsiveFilters';
@@ -13,26 +12,30 @@ import UserSelectFilter from './UserSelectFilter';
 
 const { Option } = Select;
 
-interface Props<T extends TaskType> {
+interface Props<T extends CommandType | TaskType> {
   filters: TaskFilters<T>;
   onChange: (filters: TaskFilters<T>) => void;
   showExperiments?: boolean;
   showLimit?: boolean;
 }
 
-type TaskFilterFC = <T extends TaskType = TaskType>(props: Props<T>) => React.ReactElement;
+type TaskFilterFC = <
+  T extends CommandType | TaskType = TaskType
+>(props: Props<T>) => React.ReactElement;
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const commandConfig = [
-  { id: CommandType.Notebook },
-  { id: CommandType.Tensorboard },
-  { id: CommandType.Shell },
-  { id: CommandType.Command },
+export const commandConfig = [
+  { id: CommandType.JupyterLab, label: 'JupyterLab' },
+  { id: CommandType.TensorBoard, label: 'TensorBoard' },
+  { id: CommandType.Shell, label: 'Shell' },
+  { id: CommandType.Command, label: 'Command' },
 ];
-const experimentConfig = [ { id: 'Experiment' } ];
+export const experimentConfig = [
+  { id: TaskType.Experiment, label: 'Experiment' },
+];
 
-const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
+const TaskFilter: TaskFilterFC = <T extends CommandType | TaskType = TaskType>({
   filters, onChange,
   showExperiments = true,
   showLimit = true,
@@ -69,7 +72,7 @@ const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
       active: Array.isArray(filters.types) && filters.types.includes(config.id as T),
       icon: config.id.toLocaleLowerCase(),
       id: config.id,
-      label: capitalize(config.id),
+      label: config.label,
     }));
   }, [ filters.types, showExperiments ]);
 

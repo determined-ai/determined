@@ -10,7 +10,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths } from 'routes/utils';
 import {
   activateExperiment, archiveExperiment, cancelExperiment, deleteExperiment, killExperiment,
-  killTask, openOrCreateTensorboard, pauseExperiment, unarchiveExperiment,
+  killTask, openOrCreateTensorBoard, pauseExperiment, unarchiveExperiment,
 } from 'services/api';
 import {
   ExperimentAction as Action, AnyTask, CommandTask, DetailedUser, ExperimentTask, RunState,
@@ -69,7 +69,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, curUser }: Prop
           if (onComplete) onComplete(action);
           break;
         case Action.OpenTensorBoard: {
-          const tensorboard = await openOrCreateTensorboard({ experimentIds: [ id ] });
+          const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ id ] });
           openCommand(tensorboard);
           break;
         }

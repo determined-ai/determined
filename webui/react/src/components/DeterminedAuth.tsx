@@ -58,7 +58,6 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         message: e.message,
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
-        silent: true,
         type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
       });
     } finally {
@@ -106,7 +105,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <Link external path={paths.docs('/topic-guides/users.html')} popout>docs</Link>
+        <Link external path={paths.docs('/sysadmin-basics/users.html')} popout>docs</Link>
       </p>
     </div>
   );

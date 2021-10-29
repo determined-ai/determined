@@ -106,7 +106,7 @@ export enum Determinedcontainerv1State {
 }
 
 /**
- * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+ * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
  * @export
  * @enum {string}
  */
@@ -122,7 +122,8 @@ export enum Determinedexperimentv1State {
     ERROR = <any> 'STATE_ERROR',
     DELETED = <any> 'STATE_DELETED',
     DELETING = <any> 'STATE_DELETING',
-    DELETEFAILED = <any> 'STATE_DELETE_FAILED'
+    DELETEFAILED = <any> 'STATE_DELETE_FAILED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED'
 }
 
 /**
@@ -825,6 +826,14 @@ export interface V1AllocationRendezvousInfoResponse {
  * @interface V1ArchiveExperimentResponse
  */
 export interface V1ArchiveExperimentResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1ArchiveModelResponse
+ */
+export interface V1ArchiveModelResponse {
 }
 
 /**
@@ -1940,6 +1949,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     externalLogoutUri?: string;
+    /**
+     * Branding style to use on front-end.
+     * @type {string}
+     * @memberof V1GetMasterResponse
+     */
+    branding?: string;
 }
 
 /**
@@ -2022,7 +2037,7 @@ export interface V1GetModelVersionsResponse {
 }
 
 /**
- * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+ * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
  * @export
  * @enum {string}
  */
@@ -2031,7 +2046,8 @@ export enum V1GetModelsRequestSortBy {
     NAME = <any> 'SORT_BY_NAME',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
     CREATIONTIME = <any> 'SORT_BY_CREATION_TIME',
-    LASTUPDATEDTIME = <any> 'SORT_BY_LAST_UPDATED_TIME'
+    LASTUPDATEDTIME = <any> 'SORT_BY_LAST_UPDATED_TIME',
+    NUMVERSIONS = <any> 'SORT_BY_NUM_VERSIONS'
 }
 
 /**
@@ -2045,13 +2061,13 @@ export interface V1GetModelsResponse {
      * @type {Array<V1Model>}
      * @memberof V1GetModelsResponse
      */
-    models?: Array<V1Model>;
+    models: Array<V1Model>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetModelsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -2754,7 +2770,7 @@ export interface V1LaunchTensorboardResponse {
  */
 export interface V1LogEntry {
     /**
-     * The id of the log.
+     * The id.
      * @type {number}
      * @memberof V1LogEntry
      */
@@ -2765,6 +2781,18 @@ export interface V1LogEntry {
      * @memberof V1LogEntry
      */
     message?: string;
+    /**
+     * The timestamp.
+     * @type {Date}
+     * @memberof V1LogEntry
+     */
+    timestamp?: Date;
+    /**
+     * The log level.
+     * @type {V1LogLevel}
+     * @memberof V1LogEntry
+     */
+    level?: V1LogLevel;
 }
 
 /**
@@ -3023,6 +3051,42 @@ export interface V1Model {
      * @memberof V1Model
      */
     lastUpdatedTime: Date;
+    /**
+     * The id of this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    id: number;
+    /**
+     * The number of versions associated with this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    numVersions: number;
+    /**
+     * Labels associated with this model.
+     * @type {Array<string>}
+     * @memberof V1Model
+     */
+    labels?: Array<string>;
+    /**
+     * README for model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    readme?: string;
+    /**
+     * User who created this model.
+     * @type {string}
+     * @memberof V1Model
+     */
+    username: string;
+    /**
+     * Whether this model is archived or not.
+     * @type {boolean}
+     * @memberof V1Model
+     */
+    archived?: boolean;
 }
 
 /**
@@ -3036,25 +3100,73 @@ export interface V1ModelVersion {
      * @type {V1Model}
      * @memberof V1ModelVersion
      */
-    model?: V1Model;
+    model: V1Model;
     /**
      * The checkpoint of the model version.
      * @type {V1Checkpoint}
      * @memberof V1ModelVersion
      */
-    checkpoint?: V1Checkpoint;
+    checkpoint: V1Checkpoint;
     /**
      * The version number.
      * @type {number}
      * @memberof V1ModelVersion
      */
-    version?: number;
+    version: number;
     /**
      * The time the model version was created.
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    creationTime?: Date;
+    creationTime: Date;
+    /**
+     * Unique id for each model version.
+     * @type {number}
+     * @memberof V1ModelVersion
+     */
+    id: number;
+    /**
+     * Name for this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    name?: string;
+    /**
+     * Metadata associated with this model version.
+     * @type {any}
+     * @memberof V1ModelVersion
+     */
+    metadata?: any;
+    /**
+     * The time this model version was last updated.
+     * @type {Date}
+     * @memberof V1ModelVersion
+     */
+    lastUpdatedTime?: Date;
+    /**
+     * Comment associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    comment?: string;
+    /**
+     * Readme associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    readme?: string;
+    /**
+     * User who created this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    username: string;
+    /**
+     * Labels associated with this model version.
+     * @type {Array<string>}
+     * @memberof V1ModelVersion
+     */
+    labels?: Array<string>;
 }
 
 /**
@@ -3197,6 +3309,50 @@ export interface V1PatchExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1PatchModel
+ */
+export interface V1PatchModel {
+    /**
+     * The id of this model.
+     * @type {number}
+     * @memberof V1PatchModel
+     */
+    id: number;
+    /**
+     * An updated name for the model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    name?: string;
+    /**
+     * An updated description for the model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    description?: string;
+    /**
+     * An updated metadata object for the model.
+     * @type {any}
+     * @memberof V1PatchModel
+     */
+    metadata?: any;
+    /**
+     * An updated label list for the model.
+     * @type {Array<string>}
+     * @memberof V1PatchModel
+     */
+    labels?: Array<string>;
+    /**
+     * An updated readme for the model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    readme?: string;
+}
+
+/**
  * Request for updating a model in the registry.
  * @export
  * @interface V1PatchModelRequest
@@ -3204,10 +3360,10 @@ export interface V1PatchExperimentResponse {
 export interface V1PatchModelRequest {
     /**
      * The model desired model fields and values.
-     * @type {V1Model}
+     * @type {V1PatchModel}
      * @memberof V1PatchModelRequest
      */
-    model?: V1Model;
+    model?: V1PatchModel;
 }
 
 /**
@@ -3222,6 +3378,84 @@ export interface V1PatchModelResponse {
      * @memberof V1PatchModelResponse
      */
     model?: V1Model;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1PatchModelVersion
+ */
+export interface V1PatchModelVersion {
+    /**
+     * An updated checkpoint to associate with the model version.
+     * @type {V1Checkpoint}
+     * @memberof V1PatchModelVersion
+     */
+    checkpoint?: V1Checkpoint;
+    /**
+     * The id of the model version.
+     * @type {number}
+     * @memberof V1PatchModelVersion
+     */
+    id: number;
+    /**
+     * An updated name for the model version.
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    name?: string;
+    /**
+     * An updated metadata object for the model version.
+     * @type {any}
+     * @memberof V1PatchModelVersion
+     */
+    metadata?: any;
+    /**
+     * An updated comment for the model version.
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    comment?: string;
+    /**
+     * An updated label list for the model version.
+     * @type {Array<string>}
+     * @memberof V1PatchModelVersion
+     */
+    labels?: Array<string>;
+}
+
+/**
+ * Request for updating a model version in the registry.
+ * @export
+ * @interface V1PatchModelVersionRequest
+ */
+export interface V1PatchModelVersionRequest {
+    /**
+     * The id of the model being updated.
+     * @type {number}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelId?: number;
+    /**
+     * The model version being updated.
+     * @type {V1PatchModelVersion}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelVersion?: V1PatchModelVersion;
+}
+
+/**
+ * Response to PatchModelVersionRequest.
+ * @export
+ * @interface V1PatchModelVersionResponse
+ */
+export interface V1PatchModelVersionResponse {
+    /**
+     * The model version created.
+     * @type {V1ModelVersion}
+     * @memberof V1PatchModelVersionResponse
+     */
+    modelVersion?: V1ModelVersion;
 }
 
 /**
@@ -3261,6 +3495,44 @@ export interface V1PostCheckpointMetadataResponse {
 }
 
 /**
+ * Request for creating a model in the registry.
+ * @export
+ * @interface V1PostModelRequest
+ */
+export interface V1PostModelRequest {
+    /**
+     * The name of the model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    name: string;
+    /**
+     * The description of the model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    description?: string;
+    /**
+     * The user-defined metadata of the model.
+     * @type {any}
+     * @memberof V1PostModelRequest
+     */
+    metadata?: any;
+    /**
+     * Labels associated with this model.
+     * @type {Array<string>}
+     * @memberof V1PostModelRequest
+     */
+    labels?: Array<string>;
+    /**
+     * User who is creating this model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    username?: string;
+}
+
+/**
  * Response to PostModelRequest.
  * @export
  * @interface V1PostModelResponse
@@ -3281,17 +3553,41 @@ export interface V1PostModelResponse {
  */
 export interface V1PostModelVersionRequest {
     /**
-     * The name of the model to add a version to.
-     * @type {string}
+     * The id of the model to add this version to.
+     * @type {number}
      * @memberof V1PostModelVersionRequest
      */
-    modelName?: string;
+    modelId: number;
     /**
-     * The checkpoint representing the new version.
+     * UUID of the checkpoint.
      * @type {string}
      * @memberof V1PostModelVersionRequest
      */
-    checkpointUuid?: string;
+    checkpointUuid: string;
+    /**
+     * User-friendly name for the model version.
+     * @type {string}
+     * @memberof V1PostModelVersionRequest
+     */
+    name?: string;
+    /**
+     * User-written comment for the model version.
+     * @type {string}
+     * @memberof V1PostModelVersionRequest
+     */
+    comment?: string;
+    /**
+     * The user-defined metadata of the model version.
+     * @type {any}
+     * @memberof V1PostModelVersionRequest
+     */
+    metadata?: any;
+    /**
+     * Labels associated with this model version.
+     * @type {Array<string>}
+     * @memberof V1PostModelVersionRequest
+     */
+    labels?: Array<string>;
 }
 
 /**
@@ -4900,6 +5196,14 @@ export interface V1TrialsSnapshotResponseTrial {
  * @interface V1UnarchiveExperimentResponse
  */
 export interface V1UnarchiveExperimentResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1UnarchiveModelResponse
+ */
+export interface V1UnarchiveModelResponse {
 }
 
 /**
@@ -7530,11 +7834,11 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options: any = {}): FetchArgs {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperimentTrials.');
@@ -7632,12 +7936,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by the specified users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, users?: Array<string>, options: any = {}): FetchArgs {
+        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -8366,11 +8670,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -8412,12 +8716,12 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by the specified users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -8749,11 +9053,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any) {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
             return ExperimentsApiFp(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
@@ -8777,12 +9081,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {string} [name] Limit experiments to those that match the name.
          * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
          * @param {boolean} [archived] Limit experiments to those that are archived.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {Array<string>} [users] Limit experiments to those that are owned by the specified users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, users?: Array<string>, options?: any) {
+        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
             return ExperimentsApiFp(configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, options)(fetch, basePath);
         },
         /**
@@ -9021,12 +9325,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any) {
+    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
         return ExperimentsApiFp(this.configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
@@ -9053,13 +9357,13 @@ export class ExperimentsApi extends BaseAPI {
      * @param {string} [name] Limit experiments to those that match the name.
      * @param {Array<string>} [labels] Limit experiments to those that match the provided labels.
      * @param {boolean} [archived] Limit experiments to those that are archived.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit experiments to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
      * @param {Array<string>} [users] Limit experiments to those that are owned by the specified users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, users?: Array<string>, options?: any) {
+    public determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, users?: Array<string>, options?: any) {
         return ExperimentsApiFp(this.configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, options)(this.fetch, this.basePath);
     }
 
@@ -11438,18 +11742,55 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
     return {
         /**
          * 
-         * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModel.');
+        determinedArchiveModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedArchiveModel.');
             }
-            const localVarPath = `/api/v1/models/{modelName}`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}/archive`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested model.
+         * @param {number} modelId The name of the template.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11476,22 +11817,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersion.');
+        determinedGetModelVersion(modelId: number, modelVersion: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModelVersion.');
             }
             // verify required parameter 'modelVersion' is not null or undefined
             if (modelVersion === null || modelVersion === undefined) {
                 throw new RequiredError('modelVersion','Required parameter modelVersion was null or undefined when calling determinedGetModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersion}`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
                 .replace(`{${"modelVersion"}}`, encodeURIComponent(String(modelVersion)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11519,7 +11860,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11527,13 +11868,13 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersions.');
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedGetModelVersions.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}/versions`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11576,16 +11917,19 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options: any = {}): FetchArgs {
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11624,6 +11968,18 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['description'] = description;
             }
 
+            if (labels) {
+                localVarQueryParameter['labels'] = labels;
+            }
+
+            if (archived !== undefined) {
+                localVarQueryParameter['archived'] = archived;
+            }
+
+            if (users) {
+                localVarQueryParameter['users'] = users;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -11637,22 +11993,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPatchModel.');
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPatchModel.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModel.');
             }
-            const localVarPath = `/api/v1/models/{model.name}`
-                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{model.id}`
+                .replace(`{${"model.id"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11682,23 +12038,69 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
-         * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
-         * @param {V1Model} body The model to create.
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId The id of the model version.
+         * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPostModel.');
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPatchModelVersion.');
             }
+            // verify required parameter 'modelVersionId' is not null or undefined
+            if (modelVersionId === null || modelVersionId === undefined) {
+                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling determinedPatchModelVersion.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModelVersion.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion.id}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
+                .replace(`{${"modelVersion.id"}}`, encodeURIComponent(String(modelVersionId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PatchModelVersionRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a model in the registry.
+         * @param {V1PostModelRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPostModel(body: V1PostModelRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModel.');
             }
-            const localVarPath = `/api/v1/models/{model.name}`
-                .replace(`{${"model.name"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11718,7 +12120,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1Model" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PostModelRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -11729,22 +12131,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add this version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'modelName' is not null or undefined
-            if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPostModelVersion.');
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedPostModelVersion.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions`
-                .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
+            const localVarPath = `/api/v1/models/{modelId}/versions`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
             const localVarHeaderParameter = {} as any;
@@ -11772,6 +12174,43 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedUnarchiveModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/unarchive`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -11783,13 +12222,32 @@ export const ModelsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModel(modelName, options);
+        determinedArchiveModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedArchiveModel(modelId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested model.
+         * @param {number} modelId The name of the template.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModel(modelId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11803,13 +12261,13 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelName, modelVersion, options);
+        determinedGetModelVersion(modelId: number, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelId, modelVersion, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11823,7 +12281,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11831,8 +12289,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options);
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11846,17 +12304,20 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options);
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11870,13 +12331,34 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModel(modelName, body, options);
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModel(modelId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId The id of the model version.
+         * @param {V1PatchModelVersionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11890,13 +12372,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
-         * @param {V1Model} body The model to create.
+         * @param {V1PostModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModel(modelName, body, options);
+        determinedPostModel(body: V1PostModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModel(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11910,13 +12391,32 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add this version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModelVersion(modelName, body, options);
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModelVersion(modelId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedUnarchiveModel(modelId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11938,29 +12438,39 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
     return {
         /**
          * 
-         * @summary Get the requested model.
-         * @param {string} modelName The name of the template.
+         * @summary Archive a model
+         * @param {number} modelId The id of the model to archive.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModel(modelName, options)(fetch, basePath);
+        determinedArchiveModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedArchiveModel(modelId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the requested model.
+         * @param {number} modelId The name of the template.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModel(modelId, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get the requested model version.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersion: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersion(modelName, modelVersion, options)(fetch, basePath);
+        determinedGetModelVersion(modelId: number, modelVersion: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModelVersion(modelId, modelVersion, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a list of versions for the requested model.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of the model.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -11968,56 +12478,80 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Get a list of models.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
          * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
          * @param {string} [name] Limit the models to those matching the name.
          * @param {string} [description] Limit the models to those matching the description.
+         * @param {Array<string>} [labels] Limit the models to those with the following labels.
+         * @param {boolean} [archived] Limit to unarchived models only.
+         * @param {Array<string>} [users] Limit the models to those made by the following users.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options)(fetch, basePath);
+        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any) {
+            return ModelsApiFp(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {string} modelName The name of the model.
+         * @param {number} modelId The id of this model.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPatchModel(modelName, body, options)(fetch, basePath);
+        determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPatchModel(modelId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Patch a model version's fields.
+         * @param {number} modelId The id of the model being updated.
+         * @param {number} modelVersionId The id of the model version.
+         * @param {V1PatchModelVersionRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Create a model in the registry.
-         * @param {string} modelName The name of the model.
-         * @param {V1Model} body The model to create.
+         * @param {V1PostModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(modelName: string, body: V1Model, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModel(modelName, body, options)(fetch, basePath);
+        determinedPostModel(body: V1PostModelRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPostModel(body, options)(fetch, basePath);
         },
         /**
          * 
          * @summary Create a model version.
-         * @param {string} modelName The name of the model to add a version to.
+         * @param {number} modelId The id of the model to add this version to.
          * @param {V1PostModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModelVersion(modelName, body, options)(fetch, basePath);
+        determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
+            return ModelsApiFp(configuration).determinedPostModelVersion(modelId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unarchive a model
+         * @param {number} modelId The id of the model to un-archive.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedUnarchiveModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedUnarchiveModel(modelId, options)(fetch, basePath);
         },
     };
 };
@@ -12031,33 +12565,45 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
 export class ModelsApi extends BaseAPI {
     /**
      * 
-     * @summary Get the requested model.
-     * @param {string} modelName The name of the template.
+     * @summary Archive a model
+     * @param {number} modelId The id of the model to archive.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModel(modelName, options)(this.fetch, this.basePath);
+    public determinedArchiveModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedArchiveModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the requested model.
+     * @param {number} modelId The name of the template.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedGetModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModel(modelId, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get the requested model version.
-     * @param {string} modelName The name of the model.
+     * @param {number} modelId The id of the model.
      * @param {number} modelVersion The version number.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersion(modelName: string, modelVersion: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersion(modelName, modelVersion, options)(this.fetch, this.basePath);
+    public determinedGetModelVersion(modelId: number, modelVersion: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModelVersion(modelId, modelVersion, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get a list of versions for the requested model.
-     * @param {string} modelName The name of the model.
+     * @param {number} modelId The id of the model.
      * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME'} [sortBy] Sort the model versions by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order model versions in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of model versions before returning results. Negative values denote number of models to skip from the end before returning results.
@@ -12066,64 +12612,92 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public determinedGetModelVersions(modelId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModelVersions(modelId, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Get a list of models.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS'} [sortBy] Sort the models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order models in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of models before returning results. Negative values denote number of models to skip from the end before returning results.
      * @param {number} [limit] Limit the number of models. A value of 0 denotes no limit.
      * @param {string} [name] Limit the models to those matching the name.
      * @param {string} [description] Limit the models to those matching the description.
+     * @param {Array<string>} [labels] Limit the models to those with the following labels.
+     * @param {boolean} [archived] Limit to unarchived models only.
+     * @param {Array<string>} [users] Limit the models to those made by the following users.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, options)(this.fetch, this.basePath);
+    public determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {string} modelName The name of the model.
+     * @param {number} modelId The id of this model.
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPatchModel(modelName: string, body: V1PatchModelRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPatchModel(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPatchModel(modelId: number, body: V1PatchModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPatchModel(modelId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a model version's fields.
+     * @param {number} modelId The id of the model being updated.
+     * @param {number} modelVersionId The id of the model version.
+     * @param {V1PatchModelVersionRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedPatchModelVersion(modelId: number, modelVersionId: number, body: V1PatchModelVersionRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPatchModelVersion(modelId, modelVersionId, body, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Create a model in the registry.
-     * @param {string} modelName The name of the model.
-     * @param {V1Model} body The model to create.
+     * @param {V1PostModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModel(modelName: string, body: V1Model, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModel(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPostModel(body: V1PostModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPostModel(body, options)(this.fetch, this.basePath);
     }
 
     /**
      * 
      * @summary Create a model version.
-     * @param {string} modelName The name of the model to add a version to.
+     * @param {number} modelId The id of the model to add this version to.
      * @param {V1PostModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModelVersion(modelName, body, options)(this.fetch, this.basePath);
+    public determinedPostModelVersion(modelId: number, body: V1PostModelVersionRequest, options?: any) {
+        return ModelsApiFp(this.configuration).determinedPostModelVersion(modelId, body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Unarchive a model
+     * @param {number} modelId The id of the model to un-archive.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedUnarchiveModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedUnarchiveModel(modelId, options)(this.fetch, this.basePath);
     }
 
 }
@@ -14291,11 +14865,11 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options: any = {}): FetchArgs {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperimentTrials.');
@@ -14570,11 +15144,11 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
             const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -14691,11 +15265,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
          * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+         * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any) {
+        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
             return TrialsApiFp(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
@@ -14768,12 +15342,12 @@ export class TrialsApi extends BaseAPI {
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order trials in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of trials before returning results. Negative values denote number of trials to skip from the end before returning results.
      * @param {number} [limit] Limit the number of trials. A value of 0 denotes no limit.
-     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.
+     * @param {Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>} [states] Limit trials to those that match the provided state.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED'>, options?: any) {
+    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED'>, options?: any) {
         return TrialsApiFp(this.configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 

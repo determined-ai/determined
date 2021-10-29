@@ -15,4 +15,6 @@ fi
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container
+
 exec "$DET_PYTHON_EXECUTABLE" -m determined.exec.gc_checkpoints "$@"

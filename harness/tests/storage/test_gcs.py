@@ -63,7 +63,7 @@ def live_gcs_manager(
     return manager
 
 
-@pytest.mark.cloud  # type: ignore
+@pytest.mark.cloud
 def test_gcs_lifecycle(live_gcs_manager: storage.GCSStorageManager) -> None:
     def post_delete_cb(storage_id: str) -> None:
         """Search gcs directly to ensure that a checkpoint is actually deleted."""

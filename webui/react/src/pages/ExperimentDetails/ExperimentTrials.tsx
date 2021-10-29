@@ -19,7 +19,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getExpTrials, openOrCreateTensorboard } from 'services/api';
+import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
   Determinedexperimentv1State, V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
@@ -208,7 +208,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment }: Props) => {
 
   const sendBatchActions = useCallback(async (action: Action) => {
     if (action === Action.OpenTensorBoard) {
-      return await openOrCreateTensorboard({ trialIds: settings.row });
+      return await openOrCreateTensorBoard({ trialIds: settings.row });
     } else if (action === Action.CompareTrials) {
       return updateSettings({ compare: true });
     }

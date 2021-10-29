@@ -5,6 +5,6 @@
   height: var(--theme-sizes-navigation-topbarHeight);
   justify-content: space-between;
   
-  [class^=Logo_base_] { padding: 0 var(--theme-sizes-layout-big); }
+  img { margin: 0 var(--theme-sizes-layout-big); }
   .user { padding: 0 var(--theme-sizes-layout-big); }
 }

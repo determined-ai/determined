@@ -31,11 +31,6 @@ const (
 	certPath          = "/run/determined/etc/ssl/master.crt"
 )
 
-const (
-	// Container runtimes.
-	runc = "runc"
-)
-
 // TaskSpec defines the spec of a task.
 type TaskSpec struct {
 	// Fields that are only for task logics.
@@ -49,6 +44,9 @@ type TaskSpec struct {
 	ClusterID   string
 	HarnessPath string
 	MasterCert  *tls.Certificate
+
+	SegmentEnabled bool
+	SegmentAPIKey  string
 
 	// Fields that are set on the per-request basis.
 	// TaskContainerDefaults should be removed from TaskSpec once we move to using the same
@@ -133,6 +131,11 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_USE_TLS"] = "false"
 	}
 
+	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+	if t.SegmentEnabled {
+		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
+	}
+
 	for k, v := range t.ExtraEnvVars {
 		e[k] = v
 	}
@@ -152,12 +155,6 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 		deviceType = t.Devices[0].Type
 	}
 	envVars = append(envVars, env.EnvironmentVariables().For(deviceType)...)
-
-	containerRuntime := ""
-	switch deviceType {
-	case device.CPU, device.ZeroSlot:
-		containerRuntime = runc
-	}
 
 	network := t.TaskContainerDefaults.NetworkMode
 	if t.UseHostMode {
@@ -200,7 +197,7 @@ func (t *TaskSpec) ToDockerSpec() container.Spec {
 				ShmSize:         shmSize,
 				CapAdd:          env.AddCapabilities(),
 				CapDrop:         env.DropCapabilities(),
-				Runtime:         containerRuntime,
+
 				Resources: docker.Resources{
 					Devices: devices,
 				},

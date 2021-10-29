@@ -2,9 +2,9 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import {
-  Agent, Auth, ClusterOverview, ClusterOverviewResource, DetailedUser, DeterminedInfo, ResourceType,
+  Agent, Auth, BrandingType, ClusterOverview, ClusterOverviewResource,
+  DetailedUser, DeterminedInfo, ResourceType,
 } from 'types';
-import { updateFaviconType } from 'utils/browser';
 import { clone, isEqual } from 'utils/data';
 import { percent } from 'utils/number';
 
@@ -46,6 +46,7 @@ export enum StoreAction {
 
   // Info
   SetInfo,
+  SetInfoCheck,
 
   // UI
   HideUIChrome,
@@ -69,6 +70,7 @@ export type Action =
 | { type: StoreAction.SetAuth; value: Auth }
 | { type: StoreAction.SetAuthCheck }
 | { type: StoreAction.SetInfo; value: DeterminedInfo }
+| { type: StoreAction.SetInfoCheck }
 | { type: StoreAction.HideUIChrome }
 | { type: StoreAction.HideUISpinner }
 | { type: StoreAction.ShowUIChrome }
@@ -91,6 +93,8 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
 const initInfo = {
+  branding: BrandingType.Determined,
+  checked: false,
   clusterId: '',
   clusterName: '',
   isTelemetryEnabled: false,
@@ -152,7 +156,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetAgents: {
       if (isEqual(state.agents, action.value)) return state;
       const cluster = agentsToOverview(action.value);
-      updateFaviconType(cluster[ResourceType.ALL].allocation !== 0);
       return { ...state, agents: action.value, cluster };
     }
     case StoreAction.ResetAuth:
@@ -173,6 +176,8 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetInfo:
       if (isEqual(state.info, action.value)) return state;
       return { ...state, info: action.value };
+    case StoreAction.SetInfoCheck:
+      return { ...state, info: { ...state.info, checked: true } };
     case StoreAction.HideUIChrome:
       if (!state.ui.showChrome) return state;
       return { ...state, ui: { ...state.ui, showChrome: false } };

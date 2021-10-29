@@ -1,12 +1,13 @@
 import enum
 import logging
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import determined as det
 from determined import tensorboard
 from determined.common.api import errors
 from determined.common.experimental.session import Session
+from determined.common.util import clearinf
 
 logger = logging.getLogger("determined.generic")
 
@@ -59,10 +60,10 @@ class Training:
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": metrics,
+            "metrics": clearinf(metrics),
         }
         if batch_metrics is not None:
-            body["batch_metrics"] = batch_metrics
+            body["batch_metrics"] = list(map(clearinf, batch_metrics))
         logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/training_metrics",
@@ -74,11 +75,7 @@ class Training:
             self._tbd_writer.on_train_step_end(latest_batch, metrics, batch_metrics)
             self._tbd_mgr.sync()
 
-    def report_validation_metrics(
-        self,
-        latest_batch: int,
-        metrics: Dict[str, Any],
-    ) -> None:
+    def _get_serializable_metrics(self, metrics: Dict[str, Any]) -> Set[str]:
         serializable_metrics = set()
         non_serializable_metrics = set()
         # NaN and bytes are not JSON serializable.  In the case of trial implementation bugs or
@@ -109,12 +106,21 @@ class Training:
             logger.warning(
                 "Removed non serializable metrics: %s", ", ".join(non_serializable_metrics)
             )
+
+        return serializable_metrics
+
+    def report_validation_metrics(
+        self,
+        latest_batch: int,
+        metrics: Dict[str, Any],
+    ) -> None:
+        serializable_metrics = self._get_serializable_metrics(metrics)
         reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
         body = {
             "trial_run_id": self._run_id,
             "latest_batch": latest_batch,
-            "metrics": reportable_metrics,
+            "metrics": clearinf(reportable_metrics),
         }
         logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
         self._session.post(
@@ -147,3 +153,38 @@ class Training:
             # 404 means 'no validations yet'.
             return None
         return float(r.json()["metric"])
+
+
+class DummyTraining(Training):
+    """ """
+
+    def __init__(self) -> None:
+        pass
+
+    def set_status(self, status: str) -> None:
+        logger.info(f"status: {status}")
+
+    def get_last_validation(self) -> Optional[int]:
+        return None
+
+    def report_training_metrics(
+        self,
+        latest_batch: int,
+        metrics: Dict[str, Any],
+        batch_metrics: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        logger.info(f"report_training_metrics(latest_batch={latest_batch}, metrics={metrics})")
+        logger.debug(
+            f"report_training_metrics(latest_batch={latest_batch}, batch_metrics={batch_metrics})"
+        )
+
+    def report_validation_metrics(self, latest_batch: int, metrics: Dict[str, Any]) -> None:
+        serializable_metrics = self._get_serializable_metrics(metrics)
+        metrics = {k: metrics[k] for k in serializable_metrics}
+        logger.info(f"report_validation_metrics(latest_batch={latest_batch}, metrics={metrics})")
+
+    def report_early_exit(self, reason: EarlyExitReason) -> None:
+        logger.info(f"report_early_exit({reason})")
+
+    def get_experiment_best_validation(self) -> Optional[float]:
+        return None

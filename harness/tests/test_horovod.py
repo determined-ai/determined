@@ -3,10 +3,10 @@ import pytest
 from determined import constants, horovod
 
 
-@pytest.mark.parametrize("debug", [True, False])  # type: ignore
-@pytest.mark.parametrize("auto_tune", [True, False])  # type: ignore
-@pytest.mark.parametrize("tensor_fusion_threshold", [64, 128, 512])  # type: ignore
-@pytest.mark.parametrize("tensor_fusion_cycle_time", [5, 20])  # type: ignore
+@pytest.mark.parametrize("debug", [True, False])
+@pytest.mark.parametrize("auto_tune", [True, False])
+@pytest.mark.parametrize("tensor_fusion_threshold", [64, 128, 512])
+@pytest.mark.parametrize("tensor_fusion_cycle_time", [5, 20])
 def test_create_run_command(
     debug: bool, auto_tune: bool, tensor_fusion_threshold: int, tensor_fusion_cycle_time: int
 ) -> None:

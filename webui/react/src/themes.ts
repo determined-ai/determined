@@ -93,7 +93,7 @@ export interface Theme {
  * When updating colors, update `variables.less` as well.
  * Currently two sources of truth due to Ant Design.
  */
-export const lightTheme: Theme = {
+const lightDeterminedTheme: Theme = {
   animationCurve: '0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86)',
   colors: {
     action: {
@@ -216,6 +216,18 @@ export const lightTheme: Theme = {
   },
 };
 
+const lightHpeTheme: Theme = {
+  ...lightDeterminedTheme,
+  colors: {
+    ...lightDeterminedTheme.colors,
+    brand: {
+      dark: '#009069',
+      light: '#1bc39c',
+      normal: '#01a982',
+    },
+  },
+};
+
 const stateColorMapping = {
   [RunState.Active]: 'active',
   [RunState.Canceled]: 'inactive',
@@ -255,13 +267,17 @@ export const getStateColor = (state: States | undefined): string => {
 };
 
 export enum ThemeId {
-  Light = 'light',
-  Dark = 'dark',
+  DarkDetermined = 'dark-determined',
+  DarkHPE = 'dark-hpe',
+  LightDetermined = 'light-determined',
+  LightHPE = 'light-hpe',
 }
 
-export const defaultThemeId: ThemeId = ThemeId.Light;
+export const defaultThemeId: ThemeId = ThemeId.LightDetermined;
 
 export default {
-  [ThemeId.Dark]: lightTheme,
-  [ThemeId.Light]: lightTheme,
+  [ThemeId.DarkDetermined]: lightDeterminedTheme,
+  [ThemeId.LightDetermined]: lightDeterminedTheme,
+  [ThemeId.DarkHPE]: lightHpeTheme,
+  [ThemeId.LightHPE]: lightHpeTheme,
 };

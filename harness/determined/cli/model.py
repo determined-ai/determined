@@ -5,13 +5,20 @@ from typing import Any, List
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import Checkpoint, Determined, Model, ModelOrderBy, ModelSortBy
+from determined.common.experimental import (
+    Determined,
+    Model,
+    ModelOrderBy,
+    ModelSortBy,
+    ModelVersion,
+)
 
 from . import render
 
 
 def render_model(model: Model) -> None:
     table = [
+        ["ID", model.model_id],
         ["Name", model.name],
         ["Description", model.description],
         ["Creation Time", model.creation_time],
@@ -24,7 +31,8 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_version(checkpoint: Checkpoint) -> None:
+def render_model_version(model_version: ModelVersion) -> None:
+    checkpoint = model_version.checkpoint
     headers = [
         "Version #",
         "Trial ID",
@@ -36,7 +44,7 @@ def render_model_version(checkpoint: Checkpoint) -> None:
 
     values = [
         [
-            checkpoint.model_version,
+            model_version.model_version,
             checkpoint.trial_id,
             checkpoint.batch_number,
             checkpoint.uuid,
@@ -55,10 +63,16 @@ def list_models(args: Namespace) -> None:
     if args.json:
         print(json.dumps([m.to_json() for m in models], indent=2))
     else:
-        headers = ["Name", "Creation Time", "Last Updated Time", "Metadata"]
+        headers = ["ID", "Name", "Creation Time", "Last Updated Time", "Metadata"]
 
         values = [
-            [m.name, m.creation_time, m.last_updated_time, json.dumps(m.metadata or {}, indent=2)]
+            [
+                m.model_id,
+                m.name,
+                m.creation_time,
+                m.last_updated_time,
+                json.dumps(m.metadata or {}, indent=2),
+            ]
             for m in models
         ]
 
@@ -68,12 +82,12 @@ def list_models(args: Namespace) -> None:
 @authentication.required
 def list_versions(args: Namespace) -> None:
     if args.json:
-        r = api.get(args.master, "models/{}/versions".format(args.name))
+        r = api.get(args.master, "models/{}/versions".format(args.id))
         data = r.json()
         print(json.dumps(data, indent=2))
 
     else:
-        model = Determined(args.master).get_model(args.name)
+        model = Determined(args.master).get_model(args.id)
         render_model(model)
         print("\n")
 
@@ -88,14 +102,14 @@ def list_versions(args: Namespace) -> None:
 
         values = [
             [
-                ckpt.model_version,
-                ckpt.trial_id,
-                ckpt.batch_number,
-                ckpt.uuid,
-                json.dumps(ckpt.validation, indent=2),
-                json.dumps(ckpt.metadata, indent=2),
+                version.model_version,
+                version.checkpoint.trial_id,
+                version.checkpoint.batch_number,
+                version.checkpoint.uuid,
+                json.dumps(version.checkpoint.validation, indent=2),
+                json.dumps(version.checkpoint.metadata, indent=2),
             ]
-            for ckpt in model.get_versions()
+            for version in model.get_versions()
         ]
 
         render.tabulate_or_csv(headers, values, False)
@@ -111,16 +125,16 @@ def create(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    model = Determined(args.master, None).get_model(args.name)
-    checkpoint = model.get_version(args.version)
+    model = Determined(args.master, None).get_model(args.id)
+    model_version = model.get_version(args.version)
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))
     else:
         render_model(model)
-        if checkpoint is not None:
+        if model_version is not None:
             print("\n")
-            render_model_version(checkpoint)
+            render_model_version(model_version)
 
 
 @authentication.required
@@ -128,17 +142,17 @@ def register_version(args: Namespace) -> None:
     if args.json:
         resp = api.post(
             args.master,
-            "/api/v1/models/{}/versions".format(args.name),
-            json={"checkpoint_uuid": args.uuid},
+            "/api/v1/models/{}/versions".format(args.id),
+            json={"checkpointUuid": args.uuid},
         )
 
         print(json.dumps(resp.json(), indent=2))
     else:
-        model = Determined(args.master, None).get_model(args.name)
-        checkpoint = model.register_version(args.uuid)
+        model = Determined(args.master, None).get_model(args.id)
+        model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
-        render_model_version(checkpoint)
+        render_model_version(model_version)
 
 
 args_description = [
@@ -175,7 +189,7 @@ args_description = [
                 register_version,
                 "register a new version of a model",
                 [
-                    Arg("name", type=str, help="name of the model"),
+                    Arg("id", type=int, help="id of the model"),
                     Arg("uuid", type=str, help="uuid to register as the next version of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
@@ -185,7 +199,7 @@ args_description = [
                 describe,
                 "describe model",
                 [
-                    Arg("name", type=str, help="model to describe"),
+                    Arg("id", type=int, help="model to describe"),
                     Arg("--json", action="store_true", help="print as JSON"),
                     Arg(
                         "--version",
@@ -200,7 +214,7 @@ args_description = [
                 list_versions,
                 "list the versions of a model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
+                    Arg("id", type=int, help="unique ID of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -209,7 +223,7 @@ args_description = [
                 create,
                 "create model",
                 [
-                    Arg("name", type=str, help="unique name of the model"),
+                    Arg("name", type=str, help="name for the model"),
                     Arg("--description", type=str, help="description of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],

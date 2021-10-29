@@ -9,14 +9,11 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    max-width: 30vw;
+    font-size: var(--theme-sizes-font-small);
+    max-width: 400px;
     text-align: center;
 
-    & > * {
-      margin-bottom: var(--theme-sizes-layout-enormous);
-    }
-    & > *:last-child {
-      margin-bottom: 0;
-    }
+    & > * { margin-bottom: var(--theme-sizes-layout-big); }
+    & > *:last-child { margin-bottom: 0; }
   }
 }

@@ -26,7 +26,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.17.0.dev0
+    default: 0.17.2.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -100,11 +100,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-e8af732
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-5e33300
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-e8af732
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-5e33300
 
   login-docker:
     parameters:
@@ -632,7 +632,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
         type: string
     steps:
       - set-cluster-id:
@@ -1117,7 +1117,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1125,7 +1125,7 @@ jobs:
 
   lint-webui-tests:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - run: make -C webui/tests get-deps
@@ -1137,7 +1137,7 @@ jobs:
         type: boolean
         default: false
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1154,7 +1154,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1162,7 +1162,7 @@ jobs:
 
   build-storybook:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:14.16
     steps:
       - checkout
       - react-get-deps
@@ -1369,6 +1369,7 @@ jobs:
     steps:
       - checkout
       - run: python --version
+      - run: pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
@@ -1567,7 +1568,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1650,7 +1651,7 @@ jobs:
         default: 1
       gke-version:
         type: string
-        default: "1.18.20-gke.4100"
+        default: "1.21.3-gke.2001"
       machine-type:
         type: string
         default: "n1-standard-8"
@@ -1676,7 +1677,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+        default: determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
         type: string
     docker:
       - image: determinedai/cimg-base:stable
@@ -1753,6 +1754,24 @@ jobs:
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
+
+  scan-docker-images:
+    machine:
+      image: ubuntu-2004:202101-01
+    steps:
+      - checkout
+      - set-slack-user-id
+      - setup-python-venv:
+          executor: ubuntu-2004:202101-01
+          extras-requires: anchorecli
+      - run: sudo snap install yq
+      - run: sudo apt-get install -y jq
+      - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
+      - slack/status:
+          fail_only: True
+          only_for_branches: master
+          failure_message: ':thisisfine: A docker image scane on branch \`master\` has failed!'
+          channel: "devops-ag"
 
 workflows:
   lint:
@@ -2176,7 +2195,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2195,7 +2214,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2211,8 +2230,8 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.0
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.0
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2231,8 +2250,8 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.0
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.0
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2399,7 +2418,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2414,7 +2433,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.0
+                - determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2426,8 +2445,8 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.0
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.0
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2442,8 +2461,19 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.0
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.0
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2
+
+  weekly-vuln-scan:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - scan-docker-images
 
   release:
     jobs:
@@ -2461,13 +2491,6 @@ workflows:
             - build-helm
             - build-proto
 
-      - publish-python-package:
-          matrix:
-            parameters:
-              path: ["harness", "common", "cli", "deploy", "model_hub"]
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - package-and-push-system-rc:
           requires:
             - build-react
@@ -2475,12 +2498,32 @@ workflows:
           context: determined-production
           filters: *rc-filters
 
+      - publish-python-package:
+          name: publish-python-package-rc
+          matrix:
+            parameters:
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
+          context: determined-production
+          filters: *rc-filters
+          requires:
+            - package-and-push-system-rc
+
       - package-and-push-system-release:
           requires:
             - build-react
             - build-docs
           context: determined-production
           filters: *release-filters
+
+      - publish-python-package:
+          name: publish-python-package-release
+          matrix:
+            parameters:
+              path: ["harness", "common", "cli", "deploy", "model_hub"]
+          context: determined-production
+          filters: *release-filters
+          requires:
+            - package-and-push-system-release
 
       - publish-docs:
           requires:

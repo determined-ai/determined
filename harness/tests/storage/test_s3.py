@@ -40,7 +40,7 @@ def live_manager(tmp_path: Path, require_secrets: bool) -> storage.S3StorageMana
     return manager
 
 
-@pytest.mark.cloud  # type: ignore
+@pytest.mark.cloud
 def test_live_s3_lifecycle(live_manager: storage.S3StorageManager, require_secrets: bool) -> None:
     def post_delete_cb(storage_id: str) -> None:
         """Search s3 directly to ensure that a checkpoint is actually deleted."""

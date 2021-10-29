@@ -143,7 +143,12 @@ export const routeToExternalUrl = (path: string): void => {
   window.location.assign(path);
 };
 export const routeToReactUrl = (path: string): void => {
-  history.push(stripUrl(path), { loginRedirect: clone(window.location) });
+  history.push(stripUrl(path), { loginRedirect: filterOutLoginLocation(window.location) });
+};
+export const filterOutLoginLocation = (
+  location: { pathname: string },
+): { pathname: string } | undefined => {
+  return location.pathname.includes('login') ? undefined : clone(location);
 };
 
 /*
@@ -211,8 +216,7 @@ export const paths = {
     return '/tasks';
   },
   taskLogs: (task: CommandTask): string => {
-    const taskType = task.type.toLocaleLowerCase();
-    return`/${taskType}/${task.id}/logs?id=${task.name}`;
+    return`/${task.type}/${task.id}/logs?id=${task.name}`;
   },
   trialDetails: (trialId: number | string, experimentId?: number | string): string => {
     if (!experimentId) {

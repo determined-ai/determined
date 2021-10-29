@@ -1,3 +1,4 @@
+import math
 import pathlib
 import pickle
 from typing import Any, Dict
@@ -6,9 +7,6 @@ import numpy as np
 
 import determined as det
 from determined import horovod, layers, workload
-from determined.common import storage
-from determined.common.api import certs
-from determined.experimental import client
 
 
 def structure_to_metrics(value: float, structure: Any) -> Any:
@@ -82,13 +80,14 @@ class MetricMaker(det.TrialController):
 
         self.wlsq = None
         if self.workloads is None:
-            session = client.Session(None, None, None, certs.cli_cert)
             self.workloads, self.wlsq = layers.make_compatibility_workloads(
-                session, self.env, self.context.distributed
+                self.context._generic, self.env
             )
 
+        self.latest_batch = self.env.latest_batch
+
         if self.env.latest_checkpoint is not None:
-            with self._generic._download_initial_checkpoint(
+            with self.context._generic.checkpointing.restore_path(
                 self.env.latest_checkpoint
             ) as load_path:
                 self.load(pathlib.Path(load_path))
@@ -108,12 +107,16 @@ class MetricMaker(det.TrialController):
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = self.compute_validation_metrics(w.step_id)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
-                with self._generic._storage_mgr.store_path() as (storage_id, path):
-                    self.save(pathlib.Path(path))
-                    response = {
-                        "uuid": storage_id,
-                        "resources": storage.StorageManager._list_directory(path),
-                    }
+                metadata = {"latest_batch": self.latest_batch}
+                if self.is_chief:
+                    with self.context._generic.checkpointing.store_path(metadata) as (
+                        storage_id,
+                        path,
+                    ):
+                        self.save(pathlib.Path(path))
+                        response = {"uuid": storage_id}
+                else:
+                    response = {}
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
@@ -126,8 +129,10 @@ class MetricMaker(det.TrialController):
         # Get a training metric structure for each batch.
         batch_metrics = [structure_to_metrics(v, self.training_structure) for v in batch_values]
 
-        # Update the overall base value for the trial..
+        # Update the overall base value for the trial.
         self.value += self.gain_per_batch * num_batches
+
+        self.latest_batch += num_batches
 
         return {
             "metrics": det.util.make_metrics(num_batches, batch_metrics),
@@ -172,6 +177,41 @@ class MetricMaker(det.TrialController):
 
 class MetricMakerTrial(det.Trial):
     trial_controller_class = MetricMaker
+
+    def __init__(self, context: det.TrialContext) -> None:
+        self.context = context
+
+
+class NANMetricMaker(MetricMaker):
+    """
+    Insert Infinity and NaN values into metrics
+    because YAML->JSON parser cannot convert YAML's .inf value
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.value = self.env.hparams["starting_base_value"]
+        self.training_structure = self.env.hparams["training_structure"]
+        self.training_structure["inf"] = math.inf
+        self.training_structure["nan"] = math.nan
+        self.validation_structure = self.env.hparams["validation_structure"]
+        self.validation_structure["neg_inf"] = -1 * math.inf
+        self.gain_per_batch = 0
+
+        self.wlsq = None
+        if self.workloads is None:
+            self.workloads, self.wlsq = layers.make_compatibility_workloads(
+                self.context._generic, self.env
+            )
+
+    @staticmethod
+    def from_trial(trial_inst: det.Trial, *args: Any, **kwargs: Any) -> det.TrialController:
+        return NANMetricMaker(*args, **kwargs)
+
+
+class NANMetricMakerTrial(det.Trial):
+    trial_controller_class = NANMetricMaker
 
     def __init__(self, context: det.TrialContext) -> None:
         self.context = context

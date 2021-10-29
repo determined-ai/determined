@@ -1,0 +1,21 @@
+# Based on https://github.com/chromium/badssl.com/blob/master/certs/src/conf/wildcard.conf
+[ req ]
+default_bits = 2048
+distinguished_name = req_distinguished_name
+encrypt_key = no
+prompt = no
+req_extensions = req_v3_usr
+
+[ req_distinguished_name ]
+countryName = US
+stateOrProvinceName = California
+localityName = San Francisco
+organizationName = Determined AI Test Certificate Authority
+commonName = 127.0.0.1
+
+[ req_v3_usr ]
+basicConstraints = CA:FALSE
+subjectAltName = @alt_names
+
+[ alt_names ]
+IP.1 = 127.0.0.1

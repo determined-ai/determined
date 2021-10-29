@@ -5,6 +5,7 @@ package schemas
 import (
 	"bytes"
 	"encoding/json"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/santhosh-tekuri/jsonschema/v2"
@@ -53,6 +54,7 @@ func IsComplete(schema Schema) error {
 	return nil
 }
 
+var validatorCacheLock sync.RWMutex
 var sanityValidators = map[string]*jsonschema.Schema{}
 var completenessValidators = map[string]*jsonschema.Schema{}
 
@@ -72,6 +74,15 @@ func newCompiler() *jsonschema.Compiler {
 // GetSanityValidator returns a jsonschema validator for bytes from a particular URL.
 func GetSanityValidator(url string) *jsonschema.Schema {
 	// Check if we have a pre-compiled validator already.
+	validatorCacheLock.RLock()
+	if validator, ok := sanityValidators[url]; ok {
+		validatorCacheLock.RUnlock()
+		return validator
+	}
+	validatorCacheLock.RUnlock()
+
+	validatorCacheLock.Lock()
+	defer validatorCacheLock.Unlock()
 	if validator, ok := sanityValidators[url]; ok {
 		return validator
 	}
@@ -99,6 +110,15 @@ func GetSanityValidator(url string) *jsonschema.Schema {
 
 // GetCompletenessValidator returns a jsonschema validator for bytes from a particular URL.
 func GetCompletenessValidator(url string) *jsonschema.Schema {
+	validatorCacheLock.RLock()
+	if validator, ok := completenessValidators[url]; ok {
+		validatorCacheLock.RUnlock()
+		return validator
+	}
+	validatorCacheLock.RUnlock()
+
+	validatorCacheLock.Lock()
+	defer validatorCacheLock.Unlock()
 	if validator, ok := completenessValidators[url]; ok {
 		return validator
 	}

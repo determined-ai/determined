@@ -2,7 +2,7 @@ import { alertAction, parseIds, visitAction } from 'omnibar/tree-extension/trees
 import { Children, TreeNode } from 'omnibar/tree-extension/types';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getTrialDetails } from 'services/api';
-import { getNotebooks, getTensorboards } from 'services/api';
+import { getJupyterLabs, getTensorBoards } from 'services/api';
 import { terminalCommandStates } from 'utils/types';
 import { openCommand } from 'wait';
 
@@ -64,13 +64,13 @@ const locations: TreeNode[] = [
     title: 'dashboard',
   },
   {
-    aliases: [ 'notebooks', 'tensorboards', 'commands', 'shells' ],
+    aliases: [ 'jupyterLabs', 'tensorBoards', 'commands', 'shells' ],
     onAction: visitAction(paths.taskList()),
     title: 'tasks',
   },
   {
     options: async (): Promise<Children> => {
-      const tsbs = await getTensorboards({});
+      const tsbs = await getTensorBoards({});
       return tsbs
         .filter(tsb => !terminalCommandStates.has(tsb.state))
         .map(tsb => ({
@@ -78,11 +78,11 @@ const locations: TreeNode[] = [
           title: `${JSON.stringify(tsb.misc)}`,
         }));
     },
-    title: 'tensorboard',
+    title: 'tensorBoard',
   },
   {
     options: async (): Promise<Children> => {
-      const nbs = await getNotebooks({});
+      const nbs = await getJupyterLabs({});
       return nbs
         .filter(nb => !terminalCommandStates.has(nb.state))
         .map(nb => ({
@@ -90,7 +90,7 @@ const locations: TreeNode[] = [
           title: nb.name,
         }));
     },
-    title: 'notebook',
+    title: 'jupyterLab',
   },
   {
     onAction: visitAction(paths.masterLogs()),

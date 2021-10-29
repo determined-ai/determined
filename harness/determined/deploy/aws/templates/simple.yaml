@@ -4,36 +4,36 @@ Description: Determined Template
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0827d8ed0295e3feb
-      Agent: ami-078d9406b4fde0567
+      Master: ami-036d0684fc96830ca
+      Agent: ami-0bcf7d2c956b2800c
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-00bbba67d13faed04
-    #   Agent: ami-0fc41a015bd08f558
+    #   Master: ami-0f8b8babb98cc66d0
+    #   Agent: ami-059460de724471f8c
     # ap-southeast-1:
-    #   Master: ami-0f6565c3d5328c913
-    #   Agent: ami-0abf18a93839d896a
+    #   Master: ami-0fed77069cd5a6d6c
+    #   Agent: ami-0f064fadd0c69116a
     # ap-southeast-2:
-    #   Master: ami-0a1002150df471b2b
-    #   Agent: ami-0b49f4913ed2aeaa3
+    #   Master: ami-0bf8b986de7e3c7ce
+    #   Agent: ami-06cf1a40fc7ad72d3
     eu-central-1:
-      Master: ami-0bdbe51a2e8070ff2
-      Agent: ami-09dfe0e75110703c8
+      Master: ami-0a49b025fffbbdac6
+      Agent: ami-0ebf2e096c954f98a
     eu-west-1:
-      Master: ami-03caf24deed650e2c
-      Agent: ami-0b5e7b7b24bfc0afc
+      Master: ami-08edbb0e85d6a0a07
+      Agent: ami-0838318c39c9b59d2
     # eu-west-2:
-    #   Master: ami-093d303510c432519
-    #   Agent: ami-0f7eefeb4ae74b526
+    #   Master: ami-0fdf70ed5c34c5f52
+    #   Agent: ami-0256eb79c263fb607
     us-east-1:
-      Master: ami-0dd76f917833aac4b
-      Agent: ami-08b34534a48df44cd
+      Master: ami-083654bd07b5da81d
+      Agent: ami-024af5b8a01219c76
     us-east-2:
-      Master: ami-0b29b6e62f2343b46
-      Agent: ami-0f35ee97c172a6131
+      Master: ami-0629230e074c580f2
+      Agent: ami-01c05db8c991b06e3
     us-west-2:
-      Master: ami-01773ce53581acf22
-      Agent: ami-0a00e428be59ef0ce
+      Master: ami-036d46416a34a611c
+      Agent: ami-094405b185514826f
 
 Parameters:
   Keypair:
@@ -73,7 +73,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.17.0.dev0
+    Default: 0.17.2.dev0
 
   DBPassword:
     Type: String

@@ -4,24 +4,12 @@ import os
 import tempfile
 from typing import Iterator, Optional
 
-import google.api_core.exceptions
 import requests.exceptions
 import urllib3.exceptions
-from google.api_core import retry
-from google.cloud import storage
 
 from determined import errors
 from determined.common import util
 from determined.common.storage.base import StorageManager
-
-retry_network_errors = retry.Retry(
-    retry.if_exception_type(
-        ConnectionError,
-        google.api_core.exceptions.ServerError,
-        urllib3.exceptions.ProtocolError,
-        requests.exceptions.ConnectionError,
-    )
-)
 
 
 class GCSStorageManager(StorageManager):
@@ -46,7 +34,9 @@ class GCSStorageManager(StorageManager):
 
     def __init__(self, bucket: str, temp_dir: Optional[str] = None) -> None:
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
-        self.client = storage.Client()
+        import google.cloud.storage
+
+        self.client = google.cloud.storage.Client()
         self.bucket = self.client.bucket(bucket)
 
     def post_store_path(self, storage_id: str, storage_dir: str) -> None:
@@ -78,6 +68,17 @@ class GCSStorageManager(StorageManager):
             blob = self.bucket.blob(blob_name)
 
             logging.debug(f"Uploading to GCS: {blob_name}")
+
+            from google.api_core import exceptions, retry
+
+            retry_network_errors = retry.Retry(
+                retry.if_exception_type(
+                    ConnectionError,
+                    exceptions.ServerError,
+                    urllib3.exceptions.ProtocolError,
+                    requests.exceptions.ConnectionError,
+                )
+            )
 
             if rel_path.endswith("/"):
                 # Create empty blobs for subdirectories. This ensures

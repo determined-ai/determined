@@ -5,8 +5,7 @@ from typing import Any, Generator, Optional, Tuple
 
 import determined as det
 from determined import _generic, tensorboard, workload
-from determined.common import check, constants
-from determined.experimental import client
+from determined.common import check
 
 WorkloadStreamElem = Tuple[workload.Workload, workload.ResponseFunc]
 
@@ -88,35 +87,17 @@ class WorkloadSequencer(workload.Source):
 
     def __init__(
         self,
+        generic_context: _generic.Context,
         env: det.EnvContext,
-        session: client.Session,
-        dist: det.DistributedContext,
     ) -> None:
+        self.generic = generic_context
         self.env = env
-        self.session = session
-        self._dist = dist
         self._run_id = env.trial_run_id
         self._trial_id = int(env.det_trial_id)
         self._allocation_id = env.allocation_id
         self._exp_id = int(env.det_experiment_id)
 
-        tbd_mgr = tensorboard.build(
-            env.det_cluster_id,
-            env.det_experiment_id,
-            env.det_trial_id,
-            env.experiment_config["checkpoint_storage"],
-            container_path=None if not env.on_cluster else constants.SHARED_FS_CONTAINER_PATH,
-        )
-        tbd_writer = tensorboard.get_metric_writer()
-        self.training = _generic.Training(
-            session, self._trial_id, self._run_id, self._exp_id, tbd_mgr, tbd_writer
-        )
-
-        api_path = f"/api/v1/trials/{self._trial_id}/checkpoint_metadata"
-        static_metadata = {"trial_id": self._trial_id, "trial_run_id": self._run_id}
-        self.checkpointing = _generic.Checkpointing(session, api_path, static_metadata, tbd_mgr)
-
-        self.val_from_previous_run = self.training.get_last_validation()
+        self.val_from_previous_run = self.generic.training.get_last_validation()
 
         self.want_initial_val = self.env.experiment_config.get("perform_initial_validation", False)
 
@@ -180,13 +161,12 @@ class WorkloadSequencer(workload.Source):
         raise ValueError("invalid length")
 
     def check_for_preemption(self) -> None:
-        assert self.preemption is not None
-        if self.preemption.should_preempt(chief_only=True):
+        if self.generic.preemption.should_preempt(chief_only=True):
             raise ShouldExit()
 
     def train(self, num_batches: int, op: _generic.SearcherOp) -> WorkloadGenerator:
         # Report a train step is starting.
-        self.training.set_status("training")
+        self.generic.training.set_status("training")
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.RUN_STEP,
@@ -203,7 +183,7 @@ class WorkloadSequencer(workload.Source):
 
         if isinstance(response, workload.InvalidHP):
             # Exit before reporting metrics (which would be empty anyway).
-            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+            self.generic.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response.get("metrics", {}).get("avg_metrics", {})
@@ -211,7 +191,7 @@ class WorkloadSequencer(workload.Source):
 
         self.state.latest_batch += num_batches
         self.state.step_id += 1
-        self.training.report_training_metrics(
+        self.generic.training.report_training_metrics(
             latest_batch=self.state.latest_batch,
             metrics=metrics,
             batch_metrics=batch_metrics,
@@ -223,7 +203,7 @@ class WorkloadSequencer(workload.Source):
         elif op.unit == _generic.Unit.RECORDS:
             op.report_progress(self.global_batch_size * self.state.latest_batch)
         elif op.unit == _generic.Unit.EPOCHS:
-            op.report_progress(self.state.latest_batch / self.as_batches(epochs=op.epochs))
+            op.report_progress(self.state.latest_batch / self.as_batches(epochs=1))
         else:
             raise ValueError(f"unrecognized searcher op unit: {op.unit}")
 
@@ -241,7 +221,7 @@ class WorkloadSequencer(workload.Source):
 
     def validate(self, op: Optional[_generic.SearcherOp]) -> WorkloadGenerator:
         # Report a validation step is starting.
-        self.training.set_status("validating")
+        self.generic.training.set_status("validating")
 
         wkld = workload.Workload(
             kind=workload.Workload.Kind.COMPUTE_VALIDATION_METRICS,
@@ -257,7 +237,7 @@ class WorkloadSequencer(workload.Source):
         # Validation step is complete, process the result.
 
         if isinstance(response, workload.InvalidHP):
-            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+            self.generic.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             raise ShouldExit()
 
         metrics = response["metrics"]["validation_metrics"]
@@ -305,10 +285,10 @@ class WorkloadSequencer(workload.Source):
         if self.ckpt_policy == "best" and not self.checkpoint_is_current():
             # Before reporting our own validation metric, check what the best known validation is
             # without it.
-            best_validation_before = self.training.get_experiment_best_validation()
+            best_validation_before = self.generic.training.get_experiment_best_validation()
 
         self.state.last_val = self.state.latest_batch
-        self.training.report_validation_metrics(
+        self.generic.training.report_validation_metrics(
             latest_batch=self.state.latest_batch,
             metrics=metrics,
         )
@@ -326,7 +306,7 @@ class WorkloadSequencer(workload.Source):
         self.check_for_preemption()
 
     def checkpoint(self, already_exiting: bool) -> WorkloadGenerator:
-        self.training.set_status("checkpointing")
+        self.generic.training.set_status("checkpointing")
 
         # Update the last_ckpt now so it can be captured by get_state() after we yield.
         self.state.last_ckpt = self.state.latest_batch
@@ -342,7 +322,7 @@ class WorkloadSequencer(workload.Source):
         response = yield from yield_and_await_response(wkld)
 
         if isinstance(response, workload.InvalidHP):
-            self.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
+            self.generic.training.report_early_exit(_generic.EarlyExitReason.INVALID_HP)
             if not already_exiting:
                 raise ShouldExit(skip_exit_checkpoint=True)
             return
@@ -350,16 +330,6 @@ class WorkloadSequencer(workload.Source):
         uuid = response["uuid"]
 
         logging.info(f"Saved trial to checkpoint {uuid}")
-
-        self.checkpointing._report_checkpoint(
-            uuid=uuid,
-            resources=response["resources"],
-            metadata={
-                "framework": response.get("framework", ""),
-                "format": response.get("format", ""),
-                "latest_batch": self.state.latest_batch,
-            },
-        )
 
         if already_exiting:
             return
@@ -392,13 +362,7 @@ class WorkloadSequencer(workload.Source):
         return self.state.last_val == self.state.latest_batch
 
     def __iter__(self) -> workload.Stream:
-        self.preemption = _generic.Preemption(self.session, self._allocation_id, self._dist)
-        self.preemption.start()
         try:
-            searcher = _generic.AdvancedSearcher(
-                self.session, self._trial_id, self._run_id, self._allocation_id
-            )
-
             # Step-zero Validations.
             if (
                 self.want_initial_val
@@ -407,7 +371,7 @@ class WorkloadSequencer(workload.Source):
             ):
                 yield from self.validate(None)
 
-            for op in searcher.ops():
+            for op in self.generic.searcher.ops():
                 while self.batches_until_op_complete(op) > 0:
                     # Do some training.
                     yield from self.train(
@@ -452,14 +416,10 @@ class WorkloadSequencer(workload.Source):
             if not e.skip_exit_checkpoint and not self.checkpoint_is_current():
                 yield from self.checkpoint(already_exiting=True)
 
-        finally:
-            self.preemption.close()
-
 
 def make_compatibility_workloads(
-    session: client.Session,
+    generic_context: _generic.Context,
     env: det.EnvContext,
-    dist: det.DistributedContext,
 ) -> Tuple[workload.Stream, Optional[WorkloadSequencer]]:
     """
     make_compatibility_workloads will create a stream of workloads to allow a pre-push-architecture
@@ -467,8 +427,8 @@ def make_compatibility_workloads(
     have been generated by the pre-push master.
     """
 
-    if dist.get_rank() == 0:
-        wlsq = WorkloadSequencer(env, session, dist)  # type: Optional[WorkloadSequencer]
+    if generic_context.distributed.get_rank() == 0:
+        wlsq = WorkloadSequencer(generic_context, env)  # type: Optional[WorkloadSequencer]
     else:
         wlsq = None
 
@@ -477,22 +437,22 @@ def make_compatibility_workloads(
             # Workloads are generated only on the chief worker.
             for wkld, response_fn in wlsq:
                 # Distribute to peers.
-                _ = dist._zmq_broadcast(wkld)
+                _ = generic_context.distributed._zmq_broadcast(wkld)
                 # Process workload.
                 yield wkld, response_fn
                 # Wait for peers.
-                _ = dist._zmq_gather(None)
+                _ = generic_context.distributed._zmq_gather(None)
             # Break the workers out of their loop.
-            _ = dist._zmq_broadcast(None)
+            _ = generic_context.distributed._zmq_broadcast(None)
         else:
             while True:
                 # Wait for chief to broadcast workload.
-                wkld = dist._zmq_broadcast(None)
+                wkld = generic_context.distributed._zmq_broadcast(None)
                 if wkld is None:
                     break
                 # Process workload.
                 yield wkld, lambda _: None
                 # Tell chief we finished.
-                _ = dist._zmq_gather(None)
+                _ = generic_context.distributed._zmq_gather(None)
 
     return workloads(), wlsq

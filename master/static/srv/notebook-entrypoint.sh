@@ -30,6 +30,8 @@ export SHELL
 
 "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 
+"$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources
+
 test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 
 exec "$DET_PYTHON_EXECUTABLE" /run/determined/jupyter/check_idle.py &

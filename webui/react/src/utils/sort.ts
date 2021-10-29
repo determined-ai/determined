@@ -2,6 +2,8 @@ import {
   CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State,
 } from 'types';
 
+import { isNumber } from './data';
+
 const runStateSortValues: Record<RunState, number> = {
   [RunState.Active]: 0,
   [RunState.Paused]: 1,
@@ -27,8 +29,14 @@ const commandStateSortValues: Record<CommandState, number> = {
   [CommandState.Terminated]: 6,
 };
 
-export const alphanumericSorter = (a: string | number, b: string | number): number => {
-  return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
+export const alphanumericSorter = (a?: string | number, b?: string | number): number => {
+  if (a != null && b!= null) {
+    const options = { numeric: isNumber(a), sensitivity: 'base' };
+    return a.toString().localeCompare(b.toString(), 'en', options);
+  }
+  if (a != null && b == null) return 1;
+  if (a == null && b != null) return -1;
+  return 0;
 };
 
 export const booleanSorter = (a: boolean, b: boolean): number => {

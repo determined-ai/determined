@@ -2,9 +2,6 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Union
 
-from azure.core.exceptions import HttpResponseError, ResourceExistsError
-from azure.storage.blob import BlobServiceClient, StorageErrorCode
-
 from determined.common import util
 
 # Prevents Azure's HTTP logs from appearing in our trial logs.
@@ -21,21 +18,24 @@ class AzureStorageClient(object):
         account_url: Optional[str] = None,
         credential: Optional[str] = None,
     ) -> None:
+        import azure.core.exceptions
+        from azure.storage import blob
+
         if connection_string:
-            self.client = BlobServiceClient.from_connection_string(connection_string)
+            self.client = blob.BlobServiceClient.from_connection_string(connection_string)
         elif account_url:
-            self.client = BlobServiceClient(account_url, credential)
+            self.client = blob.BlobServiceClient(account_url, credential)
 
         logging.info(f"Trying to create Azure Blob Storage Container: {container}.")
         try:
             self.client.create_container(container.split("/")[0])
             logging.info(f"Successfully created container {container}.")
-        except ResourceExistsError:
+        except azure.core.exceptions.ResourceExistsError:
             logging.info(
                 f"Container {container} already exists, and will be used to store checkpoints."
             )
-        except HttpResponseError as e:
-            if e.error_code == StorageErrorCode.invalid_uri:  # type: ignore
+        except azure.core.exceptions.HttpResponseError as e:
+            if e.error_code == blob.StorageErrorCode.invalid_uri:  # type: ignore
                 logging.warning(
                     f"The storage client raised the following HttpResponseError:\n{e}\nPlease "
                     "ignore this warning if this is because the account url provided points to a "

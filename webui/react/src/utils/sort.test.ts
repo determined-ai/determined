@@ -3,14 +3,14 @@ import { alphanumericSorter, booleanSorter, numericSorter } from './sort';
 describe('sort utility', () => {
   it('alphanumericSorter', () => {
     const tests = [
-      { input: [ 'ABC', 'abc' ], output: 1 },
-      { input: [ 'abc', 'ABC' ], output: -1 },
       { input: [ 'Jumping', 'elephant' ], output: 1 },
       { input: [ 52, 'elephant' ], output: -1 },
       { input: [ 'elephant', -12 ], output: 1 },
       { input: [ 52, -12 ], output: 1 },
       { input: [ -12, 52 ], output: -1 },
       { input: [ 'abc', 'abc' ], output: 0 },
+      { input: [ 'ABC', 'abc' ], output: 0 },
+      { input: [ 'abc', 'ABC' ], output: 0 },
       { input: [ -12, -12 ], output: 0 },
       { input: [ 52, 52 ], output: 0 },
     ];

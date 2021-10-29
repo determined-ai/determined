@@ -1,0 +1,77 @@
+#####
+ FAQ
+#####
+
+********************
+ TensorFlow Support
+********************
+
+Can I use TensorFlow Core models with Determined?
+=================================================
+
+Determined has support for TensorFlow models that use the :ref:`tf.keras <tf-keras-trial>` or
+:ref:`Estimator <estimator-trial>` APIs. For models that use the low-level TensorFlow Core APIs, we
+recommend porting your model to use :ref:`Estimator Trial <estimator-trial>`. `Example of converting
+a TensorFlow graph into an Estimator
+<https://github.com/determined-ai/determined/blob/master/examples/computer_vision/mnist_tf_layers/model_def.py>`_.
+
+Can I use TensorFlow 2 with Determined?
+=======================================
+
+Yes; Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is used for a
+particular experiment is controlled by the container image that has been configured for that
+experiment. Determined provides prebuilt Docker images that include TensorFlow 2.4, 1.15, 2.5, and
+2.6, respectively:
+
+-  ``determinedai/environments:cuda-11.1-pytorch-1.9-lightning-1.3-tf-2.4-gpu-0.17.2`` (default)
+-  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.17.2``
+-  ``determinedai/environments:cuda-11.2-tf-2.5-gpu-0.17.2``
+-  ``determinedai/environments:cuda-11.2-tf-2.6-gpu-0.17.2``
+
+We also provide lightweight CPU-only counterparts:
+
+-  ``determinedai/environments:py-3.8-pytorch-1.9-lightning-1.3-tf-2.4-cpu-0.17.2``
+-  ``determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-0.17.2``
+-  ``determinedai/environments:py-3.8-tf-2.5-cpu-0.17.2``
+-  ``determinedai/environments:py-3.8-tf-2.6-cpu-0.17.2``
+
+To change the container image used for an experiment, specify :ref:`environment.image
+<exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
+for more details about configuring training environments and a more complete list of prebuilt Docker
+images.
+
+How do I debug a TensorFlow model inside Determined?
+====================================================
+
+Please see :ref:`model-debug`.
+
+*****************
+ PyTorch Support
+*****************
+
+How do I debug a PyTorch model inside Determined?
+=================================================
+
+Please see :ref:`model-debug`.
+
+Why am I seeing significantly different metrics for trials which are paused and later continued than trials which aren't paused?
+================================================================================================================================
+
+When a trial is paused, the current state of the trial is saved to a :ref:`checkpoint
+<exporting-checkpoints>`. When the trial later resumes training, Determined will reload the state of
+the model from the most recent checkpoint. If you observe that this process degrades the model's
+training or validation metrics (compared to a model trained on the same data without interruption),
+one explanation is that the model's state might not be restored accurately or completely from the
+checkpoint. When using PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
+
+Please verify the following in the model code:
+
+-  The model is wrapped with :meth:`wrap_model <determined.pytorch.PyTorchTrialContext.wrap_model>`.
+
+-  The optimizer is wrapped with :meth:`wrap_optimizer
+   <determined.pytorch.PyTorchTrialContext.wrap_optimizer>` and based on the output of
+   ``wrap_model``, not the original unwrapped model.
+
+-  The LR scheduler is wrapped with :meth:`wrap_lr_scheduler
+   <determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler>` and based on the output of
+   ``wrap_optimizer``, not the original unwrapped optimizer.

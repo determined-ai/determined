@@ -1,14 +1,21 @@
-.base {
-  height: 20px;
-  width: 128px;
+.determined {
+  &.onDarkHorizontal,
+  &.onLightHorizontal {
+    height: 30px;
+    width: 192px;
+  }
+  &.onDarkVertical,
+  &.onLightVertical {
+    height: 64.95px;
+    width: 120px;
+  }
 }
-.on-dark-horizontal,
-.on-light-horizontal {
-  height: 30px;
-  width: 192px;
-}
-.on-dark-vertical,
-.on-light-vertical {
-  height: 64.95px;
-  width: 120px;
+.hpe {
+  &.onDarkHorizontal,
+  &.onLightHorizontal,
+  &.onDarkVertical,
+  &.onLightVertical {
+    height: 16px;
+    width: 133px;
+  }
 }

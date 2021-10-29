@@ -258,7 +258,19 @@ export default class StepImplementation {
     await goto(`${BASE_URL}/logs`);
   }
 
-  /* Experiment Actions */
+  /* Modal Steps */
+
+  @Step('Confirm or cancel modal with button <label>')
+  public async confirmModal(label: string) {
+    // Wait for the modal to animate in.
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-enter').exists()));
+    await t.click(t.button(label, t.within(t.$('.ant-modal-body'))));
+    // Wait for the modal to animate away
+    await t.waitFor(async () => !(await t.$('.ant-modal.zoom-leave').exists()));
+  }
+
+  /* Experiment Steps */
+
   @Step('Activate experiment <id>')
   public async activateExperiment(id: string) {
     await this.navigateToExperimentDetail(id);
@@ -392,9 +404,6 @@ export default class StepImplementation {
   public async modifyExperiment(action: string, row: string) {
     await t.click(t.tableCell({ row: parseInt(row) + 1, col: 13 }));
     await t.click(t.text(action, t.within(t.$('.ant-dropdown'))));
-    if (action === 'Kill') {
-      await t.click(t.button('Kill'));
-    }
   }
 
   @Step('Open TensorBoard from experiment row <row>')
@@ -424,22 +433,6 @@ export default class StepImplementation {
   @Step('View experiment in TensorBoard')
   public async viewExperimentInTensorBoard() {
     await t.click(t.button('View in TensorBoard'));
-  }
-
-  /* Task List Page Steps */
-
-  @Step('Filter tasks by type <table>')
-  public async filterTasksByType(table: Table) {
-    for (var row of table.getTableRows()) {
-      const ariaLabel = row.getCell('aria-label');
-      const count = row.getCell('count');
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
-      await t.click(t.text(ariaLabel, t.within(t.$('.ant-table-filter-dropdown'))));
-      await t.click(t.$('[aria-label="Apply Filter"]'));
-      await this.checkTableRowCount(count);
-      await t.click(t.$('.ant-table-thead th:nth-child(3) .ant-table-filter-trigger'));
-      await t.click(t.$('[aria-label="Reset Filter"]'));
-    }
   }
 
   /* Cluster */

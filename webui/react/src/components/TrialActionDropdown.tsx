@@ -5,7 +5,7 @@ import React from 'react';
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { paths, routeToReactUrl } from 'routes/utils';
-import { openOrCreateTensorboard } from 'services/api';
+import { openOrCreateTensorBoard } from 'services/api';
 import { ExperimentAction as Action, TrialItem } from 'types';
 import { capitalize } from 'utils/string';
 import { openCommand } from 'wait';
@@ -29,7 +29,7 @@ const TrialActionDropdown: React.FC<Props> = ({ trial, experimentId }: Props) =>
           routeToReactUrl(paths.trialLogs(trial.id, experimentId));
           break;
         case Action.OpenTensorBoard:
-          openCommand(await openOrCreateTensorboard({ trialIds: [ trial.id ] }));
+          openCommand(await openOrCreateTensorBoard({ trialIds: [ trial.id ] }));
           break;
       }
     } catch (e) {

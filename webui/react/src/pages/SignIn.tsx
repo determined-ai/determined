@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
-import Logo, { LogoTypes } from 'components/Logo';
+import Logo, { LogoType } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
@@ -112,7 +112,7 @@ const SignIn: React.FC = () => {
     <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
-          <Logo type={LogoTypes.OnLightVertical} />
+          <Logo branding={info.branding} type={LogoType.OnLightVertical} />
           <DeterminedAuth canceler={canceler} />
           {samlSso && (
             <Button

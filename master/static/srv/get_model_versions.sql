@@ -2,9 +2,23 @@ WITH mv AS (
   SELECT
     version,
     checkpoint_uuid,
-    creation_time
+    creation_time,
+    name,
+    comment,
+    id,
+    metadata,
+    labels
   FROM model_versions
-  WHERE model_name = $1
+  WHERE model_id = $1
+),
+m AS (
+  SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, m.readme, u.username, m.archived, COUNT(mv.version) as num_versions
+  FROM models as m
+  JOIN users as u ON u.id = m.user_id
+  LEFT JOIN model_versions as mv
+    ON mv.model_id = m.id
+  WHERE m.id = $1
+  GROUP BY m.id, u.id
 ),
 c AS (
   SELECT
@@ -32,7 +46,10 @@ c AS (
 )
 SELECT
     to_json(c) AS checkpoint,
-    mv.version,
-    mv.creation_time
-    FROM c, mv
-    WHERE c.uuid = mv.checkpoint_uuid::text
+    to_json(m) AS model,
+    array_to_json(mv.labels) AS labels,
+    mv.version, mv.id,
+    mv.creation_time,
+    mv.name, mv.comment, mv.metadata
+    FROM c, mv, m
+    WHERE c.uuid = mv.checkpoint_uuid::text;
