@@ -378,6 +378,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 				}
 			}
 		}
+		ctx.Respond(nil)
 		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
 	case GetJobSummary:
 		resp := getV1JobSummary(rp, msg.JobID, rp.scheduler.OrderedAllocations(rp))
