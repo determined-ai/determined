@@ -142,6 +142,10 @@ export const getModel = generateDetApi<
   GetModelParams, Api.V1GetModelResponse, ModelItem | undefined
 >(Config.getModel);
 
+export const patchModel = generateDetApi<
+  PatchModelParams, Api.V1PatchModelResponse, ModelItem | undefined
+>(Config.patchModel);
+
 export const getModelDetails = generateDetApi<
   GetModelDetailsParams, Api.V1GetModelVersionsResponse, ModelVersions | undefined
 >(Config.getModelDetails);

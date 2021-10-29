@@ -443,6 +443,18 @@ GetModelVersionParams, Api.V1GetModelVersionResponse, ModelVersion | undefined
   ),
 };
 
+export const patchModel: DetApi<
+PatchModelParams, Api.V1PatchModelResponse, ModelItem | undefined>
+ = {
+   name: 'patchModel',
+   postProcess: (response) => response.model ? decoder.mapV1Model(response.model) : undefined,
+   request: (params: PatchModelParams) =>
+     detApi.Models.determinedPatchModel(
+       params.modelId,
+       { model: { id: params.modelId, ...params } },
+     ),
+ };
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<

@@ -1,7 +1,7 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
 
-import { CommandType, DetailedUser } from 'types';
+import { CommandType, DetailedUser, RawJson } from 'types';
 
 export interface ApiCommonParams {
   cancelToken?: CancelToken,
@@ -125,6 +125,18 @@ export interface GetModelDetailsParams extends PaginationParams {
 export interface GetModelVersionParams {
   modelId: number;
   versionId: number;
+}
+
+export interface PatchModelParams {
+  body: {
+    description?: string;
+    id: number;
+    labels?: string[];
+    metadata?: RawJson;
+    name?: string;
+    readme?: string;
+  }
+  modelId: number;
 }
 
 export interface CreateExperimentParams {
