@@ -56,7 +56,7 @@ const ModelDetails: React.FC = () => {
   }, []);
 
   const downloadVersion = useCallback((version: ModelVersion) => {
-    //send download api request
+    //open download popover
   }, []);
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {

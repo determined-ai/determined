@@ -32,7 +32,10 @@ const ModelHeader: React.FC<Props> = (
       label: 'Created by',
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
-    { content: <InlineEditor placeholder="Add description..." value="" />, label: 'Description' },
+    {
+      content: <InlineEditor placeholder="Add description..." value={model.description ?? ''} />,
+      label: 'Description',
+    },
     {
       content: <TagList
         ghost={false}

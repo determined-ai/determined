@@ -49,10 +49,6 @@ const ModelVersionDetails: React.FC = () => {
 
   usePolling(fetchModelVersion);
 
-  useEffect(() => {
-    //setEditedNotes to value from db
-  }, []);
-
   const referenceText = useMemo(() => {
     return (
       `from determined.experimental import Determined
@@ -73,15 +69,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     await navigator.clipboard.writeText(referenceText);
   }, [ referenceText ]);
 
-  /*
-  const metadata = useMemo(() => {
-    return Object.entries(model?.model.metadata || {}).map((pair) => {
-      return ({ content: pair[1], label: pair[0] });
-    });
-  }, [ modelVersion.metadata ]);
-  */
-
-  const metadata = Object.entries({}).map((pair) => {
+  const metadata = Object.entries(modelVersion?.metadata ?? {}).map((pair) => {
     return ({ content: pair[1], label: pair[0] } as InfoRow);
   });
 
@@ -194,12 +182,12 @@ model.load_state_dict(ckpt['models_state_dict'][0])
                 title={'Metadata'}>
                 <EditableMetadata
                   editing={editingMetadata}
-                  metadata={{}}
+                  metadata={modelVersion.metadata ?? {}}
                   updateMetadata={setEditedMetadata} />
               </Card>
             }
             <NotesCard
-              notes=""
+              notes={modelVersion.notes ?? ''}
               style={{ height: 350 }}
               onSave={saveNotes} />
             <Card
