@@ -1,9 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Model Registry APIs: create model with string labels, update model labels
-
-**Breaking Changes**
-
--  Model Registry APIs: require name in the body and not the URL in the ``post_model`` endpoint.

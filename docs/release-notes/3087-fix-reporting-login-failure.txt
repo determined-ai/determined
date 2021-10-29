@@ -1,5 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  WebUI: Report login failure that is caused by cluster being unreachable.
