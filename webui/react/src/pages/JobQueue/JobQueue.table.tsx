@@ -78,7 +78,7 @@ export const columns: ColumnType<Job>[] = [
     dataIndex: 'submissionTime',
     key: 'submitted',
     render: (_: string, record: Job): ReactNode =>
-      relativeTimeRenderer(record.submissionTime),
+      record.submissionTime && relativeTimeRenderer(record.submissionTime),
     title: 'Submitted',
   },
   {
