@@ -2,6 +2,7 @@ import collections
 import datetime
 import enum
 import inspect
+import math
 import os
 import pathlib
 import random
@@ -128,6 +129,20 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     return metrics
 
 
+def clearinf(obj: Any) -> Any:
+    if isinstance(obj, float) and math.isnan(obj):
+        return "NaN"
+    if obj == math.inf:
+        return "Infinity"
+    if obj == -1 * math.inf:
+        return "-Infinity"
+    if isinstance(obj, List):
+        return list(map(clearinf, obj))
+    if isinstance(obj, dict):
+        return {k: clearinf(v) for k, v in obj.items()}
+    return obj
+
+
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
     import numpy as np
 
@@ -136,20 +151,14 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             return obj.isoformat()
         if isinstance(obj, enum.Enum):
             return obj.name
-        if isinstance(obj, np.float64):
-            return float(obj)
-        if isinstance(obj, np.float32):
-            return float(obj)
-        if isinstance(obj, np.float16):
-            return float(obj)
-        if isinstance(obj, np.int64):
-            return int(obj)
-        if isinstance(obj, np.int32):
+        if isinstance(obj, (np.float64, np.float32, np.float16)):
+            return clearinf(float(obj))
+        if isinstance(obj, (np.int64, np.int32)):
             return int(obj)
         if isinstance(obj, uuid.UUID):
             return str(obj)
         if isinstance(obj, np.ndarray):
-            return obj.tolist()
+            return clearinf(obj.tolist())
         # Objects that provide their own custom JSON serialization.
         if hasattr(obj, "__json__"):
             return obj.__json__()
