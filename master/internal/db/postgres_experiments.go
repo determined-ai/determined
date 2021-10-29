@@ -1150,7 +1150,7 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 
 	if err := db.query(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_Id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -1186,7 +1186,7 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 
 	if err := db.query(`
 SELECT id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -1212,7 +1212,7 @@ func (db *PgDB) ExperimentByTrialID(id int) (*model.Experiment, error) {
 	experiment := model.Experiment{}
 	return &experiment, db.sql.QueryRowx(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time,
-e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date
+e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.job_id,
 FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 		id).StructScan(&experiment)
 }
