@@ -2,6 +2,7 @@ import { Form, FormInstance, Input, Modal } from 'antd';
 import React, { useCallback, useRef } from 'react';
 
 import Json from 'components/Json';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { detApi } from 'services/apiConfig';
 import { Job } from 'types';
 import { truncate } from 'utils/string';
@@ -31,11 +32,14 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
             },
           ],
         });
-      } catch (e) {
-        console.error(
-          'https://github.com/determined-ai/determined/pull/3039#issuecomment-947265893',
-          e,
-        );
+      } catch(e) {
+        handleError({
+          error: e as Error,
+          isUserTriggered: true,
+          message: 'Failed to update job queue',
+          publicMessage: `Failed to update job ${job.jobId}`,
+          type: ErrorType.Api,
+        });
       }
       onFinish();
     },
