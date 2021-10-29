@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -64,26 +65,28 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobQueueStats(
 	_ context.Context, req *apiv1.GetJobQueueStatsRequest,
 ) (resp *apiv1.GetJobQueueStatsResponse, err error) {
-	if len(req.ResourcePools) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "missing resource_pools parameter")
-	}
 	resp = &apiv1.GetJobQueueStatsResponse{
 		Results: make([]*apiv1.RPQueueStat, 0),
 	}
 
-	for _, rp := range req.ResourcePools {
-		stats := jobv1.QueueStats{}
-		qStats := apiv1.RPQueueStat{ResourcePool: rp}
-		switch {
-		case sproto.UseAgentRM(a.m.system):
-			err = a.actorRequest(
-				sproto.AgentRMAddr.Child(rp), resourcemanagers.GetJobQStats{}, &stats,
-			)
-		case sproto.UseK8sRM(a.m.system):
-			err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobQStats{}, &stats)
-		default:
-			err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
+	rmRef := sproto.GetCurrentRM(a.m.system)
+	rpAddresses := make([]actor.Address, 0)
+	if len(req.ResourcePools) == 0 {
+		for _, ref := range rmRef.Children() {
+			rpAddresses = append(rpAddresses, ref.Address())
 		}
+	} else {
+		for _, rp := range req.ResourcePools {
+			rpAddresses = append(rpAddresses, rmRef.Child(rp).Address())
+		}
+	}
+
+	for _, rpAddr := range rpAddresses {
+		stats := jobv1.QueueStats{}
+		qStats := apiv1.RPQueueStat{ResourcePool: rpAddr.Local()}
+		err = a.actorRequest(
+			rpAddr, resourcemanagers.GetJobQStats{}, &stats,
+		)
 		if err != nil {
 			return nil, err
 		}

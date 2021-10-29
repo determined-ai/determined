@@ -33,11 +33,19 @@ func (s SchedulingState) Proto() jobv1.State {
 	}
 }
 
-// JobSummary contains information about a task for external display.
+// JobSummary contains information about a job for external display.
 type JobSummary struct {
 	//Job      model.Job
-	JobID    model.JobID
-	JobType  model.JobType
-	EntityID string `json:"entity_id"`
-	State    SchedulingState
+	JobID          model.JobID
+	JobType        model.JobType
+	EntityID       string `json:"entity_id"`
+	State          SchedulingState
+	RequestedSlots int
+	AllocatedSlots int
+}
+
+// ScheduledStates provides a list of ScheduledStates that are considered scheduled.
+var ScheduledStates = map[SchedulingState]bool{
+	SchedulingStateScheduled:           true,
+	SchedulingStateScheduledBackfilled: true,
 }

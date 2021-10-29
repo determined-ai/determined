@@ -54,10 +54,14 @@ message Job {
         "summary",
         "type",
         "submission_time",
-        "user",
+        "username",
         "resource_pool",
         "is_preemptible",
         "entity_id",
+        "name",
+        "requested_slots",
+        "allocated_slots",
+        "job_name",
         "job_id"
       ]
     }
@@ -69,7 +73,7 @@ message Job {
   // The time when the job was submitted by the user.
   google.protobuf.Timestamp submission_time = 3;
   // The username of the user who submitted the job.
-  string user = 4;
+  string username = 4;
   // Associated resource pool.
   string resource_pool = 5;
   // Whether the job is preemptible.
@@ -82,6 +86,12 @@ message Job {
   string entity_id = 9;
   // Job type.
   string job_id = 10;
+  // Number of requested slots.
+  int32 requested_slots = 11;
+  // Number of allocated slots.
+  int32 allocated_slots = 12;
+  // Job name.
+  string name = 13;
 }
 
 // Describes a message to control jobs in a queue.
@@ -108,6 +118,11 @@ message QueueControl {
 
 // Statistics for (part of) a queue.
 message QueueStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "queued_count", "scheduled_count", "preemptible_count" ]
+    }
+  };
   // Number of queued jobs in the queue.
   int32 queued_count = 1;
   // Number of scheduled jobs in the queue.
