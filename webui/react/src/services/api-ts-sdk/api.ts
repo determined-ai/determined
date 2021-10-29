@@ -3086,12 +3086,6 @@ export interface V1Model {
      */
     labels?: Array<string>;
     /**
-     * README for model.
-     * @type {string}
-     * @memberof V1Model
-     */
-    readme?: string;
-    /**
      * User who created this model.
      * @type {string}
      * @memberof V1Model
@@ -3166,11 +3160,11 @@ export interface V1ModelVersion {
      */
     comment?: string;
     /**
-     * Readme associated with this model version.
+     * Notes associated with this model version.
      * @type {string}
      * @memberof V1ModelVersion
      */
-    readme?: string;
+    notes?: string;
     /**
      * User who created this model version.
      * @type {string}
@@ -3360,12 +3354,6 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     labels?: Array<string>;
-    /**
-     * An updated readme for the model.
-     * @type {string}
-     * @memberof V1PatchModel
-     */
-    readme?: string;
 }
 
 /**
@@ -3438,6 +3426,12 @@ export interface V1PatchModelVersion {
      * @memberof V1PatchModelVersion
      */
     labels?: Array<string>;
+    /**
+     * Updated text notes for the model version.
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    notes?: string;
 }
 
 /**
@@ -3604,6 +3598,12 @@ export interface V1PostModelVersionRequest {
      * @memberof V1PostModelVersionRequest
      */
     labels?: Array<string>;
+    /**
+     * Notes associated with this model version.
+     * @type {string}
+     * @memberof V1PostModelVersionRequest
+     */
+    notes?: string;
 }
 
 /**

@@ -6,6 +6,7 @@ WITH mv AS (
 			checkpoint_uuid,
 			metadata,
 			labels,
+			notes,
 			creation_time,
 			last_updated_time
 		)
@@ -15,13 +16,14 @@ WITH mv AS (
 			$2,
 			$3,
 			string_to_array($4, ','),
+			$5,
 			current_timestamp,
 			current_timestamp
 		)
 	RETURNING id, checkpoint_uuid, version, creation_time, name, comment, model_id, metadata, labels
 ),
 m AS (
-  SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, m.readme, u.username, m.archived, COUNT(mv.version) as num_versions
+  SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.archived, COUNT(mv.version) as num_versions
   FROM models as m
   JOIN users as u ON u.id = m.user_id
   LEFT JOIN model_versions as mv

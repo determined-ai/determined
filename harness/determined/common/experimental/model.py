@@ -20,6 +20,7 @@ class ModelVersion:
         metadata: Dict[str, Any],
         name: Optional[str] = "",
         comment: Optional[str] = "",
+        notes: Optional[str] = "",
         model_id: Optional[int] = 0,
         model_version: Optional[int] = None,  # sequential
     ):
@@ -28,6 +29,7 @@ class ModelVersion:
         self.metadata = metadata
         self.name = name
         self.comment = comment
+        self.notes = notes
         self.model_id = model_id
         self.model_version_id = model_version_id
         self.model_version = model_version
@@ -44,6 +46,20 @@ class ModelVersion:
         self._session.patch(
             "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
             json={"model_version": {"name": self.name}},
+        )
+
+    def set_notes(self, notes: str) -> None:
+        """
+        Sets the human-friendly notes / readme for this model version
+
+        Arguments:
+            notes (string): Replaces notes for model version in registry
+        """
+
+        self.notes = notes
+        self._session.patch(
+            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            json={"model_version": {"notes": self.notes}},
         )
 
     def delete(self) -> None:
@@ -66,6 +82,7 @@ class ModelVersion:
             metadata=data.get("metadata", {}),
             name=data.get("name"),
             comment=data.get("comment"),
+            notes=data.get("notes"),
             model_id=data.get("model", {}).get("id"),
             model_version=data.get("version"),
         )

@@ -74,6 +74,11 @@ def test_model_registry() -> None:
     assert db_version is not None
     assert db_version.name == "Test 2021"
 
+    latest_version.set_notes("# Hello Markdown")
+    db_version = mnist.get_version()
+    assert db_version is not None
+    assert db_version.notes == "# Hello Markdown"
+
     # Run another basic test and register its checkpoint as a version as well.
     # Validate the latest has been updated.
     exp_id = exp.run_basic_test(

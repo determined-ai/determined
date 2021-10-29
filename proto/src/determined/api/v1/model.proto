@@ -204,6 +204,8 @@ message PostModelVersionRequest {
   google.protobuf.Struct metadata = 5;
   // Labels associated with this model version.
   repeated string labels = 6;
+  // Notes associated with this model version.
+  string notes = 7;
 }
 
 // Response for PostModelVersionRequest.

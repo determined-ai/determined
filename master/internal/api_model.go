@@ -291,6 +291,7 @@ func (a *apiServer) PostModelVersion(
 		c.Uuid,
 		mdata,
 		reqLabels,
+		req.Notes,
 	)
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
@@ -320,6 +321,13 @@ func (a *apiServer) PatchModelVersion(
 			req.ModelVersion.Id, currModelVersion.Comment, req.ModelVersion.Comment.Value)
 		madeChanges = true
 		currModelVersion.Comment = req.ModelVersion.Comment.Value
+	}
+
+	if req.ModelVersion.Notes != nil && req.ModelVersion.Notes.Value != currModelVersion.Notes {
+		log.Infof("model version (%d) notes changing from \"%s\" to \"%s\"",
+			req.ModelVersion.Id, currModelVersion.Notes, req.ModelVersion.Notes.Value)
+		madeChanges = true
+		currModelVersion.Notes = req.ModelVersion.Notes.Value
 	}
 
 	currMeta, err := protojson.Marshal(currModelVersion.Metadata)
@@ -361,7 +369,8 @@ func (a *apiServer) PatchModelVersion(
 
 	finalModelVersion := &modelv1.ModelVersion{}
 	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersion.Id,
-		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currMeta, currLabels)
+		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
+		currMeta, currLabels)
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
 		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)

@@ -7,12 +7,13 @@ WITH mv AS (
     comment,
     id,
     metadata,
-    labels
+    labels,
+    notes
   FROM model_versions
   WHERE model_id = $1
 ),
 m AS (
-  SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, m.readme, u.username, m.archived, COUNT(mv.version) as num_versions
+  SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.archived, COUNT(mv.version) as num_versions
   FROM models as m
   JOIN users as u ON u.id = m.user_id
   LEFT JOIN model_versions as mv
@@ -49,7 +50,7 @@ SELECT
     to_json(m) AS model,
     array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
-    mv.creation_time,
+    mv.creation_time, mv.notes,
     mv.name, mv.comment, mv.metadata
     FROM c, mv, m
     WHERE c.uuid = mv.checkpoint_uuid::text;
