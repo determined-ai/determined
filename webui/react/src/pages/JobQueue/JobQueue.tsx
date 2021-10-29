@@ -90,11 +90,7 @@ const JobQueue: React.FC = () => {
       if (col.key === 'actions') {
         const renderer: JobTypeRenderer = (_, record) => {
           const cell = (
-            <ul>
-              <li>
-                <Link onClick={handleManageJob(record)}>Manage</Link>
-              </li>
-            </ul>
+            <Link onClick={handleManageJob(record)}>Manage</Link>
           );
           return cell;
         };

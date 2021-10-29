@@ -125,11 +125,11 @@ export const columns: ColumnType<Job>[] = [
     title: 'User',
   },
   {
-    align: 'right',
-    className: 'fullCell',
-    fixed: 'right',
+    // align: 'right',
+    // fixed: 'right',
+    // width: 40,
+    // className: 'fullCell',
     key: 'actions',
     title: '',
-    // width: 40,
   },
 ];
