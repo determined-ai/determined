@@ -24,7 +24,7 @@ type GetJobOrder struct{}
 type SetJobOrder struct {
 	QPosition float64
 	Weight    float64
-	Priority  *int // QUESTION why is this a ptr?
+	Priority  *int
 	JobID     model.JobID
 }
 
