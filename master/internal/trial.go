@@ -222,7 +222,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 
 func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 	if t.generatedKeys == nil {
-		generatedKeys, err := ssh.GenerateKey(nil)
+		generatedKeys, err := ssh.GenerateKey(t.taskSpec.SSHRsaSize, nil)
 		if err != nil {
 			return tasks.TaskSpec{}, errors.Wrap(err, "failed to generate keys for trial")
 		}
