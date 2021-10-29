@@ -113,6 +113,16 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     delete_stack(stack_name, boto3_session)
 
 
+def get_tags(stack_name: str, boto3_session: boto3.session.Session) -> bool:
+    cfn = boto3_session.client("cloudformation")
+
+    print(f"Retrieving tags for CloudFormation Stack ({stack_name})")
+
+    description = cfn.describe_stacks(StackName=stack_name)
+    stack = description['Stacks'][0]
+    return {x['Key']: x['Value'] for x in stack['Tags']}
+
+
 # Cloudformation
 def stack_exists(stack_name: str, boto3_session: boto3.session.Session) -> bool:
     cfn = boto3_session.client("cloudformation")
@@ -147,6 +157,7 @@ def update_stack(
     stack_name: str,
     template_body: str,
     boto3_session: boto3.session.Session,
+    deployment_type: str,
     parameters: Optional[List] = None,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
@@ -175,10 +186,22 @@ def update_stack(
                 TemplateBody=template_body,
                 Parameters=parameters,
                 Capabilities=["CAPABILITY_IAM"],
+                Tags=[
+                    {
+                        "Key": constants.deployment_types.TYPE_TAG_KEY,
+                        "Value": deployment_type,
+                    },
+                ],
             )
         else:
             cfn.update_stack(
-                StackName=stack_name, TemplateBody=template_body, Capabilities=["CAPABILITY_IAM"]
+                StackName=stack_name, TemplateBody=template_body, Capabilities=["CAPABILITY_IAM"],
+                Tags=[
+                    {
+                        "Key": constants.deployment_types.TYPE_TAG_KEY,
+                        "Value": deployment_type,
+                    },
+                ],
             )
     except ClientError as e:
         if e.response["Error"]["Message"] != "No updates are to be performed.":
@@ -201,6 +224,7 @@ def create_stack(
     stack_name: str,
     template_body: str,
     boto3_session: boto3.session.Session,
+    deployment_type: str,
     parameters: Optional[List] = None,
 ) -> None:
     print(
@@ -220,7 +244,11 @@ def create_stack(
                 {
                     "Key": constants.defaults.STACK_TAG_KEY,
                     "Value": constants.defaults.STACK_TAG_VALUE,
-                }
+                },
+                {
+                    "Key": constants.deployment_types.TYPE_TAG_KEY,
+                    "Value": deployment_type,
+                },
             ],
         )
     else:
@@ -232,7 +260,11 @@ def create_stack(
                 {
                     "Key": constants.defaults.STACK_TAG_KEY,
                     "Value": constants.defaults.STACK_TAG_VALUE,
-                }
+                },
+                {
+                    "Key": constants.deployment_types.TYPE_TAG_KEY,
+                    "Value": deployment_type,
+                },
             ],
         )
 
@@ -309,6 +341,7 @@ def deploy_stack(
     keypair: str,
     boto3_session: boto3.session.Session,
     no_prompt: bool,
+    deployment_type: str,
     parameters: Optional[List] = None,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
@@ -319,19 +352,29 @@ def deploy_stack(
         print("True - Updating Stack")
 
         if not no_prompt:
-            val = input(
-                "If --deployment-type has changed, updating the stack may reset the database. "
-                "Are you sure you want to proceed? [y/n]"
-            )
-            if val.lower() != "y":
-                print("Update cancelled.")
-                sys.exit(1)
+            tags = get_tags(stack_name, boto3_session)
+            prompt_needed = False
+            if not constants.deployment_types.TYPE_TAG_KEY in tags:
+                print("Previous value of --deployment-type is not known.")
+                prompt_needed = True
+            elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
+                print("Value of --deployment-type has changed!")
+                prompt_needed = True
 
-        update_stack(stack_name, template_body, boto3_session, parameters)
+            if prompt_needed:
+                val = input(
+                    "If --deployment-type has changed, updating the stack may erase the database. "
+                    "Are you sure you want to proceed? [y/N]"
+                )
+                if val.lower() != "y":
+                    print("Update cancelled.")
+                    sys.exit(1)
+
+        update_stack(stack_name, template_body, boto3_session, deployment_type, parameters)
     else:
         print("False - Creating Stack")
 
-        create_stack(stack_name, template_body, boto3_session, parameters)
+        create_stack(stack_name, template_body, boto3_session, deployment_type, parameters)
 
 
 # EC2

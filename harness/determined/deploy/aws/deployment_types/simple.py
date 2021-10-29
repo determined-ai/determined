@@ -4,6 +4,7 @@ from determined.deploy.aws.deployment_types import base
 
 class Simple(base.DeterminedDeployment):
     template = "simple.yaml"
+    deployment_type = constants.deployment_types.SIMPLE
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
@@ -47,5 +48,6 @@ class Simple(base.DeterminedDeployment):
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
             no_prompt=no_prompt,
+            deployment_type=self.deployment_type,
         )
         self.print_results()

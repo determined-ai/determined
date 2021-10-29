@@ -12,6 +12,7 @@ class Govcloud(base.DeterminedDeployment):
     )
 
     template = "govcloud.yaml"
+    deployment_type = constants.deployment_types.GOVCLOUD
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
@@ -55,5 +56,6 @@ class Govcloud(base.DeterminedDeployment):
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
             no_prompt=no_prompt,
+            deployment_type = self.deployment_type,
         )
         self.print_results()

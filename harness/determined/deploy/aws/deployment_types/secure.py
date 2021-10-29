@@ -24,6 +24,7 @@ class Secure(base.DeterminedDeployment):
         "yellow",
     )
     template = "secure.yaml"
+    deployment_type = constants.deployment_types.SECURE
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
@@ -64,6 +65,7 @@ class Secure(base.DeterminedDeployment):
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
             no_prompt=no_prompt,
+            deployment_type=self.deployment_type,
         )
         self.print_results()
 

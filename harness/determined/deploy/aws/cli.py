@@ -109,7 +109,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             val = input(
                 "Deleting an AWS stack will lose all your data, including the created network "
                 "file system. Please back up the file system before deleting it. Do you still "
-                "want to delete the stack? [y/n]"
+                "want to delete the stack? [y/N]"
             )
             if val.lower() != "y":
                 print("Delete cancelled.")
