@@ -1,11 +1,11 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu } from 'antd';
+import { Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
 import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
-import { relativeTimeRenderer } from 'components/Table';
+import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -23,15 +23,20 @@ const ModelHeader: React.FC<Props> = (
 ) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
-      content: formatDatetime(model.creationTime, 'MMM DD, YYYY', false),
-      label: 'Created',
+      content:
+      (<Space>
+        {userRenderer(model.username, model, 0)}
+        {model.username + ' on ' +
+      formatDatetime(model.creationTime, 'MMM D, YYYY', false)}
+      </Space>),
+      label: 'Created by',
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
     { content: <InlineEditor placeholder="Add description..." value="" />, label: 'Description' },
     {
       content: <TagList
         ghost={false}
-        tags={[]}
+        tags={model.labels ?? []}
       />,
       label: 'Tags',
     } ] as InfoRow[];
@@ -55,7 +60,7 @@ const ModelHeader: React.FC<Props> = (
           </Breadcrumb.Item>
           <Breadcrumb.Item href="det/models">Model Registry</Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item>Model 12</Breadcrumb.Item>
+          <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
       <div style={{

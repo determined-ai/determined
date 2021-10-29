@@ -98,6 +98,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     //save notes to db
   }, []);
 
+  const deleteVersion = useCallback(() => {
+    //delete/deregister version
+  }, []);
+
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
       <div className={css.resource} key={resource}>
@@ -174,7 +178,8 @@ model.load_state_dict(ckpt['models_state_dict'][0])
       docTitle="Model Version Details"
       headerComponent={<ModelVersionHeader
         modelVersion={modelVersion}
-        onAddMetadata={editMetadata} />}
+        onAddMetadata={editMetadata}
+        onDeregisterVersion={deleteVersion} />}
       id="modelDetails">
       <Tabs
         defaultActiveKey="1"
@@ -211,10 +216,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         <TabPane key="2" tab="Checkpoint Details">
           <div className={css.base}>
             <Card title="Source">
-              <InfoBox rows = {checkpointInfo} seperator />
+              <InfoBox rows={checkpointInfo} seperator />
             </Card>
             <Card title="Validation Metrics">
-              <InfoBox rows = {validationMetrics} seperator />
+              <InfoBox rows={validationMetrics} seperator />
             </Card>
           </div>
         </TabPane>

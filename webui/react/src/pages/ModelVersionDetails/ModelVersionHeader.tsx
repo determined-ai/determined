@@ -1,11 +1,11 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu } from 'antd';
+import { Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
 import React, { useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
-import { relativeTimeRenderer } from 'components/Table';
+import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -15,21 +15,36 @@ import css from './ModelVersionHeader.module.scss';
 interface Props {
   modelVersion: ModelVersion;
   onAddMetadata: () => void;
+  onDeregisterVersion: () => void;
 }
 
-const ModelVersionHeader: React.FC<Props> = ({ modelVersion, onAddMetadata }: Props) => {
-
+const ModelVersionHeader: React.FC<Props> = (
+  { modelVersion, onAddMetadata, onDeregisterVersion }: Props,
+) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
-      content: formatDatetime(modelVersion.creationTime, 'MMM DD, YYYY', false),
-      label: 'Created',
+      content:
+      (<Space>
+        {userRenderer(modelVersion.username, modelVersion, 0)}
+        {modelVersion.username + ' on ' +
+      formatDatetime(modelVersion.creationTime, 'MMM D, YYYY', false)}
+      </Space>),
+      label: 'Created by',
     },
-    { content: relativeTimeRenderer(new Date()), label: 'Updated' },
-    { content: <InlineEditor placeholder="Add description..." value="" />, label: 'Description' },
+    {
+      content: relativeTimeRenderer(
+        new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
+      ),
+      label: 'Updated',
+    },
+    {
+      content: <InlineEditor placeholder="Add description..." value={modelVersion.comment ?? ''} />,
+      label: 'Description',
+    },
     {
       content: <TagList
         ghost={false}
-        tags={[]}
+        tags={modelVersion.labels ?? []}
       />,
       label: 'Tags',
     } ] as InfoRow[];
@@ -39,13 +54,13 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion, onAddMetadata }: Pr
     <header className={css.base}>
       <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
-          <Breadcrumb.Item href={`det/models/${modelVersion.model?.name}`}>
+          <Breadcrumb.Item href={`det/models/${modelVersion.model.id}`}>
             <LeftOutlined style={{ marginRight: 10 }} />
           </Breadcrumb.Item>
           <Breadcrumb.Item href="det/models">Model Registry</Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item href={`det/models/${modelVersion.model?.name}`}>
-            {modelVersion.model?.name}
+          <Breadcrumb.Item href={`det/models/${modelVersion.model.id}`}>
+            {modelVersion.model.name}
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>
@@ -64,7 +79,7 @@ const ModelVersionHeader: React.FC<Props> = ({ modelVersion, onAddMetadata }: Pr
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item danger>Deregister Version</Menu.Item>
+                <Menu.Item danger onClick={onDeregisterVersion}>Deregister Version</Menu.Item>
               </Menu>
             )}>
               <Button type="text">
