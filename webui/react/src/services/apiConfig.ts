@@ -6,10 +6,11 @@ import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as decoder from 'services/decoder';
 import {
-  CommandIdParams, CreateExperimentParams, DetApi, EmptyParams,
-  ExperimentDetailsParams, ExperimentIdParams, GetCommandsParams,
-  GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
+  CommandIdParams, CreateExperimentParams, DetApi, EmptyParams, ExperimentDetailsParams,
+  ExperimentIdParams, GetCommandsParams, GetExperimentParams, GetExperimentsParams,
+  GetJobQParams, GetJobsResponse, GetJupyterLabsParams,
+  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams,
+  GetTensorBoardsParams,
   GetTrialsParams, HttpApi, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse,
   LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
 } from 'services/types';
@@ -20,7 +21,7 @@ import {
   TrialPagination, ValidationHistory,
 } from 'types';
 
-import { noOp } from './utils';
+import { identity, noOp } from './utils';
 
 const ApiConfig = new Api.Configuration({
   apiKey: `Bearer ${globalStorage.authToken}`,
@@ -33,6 +34,7 @@ export const detApi = {
   Commands: new Api.CommandsApi(ApiConfig),
   Experiments: new Api.ExperimentsApi(ApiConfig),
   Internal: new Api.InternalApi(ApiConfig),
+  Jobs: new Api.JobsApi(ApiConfig),
   Notebooks: new Api.NotebooksApi(ApiConfig),
   Shells: new Api.ShellsApi(ApiConfig),
   StreamingExperiments: Api.ExperimentsApiFetchParamCreator(ApiConfig),
@@ -486,6 +488,21 @@ export const launchTensorBoard: DetApi<
   request: (params: LaunchTensorBoardParams) => detApi.TensorBoards
     .determinedLaunchTensorboard(params),
 };
+
+/* Jobs */
+
+export const getJobQueue: DetApi<
+  GetJobQParams, Api.V1GetJobsResponse, GetJobsResponse
+  > = {
+    name: 'getJobQ',
+    postProcess: identity,
+    request: (params: GetJobQParams) => detApi.Jobs.determinedGetJobs(
+      params.offset,
+      params.limit,
+      params.resourcePool,
+      params.orderBy,
+    ),
+  };
 
 /* Logs */
 

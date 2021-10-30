@@ -1,3 +1,6 @@
+import {
+  Determinedjobv1State,
+} from 'services/api-ts-sdk';
 import { CheckpointState, CommandState, ResourceState, RunState, SlotState } from 'types';
 
 /*
@@ -252,16 +255,20 @@ const stateColorMapping = {
   [SlotState.Free]: 'free',
   [SlotState.Pending]: 'pending',
   [SlotState.Running]: 'active',
+  [Determinedjobv1State.SCHEDULED]: 'active',
+  [Determinedjobv1State.SCHEDULEDBACKFILLED]: 'active',
+  [Determinedjobv1State.QUEUED]: 'suspended',
 };
 
-type States = RunState | CommandState | ResourceState | CheckpointState | SlotState
+export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState | SlotState |
+Determinedjobv1State
 
-export const getStateColorCssVar = (state: States | undefined): string => {
+export const getStateColorCssVar = (state: StateOfUnion | undefined): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;
 };
 
-export const getStateColor = (state: States | undefined): string => {
+export const getStateColor = (state: StateOfUnion | undefined): string => {
   const cssVar = getStateColorCssVar(state);
   return window.getComputedStyle(document.body).getPropertyValue(cssVar);
 };

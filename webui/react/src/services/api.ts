@@ -2,10 +2,13 @@ import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import {
   CommandIdParams, CreateExperimentParams, EmptyParams, ExperimentDetailsParams, ExperimentIdParams,
-  GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJupyterLabsParams,
-  GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams, GetTensorBoardsParams,
-  GetTrialsParams, LaunchJupyterLabParams, LaunchTensorBoardParams, LoginResponse, LogsParams,
-  PatchExperimentParams, SingleEntityParams, TaskLogsParams, TrialDetailsParams,
+  GetCommandsParams, GetExperimentParams, GetExperimentsParams, GetJobQParams, GetJobsResponse,
+  GetJupyterLabsParams, GetResourceAllocationAggregatedParams, GetShellsParams, GetTemplatesParams,
+  GetTensorBoardsParams,
+  GetTrialsParams, LaunchJupyterLabParams,
+  LaunchTensorBoardParams,
+  LoginResponse, LogsParams, PatchExperimentParams, SingleEntityParams, TaskLogsParams,
+  TrialDetailsParams,
 } from 'services/types';
 import { generateApi, generateDetApi } from 'services/utils';
 import {
@@ -71,6 +74,12 @@ export const getResourceAllocationAggregated = generateDetApi<
   GetResourceAllocationAggregatedParams, Api.V1ResourceAllocationAggregatedResponse,
   Api.V1ResourceAllocationAggregatedResponse
 >(Config.getResourceAllocationAggregated);
+
+/* Jobs */
+
+export const getJobQ = generateDetApi<
+  GetJobQParams, Api.V1GetJobsResponse, GetJobsResponse
+>(Config.getJobQueue);
 
 /* Experiments */
 

@@ -1,9 +1,10 @@
 import {
-  V1FittingPolicy, V1Pagination, V1ResourcePoolType, V1SchedulerType,
+  Determinedjobv1State, Determinedjobv1Type,
+  V1FittingPolicy, V1Job, V1JobSummary, V1Pagination, V1ResourcePoolType, V1RPQueueStat, V1SchedulerType,
 } from 'services/api-ts-sdk';
 
 interface WithPagination {
-  pagination: V1Pagination;
+  pagination: V1Pagination; // probably should use this or Pagination
 }
 
 export type RecordKey = string | number | symbol;
@@ -659,3 +660,13 @@ export interface PriorityScheduler {
   defaultPriority: number;
   preemption: boolean;
 }
+
+/* Jobs */
+
+export type Job = V1Job;
+export type JobType = Determinedjobv1Type;
+export type JobState = Determinedjobv1State;
+export type JobSummary = V1JobSummary;
+export type RPStats = V1RPQueueStat;
+
+/* End of Jobs */

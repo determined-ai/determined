@@ -4,6 +4,7 @@ import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
+import JobQueue from 'pages/JobQueue/JobQueue';
 import MasterLogs from 'pages/MasterLogs';
 import Reload from 'pages/Reload';
 import SignIn from 'pages/SignIn';
@@ -21,6 +22,7 @@ const routeComponentMap: Record<string, FC> = {
   dashboard: Dashboard,
   experimentDetails: ExperimentDetails,
   experimentList: ExperimentList,
+  jobs: JobQueue,
   masterLogs: MasterLogs,
   reload: Reload,
   signIn: SignIn,

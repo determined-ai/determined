@@ -21,14 +21,14 @@ export const generateLetters = (length = 8): string => {
   return generateAlphaNumeric(length, LETTERS);
 };
 
-export const truncate = (str: string, maxLen: number): string => {
-  if (maxLen < 4) {
+export const truncate = (str: string, maxLen: number, suffix='...'): string => {
+  if (maxLen < suffix.length+1) {
     str.slice(0, maxLen);
   }
   if (str.length <= maxLen) {
     return str;
   }
-  return str.slice(0, maxLen-3) + '...';
+  return str.slice(0, maxLen-suffix.length) + suffix;
 };
 
 export const toHtmlId = (str: string): string => {

@@ -1,14 +1,16 @@
 import { paths } from 'routes/utils';
-import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { Determinedjobv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { StateOfUnion } from 'themes';
 import {
   AnyTask, Checkpoint, CheckpointState, CheckpointWorkload, Command, CommandState, CommandTask,
-  CommandType, ExperimentItem, MetricsWorkload, RawJson, RecentCommandTask, RecentExperimentTask,
+  CommandType, ExperimentItem, JobType, MetricsWorkload, RawJson, RecentCommandTask, RecentExperimentTask,
   RecentTask, RecordKey, ResourceState, RunState, SlotState, Workload,
 } from 'types';
 
 import { LaunchTensorBoardParams } from '../services/types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
+import { capitalize } from './string';
 import { isMetricsWorkload } from './workload';
 
 /* Conversions to Tasks */
@@ -153,18 +155,25 @@ export const resourceStateToLabel: {[key in ResourceState]: string} = {
   [ResourceState.Unspecified]: 'Unspecified',
 };
 
+export const jobStateToLabel: {[key in Determinedjobv1State]: string} = {
+  [Determinedjobv1State.SCHEDULED]: 'Scheduled',
+  [Determinedjobv1State.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
+  [Determinedjobv1State.QUEUED]: 'Queued',
+};
+
 export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };
 
 export function stateToLabel(
-  state: RunState | CommandState | CheckpointState | ResourceState | SlotState,
+  state: StateOfUnion,
 ): string {
   return runStateToLabel[state as RunState]
   || commandStateToLabel[state as CommandState]
   || resourceStateToLabel[state as ResourceState]
   || checkpointStateToLabel[state as CheckpointState]
+  || jobStateToLabel[state as Determinedjobv1State]
   || slotStateToLabel[state as SlotState];
 }
 
@@ -287,3 +296,11 @@ export const getBatchNumber = (
 };
 
 export type Eventually<T> = T | Promise<T>;
+
+export const jobTypeIconName = (jobType: JobType): string => {
+  return jobType.toString().replace('TYPE_', '').toLowerCase();
+};
+
+export const jobTypeLabel = (jobType: JobType): string => {
+  return capitalize(jobTypeIconName(jobType));
+};
