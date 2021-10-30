@@ -119,8 +119,8 @@ def get_tags(stack_name: str, boto3_session: boto3.session.Session) -> bool:
     print(f"Retrieving tags for CloudFormation Stack ({stack_name})")
 
     description = cfn.describe_stacks(StackName=stack_name)
-    stack = description['Stacks'][0]
-    return {x['Key']: x['Value'] for x in stack['Tags']}
+    stack = description["Stacks"][0]
+    return {x["Key"]: x["Value"] for x in stack["Tags"]}
 
 
 # Cloudformation
@@ -195,7 +195,9 @@ def update_stack(
             )
         else:
             cfn.update_stack(
-                StackName=stack_name, TemplateBody=template_body, Capabilities=["CAPABILITY_IAM"],
+                StackName=stack_name,
+                TemplateBody=template_body,
+                Capabilities=["CAPABILITY_IAM"],
                 Tags=[
                     {
                         "Key": constants.deployment_types.TYPE_TAG_KEY,
