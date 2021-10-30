@@ -46,7 +46,7 @@ export const rpLogo = (type: V1ResourcePoolType): React.ReactNode => {
 const rpAttrs = [
   [ 'location', 'Location' ],
   [ 'instanceType', 'Instance Type' ],
-  [ 'preemptible', 'Spot/Preemptible' ],
+  [ 'preemptible', 'Spot/Preemptible' ], // FIXME do we want this spot or details.spot_enabled
   [ 'minAgents', 'Min Agents' ],
   [ 'maxAgents', 'Max Agents' ],
   [ 'slotsPerAgent', 'Slots Per Agent' ],

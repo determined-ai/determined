@@ -208,6 +208,9 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     showForkModal,
   ]);
 
+  const resolvedState = experiment.state === RunState.Active && experiment.jobSummary ?
+    experiment.jobSummary.state : experiment.state;
+
   return (
     <>
       <PageHeaderFoldable
@@ -233,6 +236,12 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Duration:</span>
                 {shortEnglishHumannizer(getDuration(experiment))}
+              </div>
+            )}
+            {experiment.jobSummary && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Job Info:</span>
+                <span>{experiment.jobSummary?.jobsAhead || 'No'} jobs ahead of this one.</span>
               </div>
             )}
             <TagList
@@ -265,7 +274,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           </div>
         }
         options={headerOptions}
-        style={{ backgroundColor: getStateColorCssVar(experiment.state) }}
+        style={{ backgroundColor: getStateColorCssVar(resolvedState) }}
       />
       <ExperimentHeaderProgress experiment={experiment} />
     </>
