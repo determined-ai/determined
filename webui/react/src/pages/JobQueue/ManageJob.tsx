@@ -22,7 +22,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
       try {
         await detApi.Jobs.determinedUpdateJobQueue({
           updates: [
-          // TODO validate & avoid including all 3
+            // TODO validate & avoid including all 3
             {
               jobId: job.jobId,
               priority: parseInt(formValues.priority),
@@ -32,7 +32,7 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
             },
           ],
         });
-      } catch(e) {
+      } catch (e) {
         handleError({
           error: e as Error,
           isUserTriggered: true,
@@ -71,21 +71,21 @@ const ManageJob: React.FC<Props> = ({ onFinish, job }) => {
         <Form.Item
           label="Q Position (DEV)"
           name="queuePosition"
-          // rules={[ { message: 'Please provide a max length.', required: true } ]}
+        // rules={[ { message: 'Please provide a max length.', required: true } ]}
         >
           <Input disabled type="number" />
         </Form.Item>
         <Form.Item
           label="Priority"
           name="priority"
-          // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
+        // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
         >
           <Input type="number" />
         </Form.Item>
         <Form.Item
           label="Weight"
           name="weight"
-          // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
+        // rules={[ { message: 'Please provide a new experiment name.', required: true } ]}
         >
           <Input disabled type="number" />
         </Form.Item>

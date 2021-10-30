@@ -196,7 +196,7 @@ export const getExperiments: DetApi<
 };
 
 export const getExperiment: DetApi<
-GetExperimentParams, Api.V1GetExperimentResponse, ExperimentItem
+  GetExperimentParams, Api.V1GetExperimentResponse, ExperimentItem
 > = {
   name: 'getExperiment',
   postProcess: (response: Api.V1GetExperimentResponse) =>
@@ -493,16 +493,16 @@ export const launchTensorBoard: DetApi<
 
 export const getJobQueue: DetApi<
   GetJobQParams, Api.V1GetJobsResponse, GetJobsResponse
-  > = {
-    name: 'getJobQ',
-    postProcess: identity,
-    request: (params: GetJobQParams) => detApi.Jobs.determinedGetJobs(
-      params.offset,
-      params.limit,
-      params.resourcePool,
-      params.orderBy,
-    ),
-  };
+> = {
+  name: 'getJobQ',
+  postProcess: identity,
+  request: (params: GetJobQParams) => detApi.Jobs.determinedGetJobs(
+    params.offset,
+    params.limit,
+    params.resourcePool,
+    params.orderBy,
+  ),
+};
 
 /* Logs */
 

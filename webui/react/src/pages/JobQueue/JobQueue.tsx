@@ -1,6 +1,6 @@
-import { Modal, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
@@ -12,18 +12,18 @@ import {
   defaultRowClassName, getFullPaginationConfig, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { useStore } from 'contexts/Store';
-import { useFetchAgents } from 'hooks/useFetch';
+import { useFetchResourcePools } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { columns as defaultColumns, JobTypeRenderer } from 'pages/JobQueue/JobQueue.table';
-import { getJobQ, getResourcePools } from 'services/api';
+import { getJobQ } from 'services/api';
 import { detApi } from 'services/apiConfig';
 import * as decoder from 'services/decoder';
 import { ShirtSize } from 'themes';
 import {
-  Job, Pagination, ResourcePool, RPStats,
+  Job, Pagination, RPStats,
 } from 'types';
-import { truncate } from 'utils/string';
+import { isEqual } from 'utils/data';
 
 import css from './JobQueue.module.scss';
 import ManageJob from './ManageJob';
@@ -40,42 +40,44 @@ const JobQueue: React.FC = () => {
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const { agents, resourcePools } = useStore();
   const [ managingJob, setManagingJob ] = useState<Job>();
-  const [ rpStats, setRpStats ] = useState<RPStats[]>([]);
+  const [ rpStats, setRpStats ] = useState<RPStats[]>(
+    resourcePools.map(rp => ({
+      resourcePool: rp.name,
+      stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
+    } as RPStats)),
+  );
   const [ jobs, setJobs ] = useState<Job[]>([]);
   const [ sorter, setSorter ] = useState(initSorter);
   const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ canceler ] = useState(new AbortController());
-  const [ selectedRp, setSelectedRp ] = useState<string>('default');
+  const [ selectedRp, setSelectedRp ] = useState<string>('');
 
-  const fetchAgents = useFetchAgents(canceler);
+  const fetchResourcePools = useFetchResourcePools(canceler);
 
   const fetchJobs = useCallback(async () => {
+    if (!selectedRp) return;
     try {
-      const tJobs = await getJobQ({ resourcePool: selectedRp, ...pagination });
+      const tJobs = await getJobQ(
+        { resourcePool: selectedRp, ...pagination },
+        { signal: canceler.signal },
+      );
       setJobs(tJobs.jobs);
-      if (managingJob?.jobId) {
-        // TODO maybe managinJob should only store job id
-        const updatedJob = tJobs.jobs.find(j => j.jobId === managingJob.jobId);
-        if (updatedJob) setManagingJob(updatedJob);
-      }
-      setPagination(decoder.mapV1Pagination(tJobs.pagination));
       return tJobs;
-    } catch (e) {}
-  }, [ selectedRp, pagination, managingJob?.jobId ]);
+    } catch (e) { }
+  }, [ selectedRp, canceler, pagination ]);
 
-  // OPTIMIZE
   const fetchAll = useCallback(async () => {
     try {
-      // const resourcePools = await getResourcePools({});
-      // TODO bring in stats api, set api to return all on no filter
-      const stats = await detApi.Jobs.determinedGetJobQueueStats();
-      // const stats = resourcePools.map(rp => ({resourcePool: rp.name, stats: {}}))
-      setRpStats(stats.results);
-      // setTotal(resourcePools.length || 0);
-      await fetchJobs();
-    } catch (e) {}
-  }, []);
+      const promises = [
+        detApi.Jobs.determinedGetJobQueueStats().then(stats => {
+          setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
+        }),
+        fetchJobs(),
+      ] as Promise<unknown>[];
+      await Promise.all(promises);
+    } catch (e) { }
+  }, [ fetchJobs ]);
 
   usePolling(fetchAll, { interval: 5000 });
 
@@ -98,7 +100,7 @@ const JobQueue: React.FC = () => {
       }
       return col;
     });
-  }, []);
+  }, [ handleManageJob ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -127,10 +129,30 @@ const JobQueue: React.FC = () => {
   // }, []);
 
   useEffect(() => {
-    fetchAgents();
+    if (resourcePools.length === 0) {
+      setSelectedRp('');
+      return;
+    }
+    if (!selectedRp) {
+      setSelectedRp(resourcePools[0].name);
+    }
+  }, [ resourcePools, selectedRp ]);
 
+  useEffect(() => {
+    fetchResourcePools();
+    fetchJobs();
     return () => canceler.abort();
-  }, [ canceler, fetchAgents ]);
+  }, [ fetchJobs, fetchResourcePools, canceler ]);
+
+  useEffect(() => {
+    if (!managingJob) return;
+    const job = jobs.find(j => j.jobId === managingJob.jobId);
+    if (!job) {
+      setManagingJob(undefined);
+    } else if (!isEqual(job, managingJob)) {
+      setManagingJob(job);
+    }
+  }, [ jobs, managingJob ]);
 
   const rpSwitcher = useCallback((rpName: string) => {
     return () => setSelectedRp(rpName);
@@ -163,7 +185,7 @@ const JobQueue: React.FC = () => {
           })}
         </Grid>
       </Section>
-      <Section hideTitle title={`Queue: ${selectedRp}`}>
+      <Section hideTitle title={`Queue: ${selectedRp} ${resourcePools.find(r => r.name === selectedRp)?.schedulerType}`}>
         <ResponsiveTable<Job>
           columns={columns}
           dataSource={jobs}
@@ -175,7 +197,7 @@ const JobQueue: React.FC = () => {
           showSorterTooltip={false}
           size="small"
           onChange={handleTableChange}
-          // onRow={handleTableRow}
+        // onRow={handleTableRow}
         />
       </Section>
       {!!managingJob &&

@@ -121,7 +121,7 @@ const mapV1TaskState =
   };
 
 const mapCommonV1Task = (
-  task: Sdk.V1Command|Sdk.V1Notebook|Sdk.V1Shell|Sdk.V1Tensorboard,
+  task: Sdk.V1Command | Sdk.V1Notebook | Sdk.V1Shell | Sdk.V1Tensorboard,
   type: types.CommandType,
 ): types.CommandTask => {
   return {
@@ -337,7 +337,7 @@ export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentI
 const filterNonScalarMetrics = (metrics: types.RawJson): types.RawJson | undefined => {
   if (!isObject(metrics)) return undefined;
   const scalarMetrics: types.RawJson = {};
-  for (const key in metrics){
+  for (const key in metrics) {
     if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
       scalarMetrics[key] = Number(metrics[key]);
     } else if (isNumber(metrics[key])) {

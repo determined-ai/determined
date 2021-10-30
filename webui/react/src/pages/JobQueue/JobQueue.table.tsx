@@ -120,7 +120,7 @@ export const columns: ColumnType<Job>[] = [
     dataIndex: 'user',
     key: 'user',
     render: (_, record: Job): ReactNode => {
-      return <Avatar name={record.username} />;
+      return <Avatar name={'unavailable'} />; // FIXME
     },
     title: 'User',
   },
