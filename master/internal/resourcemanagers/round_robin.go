@@ -22,6 +22,11 @@ func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequ
 func (p *roundRobinScheduler) OrderedAllocations(
 	rp *ResourcePool,
 ) (reqs []*sproto.AllocateRequest) {
+	// FIXME this is not correct
+	for it := rp.taskList.iterator(); it.next(); {
+		req := it.value()
+		reqs = append(reqs, req)
+	}
 	return reqs
 }
 

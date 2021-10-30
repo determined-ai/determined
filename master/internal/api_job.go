@@ -26,7 +26,7 @@ func (a *apiServer) GetJobs(
 	}
 
 	if req.ResourcePool == "" {
-		return nil, status.Error(codes.InvalidArgument, "missing resource_pool parameter")
+		return nil, status.Error(codes.InvalidArgument, "missing resourcePool parameter")
 	}
 
 	switch {
