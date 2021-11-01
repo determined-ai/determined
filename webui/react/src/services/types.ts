@@ -1,5 +1,6 @@
 import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 import { Dayjs } from 'dayjs';
+import { string } from 'fp-ts';
 
 import { CommandType, DetailedUser, RawJson } from 'types';
 
@@ -137,7 +138,6 @@ export interface PatchModelParams {
     labels?: string[];
     metadata?: RawJson;
     name?: string;
-    readme?: string;
   }
   modelId: number;
 }
@@ -149,6 +149,7 @@ export interface PatchModelVersionParams {
     labels?: string[];
     metadata?: RawJson;
     name?: string;
+    notes?: string;
   }
   modelId: number;
   versionId: number;

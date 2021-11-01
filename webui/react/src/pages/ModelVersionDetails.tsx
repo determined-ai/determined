@@ -1,6 +1,6 @@
-import { CopyOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Breadcrumb, Card, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { CopyOutlined, EditOutlined } from '@ant-design/icons';
+import { Breadcrumb, Button, Card, Space, Tabs, Tooltip } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import EditableMetadata from 'components/EditableMetadata';
@@ -12,7 +12,7 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { getModelVersion } from 'services/api';
+import { getModelVersion, patchModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
@@ -33,7 +33,7 @@ const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
   const { modelId, versionId } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
-  const [ editingMetadata, setEditingMetadata ] = useState(false);
+  const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
 
   const fetchModelVersion = useCallback(async () => {
@@ -74,17 +74,30 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   });
 
   const editMetadata = useCallback(() => {
-    setEditingMetadata(true);
+    setIsEditingMetadata(true);
   }, []);
 
   const saveMetadata = useCallback(() => {
-    setEditingMetadata(false);
-    //save metadata to db
+    setIsEditingMetadata(false);
+    patchModelVersion({
+      body: { id: parseInt(modelId), metadata: editedMetadata },
+      modelId: parseInt(modelId),
+      versionId: parseInt(versionId),
+    });
+    fetchModelVersion();
+  }, [ editedMetadata, fetchModelVersion, modelId, versionId ]);
+
+  const cancelEditMetadata = useCallback(() => {
+    setIsEditingMetadata(false);
   }, []);
 
-  const saveNotes = useCallback(() => {
-    //save notes to db
-  }, []);
+  const saveNotes = useCallback((editedNotes: string) => {
+    patchModelVersion({
+      body: { id: parseInt(modelId), notes: editedNotes },
+      modelId: parseInt(modelId),
+      versionId: parseInt(versionId),
+    });
+  }, [ modelId, versionId ]);
 
   const deleteVersion = useCallback(() => {
     //delete/deregister version
@@ -174,17 +187,24 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}>
         <TabPane key="1" tab="Overview">
           <div className={css.base}>
-            {metadata.length > 0 || editingMetadata &&
-              <Card
-                extra={editingMetadata ?
-                  <SaveOutlined onClick={saveMetadata} /> :
-                  <EditOutlined onClick={editMetadata} />}
-                title={'Metadata'}>
-                <EditableMetadata
-                  editing={editingMetadata}
-                  metadata={modelVersion.metadata ?? {}}
-                  updateMetadata={setEditedMetadata} />
-              </Card>
+            {(metadata.length > 0 || isEditingMetadata) &&
+          <Card
+            extra={isEditingMetadata ? (
+              <Space size="small">
+                <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
+                <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
+              </Space>
+            ) : (
+              <Tooltip title="Edit">
+                <EditOutlined onClick={editMetadata} />
+              </Tooltip>
+            )}
+            title={'Metadata'}>
+            <EditableMetadata
+              editing={isEditingMetadata}
+              metadata={modelVersion.metadata ?? {}}
+              updateMetadata={setEditedMetadata} />
+          </Card>
             }
             <NotesCard
               notes={modelVersion.notes ?? ''}

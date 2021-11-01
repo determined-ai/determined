@@ -187,7 +187,7 @@ export const mapV1ModelVersion = (
     metadata: modelVersion.metadata,
     model: mapV1Model(modelVersion.model),
     name: modelVersion.name,
-    notes: modelVersion.readme,
+    notes: modelVersion.notes,
     username: modelVersion.username,
     version: modelVersion.version,
   };
