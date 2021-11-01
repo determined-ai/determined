@@ -11,13 +11,14 @@ import Section from 'components/Section';
 import { archivedRenderer, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
 import TableFilterDropdown from 'components/TableFilterDropdown';
+import TableFilterSearch from 'components/TableFilterSearch';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { archiveModel, getModels, unarchiveModel } from 'services/api';
+import { archiveModel, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
@@ -99,6 +100,12 @@ const ModelRegistry: React.FC = () => {
     setIsLoading(true);
   }, [ fetchModels ]);
 
+  const setModelTags = useCallback((modelId, tags) => {
+    patchModel({ body: { id: modelId, labels: tags }, modelId });
+    fetchModels();
+    setIsLoading(true);
+  }, [ fetchModels ]);
+
   const handleArchiveFilterApply = useCallback((archived: string[]) => {
     const archivedFilter = archived.length === 1
       ? archived[0] === ArchiveFilter.Archived : undefined;
@@ -138,6 +145,44 @@ const ModelRegistry: React.FC = () => {
       onReset={handleUserFilterReset} />
   ), [ handleUserFilterApply, handleUserFilterReset, settings.users ]);
 
+  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+
+  const handleNameSearchApply = useCallback((newSearch: string) => {
+    updateSettings({ name: newSearch || undefined });
+  }, [ updateSettings ]);
+
+  const handleNameSearchReset = useCallback(() => {
+    updateSettings({ name: undefined });
+  }, [ updateSettings ]);
+
+  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={settings.name || ''}
+      onReset={handleNameSearchReset}
+      onSearch={handleNameSearchApply}
+    />
+  ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
+
+  const handleLabelFilterApply = useCallback((tags: string[]) => {
+    updateSettings({ tags: tags.length !== 0 ? tags : undefined });
+  }, [ updateSettings ]);
+
+  const handleLabelFilterReset = useCallback(() => {
+    updateSettings({ tags: undefined });
+  }, [ updateSettings ]);
+
+  const labelFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={settings.tags}
+      onFilter={handleLabelFilterApply}
+      onReset={handleLabelFilterReset}
+    />
+  ), [ handleLabelFilterApply, handleLabelFilterReset, settings.tags ]);
+
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
       closable: true,
@@ -152,13 +197,12 @@ const ModelRegistry: React.FC = () => {
     });
   }, [ deleteModel ]);
 
-  console.log(users);
-
   const columns = useMemo(() => {
     const labelsRenderer = (value: string, record: ModelItem) => (
       <TagList
         compact
         tags={record.labels ?? []}
+        onChange={(tags) => setModelTags(record.id, tags)}
       />
     );
 
@@ -200,7 +244,10 @@ const ModelRegistry: React.FC = () => {
       },
       {
         dataIndex: 'name',
+        filterDropdown: nameFilterSearch,
+        filterIcon: tableSearchIcon,
         key: V1GetModelsRequestSortBy.NAME,
+        onHeaderCell: () => settings.name ? { className: tableCss.headerFilterOn } : {},
         render: modelNameRenderer,
         sorter: true,
         title: 'Model name',
@@ -227,7 +274,13 @@ const ModelRegistry: React.FC = () => {
         title: 'Last updated',
         width: 150,
       },
-      { dataIndex: 'labels', render: labelsRenderer, title: 'Tags' },
+      {
+        dataIndex: 'labels',
+        filterDropdown: labelFilterDropdown,
+        onHeaderCell: () => settings.tags ? { className: tableCss.headerFilterOn } : {},
+        render: labelsRenderer,
+        title: 'Tags',
+      },
       {
         dataIndex: 'archived',
         filterDropdown: archiveFilterDropdown,
