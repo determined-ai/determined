@@ -63,7 +63,6 @@ const ModelDetails: React.FC = () => {
   }, [ fetchModel ]);
 
   const deleteVersion = useCallback((version: ModelVersion) => {
-    //send delete api request
     deleteModelVersion({ modelId: version.model.id, versionId: version.id });
     fetchModel();
     setIsLoading(true);

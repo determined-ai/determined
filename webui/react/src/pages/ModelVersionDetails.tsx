@@ -214,7 +214,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
               onSave={saveNotes} />
             <Card
               extra={(
-                <Tooltip title="Copied!" trigger="click">
+                <Tooltip title="Copy to Clipboard">
                   <CopyOutlined onClick={handleCopy} />
                 </Tooltip>
               )}
