@@ -482,6 +482,25 @@ export const unarchiveModel: DetApi<GetModelParams, Api.V1UnarchiveModelResponse
   ),
 };
 
+export const deleteModel: DetApi<GetModelParams, Api.V1DeleteModelResponse, void> = {
+  name: 'deleteModel',
+  postProcess: noOp,
+  request: (params: GetModelParams) => detApi.Models.determinedDeleteModel(
+    params.modelId,
+  ),
+};
+
+export const deleteModelVersion: DetApi<
+GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
+> = {
+  name: 'deleteModelVersion',
+  postProcess: noOp,
+  request: (params: GetModelVersionParams) => detApi.Models.determinedDeleteModelVersion(
+    params.modelId,
+    params.versionId,
+  ),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<

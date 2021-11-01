@@ -166,6 +166,14 @@ export const unarchiveModel = generateDetApi<
   GetModelParams, Api.V1UnarchiveModelResponse, void
 >(Config.unarchiveModel);
 
+export const deleteModel = generateDetApi<
+  GetModelParams, Api.V1DeleteModelResponse, void
+>(Config.deleteModel);
+
+export const deleteModelVersion = generateDetApi<
+  GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
+>(Config.deleteModelVersion);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
