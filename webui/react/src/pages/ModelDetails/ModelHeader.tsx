@@ -82,11 +82,11 @@ const ModelHeader: React.FC<Props> = (
           <div style={{ display: 'flex', gap: 4 }}>
             <Dropdown overlay={(
               <Menu>
-                <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item onClick={onSwitchArchive}>
+                <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
+                <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
                   {archived ? 'Unarchive' : 'Archive'}
                 </Menu.Item>
-                <Menu.Item danger onClick={onDelete}>Delete</Menu.Item>
+                <Menu.Item danger key="delete-model" onClick={onDelete}>Delete</Menu.Item>
               </Menu>
             )}>
               <Button type="text">

@@ -37,9 +37,6 @@ const EditableMetadata: React.FC<Props> = ({ metadata, editing, updateMetadata }
     })));
     delete md[''];
 
-    //eslint-disable-next-line
-    console.log(md);
-
     updateMetadata?.(md);
   }, [ updateMetadata ]);
 

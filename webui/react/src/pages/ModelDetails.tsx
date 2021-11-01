@@ -1,5 +1,5 @@
-import { EditOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Card, Dropdown, Menu, Modal } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
+import { Button, Card, Dropdown, Menu, Modal, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -12,12 +12,12 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
 import { modelVersionNameRenderer, modelVersionNumberRenderer,
-  relativeTimeRenderer,
-  userRenderer } from 'components/Table';
+  relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { archiveModel, getModelDetails, patchModelVersion, unarchiveModel } from 'services/api';
+import { archiveModel, getModelDetails, patchModel,
+  patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
@@ -36,7 +36,7 @@ const ModelDetails: React.FC = () => {
   const { modelId } = useParams<Params>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
-  const [ editingMetadata, setEditingMetadata ] = useState(false);
+  const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
 
   const id = parseInt(modelId);
@@ -164,7 +164,7 @@ const ModelDetails: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ showConfirmDelete, downloadVersion, user ]);
+  }, [ showConfirmDelete, downloadVersion, setModelVersionTags, user ]);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {
@@ -173,12 +173,20 @@ const ModelDetails: React.FC = () => {
   }, [ model?.model.metadata ]);
 
   const editMetadata = useCallback(() => {
-    setEditingMetadata(true);
+    setIsEditingMetadata(true);
   }, []);
 
   const saveMetadata = useCallback(() => {
-    setEditingMetadata(false);
-    // patchModel with editedMetadata
+    setIsEditingMetadata(false);
+    patchModel({
+      body: { id: parseInt(modelId), metadata: editedMetadata },
+      modelId: parseInt(modelId),
+    });
+    fetchModel();
+  }, [ editedMetadata, fetchModel, modelId ]);
+
+  const cancelEditMetadata = useCallback(() => {
+    setIsEditingMetadata(false);
   }, []);
 
   const switchArchive = useCallback(() => {
@@ -225,18 +233,27 @@ const ModelDetails: React.FC = () => {
           <ResponsiveTable
             columns={columns}
             dataSource={model.modelVersions}
+            loading={isLoading}
             pagination={{ hideOnSinglePage: true }}
             showSorterTooltip={false}
+            size="small"
           />
       }
-      {metadata.length > 0 || editingMetadata &&
+      {(metadata.length > 0 || isEditingMetadata) &&
           <Card
-            extra={editingMetadata ?
-              <SaveOutlined onClick={saveMetadata} /> :
-              <EditOutlined onClick={editMetadata} />}
+            extra={isEditingMetadata ? (
+              <Space size="small">
+                <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
+                <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
+              </Space>
+            ) : (
+              <Tooltip title="Edit">
+                <EditOutlined onClick={editMetadata} />
+              </Tooltip>
+            )}
             title={'Metadata'}>
             <EditableMetadata
-              editing={editingMetadata}
+              editing={isEditingMetadata}
               metadata={model?.model.metadata}
               updateMetadata={setEditedMetadata} />
           </Card>
