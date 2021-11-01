@@ -199,8 +199,8 @@ func (a *apiServer) UnarchiveModel(
 }
 
 func (a *apiServer) DeleteModel(
-	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse, error) {
-
+	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
+	error) {
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
@@ -386,7 +386,6 @@ func (a *apiServer) PatchModelVersion(
 func (a *apiServer) DeleteModelVersion(
 	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse,
 	error) {
-
 	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err

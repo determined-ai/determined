@@ -3325,12 +3325,6 @@ export interface V1PatchExperimentResponse {
  */
 export interface V1PatchModel {
     /**
-     * The id of this model.
-     * @type {number}
-     * @memberof V1PatchModel
-     */
-    id: number;
-    /**
      * An updated name for the model.
      * @type {string}
      * @memberof V1PatchModel
@@ -3362,6 +3356,12 @@ export interface V1PatchModel {
  * @interface V1PatchModelRequest
  */
 export interface V1PatchModelRequest {
+    /**
+     * The id of the model being updated.
+     * @type {number}
+     * @memberof V1PatchModelRequest
+     */
+    modelId?: number;
     /**
      * The model desired model fields and values.
      * @type {V1PatchModel}
@@ -3396,12 +3396,6 @@ export interface V1PatchModelVersion {
      * @memberof V1PatchModelVersion
      */
     checkpoint?: V1Checkpoint;
-    /**
-     * The id of the model version.
-     * @type {number}
-     * @memberof V1PatchModelVersion
-     */
-    id: number;
     /**
      * An updated name for the model version.
      * @type {string}
@@ -3446,6 +3440,12 @@ export interface V1PatchModelVersionRequest {
      * @memberof V1PatchModelVersionRequest
      */
     modelId?: number;
+    /**
+     * The id of the model version being updated.
+     * @type {number}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelVersionId?: number;
     /**
      * The model version being updated.
      * @type {V1PatchModelVersion}
@@ -12089,7 +12089,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12103,8 +12103,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModel.');
             }
-            const localVarPath = `/api/v1/models/{model.id}`
-                .replace(`{${"model.id"}}`, encodeURIComponent(String(modelId)));
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -12136,7 +12136,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12154,9 +12154,9 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion.id}`
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersionId}`
                 .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
-                .replace(`{${"modelVersion.id"}}`, encodeURIComponent(String(modelVersionId)));
+                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -12466,7 +12466,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12487,7 +12487,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12658,7 +12658,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12670,7 +12670,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12820,7 +12820,7 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {number} modelId The id of this model.
+     * @param {number} modelId The id of the model being updated.
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -12834,7 +12834,7 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model version's fields.
      * @param {number} modelId The id of the model being updated.
-     * @param {number} modelVersionId The id of the model version.
+     * @param {number} modelVersionId The id of the model version being updated.
      * @param {V1PatchModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
