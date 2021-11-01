@@ -24,12 +24,12 @@ _INTEG_MARKERS = {
     "e2e_gpu",
     "det_deploy_local",
     "distributed",
-    "cloud",
     "parallel",
     "nightly",
     "model_hub_transformers",
     "model_hub_transformers_amp",
     "model_hub_mmdetection",
+    "managed_devcluster",
 }
 
 

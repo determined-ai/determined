@@ -9,6 +9,8 @@ import pytest
 from tests import config as conf
 from tests import experiment as exp
 
+from .utils import get_command_info, run_zero_slot_command, wait_for_command_state
+
 
 @pytest.mark.e2e_cpu
 def test_disable_and_enable_slots() -> None:
@@ -71,22 +73,6 @@ def _wait_for_slots(min_slots_expected: int, max_ticks: int = 60 * 2) -> List[Di
     pytest.fail(f"Didn't detect {min_slots_expected} slots within {max_ticks} seconds")
 
 
-def _run_zero_slot_command(sleep: int = 30) -> str:
-    command = [
-        "det",
-        "-m",
-        conf.make_master_url(),
-        "command",
-        "run",
-        "-d",
-        "--config",
-        "resources.slots=0",
-        "sleep",
-        str(sleep),
-    ]
-    return subprocess.check_output(command).decode().strip()
-
-
 @contextlib.contextmanager
 def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> Iterator[str]:
     command = (
@@ -102,22 +88,6 @@ def _disable_agent(agent_id: str, drain: bool = False, json: bool = False) -> It
         subprocess.check_call(command)
 
 
-def _get_command_info(command_id: str) -> Dict[str, Any]:
-    command = ["det", "-m", conf.make_master_url(), "command", "list", "--json"]
-    command_data = json.loads(subprocess.check_output(command).decode())
-    return next((d for d in command_data if d["id"] == command_id), {})
-
-
-def _wait_for_command_state(command_id: str, state: str, ticks: int = 60) -> None:
-    for _ in range(ticks):
-        info = _get_command_info(command_id)
-        if info.get("state") == state:
-            return
-        time.sleep(1)
-
-    pytest.fail(f"Command did't reach {state} state after {ticks} secs")
-
-
 @pytest.mark.e2e_cpu
 def test_disable_agent_zero_slots() -> None:
     """
@@ -128,13 +98,13 @@ def test_disable_agent_zero_slots() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    command_id = _run_zero_slot_command(sleep=60)
+    command_id = run_zero_slot_command(sleep=60)
     # Wait for it to run.
-    _wait_for_command_state(command_id, "RUNNING", 30)
+    wait_for_command_state(command_id, "RUNNING", 30)
 
     try:
         with _disable_agent(agent_id):
-            _wait_for_command_state(command_id, "TERMINATED", 5)
+            wait_for_command_state(command_id, "TERMINATED", 5)
     finally:
         # Kill the command before failing so it does not linger.
         command = ["det", "-m", conf.make_master_url(), "command", "kill", command_id]
@@ -281,21 +251,21 @@ def test_drain_agent_sched_zeroslot() -> None:
     slots = _wait_for_slots(2)
     assert len(slots) == 2
 
-    command_id1 = _run_zero_slot_command(60)
-    _wait_for_command_state(command_id1, "RUNNING", 10)
+    command_id1 = run_zero_slot_command(60)
+    wait_for_command_state(command_id1, "RUNNING", 10)
     agent_id1 = _task_agents(command_id1)[0]
 
     with _disable_agent(agent_id1, drain=True):
-        command_id2 = _run_zero_slot_command(60)
-        _wait_for_command_state(command_id2, "RUNNING", 10)
+        command_id2 = run_zero_slot_command(60)
+        wait_for_command_state(command_id2, "RUNNING", 10)
         agent_id2 = _task_agents(command_id2)[0]
         assert agent_id1 != agent_id2
 
         with _disable_agent(agent_id2, drain=True):
             for command_id in [command_id1, command_id2]:
-                _wait_for_command_state(command_id, "TERMINATED", 60)
-                assert "success" in _get_command_info(command_id)["exitStatus"]
+                wait_for_command_state(command_id, "TERMINATED", 60)
+                assert "success" in get_command_info(command_id)["exitStatus"]
 
-    command_id3 = _run_zero_slot_command(1)
-    _wait_for_command_state(command_id3, "TERMINATED", 60)
-    assert "success" in _get_command_info(command_id3)["exitStatus"]
+    command_id3 = run_zero_slot_command(1)
+    wait_for_command_state(command_id3, "TERMINATED", 60)
+    assert "success" in get_command_info(command_id3)["exitStatus"]
