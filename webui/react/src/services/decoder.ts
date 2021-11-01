@@ -161,6 +161,7 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
 
 export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
   return {
+    archived: model.archived,
     creationTime: model.creationTime as unknown as string,
     description: model.description,
     id: model.id,

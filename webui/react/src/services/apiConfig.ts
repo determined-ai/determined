@@ -387,14 +387,8 @@ export const getModels: DetApi<GetModelsParams, Api.V1GetModelsResponse, ModelPa
   name: 'getModels',
   postProcess: (response) => {
     return {
-      models: (response.models || []).map(model => decoder.mapV1Model(model)),
-      pagination: response.pagination || {
-        endIndex: 0,
-        limit: 0,
-        offset: 0,
-        startIndex: 0,
-        total: 0,
-      },
+      models: (response.models).map(model => decoder.mapV1Model(model)),
+      pagination: response.pagination,
     };
   },
   request: (params: GetModelsParams) => detApi.Models.determinedGetModels(
@@ -468,6 +462,22 @@ PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefin
        { modelVersion: params.body },
      ),
  };
+
+export const archiveModel: DetApi<GetModelParams, Api.V1ArchiveModelResponse, void> = {
+  name: 'archiveModel',
+  postProcess: noOp,
+  request: (params: GetModelParams) => detApi.Models.determinedArchiveModel(
+    params.modelId,
+  ),
+};
+
+export const unarchiveModel: DetApi<GetModelParams, Api.V1UnarchiveModelResponse, void> = {
+  name: 'unarchiveModel',
+  postProcess: noOp,
+  request: (params: GetModelParams) => detApi.Models.determinedUnarchiveModel(
+    params.modelId,
+  ),
+};
 
 /* Tasks */
 

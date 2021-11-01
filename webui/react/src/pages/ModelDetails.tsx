@@ -15,7 +15,7 @@ import { modelVersionNameRenderer, modelVersionNumberRenderer,
   relativeTimeRenderer } from 'components/Table';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { getModelDetails } from 'services/api';
+import { archiveModel, getModelDetails, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
@@ -157,8 +157,12 @@ const ModelDetails: React.FC = () => {
   }, []);
 
   const switchArchive = useCallback(() => {
-    //check current archive status, switch it
-  }, []);
+    if (model?.model.archived) {
+      unarchiveModel({ modelId: parseInt(modelId) });
+    } else {
+      archiveModel({ modelId: parseInt(modelId) });
+    }
+  }, [ model?.model.archived, modelId ]);
 
   const deleteModel = useCallback(() => {
     //delete model, take user to model registry page

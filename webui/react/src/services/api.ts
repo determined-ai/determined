@@ -158,6 +158,14 @@ export const patchModelVersion = generateDetApi<
   PatchModelVersionParams, Api.V1PatchModelVersionResponse, ModelVersion | undefined
 >(Config.patchModelVersion);
 
+export const archiveModel = generateDetApi<
+  GetModelParams, Api.V1ArchiveModelResponse, void
+>(Config.archiveModel);
+
+export const unarchiveModel = generateDetApi<
+  GetModelParams, Api.V1UnarchiveModelResponse, void
+>(Config.unarchiveModel);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

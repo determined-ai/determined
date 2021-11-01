@@ -14,7 +14,7 @@ import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { getModels } from 'services/api';
+import { archiveModel, getModels, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ModelItem } from 'types';
@@ -75,8 +75,13 @@ const ModelRegistry: React.FC = () => {
   }, []);
 
   const switchArchived = useCallback((model: ModelItem) => {
-    //check current archive status, switch it
-  }, []);
+    if (model.archived) {
+      unarchiveModel({ modelId: model.id });
+    } else {
+      archiveModel({ modelId: model.id });
+    }
+    fetchModels();
+  }, [ fetchModels ]);
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
@@ -107,12 +112,14 @@ const ModelRegistry: React.FC = () => {
           overlay={(
             <Menu>
               <Menu.Item
+                key="switch-archived"
                 onClick={() => switchArchived(record)}>
                 {record.archived ? 'Unarchive' : 'Archive'}
               </Menu.Item>
               <Menu.Item
                 danger
                 disabled={!isDeletable}
+                key="delete-model"
                 onClick={() => showConfirmDelete(record)}>
                   Delete Model
               </Menu.Item>

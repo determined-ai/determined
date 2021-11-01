@@ -78,8 +78,10 @@ const ModelVersionHeader: React.FC<Props> = (
             <Button>Download Model</Button>
             <Dropdown overlay={(
               <Menu>
-                <Menu.Item onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item danger onClick={onDeregisterVersion}>Deregister Version</Menu.Item>
+                <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
+                <Menu.Item danger key="deregister-version" onClick={onDeregisterVersion}>
+                  Deregister Version
+                </Menu.Item>
               </Menu>
             )}>
               <Button type="text">
