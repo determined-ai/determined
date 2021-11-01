@@ -110,7 +110,7 @@ func (a *apiServer) PostModel(
 
 func (a *apiServer) PatchModel(
 	ctx context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.Model.Id})
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (a *apiServer) PatchModel(
 
 	if req.Model.Description != nil && req.Model.Description.Value != currModel.Description {
 		log.Infof("model (%d) description changing from \"%s\" to \"%s\"",
-			req.Model.Id, currModel.Description, req.Model.Description.Value)
+			req.ModelId, currModel.Description, req.Model.Description.Value)
 		madeChanges = true
 		currModel.Description = req.Model.Description.Value
 	}
@@ -131,13 +131,13 @@ func (a *apiServer) PatchModel(
 	}
 	if req.Model.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.Model.Metadata)
-		if err != nil {
+		if err2 != nil {
 			return nil, errors.Wrap(err2, "error marshaling request model metadata")
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
 			log.Infof("model (%d) metadata changing from %s to %s",
-				req.Model.Id, currMeta, newMeta)
+				req.ModelId, currMeta, newMeta)
 			madeChanges = true
 			currMeta = newMeta
 		}
@@ -152,7 +152,7 @@ func (a *apiServer) PatchModel(
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
 			log.Infof("model (%d) labels changing from %s to %s",
-				req.Model.Id, currModel.Labels, reqLabels)
+				req.ModelId, currModel.Labels, reqLabels)
 			madeChanges = true
 		}
 		currLabels = reqLabels
@@ -164,21 +164,21 @@ func (a *apiServer) PatchModel(
 
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
-		"update_model", finalModel, req.Model.Id, currModel.Description, currMeta, currLabels)
+		"update_model", finalModel, req.ModelId, currModel.Description, currMeta, currLabels)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
-		errors.Wrapf(err, "error updating model %d in database", req.Model.Id)
+		errors.Wrapf(err, "error updating model %d in database", req.ModelId)
 }
 
 func (a *apiServer) ArchiveModel(
 	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
-	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
-	if err != nil {
-		return nil, err
-	}
-
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("archive_model", holder, req.ModelId)
+	err := a.m.db.QueryProto("archive_model", holder, req.ModelId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model %d was not found and cannot be archived",
+			req.ModelId)
+	}
 
 	return &apiv1.ArchiveModelResponse{},
 		errors.Wrapf(err, "error archiving model %d", req.ModelId)
@@ -186,16 +186,37 @@ func (a *apiServer) ArchiveModel(
 
 func (a *apiServer) UnarchiveModel(
 	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
-	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
+	holder := &modelv1.Model{}
+	err := a.m.db.QueryProto("unarchive_model", holder, req.ModelId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model %d was not found and cannot be un-archived",
+			req.ModelId)
+	}
+
+	return &apiv1.UnarchiveModelResponse{},
+		errors.Wrapf(err, "error unarchiving model %d", req.ModelId)
+}
+
+func (a *apiServer) DeleteModel(
+	ctx context.Context, req *apiv1.DeleteModelRequest) (*apiv1.DeleteModelResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
 	if err != nil {
 		return nil, err
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("unarchive_model", holder, req.ModelId)
+	err = a.m.db.QueryProto("delete_model", holder, req.ModelId, user.User.Id,
+		user.User.Admin)
 
-	return &apiv1.UnarchiveModelResponse{},
-		errors.Wrapf(err, "error unarchiving model %d", req.ModelId)
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model %d does not exist or not delete-able by this user",
+			req.ModelId)
+	}
+
+	return &apiv1.DeleteModelResponse{},
+		errors.Wrapf(err, "error deleting model %d", req.ModelId)
 }
 
 func (a *apiServer) GetModelVersion(
@@ -255,6 +276,11 @@ func (a *apiServer) PostModelVersion(
 		)
 	}
 
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	respModelVersion := &apiv1.PostModelVersionResponse{}
 	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
@@ -272,6 +298,8 @@ func (a *apiServer) PostModelVersion(
 		c.Uuid,
 		mdata,
 		reqLabels,
+		req.Notes,
+		user.User.Id,
 	)
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)
@@ -281,7 +309,7 @@ func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
 	error) {
 	getResp, err := a.GetModelVersion(ctx,
-		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersion.Id})
+		&apiv1.GetModelVersionRequest{ModelId: req.ModelId, ModelVersion: req.ModelVersionId})
 	if err != nil {
 		return nil, err
 	}
@@ -291,16 +319,23 @@ func (a *apiServer) PatchModelVersion(
 
 	if req.ModelVersion.Name != nil && req.ModelVersion.Name.Value != currModelVersion.Name {
 		log.Infof("model version (%d) name changing from \"%s\" to \"%s\"",
-			req.ModelVersion.Id, currModelVersion.Name, req.ModelVersion.Name.Value)
+			req.ModelVersionId, currModelVersion.Name, req.ModelVersion.Name.Value)
 		madeChanges = true
 		currModelVersion.Name = req.ModelVersion.Name.Value
 	}
 
 	if req.ModelVersion.Comment != nil && req.ModelVersion.Comment.Value != currModelVersion.Comment {
 		log.Infof("model version (%d) comment changing from \"%s\" to \"%s\"",
-			req.ModelVersion.Id, currModelVersion.Comment, req.ModelVersion.Comment.Value)
+			req.ModelVersionId, currModelVersion.Comment, req.ModelVersion.Comment.Value)
 		madeChanges = true
 		currModelVersion.Comment = req.ModelVersion.Comment.Value
+	}
+
+	if req.ModelVersion.Notes != nil && req.ModelVersion.Notes.Value != currModelVersion.Notes {
+		log.Infof("model version (%d) notes changing from \"%s\" to \"%s\"",
+			req.ModelVersionId, currModelVersion.Notes, req.ModelVersion.Notes.Value)
+		madeChanges = true
+		currModelVersion.Notes = req.ModelVersion.Notes.Value
 	}
 
 	currMeta, err := protojson.Marshal(currModelVersion.Metadata)
@@ -309,13 +344,13 @@ func (a *apiServer) PatchModelVersion(
 	}
 	if req.ModelVersion.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.ModelVersion.Metadata)
-		if err != nil {
+		if err2 != nil {
 			return nil, errors.Wrap(err2, "error marshaling request model version metadata")
 		}
 
 		if !bytes.Equal(currMeta, newMeta) {
 			log.Infof("model version (%d) metadata changing from %s to %s",
-				req.ModelVersion.Id, currMeta, newMeta)
+				req.ModelVersionId, currMeta, newMeta)
 			madeChanges = true
 			currMeta = newMeta
 		}
@@ -330,7 +365,7 @@ func (a *apiServer) PatchModelVersion(
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
 			log.Infof("model version (%d) labels changing from %s to %s",
-				req.ModelVersion.Id, currModelVersion.Labels, reqLabels)
+				req.ModelVersionId, currModelVersion.Labels, reqLabels)
 			madeChanges = true
 		}
 		currLabels = reqLabels
@@ -341,9 +376,31 @@ func (a *apiServer) PatchModelVersion(
 	}
 
 	finalModelVersion := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersion.Id,
-		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currMeta, currLabels)
+	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersionId,
+		req.ModelId, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
+		currMeta, currLabels)
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
-		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersion.Id)
+		errors.Wrapf(err, "error updating model version %d in database", req.ModelVersionId)
+}
+
+func (a *apiServer) DeleteModelVersion(
+	ctx context.Context, req *apiv1.DeleteModelVersionRequest) (*apiv1.DeleteModelVersionResponse,
+	error) {
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	holder := &modelv1.ModelVersion{}
+	err = a.m.db.QueryProto("delete_model_version", holder, req.ModelVersionId,
+		user.User.Id, user.User.Admin)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model version %d does not exist or not delete-able by this user",
+			req.ModelVersionId)
+	}
+
+	return &apiv1.DeleteModelVersionResponse{},
+		errors.Wrapf(err, "error deleting model version %d", req.ModelVersionId)
 }

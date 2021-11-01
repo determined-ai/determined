@@ -74,6 +74,11 @@ def test_model_registry() -> None:
     assert db_version is not None
     assert db_version.name == "Test 2021"
 
+    latest_version.set_notes("# Hello Markdown")
+    db_version = mnist.get_version()
+    assert db_version is not None
+    assert db_version.notes == "# Hello Markdown"
+
     # Run another basic test and register its checkpoint as a version as well.
     # Validate the latest has been updated.
     exp_id = exp.run_basic_test(
@@ -93,9 +98,19 @@ def test_model_registry() -> None:
     all_versions = mnist.get_versions()
     assert len(all_versions) == 2
 
+    # Test deletion of model version
+    latest_version.delete()
+    all_versions = mnist.get_versions()
+    assert len(all_versions) == 1
+
     # Create some more models and validate listing models.
-    d.create_model("transformer", "all you need is attention")
+    tform = d.create_model("transformer", "all you need is attention")
     d.create_model("object-detection", "a bounding box model")
 
     models = d.get_models(sort_by=ModelSortBy.NAME)
     assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
+
+    # Test deletion of model
+    tform.delete()
+    models = d.get_models(sort_by=ModelSortBy.NAME)
+    assert [m.name for m in models] == ["mnist", "object-detection"]

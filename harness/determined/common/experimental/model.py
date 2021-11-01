@@ -20,6 +20,7 @@ class ModelVersion:
         metadata: Dict[str, Any],
         name: Optional[str] = "",
         comment: Optional[str] = "",
+        notes: Optional[str] = "",
         model_id: Optional[int] = 0,
         model_version: Optional[int] = None,  # sequential
     ):
@@ -28,6 +29,7 @@ class ModelVersion:
         self.metadata = metadata
         self.name = name
         self.comment = comment
+        self.notes = notes
         self.model_id = model_id
         self.model_version_id = model_version_id
         self.model_version = model_version
@@ -46,6 +48,28 @@ class ModelVersion:
             json={"model_version": {"name": self.name}},
         )
 
+    def set_notes(self, notes: str) -> None:
+        """
+        Sets the human-friendly notes / readme for this model version
+
+        Arguments:
+            notes (string): Replaces notes for model version in registry
+        """
+
+        self.notes = notes
+        self._session.patch(
+            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+            json={"model_version": {"notes": self.notes}},
+        )
+
+    def delete(self) -> None:
+        """
+        Deletes the model version in the registry
+        """
+        self._session.delete(
+            "/api/v1/models/{}/versions/{}".format(self.model_id, self.model_version_id),
+        )
+
     @staticmethod
     def from_json(data: Dict[str, Any], session: session.Session) -> "ModelVersion":
         ckpt_data = data.get("checkpoint", {})
@@ -58,6 +82,7 @@ class ModelVersion:
             metadata=data.get("metadata", {}),
             name=data.get("name"),
             comment=data.get("comment"),
+            notes=data.get("notes"),
             model_id=data.get("model", {}).get("id"),
             model_version=data.get("version"),
         )
@@ -286,6 +311,14 @@ class Model:
         self.archived = False
         self._session.post(
             "/api/v1/models/{}/unarchive".format(self.model_id),
+        )
+
+    def delete(self) -> None:
+        """
+        Deletes the model in the registry
+        """
+        self._session.delete(
+            "/api/v1/models/{}".format(self.model_id),
         )
 
     def to_json(self) -> Dict[str, Any]:

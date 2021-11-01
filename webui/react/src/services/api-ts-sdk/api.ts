@@ -1261,6 +1261,22 @@ export interface V1DeleteExperimentResponse {
 }
 
 /**
+ * 
+ * @export
+ * @interface V1DeleteModelResponse
+ */
+export interface V1DeleteModelResponse {
+}
+
+/**
+ * 
+ * @export
+ * @interface V1DeleteModelVersionResponse
+ */
+export interface V1DeleteModelVersionResponse {
+}
+
+/**
  * Response to DeleteTemplateRequest.
  * @export
  * @interface V1DeleteTemplateResponse
@@ -3070,12 +3086,6 @@ export interface V1Model {
      */
     labels?: Array<string>;
     /**
-     * README for model.
-     * @type {string}
-     * @memberof V1Model
-     */
-    readme?: string;
-    /**
      * User who created this model.
      * @type {string}
      * @memberof V1Model
@@ -3150,12 +3160,6 @@ export interface V1ModelVersion {
      */
     comment?: string;
     /**
-     * Readme associated with this model version.
-     * @type {string}
-     * @memberof V1ModelVersion
-     */
-    readme?: string;
-    /**
      * User who created this model version.
      * @type {string}
      * @memberof V1ModelVersion
@@ -3167,6 +3171,12 @@ export interface V1ModelVersion {
      * @memberof V1ModelVersion
      */
     labels?: Array<string>;
+    /**
+     * Notes associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    notes?: string;
 }
 
 /**
@@ -3315,12 +3325,6 @@ export interface V1PatchExperimentResponse {
  */
 export interface V1PatchModel {
     /**
-     * The id of this model.
-     * @type {number}
-     * @memberof V1PatchModel
-     */
-    id: number;
-    /**
      * An updated name for the model.
      * @type {string}
      * @memberof V1PatchModel
@@ -3344,12 +3348,6 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     labels?: Array<string>;
-    /**
-     * An updated readme for the model.
-     * @type {string}
-     * @memberof V1PatchModel
-     */
-    readme?: string;
 }
 
 /**
@@ -3364,6 +3362,12 @@ export interface V1PatchModelRequest {
      * @memberof V1PatchModelRequest
      */
     model?: V1PatchModel;
+    /**
+     * The id of the model being updated.
+     * @type {number}
+     * @memberof V1PatchModelRequest
+     */
+    modelId?: number;
 }
 
 /**
@@ -3393,12 +3397,6 @@ export interface V1PatchModelVersion {
      */
     checkpoint?: V1Checkpoint;
     /**
-     * The id of the model version.
-     * @type {number}
-     * @memberof V1PatchModelVersion
-     */
-    id: number;
-    /**
      * An updated name for the model version.
      * @type {string}
      * @memberof V1PatchModelVersion
@@ -3422,6 +3420,12 @@ export interface V1PatchModelVersion {
      * @memberof V1PatchModelVersion
      */
     labels?: Array<string>;
+    /**
+     * Updated text notes for the model version.
+     * @type {string}
+     * @memberof V1PatchModelVersion
+     */
+    notes?: string;
 }
 
 /**
@@ -3442,6 +3446,12 @@ export interface V1PatchModelVersionRequest {
      * @memberof V1PatchModelVersionRequest
      */
     modelVersion?: V1PatchModelVersion;
+    /**
+     * The id of the model version being updated.
+     * @type {number}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelVersionId?: number;
 }
 
 /**
@@ -3588,6 +3598,12 @@ export interface V1PostModelVersionRequest {
      * @memberof V1PostModelVersionRequest
      */
     labels?: Array<string>;
+    /**
+     * Notes associated with this model version.
+     * @type {string}
+     * @memberof V1PostModelVersionRequest
+     */
+    notes?: string;
 }
 
 /**
@@ -11779,6 +11795,86 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedDeleteModel.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'modelId' is not null or undefined
+            if (modelId === null || modelId === undefined) {
+                throw new RequiredError('modelId','Required parameter modelId was null or undefined when calling determinedDeleteModelVersion.');
+            }
+            // verify required parameter 'modelVersionId' is not null or undefined
+            if (modelVersionId === null || modelVersionId === undefined) {
+                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling determinedDeleteModelVersion.');
+            }
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersionId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
+                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -11993,7 +12089,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12007,8 +12103,8 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModel.');
             }
-            const localVarPath = `/api/v1/models/{model.id}`
-                .replace(`{${"model.id"}}`, encodeURIComponent(String(modelId)));
+            const localVarPath = `/api/v1/models/{modelId}`
+                .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -12040,7 +12136,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12058,9 +12154,9 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersion.id}`
+            const localVarPath = `/api/v1/models/{modelId}/versions/{modelVersionId}`
                 .replace(`{${"modelId"}}`, encodeURIComponent(String(modelId)))
-                .replace(`{${"modelVersion.id"}}`, encodeURIComponent(String(modelVersionId)));
+                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -12241,6 +12337,45 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModel(modelId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModelVersion(modelId, modelVersionId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12331,7 +12466,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12352,7 +12487,7 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12448,6 +12583,27 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Delete a model
+         * @param {number} modelId The id of the model to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModel(modelId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedDeleteModel(modelId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete a model version
+         * @param {number} modelId The id of the model associated with the model version.
+         * @param {number} modelVersionId THe id of the model version to delete.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any) {
+            return ModelsApiFp(configuration).determinedDeleteModelVersion(modelId, modelVersionId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested model.
          * @param {number} modelId The name of the template.
          * @param {*} [options] Override http request option.
@@ -12502,7 +12658,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Patch a model's fields.
-         * @param {number} modelId The id of this model.
+         * @param {number} modelId The id of the model being updated.
          * @param {V1PatchModelRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12514,7 +12670,7 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model version's fields.
          * @param {number} modelId The id of the model being updated.
-         * @param {number} modelVersionId The id of the model version.
+         * @param {number} modelVersionId The id of the model version being updated.
          * @param {V1PatchModelVersionRequest} body 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12573,6 +12729,31 @@ export class ModelsApi extends BaseAPI {
      */
     public determinedArchiveModel(modelId: number, options?: any) {
         return ModelsApiFp(this.configuration).determinedArchiveModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Delete a model
+     * @param {number} modelId The id of the model to delete.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedDeleteModel(modelId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedDeleteModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Delete a model version
+     * @param {number} modelId The id of the model associated with the model version.
+     * @param {number} modelVersionId THe id of the model version to delete.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedDeleteModelVersion(modelId: number, modelVersionId: number, options?: any) {
+        return ModelsApiFp(this.configuration).determinedDeleteModelVersion(modelId, modelVersionId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -12639,7 +12820,7 @@ export class ModelsApi extends BaseAPI {
     /**
      * 
      * @summary Patch a model's fields.
-     * @param {number} modelId The id of this model.
+     * @param {number} modelId The id of the model being updated.
      * @param {V1PatchModelRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -12653,7 +12834,7 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model version's fields.
      * @param {number} modelId The id of the model being updated.
-     * @param {number} modelVersionId The id of the model version.
+     * @param {number} modelVersionId The id of the model version being updated.
      * @param {V1PatchModelVersionRequest} body 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

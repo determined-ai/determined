@@ -13,7 +13,6 @@ type Model struct {
 	CreationTime    time.Time `db:"creation_time" json:"creation_time"`
 	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
 	Labels          []string  `db:"labels" json:"labels"`
-	ReadMe          string    `db:"readme" json:"readme"`
 	Username        string    `db:"username" json:"username"`
 	Archived        bool      `db:"archived" json:"archived"`
 	NumVersions     int       `db:"num_versions" json:"num_versions"`
@@ -30,6 +29,6 @@ type ModelVersion struct {
 	Name            string    `db:"name" json:"name"`
 	LastUpdatedTime time.Time `db:"last_updated_time" json:"last_updated_time"`
 	Comment         string    `db:"comment" json:"comment"`
-	Readme          string    `db:"readme" json:"readme"`
+	Notes           string    `db:"readme" json:"notes"`
 	Username        string    `db:"username" json:"username"`
 }

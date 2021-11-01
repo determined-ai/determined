@@ -103,6 +103,8 @@ message PostModelResponse {
 message PatchModelRequest {
   // The model desired model fields and values.
   determined.model.v1.PatchModel model = 1;
+  // The id of the model being updated.
+  int32 model_id = 2;
 }
 
 // Response to PatchModelRequest.
@@ -128,6 +130,15 @@ message UnarchiveModelRequest {
 
 // Response to UnarchiveModelRequest
 message UnarchiveModelResponse {}
+
+// Request for deleting a model in the registry.
+message DeleteModelRequest {
+  // The id of the model to delete.
+  int32 model_id = 1;
+}
+
+// Response to DeleteModelRequest
+message DeleteModelResponse {}
 
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
@@ -195,6 +206,8 @@ message PostModelVersionRequest {
   google.protobuf.Struct metadata = 5;
   // Labels associated with this model version.
   repeated string labels = 6;
+  // Notes associated with this model version.
+  string notes = 7;
 }
 
 // Response for PostModelVersionRequest.
@@ -209,6 +222,8 @@ message PatchModelVersionRequest {
   int32 model_id = 1;
   // The model version being updated.
   determined.model.v1.PatchModelVersion model_version = 2;
+  // The id of the model version being updated.
+  int32 model_version_id = 3;
 }
 
 // Response to PatchModelVersionRequest.
@@ -216,3 +231,14 @@ message PatchModelVersionResponse {
   // The model version created.
   determined.model.v1.ModelVersion model_version = 1;
 }
+
+// Request for deleting a model version in the registry.
+message DeleteModelVersionRequest {
+  // The id of the model associated with the model version.
+  int32 model_id = 1;
+  // THe id of the model version to delete.
+  int32 model_version_id = 2;
+}
+
+// Response to DeleteModelVersionRequest
+message DeleteModelVersionResponse {}
