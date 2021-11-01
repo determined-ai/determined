@@ -4,11 +4,14 @@ import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 
 export interface Settings {
   archived?: boolean;
+  description?: string;
+  name?: string;
   sortDesc: boolean;
   sortKey: V1GetModelsRequestSortBy;
   tableLimit: number;
   tableOffset: number;
-  user?: string[];
+  tags?: string[];
+  users?: string[];
 }
 
 const config: SettingsConfig = {
@@ -42,12 +45,30 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Integer },
     },
     {
-      key: 'user',
-      storageKey: 'user',
+      key: 'users',
+      storageKey: 'users',
       type: {
         baseType: BaseType.String,
         isArray: true,
       },
+    },
+    {
+      key: 'tags',
+      storageKey: 'tags',
+      type: {
+        baseType: BaseType.String,
+        isArray: true,
+      },
+    },
+    {
+      key: 'name',
+      storageKey: 'name',
+      type: { baseType: BaseType.String },
+    },
+    {
+      key: 'description',
+      storageKey: 'description',
+      type: { baseType: BaseType.String },
     },
   ],
   storagePath: 'model-registry',

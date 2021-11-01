@@ -14,6 +14,7 @@ import TableFilterDropdown from 'components/TableFilterDropdown';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
+import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
 import { archiveModel, getModels, unarchiveModel } from 'services/api';
@@ -27,9 +28,10 @@ import css from './ModelRegistry.module.scss';
 import settingsConfig, { Settings } from './ModelRegistry.settings';
 
 const ModelRegistry: React.FC = () => {
-  const { auth: { user } } = useStore();
+  const { users, auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
+  const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
 
   const {
@@ -37,17 +39,21 @@ const ModelRegistry: React.FC = () => {
     updateSettings,
   } = useSettings<Settings>(settingsConfig);
 
+  const fetchUsers = useFetchUsers(canceler);
+
   const fetchModels = useCallback(async () => {
     try {
-      const response = await getModels(
-        {
-          archived: settings.archived,
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
-        },
-      );
+      const response = await getModels({
+        archived: settings.archived,
+        description: settings.description,
+        labels: settings.tags,
+        limit: settings.tableLimit,
+        name: settings.name,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
+        users: settings.users,
+      }, { signal: canceler.signal });
       setTotal(response.pagination.total || 0);
       setModels(prev => {
         if (isEqual(prev, response.models)) return prev;
@@ -58,9 +64,14 @@ const ModelRegistry: React.FC = () => {
       handleError({ message: 'Unable to fetch models.', silent: true, type: ErrorType.Api });
       setIsLoading(false);
     }
-  }, [ settings ]);
+  }, [ settings, canceler.signal ]);
 
-  usePolling(fetchModels);
+  const fetchAll = useCallback(() => {
+    fetchModels();
+    fetchUsers();
+  }, [ fetchModels, fetchUsers ]);
+
+  usePolling(fetchAll);
 
   /*
    * Get new models based on changes to the
@@ -109,6 +120,24 @@ const ModelRegistry: React.FC = () => {
     />
   ), [ handleArchiveFilterApply, handleArchiveFilterReset, settings.archived ]);
 
+  const handleUserFilterApply = useCallback((users: string[]) => {
+    updateSettings({ users: users.length !== 0 ? users : undefined });
+  }, [ updateSettings ]);
+
+  const handleUserFilterReset = useCallback(() => {
+    updateSettings({ users: undefined });
+  }, [ updateSettings ]);
+
+  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      multiple
+      searchable
+      values={settings.users}
+      onFilter={handleUserFilterApply}
+      onReset={handleUserFilterReset} />
+  ), [ handleUserFilterApply, handleUserFilterReset, settings.users ]);
+
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
       closable: true,
@@ -122,6 +151,8 @@ const ModelRegistry: React.FC = () => {
       title: 'Confirm Delete',
     });
   }, [ deleteModel ]);
+
+  console.log(users);
 
   const columns = useMemo(() => {
     const labelsRenderer = (value: string, record: ModelItem) => (
@@ -210,8 +241,16 @@ const ModelRegistry: React.FC = () => {
         title: 'Archived',
         width: 120,
       },
-      { dataIndex: 'username', render: userRenderer, title: 'User', width: 100 },
-      { fixed: 'right', render: overflowRenderer, title: '', width: 1 },
+      {
+        dataIndex: 'username',
+        filterDropdown: userFilterDropdown,
+        filters: users.map(user => ({ text: user.username, value: user.username })),
+        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
+        render: userRenderer,
+        title: 'User',
+        width: 100,
+      },
+      { fixed: 'right', render: overflowRenderer, title: '', width: 40 },
     ];
 
     return tableColumns.map(column => {
@@ -221,7 +260,13 @@ const ModelRegistry: React.FC = () => {
       }
       return column;
     });
-  }, [ archiveFilterDropdown, showConfirmDelete, switchArchived, user, settings ]);
+  }, [ archiveFilterDropdown,
+    showConfirmDelete,
+    switchArchived,
+    users,
+    user,
+    settings,
+    userFilterDropdown ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
@@ -239,6 +284,10 @@ const ModelRegistry: React.FC = () => {
     const shouldPush = settings.tableOffset !== newSettings.tableOffset;
     updateSettings(newSettings, shouldPush);
   }, [ columns, settings.tableOffset, updateSettings ]);
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [ canceler ]);
 
   return (
     <Page docTitle="Model Registry" id="models">
