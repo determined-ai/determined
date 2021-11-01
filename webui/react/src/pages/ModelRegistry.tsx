@@ -1,14 +1,16 @@
 import { Button, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import { SorterResult } from 'antd/lib/table/interface';
+import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
+import tableCss from 'components/ResponsiveTable.module.scss';
 import Section from 'components/Section';
 import { archivedRenderer, getFullPaginationConfig, modelNameRenderer,
   relativeTimeRenderer, userRenderer } from 'components/Table';
+import TableFilterDropdown from 'components/TableFilterDropdown';
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import handleError, { ErrorType } from 'ErrorHandler';
@@ -17,8 +19,9 @@ import useSettings from 'hooks/useSettings';
 import { archiveModel, getModels, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
-import { ModelItem } from 'types';
-import { isEqual } from 'utils/data';
+import { ArchiveFilter, ModelItem } from 'types';
+import { isBoolean, isEqual } from 'utils/data';
+import { capitalize } from 'utils/string';
 
 import css from './ModelRegistry.module.scss';
 import settingsConfig, { Settings } from './ModelRegistry.settings';
@@ -38,6 +41,7 @@ const ModelRegistry: React.FC = () => {
     try {
       const response = await getModels(
         {
+          archived: settings.archived,
           limit: settings.tableLimit,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -81,7 +85,29 @@ const ModelRegistry: React.FC = () => {
       archiveModel({ modelId: model.id });
     }
     fetchModels();
+    setIsLoading(true);
   }, [ fetchModels ]);
+
+  const handleArchiveFilterApply = useCallback((archived: string[]) => {
+    const archivedFilter = archived.length === 1
+      ? archived[0] === ArchiveFilter.Archived : undefined;
+    updateSettings({ archived: archivedFilter });
+  }, [ updateSettings ]);
+
+  const handleArchiveFilterReset = useCallback(() => {
+    updateSettings({ archived: undefined });
+  }, [ updateSettings ]);
+
+  const archiveFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterDropdown
+      {...filterProps}
+      values={isBoolean(settings.archived)
+        ? [ settings.archived ? ArchiveFilter.Archived : ArchiveFilter.Unarchived ]
+        : undefined}
+      onFilter={handleArchiveFilterApply}
+      onReset={handleArchiveFilterReset}
+    />
+  ), [ handleArchiveFilterApply, handleArchiveFilterReset, settings.archived ]);
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
@@ -173,7 +199,13 @@ const ModelRegistry: React.FC = () => {
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags' },
       {
         dataIndex: 'archived',
+        filterDropdown: archiveFilterDropdown,
+        filters: [
+          { text: capitalize(ArchiveFilter.Archived), value: ArchiveFilter.Archived },
+          { text: capitalize(ArchiveFilter.Unarchived), value: ArchiveFilter.Unarchived },
+        ],
         key: 'archived',
+        onHeaderCell: () => settings.archived != null ? { className: tableCss.headerFilterOn } : {},
         render: archivedRenderer,
         title: 'Archived',
         width: 120,
@@ -189,7 +221,7 @@ const ModelRegistry: React.FC = () => {
       }
       return column;
     });
-  }, [ showConfirmDelete, switchArchived, user, settings ]);
+  }, [ archiveFilterDropdown, showConfirmDelete, switchArchived, user, settings ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;

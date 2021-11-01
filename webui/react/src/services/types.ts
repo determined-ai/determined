@@ -107,10 +107,13 @@ export interface GetTrialsParams extends PaginationParams, SingleEntityParams {
 }
 
 export interface GetModelsParams extends PaginationParams {
+  archived?: boolean;
   description?: string;
+  labels?: string[];
   name?: string;
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION'
   | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS';
+  users?: string[];
 }
 
 export interface GetModelParams {

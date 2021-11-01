@@ -398,6 +398,9 @@ export const getModels: DetApi<GetModelsParams, Api.V1GetModelsResponse, ModelPa
     params.limit,
     params.name,
     params.description,
+    params.labels,
+    params.archived,
+    params.users,
   ),
 };
 
