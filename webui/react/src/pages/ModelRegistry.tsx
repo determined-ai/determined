@@ -334,13 +334,18 @@ const ModelRegistry: React.FC = () => {
       }
       return column;
     });
-  }, [ archiveFilterDropdown,
-    showConfirmDelete,
-    switchArchived,
+  }, [ nameFilterSearch,
+    tableSearchIcon,
+    descriptionFilterSearch,
+    labelFilterDropdown,
+    archiveFilterDropdown,
+    userFilterDropdown,
     users,
-    user,
-    settings,
-    userFilterDropdown ]);
+    setModelTags,
+    user?.isAdmin,
+    switchArchived,
+    showConfirmDelete,
+    settings ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
