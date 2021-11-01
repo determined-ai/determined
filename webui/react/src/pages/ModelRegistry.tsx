@@ -164,6 +164,23 @@ const ModelRegistry: React.FC = () => {
     />
   ), [ handleNameSearchApply, handleNameSearchReset, settings.name ]);
 
+  const handleDescriptionSearchApply = useCallback((newSearch: string) => {
+    updateSettings({ description: newSearch || undefined });
+  }, [ updateSettings ]);
+
+  const handleDescriptionSearchReset = useCallback(() => {
+    updateSettings({ description: undefined });
+  }, [ updateSettings ]);
+
+  const descriptionFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
+    <TableFilterSearch
+      {...filterProps}
+      value={settings.description || ''}
+      onReset={handleDescriptionSearchReset}
+      onSearch={handleDescriptionSearchApply}
+    />
+  ), [ handleDescriptionSearchApply, handleDescriptionSearchReset, settings.description ]);
+
   const handleLabelFilterApply = useCallback((tags: string[]) => {
     updateSettings({ tags: tags.length !== 0 ? tags : undefined });
   }, [ updateSettings ]);
@@ -255,7 +272,10 @@ const ModelRegistry: React.FC = () => {
       },
       {
         dataIndex: 'description',
+        filterDropdown: descriptionFilterSearch,
+        filterIcon: tableSearchIcon,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
+        onHeaderCell: () => settings.name ? { className: tableCss.headerFilterOn } : {},
         sorter: true,
         title: 'Description',
       },
@@ -280,6 +300,7 @@ const ModelRegistry: React.FC = () => {
         onHeaderCell: () => settings.tags ? { className: tableCss.headerFilterOn } : {},
         render: labelsRenderer,
         title: 'Tags',
+        width: 120,
       },
       {
         dataIndex: 'archived',
