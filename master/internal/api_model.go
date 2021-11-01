@@ -85,6 +85,17 @@ func (a *apiServer) GetModels(
 	return resp, a.paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
 }
 
+func (a *apiServer) GetModelLabels(
+	_ context.Context, req *apiv1.GetModelLabelsRequest) (*apiv1.GetModelLabelsResponse, error) {
+	resp := &apiv1.GetModelLabelsResponse{}
+	err := a.m.db.QueryProto("get_model_labels", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, errors.Wrapf(err, "error getting model labels")
+}
+
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
 	b, err := protojson.Marshal(req.Metadata)

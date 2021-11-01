@@ -195,3 +195,11 @@ class Determined:
 
         models = r.json().get("models")
         return [model.Model.from_json(m, self._session) for m in models]
+
+    def get_model_labels(self) -> List[str]:
+        """
+        Get a list of labels used on any models, sorted from most-popular to least-popular.
+        """
+        r = self._session.get("/api/v1/model/labels")
+
+        return r.json().get("labels")

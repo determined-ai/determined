@@ -239,3 +239,12 @@ def get_models(
     """
     assert _determined is not None
     return _determined.get_models(sort_by, order_by, name, description)
+
+
+@_require_singleton
+def get_model_labels() -> List[str]:
+    """
+    Get a list of labels used on any models, sorted from most-popular to least-popular.
+    """
+    assert _determined is not None
+    return _determined.get_labels()

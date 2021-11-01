@@ -76,6 +76,15 @@ message GetModelsResponse {
   Pagination pagination = 2;
 }
 
+// Get a list of model labels.
+message GetModelLabelsRequest {}
+
+// Response to GetModelLabelsRequest.
+message GetModelLabelsResponse {
+  // List of labels used across all models.
+  repeated string labels = 1;
+}
+
 // Request for creating a model in the registry.
 message PostModelRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
