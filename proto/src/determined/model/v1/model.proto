@@ -51,22 +51,17 @@ message Model {
 
 // PatchModel is a partial update to a model with only id required
 message PatchModel {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
-  };
-  // The id of this model.
-  int32 id = 1;
   // An updated name for the model.
-  google.protobuf.StringValue name = 2
+  google.protobuf.StringValue name = 1
       [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {
         min_length: 1
       }];
   // An updated description for the model.
-  google.protobuf.StringValue description = 3;
+  google.protobuf.StringValue description = 2;
   // An updated metadata object for the model.
-  google.protobuf.Struct metadata = 4;
+  google.protobuf.Struct metadata = 3;
   // An updated label list for the model.
-  repeated google.protobuf.StringValue labels = 5;
+  repeated google.protobuf.StringValue labels = 4;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
@@ -113,21 +108,16 @@ message ModelVersion {
 
 // PatchModel is a partial update to a ModelVersion with only id required
 message PatchModelVersion {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
-  };
   // An updated checkpoint to associate with the model version.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
-  // The id of the model version.
-  int32 id = 2;
   // An updated name for the model version.
-  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue name = 2;
   // An updated metadata object for the model version.
-  google.protobuf.Struct metadata = 4;
+  google.protobuf.Struct metadata = 3;
   // An updated comment for the model version.
-  google.protobuf.StringValue comment = 5;
+  google.protobuf.StringValue comment = 4;
   // An updated label list for the model version.
-  repeated google.protobuf.StringValue labels = 6;
+  repeated google.protobuf.StringValue labels = 5;
   // Updated text notes for the model version.
-  google.protobuf.StringValue notes = 7;
+  google.protobuf.StringValue notes = 6;
 }
