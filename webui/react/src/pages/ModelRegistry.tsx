@@ -18,7 +18,7 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { archiveModel, getModels, patchModel, unarchiveModel } from 'services/api';
+import { archiveModel, deleteModel, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
@@ -86,8 +86,8 @@ const ModelRegistry: React.FC = () => {
     settings,
   ]);
 
-  const deleteModel = useCallback((model: ModelItem) => {
-    //send delete api request
+  const deleteCurrentModel = useCallback((model: ModelItem) => {
+    deleteModel({ modelId: model.id });
   }, []);
 
   const switchArchived = useCallback((model: ModelItem) => {
@@ -209,10 +209,10 @@ const ModelRegistry: React.FC = () => {
       maskClosable: true,
       okText: 'Delete Model',
       okType: 'danger',
-      onOk: () => deleteModel(model),
+      onOk: () => deleteCurrentModel(model),
       title: 'Confirm Delete',
     });
-  }, [ deleteModel ]);
+  }, [ deleteCurrentModel ]);
 
   const columns = useMemo(() => {
     const labelsRenderer = (value: string, record: ModelItem) => (

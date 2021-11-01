@@ -2,7 +2,7 @@ import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Menu, Modal, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 
 import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
@@ -16,7 +16,7 @@ import { modelVersionNameRenderer, modelVersionNumberRenderer,
 import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { archiveModel, getModelDetails, patchModel,
+import { archiveModel, deleteModel, deleteModelVersion, getModelDetails, patchModel,
   patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound } from 'services/utils';
@@ -38,6 +38,7 @@ const ModelDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
+  const history = useHistory();
 
   const id = parseInt(modelId);
 
@@ -63,7 +64,10 @@ const ModelDetails: React.FC = () => {
 
   const deleteVersion = useCallback((version: ModelVersion) => {
     //send delete api request
-  }, []);
+    deleteModelVersion({ modelId: version.model.id, versionId: version.id });
+    fetchModel();
+    setIsLoading(true);
+  }, [ fetchModel ]);
 
   const downloadVersion = useCallback((version: ModelVersion) => {
     //open download popover
@@ -197,9 +201,10 @@ const ModelDetails: React.FC = () => {
     }
   }, [ model?.model.archived, modelId ]);
 
-  const deleteModel = useCallback(() => {
-    //delete model, take user to model registry page
-  }, []);
+  const deleteCurrentModel = useCallback(() => {
+    deleteModel({ modelId: parseInt(modelId) });
+    history.push('/det/models');
+  }, [ history, modelId ]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Model ID ${modelId}`} />;
@@ -219,7 +224,7 @@ const ModelDetails: React.FC = () => {
         archived={false}
         model={model.model}
         onAddMetadata={editMetadata}
-        onDelete={deleteModel}
+        onDelete={deleteCurrentModel}
         onSwitchArchive={switchArchive} />}
       id="modelDetails">
       <div className={css.base}>{

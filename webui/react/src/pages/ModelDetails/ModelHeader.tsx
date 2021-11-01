@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
-import React, { useMemo } from 'react';
+import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -45,6 +45,20 @@ const ModelHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ model ]);
 
+  const showConfirmDelete = useCallback((model: ModelItem) => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this model "${model.name}" and all 
+      of its versions from the model registry?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Model',
+      okType: 'danger',
+      onOk: () => onDelete(),
+      title: 'Confirm Delete',
+    });
+  }, [ onDelete ]);
+
   return (
     <header style={{
       backgroundColor: 'var(--theme-colors-monochrome-17)',
@@ -86,7 +100,9 @@ const ModelHeader: React.FC<Props> = (
                 <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
                   {archived ? 'Unarchive' : 'Archive'}
                 </Menu.Item>
-                <Menu.Item danger key="delete-model" onClick={onDelete}>Delete</Menu.Item>
+                <Menu.Item danger key="delete-model" onClick={() => showConfirmDelete(model)}>
+                  Delete
+                </Menu.Item>
               </Menu>
             )}>
               <Button type="text">

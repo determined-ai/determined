@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
-import React, { useMemo } from 'react';
+import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -50,6 +50,20 @@ const ModelVersionHeader: React.FC<Props> = (
     } ] as InfoRow[];
   }, [ modelVersion ]);
 
+  const showConfirmDelete = useCallback((version: ModelVersion) => {
+    Modal.confirm({
+      closable: true,
+      content: `Are you sure you want to delete this version "Version ${version.version}" 
+      from this model?`,
+      icon: null,
+      maskClosable: true,
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: () => onDeregisterVersion(),
+      title: 'Confirm Delete',
+    });
+  }, [ onDeregisterVersion ]);
+
   return (
     <header className={css.base}>
       <div className={css.breadcrumbs}>
@@ -79,7 +93,10 @@ const ModelVersionHeader: React.FC<Props> = (
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
-                <Menu.Item danger key="deregister-version" onClick={onDeregisterVersion}>
+                <Menu.Item
+                  danger
+                  key="deregister-version"
+                  onClick={() => showConfirmDelete(modelVersion)}>
                   Deregister Version
                 </Menu.Item>
               </Menu>

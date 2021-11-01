@@ -1,7 +1,7 @@
 import { CopyOutlined, EditOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Space, Tabs, Tooltip } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { useHistory, useParams } from 'react-router-dom';
 
 import EditableMetadata from 'components/EditableMetadata';
 import Icon from 'components/Icon';
@@ -12,7 +12,7 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
-import { getModelVersion, patchModelVersion } from 'services/api';
+import { deleteModelVersion, getModelVersion, patchModelVersion } from 'services/api';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion } from 'types';
 import { isEqual } from 'utils/data';
@@ -35,6 +35,7 @@ const ModelVersionDetails: React.FC = () => {
   const [ pageError, setPageError ] = useState<Error>();
   const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
+  const history = useHistory();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -100,8 +101,9 @@ model.load_state_dict(ckpt['models_state_dict'][0])
   }, [ modelId, versionId ]);
 
   const deleteVersion = useCallback(() => {
-    //delete/deregister version
-  }, []);
+    deleteModelVersion({ modelId: modelVersion?.model.id ?? 0, versionId: modelVersion?.id ?? 0 });
+    history.push(`/det/models/${modelVersion?.model.id}`);
+  }, [ history, modelVersion?.id, modelVersion?.model.id ]);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
