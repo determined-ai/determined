@@ -209,7 +209,7 @@ func (a *apiServer) DeleteModel(
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("delete_model", holder, req.ModelId, user.User.Id)
 
-	if (holder.Id == 0) {
+	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model %d does not exist or not delete-able by this user",
 			req.ModelId)
 	}
@@ -396,7 +396,7 @@ func (a *apiServer) DeleteModelVersion(
 	err = a.m.db.QueryProto("delete_model_version", holder, req.ModelVersionId,
 		user.User.Id)
 
-	if (holder.Id == 0) {
+	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model version %d does not exist or not delete-able by this user",
 			req.ModelVersionId)
 	}
