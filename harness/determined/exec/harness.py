@@ -4,7 +4,7 @@ import faulthandler
 import logging
 import sys
 from typing import Iterator, Optional
-
+import os
 import determined as det
 from determined import _generic, horovod, load
 from determined.common.api import certs
@@ -30,7 +30,7 @@ def maybe_periodic_stacktraces(debug_enabled: bool) -> Iterator[None]:
             faulthandler.cancel_dump_traceback_later()
 
 
-def main(chief_ip: Optional[str]) -> int:
+def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
@@ -105,6 +105,17 @@ def main(chief_ip: Optional[str]) -> int:
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
+        elif distributed_backend == "torch":
+            distributed = _generic.DistributedContext(
+                rank=int(os.environ["RANK"]),
+                size=int(os.environ["WORLD_SIZE"]),
+                local_rank=int(os.environ["LOCAL_RANK"]),
+                local_size=int(os.environ["LOCAL_WORLD_SIZE"]),
+                cross_rank=int(os.environ["GROUP_RANK"]),
+                cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
+                chief_ip=chief_ip,
+                port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
+            )
         else:
             distributed = _generic.DummyDistributed()
 
@@ -132,5 +143,6 @@ def main(chief_ip: Optional[str]) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--chief-ip")
+    parser.add_argument("--distributed")
     args = parser.parse_args()
-    sys.exit(main(args.chief_ip))
+    sys.exit(main(args.chief_ip, args.distributed))

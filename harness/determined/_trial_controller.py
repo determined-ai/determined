@@ -38,10 +38,7 @@ class TrialController(metaclass=abc.ABCMeta):
         self.batch_size = self.context.get_per_slot_batch_size()
         self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
-        if self.hvd_config.use:
-            self.is_chief = hvd.rank() == 0
-        else:
-            self.is_chief = True
+        self.is_chief = context.distributed.rank == 0
 
         if self.hvd_config.use and not self.is_chief:
             log_level = (
