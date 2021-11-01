@@ -72,9 +72,7 @@ class MNistTrial(PyTorchTrial):
 
         train_data = data.get_dataset(self.download_directory, train=True)
         
-        batch_size = self.context.get_global_batch_size() / self.context.distributed.get_size()
-        return DataLoader(train_data, batch_size=int(batch_size),
-                          num_workers=self.context.distributed.get_size())
+        return DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -84,8 +82,7 @@ class MNistTrial(PyTorchTrial):
             )
             self.data_downloaded = True
         validation_data = data.get_dataset(self.download_directory, train=False)
-        batch_size = self.context.get_global_batch_size() / self.context.distributed.get_size()
-        return DataLoader(validation_data, batch_size=int(batch_size))
+        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
     def train_batch(
             self, batch: TorchData, epoch_idx: int, batch_idx: int
