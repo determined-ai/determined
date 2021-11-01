@@ -1,7 +1,7 @@
 import { EditOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, Card, Dropdown, Menu, Modal } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import EditableMetadata from 'components/EditableMetadata';
@@ -12,10 +12,12 @@ import Page from 'components/Page';
 import ResponsiveTable from 'components/ResponsiveTable';
 import Spinner from 'components/Spinner';
 import { modelVersionNameRenderer, modelVersionNumberRenderer,
-  relativeTimeRenderer } from 'components/Table';
+  relativeTimeRenderer,
+  userRenderer } from 'components/Table';
+import TagList from 'components/TagList';
 import { useStore } from 'contexts/Store';
 import usePolling from 'hooks/usePolling';
-import { archiveModel, getModelDetails, unarchiveModel } from 'services/api';
+import { archiveModel, getModelDetails, patchModelVersion, unarchiveModel } from 'services/api';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 import { isAborted, isNotFound } from 'services/utils';
 import { ModelVersion, ModelVersions } from 'types';
@@ -32,6 +34,7 @@ const ModelDetails: React.FC = () => {
   const { auth: { user } } = useStore();
   const [ model, setModel ] = useState<ModelVersions>();
   const { modelId } = useParams<Params>();
+  const [ isLoading, setIsLoading ] = useState(true);
   const [ pageError, setPageError ] = useState<Error>();
   const [ editingMetadata, setEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
@@ -44,12 +47,19 @@ const ModelDetails: React.FC = () => {
         { modelId: id, sortBy: 'SORT_BY_VERSION' },
       );
       if (!isEqual(modelData, model)) setModel(modelData);
+      setIsLoading(false);
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
+      setIsLoading(false);
     }
   }, [ id, model, pageError ]);
 
   usePolling(fetchModel);
+
+  useEffect(() => {
+    fetchModel();
+    setIsLoading(true);
+  }, [ fetchModel ]);
 
   const deleteVersion = useCallback((version: ModelVersion) => {
     //send delete api request
@@ -58,6 +68,12 @@ const ModelDetails: React.FC = () => {
   const downloadVersion = useCallback((version: ModelVersion) => {
     //open download popover
   }, []);
+
+  const setModelVersionTags = useCallback((modelId, versionId, tags) => {
+    patchModelVersion({ body: { id: versionId, labels: tags }, modelId, versionId });
+    fetchModel();
+    setIsLoading(true);
+  }, [ fetchModel ]);
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {
     Modal.confirm({
@@ -74,6 +90,14 @@ const ModelDetails: React.FC = () => {
   }, [ deleteVersion ]);
 
   const columns = useMemo(() => {
+    const labelsRenderer = (value: string, record: ModelVersion) => (
+      <TagList
+        compact
+        tags={record.labels ?? []}
+        onChange={(tags) => setModelVersionTags(record.model.id, record.id, tags)}
+      />
+    );
+
     const overflowRenderer = (_:string, record: ModelVersion) => {
       const isDeletable = user?.isAdmin;
       return (
@@ -127,13 +151,14 @@ const ModelDetails: React.FC = () => {
       },
       {
         dataIndex: 'lastUpdatedTime',
-        render: relativeTimeRenderer,
+        render: (date: Date, record: ModelVersion) =>
+          relativeTimeRenderer(date ?? record.creationTime),
         sorter: true,
         title: 'Last updated',
-        width: 1,
+        width: 140,
       },
-      { dataIndex: 'username', title: 'User', width: 1 },
-      { dataIndex: 'tags', title: 'Tags' },
+      { dataIndex: 'username', render: userRenderer, title: 'User', width: 1 },
+      { dataIndex: 'labels', render: labelsRenderer, title: 'Tags', width: 120 },
       { render: actionRenderer, title: 'Actions', width: 1 },
       { render: overflowRenderer, title: '', width: 1 },
     ];
