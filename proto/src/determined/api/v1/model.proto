@@ -101,10 +101,10 @@ message PostModelResponse {
 
 // Request for updating a model in the registry.
 message PatchModelRequest {
-  // The id of the model being updated.
-  int32 model_id = 1;
   // The model desired model fields and values.
-  determined.model.v1.PatchModel model = 2;
+  determined.model.v1.PatchModel model = 1;
+  // The id of the model being updated.
+  int32 model_id = 2;
 }
 
 // Response to PatchModelRequest.
@@ -220,10 +220,10 @@ message PostModelVersionResponse {
 message PatchModelVersionRequest {
   // The id of the model being updated.
   int32 model_id = 1;
-  // The id of the model version being updated.
-  int32 model_version_id = 2;
   // The model version being updated.
-  determined.model.v1.PatchModelVersion model_version = 3;
+  determined.model.v1.PatchModelVersion model_version = 2;
+  // The id of the model version being updated.
+  int32 model_version_id = 3;
 }
 
 // Response to PatchModelVersionRequest.

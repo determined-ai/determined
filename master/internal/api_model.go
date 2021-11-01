@@ -172,13 +172,13 @@ func (a *apiServer) PatchModel(
 
 func (a *apiServer) ArchiveModel(
 	ctx context.Context, req *apiv1.ArchiveModelRequest) (*apiv1.ArchiveModelResponse, error) {
-	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
-	if err != nil {
-		return nil, err
-	}
-
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("archive_model", holder, req.ModelId)
+	err := a.m.db.QueryProto("archive_model", holder, req.ModelId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model %d was not found and cannot be archived",
+			req.ModelId)
+	}
 
 	return &apiv1.ArchiveModelResponse{},
 		errors.Wrapf(err, "error archiving model %d", req.ModelId)
@@ -186,13 +186,13 @@ func (a *apiServer) ArchiveModel(
 
 func (a *apiServer) UnarchiveModel(
 	ctx context.Context, req *apiv1.UnarchiveModelRequest) (*apiv1.UnarchiveModelResponse, error) {
-	_, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelId: req.ModelId})
-	if err != nil {
-		return nil, err
-	}
-
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("unarchive_model", holder, req.ModelId)
+	err := a.m.db.QueryProto("unarchive_model", holder, req.ModelId)
+
+	if holder.Id == 0 {
+		return nil, errors.Wrapf(err, "model %d was not found and cannot be un-archived",
+			req.ModelId)
+	}
 
 	return &apiv1.UnarchiveModelResponse{},
 		errors.Wrapf(err, "error unarchiving model %d", req.ModelId)
@@ -207,7 +207,8 @@ func (a *apiServer) DeleteModel(
 	}
 
 	holder := &modelv1.Model{}
-	err = a.m.db.QueryProto("delete_model", holder, req.ModelId, user.User.Id)
+	err = a.m.db.QueryProto("delete_model", holder, req.ModelId, user.User.Id,
+		user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model %d does not exist or not delete-able by this user",
@@ -343,7 +344,7 @@ func (a *apiServer) PatchModelVersion(
 	}
 	if req.ModelVersion.Metadata != nil {
 		newMeta, err2 := protojson.Marshal(req.ModelVersion.Metadata)
-		if err != nil {
+		if err2 != nil {
 			return nil, errors.Wrap(err2, "error marshaling request model version metadata")
 		}
 
@@ -393,7 +394,7 @@ func (a *apiServer) DeleteModelVersion(
 
 	holder := &modelv1.ModelVersion{}
 	err = a.m.db.QueryProto("delete_model_version", holder, req.ModelVersionId,
-		user.User.Id)
+		user.User.Id, user.User.Admin)
 
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model version %d does not exist or not delete-able by this user",

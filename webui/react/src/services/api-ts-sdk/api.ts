@@ -3160,12 +3160,6 @@ export interface V1ModelVersion {
      */
     comment?: string;
     /**
-     * Notes associated with this model version.
-     * @type {string}
-     * @memberof V1ModelVersion
-     */
-    notes?: string;
-    /**
      * User who created this model version.
      * @type {string}
      * @memberof V1ModelVersion
@@ -3177,6 +3171,12 @@ export interface V1ModelVersion {
      * @memberof V1ModelVersion
      */
     labels?: Array<string>;
+    /**
+     * Notes associated with this model version.
+     * @type {string}
+     * @memberof V1ModelVersion
+     */
+    notes?: string;
 }
 
 /**
@@ -3357,17 +3357,17 @@ export interface V1PatchModel {
  */
 export interface V1PatchModelRequest {
     /**
-     * The id of the model being updated.
-     * @type {number}
-     * @memberof V1PatchModelRequest
-     */
-    modelId?: number;
-    /**
      * The model desired model fields and values.
      * @type {V1PatchModel}
      * @memberof V1PatchModelRequest
      */
     model?: V1PatchModel;
+    /**
+     * The id of the model being updated.
+     * @type {number}
+     * @memberof V1PatchModelRequest
+     */
+    modelId?: number;
 }
 
 /**
@@ -3441,17 +3441,17 @@ export interface V1PatchModelVersionRequest {
      */
     modelId?: number;
     /**
-     * The id of the model version being updated.
-     * @type {number}
-     * @memberof V1PatchModelVersionRequest
-     */
-    modelVersionId?: number;
-    /**
      * The model version being updated.
      * @type {V1PatchModelVersion}
      * @memberof V1PatchModelVersionRequest
      */
     modelVersion?: V1PatchModelVersion;
+    /**
+     * The id of the model version being updated.
+     * @type {number}
+     * @memberof V1PatchModelVersionRequest
+     */
+    modelVersionId?: number;
 }
 
 /**
