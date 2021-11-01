@@ -1,19 +1,23 @@
 WITH myuser AS (
-  SELECT * FROM users WHERE id = $2 LIMIT 1
+  SELECT *
+  FROM users
+  WHERE id = $2
+  LIMIT 1
 ),
-WITH m AS (
+m AS (
   SELECT id
-  FROM models, myuser
-  WHERE models.id = $1 AND (
-    models.user_id = $2
-    OR myuser.admin
-  )
+  FROM models
+  WHERE id = $1 AND user_id = $2
 ),
-WITH mv AS (
+mv AS (
   DELETE FROM model_versions
   WHERE model_id IN (SELECT id FROM m)
-  RETURNING id
 )
 DELETE FROM models
-WHERE id IN (SELECT id FROM m)
-RETURNING id;
+USING myuser
+WHERE
+  models.id = $1 AND (
+    models.id IN (SELECT id FROM m)
+    OR myuser.admin
+  )
+RETURNING models.id;

@@ -5,11 +5,13 @@ WITH mv AS (
     creation_time,
     name,
     comment,
-    id,
+    model_versions.id,
     metadata,
     labels,
-    notes
+    notes,
+    username
   FROM model_versions
+  LEFT JOIN users ON users.id = model_versions.user_id
   WHERE model_id = $1
 ),
 m AS (

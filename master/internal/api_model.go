@@ -275,6 +275,11 @@ func (a *apiServer) PostModelVersion(
 		)
 	}
 
+	user, err := a.CurrentUser(ctx, &apiv1.CurrentUserRequest{})
+	if err != nil {
+		return nil, err
+	}
+
 	respModelVersion := &apiv1.PostModelVersionResponse{}
 	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
@@ -293,6 +298,7 @@ func (a *apiServer) PostModelVersion(
 		mdata,
 		reqLabels,
 		req.Notes,
+		user.User.Id,
 	)
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %d", req.ModelId)

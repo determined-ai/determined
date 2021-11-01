@@ -7,6 +7,7 @@ WITH mv AS (
 			metadata,
 			labels,
 			notes,
+			user_id,
 			creation_time,
 			last_updated_time
 		)
@@ -17,10 +18,14 @@ WITH mv AS (
 			$3,
 			string_to_array($4, ','),
 			$5,
+			$6,
 			current_timestamp,
 			current_timestamp
 		)
-	RETURNING id, checkpoint_uuid, version, creation_time, name, comment, model_id, metadata, labels
+	RETURNING id, checkpoint_uuid, version, creation_time, name, comment, model_id, metadata, labels, user_id
+),
+u AS (
+	SELECT username FROM users WHERE id = $6
 ),
 m AS (
   SELECT m.id, m.name, m.description, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.archived, COUNT(mv.version) as num_versions
@@ -61,6 +66,7 @@ SELECT
 		array_to_json(mv.labels) AS labels,
     mv.version, mv.id,
     mv.creation_time,
-    mv.name, mv.comment, mv.metadata
-    FROM c, mv, m
+    mv.name, mv.comment, mv.metadata,
+		u.username
+    FROM c, mv, m, u
     WHERE c.uuid = mv.checkpoint_uuid::text;
