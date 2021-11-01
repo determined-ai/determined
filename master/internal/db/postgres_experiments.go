@@ -780,7 +780,7 @@ FROM (
 SELECT row_to_json(e)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id, e.name,
+		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 		   (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 			as owner,
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
