@@ -656,7 +656,7 @@ SELECT row_to_json(e)
 FROM (
 	SELECT e.id, e.state, e.config, e.start_time, e.end_time,
 		   e.archived, e.git_remote, e.git_commit,
-		   e.git_committer, e.git_commit_date, e.progress,
+		   e.git_committer, e.git_commit_date, e.progress, e.job_id,
 		   -- Get the trials belonging to this experiment, along with additional "num_steps",
 		   -- "latest_validation_metrics", and "num_completed_checkpoints" columns.
 		   (SELECT coalesce(jsonb_agg(t ORDER BY end_time ASC), '[]'::jsonb)
@@ -780,7 +780,7 @@ FROM (
 SELECT row_to_json(e)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-		   e.git_remote, e.id, e.start_time, e.state, e.progress,
+		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 		   (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 			as owner,
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
@@ -997,7 +997,7 @@ func (db *PgDB) ExperimentRaw(id int) ([]byte, error) {
 SELECT row_to_json(e)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-		   e.git_remote, e.id, e.start_time, e.state, e.progress,
+		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 		   (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 			as owner,
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
@@ -1059,7 +1059,7 @@ OFFSET $%d
 SELECT coalesce(jsonb_agg(e ORDER BY e.id DESC), '[]'::jsonb)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-	   e.git_remote, e.id, e.start_time, e.state, e.progress,
+	   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id
 	  (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 		as owner
 	FROM experiments e
