@@ -192,6 +192,13 @@ const ModelDetails: React.FC = () => {
     setIsEditingMetadata(false);
   }, []);
 
+  const saveDescription = useCallback(async (editedDescription: string) => {
+    await patchModel({
+      body: { description: editedDescription, id: parseInt(modelId) },
+      modelId: parseInt(modelId),
+    });
+  }, [ modelId ]);
+
   const switchArchive = useCallback(() => {
     if (model?.model.archived) {
       unarchiveModel({ modelId: parseInt(modelId) });
@@ -224,6 +231,7 @@ const ModelDetails: React.FC = () => {
         model={model.model}
         onAddMetadata={editMetadata}
         onDelete={deleteCurrentModel}
+        onSaveDescription={saveDescription}
         onSwitchArchive={switchArchive} />}
       id="modelDetails">
       <div className={css.base}>{

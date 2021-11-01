@@ -16,10 +16,12 @@ interface Props {
   modelVersion: ModelVersion;
   onAddMetadata: () => void;
   onDeregisterVersion: () => void;
+  onDownload: () => void;
+  onSaveDescription: (editedNotes: string) => Promise<void>;
 }
 
 const ModelVersionHeader: React.FC<Props> = (
-  { modelVersion, onAddMetadata, onDeregisterVersion }: Props,
+  { modelVersion, onAddMetadata, onDeregisterVersion, onDownload, onSaveDescription }: Props,
 ) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -38,7 +40,10 @@ const ModelVersionHeader: React.FC<Props> = (
       label: 'Updated',
     },
     {
-      content: <InlineEditor placeholder="Add description..." value={modelVersion.comment ?? ''} />,
+      content: <InlineEditor
+        placeholder="Add description..."
+        value={modelVersion.comment ?? ''}
+        onSave={onSaveDescription} />,
       label: 'Description',
     },
     {
@@ -48,7 +53,7 @@ const ModelVersionHeader: React.FC<Props> = (
       />,
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ modelVersion ]);
+  }, [ modelVersion, onSaveDescription ]);
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {
     Modal.confirm({
@@ -89,7 +94,7 @@ const ModelVersionHeader: React.FC<Props> = (
             <h1 className={css.versionName}>Version {modelVersion.version}</h1>
           </div>
           <div className={css.buttons}>
-            <Button>Download Model</Button>
+            <Button onClick={onDownload}>Download Model</Button>
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>

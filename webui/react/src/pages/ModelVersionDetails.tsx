@@ -100,10 +100,22 @@ model.load_state_dict(ckpt['models_state_dict'][0])
     });
   }, [ modelId, versionId ]);
 
+  const saveDescription = useCallback(async (editedDescription: string) => {
+    await patchModelVersion({
+      body: { comment: editedDescription, id: parseInt(modelId) },
+      modelId: parseInt(modelId),
+      versionId: parseInt(versionId),
+    });
+  }, [ modelId, versionId ]);
+
   const deleteVersion = useCallback(() => {
     deleteModelVersion({ modelId: modelVersion?.model.id ?? 0, versionId: modelVersion?.id ?? 0 });
     history.push(`/det/models/${modelVersion?.model.id}`);
   }, [ history, modelVersion?.id, modelVersion?.model.id ]);
+
+  const downloadVersion = useCallback(() => {
+    //open download popover
+  }, []);
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
     return (
@@ -182,7 +194,9 @@ model.load_state_dict(ckpt['models_state_dict'][0])
       headerComponent={<ModelVersionHeader
         modelVersion={modelVersion}
         onAddMetadata={editMetadata}
-        onDeregisterVersion={deleteVersion} />}
+        onDeregisterVersion={deleteVersion}
+        onDownload={downloadVersion}
+        onSaveDescription={saveDescription} />}
       id="modelDetails">
       <Tabs
         defaultActiveKey="1"

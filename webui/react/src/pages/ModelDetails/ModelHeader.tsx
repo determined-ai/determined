@@ -15,11 +15,12 @@ interface Props {
   model: ModelItem;
   onAddMetadata: () => void;
   onDelete: () => void;
+  onSaveDescription: (editedDescription: string) => Promise<void>
   onSwitchArchive: () => void;
 }
 
 const ModelHeader: React.FC<Props> = (
-  { model, archived, onAddMetadata, onDelete, onSwitchArchive }: Props,
+  { model, archived, onAddMetadata, onDelete, onSwitchArchive, onSaveDescription }: Props,
 ) => {
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
@@ -33,7 +34,10 @@ const ModelHeader: React.FC<Props> = (
     },
     { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
     {
-      content: <InlineEditor placeholder="Add description..." value={model.description ?? ''} />,
+      content: <InlineEditor
+        placeholder="Add description..."
+        value={model.description ?? ''}
+        onSave={onSaveDescription} />,
       label: 'Description',
     },
     {
@@ -43,7 +47,7 @@ const ModelHeader: React.FC<Props> = (
       />,
       label: 'Tags',
     } ] as InfoRow[];
-  }, [ model ]);
+  }, [ model, onSaveDescription ]);
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
