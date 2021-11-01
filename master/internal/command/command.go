@@ -38,6 +38,7 @@ func createGenericCommandActor(
 	db *db.PgDB,
 	taskID model.TaskID,
 	taskType model.TaskType,
+	jobType model.JobType,
 	spec tasks.GenericCommandSpec,
 ) error {
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
@@ -49,6 +50,7 @@ func createGenericCommandActor(
 
 		taskID:         taskID,
 		taskType:       taskType,
+		jobType:        jobType,
 		serviceAddress: &serviceAddress,
 	}
 
@@ -73,6 +75,7 @@ type command struct {
 	registeredTime time.Time
 	taskID         model.TaskID
 	taskType       model.TaskType
+	jobType        model.JobType
 	allocationID   model.AllocationID
 	allocation     *actor.Ref
 	serviceAddress *string
@@ -284,6 +287,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -298,6 +302,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		Username:     c.Base.Owner.Username,
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
+		JobId:        c.jobID().String(),
 	}
 }
 
@@ -316,6 +321,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		ExitStatus:     c.exitStatus.String(),
 		Addresses:      toProto(state.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -333,6 +339,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Username:       c.Base.Owner.Username,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
+		JobId:          c.jobID().String(),
 	}
 }
 
@@ -354,6 +361,10 @@ func (c *command) refreshAllocationState(ctx *actor.Context) task.AllocationStat
 	}
 
 	return c.lastState
+}
+
+func (c *command) jobID() model.JobID {
+	return model.JobID(c.taskID)
 }
 
 func toProto(as []cproto.Address) []*structpb.Struct {

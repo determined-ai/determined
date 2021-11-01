@@ -656,7 +656,7 @@ SELECT row_to_json(e)
 FROM (
 	SELECT e.id, e.state, e.config, e.start_time, e.end_time,
 		   e.archived, e.git_remote, e.git_commit,
-		   e.git_committer, e.git_commit_date, e.progress,
+		   e.git_committer, e.git_commit_date, e.progress, e.job_id,
 		   -- Get the trials belonging to this experiment, along with additional "num_steps",
 		   -- "latest_validation_metrics", and "num_completed_checkpoints" columns.
 		   (SELECT coalesce(jsonb_agg(t ORDER BY end_time ASC), '[]'::jsonb)
@@ -780,7 +780,7 @@ FROM (
 SELECT row_to_json(e)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-		   e.git_remote, e.id, e.start_time, e.state, e.progress,
+		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 		   (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 			as owner,
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
@@ -997,7 +997,7 @@ func (db *PgDB) ExperimentRaw(id int) ([]byte, error) {
 SELECT row_to_json(e)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-		   e.git_remote, e.id, e.start_time, e.state, e.progress,
+		   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 		   (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 			as owner,
 		   (SELECT coalesce(jsonb_agg(t ORDER BY id ASC), '[]'::jsonb)
@@ -1059,7 +1059,7 @@ OFFSET $%d
 SELECT coalesce(jsonb_agg(e ORDER BY e.id DESC), '[]'::jsonb)
 FROM (
 	SELECT e.archived, e.config, e.end_time, e.git_commit, e.git_commit_date, e.git_committer,
-	   e.git_remote, e.id, e.start_time, e.state, e.progress,
+	   e.git_remote, e.id, e.start_time, e.state, e.progress, e.job_id,
 	  (SELECT to_json(u) FROM (SELECT id, username FROM users WHERE id = e.owner_id) u)
 		as owner
 	FROM experiments e
@@ -1121,18 +1121,27 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) error {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
-	err := db.namedGet(&experiment.ID, `
-INSERT INTO experiments
-(state, config, model_definition, start_time, end_time, archived,
- git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes)
-VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
-		:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-		:notes)
-RETURNING id`, experiment)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting experiment %v", *experiment)
-	}
-	return nil
+	return db.withTransaction("add_experiment", func(tx *sqlx.Tx) error {
+		job := model.Job{
+			JobID:   experiment.JobID,
+			JobType: model.JobTypeExperiment,
+		}
+		if err := addJob(tx, &job); err != nil {
+			return errors.Wrapf(err, "error inserting job %v", job)
+		}
+		err := namedGet(tx, &experiment.ID, `
+	INSERT INTO experiments
+	(state, config, model_definition, start_time, end_time, archived,
+	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id)
+	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived,
+					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
+					:notes, :job_id)
+	RETURNING id`, experiment)
+		if err != nil {
+			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
+		}
+		return nil
+	})
 }
 
 // ExperimentByID looks up an experiment by ID in a database, returning an error if none exists.
@@ -1141,7 +1150,7 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 
 	if err := db.query(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -1177,7 +1186,7 @@ func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
 
 	if err := db.query(`
 SELECT id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
@@ -1203,7 +1212,7 @@ func (db *PgDB) ExperimentByTrialID(id int) (*model.Experiment, error) {
 	experiment := model.Experiment{}
 	return &experiment, db.sql.QueryRowx(`
 SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time,
-e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date
+e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.job_id,
 FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 		id).StructScan(&experiment)
 }
@@ -1212,7 +1221,7 @@ FROM experiments e, trials t  WHERE t.id = $1 AND e.id = t.experiment_id`,
 func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id
+       git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
 	if err == sql.ErrNoRows {

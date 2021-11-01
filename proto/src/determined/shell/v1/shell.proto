@@ -20,6 +20,7 @@ message Shell {
         "start_time",
         "state",
         "username",
+        "job_id",
         "resource_pool"
       ]
     }
@@ -48,4 +49,6 @@ message Shell {
   repeated google.protobuf.Struct addresses = 13;
   // The agent user group;
   google.protobuf.Struct agent_user_group = 14;
+  // The associated job id.
+  string job_id = 15;
 }

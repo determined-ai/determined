@@ -1116,6 +1116,12 @@ export interface V1Command {
      * @memberof V1Command
      */
     exitStatus?: string;
+    /**
+     * The associated job id.
+     * @type {string}
+     * @memberof V1Command
+     */
+    jobId: string;
 }
 
 /**
@@ -1482,6 +1488,12 @@ export interface V1Experiment {
      * @memberof V1Experiment
      */
     notes?: string;
+    /**
+     * Associated job's id.
+     * @type {string}
+     * @memberof V1Experiment
+     */
+    jobId: string;
 }
 
 /**
@@ -3228,17 +3240,23 @@ export interface V1Notebook {
      */
     serviceAddress?: string;
     /**
-     * 
+     * The name of the resource pool the Notebook was created in.
      * @type {string}
      * @memberof V1Notebook
      */
     resourcePool: string;
     /**
-     * 
+     * The exit status.
      * @type {string}
      * @memberof V1Notebook
      */
     exitStatus?: string;
+    /**
+     * The associated job id.
+     * @type {string}
+     * @memberof V1Notebook
+     */
+    jobId: string;
 }
 
 /**
@@ -4728,6 +4746,12 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     agentUserGroup?: any;
+    /**
+     * The associated job id.
+     * @type {string}
+     * @memberof V1Shell
+     */
+    jobId: string;
 }
 
 /**
@@ -4860,6 +4884,12 @@ export interface V1Tensorboard {
      * @memberof V1Tensorboard
      */
     exitStatus?: string;
+    /**
+     * The associated job id.
+     * @type {string}
+     * @memberof V1Tensorboard
+     */
+    jobId: string;
 }
 
 /**

@@ -1,5 +1,6 @@
 SELECT
     id,
+    job_id,
     state,
     config,
     owner_id,

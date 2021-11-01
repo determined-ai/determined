@@ -36,6 +36,7 @@ import (
 type trial struct {
 	id           int
 	taskID       model.TaskID
+	jobID        model.JobID
 	idSet        bool
 	experimentID int
 
@@ -68,6 +69,7 @@ type trial struct {
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
 func newTrial(
 	taskID model.TaskID,
+	jobID model.JobID,
 	experimentID int,
 	initialState model.State,
 	searcher trialSearcherState,
@@ -78,8 +80,8 @@ func newTrial(
 	taskSpec *tasks.TaskSpec,
 ) *trial {
 	return &trial{
-		taskID: taskID,
-
+		taskID:       taskID,
+		jobID:        jobID,
 		experimentID: experimentID,
 		state:        initialState,
 		searcher:     searcher,

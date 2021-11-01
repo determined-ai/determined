@@ -57,6 +57,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *model.Experiment {
 	internal.DefaultConfig().TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 	e := &model.Experiment{
+		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
 		Config:               config,
 		StartTime:            time.Now(),
