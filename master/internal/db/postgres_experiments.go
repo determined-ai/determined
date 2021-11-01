@@ -1150,7 +1150,7 @@ func (db *PgDB) ExperimentByID(id int) (*model.Experiment, error) {
 
 	if err := db.query(`
 SELECT id, state, config, model_definition, start_time, end_time, archived,
-	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_Id
+	   git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id
 FROM experiments
 WHERE id = $1`, &experiment, id); err != nil {
 		return nil, err
