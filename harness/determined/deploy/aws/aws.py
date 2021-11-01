@@ -113,7 +113,7 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     delete_stack(stack_name, boto3_session)
 
 
-def get_tags(stack_name: str, boto3_session: boto3.session.Session) -> bool:
+def get_tags(stack_name: str, boto3_session: boto3.session.Session) -> Dict[Any, Any]:
     cfn = boto3_session.client("cloudformation")
 
     print(f"Retrieving tags for CloudFormation Stack ({stack_name})")
