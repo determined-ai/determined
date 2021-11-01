@@ -356,7 +356,7 @@ def deploy_stack(
         if not no_prompt:
             tags = get_tags(stack_name, boto3_session)
             prompt_needed = False
-            if not constants.deployment_types.TYPE_TAG_KEY in tags:
+            if constants.deployment_types.TYPE_TAG_KEY not in tags:
                 print("Previous value of --deployment-type is not known.")
                 prompt_needed = True
             elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:

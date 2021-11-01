@@ -491,7 +491,7 @@ args_description = Cmd(
                 Arg(
                     "--no-prompt",
                     action="store_true",
-                    help="no prompt when deleting existing resources",
+                    help="no prompt when deployment would delete existing database",
                 ),
             ],
         ),
