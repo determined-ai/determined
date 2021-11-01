@@ -6,14 +6,13 @@ subprocess otherwise.
 """
 
 import copy
+import json
 import logging
 import socket
 import subprocess
 import sys
 import time
 from typing import Dict
-
-import simplejson
 
 import determined as det
 import determined.common
@@ -52,7 +51,7 @@ def main() -> int:
 
     logging.info(
         f"New trial runner in (container {info.container_id}) on agent {info.agent_id}: "
-        + simplejson.dumps(mask_config_dict(experiment_config))
+        + json.dumps(mask_config_dict(experiment_config))
     )
 
     # TODO: this should go in the chief worker, not in the launch layer.  For now, the

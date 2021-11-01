@@ -1,9 +1,9 @@
+import json
 import tempfile
 from typing import Any, Dict, Optional, Sequence
 from urllib.parse import urlencode
 
 import pytest
-import simplejson
 import yaml
 
 from determined.common import api
@@ -102,7 +102,7 @@ def request_profiling_metric_labels(trial_id: int, timing_enabled: bool, gpu_ena
         stream=True,
     ) as r:
         for line in r.iter_lines():
-            labels = simplejson.loads(line)["result"]["labels"]
+            labels = json.loads(line)["result"]["labels"]
             validate_labels(labels)
             # Just check 1 iter.
             return
@@ -131,7 +131,7 @@ def request_profiling_system_metrics(trial_id: int, metric_name: str) -> None:
     ) as r:
         have_batch = False
         for line in r.iter_lines():
-            batch = simplejson.loads(line)["result"]["batch"]
+            batch = json.loads(line)["result"]["batch"]
             validate_gpu_metric_batch(batch)
             have_batch = True
         if not have_batch:
@@ -183,7 +183,7 @@ def request_profiling_pytorch_timing_metrics(
         batch_idx = 0
         have_batch = False
         for line in r.iter_lines():
-            batch = simplejson.loads(line)["result"]["batch"]
+            batch = json.loads(line)["result"]["batch"]
             batch_idx = validate_timing_batch(batch, batch_idx)
             have_batch = True
         if not have_batch:

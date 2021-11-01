@@ -195,6 +195,7 @@ class NANMetricMaker(MetricMaker):
         self.training_structure = self.env.hparams["training_structure"]
         self.training_structure["inf"] = math.inf
         self.training_structure["nan"] = math.nan
+        self.training_structure["nanarray"] = np.array([math.nan, math.nan])
         self.validation_structure = self.env.hparams["validation_structure"]
         self.validation_structure["neg_inf"] = -1 * math.inf
         self.gain_per_batch = 0

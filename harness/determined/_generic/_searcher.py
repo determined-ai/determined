@@ -76,17 +76,15 @@ class SearcherOp:
         if math.isnan(searcher_metric):
             raise RuntimeError("searcher_metric may not be NaN")
         self._completed = True
-        body = det.util.clearinf(
-            {
-                "op": {
-                    "length": {
-                        "length": self._length,
-                        "unit": self._unit.value,
-                    }
-                },
-                "searcherMetric": searcher_metric,
-            }
-        )
+        body = {
+            "op": {
+                "length": {
+                    "length": self._length,
+                    "unit": self._unit.value,
+                }
+            },
+            "searcherMetric": searcher_metric,
+        }
         logger.debug(f"op.complete({searcher_metric})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/searcher/completed_operation",
