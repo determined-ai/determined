@@ -3,6 +3,7 @@ package job
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,14 +13,22 @@ import (
 
 var JobsActorAddr = actor.Addr("jobs")
 
+type RMJobInfo struct {
+	JobsAhead      int
+	State          sproto.SchedulingState
+	RequestedSlots int
+	AllocatedSlots int
+}
+
 type Job struct {
 	JobType        model.JobType
 	Id             model.JobID
 	SubmissionTime time.Time
-	User           *model.User // username?
+	User           model.User // username?
 	IsPreemptible  bool
 	SubEntityRef   *actor.Ref // TODO rename
 	RPRef          *actor.Ref
+	RMInfo         RMJobInfo
 }
 
 // TODO register this job with the jobs group

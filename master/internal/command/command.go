@@ -170,6 +170,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}, c.db, sproto.GetRM(ctx.Self().System()))
 		c.allocation, _ = ctx.ActorOf(c.allocationID, allocation)
 
+	case job.RMJobInfo:
+		c.job.RMInfo = msg
+
 	case actor.PostStop:
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
 			ctx.Log().WithError(err).Error("marking task complete")

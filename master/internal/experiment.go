@@ -261,7 +261,6 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			msg.Handler = ctx.Self()
 			ctx.Tell(e.rm, msg)
 		}
-
 	case sproto.SetGroupOrder:
 		job := model.Job{
 			JobID: e.JobID,
@@ -274,6 +273,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		if !e.isRP(msg.Handler) {
 			ctx.Tell(e.rm, msg)
 		}
+
+	case job.RMJobInfo:
+		e.job.RMInfo = msg
 
 	// Experiment shutdown logic.
 	case actor.PostStop:

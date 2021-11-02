@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -183,4 +184,18 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 		}
 	}
 	return &stats
+}
+
+// TODO to be implemented inside the scheduler for better perf and control
+// TODO update to avoid goig through proto
+func updateJobs(system *actor.System, rp *ResourcePool) {
+	jobs := getV1Jobs(rp)
+	for _, j := range jobs {
+		system.TellAt(job.JobsActorAddr.Child(j.JobId), job.RMJobInfo{
+			JobsAhead:      int(j.Summary.JobsAhead),
+			RequestedSlots: int(j.RequestedSlots),
+			AllocatedSlots: int(j.AllocatedSlots),
+			// State:          j.Summary.State,
+		})
+	}
 }

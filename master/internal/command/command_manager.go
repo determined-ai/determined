@@ -35,6 +35,8 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 		return createGenericCommandActor(
 			ctx, c.db, taskID, model.TaskTypeCommand, model.JobTypeCommand, msg,
 		)
+	// case job.RMJobInfo:
+	// 	c.job.RMInfo = msg
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
