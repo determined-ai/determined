@@ -27,8 +27,10 @@ const ModelVersionHeader: React.FC<Props> = (
     return [ {
       content:
       (<Space>
-        {userRenderer(modelVersion.username, modelVersion, 0)}
-        {modelVersion.username + ' on ' +
+        {modelVersion.username ?
+          userRenderer(modelVersion.username, modelVersion, 0) :
+          userRenderer(modelVersion.model.username, modelVersion.model, 0)}
+        {modelVersion.username ? modelVersion.username : modelVersion.model.username + ' on ' +
       formatDatetime(modelVersion.creationTime, 'MMM D, YYYY', false)}
       </Space>),
       label: 'Created by',

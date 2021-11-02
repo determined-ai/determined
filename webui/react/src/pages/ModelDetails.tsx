@@ -160,7 +160,15 @@ const ModelDetails: React.FC = () => {
         title: 'Last updated',
         width: 140,
       },
-      { dataIndex: 'username', render: userRenderer, title: 'User', width: 1 },
+      {
+        dataIndex: 'username',
+        render: (username: string, record: ModelVersion, index) =>
+          username ?
+            userRenderer(username, record, index) :
+            userRenderer(record.model.username, record.model, index),
+        title: 'User',
+        width: 1,
+      },
       { dataIndex: 'labels', render: labelsRenderer, title: 'Tags', width: 120 },
       { render: actionRenderer, title: 'Actions', width: 1 },
       { render: overflowRenderer, title: '', width: 1 },
