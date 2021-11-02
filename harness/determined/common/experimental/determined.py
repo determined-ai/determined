@@ -202,4 +202,5 @@ class Determined:
         """
         r = self._session.get("/api/v1/model/labels")
 
-        return r.json().get("labels")
+        labels = r.json().get("labels")
+        return [str(label) for label in labels]
