@@ -5,8 +5,10 @@ import React, { useCallback, useMemo } from 'react';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import { paths } from 'routes/utils';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/date';
 
@@ -75,13 +77,21 @@ const ModelVersionHeader: React.FC<Props> = (
     <header className={css.base}>
       <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
-          <Breadcrumb.Item href={`det/models/${modelVersion.model.id}`}>
-            <LeftOutlined style={{ marginRight: 10 }} />
+          <Breadcrumb.Item>
+            <Link path={paths.modelDetails(modelVersion.model.id)}>
+              <LeftOutlined style={{ marginRight: 10 }} />
+            </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item href="det/models">Model Registry</Breadcrumb.Item>
+          <Breadcrumb.Item>
+            <Link path={paths.modelList()}>
+              Model Registry
+            </Link>
+          </Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item href={`det/models/${modelVersion.model.id}`}>
-            {modelVersion.model.name}
+          <Breadcrumb.Item>
+            <Link path={paths.modelDetails(modelVersion.model.id)}>
+              {modelVersion.model.name}
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>Version {modelVersion.version}</Breadcrumb.Item>

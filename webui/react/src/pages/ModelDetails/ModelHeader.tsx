@@ -5,8 +5,10 @@ import React, { useCallback, useMemo } from 'react';
 import Icon from 'components/Icon';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
+import Link from 'components/Link';
 import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/date';
 
@@ -76,10 +78,16 @@ const ModelHeader: React.FC<Props> = (
         paddingBottom: 8,
       }}>
         <Breadcrumb separator="">
-          <Breadcrumb.Item href="det/models">
-            <LeftOutlined style={{ marginRight: 10 }} />
+          <Breadcrumb.Item>
+            <Link path={paths.modelList()}>
+              <LeftOutlined style={{ marginRight: 10 }} />
+            </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item href="det/models">Model Registry</Breadcrumb.Item>
+          <Breadcrumb.Item>
+            <Link path={paths.modelList()}>
+              Model Registry
+            </Link>
+          </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>

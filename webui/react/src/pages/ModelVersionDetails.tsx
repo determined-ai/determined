@@ -1,6 +1,6 @@
 import { CopyOutlined, EditOutlined } from '@ant-design/icons';
 import { Breadcrumb, Button, Card, Space, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import EditableMetadata from 'components/EditableMetadata';
@@ -26,16 +26,28 @@ const { TabPane } = Tabs;
 
 interface Params {
   modelId: string;
+  tab?: TabType;
   versionId: string;
 }
 
+enum TabType {
+  CheckpointDetails = 'checkpoint-details',
+  Overview = 'overview',
+}
+
+const TAB_KEYS = Object.values(TabType);
+const DEFAULT_TAB_KEY = TabType.Overview;
+
 const ModelVersionDetails: React.FC = () => {
   const [ modelVersion, setModelVersion ] = useState<ModelVersion>();
-  const { modelId, versionId } = useParams<Params>();
+  const { modelId, versionId, tab } = useParams<Params>();
   const [ pageError, setPageError ] = useState<Error>();
   const [ isEditingMetadata, setIsEditingMetadata ] = useState(false);
   const [ editedMetadata, setEditedMetadata ] = useState<Record<string, string>>({});
   const history = useHistory();
+  const [ tabKey, setTabKey ] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+
+  const basePath = paths.modelVersionDetails(modelId, versionId);
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -49,6 +61,18 @@ const ModelVersionDetails: React.FC = () => {
   }, [ modelId, modelVersion, pageError, versionId ]);
 
   usePolling(fetchModelVersion);
+
+  const handleTabChange = useCallback(key => {
+    setTabKey(key);
+    history.replace(`${basePath}/${key}`);
+  }, [ basePath, history ]);
+
+  // Sets the default sub route.
+  useEffect(() => {
+    if (!tab || (tab && !TAB_KEYS.includes(tab))) {
+      history.replace(`${basePath}/${tabKey}`);
+    }
+  }, [ basePath, history, tab, tabKey ]);
 
   const referenceText = useMemo(() => {
     return (
@@ -199,9 +223,10 @@ model.load_state_dict(ckpt['models_state_dict'][0])
         onSaveDescription={saveDescription} />}
       id="modelDetails">
       <Tabs
-        defaultActiveKey="1"
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}>
-        <TabPane key="1" tab="Overview">
+        defaultActiveKey="overview"
+        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 36 }}
+        onChange={handleTabChange}>
+        <TabPane key="overview" tab="Overview">
           <div className={css.base}>
             {(metadata.length > 0 || isEditingMetadata) &&
           <Card
@@ -237,7 +262,7 @@ model.load_state_dict(ckpt['models_state_dict'][0])
             </Card>
           </div>
         </TabPane>
-        <TabPane key="2" tab="Checkpoint Details">
+        <TabPane key="checkpoint-details" tab="Checkpoint Details">
           <div className={css.base}>
             <Card title="Source">
               <InfoBox rows={checkpointInfo} seperator />
