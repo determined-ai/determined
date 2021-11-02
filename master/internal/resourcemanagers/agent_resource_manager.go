@@ -135,6 +135,7 @@ func (a *agentResourceManager) createResourcePool(
 		cert,
 		MakeScheduler(config.Scheduler),
 		MakeFitFunction(config.Scheduler.FittingPolicy),
+		ctx.Self().System(), // CHECK
 	)
 	ref, ok := ctx.ActorOf(config.PoolName, rp)
 	if !ok {

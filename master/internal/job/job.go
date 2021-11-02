@@ -62,7 +62,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
-	case apiv1.GetJobsRequest:
+	case *apiv1.GetJobsRequest:
 		jobs := make([]*jobv1.Job, 0)
 		for _, job := range ctx.AskAll(msg, ctx.Children()...).GetAll() {
 			typed, ok := job.(*jobv1.Job)

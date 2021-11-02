@@ -1,6 +1,8 @@
 package resourcemanagers
 
 import (
+	"fmt"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -190,6 +192,7 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 // TODO update to avoid goig through proto
 func updateJobs(system *actor.System, rp *ResourcePool) {
 	jobs := getV1Jobs(rp)
+	fmt.Println("updating jobs, got jobs")
 	for _, j := range jobs {
 		system.TellAt(job.JobsActorAddr.Child(j.JobId), job.RMJobInfo{
 			JobsAhead:      int(j.Summary.JobsAhead),
