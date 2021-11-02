@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/job"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
@@ -82,6 +83,7 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
+		job                   job.Job
 	}
 )
 

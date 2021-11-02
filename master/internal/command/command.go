@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -55,6 +56,7 @@ func createGenericCommandActor(
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
+	job.RegisterJob(ctx.Self().System(), cmd.jobID(), cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
 		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
@@ -81,6 +83,7 @@ type command struct {
 	serviceAddress *string
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
+	job            job.Job
 }
 
 // Receive implements the actor.Actor interface.

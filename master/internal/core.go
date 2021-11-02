@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/determined-ai/determined/master/internal/elastic"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/masterv1"
 
@@ -711,6 +712,7 @@ func (m *Master) Run(ctx context.Context) error {
 	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
+	m.system.ActorOf(job.JobsActorAddr, &actors.Group{})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
