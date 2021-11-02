@@ -78,13 +78,15 @@ def list_models(args: Namespace) -> None:
 
         render.tabulate_or_csv(headers, values, False)
 
+
 def model_by_name(args: Namespace) -> Model:
     models = Determined(args.master, None).get_models(name=args.name)
     if len(models) == 0:
-        raise Error("No model was found with the given name.")
+        raise Exception("No model was found with the given name.")
     if len(models) > 1:
-        raise Error("Multiple models were found with the given name.")
+        raise Exception("Multiple models were found with the given name.")
     return models[0]
+
 
 @authentication.required
 def list_versions(args: Namespace) -> None:
