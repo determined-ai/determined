@@ -1,5 +1,5 @@
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from determined.common import check, context, util, yaml
 from determined.common.api import authentication, certs
@@ -203,4 +203,4 @@ class Determined:
         r = self._session.get("/api/v1/model/labels")
 
         labels = r.json().get("labels")
-        return [str(label) for label in labels]
+        return cast(List[str], labels)
