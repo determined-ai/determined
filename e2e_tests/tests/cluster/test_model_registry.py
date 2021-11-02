@@ -110,6 +110,11 @@ def test_model_registry() -> None:
     models = d.get_models(sort_by=ModelSortBy.NAME)
     assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
 
+    # Test model labels combined
+    tform.set_labels(["world", "test", "zebra"])
+    labels = d.get_model_labels()
+    assert labels == ["world", "hello", "test", "zebra"]
+
     # Test deletion of model
     tform.delete()
     models = d.get_models(sort_by=ModelSortBy.NAME)

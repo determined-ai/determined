@@ -982,6 +982,15 @@ service Determined {
       tags: "Models"
     };
   }
+  // Get a list of unique model labels (sorted by popularity).
+  rpc GetModelLabels(GetModelLabelsRequest) returns (GetModelLabelsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/model/labels"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Models"
+    };
+  }
   // Get the requested model version.
   rpc GetModelVersion(GetModelVersionRequest)
       returns (GetModelVersionResponse) {

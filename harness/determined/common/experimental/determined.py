@@ -1,5 +1,5 @@
 import pathlib
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from determined.common import check, context, util, yaml
 from determined.common.api import authentication, certs
@@ -195,3 +195,12 @@ class Determined:
 
         models = r.json().get("models")
         return [model.Model.from_json(m, self._session) for m in models]
+
+    def get_model_labels(self) -> List[str]:
+        """
+        Get a list of labels used on any models, sorted from most-popular to least-popular.
+        """
+        r = self._session.get("/api/v1/model/labels")
+
+        labels = r.json().get("labels")
+        return cast(List[str], labels)

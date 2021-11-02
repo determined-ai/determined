@@ -2000,6 +2000,20 @@ export interface V1GetModelDefResponse {
 }
 
 /**
+ * Response to GetModelLabelsRequest.
+ * @export
+ * @interface V1GetModelLabelsResponse
+ */
+export interface V1GetModelLabelsResponse {
+    /**
+     * List of labels used across all models.
+     * @type {Array<string>}
+     * @memberof V1GetModelLabelsResponse
+     */
+    labels?: Array<string>;
+}
+
+/**
  * Response to GetModelRequest.
  * @export
  * @interface V1GetModelResponse
@@ -11942,6 +11956,37 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModelLabels(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/model/labels`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -12425,6 +12470,24 @@ export const ModelsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelLabels(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -12644,6 +12707,15 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
         },
         /**
          * 
+         * @summary Get a list of unique model labels (sorted by popularity).
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        determinedGetModelLabels(options?: any) {
+            return ModelsApiFp(configuration).determinedGetModelLabels(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested model version.
          * @param {number} modelId The id of the model.
          * @param {number} modelVersion The version number.
@@ -12796,6 +12868,17 @@ export class ModelsApi extends BaseAPI {
      */
     public determinedGetModel(modelId: number, options?: any) {
         return ModelsApiFp(this.configuration).determinedGetModel(modelId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a list of unique model labels (sorted by popularity).
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ModelsApi
+     */
+    public determinedGetModelLabels(options?: any) {
+        return ModelsApiFp(this.configuration).determinedGetModelLabels(options)(this.fetch, this.basePath);
     }
 
     /**
