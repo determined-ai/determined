@@ -174,6 +174,10 @@ export const deleteModelVersion = generateDetApi<
   GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
 >(Config.deleteModelVersion);
 
+export const getModelLabels = generateDetApi<
+  EmptyParams, Api.V1GetModelLabelsResponse, string[]
+>(Config.getModelLabels);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

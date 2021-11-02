@@ -18,11 +18,12 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { archiveModel, deleteModel, getModels, patchModel, unarchiveModel } from 'services/api';
+import { archiveModel, deleteModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
 import { isBoolean, isEqual } from 'utils/data';
+import { alphanumericSorter } from 'utils/sort';
 import { capitalize } from 'utils/string';
 
 import css from './ModelRegistry.module.scss';
@@ -31,6 +32,7 @@ import settingsConfig, { Settings } from './ModelRegistry.settings';
 const ModelRegistry: React.FC = () => {
   const { users, auth: { user } } = useStore();
   const [ models, setModels ] = useState<ModelItem[]>([]);
+  const [ tags, setTags ] = useState<string[]>([]);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ canceler ] = useState(new AbortController());
   const [ total, setTotal ] = useState(0);
@@ -67,10 +69,19 @@ const ModelRegistry: React.FC = () => {
     }
   }, [ settings, canceler.signal ]);
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const tags = await getModelLabels({ signal: canceler.signal });
+      tags.sort((a, b) => alphanumericSorter(a, b));
+      setTags(tags);
+    } catch (e) {}
+  }, [ canceler.signal ]);
+
   const fetchAll = useCallback(() => {
     fetchModels();
+    fetchTags();
     fetchUsers();
-  }, [ fetchModels, fetchUsers ]);
+  }, [ fetchModels, fetchTags, fetchUsers ]);
 
   usePolling(fetchAll);
 
@@ -297,6 +308,7 @@ const ModelRegistry: React.FC = () => {
       {
         dataIndex: 'labels',
         filterDropdown: labelFilterDropdown,
+        filters: tags.map(tag => ({ text: tag, value: tag })),
         onHeaderCell: () => settings.tags ? { className: tableCss.headerFilterOn } : {},
         render: labelsRenderer,
         title: 'Tags',

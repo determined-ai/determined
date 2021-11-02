@@ -501,6 +501,14 @@ GetModelVersionParams, Api.V1DeleteModelVersionResponse, void
   ),
 };
 
+export const getModelLabels: DetApi<
+  EmptyParams, Api.V1GetModelLabelsResponse, string[]
+> = {
+  name: 'getModelLabels',
+  postProcess: (response) => response.labels || [],
+  request: (options) => detApi.Models.determinedGetModelLabels(options),
+};
+
 /* Tasks */
 
 export const getCommands: Service.DetApi<
