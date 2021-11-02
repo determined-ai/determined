@@ -174,7 +174,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case job.RMJobInfo:
 		c.job.RMInfo = msg
 
-	case apiv1.GetJobsRequest:
+	case *apiv1.GetJobsRequest:
 		if msg.ResourcePool != c.Config.Resources.ResourcePool {
 			ctx.Respond(nil)
 			return nil

@@ -275,7 +275,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Tell(e.rm, msg)
 		}
 
-	case apiv1.GetJobsRequest:
+	case *apiv1.GetJobsRequest:
+		fmt.Printf("GetJobsReques eid %v t\n", e.ID)
 		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
 			ctx.Respond(nil)
 			return nil
@@ -393,6 +394,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				ctx.Respond(&apiv1.KillExperimentResponse{})
 			}
 		}
+
+	default:
+		return status.Errorf(codes.InvalidArgument, "unknown message type %T", msg)
 	}
 
 	return nil

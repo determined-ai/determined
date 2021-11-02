@@ -2,6 +2,7 @@ package job
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -49,7 +50,14 @@ type Job struct {
 
 // TODO register this job with the jobs group
 func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) (*actor.Ref, bool) {
-	return system.ActorOf(JobsActorAddr.Child(jobId.String()), aActor)
+
+	a, created := system.ActorOf(JobsActorAddr.Child(jobId.String()), aActor)
+	fmt.Printf("RegisterJob %v %s %v \n", jobId, a.Address(), created)
+	if !created {
+		panic("job already exists")
+	}
+
+	return a, created
 	// system.TellAt(JobsActorAddr, actors.NewChild{
 	// 	ID:    string(jobId),
 	// 	Actor: aActor,
@@ -63,6 +71,8 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetJobsRequest:
+		// fmt.Printf("GetJobsRequest %v \n", *msg)
+		// fmt.Printf("children count %d \n", len(ctx.Children()))
 		jobs := make([]*jobv1.Job, 0)
 		for _, job := range ctx.AskAll(msg, ctx.Children()...).GetAll() {
 			typed, ok := job.(*jobv1.Job)
