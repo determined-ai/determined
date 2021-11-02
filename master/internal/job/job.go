@@ -1,12 +1,14 @@
 package job
 
 import (
+	"errors"
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // TODO move sproto/job.go here
@@ -31,12 +33,67 @@ type Job struct {
 	RMInfo         RMJobInfo
 }
 
+// // GetJobOrder requests a list of *jobv1.Job.
+// // Expected response: []*jobv1.Job.
+// type GetJobOrder struct{}
+
+// // GetJobSummary requests a JobSummary.
+// // Expected response: jobv1.JobSummary.
+// type GetJobSummary struct { // CHECK should these use the same type as response instead of a new msg
+// 	JobID model.JobID
+// }
+
+// // GetJobQStats requests stats for a queue.
+// // Expected response: jobv1.QueueStats.
+// type GetJobQStats struct{}
+
 // TODO register this job with the jobs group
-func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) {
-	system.TellAt(JobsActorAddr, actors.NewChild{
-		ID:    string(jobId),
-		Actor: aActor,
-	})
+func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) (*actor.Ref, bool) {
+	return system.ActorOf(JobsActorAddr.Child(jobId.String()), aActor)
+	// system.TellAt(JobsActorAddr, actors.NewChild{
+	// 	ID:    string(jobId),
+	// 	Actor: aActor,
+	// })
+}
+
+type Jobs struct{}
+
+func (j *Jobs) Receive(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
+
+	case apiv1.GetJobsRequest:
+		jobs := make([]*jobv1.Job, 0)
+		for _, job := range ctx.AskAll(msg, ctx.Children()...).GetAll() {
+			typed, ok := job.(*jobv1.Job)
+			if !ok {
+				return errors.New("unexpected response type")
+			}
+			if typed != nil {
+				jobs = append(jobs, typed)
+			}
+		}
+		// TODO do pagination here as well?
+		ctx.Respond(jobs)
+
+	// case GetJobOrder:
+	// 	ctx.Respond(getV1Jobs(rp))
+	// case GetJobSummary:
+	// 	// for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
+	// 	// 	if typed := tensorboard.(*tensorboardv1.Tensorboard); len(users) == 0 || users[typed.Username] {
+	// 	// 		resp.Tensorboards = append(resp.Tensorboards, typed)
+	// 	// 	}
+	// 	// }
+	// 	// ctx.Self().System().AskAll()
+	// 	// ctx.ActorOf(job.JobsActorAddr)
+	// 	ctx.Respond(resp)
+	// case GetJobQStats:
+	// 	ctx.Respond(*jobStats(rp))
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
 }
 
 // func NewJob(jobType model.JobType, id model.JobID, user *model.User, isPreemptible bool, subEntityRef *actor.Ref, rpRef *actor.Ref) *Job {

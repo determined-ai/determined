@@ -30,9 +30,10 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	ar := p.OrderedAllocations(rp)
-	// TODO remove me. for dev only.
-	logAllocRequests(ar, "ordered allocations")
+	if rp.provisioner == nil {
+		panic("nil ptr")
+	}
+	updateJobs(rp.provisioner.System(), rp) // FIXME this is a hack.
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 

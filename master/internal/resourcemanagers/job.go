@@ -17,10 +17,6 @@ import (
 // CHECK do we define the following messages in sproto package?
 // QUESTION should we use proto defined messages more often internally or keep them at api level
 
-// GetJobOrder requests a list of *jobv1.Job.
-// Expected response: []*jobv1.Job.
-type GetJobOrder struct{}
-
 // SetJobOrder conveys a job queue change for a specific jobID to the resource pool.
 type SetJobOrder struct {
 	QPosition float64
@@ -28,6 +24,10 @@ type SetJobOrder struct {
 	Priority  *int
 	JobID     model.JobID
 }
+
+// GetJobOrder requests a list of *jobv1.Job.
+// Expected response: []*jobv1.Job.
+type GetJobOrder struct{}
 
 // GetJobSummary requests a JobSummary.
 // Expected response: jobv1.JobSummary.

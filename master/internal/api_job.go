@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -21,27 +22,36 @@ import (
 func (a *apiServer) GetJobs(
 	_ context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	resp = &apiv1.GetJobsResponse{
-		Jobs: make([]*jobv1.Job, 0),
-	}
+	jobs := make([]*jobv1.Job, 0)
+	resp = &apiv1.GetJobsResponse{}
 
 	if req.ResourcePool == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing resource_pool parameter")
 	}
 
-	switch {
-	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(
-			sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.GetJobOrder{}, &resp.Jobs,
-		)
-	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &resp.Jobs)
-	default:
-		err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
-	}
-	if err != nil {
+	actorResp := a.m.system.AskAt(job.JobsActorAddr, req)
+	if err := actorResp.Error(); err != nil {
 		return nil, err
 	}
+	jobs, ok := actorResp.Get().([]*jobv1.Job)
+	if !ok {
+		return nil, status.Error(codes.Internal, "unexpected response from actor")
+	}
+	resp.Jobs = jobs
+
+	// switch {
+	// case sproto.UseAgentRM(a.m.system):
+	// 	err = a.actorRequest(
+	// 		sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.GetJobOrder{}, &resp.Jobs,
+	// 	)
+	// case sproto.UseK8sRM(a.m.system):
+	// 	err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &resp.Jobs)
+	// default:
+	// 	err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
 		// Reverese the list.

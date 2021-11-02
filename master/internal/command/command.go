@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -172,6 +173,15 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case job.RMJobInfo:
 		c.job.RMInfo = msg
+
+	case apiv1.GetJobsRequest:
+		if msg.ResourcePool != c.Config.Resources.ResourcePool {
+			ctx.Respond(nil)
+			return nil
+		}
+		job := c.toV1Job()
+		ctx.Respond(job)
+		return nil
 
 	case actor.PostStop:
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
@@ -391,4 +401,22 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 		res = append(res, protoutils.ToStruct(a))
 	}
 	return res
+}
+
+// toV1Job is a method on command to translate command to jobv1.Job
+func (c *command) toV1Job() *jobv1.Job {
+	return &jobv1.Job{
+		JobId:    c.jobID().String(),
+		EntityId: string(c.taskID),
+		Type:     c.jobType.Proto(),
+		// Id:             ctx.Self().Address().Local(),
+		// State:          state.State.Proto(),
+		// Description:    c.Config.Description,
+		// Container:      state.FirstContainer().Proto(),
+		// StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		// Username:       c.Base.Owner.Username,
+		// ResourcePool:   c.Config.Resources.ResourcePool,
+		// ExitStatus:     c.exitStatus.String(),
+		// JobId:          c.jobID().String(),
+	}
 }

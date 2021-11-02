@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 // Experiment-specific actor messages.
@@ -274,8 +275,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Tell(e.rm, msg)
 		}
 
+	case apiv1.GetJobsRequest:
+		if msg.ResourcePool != e.Config.Resources().ResourcePool() {
+			ctx.Respond(nil)
+			return nil
+		}
+		job := e.toV1Job()
+		ctx.Respond(job)
+		return nil
+
 	case job.RMJobInfo:
 		e.job.RMInfo = msg
+
+	case jobv1.Job:
+		job := e.toV1Job()
+		ctx.Respond(job)
+		return nil
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -573,4 +588,13 @@ func checkpointFromTrialIDOrUUID(
 		}
 	}
 	return checkpoint, nil
+}
+
+// experiment methot to translate it into jobv1.Job
+func (e *experiment) toV1Job() *jobv1.Job {
+	return &jobv1.Job{
+		JobId:    e.JobID.String(),
+		EntityId: fmt.Sprint(e.ID),
+		Type:     jobv1.Type_TYPE_EXPERIMENT,
+	}
 }
