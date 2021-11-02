@@ -78,16 +78,23 @@ def list_models(args: Namespace) -> None:
 
         render.tabulate_or_csv(headers, values, False)
 
+def model_by_name(args: Namespace) -> Model:
+    models = Determined(args.master, None).get_models(name=args.name)
+    if len(models) == 0:
+        raise Error("No model was found with the given name.")
+    if len(models) > 1:
+        raise Error("Multiple models were found with the given name.")
+    return models[0]
 
 @authentication.required
 def list_versions(args: Namespace) -> None:
+    model = model_by_name(args)
     if args.json:
-        r = api.get(args.master, "models/{}/versions".format(args.id))
+        r = api.get(args.master, "models/{}/versions".format(model.model_id))
         data = r.json()
         print(json.dumps(data, indent=2))
 
     else:
-        model = Determined(args.master).get_model(args.id)
         render_model(model)
         print("\n")
 
@@ -125,7 +132,7 @@ def create(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    model = Determined(args.master, None).get_model(args.id)
+    model = model_by_name(args)
     model_version = model.get_version(args.version)
 
     if args.json:
@@ -139,16 +146,16 @@ def describe(args: Namespace) -> None:
 
 @authentication.required
 def register_version(args: Namespace) -> None:
+    model = model_by_name(args)
     if args.json:
         resp = api.post(
             args.master,
-            "/api/v1/models/{}/versions".format(args.id),
+            "/api/v1/models/{}/versions".format(model.model_id),
             json={"checkpointUuid": args.uuid},
         )
 
         print(json.dumps(resp.json(), indent=2))
     else:
-        model = Determined(args.master, None).get_model(args.id)
         model_version = model.register_version(args.uuid)
         render_model(model)
         print("\n")
@@ -189,7 +196,7 @@ args_description = [
                 register_version,
                 "register a new version of a model",
                 [
-                    Arg("id", type=int, help="id of the model"),
+                    Arg("name", type=str, help="name of the model"),
                     Arg("uuid", type=str, help="uuid to register as the next version of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
@@ -199,7 +206,7 @@ args_description = [
                 describe,
                 "describe model",
                 [
-                    Arg("id", type=int, help="model to describe"),
+                    Arg("name", type=str, help="name of model to describe"),
                     Arg("--json", action="store_true", help="print as JSON"),
                     Arg(
                         "--version",
@@ -214,7 +221,7 @@ args_description = [
                 list_versions,
                 "list the versions of a model",
                 [
-                    Arg("id", type=int, help="unique ID of the model"),
+                    Arg("name", type=str, help="unique name of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -223,7 +230,7 @@ args_description = [
                 create,
                 "create model",
                 [
-                    Arg("name", type=str, help="name for the model"),
+                    Arg("name", type=str, help="unique name of the model"),
                     Arg("--description", type=str, help="description of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
