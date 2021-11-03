@@ -177,7 +177,7 @@ const ModelDetails: React.FC = () => {
     ];
 
     return tableColumns;
-  }, [ showConfirmDelete, downloadVersion, setModelVersionTags, user ]);
+  }, [ showConfirmDelete, downloadVersion, model?.model.username, setModelVersionTags, user ]);
 
   const metadata = useMemo(() => {
     return Object.entries(model?.model.metadata || {}).map((pair) => {

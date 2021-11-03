@@ -355,7 +355,7 @@ const ModelRegistry: React.FC = () => {
     userFilterDropdown,
     users,
     setModelTags,
-    user?.isAdmin,
+    user,
     switchArchived,
     showConfirmDelete,
     settings,
