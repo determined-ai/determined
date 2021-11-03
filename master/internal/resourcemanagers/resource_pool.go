@@ -277,6 +277,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 	case schedulerTick:
 		if rp.reschedule {
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
+			updateJobs(ctx.Self().System(), rp) // FIXME this is a hack.
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)
 			}

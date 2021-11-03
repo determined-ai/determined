@@ -16,14 +16,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-//var notImplementedError = status.Error(codes.Unimplemented, "API not implemented")
-
 // GetJobs retrieves a list of jobs for a resource pool.
 func (a *apiServer) GetJobs(
 	_ context.Context, req *apiv1.GetJobsRequest,
 ) (resp *apiv1.GetJobsResponse, err error) {
-	jobs := make([]*jobv1.Job, 0)
-	resp = &apiv1.GetJobsResponse{}
 
 	if req.ResourcePool == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing resource_pool parameter")
@@ -37,37 +33,18 @@ func (a *apiServer) GetJobs(
 	if !ok {
 		return nil, status.Error(codes.Internal, "unexpected response from actor")
 	}
-	resp.Jobs = jobs
-
-	// switch {
-	// case sproto.UseAgentRM(a.m.system):
-	// 	err = a.actorRequest(
-	// 		sproto.AgentRMAddr.Child(req.ResourcePool), resourcemanagers.GetJobOrder{}, &resp.Jobs,
-	// 	)
-	// case sproto.UseK8sRM(a.m.system):
-	// 	err = a.actorRequest(sproto.K8sRMAddr, resourcemanagers.GetJobOrder{}, &resp.Jobs)
-	// default:
-	// 	err = status.Error(codes.NotFound, "cannot find the appropriate resource manager")
-	// }
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
 		// Reverese the list.
-		for i, j := 0, len(resp.Jobs)-1; i < j; i, j = i+1, j-1 {
-			resp.Jobs[i], resp.Jobs[j] = resp.Jobs[j], resp.Jobs[i]
+		for i, j := 0, len(jobs)-1; i < j; i, j = i+1, j-1 {
+			jobs[i], jobs[j] = jobs[j], jobs[i]
 		}
 	}
 
 	if req.Pagination == nil {
 		req.Pagination = &apiv1.PaginationRequest{}
 	}
-	/* TODO user information
-	2. persist use with job info. not all jobs are persisted.
-	3. allocateReq.taskActor => a msg to get the task user/owner.
-	would need to bubble up incase of eg trial actor to experiment
-	*/
+	resp = &apiv1.GetJobsResponse{Jobs: jobs}
 	return resp, a.paginate(&resp.Pagination, &resp.Jobs, req.Pagination.Offset, req.Pagination.Limit)
 }
 

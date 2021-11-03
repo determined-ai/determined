@@ -94,9 +94,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
 
-		// TODO register job here instead?
-		// TODO unregister post stop?
-
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
 			TaskType:  c.taskType,
@@ -183,9 +180,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(nil)
 			return nil
 		}
-		job := c.toV1Job()
-		ctx.Respond(job)
-		return nil
+		ctx.Respond(c.toV1Job())
 
 	case actor.PostStop:
 		if err := c.db.CompleteTask(c.taskID, time.Now()); err != nil {
@@ -407,20 +402,10 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 	return res
 }
 
-// toV1Job is a method on command to translate command to jobv1.Job
 func (c *command) toV1Job() *jobv1.Job {
 	return &jobv1.Job{
 		JobId:    c.jobID().String(),
 		EntityId: string(c.taskID),
 		Type:     c.jobType.Proto(),
-		// Id:             ctx.Self().Address().Local(),
-		// State:          state.State.Proto(),
-		// Description:    c.Config.Description,
-		// Container:      state.FirstContainer().Proto(),
-		// StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		// Username:       c.Base.Owner.Username,
-		// ResourcePool:   c.Config.Resources.ResourcePool,
-		// ExitStatus:     c.exitStatus.String(),
-		// JobId:          c.jobID().String(),
 	}
 }

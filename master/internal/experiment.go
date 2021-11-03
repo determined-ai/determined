@@ -281,17 +281,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(nil)
 			return nil
 		}
-		job := e.toV1Job()
-		ctx.Respond(job)
-		return nil
+		ctx.Respond(e.toV1Job())
 
 	case job.RMJobInfo:
 		e.job.RMInfo = msg
-
-	case jobv1.Job:
-		job := e.toV1Job()
-		ctx.Respond(job)
-		return nil
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -594,7 +587,6 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
-// experiment methot to translate it into jobv1.Job
 func (e *experiment) toV1Job() *jobv1.Job {
 	return &jobv1.Job{
 		JobId:    e.JobID.String(),

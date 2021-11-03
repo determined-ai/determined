@@ -30,15 +30,6 @@ func NewPriorityScheduler(config *SchedulerConfig) Scheduler {
 }
 
 func (p *priorityScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	// if rp.provisioner == nil {
-	// 	panic("nil ptr")
-	// }
-	if rp.system != nil {
-		// rp.taskList.iterator() != nil &&
-		// rp.taskList.iterator().value() != nil &&
-		// rp.taskList.iterator().value().TaskActor != nil {
-		updateJobs(rp.system, rp) // FIXME this is a hack.
-	}
 	return p.prioritySchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
 }
 

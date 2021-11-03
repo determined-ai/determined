@@ -3,7 +3,6 @@ package job
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -16,6 +15,7 @@ import (
 
 var JobsActorAddr = actor.Addr("jobs")
 
+// TODO these could be set up as jobs children.
 var jobManagers = [...]actor.Address{
 	actor.Addr("experiments"),
 	actor.Addr("tensorboard"), // should be tensorboards
@@ -33,6 +33,7 @@ func getJobRefs(system *actor.System) []*actor.Ref {
 	return jobRefs
 }
 
+// RMJobInfo packs information available only to the RM that updates frequently.
 type RMJobInfo struct {
 	JobsAhead      int
 	State          sproto.SchedulingState
@@ -41,14 +42,13 @@ type RMJobInfo struct {
 }
 
 type Job struct {
-	JobType        model.JobType
-	Id             model.JobID
-	SubmissionTime time.Time
-	User           model.User // username?
-	IsPreemptible  bool
-	SubEntityRef   *actor.Ref // TODO rename
-	RPRef          *actor.Ref
-	RMInfo         RMJobInfo
+	JobType model.JobType
+	Id      model.JobID // TODO is already merged in to the job actors
+	// SubmissionTime time.Time
+	// User           model.User // username?
+	// IsPreemptible  bool
+	// RPRef          *actor.Ref
+	RMInfo RMJobInfo
 }
 
 // // GetJobOrder requests a list of *jobv1.Job.
@@ -82,6 +82,7 @@ func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) (*
 	// })
 }
 
+// Jobs manage jobs.
 type Jobs struct{}
 
 func (j *Jobs) Receive(ctx *actor.Context) error {
@@ -124,33 +125,3 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	}
 	return nil
 }
-
-// func NewJob(jobType model.JobType, id model.JobID, user *model.User, isPreemptible bool, subEntityRef *actor.Ref, rpRef *actor.Ref) *Job {
-// 	job := Job{
-// 		JobType:        jobType,
-// 		Id:             id,
-// 		SubmissionTime: time.Now(),
-// 		User:           user,
-// 		IsPreemptible:  isPreemptible,
-// 		SubEntityRef:   subEntityRef,
-// 		RPRef:          rpRef,
-// 	}
-
-// 	registerJob(subEntityRef.System(), &job)
-// 	return &job
-// }
-
-// TODO a jobs actor
-
-// TODO helper for ENTbCS to register as children to this actor
-// func (j *Job) RegisterChild(ctx *actor.Context, child *actor.Ref) {
-// }
-
-// setup receive method to implement actor interface
-// func (j *Job) Receive(ctx *actor.Context) error {
-// 	switch msg := ctx.Message().(type) {
-// 	default:
-// 		return actor.ErrUnhandledMessage(msg)
-// 	}
-// 	return nil
-// }

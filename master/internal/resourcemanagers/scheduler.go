@@ -18,7 +18,6 @@ import (
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
 	OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
-	// UpdateJobs(rp *ResourcePool)
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
