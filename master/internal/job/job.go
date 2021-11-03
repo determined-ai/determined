@@ -68,16 +68,34 @@ type Job struct {
 // Jobs manage jobs.
 type Jobs struct{}
 
+func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
+	children := getJobRefs(ctx.Self().System())
+	fmt.Printf("children count %d \n", len(children))
+	// jobs := make([]*jobv1.Job, 0)
+	return ctx.AskAll(msg, children...).GetAll()
+
+	// IMPROVE. look up reflect
+	// for _, val := range ctx.AskAll(msg, children...).GetAll() {
+	// 	rType := reflect.TypeOf(responses).Elem()
+	// 	typed, ok := val.(rType)
+	// 	if !ok {
+	// 		return errors.New("unexpected response type")
+	// 	}
+	// 	if typed != nil {
+	// 		responses = append(responses, typed)
+	// 	}
+
+}
+
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsRequest %v \n", *msg)
-		children := getJobRefs(ctx.Self().System())
-		fmt.Printf("children count %d \n", len(children))
+
 		jobs := make([]*jobv1.Job, 0)
-		for _, job := range ctx.AskAll(msg, children...).GetAll() {
+		for _, job := range j.askJobActors(ctx, msg) {
 			typed, ok := job.(*jobv1.Job)
 			if !ok {
 				return errors.New("unexpected response type")
@@ -89,17 +107,7 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 		// TODO do pagination here as well?
 		ctx.Respond(jobs)
 
-	// case GetJobOrder:
-	// 	ctx.Respond(getV1Jobs(rp))
-	// case GetJobSummary:
-	// 	// for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
-	// 	// 	if typed := tensorboard.(*tensorboardv1.Tensorboard); len(users) == 0 || users[typed.Username] {
-	// 	// 		resp.Tensorboards = append(resp.Tensorboards, typed)
-	// 	// 	}
-	// 	// }
-	// 	// ctx.Self().System().AskAll()
-	// 	// ctx.ActorOf(job.JobsActorAddr)
-	// 	ctx.Respond(resp)
+	case *apiv1.GetJobQueueStatsRequest:
 	// case GetJobQStats:
 	// 	ctx.Respond(*jobStats(rp))
 
