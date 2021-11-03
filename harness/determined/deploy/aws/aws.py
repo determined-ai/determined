@@ -357,7 +357,14 @@ def deploy_stack(
             tags = get_tags(stack_name, boto3_session)
             prompt_needed = False
             if constants.deployment_types.TYPE_TAG_KEY not in tags:
-                print("Previous value of --deployment-type is not known.")
+                print()
+                print("Previous value of --deployment-type is not known. Versions of Determined as late")
+                print("as 0.17.2 did not annotate deployed clusters, and it was the responsibility of")
+                print("the user to make updates with the same --deployment-type. Note that if you are")
+                print("sure you did not set --deployment-type before, your cluster would have deployed")
+                print("as --deployment-type simple (the default).")
+                print()
+                
                 prompt_needed = True
             elif tags[constants.deployment_types.TYPE_TAG_KEY] != deployment_type:
                 print("Value of --deployment-type has changed!")
@@ -369,7 +376,7 @@ def deploy_stack(
                     "Are you sure you want to proceed? [y/N]"
                 )
                 if val.lower() != "y":
-                    print("Update cancelled.")
+                    print("Update canceled.")
                     sys.exit(1)
 
         update_stack(stack_name, template_body, boto3_session, deployment_type, parameters)
