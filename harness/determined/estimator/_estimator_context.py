@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union, Optional
 
 import tensorflow as tf
 
@@ -8,7 +8,7 @@ import determined as det
 from determined import _data_layer, estimator, horovod, util
 from determined.common import check
 from determined.horovod import hvd
-
+from typing import cast, Dict
 """
 The normal path to create a model usually needs the use of tensorflow pre-made optimizer and
 dataset objects. However, the path to create a model for Horovod is different. Some Horovod
@@ -40,13 +40,21 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
 
         self.experimental = EstimatorExperimentalContext(
             env=self.env,
-            hvd_config=self.hvd_config,
             parent=self,
+            distributed_backend=self.distributed.backend
         )
+
+        if self.distributed.backend == "horovod":
+            experiment_config = self.get_experiment_config()
+            optimizations_config = cast(Dict[str, Any], experiment_config.get("optimizations"))
+            self.aggregation_frequency = cast(int, optimizations_config.get("aggregation_frequency"))
+            self.fp16_compression = cast(bool, optimizations_config.get("gradient_compression"))
+            self.average_aggregated_gradients = cast(bool, optimizations_config.get("average_aggregated_gradients"))
+            self.average_training_metrics = cast(bool, optimizations_config.get("average_training_metrics"))
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
-        logging.debug(f"Initialized EstimatorTrialContext with config: {self.hvd_config}.")
+
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
@@ -60,7 +68,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             return optimizer
 
         self.optimizer_initialized = True
-        if not self.hvd_config.use:
+        if not self.distributed.backend == "horovod":
             return optimizer
 
         check.check_false(
@@ -69,7 +77,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         )
 
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_optimizer was called.")
-        use_compression = self.hvd_config.fp16_compression
+        use_compression = self.fp16_compression
 
         # The signature of our horovod optimizer changed after we rebased onto 0.21.
         hvd_sig = inspect.signature(hvd.DistributedOptimizer)
@@ -77,12 +85,12 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
             "compression": hvd.compression.Compression.fp16
             if use_compression
             else hvd.compression.Compression.none,
-            "average_aggregated_gradients": self.hvd_config.average_aggregated_gradients,
+            "average_aggregated_gradients": self.average_aggregated_gradients,
         }
         if "aggregation_frequency" in hvd_sig.parameters:
-            horovod_kwargs["aggregation_frequency"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["aggregation_frequency"] = self.aggregation_frequency
         else:
-            horovod_kwargs["backward_passes_per_step"] = self.hvd_config.aggregation_frequency
+            horovod_kwargs["backward_passes_per_step"] = self.aggregation_frequency
 
         optimizer = hvd.DistributedOptimizer(optimizer, **horovod_kwargs)
         logging.debug("Initialized optimizer for distributed and optimized parallel training.")
@@ -113,8 +121,8 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         hvd.require_horovod_type("tensorflow", "EstimatorTrialContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.hvd_config.use or not shard_dataset:
-            if self.hvd_config and not shard_dataset:
+        if not self.distributed.backend == "horovod" or not shard_dataset:
+            if self.distributed.backend == "horovod" and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset
 
@@ -133,9 +141,10 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
 
     def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext, parent: EstimatorTrialContext
+        self, env: det.EnvContext, parent: EstimatorTrialContext,
+            distributed_backend: Optional[str]
     ) -> None:
-        super().__init__(env=env, hvd_config=hvd_config)
+        super().__init__(env=env, distributed_backend=distributed_backend)
         self._parent = parent
 
     @util.deprecated(

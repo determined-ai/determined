@@ -10,11 +10,9 @@ from determined.common import check
 class WorkerProcessContext:
     def __init__(
         self,
-        hvd_config: horovod.HorovodContext,
         rendezvous_info: det.RendezvousInfo,
         env: det.EnvContext,
     ) -> None:
-        self.hvd_config = hvd_config
         self.rendezvous_info = rendezvous_info
         self.env = env
 

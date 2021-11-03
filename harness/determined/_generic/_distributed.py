@@ -35,6 +35,7 @@ class DistributedContext:
         local_size: int,
         cross_rank: int,
         cross_size: int,
+            backend: Optional[str],
         chief_ip: Optional[str] = None,
         pub_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_1,
         pull_port: int = constants.INTER_TRAIN_PROCESS_COMM_PORT_2,
@@ -54,7 +55,7 @@ class DistributedContext:
         self.local_size = local_size if local_size is not None else 1
         self.cross_rank = cross_rank if cross_rank is not None else 0
         self.cross_size = cross_size if cross_size is not None else 1
-
+        self.backend = backend
         self._pub_port = pub_port + port_offset
         self._pull_port = pull_port + port_offset
         self._chief_ip = chief_ip
@@ -207,6 +208,9 @@ class DistributedContext:
         Return the number of agents this trial is running on.
         """
         return self.cross_size
+
+    def get_backend(self) -> str:
+        return self.backend
 
     def _zmq_gather(self, stuff: Any) -> Optional[List]:
         """

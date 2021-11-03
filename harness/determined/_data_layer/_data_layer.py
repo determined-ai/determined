@@ -35,12 +35,11 @@ class _CacheableDecorator:
     def __init__(
         self,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         training: bool,
         per_slot_batch_size: int,
+            distributed_backend: Optional[str]
     ) -> None:
         self._env = env
-        self._hvd_config = hvd_config
         self._training = training
         self._per_slot_batch_size = per_slot_batch_size
 
@@ -49,7 +48,7 @@ class _CacheableDecorator:
         self._num_shards = 1
         self._shuffle_seed = self._env.trial_seed
         self._decorator_used = False
-
+        self._distributed_backend = distributed_backend
         self._dataset_length = None  # type: Optional[int]
 
         self._init_offset()
@@ -63,7 +62,7 @@ class _CacheableDecorator:
         self._offset = self._env.latest_batch * batch_size
 
     def _init_shard(self) -> None:
-        if not self._hvd_config.use:
+        if not self._distributed_backend == "horovod":
             return
 
         self._shard_rank = hvd.rank()
@@ -71,7 +70,7 @@ class _CacheableDecorator:
 
     def _configure_storage(self) -> None:
         session_config = None  # type: Optional[tf.compat.v1.ConfigProto]
-        if self._hvd_config.use:
+        if self._distributed_backend == "horovod":
             # For multi-GPU training, we map processes to individual GPUs. TF requires
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.

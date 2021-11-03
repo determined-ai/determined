@@ -3,15 +3,16 @@ import logging
 import tensorflow as tf
 from packaging import version
 from tensorflow.python.keras.engine import sequential
-
+from typing import Optional
 from determined import horovod, util
 
 
 def _check_if_aggregation_frequency_will_work(
     model: tf.keras.Model,
-    hvd_config: horovod.HorovodContext,
+    distributed_backend: Optional[str],
+    aggregation_frequency: Optional[int]
 ) -> None:
-    if not hvd_config.use or hvd_config.aggregation_frequency == 1:
+    if not distributed_backend == "horovod" or aggregation_frequency == 1:
         return
 
     if model._is_graph_network or isinstance(model, sequential.Sequential):

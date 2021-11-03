@@ -18,12 +18,10 @@ class TrialController(metaclass=abc.ABCMeta):
         self,
         context: Any,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> None:
         self.context = context
         self.env = env
-        self.hvd_config = hvd_config
         # The only time that workloads should be non-None here is unit tests or test mode.
         self.workloads = workloads
 
@@ -40,7 +38,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
         self.is_chief = context.distributed.rank == 0
 
-        if self.hvd_config.use and not self.is_chief:
+        if context.distributed.backend == "horovod" and not self.is_chief:
             log_level = (
                 logging.DEBUG if self.env.experiment_config.debug_enabled() else logging.WARNING
             )
@@ -48,7 +46,7 @@ class TrialController(metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> Any:
+    def pre_execute_hook(env: det.EnvContext, distributed_backend: Optional[str]) -> Any:
         """
         Certain things must be initialized before either running user code (in the Native API case)
         or intializing user code (in the Trial API case).
@@ -61,7 +59,6 @@ class TrialController(metaclass=abc.ABCMeta):
         trial_inst: "det.Trial",
         context: det.TrialContext,
         env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
         workloads: Optional[workload.Stream] = None,
     ) -> "TrialController":
         """

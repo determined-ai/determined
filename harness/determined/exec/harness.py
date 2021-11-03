@@ -74,10 +74,10 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
         on_cluster=True,
     )
 
-    multi_machine_trial = len(info.container_addrs) > 1
-    hvd_config = horovod.HorovodContext.from_configs(
-        env.experiment_config, env.hparams, multi_machine_trial
-    )
+    # multi_machine_trial = len(info.container_addrs) > 1
+    # hvd_config = horovod.HorovodContext.from_configs(
+    #     env.experiment_config, env.hparams, multi_machine_trial
+    # )
 
     config_logging(env.debug)
 
@@ -89,12 +89,12 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
         trial_class, controller_class = load.get_trial_and_controller_class(env.experiment_config)
 
         # Step 2: Initialize framework-specific details (horovod, random seeds, etc).
-        controller_class.pre_execute_hook(env, hvd_config)
+        controller_class.pre_execute_hook(env, distributed_backend)
 
         # Step 3: Now that horovod is initialized, we can build a RankInfo object.
         # It is always expected that the training code can figure this out based on how the
         # launch layer launched the code.
-        if hvd_config.use:
+        if distributed_backend == "horovod":
             distributed = _generic.DistributedContext(
                 rank=horovod.hvd.rank(),
                 size=horovod.hvd.size(),
@@ -102,6 +102,7 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
                 local_size=horovod.hvd.local_size(),
                 cross_rank=horovod.hvd.cross_rank(),
                 cross_size=horovod.hvd.cross_size(),
+                backend="horovod",
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
@@ -113,6 +114,7 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
                 local_size=int(os.environ["LOCAL_WORLD_SIZE"]),
                 cross_rank=int(os.environ["GROUP_RANK"]),
                 cross_size=int(os.environ["GROUP_WORLD_SIZE"]),
+                backend="torch",
                 chief_ip=chief_ip,
                 port_offset=info.task_type == "TRIAL" and info.trial._unique_port_offset or 0,
             )
@@ -121,7 +123,7 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
 
         # Step 4: Let generic.init() create the generic.Context.
         with _generic.init(distributed=distributed) as generic_context:
-            trial_context = trial_class.trial_context_class(generic_context, env, hvd_config)
+            trial_context = trial_class.trial_context_class(generic_context, env)
 
             # Step 5: Instantiate the user's Trial.
             trial_inst = trial_class(trial_context)
@@ -132,7 +134,6 @@ def main(chief_ip: Optional[str], distributed_backend: Optional[str]) -> int:
                 trial_inst=trial_inst,
                 context=trial_context,
                 env=env,
-                hvd_config=hvd_config,
             )
 
             controller.run()
