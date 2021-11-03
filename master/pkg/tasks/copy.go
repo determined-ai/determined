@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -24,9 +25,19 @@ const (
 	harnessTargetPath = "/opt/determined/wheels"
 )
 
+// normalizePythonVersion converts the given SemVer version into the equivalent normalized version
+// as described by PEP 440 (which is what the filenames of built wheels will contain). In SemVer,
+// the separators for the likes of `devN` and `rcN` is a hyphen, but PEP 440 specifies a period for
+// `devN` and nothing for `rcN`.
+func normalizePythonVersion(version string) string {
+	version = strings.ReplaceAll(version, "-dev", ".dev")
+	version = strings.ReplaceAll(version, "-rc", "rc")
+	return version
+}
+
 func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.RunArchive {
 	var harnessFiles archive.Archive
-	validWhlNames := fmt.Sprintf("*%s*.whl", version.Version)
+	validWhlNames := fmt.Sprintf("*%s*.whl", normalizePythonVersion(version.Version))
 	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, validWhlNames))
 	if err != nil {
 		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",

@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	python setup.py -q bdist_wheel
+	python -W ignore:Normalizing:UserWarning:setuptools.dist setup.py -q bdist_wheel
 
 .PHONY: publish
 publish:
