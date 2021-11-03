@@ -16,6 +16,23 @@ import (
 
 var JobsActorAddr = actor.Addr("jobs")
 
+var jobManagers = [...]actor.Address{
+	actor.Addr("experiments"),
+	actor.Addr("tensorboard"), // should be tensorboards
+	actor.Addr("commands"),
+	actor.Addr("shells"),
+	actor.Addr("notebooks"),
+}
+
+// helper to get all the childrens of job managers addresse into a list
+func getJobRefs(system *actor.System) []*actor.Ref {
+	jobRefs := make([]*actor.Ref, 0)
+	for _, addr := range jobManagers {
+		jobRefs = append(jobRefs, system.Get(addr).Children()...)
+	}
+	return jobRefs
+}
+
 type RMJobInfo struct {
 	JobsAhead      int
 	State          sproto.SchedulingState
@@ -48,6 +65,7 @@ type Job struct {
 // // Expected response: jobv1.QueueStats.
 // type GetJobQStats struct{}
 
+// link the same actor under two parents?
 // TODO register this job with the jobs group
 func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) (*actor.Ref, bool) {
 
@@ -71,10 +89,11 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
 
 	case *apiv1.GetJobsRequest:
-		// fmt.Printf("GetJobsRequest %v \n", *msg)
-		// fmt.Printf("children count %d \n", len(ctx.Children()))
+		fmt.Printf("GetJobsRequest %v \n", *msg)
+		children := getJobRefs(ctx.Self().System())
+		fmt.Printf("children count %d \n", len(children))
 		jobs := make([]*jobv1.Job, 0)
-		for _, job := range ctx.AskAll(msg, ctx.Children()...).GetAll() {
+		for _, job := range ctx.AskAll(msg, children...).GetAll() {
 			typed, ok := job.(*jobv1.Job)
 			if !ok {
 				return errors.New("unexpected response type")

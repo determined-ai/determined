@@ -385,13 +385,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
 	case GetJobSummary:
 		resp := getV1JobSummary(rp, msg.JobID, rp.scheduler.OrderedAllocations(rp))
-		// for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
-		// 	if typed := tensorboard.(*tensorboardv1.Tensorboard); len(users) == 0 || users[typed.Username] {
-		// 		resp.Tensorboards = append(resp.Tensorboards, typed)
-		// 	}
-		// }
-		// ctx.Self().System().AskAll()
-		// ctx.ActorOf(job.JobsActorAddr)
 		ctx.Respond(resp)
 	case GetJobQStats:
 		ctx.Respond(*jobStats(rp))

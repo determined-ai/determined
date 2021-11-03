@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -102,7 +101,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
-	job.RegisterJob(m.system, e.JobID, e)
+	// job.RegisterJob(m.system, e.JobID, e)
 	return nil
 }
 

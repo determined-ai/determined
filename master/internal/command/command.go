@@ -57,7 +57,7 @@ func createGenericCommandActor(
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
-	job.RegisterJob(ctx.Self().System(), cmd.jobID(), cmd)
+	// job.RegisterJob(ctx.Self().System(), cmd.jobID(), cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
 		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
@@ -93,6 +93,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		c.allocationID = model.NewAllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
 		c.registeredTime = ctx.Self().RegisteredTime()
+
+		// TODO register job here instead?
+		// TODO unregister post stop?
+
 		if err := c.db.AddTask(&model.Task{
 			TaskID:    c.taskID,
 			TaskType:  c.taskType,
