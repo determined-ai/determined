@@ -8,6 +8,7 @@ import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelVersion } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -25,6 +26,8 @@ interface Props {
 const ModelVersionHeader: React.FC<Props> = (
   { modelVersion, onAddMetadata, onDeregisterVersion, onDownload, onSaveDescription }: Props,
 ) => {
+  const { auth: { user } } = useStore();
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content:
@@ -58,6 +61,10 @@ const ModelVersionHeader: React.FC<Props> = (
       label: 'Tags',
     } ] as InfoRow[];
   }, [ modelVersion, onSaveDescription ]);
+
+  const isDeletable = user?.isAdmin
+        || user?.username === modelVersion.model.username
+        || user?.username === modelVersion.username;
 
   const showConfirmDelete = useCallback((version: ModelVersion) => {
     Modal.confirm({
@@ -112,6 +119,7 @@ const ModelVersionHeader: React.FC<Props> = (
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
                 <Menu.Item
                   danger
+                  disabled={!isDeletable}
                   key="deregister-version"
                   onClick={() => showConfirmDelete(modelVersion)}>
                   Deregister Version

@@ -8,6 +8,7 @@ import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import { relativeTimeRenderer, userRenderer } from 'components/Table';
 import TagList from 'components/TagList';
+import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -24,6 +25,8 @@ interface Props {
 const ModelHeader: React.FC<Props> = (
   { model, archived, onAddMetadata, onDelete, onSwitchArchive, onSaveDescription }: Props,
 ) => {
+  const { auth: { user } } = useStore();
+
   const infoRows: InfoRow[] = useMemo(() => {
     return [ {
       content:
@@ -50,6 +53,8 @@ const ModelHeader: React.FC<Props> = (
       label: 'Tags',
     } ] as InfoRow[];
   }, [ model, onSaveDescription ]);
+
+  const isDeletable = user?.isAdmin || user?.username === model.username;
 
   const showConfirmDelete = useCallback((model: ModelItem) => {
     Modal.confirm({
@@ -112,7 +117,11 @@ const ModelHeader: React.FC<Props> = (
                 <Menu.Item key="switch-archive" onClick={onSwitchArchive}>
                   {archived ? 'Unarchive' : 'Archive'}
                 </Menu.Item>
-                <Menu.Item danger key="delete-model" onClick={() => showConfirmDelete(model)}>
+                <Menu.Item
+                  danger
+                  disabled={!isDeletable}
+                  key="delete-model"
+                  onClick={() => showConfirmDelete(model)}>
                   Delete
                 </Menu.Item>
               </Menu>

@@ -18,7 +18,8 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import { useFetchUsers } from 'hooks/useFetch';
 import usePolling from 'hooks/usePolling';
 import useSettings from 'hooks/useSettings';
-import { archiveModel, deleteModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
+import { archiveModel, deleteModel, getModelLabels,
+  getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 import { validateDetApiEnum } from 'services/utils';
 import { ArchiveFilter, ModelItem } from 'types';
@@ -235,7 +236,7 @@ const ModelRegistry: React.FC = () => {
     );
 
     const overflowRenderer = (_:string, record: ModelItem) => {
-      const isDeletable = user?.isAdmin;
+      const isDeletable = user?.isAdmin || user?.username === record.username;
       return (
         <Dropdown
           overlay={(
@@ -357,7 +358,8 @@ const ModelRegistry: React.FC = () => {
     user?.isAdmin,
     switchArchived,
     showConfirmDelete,
-    settings ]);
+    settings,
+    tags ]);
 
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
