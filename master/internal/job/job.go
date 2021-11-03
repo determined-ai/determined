@@ -65,23 +65,6 @@ type Job struct {
 // // Expected response: jobv1.QueueStats.
 // type GetJobQStats struct{}
 
-// link the same actor under two parents?
-// TODO register this job with the jobs group
-func RegisterJob(system *actor.System, jobId model.JobID, aActor actor.Actor) (*actor.Ref, bool) {
-
-	a, created := system.ActorOf(JobsActorAddr.Child(jobId.String()), aActor)
-	fmt.Printf("RegisterJob %v %s %v \n", jobId, a.Address(), created)
-	if !created {
-		panic("job already exists")
-	}
-
-	return a, created
-	// system.TellAt(JobsActorAddr, actors.NewChild{
-	// 	ID:    string(jobId),
-	// 	Actor: aActor,
-	// })
-}
-
 // Jobs manage jobs.
 type Jobs struct{}
 

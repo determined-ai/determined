@@ -495,7 +495,6 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
-	// job.RegisterJob(m.system, e.JobID, e)
 
 	c.Response().Header().Set(echo.HeaderLocation, fmt.Sprintf("/experiments/%v", e.ID))
 	response := model.ExperimentDescriptor{

@@ -101,7 +101,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	}
 
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
-	// job.RegisterJob(m.system, e.JobID, e)
 	return nil
 }
 

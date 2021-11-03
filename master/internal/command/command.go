@@ -57,7 +57,6 @@ func createGenericCommandActor(
 	}
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
-	// job.RegisterJob(ctx.Self().System(), cmd.jobID(), cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
 		ctx.Respond(errors.Wrap(err, "failed to create generic command"))
