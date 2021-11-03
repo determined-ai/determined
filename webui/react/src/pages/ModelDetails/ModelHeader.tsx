@@ -13,6 +13,8 @@ import { paths } from 'routes/utils';
 import { ModelItem } from 'types';
 import { formatDatetime } from 'utils/date';
 
+import css from './ModelHeader.module.scss';
+
 interface Props {
   archived: boolean;
   model: ModelItem;
@@ -71,17 +73,8 @@ const ModelHeader: React.FC<Props> = (
   }, [ onDelete ]);
 
   return (
-    <header style={{
-      backgroundColor: 'var(--theme-colors-monochrome-17)',
-      borderBottom: '1px solid var(--theme-colors-monochrome-12)',
-      margin: 0,
-      padding: 12,
-      width: '100%',
-    }}>
-      <div style={{
-        borderBottom: '1px solid var(--theme-colors-monochrome-12)',
-        paddingBottom: 8,
-      }}>
+    <header className={css.base}>
+      <div className={css.breadcrumbs}>
         <Breadcrumb separator="">
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>
@@ -97,20 +90,13 @@ const ModelHeader: React.FC<Props> = (
           <Breadcrumb.Item>{model.name}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
-      <div style={{
-        marginLeft: 24,
-        marginRight: 24,
-      }}>
-        <div style={{
-          alignItems: 'center',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}>
+      <div className={css.headerContent}>
+        <div className={css.mainRow}>
           <div>
             <img />
             <h1>{model.name}</h1>
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <Space size="small">
             <Dropdown overlay={(
               <Menu>
                 <Menu.Item key="add-metadata" onClick={onAddMetadata}>Add Metadata</Menu.Item>
@@ -130,7 +116,7 @@ const ModelHeader: React.FC<Props> = (
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>
             </Dropdown>
-          </div>
+          </Space>
         </div>
         <InfoBox rows={infoRows} seperator={false} />
       </div>
