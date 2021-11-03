@@ -250,6 +250,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case
 		GetJobOrder,
+		GetJobQInfo,
 		SetJobOrder,
 		GetJobQStats,
 		GetJobSummary:
@@ -386,6 +387,11 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		// TODO: add a ctx.Respond so that the API doesn't return an error to the user
 	case GetJobQStats:
 		ctx.Respond(*jobStats(rp))
+	case GetJobQInfo:
+		ctx.Respond(rp.scheduler.JobQInfo(rp))
+	case GetJobSummary:
+		reqs := rp.scheduler.OrderedAllocations(rp)
+		ctx.Respond(getV1JobSummary(rp, msg.JobID, reqs))
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

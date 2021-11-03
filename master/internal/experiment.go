@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/job"
@@ -588,9 +589,24 @@ func checkpointFromTrialIDOrUUID(
 }
 
 func (e *experiment) toV1Job() *jobv1.Job {
-	return &jobv1.Job{
-		JobId:    e.JobID.String(),
-		EntityId: fmt.Sprint(e.ID),
-		Type:     jobv1.Type_TYPE_EXPERIMENT,
+	j := jobv1.Job{
+		JobId:          e.JobID.String(),
+		EntityId:       fmt.Sprint(e.ID),
+		Type:           jobv1.Type_TYPE_EXPERIMENT,
+		IsPreemptible:  true, // trial allocate requests are set to true
+		ResourcePool:   e.Config.RawResources.ResourcePool(),
+		SubmissionTime: timestamppb.New(e.StartTime),
+		Weight:         e.Config.RawResources.Weight(),
+		// TODO where is source of truth for weight and priority? should be here with fallback on RM
+		// read from m.config.ResourceConfig or rp
+		// adjusted priorities and weights should be persisted in this actor, probably. and passed down to rp group?
 	}
+
+	if priority := e.Config.RawResources.Priority(); priority != nil {
+		j.Priority = int32(*priority)
+	}
+
+	job.FillInRmJobInfo(&j, &e.job.RMInfo)
+
+	return &j
 }

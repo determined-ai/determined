@@ -5,6 +5,7 @@ import (
 	"time"
 
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -402,9 +403,21 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 }
 
 func (c *command) toV1Job() *jobv1.Job {
-	return &jobv1.Job{
+	j := jobv1.Job{
 		JobId:    c.jobID().String(),
 		EntityId: string(c.taskID),
 		Type:     c.jobType.Proto(),
+		// IsPreemptible:  c.pre // TODO see internal/experiment
+		ResourcePool:   c.Config.Resources.ResourcePool,
+		SubmissionTime: timestamppb.New(c.registeredTime),
+		Weight:         c.Config.Resources.Weight,
 	}
+
+	if priority := c.Config.Resources.Priority; priority != nil {
+		j.Priority = int32(*priority)
+	}
+
+	job.FillInRmJobInfo(&j, &c.job.RMInfo)
+
+	return &j
 }

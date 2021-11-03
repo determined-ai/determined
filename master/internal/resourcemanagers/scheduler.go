@@ -5,8 +5,10 @@ import (
 
 	"github.com/labstack/gommon/log"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
@@ -18,6 +20,7 @@ import (
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
 	OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
+	JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.

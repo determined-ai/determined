@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
@@ -71,6 +72,39 @@ func (p *priorityScheduler) OrderedAllocations(
 	readFromPrioToTask(priorityToScheduledTaskMap, &reqs)
 	readFromPrioToTask(priorityToPendingTasksMap, &reqs)
 	return reqs
+}
+
+func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo {
+	reqs := p.OrderedAllocations(rp)
+	isAdded := make(map[model.JobID]*job.RMJobInfo)
+	// v1Jobs := make([]*jobv1.Job, 0)
+	jobsAhead := 0
+	for _, req := range reqs {
+		curJob := req.Job
+		if curJob == nil {
+			continue
+		}
+		v1JobInfo, exists := isAdded[curJob.JobID]
+		if !exists {
+			v1JobInfo = &job.RMJobInfo{
+				JobsAhead:      jobsAhead,
+				State:          req.Job.State,
+				RequestedSlots: req.Job.RequestedSlots,
+				AllocatedSlots: req.Job.AllocatedSlots,
+			}
+			isAdded[curJob.JobID] = v1JobInfo
+			jobsAhead++
+		}
+		// Carry over the the highest state.
+		if v1JobInfo.State < curJob.State {
+			isAdded[curJob.JobID].State = curJob.State
+		}
+		v1JobInfo.RequestedSlots += req.SlotsNeeded
+		if sproto.ScheduledStates[req.Job.State] {
+			v1JobInfo.AllocatedSlots += req.SlotsNeeded
+		}
+	}
+	return isAdded
 }
 
 func (p *priorityScheduler) prioritySchedule(

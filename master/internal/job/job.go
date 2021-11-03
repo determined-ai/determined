@@ -24,6 +24,7 @@ var jobManagers = [...]actor.Address{
 	actor.Addr("notebooks"),
 }
 
+// TODO attach jobs to jobs actor for direct access via id?
 // helper to get all the childrens of job managers addresse into a list
 func getJobRefs(system *actor.System) []*actor.Ref {
 	jobRefs := make([]*actor.Ref, 0)
@@ -39,6 +40,7 @@ type RMJobInfo struct {
 	State          sproto.SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
+	// should preemptible status come from RM?
 }
 
 type Job struct {
@@ -51,22 +53,25 @@ type Job struct {
 	RMInfo RMJobInfo
 }
 
-// // GetJobOrder requests a list of *jobv1.Job.
-// // Expected response: []*jobv1.Job.
-// type GetJobOrder struct{}
-
-// // GetJobSummary requests a JobSummary.
-// // Expected response: jobv1.JobSummary.
-// type GetJobSummary struct { // CHECK should these use the same type as response instead of a new msg
-// 	JobID model.JobID
-// }
-
-// // GetJobQStats requests stats for a queue.
-// // Expected response: jobv1.QueueStats.
-// type GetJobQStats struct{}
+func QueueStatsFromJobs(jobs []*jobv1.Job) *jobv1.QueueStats {
+	stats := &jobv1.QueueStats{}
+	for _, job := range jobs {
+		if job.IsPreemptible {
+			stats.PreemptibleCount++
+		}
+		if job.Summary.State == jobv1.State_STATE_QUEUED {
+			stats.QueuedCount++
+		} else {
+			stats.ScheduledCount++
+		}
+	}
+	return stats
+}
 
 // Jobs manage jobs.
-type Jobs struct{}
+type Jobs struct {
+	RMRef *actor.Ref
+}
 
 func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Ref]actor.Message {
 	children := getJobRefs(ctx.Self().System())
@@ -87,6 +92,24 @@ func (j *Jobs) askJobActors(ctx *actor.Context, msg actor.Message) map[*actor.Re
 
 }
 
+func (j *Jobs) parseV1JobResposnes(responses map[*actor.Ref]actor.Message) ([]*jobv1.Job, error) {
+	jobs := make([]*jobv1.Job, 0)
+	for _, val := range responses {
+		typed, ok := val.(*jobv1.Job)
+		if !ok {
+			return nil, errors.New("unexpected response type")
+		}
+		if typed != nil {
+			jobs = append(jobs, typed)
+		}
+	}
+	return jobs, nil
+}
+
+func (j *Jobs) getV1Jobs(ctx *actor.Context, msg actor.Message) ([]*jobv1.Job, error) {
+	return j.parseV1JobResposnes(j.askJobActors(ctx, msg))
+}
+
 func (j *Jobs) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart, actor.PostStop, actor.ChildFailed, actor.ChildStopped:
@@ -94,25 +117,33 @@ func (j *Jobs) Receive(ctx *actor.Context) error {
 	case *apiv1.GetJobsRequest:
 		fmt.Printf("GetJobsRequest %v \n", *msg)
 
-		jobs := make([]*jobv1.Job, 0)
-		for _, job := range j.askJobActors(ctx, msg) {
-			typed, ok := job.(*jobv1.Job)
-			if !ok {
-				return errors.New("unexpected response type")
-			}
-			if typed != nil {
-				jobs = append(jobs, typed)
-			}
+		jobs, err := j.getV1Jobs(ctx, msg)
+		if err != nil {
+			return err
 		}
 		// TODO do pagination here as well?
 		ctx.Respond(jobs)
 
-	case *apiv1.GetJobQueueStatsRequest:
-	// case GetJobQStats:
-	// 	ctx.Respond(*jobStats(rp))
+	// case *apiv1.GetJobQueueStatsRequest:
+	// 	jobs, err := j.getV1Jobs(ctx, msg) // TODO specialize to returning just stats.
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	ctx.Respond(QueueStatsFromJobs(jobs))
+	// TODO sync with RMInfo from RM
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func FillInRmJobInfo(job *jobv1.Job, rmInfo *RMJobInfo) {
+	job.RequestedSlots = int32(rmInfo.RequestedSlots)
+	job.AllocatedSlots = int32(rmInfo.AllocatedSlots)
+	if job.Summary == nil {
+		job.Summary = &jobv1.JobSummary{}
+	}
+	job.Summary.State = rmInfo.State.Proto()
+	job.Summary.JobsAhead = int32(rmInfo.JobsAhead)
 }

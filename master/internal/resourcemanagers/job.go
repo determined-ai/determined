@@ -31,6 +31,9 @@ type SetJobOrder struct {
 // Expected response: []*jobv1.Job.
 type GetJobOrder struct{}
 
+// GetJobQInfo is used to get all job information in one go avoid any inconsistencies.
+type GetJobQInfo struct{}
+
 // GetJobSummary requests a JobSummary.
 // Expected response: jobv1.JobSummary.
 type GetJobSummary struct { // CHECK should these use the same type as response instead of a new msg
@@ -172,20 +175,10 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 }
 
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {
-	stats := jobv1.QueueStats{}
 	reqs := rp.scheduler.OrderedAllocations(rp)
+	// TODO work on allocate requests
 	jobs := mergeToJobs(reqs, rp.groups, rp.config.Scheduler.GetType())
-	for _, job := range jobs {
-		if job.IsPreemptible {
-			stats.PreemptibleCount++
-		}
-		if job.Summary.State == jobv1.State_STATE_QUEUED {
-			stats.QueuedCount++
-		} else {
-			stats.ScheduledCount++
-		}
-	}
-	return &stats
+	return job.QueueStatsFromJobs(jobs)
 }
 
 // TODO to be implemented inside the scheduler for better perf and control

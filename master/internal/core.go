@@ -712,7 +712,9 @@ func (m *Master) Run(ctx context.Context) error {
 	// good still to avoid overwhelming us on restart after a crash.
 	sema := make(chan struct{}, maxConcurrentRestores)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
-	m.system.ActorOf(job.JobsActorAddr, &job.Jobs{})
+	m.system.ActorOf(job.JobsActorAddr, &job.Jobs{
+		// RMRef: sproto.GetCurrentRM(m.system),
+	})
 	toRestore, err := m.db.NonTerminalExperiments()
 	if err != nil {
 		return errors.Wrap(err, "couldn't retrieve experiments to restore")
