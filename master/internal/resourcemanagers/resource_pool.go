@@ -275,6 +275,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if rp.reschedule {
+			// QUESTION do we want to do this if there are no agents?
 			toAllocate, toRelease := rp.scheduler.Schedule(rp)
 			for _, req := range toAllocate {
 				rp.allocateResources(ctx, req)

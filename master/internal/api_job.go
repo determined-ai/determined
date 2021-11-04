@@ -40,7 +40,7 @@ func (a *apiServer) GetJobs(
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_ASC {
 			i, j = j, i
 		}
-		if jobs[i].Summary == nil {
+		if jobs[i].Summary == nil || jobs[j].Summary == nil {
 			return false // CHECK
 		}
 		return jobs[i].Summary.JobsAhead < jobs[j].Summary.JobsAhead

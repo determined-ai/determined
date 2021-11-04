@@ -109,6 +109,13 @@ func (p *priorityScheduler) prioritySchedule(
 			toRelease = append(toRelease, release...)
 		}
 	}
+	if len(agents) == 0 { // report queue state if no agents are available
+		for _, zeroSlots := range []bool{false, true} {
+			priorityToPendingTasksMap, priorityToScheduledTaskMap :=
+				sortTasksByPriorityAndPositionAndTimestamp(taskList, groups, taskFilter("", zeroSlots))
+			p.reportJobQInfo(priorityToPendingTasksMap, priorityToScheduledTaskMap)
+		}
+	}
 
 	return toAllocate, toRelease
 }

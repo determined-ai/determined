@@ -33,14 +33,3 @@ func MakeScheduler(config *SchedulerConfig) Scheduler {
 		panic(fmt.Sprintf("invalid scheduler: %s", config.GetType()))
 	}
 }
-
-// func logAllocRequests(reqs []*sproto.AllocateRequest, prefix string) {
-// 	var str string
-// 	for _, req := range reqs {
-// 		if req.Job == nil {
-// 			continue
-// 		}
-// 		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.Job.JobID)
-// 	}
-// 	log.Debug(prefix + ": " + str)
-// }
