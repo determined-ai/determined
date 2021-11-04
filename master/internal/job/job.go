@@ -6,7 +6,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
@@ -24,7 +23,7 @@ var jobManagers = [...]actor.Address{
 	actor.Addr("notebooks"),
 }
 
-// TODO attach jobs to jobs actor for direct access via id?
+// TODO attach jobs to jobs actor for direct access via id? would need alias address support form the actor system
 // helper to get all the childrens of job managers addresse into a list
 func getJobRefs(system *actor.System) []*actor.Ref {
 	jobRefs := make([]*actor.Ref, 0)
@@ -43,15 +42,15 @@ type RMJobInfo struct {
 	// should preemptible status come from RM?
 }
 
-type Job struct {
-	JobType model.JobType
-	Id      model.JobID // TODO is already merged in to the job actors
-	// SubmissionTime time.Time
-	// User           model.User // username?
-	// IsPreemptible  bool
-	// RPRef          *actor.Ref
-	RMInfo RMJobInfo
-}
+// type Job struct { // probably not needed? can we merged into ENTbCS but could be used to unify the two
+// 	JobType model.JobType
+// 	Id      model.JobID // TODO is already merged in to the job actors
+// 	// SubmissionTime time.Time
+// 	// User           model.User // username?
+// 	// IsPreemptible  bool
+// 	// RPRef          *actor.Ref
+// 	RMInfo RMJobInfo
+// }
 
 func QueueStatsFromJobs(jobs []*jobv1.Job) *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}

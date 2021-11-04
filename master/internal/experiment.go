@@ -85,7 +85,8 @@ type (
 
 		faultToleranceEnabled bool
 		restored              bool
-		job                   job.Job
+		// job                   job.Job
+		rmJobInfo job.RMJobInfo
 	}
 )
 
@@ -285,7 +286,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Respond(e.toV1Job())
 
 	case job.RMJobInfo:
-		e.job.RMInfo = msg
+		e.rmJobInfo = msg
 
 	// Experiment shutdown logic.
 	case actor.PostStop:
@@ -606,7 +607,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		j.Priority = int32(*priority)
 	}
 
-	job.FillInRmJobInfo(&j, &e.job.RMInfo)
+	job.FillInRmJobInfo(&j, &e.rmJobInfo)
 
 	return &j
 }
