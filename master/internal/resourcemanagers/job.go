@@ -5,7 +5,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 
-	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -52,7 +51,7 @@ information we need out of scheduler, RP, and RM:
 task actors get ResourcesAllocated & released messages and we can compute state of jobs
 and busy slots from there.
 */
-func allocateReqToV1Job(
+func allocateReqToV1Job( // TODO deprecate (k8)
 	group *group,
 	schedulerType string,
 	req *sproto.AllocateRequest,
@@ -106,7 +105,7 @@ Input:
 reqs: a list of allocateRequests sorted by expected order of execution from the scheduler.
 extended: whether the costlier job attributes should be filled or not.
 */
-func mergeToJobs(
+func mergeToJobs( // TODO deprecate (k8)
 	reqs AllocReqs,
 	groups map[*actor.Ref]*group,
 	schedulerType string,
@@ -137,12 +136,16 @@ func mergeToJobs(
 }
 
 // allocReqsToJobOrder converts sorted allocation requests to job order.
-func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
-	for _, job := range mergeToJobs(reqs, nil, DefaultSchedulerConfig().GetType()) {
-		jobIds = append(jobIds, job.JobId)
-	}
-	return jobIds
-}
+// func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
+// 	for _, job := range mergeToJobs(reqs, nil, DefaultSchedulerConfig().GetType()) {
+// 		jobIds = append(jobIds, job.JobId)
+// 	}
+// 	return jobIds
+// }
+
+// order map keys by jobsAhead attribute of values
+// func orderMapKeysByJobsAhead(m map[model.JobID]*job.RMJobInfo) (keys []string) {
+// }
 
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 	if req.Job == nil {
@@ -152,8 +155,17 @@ func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 }
 
 func jobStats(rp *ResourcePool) *jobv1.QueueStats {
-	reqs := rp.scheduler.OrderedAllocations(rp)
-	// TODO work on allocate requests
-	jobs := mergeToJobs(reqs, rp.groups, rp.config.Scheduler.GetType())
-	return job.QueueStatsFromJobs(jobs)
+	stats := &jobv1.QueueStats{}
+	jobinfo := rp.scheduler.JobQInfo(rp)
+	for _, j := range jobinfo {
+		if j.IsPreemptible {
+			stats.PreemptibleCount++
+		}
+		if j.State == sproto.SchedulingStateQueued {
+			stats.QueuedCount++
+		} else {
+			stats.ScheduledCount++
+		}
+	}
+	return stats
 }

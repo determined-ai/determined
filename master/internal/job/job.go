@@ -57,7 +57,9 @@ type RMJobInfo struct {
 	State          sproto.SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
-	// should preemptible status come from RM?
+	IsPreemptible  bool
+	// should preemptible status come from RM? internal/experiments
+	// order: wherever we save it, job config, rm config,
 }
 
 // type Job struct { // probably not needed? can we merged into ENTbCS but could be used to unify the two

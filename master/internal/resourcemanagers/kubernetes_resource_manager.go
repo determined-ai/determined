@@ -244,6 +244,11 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	case GetJobOrder:
 		ctx.Respond(k.getOrderedJobs())
 		return nil
+	case GetJobQInfo:
+		// ctx.Respond(rp.scheduler.JobQInfo(rp))
+		// TODO respond with RMJobInfo and deprecate GetJobOrder
+		return actor.ErrUnexpectedMessage(ctx)
+
 	case SetJobOrder:
 		for it := k.reqList.iterator(); it.next(); {
 			req := it.value()

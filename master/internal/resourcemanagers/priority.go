@@ -91,6 +91,7 @@ func (p *priorityScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJo
 				State:          req.Job.State,
 				RequestedSlots: req.Job.RequestedSlots,
 				AllocatedSlots: req.Job.AllocatedSlots,
+				IsPreemptible:  req.Preemptible,
 			}
 			isAdded[curJob.JobID] = v1JobInfo
 			jobsAhead++

@@ -389,6 +389,7 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	case GetJobQInfo:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
 	case GetJobSummary:
+		// TODO we can respond to this at jobs actor level
 		jobInfo, ok := rp.scheduler.JobQInfo(rp)[msg.JobID]
 		if !ok {
 			return nil
