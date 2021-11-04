@@ -54,9 +54,6 @@ type RMJobInfo struct { // rename ?
 	State          SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
-	// IsPreemptible  bool // NOT HERE read from config file!
-	// weight, priority // READ form job actor. no RM needed
-	// qorder // TODO READ form job actor. no RM needed
 }
 
 type GetJobSummary struct{}

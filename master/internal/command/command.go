@@ -58,7 +58,7 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
-	cmd.isPreemptible = true // TODO compute from config files
+	cmd.isPreemptible = false // TODO compute from config files
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})

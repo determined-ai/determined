@@ -38,9 +38,8 @@ func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.
 		v1JobInfo, exists := isAdded[*req.JobID]
 		if !exists {
 			v1JobInfo = &job.RMJobInfo{
-				JobsAhead:     jobsAhead,
-				State:         req.State,
-				IsPreemptible: req.Preemptible,
+				JobsAhead: jobsAhead,
+				State:     req.State,
 			}
 			isAdded[*req.JobID] = v1JobInfo
 			jobActors[*req.JobID] = req.Group
@@ -62,9 +61,9 @@ func jobStats(rp *ResourcePool) *jobv1.QueueStats {
 	stats := &jobv1.QueueStats{}
 	jobinfo := rp.scheduler.JobQInfo(rp)
 	for _, j := range jobinfo {
-		if j.IsPreemptible {
-			stats.PreemptibleCount++
-		}
+		// if j.IsPreemptible { // TODO
+		// 	stats.PreemptibleCount++
+		// }
 		if j.State == job.SchedulingStateQueued {
 			stats.QueuedCount++
 		} else {
