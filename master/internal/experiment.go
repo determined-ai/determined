@@ -136,8 +136,11 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
-	// TODO compute isPreemptible from the RM config.
-	isPreemptible := true
+	isPreemptible := ReadPreemptionStatus(
+		master.config,
+		expModel.Config.Resources().ResourcePool(),
+		model.TaskTypeTrial,
+	)
 
 	return &experiment{
 		Experiment:          expModel,

@@ -58,7 +58,7 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
-	cmd.isPreemptible = false // TODO compute from config files
+	// cmd.isPreemptible = internal.ReadPreemptionStatus() // need to move Config to its own package
 
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})

@@ -868,3 +868,17 @@ func (m *Master) Run(ctx context.Context) error {
 
 	return m.startServers(ctx, cert)
 }
+
+func ReadPreemptionStatus(config *Config, rpName string, taskType model.TaskType) bool {
+	return true
+	// TODO
+	/*
+		does this task allow preemption?
+		k8 or agent
+		if k8:
+			can the selected scheduler preempt? is it set to?
+		if agent:
+			can the default scheduler preempt? is it set to?
+			can thsi tasks rp preempt? is it set to?
+	*/
+}
