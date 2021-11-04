@@ -4,8 +4,8 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('fonts/determined-ai.woff2?wo7opj') format('woff2'),
-    url('fonts/determined-ai.woff?wo7opj') format('woff');
+    url('fonts/determined-ai.woff2?2sciyp') format('woff2'),
+    url('fonts/determined-ai.woff?2sciyp') format('woff');
 }
 
 [class^='icon-'],
@@ -59,6 +59,7 @@
 .icon-list::before { content: '\e905'; }
 .icon-lock::before { content: '\e911'; }
 .icon-logs::before { content: '\e91b'; }
+.icon-model::before { content: '\e937'; }
 .icon-notebook::before { content: '\e906'; }
 .icon-overflow-horizontal::before { content: '\e907'; }
 .icon-overflow-vertical::before { content: '\e908'; }
