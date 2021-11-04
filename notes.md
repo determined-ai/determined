@@ -10,9 +10,9 @@
 - [x] low cost single job summary lookup
 - [x] scheduling state
 - [ ] cache jobinfo in jobs actor?
-- [ ] remove isPrememptible from rmjobiinfo, read from config
-- [ ] read prio, weight, qvalue from job actor
-  - [ ] group usage?
+- [k] remove isPrememptible from rmjobiinfo, read from config
+- [x] read prio, weight, qvalue from job actor
+  - [ ] group usage: noOp? we probably still want to store on job actor and propagate down the same way group is set. 
 
 
 chat:
