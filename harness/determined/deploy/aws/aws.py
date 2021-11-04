@@ -372,7 +372,7 @@ def deploy_stack(
 
             if prompt_needed:
                 val = input(
-                    "If --deployment-type has changed, updating the stack may erase the database. "
+                    "If --deployment-type has changed, updating the stack may erase the database.\n"
                     "Are you sure you want to proceed? [y/N]"
                 )
                 if val.lower() != "y":
