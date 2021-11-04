@@ -10,8 +10,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-// TODO move sproto/job.go here
-
 var JobsActorAddr = actor.Addr("jobs")
 
 // TODO these could be set up as jobs children.
@@ -51,7 +49,7 @@ func JobActorAddr(jobType model.JobType, entityId string) actor.Address {
 }
 
 // RMJobInfo packs information available only to the RM that updates frequently.
-type RMJobInfo struct {
+type RMJobInfo struct { // rename ?
 	JobsAhead      int
 	State          SchedulingState
 	RequestedSlots int
@@ -64,16 +62,6 @@ type RMJobInfo struct {
 	// adjusted priorities and weights should be persisted in this actor, probably. and passed down to rp group?
 	// check with RMJobInfo definition
 }
-
-// type Job struct { // probably not needed? can we merged into ENTbCS but could be used to unify the two
-// 	JobType model.JobType
-// 	Id      model.JobID // TODO is already merged in to the job actors
-// 	// SubmissionTime time.Time
-// 	// User           model.User // username?
-// 	// IsPreemptible  bool
-// 	// RPRef          *actor.Ref
-// 	RMInfo RMJobInfo
-// }
 
 type GetJobSummary struct{}
 
