@@ -144,18 +144,6 @@ func allocReqsToJobOrder(reqs []*sproto.AllocateRequest) (jobIds []string) {
 	return jobIds
 }
 
-// getJobSummary given an ordered list of allocateRequests returns the
-// requested job summary.
-func getV1JobSummary(rp *ResourcePool, jobID model.JobID, requests AllocReqs) *jobv1.JobSummary {
-	jobs := mergeToJobs(requests, rp.groups, rp.config.Scheduler.GetType())
-	for _, job := range jobs {
-		if job.JobId == jobID.String() {
-			return job.Summary
-		}
-	}
-	return nil
-}
-
 func setJobState(req *sproto.AllocateRequest, state sproto.SchedulingState) {
 	if req.Job == nil {
 		return
