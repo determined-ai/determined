@@ -3,8 +3,6 @@ package resourcemanagers
 import (
 	"fmt"
 
-	"github.com/labstack/gommon/log"
-
 	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -37,13 +35,13 @@ func MakeScheduler(config *SchedulerConfig) Scheduler {
 	}
 }
 
-func logAllocRequests(reqs []*sproto.AllocateRequest, prefix string) {
-	var str string
-	for _, req := range reqs {
-		if req.Job == nil {
-			continue
-		}
-		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.Job.JobID)
-	}
-	log.Debug(prefix + ": " + str)
-}
+// func logAllocRequests(reqs []*sproto.AllocateRequest, prefix string) {
+// 	var str string
+// 	for _, req := range reqs {
+// 		if req.Job == nil {
+// 			continue
+// 		}
+// 		str += fmt.Sprintf(", AID %s, JID %s | ", req.AllocationID, req.Job.JobID)
+// 	}
+// 	log.Debug(prefix + ": " + str)
+// }

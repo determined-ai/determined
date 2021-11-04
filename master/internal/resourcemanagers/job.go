@@ -31,12 +31,6 @@ type GetJobOrder struct{}
 // GetJobQInfo is used to get all job information in one go avoid any inconsistencies.
 type GetJobQInfo struct{}
 
-// GetJobSummary requests a JobSummary.
-// Expected response: jobv1.JobSummary.
-type GetJobSummary struct { // CHECK should these use the same type as response instead of a new msg
-	JobID model.JobID
-}
-
 // GetJobQStats requests stats for a queue.
 // Expected response: jobv1.QueueStats.
 type GetJobQStats struct{}

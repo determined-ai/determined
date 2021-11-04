@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -253,8 +252,7 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		GetJobOrder,
 		GetJobQInfo,
 		SetJobOrder,
-		GetJobQStats,
-		GetJobSummary:
+		GetJobQStats:
 		return rp.receiveJobQueueMsg(ctx)
 
 	case sproto.GetTaskHandler:
@@ -388,16 +386,6 @@ func (rp *ResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		ctx.Respond(*jobStats(rp))
 	case GetJobQInfo:
 		ctx.Respond(rp.scheduler.JobQInfo(rp))
-	case GetJobSummary:
-		// TODO we can respond to this at jobs actor level
-		jobInfo, ok := rp.scheduler.JobQInfo(rp)[msg.JobID]
-		if !ok {
-			return nil
-		}
-		ctx.Respond(&jobv1.JobSummary{
-			State:     jobInfo.State.Proto(),
-			JobsAhead: int32(jobInfo.JobsAhead),
-		})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}

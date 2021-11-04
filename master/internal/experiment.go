@@ -287,6 +287,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case *job.RMJobInfo:
 		e.rmJobInfo = msg
 
+	case job.GetJobSummary:
+		ctx.Respond(e.toV1Job().Summary)
+
 	// Experiment shutdown logic.
 	case actor.PostStop:
 		if err := e.db.SaveExperimentProgress(e.ID, nil); err != nil {

@@ -23,9 +23,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/lttb"
-	"github.com/determined-ai/determined/master/internal/resourcemanagers"
-	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -36,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
 var experimentsAddr = actor.Addr("experiments")
@@ -85,27 +85,17 @@ func (a *apiServer) GetExperiment(
 			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
 
-	resp := apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}
+	resp := apiv1.GetExperimentResponse{
+		Experiment: exp,
+		Config:     protoutils.ToStruct(conf),
+		JobSummary: &jobv1.JobSummary{},
+	}
 
 	if model.TerminalStates[model.StateFromProto(exp.State)] {
 		return &resp, nil
 	}
 
-	jobSummaryMsg := resourcemanagers.GetJobSummary{JobID: model.JobID(exp.JobId)}
-
-	switch {
-	case sproto.UseAgentRM(a.m.system):
-		err = a.actorRequest(
-			sproto.AgentRMAddr.Child(exp.ResourcePool), jobSummaryMsg, &resp.JobSummary,
-		)
-	case sproto.UseK8sRM(a.m.system):
-		err = a.actorRequest(sproto.K8sRMAddr, jobSummaryMsg, &resp.JobSummary)
-	default:
-		err = status.Error(codes.NotFound, "cannot find appropriate resource manager")
-	}
-	if err != nil {
-		return nil, err
-	}
+	a.actorRequest(actor.Addr("experiments").Child(exp.Id), job.GetJobSummary{}, &resp.JobSummary)
 
 	return &resp, nil
 }

@@ -72,19 +72,7 @@ type RMJobInfo struct {
 // 	RMInfo RMJobInfo
 // }
 
-func QueueStatsFromJobs(jobs []*jobv1.Job) *jobv1.QueueStats {
-	stats := &jobv1.QueueStats{}
-	for _, job := range jobs {
-		if job.IsPreemptible {
-			stats.PreemptibleCount++
-		}
-		if job.Summary.State == jobv1.State_STATE_QUEUED {
-			stats.QueuedCount++
-		} else {
-			stats.ScheduledCount++
-		}
-	}
-	return stats
+type GetJobSummary struct {
 }
 
 // Jobs manage jobs.
