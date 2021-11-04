@@ -9,12 +9,16 @@
 - [x] add name and user information for jobs
 - [x] low cost single job summary lookup
 - [x] scheduling state
-- [ ] group usage?
+- [ ] cache jobinfo in jobs actor?
+- [ ] remove isPrememptible from rmjobiinfo, read from config
+- [ ] read prio, weight, qvalue from job actor
+  - [ ] group usage?
 
 
 chat:
 - async update pattern of q info
-- multiple queues per scheduler
+- multiple queues per scheduler (leave out of this pr)
+- jobinfo struct
 
 ## actor system
 ### tip of master:

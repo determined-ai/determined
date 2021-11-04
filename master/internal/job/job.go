@@ -1,4 +1,4 @@
-package job
+package job // jobqueue
 
 import (
 	"errors"
@@ -54,7 +54,9 @@ type RMJobInfo struct { // rename ?
 	State          SchedulingState
 	RequestedSlots int
 	AllocatedSlots int
-	IsPreemptible  bool
+	IsPreemptible  bool // NOT HERE read from config file!
+	// weight, priority // READ form job actor. no RM needed
+	// qorder // TODO READ form job actor. no RM needed
 	// should preemptible status come from RM? internal/experiments
 	// order: wherever we save it, job config, rm config,
 	// TODO where is source of truth for weight and priority? should be here with fallback on RM
