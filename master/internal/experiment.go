@@ -601,6 +601,7 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Weight:         e.Config.RawResources.Weight(),
 		Username:       fmt.Sprintf("%d-userid", e.OwnerID),
+		Name:           e.Config.Name().String(),
 	}
 
 	if priority := e.Config.RawResources.Priority(); priority != nil {

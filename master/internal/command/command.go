@@ -404,6 +404,7 @@ func (c *command) toV1Job() *jobv1.Job {
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		Weight:         c.Config.Resources.Weight,
+		Name:           c.Config.Description,
 	}
 
 	if priority := c.Config.Resources.Priority; priority != nil {
