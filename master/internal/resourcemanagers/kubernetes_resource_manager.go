@@ -4,8 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
-
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -109,7 +108,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(getTaskHandler(k.reqList, msg.ID))
 
 	case
-		GetJobOrder,
+		GetJobQInfo,
 		SetJobOrder:
 		return k.receiveJobQueueMsg(ctx)
 
@@ -241,12 +240,8 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 
 func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case GetJobOrder:
-		ctx.Respond(k.getOrderedJobs())
-		return nil
 	case GetJobQInfo:
-		// ctx.Respond(rp.scheduler.JobQInfo(rp))
-		// TODO respond with RMJobInfo and deprecate GetJobOrder
+		ctx.Respond(k.getOrderedJobQInfo())
 		return actor.ErrUnexpectedMessage(ctx)
 
 	case SetJobOrder:
@@ -285,9 +280,10 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 
 // getOrderedJobs generates a list of jobv1.Job through scheduler.OrderedAllocations.
 // CHECK should this be on the resourcepool struct?
-func (k *kubernetesResourceManager) getOrderedJobs() []*jobv1.Job {
+func (k *kubernetesResourceManager) getOrderedJobQInfo() map[model.JobID]*job.RMJobInfo {
 	reqs, _ := sortTasksWithPosition(k.reqList, k.groups)
-	return mergeToJobs(reqs, k.groups, kubernetesScheduler)
+	jobQinfo, _ := mergeToJobQInfo(reqs)
+	return jobQinfo
 }
 
 func (k *kubernetesResourceManager) receiveSetTaskName(ctx *actor.Context, msg sproto.SetTaskName) {

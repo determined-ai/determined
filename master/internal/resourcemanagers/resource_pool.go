@@ -249,7 +249,6 @@ func (rp *ResourcePool) Receive(ctx *actor.Context) error {
 		return rp.receiveRequestMsg(ctx)
 
 	case
-		GetJobOrder,
 		GetJobQInfo,
 		SetJobOrder,
 		GetJobQStats:
