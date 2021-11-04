@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 
+	"github.com/determined-ai/determined/master/internal/job"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -84,6 +85,40 @@ func allocateReqToV1Job( // TODO deprecate (k8)
 	}
 
 	return job
+}
+
+func mergeToJobQInfo(reqs AllocReqs) (map[model.JobID]*job.RMJobInfo, map[model.JobID]*actor.Ref) {
+	isAdded := make(map[model.JobID]*job.RMJobInfo)
+	jobActors := make(map[model.JobID]*actor.Ref)
+	jobsAhead := 0
+	for _, req := range reqs {
+		curJob := req.Job
+		if curJob == nil {
+			continue
+		}
+		v1JobInfo, exists := isAdded[curJob.JobID]
+		if !exists {
+			v1JobInfo = &job.RMJobInfo{
+				JobsAhead:      jobsAhead,
+				State:          req.Job.State,
+				RequestedSlots: req.Job.RequestedSlots,
+				AllocatedSlots: req.Job.AllocatedSlots,
+				IsPreemptible:  req.Preemptible,
+			}
+			isAdded[curJob.JobID] = v1JobInfo
+			jobsAhead++
+			jobActors[curJob.JobID] = req.Group
+		}
+		// Carry over the the highest state.
+		if v1JobInfo.State < curJob.State {
+			isAdded[curJob.JobID].State = curJob.State
+		}
+		v1JobInfo.RequestedSlots += req.SlotsNeeded
+		if sproto.ScheduledStates[req.Job.State] {
+			v1JobInfo.AllocatedSlots += req.SlotsNeeded
+		}
+	}
+	return isAdded, jobActors
 }
 
 func addAllocateReqSlots(v1Job *jobv1.Job, req *sproto.AllocateRequest) {
