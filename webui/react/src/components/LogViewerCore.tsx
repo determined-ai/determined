@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { ListChildComponentProps, ListOnItemsRenderedProps, VariableSizeList } from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
-import { debounce, throttle } from 'throttle-debounce';
+import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
 import LogViewerEntry, {
@@ -15,17 +15,20 @@ import useResize from 'hooks/useResize';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 import { Log, LogLevel, RecordKey } from 'types';
+import { clone } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { copyToClipboard } from 'utils/dom';
+import { datetimeStringSorter, numericSorter } from 'utils/sort';
 
 import css from './LogViewerCore.module.scss';
 
 interface Props {
   decoder: (data: unknown) => Log,
+  filters?: React.ReactNode;
   onDownload?: () => void;
-  onFetch: (options: FetchOptions) => FetchArgs;
+  onFetch: (config: FetchConfig, type: FetchType) => FetchArgs;
+  sortKey?: keyof Log;
   title: string;
-  type: OffsetType;
 }
 
 interface ViewerLog extends Log {
@@ -34,22 +37,36 @@ interface ViewerLog extends Log {
 
 type Hash = Record<RecordKey, boolean>;
 
-export interface FetchOptions {
+export interface FetchConfig {
   canceler: AbortController;
-  follow?: boolean;
+  isNewestFirst: boolean;
   limit: number;
   offset?: number;
+  offsetLog?: Log;
 }
 
-export enum OffsetType {
-  Id = 'id',
-  Timestamp = 'timestamp',
+export enum FetchType {
+  Initial = 'Initial',
+  Newer = 'Newer',
+  Older = 'Older',
+  Stream = 'Stream',
 }
 
 const PAGE_LIMIT = 50;
 const PADDING = 8;
-const DEBOUNCE_TIME = 500;
 const THROTTLE_TIME = 50;
+
+const defaultLocal = {
+  fetchOffset: -PAGE_LIMIT,
+  idMap: {} as Hash,
+  isAtOffsetEnd: false,
+  isFetching: false,
+  isOnBottom: false,
+  isOnTop: false,
+  isScrollReady: false,
+  previousHeight: 0,
+  previousWidth: 0,
+};
 
 const formatClipboardHeader = (log: Log): string => {
   const format = `%${MAX_DATETIME_LENGTH - 1}s `;
@@ -58,19 +75,25 @@ const formatClipboardHeader = (log: Log): string => {
   return sprintf(`%-9s ${format}`, level, datetime);
 };
 
-const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }: Props) => {
+const logSorter = (key: keyof Log) => (a: Log, b: Log): number => {
+  const aValue = a[key];
+  const bValue = b[key];
+  if (key === 'id') return numericSorter(aValue as number, bValue as number);
+  if (key === 'time') return datetimeStringSorter(aValue as string, bValue as string);
+  return 0;
+};
+
+const LogViewerCore: React.FC<Props> = ({
+  decoder,
+  onDownload,
+  onFetch,
+  sortKey = 'time',
+  ...props
+}: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
-  const local = useRef({
-    fetchOffset: -PAGE_LIMIT,
-    idMap: {} as Hash,
-    isAtOffsetEnd: false,
-    isFetching: false,
-    isOnBottom: false,
-    isOnTop: false,
-    isScrollReady: false,
-  });
+  const local = useRef(clone(defaultLocal));
   const [ canceler ] = useState(new AbortController());
   const [ isNewestFirst, setIsNewestFirst ] = useState(true);
   const [ isTailing, setIsTailing ] = useState(true);
@@ -102,6 +125,8 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
     return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
   }, [ charMeasures, maxCharPerLine, logs ]);
 
+  const resizeLogs = useCallback(() => listRef.current?.resetAfterIndex(0), []);
+
   const processLogs = useCallback((newLogs: Log[]) => {
     const map = local.current.idMap;
     return newLogs
@@ -117,30 +142,26 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
       .map(log => {
         const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
         return { ...log, formattedTime };
-      });
-  }, []);
+      })
+      .sort(logSorter(sortKey));
+  }, [ sortKey ]);
 
-  const addLogs = useCallback((newLogs: ViewerLog[]): void => {
+  const addLogs = useCallback((newLogs: ViewerLog[], prepend = false): void => {
     if (newLogs.length === 0) return;
+    setLogs(prevLogs => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
+    resizeLogs();
+  }, [ resizeLogs ]);
 
-    setLogs(prevLogs => {
-      return [ ...prevLogs, ...newLogs ].sort((logA, logB) => {
-        const logATime = logA.time || '';
-        const logBTime = logB.time || '';
-        return logATime.localeCompare(logBTime);
-      });
-    });
-
-    listRef.current?.resetAfterIndex(0);
-  }, []);
-
-  const fetchLogs = useCallback(async (options: FetchOptions): Promise<ViewerLog[]> => {
+  const fetchLogs = useCallback(async (
+    config: Partial<FetchConfig>,
+    type: FetchType,
+  ): Promise<ViewerLog[]> => {
     const buffer: Log[] = [];
 
     local.current.isFetching = true;
 
     await consumeStream(
-      onFetch(options),
+      onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
       event => {
         const logEntry = decoder(event);
         isNewestFirst ? buffer.unshift(logEntry) : buffer.push(logEntry);
@@ -170,17 +191,17 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
     const shouldFetchNewLogs = local.current.isOnBottom && !isNewestFirst;
     const shouldFetchOldLogs = local.current.isOnTop && isNewestFirst;
 
-    if (shouldFetchNewLogs) local.current.fetchOffset += PAGE_LIMIT;
-    if (shouldFetchOldLogs) local.current.fetchOffset -= PAGE_LIMIT;
     if (shouldFetchNewLogs || shouldFetchOldLogs) {
-      const newLogs = await fetchLogs({
-        canceler,
-        follow: false,
-        limit: PAGE_LIMIT,
-        offset: local.current.fetchOffset,
-      });
+      const newLogs = await fetchLogs(
+        {
+          canceler,
+          isNewestFirst,
+          offsetLog: shouldFetchNewLogs ? logs.last() : logs.first(),
+        },
+        shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
+      );
 
-      addLogs(newLogs);
+      addLogs(newLogs, shouldFetchOldLogs);
 
       // Restore previous scroll position upon adding older logs.
       if (shouldFetchOldLogs) {
@@ -252,12 +273,7 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
 
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
-    fetchLogs({
-      canceler,
-      follow: false,
-      limit: PAGE_LIMIT,
-      offset: isNewestFirst ? -PAGE_LIMIT : 0,
-    }).then(logs => {
+    fetchLogs({ canceler, isNewestFirst }, FetchType.Initial).then(logs => {
       addLogs(logs);
 
       if (isNewestFirst) {
@@ -297,12 +313,7 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
 
     if (isNewestFirst) {
       consumeStream(
-        onFetch({
-          canceler,
-          follow: true,
-          limit: 0,
-          offset: -1,
-        }),
+        onFetch({ canceler, isNewestFirst: true, limit: PAGE_LIMIT }, FetchType.Stream),
         event => {
           buffer.push(decoder(event));
           throttledProcessBuffer();
@@ -316,23 +327,33 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
     };
   }, [ addLogs, decoder, isNewestFirst, onFetch, processLogs ]);
 
-  // Force recomputing messages height when container width changes.
+  // Re
   useEffect(() => {
-    if (!local.current.isScrollReady) return;
+    local.current = clone(defaultLocal);
 
-    const debounceFunc = debounce(DEBOUNCE_TIME, () => {
-      listRef.current?.resetAfterIndex(0);
-    });
-
-    debounceFunc();
-
-    return () => debounceFunc.cancel();
-  }, [ containerSize.width, containerSize.height ]);
+    setLogs([]);
+    setIsTailing(true);
+    setIsNewestFirst(true);
+  }, [ onFetch ]);
 
   // Abort all outstanding API calls if log viewer unmounts.
   useEffect(() => {
     return () => canceler.abort();
   }, [ canceler ]);
+
+  // Force recomputing messages height when container size changes.
+  useLayoutEffect(() => {
+    if (containerSize.width === 0 || containerSize.height === 0) return;
+
+    const sizeChanged = (
+      containerSize.height === local.current.previousHeight &&
+      containerSize.width === local.current.previousWidth
+    );
+    if (sizeChanged) resizeLogs();
+
+    local.current.previousWidth = containerSize.width;
+    local.current.previousHeight = containerSize.height;
+  }, [ containerSize, resizeLogs ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -376,7 +397,7 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
   }, []);
 
   const logViewerTitle = (
-    <div className={css.title}>{title}</div>
+    <div className={css.title}>{props.title}</div>
   );
 
   const logViewerOptions = (
@@ -425,6 +446,7 @@ const LogViewerCore: React.FC<Props> = ({ decoder, onDownload, onFetch, title }:
       bodyNoPadding
       bodyScroll
       divider
+      filters={props.filters}
       maxHeight
       options={logViewerOptions}
       title={logViewerTitle}>

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 import {
   CommandState, HpImportance, MetricName, MetricType, Primitive, RunState, State,
 } from 'types';
@@ -46,6 +48,19 @@ export const booleanSorter = (a: boolean, b: boolean): number => {
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+export const datetimeStringSorter = (a?: string, b?: string): number => {
+  // Handle undefined cases.
+  if (a === b) return 0;
+  if (a && !b) return -1;
+  if (!a && b) return 1;
+
+  // Compare as date objects.
+  const aDate = dayjs(a);
+  const bDate = dayjs(b);
+  if (aDate.isSame(bDate)) return 0;
+  return aDate.isBefore(bDate) ? -1 : 1;
 };
 
 export const hpImportanceSorter = (a: string, b: string, hpImportance: HpImportance): number => {
