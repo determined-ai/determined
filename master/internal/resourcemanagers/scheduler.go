@@ -17,7 +17,6 @@ import (
 // the overhead of restarting a preempted task.
 type Scheduler interface {
 	Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref)
-	OrderedAllocations(rp *ResourcePool) []*sproto.AllocateRequest
 	JobQInfo(rp *ResourcePool) map[model.JobID]*job.RMJobInfo
 }
 
