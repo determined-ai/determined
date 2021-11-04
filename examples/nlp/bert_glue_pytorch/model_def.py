@@ -117,6 +117,9 @@ class BertPytorch(PyTorchTrial):
         """
 
         inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[-1]}
+        inputs["token_type_ids"] = (
+            batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
+        )
 
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)
@@ -132,6 +135,9 @@ class BertPytorch(PyTorchTrial):
         Returns: Dictionary of the calculated Metrics
         """
         inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+        inputs["token_type_ids"] = (
+            batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
+        )
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)
         return results

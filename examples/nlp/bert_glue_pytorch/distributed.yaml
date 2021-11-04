@@ -3,6 +3,7 @@ hyperparameters:
   global_batch_size: 192 # per gpu batch size of 24
   learning_rate: 2.0e-5
   lr_scheduler_epoch_freq: 1
+  model_type: 'bert'
   adam_epsilon: 1.0e-8
   weight_decay: 0
   num_warmup_steps: 0
