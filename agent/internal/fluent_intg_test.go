@@ -26,9 +26,9 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/test/testutils"
 )
@@ -148,7 +148,7 @@ func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
 			StdType:     stringToPointer("stdout"),
 		},
 	}
-	actual := `[rank=4]
+	actual := `[rank=4] 
 [rank=1] INFO: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)
 [rank=2] ERROR: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)
 [rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]` // nolint:lll
