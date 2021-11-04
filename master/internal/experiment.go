@@ -85,7 +85,8 @@ type (
 		faultToleranceEnabled bool
 		restored              bool
 		// job                   job.Job
-		rmJobInfo *job.RMJobInfo
+		rmJobInfo     *job.RMJobInfo
+		isPreemptible bool
 	}
 )
 
@@ -135,6 +136,9 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
+	// TODO compute isPreemptible from the RM config.
+	isPreemptible := true
+
 	return &experiment{
 		Experiment:          expModel,
 		rm:                  master.rm,
@@ -151,6 +155,7 @@ func newExperiment(master *Master, expModel *model.Experiment, taskSpec *tasks.T
 		experimentState: experimentState{
 			TrialSearcherState: map[model.RequestID]trialSearcherState{},
 		},
+		isPreemptible: isPreemptible,
 	}, nil
 }
 
@@ -596,15 +601,15 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		JobId:          e.JobID.String(),
 		EntityId:       fmt.Sprint(e.ID),
 		Type:           jobv1.Type_TYPE_EXPERIMENT,
-		IsPreemptible:  true, // trial allocate requests are set to true. // ref RMJobInfo
-		ResourcePool:   e.Config.RawResources.ResourcePool(),
+		IsPreemptible:  e.isPreemptible,
+		ResourcePool:   e.Config.Resources().ResourcePool(),
 		SubmissionTime: timestamppb.New(e.StartTime),
-		Weight:         e.Config.RawResources.Weight(),
+		Weight:         e.Config.Resources().Weight(),
 		Username:       fmt.Sprintf("%d-userid", e.OwnerID),
 		Name:           e.Config.Name().String(),
 	}
 
-	if priority := e.Config.RawResources.Priority(); priority != nil {
+	if priority := e.Config.Resources().Priority(); priority != nil {
 		j.Priority = int32(*priority)
 	}
 

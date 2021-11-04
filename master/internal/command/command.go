@@ -58,6 +58,8 @@ func createGenericCommandActor(
 		serviceAddress: &serviceAddress,
 	}
 
+	cmd.isPreemptible = true // TODO compute from config files
+
 	a, _ := ctx.ActorOf(cmd.taskID, cmd)
 	summaryFut := ctx.Ask(a, getSummary{})
 	if err := summaryFut.Error(); err != nil {
@@ -87,6 +89,7 @@ type command struct {
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	rmJobInfo      *job.RMJobInfo
+	isPreemptible  bool
 }
 
 // Receive implements the actor.Actor interface.
@@ -282,7 +285,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case terminateForGC:
 		ctx.Self().Stop()
 
-	case sproto.SetGroupOrder, sproto.SetGroupWeight, sproto.SetGroupPriority:
+	case sproto.SetGroupOrder:
+		// c.Config.Resources.
+		// TODO
+
+	case sproto.SetGroupWeight:
+		c.Config.Resources.Weight = msg.Weight
+
+	case sproto.SetGroupPriority:
+		c.Config.Resources.Priority = msg.Priority
+		// QUESTION: where do these get persisted?
 		// these operations do not require special handling by commands
 
 	default:
@@ -396,10 +408,10 @@ func toProto(as []cproto.Address) []*structpb.Struct {
 
 func (c *command) toV1Job() *jobv1.Job {
 	j := jobv1.Job{
-		JobId:    c.jobID.String(),
-		EntityId: string(c.taskID),
-		Type:     c.jobType.Proto(),
-		// IsPreemptible:  // TODO see internal/job/RMJobInfo
+		JobId:          c.jobID.String(),
+		EntityId:       string(c.taskID),
+		Type:           c.jobType.Proto(),
+		IsPreemptible:  c.isPreemptible,
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		SubmissionTime: timestamppb.New(c.registeredTime),
 		Username:       c.Base.Owner.Username,
