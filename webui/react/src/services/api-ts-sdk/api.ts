@@ -11960,7 +11960,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options: any = {}): FetchArgs {
+        getModelLabels(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12474,8 +12474,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelLabels(options);
+        getModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12711,8 +12711,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelLabels(options)(fetch, basePath);
+        getModelLabels(options?: any) {
+            return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
         },
         /**
          * 
@@ -12877,8 +12877,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelLabels(options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelLabels(options)(this.fetch, this.basePath);
+    public getModelLabels(options?: any) {
+        return ModelsApiFp(this.configuration).getModelLabels(options)(this.fetch, this.basePath);
     }
 
     /**
