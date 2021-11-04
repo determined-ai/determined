@@ -1,9 +1,8 @@
-name: bert_glue_pytorch_distributed 
+name: bert_glue_pytorch_distributed
 hyperparameters:
   global_batch_size: 192 # per gpu batch size of 24
   learning_rate: 2.0e-5
   lr_scheduler_epoch_freq: 1
-  model_type: 'bert'
   adam_epsilon: 1.0e-8
   weight_decay: 0
   num_warmup_steps: 0
@@ -11,7 +10,7 @@ hyperparameters:
   max_seq_length: 128
 searcher:
   name: single
-  metric: acc
+  metric: accuracy
   max_length:
     batches: 50
   smaller_is_better: false
@@ -22,5 +21,4 @@ data:
   model_name_or_path: "bert-base-uncased"
   output_mode: "classification"
   path_to_mrpc: ''
-  download_data: True
 entrypoint: model_def:BertPytorch

@@ -1,2 +1,2 @@
-pip install transformers==2.8.0 scikit-learn==0.22.2.post1
-pip install sentencepiece==0.1.91
+apt-get install -y git-lfs
+pip install transformers==4.12.3 datasets==1.15.1 scikit-learn==1.0.1

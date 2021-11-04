@@ -15,10 +15,9 @@ from torch import nn
 
 from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 from transformers import AdamW, get_linear_schedule_with_warmup
-from transformers import glue_compute_metrics as compute_metrics
-from transformers import glue_processors as processors
+from transformers import AutoConfig, AutoModelForSequenceClassification
+from datasets import load_dataset, load_metric
 
-import constants
 import data
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
@@ -28,26 +27,20 @@ class BertPytorch(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
-        # Create a unique download directory for each rank so they don't overwrite each
-        # other when doing distributed training.
-        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.data_downloaded = False
-
-        config_class, model_class, tokenizer_class = constants.MODEL_CLASSES[
-            self.context.get_hparam("model_type")
-        ]
-        processor = processors[f"{self.context.get_data_config().get('task').lower()}"]()
-        label_list = processor.get_labels()
+        raw_dataset = load_dataset("glue", self.context.get_data_config().get('task').lower())
+        label_list = raw_dataset["train"].features["label"].names
         num_labels = len(label_list)
 
+        self.metric = load_metric("glue", self.context.get_data_config().get('task').lower())
+
         cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
-        config = config_class.from_pretrained(
+        config = AutoConfig.from_pretrained(
             self.context.get_data_config().get("model_name_or_path"),
             num_labels=num_labels,
             finetuning_task=self.context.get_data_config().get("task").lower(),
             cache_dir=cache_dir_per_rank,
         )
-        self.model = self.context.wrap_model(model_class.from_pretrained(
+        self.model = self.context.wrap_model(AutoModelForSequenceClassification.from_pretrained(
             self.context.get_data_config().get("model_name_or_path"),
             from_tf=(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
             config=config,
@@ -83,38 +76,17 @@ class BertPytorch(PyTorchTrial):
             LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
 
-    def download_dataset(self) -> None:
-        task = self.context.get_data_config().get("task")
-        path_to_mrpc = self.context.get_data_config().get("path_to_mrpc")
-
-        if not self.context.get_data_config().get("download_data"):
-            # Exit if you do not want to download data at all
-            return
-
-        data.download_data(task, self.download_directory, path_to_mrpc)
-        self.data_downloaded = True
-
     def build_training_data_loader(self) -> DataLoader:
-        if not self.data_downloaded:
-            self.download_dataset()
-
         train_dataset = data.load_and_cache_examples(
-            base_data_dir=self.download_directory,
             config=self.context.get_data_config(),
-            model_type=self.context.get_hparam("model_type"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             evaluate=False,
         )
         return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> DataLoader:
-        if not self.data_downloaded:
-            self.download_dataset()
-
         test_dataset = data.load_and_cache_examples(
-            base_data_dir=self.download_directory,
             config=self.context.get_data_config(),
-            model_type=self.context.get_hparam("model_type"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             evaluate=True,
         )
@@ -129,13 +101,12 @@ class BertPytorch(PyTorchTrial):
         preds = logits.detach().cpu().numpy()
         out_labels_ids = inputs["labels"].detach().cpu().numpy()
         if self.context.get_data_config()["output_mode"] == "classification":
-            preds = np.argmax(preds, axis=1)
+           preds = np.argmax(preds, axis=1)
         elif self.context.get_data_config()["output_mode"] == "regression":
-            preds = np.squeeze(preds)
+           preds = np.squeeze(preds)
 
-        results = compute_metrics(
-            self.context.get_data_config().get("task").lower(), preds, out_labels_ids
-        )
+        self.metric.add_batch(predictions=preds, references=out_labels_ids)
+        results = self.metric.compute()
         results["loss"] = loss
         return results
 
@@ -145,12 +116,8 @@ class BertPytorch(PyTorchTrial):
         Returns: Dictionary of the calculated Metrics
         """
 
-        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[-1]}
 
-        if self.context.get_hparam("model_type") != "distilbert":
-            inputs["token_type_ids"] = (
-                batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
-            )
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)
 
@@ -165,11 +132,6 @@ class BertPytorch(PyTorchTrial):
         Returns: Dictionary of the calculated Metrics
         """
         inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
-
-        if self.context.get_hparam("model_type") != "distilbert":
-            inputs["token_type_ids"] = (
-                batch[2] if self.context.get_hparam("model_type") in ["bert", "xlnet"] else None
-            )
         outputs = self.model(**inputs)
         results = self.get_metrics(outputs, inputs)
         return results
