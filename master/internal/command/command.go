@@ -147,9 +147,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 		jobSummary := sproto.JobSummary{
-			JobID:    c.jobID,
-			JobType:  c.jobType,
-			EntityID: string(c.taskID), // CHECK
+			JobID: c.jobID,
 		}
 
 		allocation := task.NewAllocation(sproto.AllocateRequest{

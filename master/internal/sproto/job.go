@@ -55,8 +55,6 @@ var ScheduledStates = map[SchedulingState]bool{
 // JobSummary contains information about a job for external display.
 type JobSummary struct { // FIXME same as job.RMJobInfo
 	JobID          model.JobID
-	JobType        model.JobType // to get to the job actor
-	EntityID       string        `json:"entity_id"` // to get to the job actor
 	State          SchedulingState
 	RequestedSlots int
 	AllocatedSlots int

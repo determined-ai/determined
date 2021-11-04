@@ -17,9 +17,10 @@ type (
 		AllocationID model.AllocationID
 		TaskID       model.TaskID
 		Job          *JobSummary
-		Name         string
-		TaskActor    *actor.Ref
-		Group        *actor.Ref // CHECK aka the job actor
+		// JobID     model.JobID
+		Name      string
+		TaskActor *actor.Ref
+		Group     *actor.Ref // CHECK aka the job actor
 
 		// Resource configuration.
 		SlotsNeeded         int

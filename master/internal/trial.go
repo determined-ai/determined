@@ -202,9 +202,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 	}
 
 	jobSummary := sproto.JobSummary{
-		JobID:    t.jobID,
-		EntityID: fmt.Sprint(t.experimentID),
-		JobType:  model.JobTypeExperiment,
+		JobID: t.jobID,
 	}
 
 	ctx.Log().Info("decided to allocate trial")
